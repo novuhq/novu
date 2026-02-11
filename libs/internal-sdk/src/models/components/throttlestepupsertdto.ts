@@ -4,7 +4,6 @@
 
 import * as z from "zod/v3";
 import { remap as remap$ } from "../../lib/primitives.js";
-import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 import {
   ThrottleControlDto,
   ThrottleControlDto$Outbound,
@@ -34,7 +33,7 @@ export type ThrottleStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "throttle";
   /**
    * Control values for the Throttle step.
    */
@@ -68,7 +67,7 @@ export type ThrottleStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: string;
+  type: "throttle";
   controlValues?:
     | ThrottleControlDto$Outbound
     | { [k: string]: any }
@@ -84,7 +83,7 @@ export const ThrottleStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: StepTypeEnum$outboundSchema,
+  type: z.literal("throttle"),
   controlValues: z.union([ThrottleControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

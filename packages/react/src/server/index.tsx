@@ -1,16 +1,22 @@
 import type { InboxProps } from '../components/Inbox';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
+  UseCreateSubscriptionProps,
+  UseCreateSubscriptionResult,
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesProps,
   UsePreferencesResult,
+  UseRemoveSubscriptionProps,
+  UseRemoveSubscriptionResult,
   UseScheduleProps,
   UseScheduleResult,
   UseSubscriptionProps,
   UseSubscriptionResult,
   UseSubscriptionsProps,
   UseSubscriptionsResult,
+  UseUpdateSubscriptionProps,
+  UseUpdateSubscriptionResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
@@ -92,7 +98,29 @@ export function useSubscription(_: UseSubscriptionProps): UseSubscriptionResult 
     isLoading: false,
     isFetching: false,
     refetch: () => Promise.resolve(),
+  };
+}
+
+export function useCreateSubscription(_: UseCreateSubscriptionProps = {}): UseCreateSubscriptionResult {
+  return {
+    isCreating: false,
+    error: undefined,
     create: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
+}
+
+export function useUpdateSubscription(_: UseUpdateSubscriptionProps = {}): UseUpdateSubscriptionResult {
+  return {
+    isUpdating: false,
+    error: undefined,
+    update: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
+}
+
+export function useRemoveSubscription(_: UseRemoveSubscriptionProps = {}): UseRemoveSubscriptionResult {
+  return {
+    isRemoving: false,
+    error: undefined,
     remove: () => Promise.resolve({ data: undefined, error: undefined }),
   };
 }
@@ -105,20 +133,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
   };
 }
 
-export type {
-  ChannelPreference,
-  ChannelType,
-  FiltersCountResponse,
-  InboxNotification,
-  ListNotificationsResponse,
-  Notification,
-  NotificationFilter,
-  NotificationStatus,
-  NovuError,
-  NovuOptions,
-  Preference,
-  RulesLogic,
-} from '@novu/js';
+export type * from '@novu/js';
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {

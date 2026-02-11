@@ -308,7 +308,7 @@ function displayNextSteps() {
   logger.info(logger.cyan('   <NovuInbox />\n'));
 
   logger.info(logger.blue('4. Get your Novu credentials:'));
-  logger.gray('   • Visit https://web.novu.co to create an account and application.');
+  logger.gray('   • Visit https://dashboard.novu.co to create an account and application.');
   logger.gray('   • Find your Application Identifier in the Novu dashboard.\n');
 
   logger.info(logger.blue('5. Customize your Inbox & learn more:'));

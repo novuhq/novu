@@ -16,7 +16,6 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 import {
   ThrottleControlsMetadataResponseDto,
   ThrottleControlsMetadataResponseDto$inboundSchema,
@@ -62,7 +61,7 @@ export type ThrottleStepResponseDtoControlValues = {
   /**
    * The type of throttle window.
    */
-  type?: ThrottleStepResponseDtoType | undefined;
+  type: ThrottleStepResponseDtoType;
   /**
    * The amount of time for the throttle window (required for fixed type).
    */
@@ -78,7 +77,7 @@ export type ThrottleStepResponseDtoControlValues = {
   /**
    * The maximum number of executions allowed within the window. Defaults to 1.
    */
-  threshold?: number | undefined;
+  threshold: number;
   /**
    * Optional key for grouping throttle rules. If not provided, defaults to workflow and subscriber combination.
    */
@@ -118,7 +117,7 @@ export type ThrottleStepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "throttle";
   /**
    * Origin of the layout
    */
@@ -192,7 +191,7 @@ export const ThrottleStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.literal("throttle"),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

@@ -45,13 +45,6 @@ export class MarkAllMessagesAs {
     }
 
     await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -99,6 +92,7 @@ export class MarkAllMessagesAs {
           event: eventMessage,
           userId: subscriber._id,
           _environmentId: command.environmentId,
+          contextKeys: [],
         },
         groupId: subscriber._organizationId,
       });

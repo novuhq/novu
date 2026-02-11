@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import {
   BullMqService,
+  FeatureFlagsService,
   PinoLogger,
   TriggerEvent,
   WorkflowInMemoryProviderService,
@@ -29,12 +30,14 @@ describe('Workflow Worker', () => {
       WorkflowInMemoryProviderService
     );
     const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
+    const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
 
     workflowWorker = new WorkflowWorker(
       triggerEventUseCase,
       workflowInMemoryProviderService,
       organizationRepository,
-      new PinoLogger({})
+      new PinoLogger({}),
+      featureFlagsService
     );
 
     workflowQueueService = new WorkflowQueueService(workflowInMemoryProviderService);

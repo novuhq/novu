@@ -23,7 +23,7 @@ export const WorkflowTags = (props: WorkflowTagsProps) => {
     <div className="flex min-w-0 flex-wrap items-center gap-1">
       <>
         {firstTags.map((tag) => (
-          <Badge key={tag} color="purple" size="md" variant="lighter" className="max-w-[8rem] shrink-0">
+          <Badge key={tag} color="purple" size="md" variant="lighter" className="max-w-32 shrink-0">
             <TruncatedText className="block max-w-full">{tag}</TruncatedText>
           </Badge>
         ))}

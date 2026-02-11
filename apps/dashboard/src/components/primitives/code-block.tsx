@@ -3,7 +3,7 @@ import { langs, loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { createTheme } from '@uiw/codemirror-themes';
 import CodeMirror from '@uiw/react-codemirror';
 import { Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/ui';
 import { CopyToClipboard } from './copy-to-clipboard';
 
@@ -30,52 +30,58 @@ export type Language = keyof typeof languageMap;
 const darkTheme = createTheme({
   theme: 'dark',
   settings: {
-    background: 'rgba(14, 18, 27, 0.90)',
-    foreground: '#EEFFFF',
-    caret: '#FFCC00',
-    selection: '#80CBC440',
-    lineHighlight: '#000000',
-    gutterBackground: 'rgba(14, 18, 27, 0.90)',
-    gutterForeground: '#545454',
+    background: '#161b22',
+    foreground: '#f9fafb',
+    caret: '#f9fafb',
+    selection: '#264f78',
+    lineHighlight: '#1c2128',
+    gutterBackground: '#161b22',
+    gutterForeground: '#6e7681',
+    gutterBorder: 'transparent',
   },
   styles: [
-    { tag: t.keyword, color: '#C792EA' },
-    { tag: t.operator, color: '#89DDFF' },
-    { tag: t.special(t.brace), color: '#89DDFF' },
-    { tag: t.propertyName, color: '#FFCB6B' },
-    { tag: t.definition(t.propertyName), color: '#82AAFF' },
-    { tag: t.string, color: '#C3E88D' },
-    { tag: t.comment, color: '#546E7A' },
-    { tag: t.variableName, color: '#EEFFFF' },
-    { tag: [t.function(t.variableName), t.definition(t.variableName)], color: '#82AAFF' },
-    { tag: t.typeName, color: '#F07178' },
-    { tag: t.className, color: '#FFCB6B' },
-    { tag: t.number, color: '#F78C6C' },
-    { tag: t.bool, color: '#F78C6C' },
+    { tag: t.keyword, color: '#bb9af7' },
+    { tag: t.operator, color: '#ffffff' },
+    { tag: t.brace, color: '#ffffff' },
+    { tag: t.propertyName, color: '#f7d025' },
+    { tag: t.definition(t.propertyName), color: '#9cdcfe' },
+    { tag: t.string, color: '#49d18a' },
+    { tag: t.comment, color: '#8b949e' },
+    { tag: t.variableName, color: '#9cdcfe' },
+    { tag: [t.function(t.variableName), t.definition(t.variableName)], color: '#1bc6f2' },
+    { tag: t.typeName, color: '#ffcb6b' },
+    { tag: t.className, color: '#ffcb6b' },
+    { tag: t.number, color: '#f7d025' },
+    { tag: t.bool, color: '#bb4d60' },
   ],
 });
 
 const lightTheme = createTheme({
   theme: 'light',
   settings: {
-    background: 'white',
+    background: '#ffffff',
     foreground: '#24292e',
     caret: '#24292e',
-    selection: '#0366d625',
-    lineHighlight: '#0366d608',
+    selection: '#b3d4fc',
+    lineHighlight: '#f5f5f5',
+    gutterBackground: '#ffffff',
+    gutterForeground: '#6e7681',
+    gutterBorder: 'transparent',
   },
   styles: [
-    { tag: t.keyword, color: '#FF5D00' },
-    { tag: t.operator, color: '#FF5D00' },
-    { tag: t.special(t.brace), color: '#24292e' },
-    { tag: t.propertyName, color: '#FB4BA3' },
-    { tag: t.definition(t.propertyName), color: '#24292e' },
-    { tag: t.string, color: '#8B41E1' },
-    { tag: t.comment, color: '#6e7781' },
-    { tag: t.variableName, color: '#24292e' },
-    { tag: [t.function(t.variableName), t.definition(t.variableName)], color: '#24292e' },
-    { tag: t.typeName, color: '#0550ae' },
-    { tag: t.className, color: '#0550ae' },
+    { tag: t.keyword, color: '#d73a49' },
+    { tag: t.operator, color: '#d73a49' },
+    { tag: t.brace, color: '#24292e' },
+    { tag: t.propertyName, color: '#005cc5' },
+    { tag: t.definition(t.propertyName), color: '#005cc5' },
+    { tag: t.string, color: '#032f62' },
+    { tag: t.comment, color: '#6a737d' },
+    { tag: t.variableName, color: '#e36209' },
+    { tag: [t.function(t.variableName), t.definition(t.variableName)], color: '#6f42c1' },
+    { tag: t.typeName, color: '#005cc5' },
+    { tag: t.className, color: '#005cc5' },
+    { tag: t.number, color: '#005cc5' },
+    { tag: t.bool, color: '#d73a49' },
   ],
 });
 
@@ -140,10 +146,12 @@ export function CodeBlock({
   actionButtons,
 }: CodeBlockProps) {
   const [showSecrets, setShowSecrets] = useState(false);
+  const [showGradient, setShowGradient] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const hasSecrets = secretMask.length > 0;
 
-  const getMaskedCode = () => {
+  const maskedCode = useMemo(() => {
     if (!hasSecrets || showSecrets) return code;
 
     const lines = code.split('\n');
@@ -164,45 +172,112 @@ export function CodeBlock({
     }
 
     return lines.join('\n');
-  };
+  }, [code, hasSecrets, showSecrets, secretMask]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let resizeObserver: ResizeObserver | null = null;
+    let scrollElement: Element | null = null;
+
+    const checkScroll = () => {
+      if (!scrollElement) return;
+
+      const hasHorizontalScroll = scrollElement.scrollWidth > scrollElement.clientWidth;
+      const isScrolledToEnd =
+        Math.abs(scrollElement.scrollWidth - scrollElement.clientWidth - scrollElement.scrollLeft) < 1;
+
+      setShowGradient(hasHorizontalScroll && !isScrolledToEnd);
+    };
+
+    const setupListeners = () => {
+      scrollElement = container.querySelector('.cm-scroller');
+      if (scrollElement) {
+        scrollElement.addEventListener('scroll', checkScroll);
+        checkScroll();
+
+        resizeObserver = new ResizeObserver(checkScroll);
+        resizeObserver.observe(scrollElement);
+      }
+    };
+
+    const timeoutId = setTimeout(setupListeners, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (scrollElement) {
+        scrollElement.removeEventListener('scroll', checkScroll);
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maskedCode]);
+
+  const showToolbar = hasSecrets || actionButtons === undefined;
 
   return (
     <div
       className={cn(
-        'w-full overflow-hidden rounded-xl border',
-        theme === 'light' ? 'border-neutral-200 bg-white' : 'border-neutral-700 bg-neutral-800',
+        'flex w-full flex-col overflow-hidden rounded-xl border',
+        theme === 'light' ? 'border-neutral-200 bg-white shadow-sm' : 'border-neutral-800/50 bg-[#0d1117] shadow-lg',
+        !title && 'group',
         className
       )}
     >
-      {title ? (
-        <div className={cn('flex items-center justify-between border-b border-neutral-100 px-2 py-1')}>
-          <span className={cn('text-xs', theme === 'light' ? 'text-gray-600' : 'text-foreground-400')}>{title}</span>
-          <div className="ml-auto flex items-center gap-1">
-            {hasSecrets && (
-              <button
-                type="button"
-                onClick={() => setShowSecrets(!showSecrets)}
-                className={cn(
-                  'rounded-md p-2 transition-all duration-200 active:scale-95',
-                  theme === 'light'
-                    ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                    : 'text-foreground-400 hover:text-foreground-50 hover:bg-[#32424a]'
-                )}
-                title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
-              >
-                {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            )}
-            {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
-          </div>
+      {title && (
+        <div
+          className={cn('flex items-center justify-between px-4 py-2', theme === 'light' ? 'bg-white' : 'bg-[#0d1117]')}
+        >
+          <span className={cn('text-xs font-medium', theme === 'light' ? 'text-neutral-700' : 'text-neutral-300')}>
+            {title}
+          </span>
+          {showToolbar && (
+            <div className="ml-auto flex items-center gap-1">
+              {hasSecrets && (
+                <button
+                  type="button"
+                  onClick={() => setShowSecrets(!showSecrets)}
+                  className={cn(
+                    'rounded-md p-1.5 transition-all duration-200 active:scale-95',
+                    theme === 'light'
+                      ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+                  )}
+                  title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
+                >
+                  {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              )}
+              {actionButtons ?? (
+                <CopyToClipboard
+                  content={code}
+                  theme={theme}
+                  className={cn(
+                    'rounded-md p-1.5 transition-all duration-200 active:scale-95',
+                    theme === 'light'
+                      ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+                  )}
+                  title="Copy code"
+                />
+              )}
+            </div>
+          )}
         </div>
-      ) : (
+      )}
+
+      {!title && (
         <div className="relative">
           <div
             className={cn(
-              'absolute right-1 top-0 z-10 flex items-center gap-1 rounded-md',
-              theme === 'light' ? '' : 'bg-neutral-800/80',
-              'backdrop-blur-sm'
+              'absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md',
+              'opacity-0 transition-opacity duration-200 group-hover:opacity-100',
+              theme === 'light' ? 'bg-white/90' : 'bg-[#0d1117]/90',
+              'backdrop-blur-xs border',
+              theme === 'light' ? 'border-neutral-200' : 'border-neutral-800/50'
             )}
           >
             {hasSecrets && (
@@ -210,10 +285,10 @@ export function CodeBlock({
                 type="button"
                 onClick={() => setShowSecrets(!showSecrets)}
                 className={cn(
-                  'rounded-md p-2 transition-all duration-200 active:scale-95',
+                  'rounded-md p-1.5 transition-all duration-200 active:scale-95',
                   theme === 'light'
-                    ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                    : 'text-foreground-400 hover:text-foreground-50 hover:bg-[#32424a]'
+                    ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
                 )}
                 title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
               >
@@ -224,19 +299,44 @@ export function CodeBlock({
           </div>
         </div>
       )}
-      <CodeMirror
-        value={getMaskedCode()}
-        theme={theme === 'dark' ? darkTheme : lightTheme}
-        extensions={[languageMap[language]()]}
-        basicSetup={{
-          lineNumbers: true,
-          highlightActiveLineGutter: false,
-          highlightActiveLine: false,
-          foldGutter: false,
-        }}
-        editable={false}
-        className={cn('overflow-auto text-xs [&_.cm-editor]:py-3 [&_.cm-scroller]:font-mono', className)}
-      />
+
+      <div className={cn('flex h-full flex-col overflow-hidden px-[4px] pb-[4px]', !title && 'pt-[4px]')}>
+        <div
+          ref={scrollContainerRef}
+          className={cn(
+            'relative h-full overflow-y-auto rounded-lg border p-2.5',
+            theme === 'light' ? 'border-neutral-200 bg-neutral-50' : 'border-neutral-600/50 bg-[#161b22]'
+          )}
+        >
+          {showGradient && (
+            <div
+              className={cn(
+                'pointer-events-none absolute right-2.5 top-2.5 bottom-2.5 z-10 w-8 rounded-r-lg',
+                theme === 'light'
+                  ? 'bg-linear-to-l from-neutral-50 to-transparent'
+                  : 'bg-linear-to-l from-[#161b22] to-transparent'
+              )}
+            />
+          )}
+          <CodeMirror
+            value={maskedCode}
+            theme={theme === 'dark' ? darkTheme : lightTheme}
+            extensions={[languageMap[language]()]}
+            basicSetup={{
+              lineNumbers: true,
+              highlightActiveLineGutter: false,
+              highlightActiveLine: false,
+              foldGutter: false,
+            }}
+            editable={false}
+            className={cn(
+              'overflow-auto text-xs [&_.cm-editor]:py-0 [&_.cm-scroller]:font-mono [&_.cm-editor]:bg-transparent',
+              '[&_.cm-gutters]:border-0 [&_.cm-lineNumbers]:min-w-[3ch]',
+              className
+            )}
+          />
+        </div>
+      </div>
     </div>
   );
 }

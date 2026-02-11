@@ -46,6 +46,7 @@ export class DuplicateWorkflowUseCase {
       UpsertWorkflowCommand.create({
         workflowDto: duplicateWorkflowDto,
         user: command.user,
+        preserveWorkflowId: !!command.overrides.workflowId,
       })
     );
 
@@ -70,6 +71,7 @@ export class DuplicateWorkflowUseCase {
     preferences: PreferencesEntity[]
   ): Promise<UpsertWorkflowDataCommand> {
     return {
+      workflowId: overrides.workflowId,
       name: overrides.name ?? `${originWorkflow.name} (Copy)`,
       description: overrides.description ?? originWorkflow.description,
       tags: overrides.tags ?? originWorkflow.tags,
@@ -79,6 +81,9 @@ export class DuplicateWorkflowUseCase {
       steps: this.mapStepsToDuplicate(originWorkflow.steps),
       preferences: this.mapPreferences(preferences),
       isTranslationEnabled: overrides.isTranslationEnabled ?? originWorkflow.isTranslationEnabled,
+      payloadSchema: originWorkflow.payloadSchema || null,
+      validatePayload: originWorkflow.validatePayload,
+      severity: originWorkflow.severity,
     };
   }
 

@@ -58,6 +58,11 @@ export type Workflow = {
   severity: SeverityLevelEnum;
 };
 
+/**
+ * Condition using JSON Logic rules
+ */
+export type Condition = {};
+
 export type GetPreferencesResponseDto = {
   /**
    * The level of the preference (global or template)
@@ -75,6 +80,10 @@ export type GetPreferencesResponseDto = {
    * Channel-specific preference settings
    */
   channels: SubscriberPreferenceChannels;
+  /**
+   * Condition using JSON Logic rules
+   */
+  condition?: Condition | null | undefined;
 };
 
 /** @internal */
@@ -120,6 +129,23 @@ export function workflowFromJSON(
 }
 
 /** @internal */
+export const Condition$inboundSchema: z.ZodType<
+  Condition,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+export function conditionFromJSON(
+  jsonString: string,
+): SafeParseResult<Condition, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Condition$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Condition' from JSON`,
+  );
+}
+
+/** @internal */
 export const GetPreferencesResponseDto$inboundSchema: z.ZodType<
   GetPreferencesResponseDto,
   z.ZodTypeDef,
@@ -129,6 +155,7 @@ export const GetPreferencesResponseDto$inboundSchema: z.ZodType<
   workflow: z.nullable(z.lazy(() => Workflow$inboundSchema)).optional(),
   enabled: z.boolean(),
   channels: SubscriberPreferenceChannels$inboundSchema,
+  condition: z.nullable(z.lazy(() => Condition$inboundSchema)).optional(),
 });
 
 export function getPreferencesResponseDtoFromJSON(

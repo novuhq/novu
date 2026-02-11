@@ -68,13 +68,14 @@ export class TopicSubscribersRepository extends BaseRepository<
 
   async createSubscriptions(subscriptions: CreateTopicSubscribersEntity[]): Promise<BulkAddTopicSubscribersResult> {
     const bulkUpsertWriteOps = subscriptions.map((subscription) => {
-      const { _subscriberId, _topicId, _environmentId, identifier } = subscription;
+      const { _subscriberId, _topicId, _environmentId, identifier, contextKeys } = subscription;
 
       const filter: Partial<CreateTopicSubscribersEntity> = {
         _environmentId,
         _subscriberId,
         _topicId,
         identifier,
+        ...(contextKeys && contextKeys.length > 0 ? { contextKeys } : {}),
       };
 
       return {
@@ -87,6 +88,7 @@ export class TopicSubscribersRepository extends BaseRepository<
     });
 
     let bulkResponse: mongo.BulkWriteResult;
+    let writeErrors: Array<{ err: { index: number; errmsg: string } }> = [];
     try {
       bulkResponse = await this.bulkWrite(bulkUpsertWriteOps);
     } catch (e: unknown) {
@@ -95,13 +97,13 @@ export class TopicSubscribersRepository extends BaseRepository<
           throw new DalException(e.message || 'Unknown error');
         }
         bulkResponse = e.result as mongo.BulkWriteResult;
+        writeErrors = e.writeErrors as Array<{ err: { index: number; errmsg: string } }>;
       } else {
         throw new DalException('An unknown error occurred while adding topic subscribers');
       }
     }
 
     const upsertedIds = bulkResponse.upsertedIds || {};
-    const writeErrors = bulkResponse.getWriteErrors() || [];
 
     const createdOrFailedIndexes: number[] = [];
 
@@ -109,11 +111,11 @@ export class TopicSubscribersRepository extends BaseRepository<
     for (const [index, _id] of Object.entries(upsertedIds)) {
       const numericIndex = parseInt(index, 10);
       createdOrFailedIndexes.push(numericIndex);
-      const subscriber = subscriptions[numericIndex];
-      if (subscriber) {
+      const subscription = subscriptions[numericIndex];
+      if (subscription) {
         createdSubscribers.push({
           _id: _id.toString(),
-          ...subscriber,
+          ...subscription,
         } as TopicSubscribersEntity);
       }
     }
@@ -168,11 +170,15 @@ export class TopicSubscribersRepository extends BaseRepository<
       _organizationId: OrganizationId;
       topicIds: string[];
       excludeSubscribers: string[];
+      contextKeys?: string[];
     };
     batchSize?: number;
-  }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string }, void, unknown> {
-    const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
+  }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string; identifier: string }, void, unknown> {
+    const { _organizationId, _environmentId, topicIds, excludeSubscribers, contextKeys } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
+
+    // Build context query: undefined = no filter (backward compatibility), otherwise use shared method
+    const contextMatch = contextKeys !== undefined ? this.buildContextExactMatchQuery(contextKeys) : {};
 
     const aggregatePipeline = [
       {
@@ -181,6 +187,7 @@ export class TopicSubscribersRepository extends BaseRepository<
           _environmentId: this.convertStringToObjectId(_environmentId),
           _topicId: { $in: mappedTopicIds },
           externalSubscriberId: { $nin: excludeSubscribers },
+          ...contextMatch,
         },
       },
       {
@@ -188,6 +195,7 @@ export class TopicSubscribersRepository extends BaseRepository<
           _id: '$_id',
           subscriberId: '$externalSubscriberId',
           _topicId: '$_topicId',
+          identifier: '$identifier',
         },
       },
     ];
@@ -244,6 +252,7 @@ export class TopicSubscribersRepository extends BaseRepository<
     organizationId,
     topicKey,
     subscriberId,
+    contextKeys,
     limit = 10,
     before,
     after,
@@ -268,6 +277,10 @@ export class TopicSubscribersRepository extends BaseRepository<
 
     if (subscriberId) {
       query.externalSubscriberId = subscriberId;
+    }
+
+    if (contextKeys) {
+      Object.assign(query, this.buildContextExactMatchQuery(contextKeys));
     }
 
     // Handle cursor-based pagination

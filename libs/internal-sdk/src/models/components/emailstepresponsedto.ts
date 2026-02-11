@@ -20,7 +20,6 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 /**
  * Type of editor to use for the body.
@@ -51,15 +50,15 @@ export type EmailStepResponseDtoControlValues = {
   /**
    * Body content of the email, either a valid Maily JSON object, or html string.
    */
-  body?: string | undefined;
+  body: string;
   /**
    * Type of editor to use for the body.
    */
-  editorType?: EmailStepResponseDtoEditorType | undefined;
+  editorType: EmailStepResponseDtoEditorType;
   /**
    * Disable sanitization of the output.
    */
-  disableOutputSanitization?: boolean | undefined;
+  disableOutputSanitization: boolean;
   /**
    * Layout ID to use for the email. Null means no layout, undefined means default layout.
    */
@@ -99,7 +98,7 @@ export type EmailStepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "email";
   /**
    * Origin of the layout
    */
@@ -165,7 +164,7 @@ export const EmailStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.literal("email"),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

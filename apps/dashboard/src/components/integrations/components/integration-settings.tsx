@@ -44,7 +44,7 @@ type IntegrationConfigurationProps = {
   isChannelSupportPrimary?: boolean;
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
-  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown> }) => void;
+  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
 function generateSlug(name: string): string {
@@ -101,9 +101,10 @@ export function IntegrationSettings({
       onFormStateChange({
         isValid: formState.isValid,
         errors: formState.errors,
+        isDirty: formState.isDirty,
       });
     }
-  }, [formState.isValid, formState.errors, onFormStateChange]);
+  }, [formState.isValid, formState.errors, formState.isDirty, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });

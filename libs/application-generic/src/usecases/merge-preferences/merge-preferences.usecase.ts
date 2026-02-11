@@ -15,13 +15,35 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * 3. Subscriber global preferences
  * 4. Subscriber workflow preferences
  *
- * If a workflow has the readOnly flag set to true, the subscriber preferences are ignored.
- *
- * If the workflow does not have the readOnly flag set to true, the subscriber preferences are merged with the workflow preferences.
+ * Subscriber preferences are excluded from the merge calculation when:
+ * - The workflow has the readOnly flag set to true
+ * - The excludeSubscriberPreferences flag is set to true (used for subscription preferences)
  *
  * If the subscriber has no preferences, the workflow preferences are returned.
  */
 export class MergePreferences {
+  /**
+   * Ensures that `all.enabled` defaults to `true` if undefined.
+   * Without this, if the `all` object is missing or `enabled` is undefined,
+   * the merge result could incorrectly resolve to `false`, while the intended fallback is `true`.
+   */
+  private static ensureDefaultAllEnabled(preference: PreferencesEntity | undefined): PreferencesEntity | undefined {
+    if (!preference?.preferences) {
+      return preference;
+    }
+
+    const normalized = { ...preference, preferences: { ...preference.preferences } };
+
+    if (normalized.preferences.all && normalized.preferences.all.enabled === undefined) {
+      normalized.preferences.all = {
+        ...normalized.preferences.all,
+        enabled: true,
+      };
+    }
+
+    return normalized;
+  }
+
   public static execute(command: MergePreferencesCommand): GetPreferencesResponseDto {
     const workflowPreferences = [command.workflowResourcePreference, command.workflowUserPreference].filter(
       (preference) => preference !== undefined
@@ -32,14 +54,18 @@ export class MergePreferences {
     );
 
     const isWorkflowPreferenceReadonly = workflowPreferences.some((preference) => preference.preferences.all?.readOnly);
+    const shouldExcludeSubscriberPreferences = command.excludeSubscriberPreferences || isWorkflowPreferenceReadonly;
 
     const preferencesList = [
       ...workflowPreferences,
-      // If the workflow preference is readOnly, we disregard the subscriber preferences
-      ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
+      ...(shouldExcludeSubscriberPreferences ? [] : subscriberPreferences),
     ];
 
-    const mergedPreferences = preferencesList.reduce(
+    const normalizedPreferencesList = preferencesList.map((preference) =>
+      MergePreferences.ensureDefaultAllEnabled(preference)
+    );
+
+    const mergedPreferences = normalizedPreferencesList.reduce(
       (acc, preference) => toMerged(acc, preference),
       {}
     ) as PreferencesEntity & { preferences: WorkflowPreferences };

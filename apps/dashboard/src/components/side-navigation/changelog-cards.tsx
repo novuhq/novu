@@ -219,7 +219,7 @@ function ChangelogCard({
   return (
     <motion.div
       key={changelog.id}
-      className="border-stroke-soft rounded-8 group absolute flex h-[175px] w-full cursor-pointer flex-col justify-between overflow-hidden border bg-white p-3 shadow-xl shadow-black/[0.1] transition-[height] duration-200 dark:border-white/[0.1] dark:bg-black dark:shadow-white/[0.05]"
+      className="border-stroke-soft rounded-8 group absolute flex h-[175px] w-full cursor-pointer flex-col justify-between overflow-hidden border bg-white p-3 shadow-xl shadow-black/10 transition-[height] duration-200 dark:border-white/10 dark:bg-black dark:shadow-white/5"
       style={{ transformOrigin: 'top center' }}
       animate={{
         top: index * -CONSTANTS.CARD_OFFSET,

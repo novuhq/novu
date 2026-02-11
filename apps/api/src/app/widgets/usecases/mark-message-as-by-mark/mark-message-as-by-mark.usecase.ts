@@ -51,12 +51,6 @@ export class MarkMessageAsByMark {
     if (!environment) {
       throw new Error(`Environment not found for id ${command.environmentId}`);
     }
-    await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
 
     await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
@@ -130,6 +124,7 @@ export class MarkMessageAsByMark {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
+        contextKeys: [],
       },
       groupId: subscriber._organizationId,
     });

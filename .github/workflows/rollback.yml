@@ -12,7 +12,7 @@ run-name: >
   }}on ${{ github.event.inputs.environment }} (${{
     github.event.inputs.revisions_to_rollback
   }} revisions)
-description: Rollback deployment to the previous task definition for selected services in the specified environment.
+
 concurrency:
   group: "rollback-${{ github.event.inputs.environment }}"
 
@@ -20,60 +20,66 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to rollback'
+        description: "Environment to rollback"
         required: true
         type: choice
         default: staging
         options:
           - staging
+          - staging-sg
           - production-us
           - production-eu
-          - production-both
+          - production-sg
+          - production-au
+          - production-uk
+          - production-jp
+          - production-kr
+          - production-us-and-eu
+          - production-sg-au-uk-jp-kr
 
       rollback_api:
-        description: 'Rollback API'
+        description: "Rollback API"
         required: true
         type: boolean
         default: true
 
       rollback_worker:
-        description: 'Rollback Worker'
+        description: "Rollback Worker"
         required: true
         type: boolean
         default: true
 
       rollback_ws:
-        description: 'Rollback WS'
+        description: "Rollback WS"
         required: true
         type: boolean
         default: true
-      
+
       rollback_webhook:
-        description: 'Rollback Webhook'
+        description: "Rollback Webhook"
         required: true
         type: boolean
         default: true
 
       revisions_to_rollback:
-        description: 'Number of revisions to rollback (default: 1)'
+        description: "Number of revisions to rollback (default: 1)"
         required: true
         type: number
         default: 1
-      
+
       rollback_signoff:
         description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you agree?"
         required: true
         type: choice
-        default: 'I do not agree'
+        default: "I do not agree"
         options:
-          - 'I agree'
-          - 'I do not agree'
+          - "I agree"
+          - "I do not agree"
 
-       
 jobs:
   prepare-matrix:
     runs-on: ubuntu-latest
-    if : "${{ github.event.inputs.rollback_signoff == 'I agree' }}"
+    if: "${{ github.event.inputs.rollback_signoff == 'I agree' }}"
     outputs:
       env_matrix: ${{ steps.set-matrix.outputs.env_matrix }}
       service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
@@ -88,11 +94,12 @@ jobs:
             echo "Error: At least one service must be selected for rollback."
             exit 1
           fi
-      
+
       - name: Generate Environment, Service, and Rollback Matrices
         id: set-matrix
-        env: 
+        env:
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
+          API_SERVICE: ${{ vars.API_SERVICE }}
         run: |
           envs=()
           services=()
@@ -102,15 +109,40 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
+          if [ "${{ github.event.inputs.environment }}" == "staging-sg" ]; then
+            envs+=("\"staging-apse1\"")
+          fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
             envs+=("\"prod-us\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-both" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "production-sg" ]; then
+            envs+=("\"prod-apse1\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-au" ]; then
+            envs+=("\"prod-apse2\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-uk" ]; then
+            envs+=("\"prod-ew2\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-jp" ]; then
+            envs+=("\"prod-apne1\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-kr" ]; then
+            envs+=("\"prod-apne2\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-sg-au-uk-jp-kr" ]; then
+            envs+=("\"prod-apse1\"")
+            envs+=("\"prod-apse2\"")
+            envs+=("\"prod-ew2\"")
+            envs+=("\"prod-apne1\"")
+            envs+=("\"prod-apne2\"")
           fi
 
           # Collect selected services
@@ -137,15 +169,59 @@ jobs:
                 service_name=$(echo "$worker_service" | jq -r '.service')
                 task_name=$(echo "$worker_service" | jq -r '.task_name')
                 image=$(echo "$worker_service" | jq -r '.image')
-                rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                
+                # Check if service has environments filter, otherwise rollback to all
+                allowed_envs=$(echo "$worker_service" | jq -r '.environments // empty')
+                should_rollback=false
+                
+                if [ -z "$allowed_envs" ]; then
+                  # No environment filter, rollback to all environments
+                  should_rollback=true
+                else
+                  # Check if any of the selected environments match the allowed environments
+                  for env in "${envs[@]}"; do
+                    env_clean=$(echo "$env" | tr -d '"')
+                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
+                      should_rollback=true
+                      break
+                    fi
+                  done
+                fi
+                
+                if [ "$should_rollback" == "true" ]; then
+                  rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                fi
               done
             elif [ "$service" == "\"api\"" ]; then
-              cluster_name=api-cluster
-              container_name=api-container
-              service_name=api-service
-              task_name=api-task
-              image=api
-              rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+              for api_service in $(echo "$API_SERVICE" | jq -c '.[]'); do
+                cluster_name=$(echo "$api_service" | jq -r '.cluster_name')
+                container_name=$(echo "$api_service" | jq -r '.container_name')
+                service_name=$(echo "$api_service" | jq -r '.service')
+                task_name=$(echo "$api_service" | jq -r '.task_name')
+                image=$(echo "$api_service" | jq -r '.image')
+                
+                # Check if service has environments filter, otherwise rollback to all
+                allowed_envs=$(echo "$api_service" | jq -r '.environments // empty')
+                should_rollback=false
+                
+                if [ -z "$allowed_envs" ]; then
+                  # No environment filter, rollback to all environments
+                  should_rollback=true
+                else
+                  # Check if any of the selected environments match the allowed environments
+                  for env in "${envs[@]}"; do
+                    env_clean=$(echo "$env" | tr -d '"')
+                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
+                      should_rollback=true
+                      break
+                    fi
+                  done
+                fi
+                
+                if [ "$should_rollback" == "true" ]; then
+                  rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                fi
+              done
             elif [ "$service" == "\"ws\"" ]; then
               cluster_name=ws-cluster
               container_name=ws-container
@@ -187,77 +263,75 @@ jobs:
     environment: ${{ matrix.env }}
 
     steps:
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ${{ vars.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-        - name: ECS get output
-          env:
-            TASK_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.task_name }}
-            CONTAINER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
-            SERVICE_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
-            CLUSTER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
-          id: ecs-output
-          run: |
-            echo "Retrieving current_task_definition_arn..."
-            current_task_definition_arn=$(aws ecs describe-services --cluster ${CLUSTER_NAME} --services ${SERVICE_NAME} --query 'services[0].taskDefinition' --output text)
-            echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
+      - name: ECS get output
+        env:
+          TASK_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.task_name }}
+          CONTAINER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
+          SERVICE_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
+          CLUSTER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
+        id: ecs-output
+        run: |
+          echo "Retrieving current_task_definition_arn..."
+          current_task_definition_arn=$(aws ecs describe-services --cluster ${CLUSTER_NAME} --services ${SERVICE_NAME} --query 'services[0].taskDefinition' --output text)
+          echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
 
-            echo "Retrieving task_definition_family..."
-            task_definition_family=$(aws ecs describe-task-definition --task-definition ${TASK_NAME} --query 'taskDefinition.family' --output text)
-            echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
+          echo "Retrieving task_definition_family..."
+          task_definition_family=$(aws ecs describe-task-definition --task-definition ${TASK_NAME} --query 'taskDefinition.family' --output text)
+          echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
 
-            echo "Finding previous task definition..."
-            revisions_to_rollback=${{ github.event.inputs.revisions_to_rollback }}
-            max_items=$((revisions_to_rollback + 10))  # Get a few extra to be safe
-            
-            # Get only the latest task definitions (limited number to avoid argument length issues)
-            task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --max-items ${max_items} --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
-            
-            if [ -z "$task_definition_list" ]; then
-              echo "No task definitions found."
-              exit 1
-            fi
+          echo "Finding previous task definition..."
+          revisions_to_rollback=${{ github.event.inputs.revisions_to_rollback }}
+          max_items=$((revisions_to_rollback + 10))  # Get a few extra to be safe
 
-            # Find the index of current task definition
-            index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
-            
-            if [ -z "$index" ]; then
-              echo "Current task definition not found in recent task definitions."
-              echo "Current: $current_task_definition_arn"
-              echo "Available recent task definitions:"
-              echo "$task_definition_list" | head -10
-              exit 1
-            fi
+          # Get only the latest task definitions (limited number to avoid argument length issues)
+          task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --max-items ${max_items} --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
 
-            # Calculate the previous task definition index
-            previous_index=$((index + revisions_to_rollback))
-            previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
-            
-            if [ -z "$previous_task_definition_arn" ]; then
-              echo "Error: Cannot rollback $revisions_to_rollback revisions. Not enough previous versions available."
-              echo "Current task is at position $index out of $(echo "$task_definition_list" | wc -l) recent task definitions."
-              exit 1
-            fi
-            
-            echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
-          
-        - name: Rollback a service to the previous task definition
-          id: rollback-service
-          env:
-            PREVIOUS_TASK: ${{ env.previous_task_definition_arn }}
-            CURRENT_TASK: ${{ env.current_task_definition_arn }}
-            SERVICE_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
-            CLUSTER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
-          run: |
-            aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --task-definition ${{ env.PREVIOUS_TASK }}
-            aws ecs wait services-stable --cluster  ${CLUSTER_NAME} --service ${SERVICE_NAME}
-            echo "After Rollback:"
-            echo "The previous task definition: $(echo $CURRENT_TASK | awk -F'task-definition/' '{print $2}')"
-            echo "The current task definition: $(echo $PREVIOUS_TASK | awk -F'task-definition/' '{print $2}')"
-            echo "Rollback completed successfully."
+          if [ -z "$task_definition_list" ]; then
+            echo "No task definitions found."
+            exit 1
+          fi
 
-        
+          # Find the index of current task definition
+          index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
+
+          if [ -z "$index" ]; then
+            echo "Current task definition not found in recent task definitions."
+            echo "Current: $current_task_definition_arn"
+            echo "Available recent task definitions:"
+            echo "$task_definition_list" | head -10
+            exit 1
+          fi
+
+          # Calculate the previous task definition index
+          previous_index=$((index + revisions_to_rollback))
+          previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+
+          if [ -z "$previous_task_definition_arn" ]; then
+            echo "Error: Cannot rollback $revisions_to_rollback revisions. Not enough previous versions available."
+            echo "Current task is at position $index out of $(echo "$task_definition_list" | wc -l) recent task definitions."
+            exit 1
+          fi
+
+          echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+
+      - name: Rollback a service to the previous task definition
+        id: rollback-service
+        env:
+          PREVIOUS_TASK: ${{ env.previous_task_definition_arn }}
+          CURRENT_TASK: ${{ env.current_task_definition_arn }}
+          SERVICE_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
+          CLUSTER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
+        run: |
+          aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --task-definition ${{ env.PREVIOUS_TASK }}
+          aws ecs wait services-stable --cluster  ${CLUSTER_NAME} --service ${SERVICE_NAME}
+          echo "After Rollback:"
+          echo "The previous task definition: $(echo $CURRENT_TASK | awk -F'task-definition/' '{print $2}')"
+          echo "The current task definition: $(echo $PREVIOUS_TASK | awk -F'task-definition/' '{print $2}')"
+          echo "Rollback completed successfully."

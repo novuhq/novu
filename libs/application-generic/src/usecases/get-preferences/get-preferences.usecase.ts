@@ -48,7 +48,12 @@ export class GetPreferences {
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
     const items = await this.getPreferencesFromDb(command);
 
-    const mergedPreferences = MergePreferences.execute(MergePreferencesCommand.create(items));
+    const mergedPreferences = MergePreferences.execute(
+      MergePreferencesCommand.create({
+        ...items,
+        excludeSubscriberPreferences: command.excludeSubscriberPreferences,
+      })
+    );
 
     if (!mergedPreferences.preferences) {
       throw new PreferencesNotFoundException(command);
@@ -62,6 +67,7 @@ export class GetPreferences {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
+    contextKeys?: string[];
   }): Promise<{
     enabled: boolean;
     channels: IPreferenceChannels;
@@ -104,7 +110,8 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
-          topicSubscriptionId: command.topicSubscriptionId,
+          excludeSubscriberPreferences: command.excludeSubscriberPreferences,
+          contextKeys: command.contextKeys,
         })
       );
     } catch (e) {
@@ -161,23 +168,34 @@ export class GetPreferences {
     ];
 
     if (command.subscriberId) {
-      const workflowQuery = {
-        ...baseQuery,
-        _subscriberId: command.subscriberId,
-        ...(command.topicSubscriptionId && { _topicSubscriptionId: command.topicSubscriptionId }),
-        _templateId: command.templateId,
-        type: command.topicSubscriptionId
-          ? PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW
-          : PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-      };
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
 
       queries.push(
-        this.preferencesRepository.findOne(workflowQuery, undefined, queryOptions),
+        this.preferencesRepository.findOne(
+          {
+            ...baseQuery,
+            _subscriberId: command.subscriberId,
+            _templateId: command.templateId,
+            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+            ...contextQuery,
+          },
+          undefined,
+          queryOptions
+        ),
         this.preferencesRepository.findOne(
           {
             ...baseQuery,
             _subscriberId: command.subscriberId,
             type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+            ...contextQuery,
           },
           undefined,
           queryOptions

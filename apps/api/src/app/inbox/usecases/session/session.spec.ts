@@ -302,7 +302,7 @@ describe('Session', () => {
         environmentName: environment.name,
         _subscriber: subscriber._id,
         origin: command.origin,
-        context: undefined,
+        context: [],
       })
     ).to.be.true;
   });
@@ -374,7 +374,7 @@ describe('Session', () => {
     const subscriber = { _id: 'subscriber-id' };
     const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
-    const mockContexts = [{ key: 'teamId:team-123' }, { key: 'projectId:project-456' }];
+    const mockContexts = [{ key: 'projectId:project-456' }, { key: 'teamId:team-123' }];
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
@@ -400,7 +400,7 @@ describe('Session', () => {
       )
     ).to.be.true;
 
-    expect(response.contextKeys).to.deep.equal(['teamId:team-123', 'projectId:project-456']);
+    expect(response.contextKeys).to.deep.equal(['projectId:project-456', 'teamId:team-123']);
   });
 
   it('should validate context HMAC when HMAC is enabled and context is provided', async () => {

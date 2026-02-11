@@ -17,7 +17,7 @@ export type TopicsControllerUpdateTopicSubscriptionRequest = {
   /**
    * The unique identifier of the subscription
    */
-  subscriptionId: string;
+  identifier: string;
   /**
    * A header for idempotency purposes
    */
@@ -34,7 +34,7 @@ export type TopicsControllerUpdateTopicSubscriptionResponse = {
 /** @internal */
 export type TopicsControllerUpdateTopicSubscriptionRequest$Outbound = {
   topicKey: string;
-  subscriptionId: string;
+  identifier: string;
   "idempotency-key"?: string | undefined;
   UpdateTopicSubscriptionRequestDto:
     components.UpdateTopicSubscriptionRequestDto$Outbound;
@@ -48,7 +48,7 @@ export const TopicsControllerUpdateTopicSubscriptionRequest$outboundSchema:
     TopicsControllerUpdateTopicSubscriptionRequest
   > = z.object({
     topicKey: z.string(),
-    subscriptionId: z.string(),
+    identifier: z.string(),
     idempotencyKey: z.string().optional(),
     updateTopicSubscriptionRequestDto:
       components.UpdateTopicSubscriptionRequestDto$outboundSchema,

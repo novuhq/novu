@@ -1,6 +1,7 @@
 import { ResourceOriginEnum } from '@novu/shared';
 import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
-import { RiArrowDownSFill } from 'react-icons/ri';
+import { useFormContext } from 'react-hook-form';
+import { RiArrowDownSFill, RiEdit2Line } from 'react-icons/ri';
 import { MAILY_EMAIL_WIDTH } from '@/components/maily/maily-config';
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -8,14 +9,24 @@ import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integratio
 import { cn } from '@/utils/ui';
 import { NovuBranding } from './novu-branding';
 
-type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & { minimalHeader?: boolean };
+type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & {
+  minimalHeader?: boolean;
+  onEditSenderClick?: () => void;
+  previewFrom?: {
+    email?: string;
+    name?: string;
+  };
+};
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
-  const { className, children, minimalHeader = false, ...rest } = props;
+  const { className, children, minimalHeader = false, onEditSenderClick, previewFrom, ...rest } = props;
   const { senderEmail, senderName, isLoading } = usePrimaryEmailIntegration();
+  const formContext = useFormContext();
+  const fromEmail = formContext?.watch('from.email');
+  const fromName = formContext?.watch('from.name');
 
-  const displaySenderName = senderName || 'Acme Inc.';
-  const displaySenderEmail = senderEmail || 'noreply@novu.co';
+  const displaySenderName = previewFrom?.name || fromName || senderName || 'Acme Inc.';
+  const displaySenderEmail = previewFrom?.email || fromEmail || senderEmail || 'noreply@novu.co';
 
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
@@ -30,9 +41,20 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
             {isLoading ? (
               <Skeleton className="h-4 w-40" />
             ) : (
-              <>
-                {displaySenderName} <span className="text-foreground-600 text-xs">{`<${displaySenderEmail}>`}</span>
-              </>
+              <button
+                type="button"
+                onClick={onEditSenderClick}
+                className="group flex items-center gap-1 text-left hover:text-foreground-950 focus:outline-none"
+              >
+                {displaySenderName}
+                <span className="text-foreground-600 text-xs">
+                  {'<'}
+                  <span className="text-foreground-600 text-xs underline decoration-dotted">{displaySenderEmail}</span>
+                  {'>'}
+                </span>
+
+                {onEditSenderClick && <RiEdit2Line className="text-foreground-600 size-3.5" />}
+              </button>
             )}
           </div>
           {!minimalHeader && (
@@ -127,7 +149,10 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div {...rest} className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}>
+    <div
+      {...rest}
+      className={cn(`bg-background mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}
+    >
       <div
         className={cn(`shadow-xs min-h-80 w-full overflow-auto p-0`)}
         ref={(node) => {
@@ -145,7 +170,7 @@ type EmailPreviewContentMobileProps = HTMLAttributes<HTMLDivElement>;
 export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps) => {
   const { className, ...rest } = props;
 
-  return <div className={cn('bg-background max-w-sm', className)} {...rest} />;
+  return <div className={cn('max-w-sm', className)} {...rest} />;
 };
 
 type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
@@ -221,27 +246,13 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   return (
     <div className={cn('flex flex-col', className)} {...rest}>
       <div
-        className="mx-auto min-h-96 w-full overflow-auto px-4"
+        className="mx-auto min-h-96 w-full overflow-auto"
         ref={(node) => {
           refNode.current = node;
           attachShadow(node, body);
         }}
       />
       <NovuBranding resourceOrigin={resourceOrigin} />
-    </div>
-  );
-};
-
-type EmailPreviewSubjectMobileProps = HTMLAttributes<HTMLDivElement> & {
-  subject: string;
-};
-
-export const EmailPreviewSubjectMobile = (props: EmailPreviewSubjectMobileProps) => {
-  const { subject, className, ...rest } = props;
-
-  return (
-    <div className={cn('bg-neutral-50 p-4', className)} {...rest}>
-      <h3 className="line-clamp-2">{subject}</h3>
     </div>
   );
 };

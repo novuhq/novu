@@ -30,4 +30,7 @@ export interface FacetedFilterProps {
   className?: string;
   trailingNode?: React.ReactNode;
   disabled?: boolean;
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
+  isLoading?: boolean;
 }

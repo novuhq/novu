@@ -6,21 +6,35 @@ import {
   TopicSubscription,
 } from '../../../subscriptions';
 import { useNovu } from '../../context';
+import { buildSubscriptionIdentifier } from '../../internal';
 
 export const useSubscription = (options: GetSubscriptionArgs) => {
   const novuAccessor = useNovu();
+  const identifier = () => {
+    const subscriberId = novuAccessor().subscriberId;
+    const contextKey = novuAccessor().contextKey;
+    return options.identifier ?? buildSubscriptionIdentifier({ topicKey: options.topicKey, subscriberId, contextKey });
+  };
 
   const [loading, setLoading] = createSignal(true);
-  const [subscription, { mutate, refetch }] = createResource(options || {}, async ({ topicKey, identifier }) => {
-    try {
-      const response = await novuAccessor().subscriptions.get({ topicKey, identifier });
+  const [subscription, { mutate, refetch }] = createResource(
+    options || {},
+    async ({ topicKey, identifier, workflowIds, tags }) => {
+      try {
+        const response = await novuAccessor().subscriptions.get({
+          topicKey,
+          identifier,
+          workflowIds,
+          tags,
+        });
 
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
-      throw error;
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+        throw error;
+      }
     }
-  });
+  );
 
   const create = async (args: CreateSubscriptionArgs) => {
     setLoading(true);
@@ -39,7 +53,7 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
     const response =
       'subscription' in args
         ? await novuAccessor().subscriptions.delete({ subscription: args.subscription })
-        : await novuAccessor().subscriptions.delete({ subscriptionId: args.subscriptionId });
+        : await novuAccessor().subscriptions.delete({ topicKey: args.topicKey, subscriptionId: args.subscriptionId });
 
     mutate(null);
     setLoading(false);
@@ -49,7 +63,7 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
 
   onMount(() => {
     const listener = ({ data }: { data?: TopicSubscription }) => {
-      if (!data || data.topicKey !== options.topicKey || data.identifier !== options.identifier) {
+      if (!data || data.topicKey !== options.topicKey || data.identifier !== identifier()) {
         return;
       }
 
@@ -59,7 +73,7 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
 
     const currentNovu = novuAccessor();
     const cleanupCreatePending = currentNovu.on('subscription.create.pending', ({ args }) => {
-      if (!args || args.topicKey !== options.topicKey || args.identifier !== options.identifier) {
+      if (!args || args.topicKey !== options.topicKey || args.identifier !== identifier()) {
         return;
       }
       setLoading(true);
@@ -82,7 +96,21 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
       }
       setLoading(true);
     });
-    const cleanupDelete = currentNovu.on('subscription.delete.resolved', () => {
+    const cleanupDelete = currentNovu.on('subscription.delete.resolved', ({ args }) => {
+      const subscriptionId = subscription()?.id;
+      const subscriptionIdentifier = subscription()?.identifier;
+      if (
+        !args ||
+        ('subscriptionId' in args &&
+          args.subscriptionId !== subscriptionId &&
+          args.subscriptionId !== subscriptionIdentifier) ||
+        ('subscription' in args &&
+          args.subscription.id !== subscriptionId &&
+          args.subscription.identifier !== subscriptionIdentifier)
+      ) {
+        return;
+      }
+
       mutate(null);
       setLoading(false);
     });

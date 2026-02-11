@@ -1,9 +1,27 @@
-import { ISubscribersDefine, SeverityLevelEnum, StatelessControls, StepTypeEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleEventType,
+  ISubscribersDefine,
+  SeverityLevelEnum,
+  StatelessControls,
+  StepTypeEnum,
+} from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
+
+export interface TopicPreferenceEvaluation {
+  condition?: Record<string, unknown>;
+  result: boolean;
+  subscriptionIdentifier: string;
+}
+
+export type NotificationTopic = {
+  _topicId: string;
+  topicKey: string;
+  preferenceEvaluation?: TopicPreferenceEvaluation;
+};
 
 export class NotificationEntity {
   _id: string;
@@ -16,10 +34,7 @@ export class NotificationEntity {
 
   _subscriberId: string;
 
-  topics: {
-    _topicId: string;
-    topicKey: string;
-  }[];
+  topics: NotificationTopic[];
 
   transactionId: string;
 
@@ -44,6 +59,7 @@ export class NotificationEntity {
   severity?: SeverityLevelEnum;
   critical?: boolean;
   contextKeys?: string[];
+  lastEmittedDeliveryEvent?: DeliveryLifecycleEventType;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

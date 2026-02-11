@@ -202,6 +202,18 @@ export const sendgridConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    description: 'Select EU if your SendGrid account is hosted in the EU data center',
+    type: 'dropdown',
+    required: false,
+    value: 'global',
+    dropdown: [
+      { name: 'Global (US)', value: 'global' },
+      { name: 'EU', value: 'eu' },
+    ],
+  },
+  {
     key: CredentialsKeyEnum.IpPoolName,
     displayName: 'IP Pool Name',
     type: 'string',

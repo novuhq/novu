@@ -63,7 +63,7 @@ const stepRunSelectColumns = [
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
-const traceSelectColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
+const traceSelectColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at', 'event_type'] as const;
 type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
 
 interface IStepRunWithDetails extends StepRunFetchResult {
@@ -307,6 +307,7 @@ export class GetWorkflowRun {
       severity: workflowRun.severity,
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,
+      topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : [],
     };
   }
 }

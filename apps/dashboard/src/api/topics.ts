@@ -1,5 +1,7 @@
-import type { DirectionEnum, IEnvironment } from '@novu/shared';
+import { RulesLogic } from '@novu/js';
+import type { CustomDataType, DirectionEnum, IEnvironment, SeverityLevelEnum } from '@novu/shared';
 import { Topic } from '@/components/topics/types';
+import { convertContextKeysToPayload } from '@/utils/context-variable-utils';
 import { delV2, getV2, patchV2, postV2 } from './api.client';
 
 export type ListTopicsResponse = {
@@ -105,11 +107,15 @@ export const addSubscribersToTopic = async ({
   environment,
   topicKey,
   subscribers,
+  contextKeys,
 }: {
   environment: IEnvironment;
   topicKey: string;
   subscribers: string[];
+  contextKeys?: string[];
 }) => {
+  const context = convertContextKeysToPayload(contextKeys);
+
   const { data } = await postV2<{
     data: {
       succeeded: string[];
@@ -119,7 +125,10 @@ export const addSubscribersToTopic = async ({
     };
   }>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
     environment,
-    body: { subscriberIds: subscribers },
+    body: {
+      subscriberIds: subscribers,
+      ...(context && { context }),
+    },
   });
 
   return data;
@@ -142,8 +151,28 @@ export const removeSubscribersFromTopic = async ({
   return { acknowledged: true };
 };
 
+export const deleteTopicSubscription = async ({
+  environment,
+  topicKey,
+  identifier,
+  subscriberId,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  identifier: string;
+  subscriberId: string;
+}) => {
+  await delV2<DeleteTopicSubscriptionsResponseDto>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
+    environment,
+    body: { subscriptions: [{ identifier, subscriberId }] },
+  });
+
+  return { acknowledged: true };
+};
+
 export type TopicSubscription = {
   _id: string;
+  identifier: string;
   createdAt: string;
   topic: {
     _id: string;
@@ -170,6 +199,30 @@ export type ListTopicSubscriptionsResponse = {
   totalCountCapped: boolean;
 };
 
+export type WorkflowDto = {
+  id: string;
+  identifier: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
+  data?: CustomDataType;
+  severity: SeverityLevelEnum;
+};
+
+export type TopicSubscriptionPreference = {
+  workflow: WorkflowDto;
+  subscriptionId: string;
+  enabled: boolean;
+  condition?: RulesLogic;
+};
+
+export type TopicSubscriptionDetailsResponse = {
+  id: string;
+  identifier?: string;
+  name?: string;
+  preferences: TopicSubscriptionPreference[];
+};
+
 export const getTopicSubscriptions = async ({
   environment,
   topicKey,
@@ -177,6 +230,7 @@ export const getTopicSubscriptions = async ({
   after,
   before,
   subscriberId,
+  contextKeys,
 }: {
   environment: IEnvironment;
   topicKey: string;
@@ -184,6 +238,7 @@ export const getTopicSubscriptions = async ({
   after?: string;
   before?: string;
   subscriberId?: string;
+  contextKeys?: string[];
 }): Promise<ListTopicSubscriptionsResponse> => {
   const params = new URLSearchParams();
 
@@ -191,6 +246,12 @@ export const getTopicSubscriptions = async ({
   if (after) params.append('after', after);
   if (before) params.append('before', before);
   if (subscriberId) params.append('subscriberId', subscriberId);
+
+  if (contextKeys?.length) {
+    for (const contextKey of contextKeys) {
+      params.append('contextKeys', contextKey);
+    }
+  }
 
   const query = params.toString() ? `?${params.toString()}` : '';
 
@@ -202,4 +263,23 @@ export const getTopicSubscriptions = async ({
   );
 
   return response;
+};
+
+export const getTopicSubscription = async ({
+  environment,
+  topicKey,
+  subscriptionId,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  subscriptionId: string;
+}): Promise<TopicSubscriptionDetailsResponse> => {
+  const response = await getV2<{ data: TopicSubscriptionDetailsResponse }>(
+    `/topics/${encodeURIComponent(topicKey)}/subscriptions/${subscriptionId}`,
+    {
+      environment,
+    }
+  );
+
+  return response.data;
 };

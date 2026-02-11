@@ -12,7 +12,8 @@ export class GetDecryptedSecretKey {
       {
         _id: command.environmentId,
       },
-      '_id apiKeys'
+      '_id apiKeys',
+      { readPreference: 'secondaryPreferred' }
     );
 
     if (!environment) {

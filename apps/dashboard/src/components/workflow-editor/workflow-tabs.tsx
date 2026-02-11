@@ -25,8 +25,8 @@ import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
 
 export const WorkflowTabs = () => {
-  const { workflow } = useWorkflow();
-  const { currentEnvironment } = useEnvironment();
+  const { workflow, isPending: isWorkflowPending } = useWorkflow();
+  const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
@@ -295,28 +295,48 @@ export const WorkflowTabs = () => {
   const currentTab = activityMatch ? 'activity' : 'workflow';
 
   return (
-    <div className="flex h-full flex-1 flex-nowrap">
-      <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value={currentTab}>
+    <div className="flex h-full w-full flex-1 flex-nowrap">
+      <Tabs defaultValue="workflow" className="-mt-px flex h-full max-w-full flex-1 flex-col" value={currentTab}>
         <TabsList variant="regular" className="items-center">
-          <TabsTrigger value="workflow" asChild variant="regular" size="lg">
-            <Link
-              to={buildRoute(ROUTES.EDIT_WORKFLOW, {
-                environmentSlug: currentEnvironment?.slug ?? '',
-                workflowSlug: workflow?.slug ?? '',
-              })}
-            >
-              Workflow
-            </Link>
+          <TabsTrigger
+            value="workflow"
+            asChild
+            variant="regular"
+            size="lg"
+            disabled={isWorkflowPending || areEnvironmentsInitialLoading}
+          >
+            {currentEnvironment && workflow ? (
+              <Link
+                to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+                  environmentSlug: currentEnvironment?.slug ?? '',
+                  workflowSlug: workflow?.slug ?? '',
+                })}
+              >
+                Workflow
+              </Link>
+            ) : (
+              <span>Workflow</span>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="activity" asChild variant="regular" size="lg">
-            <Link
-              to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                environmentSlug: currentEnvironment?.slug ?? '',
-                workflowSlug: workflow?.slug ?? '',
-              })}
-            >
-              Activity
-            </Link>
+          <TabsTrigger
+            value="activity"
+            asChild
+            variant="regular"
+            size="lg"
+            disabled={isWorkflowPending || areEnvironmentsInitialLoading}
+          >
+            {currentEnvironment && workflow ? (
+              <Link
+                to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                  environmentSlug: currentEnvironment?.slug ?? '',
+                  workflowSlug: workflow?.slug ?? '',
+                })}
+              >
+                Activity
+              </Link>
+            ) : (
+              <span>Activity</span>
+            )}
           </TabsTrigger>
           <div className="my-auto ml-auto flex items-center gap-2">
             <Protect permission={PermissionsEnum.EVENT_WRITE}>
@@ -379,10 +399,10 @@ export const WorkflowTabs = () => {
             </Protect>
           </div>
         </TabsList>
-        <TabsContent value="workflow" className="mt-0 h-full w-full">
+        <TabsContent value="workflow" className="mt-0 h-full max-w-full">
           {workflow && <WorkflowCanvas steps={workflow.steps || []} isReadOnly={isReadOnly} />}
         </TabsContent>
-        <TabsContent value="activity" className="mt-0 h-full w-full">
+        <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />
         </TabsContent>
       </Tabs>

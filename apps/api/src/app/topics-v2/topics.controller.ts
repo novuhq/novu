@@ -21,6 +21,7 @@ import { Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
+import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -33,11 +34,16 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
+import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
+import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
-import { DeleteTopicSubscriptionsRequestDto } from './dtos/delete-topic-subscriptions.dto';
+import {
+  DeleteTopicSubscriberIdentifierDto,
+  DeleteTopicSubscriptionsRequestDto,
+} from './dtos/delete-topic-subscriptions.dto';
 import { DeleteTopicSubscriptionsResponseDto } from './dtos/delete-topic-subscriptions-response.dto';
 import { ListTopicSubscriptionsQueryDto } from './dtos/list-topic-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from './dtos/list-topic-subscriptions-response.dto';
@@ -78,7 +84,8 @@ export class TopicsController {
     private listTopicSubscriptionsUsecase: ListTopicSubscriptionsUseCase,
     private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
     private deleteTopicSubscriptionsUsecase: DeleteTopicSubscriptionsUsecase,
-    private updateSubscriptionUsecase: UpdateSubscriptionUsecase
+    private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
+    private getSubscriptionUsecase: GetSubscription
   ) {}
 
   @Get('')
@@ -255,6 +262,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         topicKey,
         subscriberId: query.subscriberId,
+        contextKeys: query.contextKeys,
         limit: query.limit ? Number(query.limit) : 10,
         after: query.after,
         before: query.before,
@@ -293,6 +301,7 @@ export class TopicsController {
         subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        context: body.context,
       })
     );
 
@@ -301,6 +310,7 @@ export class TopicsController {
         ...item,
         createdAt: item.createdAt || '',
         updatedAt: item.updatedAt || '',
+        contextKeys: item.contextKeys,
       })),
       meta: result.meta,
       errors: result.errors,
@@ -338,7 +348,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriberIds: body.subscriberIds,
+        subscriptions: this.mapDeleteSubscriptions(body.subscriptions || body.subscriberIds || []),
       })
     );
 
@@ -362,22 +372,66 @@ export class TopicsController {
     return typeSafeResult;
   }
 
-  @Patch('/:topicKey/subscriptions/:subscriptionId')
+  @Get('/:topicKey/subscriptions/:identifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Topics.Subscriptions')
+  @SdkMethodName('getSubscription')
+  @ApiOperation({
+    summary: 'Retrieve a topic subscription',
+    description: `Retrieve a subscription by its unique identifier for a topic.`,
+  })
+  @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
+  @ApiParam({
+    name: 'identifier',
+    description: 'The unique identifier of the subscription',
+    type: String,
+  })
+  @ApiResponse(SubscriptionDetailsResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_READ)
+  async getTopicSubscription(
+    @UserSession() user: UserSessionData,
+    @Param('topicKey') topicKey: string,
+    @Param('identifier') identifier: string,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<SubscriptionDetailsResponseDto | void> {
+    const result = await this.getSubscriptionUsecase.execute(
+      GetSubscriptionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        topicKey,
+        identifier,
+      })
+    );
+
+    if (!result) {
+      res.status(HttpStatus.NO_CONTENT);
+
+      return;
+    }
+
+    return result;
+  }
+
+  @Patch('/:topicKey/subscriptions/:identifier')
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('update')
   @ApiOperation({
     summary: 'Update a topic subscription',
-    description: `Update a subscription by its unique identifier **subscriptionId** for a topic. You can update the preferences and name associated with the subscription.`,
+    description: `Update a subscription by its unique identifier for a topic. You can update the preferences and name associated with the subscription.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiParam({ name: 'subscriptionId', description: 'The unique identifier of the subscription', type: String })
+  @ApiParam({
+    name: 'identifier',
+    description: 'The unique identifier of the subscription',
+    type: String,
+  })
   @ApiResponse(SubscriptionResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async updateTopicSubscription(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionId') subscriptionId: string,
+    @Param('identifier') identifier: string,
     @Body() body: UpdateTopicSubscriptionRequestDto
   ): Promise<SubscriptionResponseDto> {
     return await this.updateSubscriptionUsecase.execute(
@@ -386,7 +440,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriptionId,
+        identifier,
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
       })
@@ -396,6 +450,20 @@ export class TopicsController {
   private mapSubscriptions(
     subscriptions: Array<string | { identifier: string; subscriberId: string; name?: string }>
   ): Array<{ identifier?: string; subscriberId: string; name?: string }> {
+    return subscriptions.map((subscription) => {
+      if (typeof subscription === 'string') {
+        return {
+          subscriberId: subscription,
+        };
+      }
+
+      return subscription;
+    });
+  }
+
+  private mapDeleteSubscriptions(
+    subscriptions: Array<string | DeleteTopicSubscriberIdentifierDto>
+  ): Array<{ identifier?: string; subscriberId?: string; name?: string }> {
     return subscriptions.map((subscription) => {
       if (typeof subscription === 'string') {
         return {

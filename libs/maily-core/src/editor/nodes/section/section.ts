@@ -4,19 +4,19 @@ import { updateAttributes } from '@/editor/utils/update-attribute';
 
 export const DEFAULT_SECTION_BACKGROUND_COLOR = '#f7f7f7';
 export const DEFAULT_SECTION_ALIGN = 'left';
-export const DEFAULT_SECTION_BORDER_WIDTH = 2;
+export const DEFAULT_SECTION_BORDER_WIDTH = 0;
 export const DEFAULT_SECTION_BORDER_COLOR = '#e2e2e2';
-export const DEFAULT_SECTION_BORDER_RADIUS = 0;
+export const DEFAULT_SECTION_BORDER_RADIUS = 6;
 
 export const DEFAULT_SECTION_MARGIN_TOP = 0;
 export const DEFAULT_SECTION_MARGIN_RIGHT = 0;
-export const DEFAULT_SECTION_MARGIN_BOTTOM = 0;
+export const DEFAULT_SECTION_MARGIN_BOTTOM = 10;
 export const DEFAULT_SECTION_MARGIN_LEFT = 0;
 
-export const DEFAULT_SECTION_PADDING_TOP = 0;
-export const DEFAULT_SECTION_PADDING_RIGHT = 0;
-export const DEFAULT_SECTION_PADDING_BOTTOM = 0;
-export const DEFAULT_SECTION_PADDING_LEFT = 0;
+export const DEFAULT_SECTION_PADDING_TOP = 8;
+export const DEFAULT_SECTION_PADDING_RIGHT = 8;
+export const DEFAULT_SECTION_PADDING_BOTTOM = 8;
+export const DEFAULT_SECTION_PADDING_LEFT = 8;
 
 export const DEFAULT_SECTION_SHOW_IF_KEY = null;
 
@@ -59,7 +59,7 @@ export const SectionExtension = Node.create({
   addAttributes() {
     return {
       borderRadius: {
-        default: 0,
+        default: DEFAULT_SECTION_BORDER_RADIUS,
         parseHTML: (element) => {
           return Number(element?.style?.borderRadius?.replace(/['"]+/g, ''));
         },

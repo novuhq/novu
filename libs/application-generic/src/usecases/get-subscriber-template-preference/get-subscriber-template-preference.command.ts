@@ -9,7 +9,7 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
   template: NotificationTemplateEntity;
 
   @IsOptional()
-  subscriber?: SubscriberEntity;
+  subscriber?: Pick<SubscriberEntity, '_id'>;
 
   @IsOptional()
   tenant?: ITenantDefine;
@@ -17,7 +17,4 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
   @IsDefined()
   @IsBoolean()
   includeInactiveChannels: boolean;
-
-  @IsOptional()
-  subscriptionId?: string;
 }

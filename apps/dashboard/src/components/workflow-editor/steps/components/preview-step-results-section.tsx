@@ -59,7 +59,7 @@ export function PreviewStepResultsSection({
   const stepEntries = Object.entries(localParsedData.steps || {});
 
   return (
-    <AccordionItem value="step-results" className={ACCORDION_STYLES.itemLast}>
+    <AccordionItem value="step-results" className={ACCORDION_STYLES.item}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
         <div className="flex items-center gap-0.5">
           Step results
@@ -76,68 +76,70 @@ export function PreviewStepResultsSection({
         </div>
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">
-        {stepEntries.length > 0 ? (
-          <div className="w-full">
-            {stepEntries.map(([stepId, stepData]) => {
-              const stepType = getStepType(workflow, stepId);
-              const StepIcon = getStepTypeIcon(stepType);
-              const stepName = getStepName(workflow, stepId);
-              const isCurrentStep = stepId === currentStepId;
-              const isOpen = openSteps[stepId] || false;
-              const currentStepData = getCurrentStepData(stepId, stepData);
+        <div className="flex flex-1 flex-col gap-2 overflow-auto">
+          {stepEntries.length > 0 ? (
+            <>
+              {stepEntries.map(([stepId, stepData]) => {
+                const stepType = getStepType(workflow, stepId);
+                const StepIcon = getStepTypeIcon(stepType);
+                const stepName = getStepName(workflow, stepId);
+                const isCurrentStep = stepId === currentStepId;
+                const isOpen = openSteps[stepId] || false;
+                const currentStepData = getCurrentStepData(stepId, stepData);
 
-              return (
-                <div key={stepId}>
-                  <button
-                    type="button"
-                    onClick={() => toggleStepOpen(stepId)}
-                    className="flex w-full items-center gap-2 py-1.5 transition-colors hover:bg-neutral-50"
-                  >
-                    <div className="flex flex-1 items-center gap-2">
-                      <StepIcon className="h-3 w-3 flex-shrink-0 text-neutral-300" />
-                      <span className="text-label-2xs text-left font-medium">{stepName}</span>
-                      {isCurrentStep && <span className="text-label-2xs text-neutral-500">(current step)</span>}
-                      <div className="border-soft mx-2 flex-1 border-t" />
-                    </div>
-                    <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
-                      {isOpen ? (
-                        <RiContractUpDownLine className="h-3 w-3 text-neutral-400" />
-                      ) : (
-                        <RiExpandUpDownLine className="h-3 w-3 text-neutral-400" />
-                      )}
-                    </div>
-                  </button>
-                  {isOpen &&
-                    (currentStepData && Object.keys(currentStepData).length > 0 ? (
-                      <div className="pb-3">
-                        <EditableJsonViewer
-                          key={`${stepId}-${JSON.stringify(currentStepData)}`}
-                          value={currentStepData}
-                          onChange={(updatedStepData) => handleStepDataChange(stepId, updatedStepData)}
-                          className={ACCORDION_STYLES.jsonViewer}
-                        />
-                        {stepType === 'digest' && (
-                          <div className="pt-2">
-                            <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-                              <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
-                              <span>
-                                Event count and events array are synchronized automatically. The event payload is
-                                originating from the workflow trigger payload.
-                              </span>
-                            </div>
-                          </div>
+                return (
+                  <div key={stepId}>
+                    <button
+                      type="button"
+                      onClick={() => toggleStepOpen(stepId)}
+                      className="flex w-full items-center gap-2 py-1.5 transition-colors hover:bg-neutral-50"
+                    >
+                      <div className="flex flex-1 items-center gap-2">
+                        <StepIcon className="h-3 w-3 shrink-0 text-neutral-300" />
+                        <span className="text-label-2xs text-left font-medium">{stepName}</span>
+                        {isCurrentStep && <span className="text-label-2xs text-neutral-500">(current step)</span>}
+                        <div className="border-soft mx-2 flex-1 border-t" />
+                      </div>
+                      <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+                        {isOpen ? (
+                          <RiContractUpDownLine className="h-3 w-3 text-neutral-400" />
+                        ) : (
+                          <RiExpandUpDownLine className="h-3 w-3 text-neutral-400" />
                         )}
                       </div>
-                    ) : (
-                      <p className="text-xs italic text-neutral-500">no step results</p>
-                    ))}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-xs italic text-neutral-500">no step results</p>
-        )}
+                    </button>
+                    {isOpen &&
+                      (currentStepData && Object.keys(currentStepData).length > 0 ? (
+                        <div className="pb-3">
+                          <EditableJsonViewer
+                            key={`${stepId}-${JSON.stringify(currentStepData)}`}
+                            value={currentStepData}
+                            onChange={(updatedStepData) => handleStepDataChange(stepId, updatedStepData)}
+                            className={ACCORDION_STYLES.jsonViewer}
+                          />
+                          {stepType === 'digest' && (
+                            <div className="pt-2">
+                              <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
+                                <RiInformation2Line className="h-3 w-3 shrink-0" />
+                                <span>
+                                  Event count and events array are synchronized automatically. The event payload is
+                                  originating from the workflow trigger payload.
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs italic text-neutral-500">no step results</p>
+                      ))}
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <p className="text-xs italic text-neutral-500">no step results</p>
+          )}
+        </div>
       </AccordionContent>
     </AccordionItem>
   );

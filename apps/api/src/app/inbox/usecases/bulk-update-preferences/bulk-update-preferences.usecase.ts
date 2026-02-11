@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
 import {
   BaseRepository,
+  ContextRepository,
   EnvironmentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { PreferenceLevelEnum } from '@novu/shared';
+import { ContextPayload, FeatureFlagsKeysEnum, PreferenceLevelEnum } from '@novu/shared';
 import { BulkUpdatePreferenceItemDto } from '../../dtos/bulk-update-preferences-request.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
@@ -24,11 +25,15 @@ export class BulkUpdatePreferences {
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
     private updatePreferencesUsecase: UpdatePreferences,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private contextRepository: ContextRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: BulkUpdatePreferencesCommand): Promise<InboxPreference[]> {
+    const contextKeys = await this.resolveContexts(command.environmentId, command.organizationId, command.context);
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
@@ -93,12 +98,24 @@ export class BulkUpdatePreferences {
 
     const updatePromises = Array.from(workflowPreferencesMap.entries()).map(
       async ([workflowId, { preference, workflow }]) => {
+        const isUpdatingSubscriptionPreference =
+          preference.subscriptionIdentifier &&
+          (typeof preference.enabled !== 'undefined' || typeof preference.condition !== 'undefined');
+
         return this.updatePreferencesUsecase.execute(
           UpdatePreferencesCommand.create({
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
+            contextKeys,
             level: PreferenceLevelEnum.TEMPLATE,
+            subscriptionIdentifier: preference.subscriptionIdentifier,
+            ...(isUpdatingSubscriptionPreference && {
+              all: {
+                ...(typeof preference.enabled !== 'undefined' && { enabled: preference.enabled }),
+                ...(typeof preference.condition !== 'undefined' && { condition: preference.condition }),
+              },
+            }),
             chat: preference.chat,
             email: preference.email,
             in_app: preference.in_app,
@@ -117,13 +134,35 @@ export class BulkUpdatePreferences {
 
     const updatedPreferences = await Promise.all(updatePromises);
 
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES_BULK, '', {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      workflowIds: Array.from(workflowPreferencesMap.keys()),
-      level: PreferenceLevelEnum.TEMPLATE,
+    return updatedPreferences;
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload
+  ): Promise<string[] | undefined> {
+    // Check if context preferences feature is enabled
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
     });
 
-    return updatedPreferences;
+    if (!isEnabled) {
+      return undefined; // Ignore context when FF is off
+    }
+
+    if (!context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
+
+    return contexts.map((ctx) => ctx.key);
   }
 }

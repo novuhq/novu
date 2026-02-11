@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
  * Update a topic subscription
  *
  * @remarks
- * Update a subscription by its unique identifier **subscriptionId** for a topic. You can update the preferences and name associated with the subscription.
+ * Update a subscription by its unique identifier for a topic. You can update the preferences and name associated with the subscription.
  */
 export function topicsSubscriptionsUpdate(
   client: NovuCore,
@@ -95,7 +95,7 @@ async function $do(
   });
 
   const pathParams = {
-    subscriptionId: encodeSimple("subscriptionId", payload.subscriptionId, {
+    identifier: encodeSimple("identifier", payload.identifier, {
       explode: false,
       charEncoding: "percent",
     }),
@@ -105,9 +105,9 @@ async function $do(
     }),
   };
 
-  const path = pathToFunc(
-    "/v2/topics/{topicKey}/subscriptions/{subscriptionId}",
-  )(pathParams);
+  const path = pathToFunc("/v2/topics/{topicKey}/subscriptions/{identifier}")(
+    pathParams,
+  );
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",

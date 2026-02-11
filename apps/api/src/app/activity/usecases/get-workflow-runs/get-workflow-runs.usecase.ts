@@ -11,6 +11,7 @@ import {
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { TopicSubscribersRepository } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
@@ -64,6 +65,7 @@ export class GetWorkflowRuns {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
+    private topicSubscribersRepository: TopicSubscribersRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -158,9 +160,27 @@ export class GetWorkflowRuns {
         queryBuilder.whereLike('topics', `%${command.topicKey}%`);
       }
 
-      if (command.contextKeys?.length) {
-        // This checks if context_keys array contains any of the specified keys
-        queryBuilder.whereHasAny('context_keys', command.contextKeys);
+      if (command.subscriptionId) {
+        const subscription = await this.topicSubscribersRepository.findOne({
+          _environmentId: command.environmentId,
+          identifier: command.subscriptionId,
+        });
+
+        if (subscription) {
+          queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
+          queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
+          queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
+        }
+      }
+
+      if (command.contextKeys !== undefined) {
+        if (command.contextKeys.length === 0) {
+          // Empty array = filter for records with no context (empty context_keys)
+          queryBuilder.whereEquals('context_keys', []);
+        } else {
+          // Non-empty array = filter for records containing all specified contexts
+          queryBuilder.whereHasAll('context_keys', command.contextKeys);
+        }
       }
 
       const safeWhere = queryBuilder.build();

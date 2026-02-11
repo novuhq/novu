@@ -4,6 +4,7 @@
 
 import { topicsSubscriptionsCreate } from "../funcs/topicsSubscriptionsCreate.js";
 import { topicsSubscriptionsDelete } from "../funcs/topicsSubscriptionsDelete.js";
+import { topicsSubscriptionsGetSubscription } from "../funcs/topicsSubscriptionsGetSubscription.js";
 import { topicsSubscriptionsList } from "../funcs/topicsSubscriptionsList.js";
 import { topicsSubscriptionsUpdate } from "../funcs/topicsSubscriptionsUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
@@ -76,10 +77,31 @@ export class Subscriptions extends ClientSDK {
   }
 
   /**
+   * Get a topic subscription
+   *
+   * @remarks
+   * Get a subscription by its unique identifier for a topic.
+   */
+  async getSubscription(
+    topicKey: string,
+    identifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.TopicsControllerGetTopicSubscriptionResponse> {
+    return unwrapAsync(topicsSubscriptionsGetSubscription(
+      this,
+      topicKey,
+      identifier,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
    * Update a topic subscription
    *
    * @remarks
-   * Update a subscription by its unique identifier **subscriptionId** for a topic. You can update the preferences and name associated with the subscription.
+   * Update a subscription by its unique identifier for a topic. You can update the preferences and name associated with the subscription.
    */
   async update(
     request: operations.TopicsControllerUpdateTopicSubscriptionRequest,

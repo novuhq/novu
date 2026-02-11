@@ -72,6 +72,8 @@ export class InboxService {
     seen,
     data,
     severity,
+    createdGte,
+    createdLte,
   }: {
     tags?: string[];
     read?: boolean;
@@ -83,6 +85,8 @@ export class InboxService {
     offset?: number;
     data?: Record<string, unknown>;
     severity?: SeverityLevelEnum | SeverityLevelEnum[];
+    createdGte?: number;
+    createdLte?: number;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -117,6 +121,12 @@ export class InboxService {
       }
     } else if (severity) {
       searchParams.append('severity', severity);
+    }
+    if (createdGte) {
+      searchParams.append('createdGte', `${createdGte}`);
+    }
+    if (createdLte) {
+      searchParams.append('createdLte', `${createdLte}`);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
@@ -338,54 +348,111 @@ export class InboxService {
     return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`);
   }
 
-  getSubscription(topicKey: string, identifier: string): Promise<SubscriptionResponse> {
-    return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
+  getSubscription(
+    topicKey: string,
+    identifier?: string,
+    workflowIds?: string[],
+    tags?: string[]
+  ): Promise<SubscriptionResponse | undefined> {
+    const searchParams = new URLSearchParams();
+
+    if (workflowIds?.length)
+      for (const workflowIdentifier of workflowIds) searchParams.append('workflowIds', workflowIdentifier);
+
+    if (tags?.length) for (const tag of tags) searchParams.append('tags', tag);
+
+    const query = searchParams.size ? `?${searchParams.toString()}` : '';
+
+    return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}${query}`);
   }
 
   createSubscription({
-    topicKey,
     identifier,
-    filters,
+    name,
+    topicKey,
+    topicName,
+    preferences,
   }: {
-    topicKey: string;
     identifier?: string;
-    filters: Array<PreferenceFilter>;
+    name?: string;
+    topicKey: string;
+    topicName?: string;
+    preferences?: Array<PreferenceFilter>;
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.post(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`, {
       identifier,
-      filters,
+      name,
+      ...(topicName && { topic: { name: topicName } }),
+      ...(preferences !== undefined && { preferences }),
+    });
+  }
+
+  updateSubscription({
+    topicKey,
+    identifier,
+    name,
+    preferences,
+  }: {
+    topicKey: string;
+    identifier: string;
+    name?: string;
+    preferences?: Array<PreferenceFilter>;
+  }): Promise<SubscriptionResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`, {
+      name,
+      ...(preferences !== undefined && { preferences }),
     });
   }
 
   updateSubscriptionPreference({
-    subscriptionId,
+    subscriptionIdentifier,
     workflowId,
     enabled,
     condition,
+    email,
+    sms,
+    in_app,
+    chat,
+    push,
   }: {
-    subscriptionId: string;
+    subscriptionIdentifier: string;
     workflowId: string;
     enabled?: boolean;
     condition?: RulesLogic;
+    email?: boolean;
+    sms?: boolean;
+    in_app?: boolean;
+    chat?: boolean;
+    push?: boolean;
   }): Promise<SubscriptionPreferenceResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionId}/preferences/${workflowId}`, {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionIdentifier}/preferences/${workflowId}`, {
       enabled,
       condition,
+      email,
+      sms,
+      in_app,
+      chat,
+      push,
     });
   }
 
   bulkUpdateSubscriptionPreferences(
     preferences: Array<{
-      subscriptionId: string;
+      subscriptionIdentifier: string;
       workflowId: string;
       enabled?: boolean;
       condition?: RulesLogic;
+      email?: boolean;
+      sms?: boolean;
+      in_app?: boolean;
+      chat?: boolean;
+      push?: boolean;
     }>
   ): Promise<SubscriptionPreferenceResponse[]> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/preferences/bulk`, { preferences });
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
   }
 
-  deleteSubscription(subscriptionId: string): Promise<void> {
-    return this.#httpClient.delete(`${INBOX_ROUTE}/subscriptions/${subscriptionId}`);
+  deleteSubscription({ topicKey, identifier }: { topicKey: string; identifier: string }): Promise<void> {
+    return this.#httpClient.delete(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
   }
 }

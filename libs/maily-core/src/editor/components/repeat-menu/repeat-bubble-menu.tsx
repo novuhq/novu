@@ -40,6 +40,10 @@ export function RepeatBubbleMenu(
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     shouldShow: ({ editor }) => {
+      if (editor.view.dragging) {
+        return false;
+      }
+
       const activeForNode = getClosestNodeByName(editor, 'repeat');
       const sectionNodeChildren = activeForNode
         ? findChildren(activeForNode?.node, (node) => {

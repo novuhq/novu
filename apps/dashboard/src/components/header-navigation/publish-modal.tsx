@@ -147,7 +147,7 @@ export function PublishModal({
         <PublishModalHeader />
         <PublishModalContent environment={environment} />
 
-        <div className="space-y-1.5">
+        <div className="w-full max-w-[486px] space-y-1.5">
           {workflows.length > 0 && (
             <ResourceGroupCompact
               title="Workflows"
@@ -329,14 +329,12 @@ function CompactResourceRow({
       <div className="min-w-0 flex-1">
         {resource.resourceType === 'layout' ? (
           // Layout: name and ID side by side
-          <div className="leading-0 flex w-full items-center gap-1 text-left min-w-0">
-            <span className="overflow-hidden truncate overflow-ellipsis text-xs font-medium leading-4 text-gray-900 flex-shrink min-w-0">
-              {displayName}
-            </span>
+          <div className="leading-0 flex w-full min-w-0 items-center gap-1 text-left">
+            <span className="min-w-0 shrink truncate text-xs font-medium leading-4 text-gray-900">{displayName}</span>
             {hasDependencies && (
               <Tooltip>
                 <TooltipTrigger>
-                  <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                  <RiLinkUnlinkM className="h-3 w-3 shrink-0 text-orange-500" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {dependencies && dependencies.length > 0 && (
@@ -355,12 +353,12 @@ function CompactResourceRow({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-1">
-              <span className="truncate text-xs font-medium text-gray-900">{displayName}</span>
+            <div className="flex min-w-0 items-center gap-1">
+              <span className="min-w-0 truncate text-xs font-medium text-gray-900">{displayName}</span>
               {hasDependencies && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                    <RiLinkUnlinkM className="h-3 w-3 shrink-0 text-orange-500" />
                   </TooltipTrigger>
                   <TooltipContent>
                     {dependencies && dependencies.length > 0 && (
@@ -377,7 +375,7 @@ function CompactResourceRow({
                 </Tooltip>
               )}
             </div>
-            <div className="font-mono text-xs tracking-tight text-gray-400">{slug}</div>
+            <div className="truncate font-mono text-xs tracking-tight text-gray-400">{slug}</div>
           </>
         )}
 

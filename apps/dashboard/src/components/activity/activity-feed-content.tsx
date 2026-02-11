@@ -134,7 +134,7 @@ export function ActivityFeedContent({
 
   return (
     <div className={cn('p-2.5', className)}>
-      <div className="flex items-center justify-between pb-2.5">
+      <div className="flex items-center justify-between pb-2.5 gap-2">
         <ActivityFilters
           filters={mergedFilterValues}
           onFiltersChange={handleFiltersChange}

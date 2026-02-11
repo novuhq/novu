@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AnalyticsService, createHash } from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { normalizeEmail } from '@novu/shared';
 import bcrypt from 'bcrypt';
@@ -60,19 +60,6 @@ export class Login {
       }
 
       throw new UnauthorizedException(`Incorrect email or password provided.`);
-    }
-
-    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY && !user.servicesHashes?.intercom) {
-      const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
-      const userHashForIntercom = createHash(intercomSecretKey, user._id);
-      await this.userRepository.update(
-        { _id: user._id },
-        {
-          $set: {
-            'servicesHashes.intercom': userHashForIntercom,
-          },
-        }
-      );
     }
 
     this.analyticsService.upsertUser(user, user._id);

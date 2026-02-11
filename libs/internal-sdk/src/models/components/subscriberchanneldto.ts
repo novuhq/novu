@@ -13,7 +13,7 @@ import {
 /**
  * The ID of the chat or push provider.
  */
-export const ProviderId = {
+export const SubscriberChannelDtoProviderId = {
   Slack: "slack",
   Discord: "discord",
   Msteams: "msteams",
@@ -38,13 +38,15 @@ export const ProviderId = {
 /**
  * The ID of the chat or push provider.
  */
-export type ProviderId = ClosedEnum<typeof ProviderId>;
+export type SubscriberChannelDtoProviderId = ClosedEnum<
+  typeof SubscriberChannelDtoProviderId
+>;
 
 export type SubscriberChannelDto = {
   /**
    * The ID of the chat or push provider.
    */
-  providerId: ProviderId;
+  providerId: SubscriberChannelDtoProviderId;
   /**
    * An optional identifier for the integration.
    */
@@ -56,8 +58,9 @@ export type SubscriberChannelDto = {
 };
 
 /** @internal */
-export const ProviderId$outboundSchema: z.ZodNativeEnum<typeof ProviderId> = z
-  .nativeEnum(ProviderId);
+export const SubscriberChannelDtoProviderId$outboundSchema: z.ZodNativeEnum<
+  typeof SubscriberChannelDtoProviderId
+> = z.nativeEnum(SubscriberChannelDtoProviderId);
 
 /** @internal */
 export type SubscriberChannelDto$Outbound = {
@@ -72,7 +75,7 @@ export const SubscriberChannelDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   SubscriberChannelDto
 > = z.object({
-  providerId: ProviderId$outboundSchema,
+  providerId: SubscriberChannelDtoProviderId$outboundSchema,
   integrationIdentifier: z.string().optional(),
   credentials: ChannelCredentialsDto$outboundSchema,
 });

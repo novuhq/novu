@@ -6,7 +6,7 @@ import {
   InvalidateCacheService,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { DalException, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { DalException, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
@@ -40,12 +40,6 @@ export class RemoveMessagesBulk {
           this.updateServices(subscriber, MarkEnum.SEEN),
           this.updateServices(subscriber, MarkEnum.READ),
           this.invalidateCache.invalidateQuery({
-            key: buildFeedKey().invalidate({
-              subscriberId: command.subscriberId,
-              _environmentId: command.environmentId,
-            }),
-          }),
-          this.invalidateCache.invalidateQuery({
             key: buildMessageCountKey().invalidate({
               subscriberId: command.subscriberId,
               _environmentId: command.environmentId,
@@ -61,7 +55,7 @@ export class RemoveMessagesBulk {
     }
   }
 
-  private async updateServices(subscriber, marked: string): Promise<void> {
+  private async updateServices(subscriber: SubscriberEntity, marked: MarkEnum): Promise<void> {
     const eventMessage = marked === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
     await this.webSocketsQueueService.add({
@@ -70,6 +64,7 @@ export class RemoveMessagesBulk {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
+        contextKeys: [],
       },
       groupId: subscriber._organizationId,
     });

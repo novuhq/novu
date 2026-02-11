@@ -1,10 +1,13 @@
+import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-
+import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
+import { CloudflareSchedulerService } from '../cloudflare-scheduler';
+import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
@@ -16,12 +19,38 @@ let workflowQueueService: WorkflowQueueService;
 let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
 
+const mockCloudflareSchedulerService = {
+  scheduleJob: jest.fn(),
+} as unknown as CloudflareSchedulerService;
+
+const mockFeatureFlagsService = {
+  getFlag: jest.fn(),
+} as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: jest.fn(),
+} as unknown as CommunityOrganizationRepository;
+
+const mockLogger = {
+  setContext: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as PinoLogger;
+
 describe('Readiness Service', () => {
   beforeAll(async () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-    standardQueueService = new StandardQueueService(new WorkflowInMemoryProviderService());
+    standardQueueService = new StandardQueueService(
+      new WorkflowInMemoryProviderService(),
+      mockCloudflareSchedulerService,
+      mockFeatureFlagsService,
+      mockOrganizationRepository,
+      mockLogger
+    );
     workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService());
     subscriberProcessQueueService = new SubscriberProcessQueueService(new WorkflowInMemoryProviderService());
 
@@ -76,7 +105,7 @@ describe('Readiness Service', () => {
 
       const getWorkerProcessor = () => {
         return async ({ data }) => {
-          return await new Promise((resolve, reject) => {
+          return await new Promise((resolve) => {
             resolve(data);
           });
         };

@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { capitalize } from './string';
 
-const getIssueField = (issue: z.ZodIssueBase) => capitalize(`${issue.path[issue.path.length - 1]}`);
+const getIssueField = (issue: z.core.$ZodRawIssue) => {
+  const path = issue.path ?? [];
+
+  return capitalize(`${String(path[path.length - 1] ?? 'Field')}`);
+};
 const pluralize = (count: number | bigint) => (count === 1 ? '' : 's');
 
 /**
@@ -11,7 +15,7 @@ const pluralize = (count: number | bigint) => (count === 1 ? '' : 's');
  *
  * For all built-in defaults, @see https://github.com/colinhacks/zod/blob/main/src/locales/en.ts
  */
-const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
+const customErrorMap: z.ZodErrorMap = (issue) => {
   const issueField = getIssueField(issue);
 
   if (issue.code === z.ZodIssueCode.too_big) {
@@ -48,7 +52,7 @@ const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
     }
 
     if (issue.type === 'string') {
-      if (String(ctx.data).length === 0) {
+      if (String(issue.input).length === 0) {
         return {
           message: `${issueField} is required`,
         };
@@ -72,19 +76,19 @@ const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
     }
   }
 
-  if (issue.code === z.ZodIssueCode.invalid_string && issue.validation === 'email') {
+  if (issue.code === z.ZodIssueCode.invalid_format && issue.format === 'email') {
     return {
       message: `${issueField} must be a valid email`,
     };
   }
 
-  if (issue.code === z.ZodIssueCode.invalid_enum_value) {
+  if (issue.code === z.ZodIssueCode.invalid_value) {
     return {
-      message: `${issueField} must be one of ${issue.options.join(', ')}`,
+      message: `${issueField} must be one of ${issue.values.join(', ')}`,
     };
   }
 
-  return { message: ctx.defaultError };
+  return null;
 };
 
 export const overrideZodErrorMap = () => {

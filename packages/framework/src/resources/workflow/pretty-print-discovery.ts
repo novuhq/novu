@@ -1,7 +1,9 @@
 import type { DiscoverWorkflowOutput } from '../../types';
 import { EMOJI, log } from '../../utils';
 
-export function prettyPrintDiscovery(discoveredWorkflow: DiscoverWorkflowOutput): void {
+export function prettyPrintDiscovery(discoveredWorkflow: DiscoverWorkflowOutput, verbose: boolean = true): void {
+  if (!verbose) return;
+
   console.log(`\n${log.bold(log.underline('Discovered workflowId:'))} '${discoveredWorkflow.workflowId}'`);
   discoveredWorkflow.steps.forEach((step, i) => {
     const isLastStep = i === discoveredWorkflow.steps.length - 1;

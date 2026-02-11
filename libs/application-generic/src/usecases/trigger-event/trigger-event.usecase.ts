@@ -1,8 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   ContextRepository,
-  EnvironmentEntity,
-  EnvironmentRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateEntity,
@@ -18,28 +16,37 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
+import { toMerged } from 'es-toolkit';
+import { LRUCache } from 'lru-cache';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
-import { FeatureFlagsService } from '../../services';
-import type { EventType, Trace } from '../../services/analytic-logs';
+import type { EventType, RequestTraceInput } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { TriggerEventCommand } from './trigger-event.command';
 
 function getActiveWorker() {
   return process.env.ACTIVE_WORKER;
 }
 
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 1000,
+  ttl: 1000 * 30,
+});
+
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | null>>();
+
 @Injectable()
 export class TriggerEvent {
   constructor(
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-    private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
@@ -49,6 +56,7 @@ export class TriggerEvent {
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
     private contextRepository: ContextRepository,
+    private verifyPayload: VerifyPayload,
     private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -67,6 +75,17 @@ export class TriggerEvent {
           organizationId: command.organizationId,
           userId: command.userId,
         });
+      }
+
+      if (storedWorkflow) {
+        const defaultPayload = this.verifyPayload.execute(
+          VerifyPayloadCommand.create({
+            payload: command.payload,
+            template: storedWorkflow,
+          })
+        );
+
+        command.payload = toMerged(defaultPayload, command.payload);
       }
 
       const mappedCommand = await this.getMappedCommand(command, storedWorkflow?._id);
@@ -143,7 +162,7 @@ export class TriggerEvent {
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
-        this.logger.info(mappedCommand, 'Processing actor');
+        this.logger.debug(mappedCommand, 'Processing actor');
 
         try {
           actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
@@ -222,19 +241,11 @@ export class TriggerEvent {
   }
 
   private async getMappedCommand(command: TriggerEventCommand, workflowId: string) {
-    const isContextEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-    });
-
     return {
       ...command,
       tenant: this.mapTenant(command.tenant),
       actor: this.mapActor(command.actor),
-      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command, workflowId) }),
+      contextKeys: await this.resolveContextKeys(command, workflowId),
     };
   }
 
@@ -243,7 +254,7 @@ export class TriggerEvent {
     eventType: EventType;
     status?: 'success' | 'error' | 'warning';
     message?: string;
-    rawData?: any;
+    rawData?: unknown;
     workflowId?: string;
   }): Promise<void> {
     const { command, eventType, status = 'success', message, rawData, workflowId } = params;
@@ -253,22 +264,22 @@ export class TriggerEvent {
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
         user_id: command.userId,
-        subscriber_id: null,
-        external_subscriber_id: null,
+        subscriber_id: '',
+        external_subscriber_id: '',
         event_type: eventType,
         title: mapEventTypeToTitle(eventType),
-        message: message || null,
-        raw_data: rawData ? JSON.stringify(rawData) : null,
+        message: message || '',
+        raw_data: rawData ? JSON.stringify(rawData) : '',
         status,
-        entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: workflowId || '',
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);
@@ -316,9 +327,11 @@ export class TriggerEvent {
   }) {
     const lastTriggeredAt = new Date();
 
-    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifier(
+    const workflow = await this.findWorkflowByTriggerIdentifier(
+      command.triggerIdentifier,
       command.environmentId,
-      command.triggerIdentifier
+      command.organizationId,
+      command.payload?.__source
     );
 
     if (workflow) {
@@ -354,6 +367,59 @@ export class TriggerEvent {
     }
 
     return workflow;
+  }
+
+  @Instrument()
+  private async findWorkflowByTriggerIdentifier(
+    triggerIdentifier: string,
+    environmentId: string,
+    organizationId: string,
+    source?: string
+  ): Promise<NotificationTemplateEntity | null> {
+    const cacheKey = `${environmentId}:${triggerIdentifier}`;
+
+    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'api-trigger-event',
+    });
+
+    const isCacheEnabled = isFeatureFlagEnabled && !source;
+
+    if (isCacheEnabled) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.notificationTemplateRepository
+      .findByTriggerIdentifier(environmentId, triggerIdentifier)
+      .then((workflow) => {
+        if (workflow && isCacheEnabled) {
+          workflowCache.set(cacheKey, workflow);
+        }
+
+        return workflow;
+      })
+      .finally(() => {
+        if (isCacheEnabled) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (isCacheEnabled) {
+      workflowInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 
   @Instrument()

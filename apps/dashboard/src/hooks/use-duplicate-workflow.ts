@@ -53,6 +53,7 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
 
   const submit = (values: z.infer<typeof workflowSchema>) => {
     return mutation.mutateAsync({
+      workflowId: values.workflowId,
       name: values.name,
       description: values.description || undefined,
       tags: values.tags || [],

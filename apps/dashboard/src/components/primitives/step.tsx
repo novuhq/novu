@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cn } from '@/utils/ui';
 
 const stepVariants = cva(
-  'inline-flex items-center shadow-xs rounded-full border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-neutral-50',
+  'inline-flex items-center shadow-xs rounded-full border text-xs font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-neutral-50',
   {
     variants: {
       variant: {

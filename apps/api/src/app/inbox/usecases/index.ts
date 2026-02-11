@@ -5,21 +5,21 @@ import {
   MessageInteractionService,
   StorageHelperService,
   UpsertControlValuesUseCase,
+  VerifyPayload,
   WorkflowRunService,
 } from '@novu/application-generic';
 import { CommunityUserRepository } from '@novu/dal';
 import { GenerateUniqueApiKey } from '../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { ParseEventRequest } from '../../events/usecases/parse-event-request';
-import { VerifyPayload } from '../../events/usecases/verify-payload';
 import { GetSubscriberGlobalPreference } from '../../subscribers/usecases/get-subscriber-global-preference';
+import { GetSubscription } from '../../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { BulkUpdatePreferences } from './bulk-update-preferences/bulk-update-preferences.usecase';
 import { DeleteAllNotifications } from './delete-all-notifications/delete-all-notifications.usecase';
 import { DeleteManyNotifications } from './delete-many-notifications/delete-many-notifications.usecase';
 import { DeleteNotification } from './delete-notification/delete-notification.usecase';
-import { DeleteTopicSubscription } from './delete-topic-subscription/delete-topic-subscription.usecase';
+import { DeleteTopicSubscription } from './delete-subscription/delete-subscription.usecase';
 import { GetInboxPreferences } from './get-inbox-preferences/get-inbox-preferences.usecase';
 import { GetNotifications } from './get-notifications/get-notifications.usecase';
-import { GetTopicSubscription } from './get-topic-subscription/get-topic-subscription.usecase';
 import { GetTopicSubscriptions } from './get-topic-subscriptions/get-topic-subscriptions.usecase';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as/mark-many-notifications-as.usecase';
 import { MarkNotificationAs } from './mark-notification-as/mark-notification-as.usecase';
@@ -53,7 +53,7 @@ export const USE_CASES = [
   DeleteManyNotifications,
   DeleteAllNotifications,
   DeleteTopicSubscription,
-  GetTopicSubscription,
+  GetSubscription,
   GetTopicSubscriptions,
   GenerateUniqueApiKey,
   CommunityUserRepository,

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   filteredPreference,
   GetPreferences,
   GetPreferencesResponseDto,
@@ -20,6 +21,7 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
@@ -33,7 +35,8 @@ export class GetSubscriberPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private preferencesRepository: PreferencesRepository
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -62,6 +65,7 @@ export class GetSubscriberPreference {
     } = await this.findAllPreferences({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
+      contextKeys: command.contextKeys,
       subscriberId: subscriber._id,
       workflowIds,
     });
@@ -174,11 +178,14 @@ export class GetSubscriberPreference {
 
           const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
-          return {
+          const preference: ISubscriberPreferenceResponse = {
             preference: {
               channels,
               enabled: true,
               overrides,
+              ...(preferences.subscriberWorkflowPreference?.updatedAt && {
+                updatedAt: preferences.subscriberWorkflowPreference.updatedAt,
+              }),
             },
             template: mapTemplateConfiguration({
               ...workflow,
@@ -186,6 +193,8 @@ export class GetSubscriberPreference {
             }),
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
+
+          return preference;
         })
         .filter((item): item is ISubscriberPreferenceResponse => item !== null);
 
@@ -241,11 +250,13 @@ export class GetSubscriberPreference {
     organizationId,
     subscriberId,
     workflowIds,
+    contextKeys,
   }: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
     workflowIds: string[];
+    contextKeys?: string[];
   }) {
     const baseQuery = {
       _environmentId: environmentId,
@@ -253,6 +264,15 @@ export class GetSubscriberPreference {
     };
 
     const readOptions = { readPreference: 'secondaryPreferred' as const };
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     const [
       workflowResourcePreferences,
@@ -284,6 +304,7 @@ export class GetSubscriberPreference {
           _subscriberId: subscriberId,
           _templateId: { $in: workflowIds },
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          ...contextQuery,
         },
         undefined,
         readOptions
@@ -293,6 +314,7 @@ export class GetSubscriberPreference {
           ...baseQuery,
           _subscriberId: subscriberId,
           type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          ...contextQuery,
         },
         undefined,
         readOptions

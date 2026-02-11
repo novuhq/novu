@@ -46,14 +46,19 @@ export const inputVariants = tv({
     ],
     input: [
       // base
-      'w-full bg-transparent bg-none text-paragraph-sm text-text-strong outline-none',
+      'w-full bg-transparent bg-none text-paragraph-sm text-text-strong outline-hidden',
       'transition duration-200 ease-out',
+      // horizontal scroll with fade gradient
+      'overflow-x-auto scrollbar-thin',
+      'mask-[linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]',
+      'mask-size-[100%_100%]',
+      'mask-no-repeat',
       // placeholder
       'placeholder:select-none placeholder:text-text-soft placeholder:transition placeholder:duration-200 placeholder:ease-out',
       // hover placeholder
       'group-hover/input-wrapper:placeholder:text-text-sub',
       // focus
-      'focus:outline-none',
+      'focus:outline-hidden',
       // focus placeholder
       'group-has-[input:focus]:placeholder:text-text-sub',
       // disabled
@@ -64,13 +69,13 @@ export const inputVariants = tv({
       'flex size-5 shrink-0 select-none items-center justify-center',
       'transition duration-200 ease-out',
       // placeholder state
-      'group-has-[:placeholder-shown]:text-text-soft',
+      'group-has-placeholder-shown:text-text-soft',
       // filled state
       'text-text-sub',
       // hover
-      'group-has-[:placeholder-shown]:group-hover/input-wrapper:text-text-sub',
+      'group-hover/input-wrapper:group-has-placeholder-shown:text-text-sub',
       // focus
-      'group-has-[:placeholder-shown]:group-has-[input:focus]/input-wrapper:text-text-sub',
+      'group-has-[input:focus]/input-wrapper:group-has-placeholder-shown:text-text-sub',
       // disabled
       'group-has-[input:disabled]/input-wrapper:text-text-disabled',
     ],
@@ -80,17 +85,17 @@ export const inputVariants = tv({
       'flex items-center justify-center truncate',
       'transition duration-200 ease-out',
       // placeholder state
-      'group-has-[:placeholder-shown]:text-text-soft',
+      'group-has-placeholder-shown:text-text-soft',
       // focus state
-      'group-has-[:placeholder-shown]:group-has-[input:focus]:text-text-sub',
+      'group-has-[input:focus]:group-has-placeholder-shown:text-text-sub',
     ],
     inlineAffix: [
       // base
       'text-paragraph-sm text-text-sub',
       // placeholder state
-      'group-has-[:placeholder-shown]:text-text-soft',
+      'group-has-placeholder-shown:text-text-soft',
       // focus state
-      'group-has-[:placeholder-shown]:group-has-[input:focus]:text-text-sub',
+      'group-has-[input:focus]:group-has-placeholder-shown:text-text-sub',
     ],
   },
   variants: {
@@ -128,7 +133,7 @@ export const inputVariants = tv({
           // base
           'before:ring-error-base',
           // base
-          'hover:before:ring-error-base hover:[&:not(&:has(input:focus)):has(>:only-child)]:before:ring-error-base',
+          'hover:before:ring-error-base [&:not(&:has(input:focus)):has(>:only-child)]:hover:before:ring-error-base',
           // focus
           'has-[input:focus]:border-destructive has-[input:focus]:ring-destructive/20 dark:has-[input:focus]:ring-destructive/40',
           'focus-within:border-destructive focus-within:ring-destructive/20 dark:focus-within:ring-destructive/40',

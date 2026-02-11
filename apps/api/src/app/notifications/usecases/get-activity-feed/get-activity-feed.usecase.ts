@@ -152,7 +152,10 @@ export class GetActivityFeed {
     const buffer = 1 * 60 * 60 * 1000; // 1 hour
     const bufferedEarliestAllowedDate = new Date(earliestAllowedDate.getTime() - buffer);
 
-    if (afterDate < bufferedEarliestAllowedDate || beforeDate < bufferedEarliestAllowedDate) {
+    if (
+      process.env.NODE_ENV !== 'local' &&
+      (afterDate < bufferedEarliestAllowedDate || beforeDate < bufferedEarliestAllowedDate)
+    ) {
       throw new HttpException(
         `Requested date range exceeds your plan's retention period. ` +
           `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
@@ -212,6 +215,7 @@ export class GetActivityFeed {
         subscriberIds: subscriberIds || [],
         transactionId: command.transactionId,
         topicKey: command.topicKey,
+        subscriptionId: command.subscriptionId,
         after: command.after,
         before: command.before,
         severity: command.severity,

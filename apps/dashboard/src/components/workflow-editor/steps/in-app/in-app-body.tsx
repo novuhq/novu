@@ -17,7 +17,7 @@ function getFormMessage(
     return 'HTML entities detected. Consider disabling content sanitization for proper rendering';
   }
 
-  const hints = ['Type {{ to access variables, or wrap text in ** for bold.'];
+  const hints = ['Type {{ to access variables, wrap text in ** for bold, or * for italic.'];
 
   if (isTranslationEnabled) {
     hints.push('Type {{t. to access translation keys.');
@@ -42,7 +42,7 @@ export const InAppBody = () => {
           <FormControl>
             <InputRoot hasError={!!fieldState.error}>
               <ControlInput
-                className="min-h-[7rem]"
+                className="min-h-28"
                 indentWithTab={false}
                 placeholder={capitalize(field.name)}
                 id={field.name}

@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 export type MetaDescriptor =
   | {
       charSet: 'utf-8';

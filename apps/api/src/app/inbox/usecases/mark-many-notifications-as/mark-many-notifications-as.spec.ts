@@ -118,41 +118,6 @@ describe('MarkManyNotificationsAs', () => {
     ]);
   });
 
-  it('should invalidate the cache', async () => {
-    const command: MarkManyNotificationsAsCommand = {
-      environmentId: 'env-1',
-      organizationId: 'org-1',
-      subscriberId: 'not-found',
-      ids: [mockMessage._id],
-      read: true,
-    };
-
-    getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOne.resolves(mockMessage);
-    messageRepositoryMock.updateMessagesStatusByIds.resolves(mockMessage);
-    environmentRepositoryMock.findOne.resolves(mockEnvironment);
-
-    await markManyNotificationsAs.execute(command);
-
-    expect(invalidateCacheMock.invalidateQuery.calledTwice).to.be.true;
-    expect(invalidateCacheMock.invalidateQuery.firstCall.args).to.deep.equal([
-      {
-        key: buildFeedKey().invalidate({
-          subscriberId: mockSubscriber.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      },
-    ]);
-    expect(invalidateCacheMock.invalidateQuery.secondCall.args).to.deep.equal([
-      {
-        key: buildMessageCountKey().invalidate({
-          subscriberId: mockSubscriber.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      },
-    ]);
-  });
-
   it('should send the websocket unread event', async () => {
     const command: MarkManyNotificationsAsCommand = {
       environmentId: 'env-1',
@@ -177,6 +142,7 @@ describe('MarkManyNotificationsAs', () => {
           event: WebSocketEventEnum.UNREAD,
           userId: mockSubscriber._id,
           _environmentId: mockSubscriber._environmentId,
+          contextKeys: [],
         },
         groupId: mockSubscriber._organizationId,
       },

@@ -271,11 +271,11 @@ notificationTemplateSchema.virtual('steps.variants.template', {
   justOne: true,
 });
 
-notificationTemplateSchema.path('steps').schema.set('toJSON', { virtuals: true });
-notificationTemplateSchema.path('steps').schema.set('toObject', { virtuals: true });
+notificationTemplateSchema.path('steps')?.schema?.set('toJSON', { virtuals: true });
+notificationTemplateSchema.path('steps')?.schema?.set('toObject', { virtuals: true });
 
-notificationTemplateSchema.path('steps.variants').schema.set('toJSON', { virtuals: true });
-notificationTemplateSchema.path('steps.variants').schema.set('toObject', { virtuals: true });
+notificationTemplateSchema.path('steps.variants')?.schema?.set('toJSON', { virtuals: true });
+notificationTemplateSchema.path('steps.variants')?.schema?.set('toObject', { virtuals: true });
 
 notificationTemplateSchema.virtual('notificationGroup', {
   ref: 'NotificationGroup',

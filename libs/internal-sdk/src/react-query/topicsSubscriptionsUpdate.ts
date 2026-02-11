@@ -28,7 +28,7 @@ export type TopicsSubscriptionsUpdateMutationData =
  * Update a topic subscription
  *
  * @remarks
- * Update a subscription by its unique identifier **subscriptionId** for a topic. You can update the preferences and name associated with the subscription.
+ * Update a subscription by its unique identifier for a topic. You can update the preferences and name associated with the subscription.
  */
 export function useTopicsSubscriptionsUpdateMutation(
   options?: MutationHookOptions<

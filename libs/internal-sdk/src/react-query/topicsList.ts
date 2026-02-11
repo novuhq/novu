@@ -5,27 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { topicsList } from "../funcs/topicsList.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type TopicsListQueryData = operations.TopicsControllerListTopicsResponse;
+import {
+  buildTopicsListQuery,
+  prefetchTopicsList,
+  queryKeyTopicsList,
+  TopicsListQueryData,
+} from "./topicsList.core.js";
+export {
+  buildTopicsListQuery,
+  prefetchTopicsList,
+  queryKeyTopicsList,
+  type TopicsListQueryData,
+};
 
 /**
  * List all topics
@@ -70,19 +73,6 @@ export function useTopicsListSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchTopicsList(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.TopicsControllerListTopicsRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildTopicsListQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -143,60 +133,4 @@ export function invalidateAllTopicsList(
     ...filters,
     queryKey: ["@novu/api", "Topics", "list"],
   });
-}
-
-export function buildTopicsListQuery(
-  client$: NovuCore,
-  request: operations.TopicsControllerListTopicsRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<TopicsListQueryData>;
-} {
-  return {
-    queryKey: queryKeyTopicsList({
-      after: request.after,
-      before: request.before,
-      limit: request.limit,
-      orderDirection: request.orderDirection,
-      orderBy: request.orderBy,
-      includeCursor: request.includeCursor,
-      key: request.key,
-      name: request.name,
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function topicsListQueryFn(
-      ctx,
-    ): Promise<TopicsListQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(topicsList(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyTopicsList(
-  parameters: {
-    after?: string | undefined;
-    before?: string | undefined;
-    limit?: number | undefined;
-    orderDirection?:
-      | operations.TopicsControllerListTopicsQueryParamOrderDirection
-      | undefined;
-    orderBy?: string | undefined;
-    includeCursor?: boolean | undefined;
-    key?: string | undefined;
-    name?: string | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "Topics", "list", parameters];
 }

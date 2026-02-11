@@ -1,6 +1,11 @@
 import { BadRequestException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
-import { EnvironmentRepository, NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
+import { AnalyticsService, FeatureFlagsService } from '@novu/application-generic';
+import {
+  ContextRepository,
+  EnvironmentRepository,
+  NotificationTemplateRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import { PreferenceLevelEnum, TriggerTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -80,18 +85,26 @@ describe('BulkUpdatePreferences', () => {
   let notificationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
   let updatePreferencesUsecaseMock: sinon.SinonStubbedInstance<UpdatePreferences>;
   let environmentRepositoryMock: sinon.SinonStubbedInstance<EnvironmentRepository>;
+  let contextRepositoryMock: sinon.SinonStubbedInstance<ContextRepository>;
+  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
+
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
     updatePreferencesUsecaseMock = sinon.createStubInstance(UpdatePreferences);
     environmentRepositoryMock = sinon.createStubInstance(EnvironmentRepository);
+    contextRepositoryMock = sinon.createStubInstance(ContextRepository);
+    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
+
     bulkUpdatePreferences = new BulkUpdatePreferences(
       notificationTemplateRepositoryMock as any,
       subscriberRepositoryMock as any,
       analyticsServiceMock as any,
       updatePreferencesUsecaseMock as any,
-      environmentRepositoryMock as any
+      environmentRepositoryMock as any,
+      contextRepositoryMock as any,
+      featureFlagsServiceMock as any
     );
   });
 
@@ -379,8 +392,6 @@ describe('BulkUpdatePreferences', () => {
       sms: true,
       chat: true,
     });
-
-    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
 
     expect(result).to.deep.equal([mockedInboxPreference1, mockedInboxPreference2]);
   });

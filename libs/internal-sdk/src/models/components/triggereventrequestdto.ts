@@ -99,7 +99,7 @@ export type Overrides = {
 export type To1 = TopicPayloadDto | SubscriberPayloadDto | string;
 
 /**
- * The recipients list of people who will receive the notification.
+ * The recipients list of people who will receive the notification. Maximum number of recipients can be 100.
  */
 export type To =
   | TopicPayloadDto
@@ -126,7 +126,7 @@ export type Tenant = string | TenantPayloadDto;
 /**
  * Rich context object with id and optional data
  */
-export type Context2 = {
+export type TriggerEventRequestDtoContext2 = {
   id: string;
   /**
    * Optional additional context data
@@ -134,7 +134,9 @@ export type Context2 = {
   data?: { [k: string]: any } | undefined;
 };
 
-export type TriggerEventRequestDtoContext = Context2 | string;
+export type TriggerEventRequestDtoContext =
+  | TriggerEventRequestDtoContext2
+  | string;
 
 export type TriggerEventRequestDto = {
   /**
@@ -154,7 +156,7 @@ export type TriggerEventRequestDto = {
    */
   overrides?: Overrides | undefined;
   /**
-   * The recipients list of people who will receive the notification.
+   * The recipients list of people who will receive the notification. Maximum number of recipients can be 100.
    */
   to:
     | TopicPayloadDto
@@ -182,7 +184,9 @@ export type TriggerEventRequestDto = {
    *     Existing tenants will be updated with the provided details.
    */
   tenant?: string | TenantPayloadDto | undefined;
-  context?: { [k: string]: Context2 | string } | undefined;
+  context?:
+    | { [k: string]: TriggerEventRequestDtoContext2 | string }
+    | undefined;
 };
 
 /** @internal */
@@ -310,34 +314,45 @@ export function tenantToJSON(tenant: Tenant): string {
 }
 
 /** @internal */
-export type Context2$Outbound = {
+export type TriggerEventRequestDtoContext2$Outbound = {
   id: string;
   data?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
-export const Context2$outboundSchema: z.ZodType<
-  Context2$Outbound,
+export const TriggerEventRequestDtoContext2$outboundSchema: z.ZodType<
+  TriggerEventRequestDtoContext2$Outbound,
   z.ZodTypeDef,
-  Context2
+  TriggerEventRequestDtoContext2
 > = z.object({
   id: z.string(),
   data: z.record(z.any()).optional(),
 });
 
-export function context2ToJSON(context2: Context2): string {
-  return JSON.stringify(Context2$outboundSchema.parse(context2));
+export function triggerEventRequestDtoContext2ToJSON(
+  triggerEventRequestDtoContext2: TriggerEventRequestDtoContext2,
+): string {
+  return JSON.stringify(
+    TriggerEventRequestDtoContext2$outboundSchema.parse(
+      triggerEventRequestDtoContext2,
+    ),
+  );
 }
 
 /** @internal */
-export type TriggerEventRequestDtoContext$Outbound = Context2$Outbound | string;
+export type TriggerEventRequestDtoContext$Outbound =
+  | TriggerEventRequestDtoContext2$Outbound
+  | string;
 
 /** @internal */
 export const TriggerEventRequestDtoContext$outboundSchema: z.ZodType<
   TriggerEventRequestDtoContext$Outbound,
   z.ZodTypeDef,
   TriggerEventRequestDtoContext
-> = z.union([z.lazy(() => Context2$outboundSchema), z.string()]);
+> = z.union([
+  z.lazy(() => TriggerEventRequestDtoContext2$outboundSchema),
+  z.string(),
+]);
 
 export function triggerEventRequestDtoContextToJSON(
   triggerEventRequestDtoContext: TriggerEventRequestDtoContext,
@@ -362,7 +377,9 @@ export type TriggerEventRequestDto$Outbound = {
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
   tenant?: string | TenantPayloadDto$Outbound | undefined;
-  context?: { [k: string]: Context2$Outbound | string } | undefined;
+  context?:
+    | { [k: string]: TriggerEventRequestDtoContext2$Outbound | string }
+    | undefined;
 };
 
 /** @internal */
@@ -390,7 +407,10 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
   tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),
   context: z.record(
-    z.union([z.lazy(() => Context2$outboundSchema), z.string()]),
+    z.union([
+      z.lazy(() => TriggerEventRequestDtoContext2$outboundSchema),
+      z.string(),
+    ]),
   ).optional(),
 }).transform((v) => {
   return remap$(v, {

@@ -63,28 +63,6 @@ export const buildMessageCountKey = () => {
   };
 };
 
-export const buildIntegrationKey = () => {
-  const cache = (command: Record<string, unknown> & { _organizationId: string }): string =>
-    buildQueryByOrganizationKey({
-      type: CacheKeyTypeEnum.QUERY,
-      keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-      organizationId: command._organizationId,
-      query: command,
-    });
-
-  const invalidate = ({ _organizationId }: { _organizationId: string }): string =>
-    buildOrganizationScopedKey({
-      type: CacheKeyTypeEnum.QUERY,
-      keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-      organizationId: _organizationId,
-    });
-
-  return {
-    cache,
-    invalidate,
-  };
-};
-
 export const buildQueryKey = ({
   type,
   keyEntity,

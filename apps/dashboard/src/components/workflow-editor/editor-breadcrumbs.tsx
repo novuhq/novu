@@ -20,6 +20,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { SavingStatusIndicator } from './saving-status-indicator';
 import { getStepTypeIcon } from './steps/utils/preview-context.utils';
 import { useWorkflow } from './workflow-provider';
 
@@ -89,12 +90,14 @@ export function EditorBreadcrumbs() {
         icon={RiArrowLeftSLine}
         onClick={handleBackNavigation}
       />
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItems breadcrumbs={breadcrumbs} workflow={workflow} isOnStepRoute={!!isOnStepRoute} />
-          {isOnStepRoute && step && <StepBreadcrumb step={step} />}
-        </BreadcrumbList>
-      </Breadcrumb>
+      {currentEnvironment && (
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItems breadcrumbs={breadcrumbs} workflow={workflow} isOnStepRoute={!!isOnStepRoute} />
+            {isOnStepRoute && step && <StepBreadcrumb step={step} />}
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
     </div>
   );
 }
@@ -117,19 +120,31 @@ function WorkflowIcon({ origin }: { origin: ResourceOriginEnum }) {
   return <RouteFill className="size-4" />;
 }
 
-function WorkflowBreadcrumbContent({ workflow, label }: { workflow: WorkflowResponseDto; label: string }) {
+function WorkflowBreadcrumbContent({
+  workflow,
+  label,
+  showSavingIndicator,
+}: {
+  workflow: WorkflowResponseDto;
+  label: string;
+  showSavingIndicator?: boolean;
+}) {
+  const { isUpdatePatchPending, lastSaveError } = useWorkflow();
+
   return (
     <div className="flex items-center gap-1">
       <WorkflowIcon origin={workflow.origin} />
       <div className="flex max-w-[32ch]">
         <TruncatedText>{label}</TruncatedText>
       </div>
+      {showSavingIndicator && <SavingStatusIndicator isSaving={isUpdatePatchPending} hasError={!!lastSaveError} />}
     </div>
   );
 }
 
 function StepBreadcrumb({ step }: { step: StepResponseDto }) {
   const Icon = getStepTypeIcon(step.type);
+  const { isUpdatePatchPending, lastSaveError } = useWorkflow();
 
   return (
     <BreadcrumbItem>
@@ -138,6 +153,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
         <div className="flex max-w-[32ch]">
           <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
         </div>
+        <SavingStatusIndicator isSaving={isUpdatePatchPending} hasError={!!lastSaveError} />
       </BreadcrumbPage>
     </BreadcrumbItem>
   );
@@ -164,11 +180,19 @@ function BreadcrumbItems({
             <BreadcrumbItem className="flex items-center gap-1">
               {shouldShowAsPage ? (
                 <BreadcrumbPage className="flex items-center gap-1">
-                  {isWorkflowBreadcrumb ? <WorkflowBreadcrumbContent workflow={workflow} label={label} /> : label}
+                  {isWorkflowBreadcrumb ? (
+                    <WorkflowBreadcrumbContent workflow={workflow} label={label} showSavingIndicator={!isOnStepRoute} />
+                  ) : (
+                    label
+                  )}
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink to={href}>
-                  {isWorkflowBreadcrumb ? <WorkflowBreadcrumbContent workflow={workflow} label={label} /> : label}
+                  {isWorkflowBreadcrumb ? (
+                    <WorkflowBreadcrumbContent workflow={workflow} label={label} showSavingIndicator={!isOnStepRoute} />
+                  ) : (
+                    label
+                  )}
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>

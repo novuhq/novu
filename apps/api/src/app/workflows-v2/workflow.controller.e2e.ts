@@ -9,7 +9,6 @@ import {
   InAppStepUpsertDto,
   ListWorkflowResponse,
   ResourceOriginEnum,
-  StepTypeEnum,
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
@@ -25,6 +24,7 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   ShortIsPrefixEnum,
+  StepTypeEnum,
   slugify,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -787,6 +787,37 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(res.error!.message).to.contain('Workflow');
       expect(res.error!.ctx?.workflowId).to.contain('123');
     });
+
+    it('should duplicate a workflow with payloadSchema, validatePayload, and severity', async () => {
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          email: { type: 'string' },
+        },
+        required: ['name'],
+      };
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        name: 'Test Workflow with Schema',
+        payloadSchema,
+        validatePayload: true,
+      });
+      const workflowCreated = await createWorkflow(apiClient, createWorkflowDto);
+
+      const duplicatedWorkflow = (
+        await apiClient.workflows.duplicate(
+          {
+            name: 'Duplicated Workflow with Schema',
+          },
+          workflowCreated.id
+        )
+      ).result;
+
+      expect(duplicatedWorkflow?.id).to.not.equal(workflowCreated.id);
+      expect(duplicatedWorkflow?.payloadSchema).to.deep.equal(payloadSchema);
+      expect(duplicatedWorkflow?.validatePayload).to.equal(true);
+      expect(duplicatedWorkflow?.severity).to.equal(workflowCreated.severity);
+    });
   });
 
   describe('Get step data', () => {
@@ -1050,7 +1081,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             steps: [
               {
                 name: 'In-App Test Step',
-                type: StepTypeEnum.InApp,
+                type: StepTypeEnum.IN_APP,
                 controlValues: {
                   // body is missing on purpose
                   redirect: { url: 'not-good-url-please-replace', target: '_blank' },
@@ -1094,7 +1125,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             steps: [
               {
                 name: 'Email Test Step',
-                type: StepTypeEnum.Email,
+                type: StepTypeEnum.EMAIL,
                 controlValues: { body: 'Welcome {{}}', subject: 'Welcome {{}}' },
               },
             ],

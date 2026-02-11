@@ -731,7 +731,8 @@ export class SendMessagePush extends SendMessageBase {
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      stepId: command.step?.stepId,
+      contextKeys: command.contextKeys,
     });
 
     await this.createExecutionDetails.execute(
@@ -753,7 +754,7 @@ export class SendMessagePush extends SendMessageBase {
     return message;
   }
 
-  private getIntegrationHandler(integration): IPushHandler {
+  private getIntegrationHandler(integration: IntegrationEntity): IPushHandler {
     const pushFactory = new PushFactory();
     const pushHandler = pushFactory.getHandler(integration);
 

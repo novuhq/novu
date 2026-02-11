@@ -2,7 +2,7 @@ import { mergeAttributes, Node } from '@tiptap/core';
 import { v4 as uuid } from 'uuid';
 import { goToColumn } from '@/editor/utils/columns';
 import { updateAttributes } from '@/editor/utils/update-attribute';
-import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
+import { DEFAULT_SECTION_MARGIN_BOTTOM, DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
 
 export const DEFAULT_COLUMNS_GAP = 8;
 
@@ -56,6 +56,21 @@ export const ColumnsExtension = Node.create({
 
           return {
             style: `gap: ${attributes.gap}px`,
+          };
+        },
+      },
+      marginBottom: {
+        default: DEFAULT_SECTION_MARGIN_BOTTOM,
+        parseHTML: (element) => {
+          return Number(element?.style?.marginBottom?.replace(/['"]+/g, '')) || 0;
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.marginBottom) {
+            return {};
+          }
+
+          return {
+            style: `margin-bottom: ${attributes.marginBottom}px`,
           };
         },
       },

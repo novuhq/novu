@@ -12,23 +12,29 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * The channel of the message to be deleted
  */
-export const Channel = {
-  InApp: "in_app",
-  Email: "email",
-  Sms: "sms",
-  Chat: "chat",
-  Push: "push",
-} as const;
+export const MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel =
+  {
+    InApp: "in_app",
+    Email: "email",
+    Sms: "sms",
+    Chat: "chat",
+    Push: "push",
+  } as const;
 /**
  * The channel of the message to be deleted
  */
-export type Channel = ClosedEnum<typeof Channel>;
+export type MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel =
+  ClosedEnum<
+    typeof MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
+  >;
 
 export type MessagesControllerDeleteMessagesByTransactionIdRequest = {
   /**
    * The channel of the message to be deleted
    */
-  channel?: Channel | undefined;
+  channel?:
+    | MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
+    | undefined;
   transactionId: string;
   /**
    * A header for idempotency purposes
@@ -41,8 +47,12 @@ export type MessagesControllerDeleteMessagesByTransactionIdResponse = {
 };
 
 /** @internal */
-export const Channel$outboundSchema: z.ZodNativeEnum<typeof Channel> = z
-  .nativeEnum(Channel);
+export const MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel$outboundSchema:
+  z.ZodNativeEnum<
+    typeof MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
+  > = z.nativeEnum(
+    MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel,
+  );
 
 /** @internal */
 export type MessagesControllerDeleteMessagesByTransactionIdRequest$Outbound = {
@@ -58,7 +68,9 @@ export const MessagesControllerDeleteMessagesByTransactionIdRequest$outboundSche
     z.ZodTypeDef,
     MessagesControllerDeleteMessagesByTransactionIdRequest
   > = z.object({
-    channel: Channel$outboundSchema.optional(),
+    channel:
+      MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel$outboundSchema
+        .optional(),
     transactionId: z.string(),
     idempotencyKey: z.string().optional(),
   }).transform((v) => {

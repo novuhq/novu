@@ -171,10 +171,11 @@ export class SendMessageSms extends SendMessageBase {
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      stepId: command.step.stepId,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
     });
 
     await this.createExecutionDetails.execute(

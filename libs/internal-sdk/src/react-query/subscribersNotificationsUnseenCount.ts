@@ -5,28 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { subscribersNotificationsUnseenCount } from "../funcs/subscribersNotificationsUnseenCount.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type SubscribersNotificationsUnseenCountQueryData =
-  operations.SubscribersV1ControllerGetUnseenCountResponse;
+import {
+  buildSubscribersNotificationsUnseenCountQuery,
+  prefetchSubscribersNotificationsUnseenCount,
+  queryKeySubscribersNotificationsUnseenCount,
+  SubscribersNotificationsUnseenCountQueryData,
+} from "./subscribersNotificationsUnseenCount.core.js";
+export {
+  buildSubscribersNotificationsUnseenCountQuery,
+  prefetchSubscribersNotificationsUnseenCount,
+  queryKeySubscribersNotificationsUnseenCount,
+  type SubscribersNotificationsUnseenCountQueryData,
+};
 
 /**
  * Retrieve unseen notifications count
@@ -69,19 +71,6 @@ export function useSubscribersNotificationsUnseenCountSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchSubscribersNotificationsUnseenCount(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.SubscribersV1ControllerGetUnseenCountRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildSubscribersNotificationsUnseenCountQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -133,58 +122,4 @@ export function invalidateAllSubscribersNotificationsUnseenCount(
     ...filters,
     queryKey: ["@novu/api", "Notifications", "unseenCount"],
   });
-}
-
-export function buildSubscribersNotificationsUnseenCountQuery(
-  client$: NovuCore,
-  request: operations.SubscribersV1ControllerGetUnseenCountRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<SubscribersNotificationsUnseenCountQueryData>;
-} {
-  return {
-    queryKey: queryKeySubscribersNotificationsUnseenCount(
-      request.subscriberId,
-      {
-        seen: request.seen,
-        limit: request.limit,
-        idempotencyKey: request.idempotencyKey,
-      },
-    ),
-    queryFn: async function subscribersNotificationsUnseenCountQueryFn(
-      ctx,
-    ): Promise<SubscribersNotificationsUnseenCountQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(subscribersNotificationsUnseenCount(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeySubscribersNotificationsUnseenCount(
-  subscriberId: string,
-  parameters: {
-    seen?: boolean | undefined;
-    limit?: number | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return [
-    "@novu/api",
-    "Notifications",
-    "unseenCount",
-    subscriberId,
-    parameters,
-  ];
 }

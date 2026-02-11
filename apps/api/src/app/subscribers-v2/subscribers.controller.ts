@@ -260,6 +260,7 @@ export class SubscribersController {
         organizationId: user.organizationId,
         subscriberId,
         criticality: query.criticality,
+        contextKeys: query.contextKeys,
       })
     );
   }
@@ -322,6 +323,7 @@ export class SubscribersController {
         subscriberId,
         environmentId: user.environmentId,
         preferences,
+        context: body.context,
       })
     );
   }
@@ -351,6 +353,7 @@ export class SubscribersController {
         workflowIdOrInternalId: body.workflowId,
         channels: body.channels,
         schedule: body.schedule,
+        context: body.context,
       })
     );
   }
@@ -378,6 +381,7 @@ export class SubscribersController {
         organizationId: user.organizationId,
         subscriberId,
         topicKey: query.key,
+        contextKeys: query.contextKeys,
         limit: query.limit ? Number(query.limit) : 10,
         after: query.after,
         before: query.before,

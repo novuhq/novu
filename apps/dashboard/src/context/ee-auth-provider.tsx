@@ -1,0 +1,103 @@
+import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { PropsWithChildren } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { buttonVariants } from '@/components/primitives/button';
+import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { ROUTES } from '@/utils/routes';
+
+type EEAuthProviderProps = PropsWithChildren;
+
+export const EEAuthProvider = (props: EEAuthProviderProps) => {
+  const navigate = useNavigate();
+  const { children } = props;
+
+  // Check community self-hosted first to match build-time alias precedence in vite.config.ts
+  if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
+    // For community self-hosted, use the self-hosted ClerkProvider
+    // (which is aliased via Vite at build time to ./src/utils/self-hosted/index.tsx)
+    // @ts-expect-error - Self-hosted ClerkProvider has simpler props
+    return <_ClerkProvider>{children}</_ClerkProvider>;
+  }
+
+  if (EE_AUTH_PROVIDER === 'better-auth') {
+    // @ts-expect-error - Better Auth wrapper has different props via vite alias
+    return <_ClerkProvider>{children}</_ClerkProvider>;
+  }
+
+  return (
+    <_ClerkProvider
+      routerPush={(to) => navigate(to)}
+      routerReplace={(to) => navigate(to, { replace: true })}
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      signInUrl={ROUTES.SIGN_IN}
+      signUpUrl={ROUTES.SIGN_UP}
+      afterSignOutUrl={ROUTES.SIGN_IN}
+      appearance={{
+        userButton: {
+          elements: {
+            userButtonAvatarBox: {
+              width: '24px',
+              height: '24px',
+            },
+          },
+        },
+        createOrganization: {
+          elements: {
+            modalContent: {
+              width: 'auto',
+            },
+            rootBox: {
+              width: '420px',
+            },
+          },
+        },
+        organizationList: {
+          elements: {
+            cardBox: {
+              borderRadius: '0',
+            },
+            card: {
+              borderRadius: '0',
+            },
+          },
+        },
+        elements: {
+          formButtonPrimary: buttonVariants({ variant: 'primary', mode: 'gradient' }).root({}),
+        },
+        variables: {
+          fontSize: '14px !important',
+        },
+      }}
+      localization={{
+        userProfile: {
+          navbar: {
+            title: 'Settings',
+            description: '',
+            account: 'User profile',
+            security: 'Access security',
+          },
+        },
+        organizationProfile: {
+          membersPage: {
+            requestsTab: { autoSuggestions: { headerTitle: '' } },
+            invitationsTab: { autoInvitations: { headerTitle: '' } },
+          },
+        },
+        userButton: {
+          action__signOut: 'Log out',
+          action__signOutAll: 'Log out from all accounts',
+          action__manageAccount: 'Settings',
+        },
+        formFieldLabel__organizationSlug: 'URL friendly identifier',
+        unstable__errors: {
+          form_identifier_exists: 'Already taken, please choose another',
+        },
+      }}
+      allowedRedirectOrigins={['http://localhost:*', window.location.origin]}
+    >
+      {children}
+    </_ClerkProvider>
+  );
+};
+
+export { EEAuthProvider as ClerkProvider };

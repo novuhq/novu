@@ -3,7 +3,7 @@ import type { Node } from '@tiptap/pm/model';
 
 import type { NodeSelection } from '@tiptap/pm/state';
 import { Copy, GripVertical, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DragHandle } from '../plugins/drag-handle/drag-handle';
 import { cn } from '../utils/classname';
 import { BaseButton } from './base-button';
@@ -21,26 +21,35 @@ export function ContentMenu(props: ContentMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentNode, setCurrentNode] = useState<Node | null>(null);
   const [currentNodePos, setCurrentNodePos] = useState<number>(-1);
+  const prevNodePosRef = useRef<number>(-1);
+  prevNodePosRef.current = currentNodePos;
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleNodeChange = useCallback(
-    (data: { node: Node | null; editor: Editor; pos: number }) => {
-      if (data.node) {
-        setCurrentNode(data.node);
-      }
+  // keep this callback pure to avoid creating multiple drag-handler plugins
+  const handleNodeChange = useCallback((data: { node: Node | null; editor: Editor; pos: number }) => {
+    if (data.node) {
+      setCurrentNode(data.node);
+    }
 
-      setCurrentNodePos(data.pos);
-    },
-    [setCurrentNodePos, setCurrentNode]
-  );
+    const positionChanged = prevNodePosRef.current !== data.pos;
+    if (positionChanged && contentRef.current) {
+      contentRef.current.style.animation = 'none';
+      contentRef.current.offsetHeight;
+      contentRef.current.style.animation = '';
+    }
+
+    setCurrentNodePos(data.pos);
+  }, []);
 
   function duplicateNode() {
-    editor.commands.setNodeSelection(currentNodePos);
+    const nodePos = prevNodePosRef.current;
+    editor.commands.setNodeSelection(nodePos);
     const { $anchor } = editor.state.selection;
     const selectedNode = $anchor.node(1) || (editor.state.selection as NodeSelection).node;
     editor
       .chain()
       .setMeta('hideDragHandle', true)
-      .insertContentAt(currentNodePos + (currentNode?.nodeSize || 0), selectedNode.toJSON())
+      .insertContentAt(nodePos + (currentNode?.nodeSize || 0), selectedNode.toJSON())
       .run();
 
     setMenuOpen(false);
@@ -53,17 +62,18 @@ export function ContentMenu(props: ContentMenuProps) {
   }
 
   function handleAddNewNode() {
-    if (currentNodePos !== -1) {
+    const nodePos = prevNodePosRef.current;
+    if (nodePos !== -1) {
       const currentNodeSize = currentNode?.nodeSize || 0;
-      const insertPos = currentNodePos + currentNodeSize;
+      const insertPos = nodePos + currentNodeSize;
       const currentNodeIsEmptyParagraph = currentNode?.type.name === 'paragraph' && currentNode?.content?.size === 0;
-      const focusPos = currentNodeIsEmptyParagraph ? currentNodePos + 2 : insertPos + 2;
+      const focusPos = currentNodeIsEmptyParagraph ? nodePos + 2 : insertPos + 2;
       editor
         .chain()
         .command(({ dispatch, tr, state }: any) => {
           if (dispatch) {
             if (currentNodeIsEmptyParagraph) {
-              tr.insertText('/', currentNodePos, currentNodePos + 1);
+              tr.insertText('/', nodePos, nodePos + 1);
             } else {
               tr.insert(insertPos, state.schema.nodes.paragraph.create(null, [state.schema.text('/')]));
             }
@@ -95,20 +105,20 @@ export function ContentMenu(props: ContentMenuProps) {
       pluginKey="ContentMenu"
       editor={editor}
       tippyOptions={{
-        offset: [2, 0],
+        offset: [0, 0],
         zIndex: 99,
       }}
       onNodeChange={handleNodeChange}
       className={cn(editor.isEditable ? 'mly-visible' : 'mly-hidden')}
     >
       <TooltipProvider>
-        <div className="mly-flex mly-items-center mly-pr-1.5">
+        <div ref={contentRef} className="mly-drag-handle mly-flex mly-items-center mly-gap-1 mly-pr-1.5">
           <Tooltip>
             <TooltipTrigger asChild>
               <BaseButton
                 variant="ghost"
                 size="icon"
-                className="!mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black"
+                className="!mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black mly-m-0"
                 onClick={handleAddNewNode}
                 type="button"
               >
@@ -124,11 +134,12 @@ export function ContentMenu(props: ContentMenuProps) {
                   <BaseButton
                     variant="ghost"
                     size="icon"
-                    className="mly-relative mly-z-[1] !mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black"
+                    className="mly-relative mly-z-[1] !mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black mly-m-0"
                     onClick={(e) => {
                       e.preventDefault();
                       setMenuOpen(true);
-                      editor.commands.setNodeSelection(currentNodePos);
+                      const nodePos = prevNodePosRef.current;
+                      editor.commands.setNodeSelection(nodePos);
                     }}
                     type="button"
                   >

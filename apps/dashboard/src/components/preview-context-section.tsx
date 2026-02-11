@@ -9,7 +9,7 @@ import { ContextSectionProps } from './workflow-editor/steps/types/preview-conte
 
 export function PreviewContextSection({ error, context, schema, onUpdate, onClearPersisted }: ContextSectionProps) {
   return (
-    <AccordionItem value="context" className={ACCORDION_STYLES.item}>
+    <AccordionItem value="context" className={ACCORDION_STYLES.itemLast}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ export function PreviewContextSection({ error, context, schema, onUpdate, onClea
           error={error ?? undefined}
         />
         <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-          <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
+          <RiInformation2Line className="h-3 w-3 shrink-0" />
           <span>Changes here only affect the preview and won't be saved to the context.</span>
         </div>
       </AccordionContent>

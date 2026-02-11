@@ -21,7 +21,7 @@ import { StepFilterDto, StepFilterDto$inboundSchema } from "./stepfilterdto.js";
 /**
  * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
  */
-export const Channel = {
+export const IntegrationResponseDtoChannel = {
   InApp: "in_app",
   Email: "email",
   Sms: "sms",
@@ -31,7 +31,9 @@ export const Channel = {
 /**
  * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
  */
-export type Channel = ClosedEnum<typeof Channel>;
+export type IntegrationResponseDtoChannel = ClosedEnum<
+  typeof IntegrationResponseDtoChannel
+>;
 
 export type IntegrationResponseDto = {
   /**
@@ -61,7 +63,7 @@ export type IntegrationResponseDto = {
   /**
    * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
    */
-  channel: Channel;
+  channel: IntegrationResponseDtoChannel;
   /**
    * The credentials required for the integration to function, including API keys and other sensitive information.
    */
@@ -97,8 +99,9 @@ export type IntegrationResponseDto = {
 };
 
 /** @internal */
-export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z
-  .nativeEnum(Channel);
+export const IntegrationResponseDtoChannel$inboundSchema: z.ZodNativeEnum<
+  typeof IntegrationResponseDtoChannel
+> = z.nativeEnum(IntegrationResponseDtoChannel);
 
 /** @internal */
 export const IntegrationResponseDto$inboundSchema: z.ZodType<
@@ -112,7 +115,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   identifier: z.string(),
   providerId: z.string(),
-  channel: Channel$inboundSchema,
+  channel: IntegrationResponseDtoChannel$inboundSchema,
   credentials: CredentialsDto$inboundSchema,
   configurations: ConfigurationsDto$inboundSchema.optional(),
   active: z.boolean(),

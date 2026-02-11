@@ -11,8 +11,8 @@ export function HeaderSection() {
     >
       <div className="flex flex-col border-l border-[#eeeef0] p-8">
         <div className="flex items-center gap-2">
-          <Loader className="h-3.5 w-3.5 text-[#dd2476] [animation:spin_5s_linear_infinite]" />
-          <span className="animate-gradient bg-gradient-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-[length:400%_400%] bg-clip-text text-sm font-medium text-transparent">
+          <Loader className="h-3.5 w-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
+          <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-sm font-medium text-transparent">
             Watching for Inbox Integration
           </span>
         </div>

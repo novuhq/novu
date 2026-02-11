@@ -55,6 +55,7 @@ export function AnalyticsPage() {
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
 
   // Define report types for each section
+  // Request 1: Metrics
   const metricsReportTypes = [
     ReportTypeEnum.MESSAGES_DELIVERED,
     ReportTypeEnum.ACTIVE_SUBSCRIBERS,
@@ -62,13 +63,18 @@ export function AnalyticsPage() {
     ReportTypeEnum.TOTAL_INTERACTIONS,
   ];
 
-  const chartsReportTypes = [
+  // Request 2: Trends and provider charts
+  const trendsReportTypes = [
     ReportTypeEnum.DELIVERY_TREND,
     ReportTypeEnum.INTERACTION_TREND,
-    ReportTypeEnum.WORKFLOW_BY_VOLUME,
     ReportTypeEnum.PROVIDER_BY_VOLUME,
-    ReportTypeEnum.WORKFLOW_RUNS_TREND,
     ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND,
+  ];
+
+  // Request 3: Workflow charts
+  const workflowReportTypes = [
+    ReportTypeEnum.WORKFLOW_BY_VOLUME,
+    ReportTypeEnum.WORKFLOW_RUNS_TREND,
   ];
 
   const { charts: metricsCharts, isLoading: isMetricsLoading } = useFetchCharts({
@@ -82,11 +88,11 @@ export function AnalyticsPage() {
   });
 
   const {
-    charts: chartsData,
-    isLoading: isChartsLoading,
-    error: chartsError,
+    charts: trendsCharts,
+    isLoading: isTrendsLoading,
+    error: trendsError,
   } = useFetchCharts({
-    reportType: chartsReportTypes,
+    reportType: trendsReportTypes,
     createdAtGte: chartsDateRange.createdAtGte,
     workflowIds: selectedWorkflows.length > 0 ? selectedWorkflows : undefined,
     enabled: true,
@@ -94,6 +100,22 @@ export function AnalyticsPage() {
     staleTime: CHART_CONFIG.staleTime,
     useMockData: isDevMockMode,
   });
+
+  const {
+    charts: workflowCharts,
+    isLoading: isWorkflowLoading,
+    error: workflowError,
+  } = useFetchCharts({
+    reportType: workflowReportTypes,
+    createdAtGte: chartsDateRange.createdAtGte,
+    workflowIds: selectedWorkflows.length > 0 ? selectedWorkflows : undefined,
+    enabled: true,
+    refetchInterval: CHART_CONFIG.refetchInterval,
+    staleTime: CHART_CONFIG.staleTime,
+    useMockData: isDevMockMode,
+  });
+
+  const chartsData = { ...trendsCharts, ...workflowCharts };
 
   const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, totalInteractionsData } =
     useMetricData(metricsCharts);
@@ -104,11 +126,11 @@ export function AnalyticsPage() {
 
   return (
     <>
-      <PageMeta title="Analytics" />
+      <PageMeta title="Usage" />
       <DashboardLayout
         headerStartItems={
           <h1 className="text-foreground-950 flex items-center gap-1">
-            <span>Analytics</span>
+            <span>Usage</span>
             {isDevMockMode && (
               <Badge variant="filled" color="orange" className="text-xs">
                 DEV MOCK DATA
@@ -160,14 +182,20 @@ export function AnalyticsPage() {
             </motion.div>
 
             <motion.div variants={ANIMATION_VARIANTS.section}>
-              <ChartsSection charts={chartsData} isLoading={isChartsLoading} error={chartsError} />
+              <ChartsSection
+                charts={chartsData}
+                isTrendsLoading={isTrendsLoading}
+                isWorkflowLoading={isWorkflowLoading}
+                trendsError={trendsError}
+                workflowError={workflowError}
+              />
             </motion.div>
 
             <motion.div variants={ANIMATION_VARIANTS.section}>
               <WorkflowRunsTrendChart
                 data={chartsData?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[]}
-                isLoading={isChartsLoading}
-                error={chartsError}
+                isLoading={isWorkflowLoading}
+                error={workflowError}
               />
             </motion.div>
 
@@ -175,22 +203,22 @@ export function AnalyticsPage() {
               <div className="lg:col-span-8">
                 <ActiveSubscribersTrendChart
                   data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
+                  isLoading={isTrendsLoading}
+                  error={trendsError}
                 />
               </div>
               <div className="lg:col-span-4 h-full">
                 <ProvidersByVolume
                   data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
+                  isLoading={isTrendsLoading}
+                  error={trendsError}
                 />
               </div>
             </motion.div>
           </div>
           {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
             <InlineToast
-              title="You're viewing analytics for the Development environment"
+              title="You're viewing usage for the Development environment"
               variant="tip"
               ctaLabel="Switch to production"
               onCtaClick={() => {

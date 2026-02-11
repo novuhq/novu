@@ -10,7 +10,6 @@ import {
   EmailPreviewContentMobile,
   EmailPreviewHeader,
   EmailPreviewSubject,
-  EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { cn } from '@/utils/ui';
@@ -44,6 +43,7 @@ export function EmailCorePreview({
     return {
       subject: previewData.result.preview?.subject || '',
       body: previewData.result.preview?.body || '',
+      from: previewData.result.preview?.from,
     };
   }, [previewData?.result]);
 
@@ -77,7 +77,7 @@ export function EmailCorePreview({
       <div className="">
         <div className="bg-bg-white overflow-auto rounded-lg border border-neutral-200">
           <div className="flex w-full items-center justify-between px-3 pb-0 pt-3">
-            <EmailPreviewHeader />
+            <EmailPreviewHeader previewFrom={emailPreviewContent?.from} />
             <div>
               <TabsList>
                 <TabsTrigger value="mobile">
@@ -106,10 +106,16 @@ export function EmailCorePreview({
                   {emailPreviewContent ? (
                     <>
                       <TabsContent value="mobile">
-                        <div className="w-full bg-neutral-100">
+                        <div className="border-b px-2">
+                          <EmailPreviewSubject subject={emailPreviewContent.subject} />
+                        </div>
+                        <div className={cn(isCustomHtmlEditor ? '' : 'w-full bg-neutral-50 py-8')}>
                           <EmailPreviewContentMobile className="mx-auto">
-                            <EmailPreviewSubjectMobile subject={emailPreviewContent.subject} />
-                            <EmailPreviewBodyMobile body={emailPreviewContent.body} resourceOrigin={resourceOrigin} />
+                            <EmailPreviewBodyMobile
+                              className="bg-background"
+                              body={emailPreviewContent.body}
+                              resourceOrigin={resourceOrigin}
+                            />
                           </EmailPreviewContentMobile>
                         </div>
                       </TabsContent>

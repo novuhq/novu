@@ -11,9 +11,9 @@
 
 import { Editor } from '@tiptap/core';
 import { NodeRange, ResolvedPos, Node as TNode } from '@tiptap/pm/model';
-import { EditorState, Plugin, PluginKey, Selection, SelectionRange } from '@tiptap/pm/state';
+import { EditorState, NodeSelection, Plugin, PluginKey, Selection, SelectionRange } from '@tiptap/pm/state';
 import { Mapping } from '@tiptap/pm/transform';
-import tippy, { Instance, Tippy, Props as TippyProps } from 'tippy.js';
+import tippy, { Instance, Props as TippyProps } from 'tippy.js';
 import { absolutePositionToRelativePosition, ySyncPluginKey } from 'y-prosemirror';
 
 function getSelectionRanges(state: ResolvedPos, range: ResolvedPos, depth?: number): SelectionRange[] {
@@ -272,6 +272,56 @@ export function DragHandlePlugin(options: DragHandlePluginOptions): Plugin<{ loc
   let x = false;
   let currentNode: TNode | null = null;
   let lastNodePos = -1;
+
+  let dragPreview: HTMLElement | null = null;
+  let transparentImage: HTMLImageElement | null = null;
+
+  const addDraggingStyles = () => {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'maily-drag-handle-styles';
+    styleEl.textContent = `
+      .ProseMirror.is-dragging .ProseMirror-selectednode {
+        opacity: 0.8;
+        &:after {
+          background-color: transparent;
+        }
+      }
+    `;
+    if (!document.getElementById('maily-drag-handle-styles')) {
+      document.head.appendChild(styleEl);
+    }
+  };
+
+  const createTransparentImage = () => {
+    if (!transparentImage) {
+      transparentImage = new Image();
+      transparentImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+
+    return transparentImage;
+  };
+
+  const updateDragPreviewPosition = (clientX: number, clientY: number) => {
+    if (!dragPreview) return;
+    dragPreview.style.left = `${clientX + 10}px`;
+    dragPreview.style.top = `${clientY + 10}px`;
+  };
+
+  const handleDrag = (evt: DragEvent) => {
+    if (evt.clientX === 0 && evt.clientY === 0) return;
+    updateDragPreviewPosition(evt.clientX, evt.clientY);
+  };
+
+  const cleanupDragPreview = () => {
+    if (dragPreview) {
+      removeNode(dragPreview);
+      dragPreview = null;
+    }
+    element.removeEventListener('drag', handleDrag);
+  };
+
+  addDraggingStyles();
+
   element.addEventListener('dragstart', (e) => {
     const { view } = editor;
     if (!e.dataTransfer) return;
@@ -282,30 +332,67 @@ export function DragHandlePlugin(options: DragHandlePluginOptions): Plugin<{ loc
     const u = empty || !c ? s : d;
     if (!u.length) return;
     const { tr: g } = view.state;
-    const h = document.createElement('div');
     const y = u[0].$from.pos;
     const v = u[u.length - 1].$to.pos;
-    const C = NodeRangeSelection.create(view.state.doc, y, v);
+
+    let C: Selection = NodeSelection.create(view.state.doc, y);
+    if (u.length > 1) {
+      C = NodeRangeSelection.create(view.state.doc, y, v) as unknown as Selection;
+    }
     const E = C.content();
-    u.forEach((e) => {
-      const t = cloneElement(view?.nodeDOM(e.$from.pos) as HTMLElement);
-      h.append(t);
+
+    // create the drag preview element
+    dragPreview = document.createElement('div');
+    dragPreview.style.position = 'fixed';
+    dragPreview.style.opacity = '0.4';
+    dragPreview.style.pointerEvents = 'none';
+    dragPreview.style.zIndex = '9999';
+    dragPreview.style.overflow = 'hidden';
+
+    // append the cloned elements to the drag preview
+    u.forEach((range) => {
+      const cloned = cloneElement(view?.nodeDOM(range.$from.pos) as HTMLElement);
+      dragPreview!.append(cloned);
     });
-    h.style.position = 'absolute';
-    h.style.top = '-10000px';
-    document.body.append(h);
+
+    document.body.append(dragPreview);
+    updateDragPreviewPosition(e.clientX, e.clientY);
+
+    element.addEventListener('drag', handleDrag);
+
+    view.dom.classList.add('is-dragging');
+
     e.dataTransfer.clearData();
-    e.dataTransfer.setDragImage(h, 0, 0);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setDragImage(createTransparentImage(), 0, 0);
     view.dragging = { slice: E, move: true };
     g.setSelection(C as unknown as Selection);
     view.dispatch(g);
-    document.addEventListener('drop', () => removeNode(h), { once: true });
+
+    document.addEventListener('drop', cleanupDragPreview, { once: true });
     setTimeout(() => {
       element && (element.style.pointerEvents = 'none');
     }, 0);
   });
+
   element.addEventListener('dragend', () => {
+    const { view } = editor;
+    cleanupDragPreview();
     element && (element.style.pointerEvents = 'auto');
+    view.dom.classList.remove('is-dragging');
+    view.dom.querySelectorAll('.ProseMirror-selectednode').forEach((node) => {
+      node.classList.remove('ProseMirror-selectednode');
+    });
+
+    requestAnimationFrame(() => {
+      // remove the selection after the drag is complete
+      // as it is causing bubble menus to show up
+      const { state } = view;
+      const { tr } = state;
+      const resolvedPos = state.doc.resolve(Math.min(state.selection.to, state.doc.content.size));
+      tr.setSelection(Selection.near(resolvedPos));
+      view.dispatch(tr);
+    });
   });
 
   return new Plugin({
@@ -427,6 +514,12 @@ export function DragHandlePlugin(options: DragHandlePluginOptions): Plugin<{ loc
                 getReferenceClientRect: () => o.getBoundingClientRect(),
               }),
               tippyInstance.show();
+          }
+          return false;
+        },
+        dragover(e, t) {
+          if (t.dataTransfer && e.dragging) {
+            t.dataTransfer.dropEffect = 'move';
           }
           return false;
         },

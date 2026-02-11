@@ -53,6 +53,8 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
       host: this.config.host,
       port: this.config.port,
       secure: this.config.secure,
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
       auth: authEnabled
         ? {
             user: this.config.user,

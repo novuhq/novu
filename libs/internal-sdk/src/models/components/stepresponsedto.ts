@@ -16,7 +16,6 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 export type StepResponseDto = {
   /**
@@ -50,7 +49,7 @@ export type StepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: string;
   /**
    * Origin of the layout
    */
@@ -82,7 +81,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.string(),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

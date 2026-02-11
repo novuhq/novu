@@ -54,7 +54,7 @@ const baseJsonSchema: z.ZodType<any> = z
 
 // Defines an item in our editable property list
 const PropertyListItemSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   keyName: z
     .string()
     .min(1, { message: 'Property name is required.' })

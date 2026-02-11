@@ -41,6 +41,12 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.topicKey = topicKey;
   }
 
+  const subscriptionId = searchParams.get('subscriptionId');
+
+  if (subscriptionId) {
+    result.subscriptionId = subscriptionId;
+  }
+
   const dateRange = searchParams.get('dateRange');
   result.dateRange = dateRange || DEFAULT_DATE_RANGE;
 
@@ -49,13 +55,10 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.severity = severity as SeverityLevelEnum[];
   }
 
-  const contextKey = searchParams.get('contextKeys');
   const contextKeys = searchParams.getAll('contextKeys');
 
-  if (contextKeys.length > 1) {
-    result.contextKeys = contextKeys.join(',');
-  } else if (contextKey) {
-    result.contextKeys = contextKey;
+  if (contextKeys.length > 0) {
+    result.contextKeys = contextKeys;
   }
 
   return result;
@@ -71,8 +74,9 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
     transactionId: transactionIds.length > 0 ? transactionIds.join(', ') : '',
     subscriberId: searchParams.get('subscriberId') || '',
     topicKey: searchParams.get('topicKey') || '',
+    subscriptionId: searchParams.get('subscriptionId') || '',
     severity: (searchParams.get('severity')?.split(',').filter(Boolean) as SeverityLevelEnum[]) || [],
-    contextKeys: searchParams.get('contextKeys') || '',
+    contextKeys: searchParams.getAll('contextKeys'),
   };
 }
 
@@ -140,6 +144,10 @@ export function useActivityUrlState(): ActivityUrlState & {
         newParams.set('topicKey', data.topicKey);
       }
 
+      if (data.subscriptionId) {
+        newParams.set('subscriptionId', data.subscriptionId);
+      }
+
       if (data.dateRange && data.dateRange !== DEFAULT_DATE_RANGE) {
         newParams.set('dateRange', data.dateRange);
       }
@@ -152,8 +160,10 @@ export function useActivityUrlState(): ActivityUrlState & {
         newParams.set('severity', data.severity.join(','));
       }
 
-      if (data.contextKeys) {
-        newParams.set('contextKeys', data.contextKeys);
+      if (data.contextKeys?.length) {
+        for (const contextKey of data.contextKeys) {
+          newParams.append('contextKeys', contextKey);
+        }
       }
 
       setSearchParams(newParams, { replace: true });

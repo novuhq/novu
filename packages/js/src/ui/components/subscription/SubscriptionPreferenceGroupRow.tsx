@@ -42,7 +42,7 @@ export const SubscriptionPreferenceGroupRow = (props: {
       value: checked,
     }));
 
-    await props.subscription.bulkUpdate(updates);
+    await props.subscription.bulkUpdatePreferences(updates);
   };
 
   const handlePreferenceChange = (preference: SubscriptionPreference) => async (checked: boolean) => {
@@ -110,12 +110,13 @@ export const SubscriptionPreferenceGroupRow = (props: {
           <span
             class={style({
               key: 'subscriptionPreferenceGroupLabel',
-              className: 'nt-text-sm nt-font-semibold nt-truncate nt-text-start',
+              className: 'nt-text-sm nt-font-semibold nt-truncate nt-text-start nt-mr-2',
               context: { group: props.group } satisfies Parameters<
                 SubscriptionAppearanceCallback['subscriptionPreferenceGroupLabel']
               >[0],
             })}
             data-open={isOpened()}
+            title={props.group.label}
           >
             {props.group.label}
           </span>
@@ -133,6 +134,9 @@ export const SubscriptionPreferenceGroupRow = (props: {
             checked={groupState().checked}
             indeterminate={groupState().indeterminate}
             onChange={handleGroupChange}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+            }}
           />
           <span
             class={style({
@@ -178,25 +182,28 @@ export const SubscriptionPreferenceGroupRow = (props: {
               <div
                 class={style({
                   key: 'subscriptionPreferenceGroupWorkflowRow',
-                  className: 'nt-flex nt-items-center nt-justify-between nt-p-2 nt-rounded',
+                  className: 'nt-flex nt-items-center nt-justify-between nt-p-2 nt-rounded nt-gap-2',
                   context: { preference: el } satisfies Parameters<
                     SubscriptionAppearanceCallback['subscriptionPreferenceGroupWorkflowRow']
                   >[0],
                 })}
               >
-                <span
+                <label
+                  for={`subscription-preference-${el.preference.workflow.identifier}`}
                   class={style({
                     key: 'subscriptionPreferenceGroupWorkflowLabel',
-                    className: 'nt-text-sm',
+                    className: 'nt-text-sm nt-truncate nt-text-start nt-w-full nt-cursor-pointer',
                     context: { preference: el } satisfies Parameters<
                       SubscriptionAppearanceCallback['subscriptionPreferenceGroupWorkflowLabel']
                     >[0],
                   })}
                   data-localization={el.preference.workflow.identifier as StringLocalizationKey}
+                  title={el.label ?? t(el.preference.workflow.identifier as StringLocalizationKey)}
                 >
-                  {t(el.preference.workflow.identifier as StringLocalizationKey) ?? el.label}
-                </span>
+                  {el.label ?? t(el.preference.workflow.identifier as StringLocalizationKey)}
+                </label>
                 <Checkbox
+                  id={`subscription-preference-${el.preference.workflow.identifier}`}
                   checked={getPreferenceChecked(el.preference)}
                   onChange={handlePreferenceChange(el.preference)}
                 />

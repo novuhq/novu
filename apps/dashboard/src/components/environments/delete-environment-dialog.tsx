@@ -1,11 +1,16 @@
 import { IEnvironment } from '@novu/shared';
+import { Cross2Icon } from '@radix-ui/react-icons';
+import { RiAlertFill } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogOverlay,
+  DialogPortal,
   DialogTitle,
 } from '@/components/primitives/dialog';
 

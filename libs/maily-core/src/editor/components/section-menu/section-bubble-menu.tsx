@@ -41,6 +41,10 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     shouldShow: ({ editor }) => {
+      if (editor.view.dragging) {
+        return false;
+      }
+
       const activeSectionNode = getClosestNodeByName(editor, 'section');
       const repeatNodeChildren = activeSectionNode
         ? findChildren(activeSectionNode?.node, (node) => {

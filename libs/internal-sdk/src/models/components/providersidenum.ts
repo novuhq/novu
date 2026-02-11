@@ -97,3 +97,7 @@ export type ProvidersIdEnum = ClosedEnum<typeof ProvidersIdEnum>;
 export const ProvidersIdEnum$inboundSchema: z.ZodNativeEnum<
   typeof ProvidersIdEnum
 > = z.nativeEnum(ProvidersIdEnum);
+/** @internal */
+export const ProvidersIdEnum$outboundSchema: z.ZodNativeEnum<
+  typeof ProvidersIdEnum
+> = ProvidersIdEnum$inboundSchema;

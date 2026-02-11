@@ -1,20 +1,13 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+/**
+ * biome-ignore-all lint/correctness/useUniqueElementIds: expected
+ */
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { IEnvironment } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiArrowRightSLine } from 'react-icons/ri';
-import { z } from 'zod';
 import { Button } from '@/components/primitives/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormInput,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormRoot,
-} from '@/components/primitives/form/form';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
 import {
   Sheet,
@@ -27,16 +20,8 @@ import {
 } from '@/components/primitives/sheet';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useUpdateEnvironment } from '@/hooks/use-environments';
-import { ColorPicker } from '../primitives/color-picker';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-
-// TODO: Merge with CreateEnvironmentButton
-const editEnvironmentSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Enter a valid hex color, like #123456.'),
-});
-
-type EditEnvironmentFormData = z.infer<typeof editEnvironmentSchema>;
+import { EnvironmentFormData, EnvironmentFormFields, environmentFormSchema } from './environment-form';
 
 interface EditEnvironmentSheetProps {
   environment?: IEnvironment;
@@ -47,8 +32,8 @@ interface EditEnvironmentSheetProps {
 export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: EditEnvironmentSheetProps) => {
   const { mutateAsync: updateEnvironment, isPending } = useUpdateEnvironment();
 
-  const form = useForm<EditEnvironmentFormData>({
-    resolver: zodResolver(editEnvironmentSchema),
+  const form = useForm<EnvironmentFormData>({
+    resolver: standardSchemaResolver(environmentFormSchema),
     defaultValues: {
       name: environment?.name || '',
       color: environment?.color,
@@ -64,7 +49,7 @@ export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: Edit
     }
   }, [environment, form]);
 
-  const onSubmit = async (values: EditEnvironmentFormData) => {
+  const onSubmit = async (values: EnvironmentFormData) => {
     if (!environment) return;
 
     try {
@@ -104,38 +89,7 @@ export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: Edit
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex flex-col gap-4"
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Name</FormLabel>
-                    <FormControl>
-                      <FormInput
-                        {...field}
-                        autoFocus
-                        onChange={(e) => {
-                          field.onChange(e);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Color</FormLabel>
-                    <FormControl>
-                      <ColorPicker value={field.value} onChange={field.onChange} pureInput={false} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <EnvironmentFormFields form={form} />
             </FormRoot>
           </Form>
         </SheetMain>

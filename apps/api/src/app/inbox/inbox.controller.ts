@@ -12,6 +12,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -49,6 +50,7 @@ import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.d
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
 import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
+import { ContextCompatibilityInterceptor } from './interceptors/context-compatibility.interceptor';
 import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
 import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
 import { DeleteAllNotificationsCommand } from './usecases/delete-all-notifications/delete-all-notifications.command';
@@ -139,6 +141,8 @@ export class InboxController {
         seen: query.seen,
         data: query.data,
         severity: query.severity,
+        createdGte: query.createdGte,
+        createdLte: query.createdLte,
       })
     );
   }
@@ -173,6 +177,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         tags: query.tags,
         severity: query.severity,
         criticality: query.criticality,
@@ -188,6 +193,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         environmentId: subscriberSession._environmentId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys,
         includeInactiveChannels: false,
         subscriber: subscriberSession,
       })
@@ -376,6 +382,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         level: PreferenceLevelEnum.GLOBAL,
         chat: body.chat,
         email: body.email,
@@ -397,12 +404,13 @@ export class InboxController {
   async bulkUpdateWorkflowPreferences(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: BulkUpdatePreferencesRequestDto
-  ): Promise<GetPreferencesResponseDto[]> {
+  ): Promise<InboxPreference[]> {
     return await this.bulkUpdatePreferencesUsecase.execute(
       BulkUpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         preferences: body.preferences,
       })
     );
@@ -420,12 +428,51 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         level: PreferenceLevelEnum.TEMPLATE,
+        all: {
+          ...(body.enabled !== undefined && { enabled: body.enabled }),
+          ...(body.condition !== undefined && { condition: body.condition }),
+        },
         chat: body.chat,
         email: body.email,
         in_app: body.in_app,
         push: body.push,
         sms: body.sms,
+        schedule: body.schedule,
+        workflowIdOrIdentifier,
+        includeInactiveChannels: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseInterceptors(ContextCompatibilityInterceptor)
+  @Patch('/subscriptions/:subscriptionIdentifier/preferences/:workflowIdOrIdentifier')
+  async updateSubscriptionWorkflowPreference(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('subscriptionIdentifier') subscriptionIdentifier: string,
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
+    @Body() body: UpdatePreferencesRequestDto
+  ): Promise<InboxPreference> {
+    return await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
+        level: PreferenceLevelEnum.TEMPLATE,
+        subscriptionIdentifier,
+        all: {
+          ...(body.enabled !== undefined && { enabled: body.enabled }),
+          ...(body.condition !== undefined && { condition: body.condition }),
+        },
+        chat: body.chat,
+        email: body.email,
+        in_app: body.in_app,
+        push: body.push,
+        sms: body.sms,
+        schedule: body.schedule,
         workflowIdOrIdentifier,
         includeInactiveChannels: false,
       })

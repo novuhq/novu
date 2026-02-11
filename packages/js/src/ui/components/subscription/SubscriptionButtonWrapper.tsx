@@ -1,12 +1,12 @@
-import type { TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
+import type { TopicSubscription } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
-import { GroupPreference } from './Subscription';
+import { extractTags, extractWorkflowIds, UIPreference } from './Subscription';
 import { SubscriptionButton } from './SubscriptionButton';
 
 export type SubscriptionButtonWrapperProps = {
-  topic: string;
-  identifier: string;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  topicKey: string;
+  identifier?: string;
+  preferences?: Array<UIPreference> | undefined;
   onClick?: (args: { subscription?: TopicSubscription }) => void;
   onDeleteError?: (error: unknown) => void;
   onDeleteSuccess?: () => void;
@@ -15,9 +15,13 @@ export type SubscriptionButtonWrapperProps = {
 };
 
 export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps) => {
+  const workflowIds = extractWorkflowIds(props.preferences ?? []);
+  const tags = extractTags(props.preferences ?? []);
   const { subscription, loading, create, remove } = useSubscription({
-    topicKey: props.topic,
+    topicKey: props.topicKey,
     identifier: props.identifier,
+    workflowIds,
+    tags,
   });
 
   const onSubscribeClick = async () => {
@@ -28,17 +32,28 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
       const { error } = await remove({ subscription: currentSubscription });
       if (error) {
         props.onDeleteError?.(error);
+
         return;
       }
       props.onDeleteSuccess?.();
     } else {
+      const mappedPreferences = props.preferences?.map((preference) => {
+        if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
+          return { workflowId: preference.workflowId, enabled: preference.enabled };
+        } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
+          return { filter: preference.filter, enabled: preference.enabled };
+        }
+
+        return preference;
+      });
       const { data, error } = await create({
-        topicKey: props.topic,
+        topicKey: props.topicKey,
         identifier: props.identifier,
-        filters: props.preferences,
+        preferences: mappedPreferences,
       });
       if (data) {
         props.onCreateSuccess?.({ subscription: data });
+
         return;
       }
       props.onCreateError?.(error);

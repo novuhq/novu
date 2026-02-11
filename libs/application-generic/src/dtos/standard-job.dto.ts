@@ -6,6 +6,13 @@ export class IStandardDataDto {
   _organizationId: string;
   _id: string;
   /*
+   * skipProcessing flag for CF Scheduler migration
+   * When true, the consumer should skip processing this job
+   * Used in LIVE mode where BullMQ job is shadow and CF Scheduler result is real
+   * Used by API when CF Scheduler calls in SHADOW mode (BullMQ is real)
+   */
+  skipProcessing?: boolean;
+  /*
    * payload is deprecated - todo remove 'payload' once the queue renewed
    * payload was added due backwards compatibility, the legacy use is in standard-worker
    */

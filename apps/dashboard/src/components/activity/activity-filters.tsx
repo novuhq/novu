@@ -16,6 +16,7 @@ import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
 import { IS_SELF_HOSTED } from '../../config';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
+import { ContextFilter } from '../contexts/context-filter';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
@@ -28,6 +29,7 @@ type Fields =
   | 'transactionId'
   | 'subscriberId'
   | 'topicKey'
+  | 'subscriptionId'
   | 'severity'
   | 'contextKeys';
 
@@ -38,6 +40,7 @@ export type ActivityFilters = {
   onReset?: () => void;
   hide?: Fields[];
   className?: string;
+  defaultContextOnClear?: boolean;
 };
 
 const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
@@ -67,11 +70,15 @@ export function ActivityFilters({
   showReset = false,
   hide = [],
   className,
+  defaultContextOnClear = false,
 }: ActivityFilters) {
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED, false);
+  const isSubscriptionPreferencesEnabled = useFeatureFlag(
+    FeatureFlagsKeysEnum.IS_SUBSCRIPTION_PREFERENCES_ENABLED,
+    false
+  );
 
   const form = useForm<ActivityFiltersData>({
     values: filters,
@@ -105,7 +112,7 @@ export function ActivityFilters({
 
   return (
     <Form {...form}>
-      <FormRoot className={cn('flex items-center gap-2 pb-2.5', className)}>
+        <FormRoot className={cn('w-full flex flex-wrap items-center gap-2 pb-2.5', className)}>
         {!hide.includes('dateRange') && (
           <FormField
             control={form.control}
@@ -230,6 +237,25 @@ export function ActivityFilters({
           />
         )}
 
+        {isSubscriptionPreferencesEnabled && !hide.includes('subscriptionId') && (
+          <FormField
+            control={form.control}
+            name="subscriptionId"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Subscription ID"
+                  value={field.value}
+                  onChange={(value) => setValue('subscriptionId', value)}
+                  placeholder="Search by full Subscription ID"
+                />
+              </FormItem>
+            )}
+          />
+        )}
+
         {!hide.includes('severity') && (
           <FormField
             control={form.control}
@@ -253,19 +279,17 @@ export function ActivityFilters({
           />
         )}
 
-        {!hide.includes('contextKeys') && isContextEnabled && (
+        {!hide.includes('contextKeys') && (
           <FormField
             control={form.control}
             name="contextKeys"
             render={({ field }) => (
               <FormItem>
-                <FacetedFormFilter
-                  type="text"
+                <ContextFilter
+                  contextKeys={field.value}
+                  onContextKeysChange={field.onChange}
+                  defaultOnClear={defaultContextOnClear}
                   size="small"
-                  title="Context"
-                  value={field.value}
-                  onChange={(value) => setValue('contextKeys', value)}
-                  placeholder="e.g., tenant:org-123, region:us-east-1"
                 />
               </FormItem>
             )}

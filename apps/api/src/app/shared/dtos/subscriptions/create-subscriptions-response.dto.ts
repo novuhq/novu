@@ -175,6 +175,13 @@ export class SubscriptionResponseDto {
   @IsOptional()
   preferences?: SubscriptionPreferenceDto[];
 
+  @ApiPropertyOptional({
+    description: 'Context keys that scope this subscription (e.g., tenant:org-a, project:proj-123)',
+    example: ['tenant:org-a', 'project:proj-123'],
+    type: [String],
+  })
+  contextKeys?: string[];
+
   @ApiProperty({
     description: 'The creation date of the subscription',
     example: '2025-04-24T05:40:21Z',

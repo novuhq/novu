@@ -4,6 +4,7 @@ export interface IOrganizationEntity {
   _id: string;
   name: string;
   apiServiceLevel?: ApiServiceLevelEnum;
+  isTrial?: boolean;
   branding?: {
     color: string;
     logo: string;

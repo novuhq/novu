@@ -3,7 +3,6 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,14 +13,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
-import {
-  ApiRateLimitCategoryEnum,
-  ContextType,
-  FeatureFlagsKeysEnum,
-  PermissionsEnum,
-  UserSessionData,
-} from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, ContextType, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -55,22 +48,8 @@ export class ContextsController {
     private updateContextUsecase: UpdateContext,
     private getContextUsecase: GetContext,
     private listContextsUsecase: ListContexts,
-    private deleteContextUsecase: DeleteContext,
-    private featureFlagsService: FeatureFlagsService
+    private deleteContextUsecase: DeleteContext
   ) {}
-
-  private async checkFeatureEnabled(user: UserSessionData) {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-    });
-
-    if (!isEnabled) {
-      throw new ForbiddenException('Context feature is not enabled');
-    }
-  }
 
   @Post('')
   @ApiResponse(GetContextResponseDto, 201)
@@ -85,8 +64,6 @@ export class ContextsController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateContextRequestDto
   ): Promise<GetContextResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const entity = await this.createContextUsecase.execute(
       CreateContextCommand.create({
         userId: user._id,
@@ -119,8 +96,6 @@ export class ContextsController {
     @Param('id') id: string,
     @Body() body: UpdateContextRequestDto
   ): Promise<GetContextResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const entity = await this.updateContextUsecase.execute(
       UpdateContextCommand.create({
         userId: user._id,
@@ -150,8 +125,6 @@ export class ContextsController {
     @UserSession() user: UserSessionData,
     @Query() query: ListContextsQueryDto
   ): Promise<ListContextsResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const result = await this.listContextsUsecase.execute(
       ListContextsCommand.create({
         user,
@@ -192,8 +165,6 @@ export class ContextsController {
     @Param('type') type: ContextType,
     @Param('id') id: string
   ): Promise<GetContextResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const entity = await this.getContextUsecase.execute(
       GetContextCommand.create({
         organizationId: user.organizationId,
@@ -222,8 +193,6 @@ export class ContextsController {
     @Param('type') type: ContextType,
     @Param('id') id: string
   ): Promise<void> {
-    await this.checkFeatureEnabled(user);
-
     return this.deleteContextUsecase.execute(
       DeleteContextCommand.create({
         organizationId: user.organizationId,
