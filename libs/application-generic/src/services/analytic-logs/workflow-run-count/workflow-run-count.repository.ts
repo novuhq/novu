@@ -113,4 +113,93 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
 
     return result.data;
   }
+
+  async getTotalDeliverySentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    const query = `
+      SELECT sum(count) as total
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_delivery_sent'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const result = await this.clickhouseService.query<{ total: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.total || '0', 10);
+  }
+
+  async getTotalInteractionsCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    const query = `
+      SELECT sum(count) as total
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_delivery_interacted'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const result = await this.clickhouseService.query<{ total: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.total || '0', 10);
+  }
+
+  async getTopWorkflows(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date,
+    limit: number = 5
+  ): Promise<Array<{ workflow_run_id: string; count: string }>> {
+    const query = `
+      SELECT 
+        workflow_run_id,
+        sum(count) as count
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_delivery_sent'
+      GROUP BY workflow_run_id
+      ORDER BY count DESC
+      LIMIT {limit:UInt32}
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      limit,
+    };
+
+    const result = await this.clickhouseService.query<{
+      workflow_run_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }

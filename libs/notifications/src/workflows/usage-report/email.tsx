@@ -43,7 +43,6 @@ export interface IEmailProps {
   usersReachedChange: number;
   usersReachedUp: boolean;
   workflowRuns: number;
-  successRate: number;
   userInteractions: number;
   interactionRate: number;
   topProviders: ITopProvider[];
@@ -276,7 +275,7 @@ function RankedListCard({
   title,
   showWorkflowIcon = false,
 }: {
-  items: PayloadSchemaType['payloadSchema']['topProviders'];
+  items: PayloadSchemaType['topProviders'];
   title: string;
   showWorkflowIcon?: boolean;
 }) {
@@ -309,7 +308,7 @@ function RankedListCard({
   );
 }
 
-function ChannelsSection({ channels }: { channels: PayloadSchemaType['payloadSchema']['channels'] }) {
+function ChannelsSection({ channels }: { channels: PayloadSchemaType['channels'] }) {
   return (
     <Card style={{ marginBottom: '12px' }}>
       <Text style={sectionLabelStyle}>Delivery by Channels</Text>
@@ -450,16 +449,14 @@ export function UsageReportEmail({
     usersReachedChange,
     usersReachedUp,
     workflowRuns,
-    successRate,
     userInteractions,
     interactionRate,
     topProviders,
     topWorkflows,
     channels,
     dashboardUrl,
-  } = props.payloadSchema;
-
-  const { previewText = 'Your monthly Novu usage report' } = props;
+    previewText = 'Your monthly Novu usage report',
+  } = props;
 
   return (
     <Html lang="en">
@@ -504,11 +501,7 @@ export function UsageReportEmail({
                 label="Workflow Runs Triggered"
                 value={workflowRuns}
                 unit="workflow runs"
-                detail={
-                  <>
-                    with <span style={{ color: COLORS.success, fontWeight: 500 }}>{successRate}%</span> success rate.
-                  </>
-                }
+                detail={<>Total workflows executed during this period.</>}
               />
             </Column>
             <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>

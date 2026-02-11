@@ -901,8 +901,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       totalRuns,
       successRate: totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0,
       failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
-      topFailures: [],
-      topFailingWorkflows: [],
     };
   }
 }

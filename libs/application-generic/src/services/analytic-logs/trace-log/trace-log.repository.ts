@@ -320,6 +320,191 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
 
     return result.data;
   }
+
+  async getMessagesSentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    const query = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
+  async getUniqueSubscribers(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    const query = `
+      SELECT count(DISTINCT subscriber_id) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'workflow_run_delivery_sent'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
+  async getInAppInteractionRate(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<{ interactions: number; interactionRate: number }> {
+    const interactionEventsQuery = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_run_type = 'in_app'
+        AND event_type IN (
+          'message_seen', 'message_unseen', 'message_clicked', 
+          'message_read', 'message_unread', 'message_archived', 
+          'message_unarchived', 'message_snoozed', 'message_unsnoozed'
+        )
+    `;
+
+    const messageSentQuery = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_run_type = 'in_app'
+        AND event_type = 'message_sent'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const [interactionResult, messageSentResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: interactionEventsQuery,
+        params,
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: messageSentQuery,
+        params,
+      }),
+    ]);
+
+    const interactions = parseInt(interactionResult.data[0]?.count || '0', 10);
+    const messagesSent = parseInt(messageSentResult.data[0]?.count || '0', 10);
+    const interactionRate = messagesSent > 0 ? Math.round((interactions / messagesSent) * 100) : 0;
+
+    return {
+      interactions,
+      interactionRate,
+    };
+  }
+
+  async getChannelBreakdown(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ step_run_type: string; count: string }>> {
+    const query = `
+      SELECT 
+        step_run_type,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+        AND step_run_type IN ('email', 'sms', 'push', 'in_app', 'chat')
+      GROUP BY step_run_type
+      ORDER BY count DESC
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      step_run_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getTopProviders(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date,
+    limit: number = 5
+  ): Promise<Array<{ provider_id: string; count: string }>> {
+    const query = `
+      SELECT 
+        provider_id,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+        AND provider_id != ''
+      GROUP BY provider_id
+      ORDER BY count DESC
+      LIMIT {limit:UInt32}
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+      limit,
+    };
+
+    const result = await this.clickhouseService.query<{
+      provider_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {

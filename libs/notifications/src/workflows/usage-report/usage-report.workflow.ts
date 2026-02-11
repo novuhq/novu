@@ -20,5 +20,7 @@ export const usageReportWorkflow = workflow(
       }
     );
   },
-  payloadSchema
+  {
+    payloadSchema: payloadSchema,
+  }
 );
