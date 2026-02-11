@@ -128,6 +128,7 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
             hasChangesInFilters={hasChangesInFilters}
             onClearFilters={handleClearFilters}
             onActivitySelect={handleActivitySelect}
+            emptyFiltersDescription="Subscribers in this topic haven't received any notifications yet. Once a workflow is triggered for this topic, you'll see their notification history and delivery details here."
           />
           <span className="text-paragraph-2xs text-text-soft border-border-soft mt-auto border-t p-3 text-center">
             To view more detailed activity, View{' '}
