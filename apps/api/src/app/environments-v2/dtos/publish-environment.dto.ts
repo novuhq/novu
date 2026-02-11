@@ -8,7 +8,6 @@ export class ResourceToPublishDto {
     description: 'Type of resource to publish',
     enum: Object.values(ResourceTypeEnum),
     enumName: 'ResourceTypeEnum',
-    example: ResourceTypeEnum.WORKFLOW,
   })
   @IsEnum(ResourceTypeEnum)
   resourceType: ResourceTypeEnum;
@@ -41,10 +40,6 @@ export class PublishEnvironmentRequestDto {
   @ApiPropertyOptional({
     description: 'Array of specific resources to publish. If not provided, all resources will be published.',
     type: [ResourceToPublishDto],
-    example: [
-      { resourceType: 'workflow', resourceId: 'workflow-id-1' },
-      { resourceType: 'layout', resourceId: 'layout-id-1' },
-    ],
   })
   @IsOptional()
   @IsArray()
