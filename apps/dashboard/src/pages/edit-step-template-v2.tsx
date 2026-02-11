@@ -73,7 +73,9 @@ export function EditStepTemplateV2Page() {
 
   const value = useMemo(() => ({ saveForm }), [saveForm]);
 
-  if (!workflow || !step) {
+  const formHasValues = Object.keys(form.getValues()).length > 0;
+
+  if (!workflow || !step || !formHasValues) {
     return null;
   }
 
