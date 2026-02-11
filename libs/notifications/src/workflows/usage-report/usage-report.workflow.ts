@@ -1,6 +1,6 @@
 import { workflow } from '@novu/framework';
-import { z } from 'zod';
-import { renderUsageReportEmail } from './email';
+import renderEmail from './email';
+import { controlValueSchema, payloadSchema } from './schemas';
 
 export const usageReportWorkflow = workflow(
   'monthly-usage-report',
@@ -8,69 +8,17 @@ export const usageReportWorkflow = workflow(
     await step.email(
       'email',
       async (controls) => {
+        const parsedPayload = payloadSchema.parse(payload);
+
         return {
           subject: controls.subject,
-          body: await renderUsageReportEmail(payload, controls),
+          body: await renderEmail(parsedPayload, controls),
         };
       },
       {
-        controlSchema: z.object({
-          subject: z.string().default('Your Monthly Novu Usage Report'),
-          previewText: z.string().default('Your monthly Novu usage report'),
-        }),
+        controlSchema: controlValueSchema,
       }
     );
   },
-  {
-    name: 'Monthly Usage Report',
-    payloadSchema: z.object({
-      dateRange: z.string(),
-      messagesSent: z.number(),
-      messagesSentChange: z.number(),
-      messagesSentUp: z.boolean(),
-      usersReached: z.number(),
-      usersReachedChange: z.number(),
-      usersReachedUp: z.boolean(),
-      workflowRuns: z.number(),
-      successRate: z.number(),
-      userInteractions: z.number(),
-      interactionRate: z.number(),
-      topProviders: z.array(
-        z.object({
-          name: z.string(),
-          count: z.number(),
-          icon: z.string().optional(),
-        })
-      ),
-      topWorkflows: z.array(
-        z.object({
-          name: z.string(),
-          count: z.number(),
-        })
-      ),
-      channels: z.array(
-        z.object({
-          name: z.string(),
-          value: z.number(),
-          color: z.string(),
-          dashArray: z.string(),
-        })
-      ),
-      failureRate: z.number(),
-      topFailures: z.array(
-        z.object({
-          message: z.string(),
-          count: z.number(),
-          percentage: z.number(),
-        })
-      ),
-      topFailingWorkflows: z.array(
-        z.object({
-          name: z.string(),
-          count: z.number(),
-        })
-      ),
-      dashboardUrl: z.string(),
-    }),
-  }
+  payloadSchema
 );
