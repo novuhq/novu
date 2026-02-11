@@ -250,8 +250,10 @@ function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
     for (const [key, value] of Object.entries(obj)) {
       if (value !== null && value !== undefined) {
         if (Array.isArray(value)) {
-          result[key as keyof T] = value as T[keyof T];
-        } else if (typeof value === 'object' && value !== null) {
+          result[key as keyof T] = value.map((item) =>
+            typeof item === 'object' && item !== null ? filterNullishValues(item as Record<string, unknown>) : item
+          ) as T[keyof T];
+        } else if (typeof value === 'object') {
           result[key as keyof T] = filterNullishValues(value as Record<string, unknown>) as T[keyof T];
         } else {
           result[key as keyof T] = value as T[keyof T];
