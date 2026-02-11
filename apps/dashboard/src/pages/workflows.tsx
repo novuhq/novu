@@ -178,10 +178,10 @@ export const WorkflowsPage = () => {
   const hasActiveFilters =
     queryParam.trim() !== '' || searchParams.getAll('tags').length > 0 || searchParams.getAll('status').length > 0;
 
-  const isProdEnv = currentEnvironment?.name === 'Production';
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   const shouldShowStartWithTemplatesSection =
-    workflowsData && workflowsData.totalCount < 5 && !hasActiveFilters && !isProdEnv;
+    workflowsData && workflowsData.totalCount < 5 && !hasActiveFilters && isDevEnvironment;
 
   useEffect(() => {
     track(TelemetryEvent.WORKFLOWS_PAGE_VISIT);
