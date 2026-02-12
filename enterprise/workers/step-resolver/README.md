@@ -17,7 +17,7 @@ This package is part of the pnpm workspace via `enterprise/workers/*`.
 ## What the worker does
 
 - Exposes a public dispatch endpoint for resolving step output.
-- Validates HMAC auth headers (`X-Timestamp`, `X-Signature`).
+- Validates HMAC auth header (`X-Novu-Signature` in format `t={timestamp},v1={hmac}`).
 - Maps tenant worker id as `sr-${organizationId}-${stepResolverHash}`.
 - Dispatches into a Workers for Platforms namespace (`DISPATCHER` binding).
 - Preserves downstream response status/body and adds `x-request-id`.
@@ -68,8 +68,10 @@ X-Novu-Signature: t={timestamp},v1={hmac}
 HMAC computed over:
 
 ```text
-${timestamp}.${JSON.stringify(payload)}
+${timestamp}.${rawRequestBody}
 ```
+
+Note: The HMAC is computed over the raw request body bytes (UTF-8 decoded string), not a re-serialized JSON object. This ensures canonical validation against the exact bytes received.
 
 Validation notes:
 
@@ -91,11 +93,14 @@ const payload = {
 };
 
 const timestamp = Date.now();
-const data = `${timestamp}.${JSON.stringify(payload)}`;
+const bodyString = JSON.stringify(payload);
+const data = `${timestamp}.${bodyString}`;
 const hmac = createHmac('sha256', secret).update(data).digest('hex');
 const signature = `t=${timestamp},v1=${hmac}`;
 
-// Use as: X-Novu-Signature: t=1234567890,v1=abc123...
+// Send as headers:
+// X-Novu-Signature: t=1234567890,v1=abc123...
+// Body: <bodyString> (same string used in HMAC computation)
 ```
 
 ## Local development
@@ -167,7 +172,7 @@ STEP_RESOLVER_HASH="abc12-def34"
 STEP_ID="welcome-email"
 SECRET="${STEP_RESOLVER_HMAC_SECRET:?set STEP_RESOLVER_HMAC_SECRET}"
 
-PATHNAME="/resolve/${ORGANIZATION_ID}/${STEP_RESOLVER_HASH}/${STEP_ID}"
+PATHNAME="/resolve/${ORGANIZATION_ID}/sr-${STEP_RESOLVER_HASH}/${STEP_ID}"
 BODY='{"payload":{"firstName":"Ada"},"subscriber":{"email":"ada@example.com"},"context":{},"steps":{}}'
 
 # Create HMAC signature using Framework format
