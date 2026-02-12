@@ -114,7 +114,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     return result.data;
   }
 
-  async getTotalDeliverySentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+  async getTotalCreatedCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
     const query = `
       SELECT sum(count) as total
       FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
@@ -122,7 +122,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         environment_id IN {environmentIds:Array(String)}
         AND date >= {startDate:Date}
         AND date <= {endDate:Date}
-        AND event_type = 'workflow_run_delivery_sent'
+        AND event_type = 'workflow_run_status_processing'
     `;
 
     const params: Record<string, unknown> = {
@@ -201,5 +201,52 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     });
 
     return result.data;
+  }
+
+  async getWorkflowRunStatistics(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<{ totalRuns: number; successRate: number; failureRate: number }> {
+    const query = `
+      SELECT 
+        sumIf(count, event_type = 'workflow_run_status_completed') as succeeded,
+        sumIf(count, event_type = 'workflow_run_status_error') as failed
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type IN ('workflow_run_status_completed', 'workflow_run_status_error')
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const result = await this.clickhouseService.query<{
+      succeeded: string;
+      failed: string;
+    }>({
+      query,
+      params,
+    });
+
+    const stats = result.data[0] || {
+      succeeded: '0',
+      failed: '0',
+    };
+
+    const succeeded = parseInt(stats.succeeded, 10);
+    const failed = parseInt(stats.failed, 10);
+    const totalRuns = succeeded + failed;
+
+    return {
+      totalRuns,
+      successRate: totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0,
+      failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
+    };
   }
 }
