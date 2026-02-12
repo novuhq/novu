@@ -75,6 +75,9 @@ export class WebhookMessageFailedDto {
 export class WebhookPreferenceDto {
   @ApiProperty({ description: 'Current preference state' })
   object: InboxPreference;
+
+  @ApiProperty({ description: 'Subscriber ID' })
+  subscriberId: string;
 }
 
 // Create the webhook events as a record to ensure all enum values are covered
