@@ -11,7 +11,7 @@
  *   requests from Novu API to Novu's Cloudflare Workers infrastructure
  *
  * Signature format: X-Novu-Signature: t={timestamp},v1={hmac}
- * HMAC computed over: ${timestamp}.${JSON.stringify(payload)}
+ * HMAC computed over: ${timestamp}.${rawPayloadString}
  */
 
 const DEFAULT_TIMESTAMP_TOLERANCE_MS = 300_000; // 5 minutes
@@ -50,7 +50,7 @@ async function createHmacSubtle(secretKey: string, data: string): Promise<string
 export async function validateHmacSignature(
   signatureHeader: string,
   secretKey: string,
-  payload: Record<string, unknown>,
+  payloadString: string,
   toleranceMs: number = DEFAULT_TIMESTAMP_TOLERANCE_MS
 ): Promise<{ valid: boolean; error?: string }> {
   const parts = signatureHeader.split(',');
@@ -68,13 +68,22 @@ export async function validateHmacSignature(
     return { valid: false, error: 'Invalid timestamp' };
   }
 
-  if (Date.now() - timestamp > toleranceMs) {
+  if (Math.abs(Date.now() - timestamp) > toleranceMs) {
     return { valid: false, error: 'Signature expired' };
   }
 
-  const expectedSignature = await createHmacSubtle(secretKey, `${timestamp}.${JSON.stringify(payload)}`);
+  const expectedSignature = await createHmacSubtle(secretKey, `${timestamp}.${payloadString}`);
 
-  if (expectedSignature !== providedSignature) {
+  const encoder = new TextEncoder();
+  const expectedBuffer = encoder.encode(expectedSignature);
+  const providedBuffer = encoder.encode(providedSignature);
+
+  const lengthsMatch = expectedBuffer.byteLength === providedBuffer.byteLength;
+  const isEqual = lengthsMatch
+    ? crypto.subtle.timingSafeEqual(expectedBuffer, providedBuffer)
+    : !crypto.subtle.timingSafeEqual(providedBuffer, providedBuffer);
+
+  if (!isEqual) {
     return { valid: false, error: 'Signature mismatch' };
   }
 

@@ -13,7 +13,7 @@
       "enabled": true
     }
   },
-  "workers_dev": true,
+  "workers_dev": false,
   "dispatch_namespaces": [
     {
       "binding": "DISPATCHER",
@@ -33,7 +33,17 @@
     },
     "production": {
       "name": "step-resolver-dispatch-production",
-      "workers_dev": true,
+      "workers_dev": false,
+      /**
+       * Custom route configuration prevents public exposure via workers.dev domain.
+       * Update pattern and zone_name to match your production domain configuration.
+       */
+      "routes": [
+        {
+          "pattern": "step-resolver.novu.co/*",
+          "zone_name": "novu.co"
+        }
+      ],
       "dispatch_namespaces": [
         {
           "binding": "DISPATCHER",

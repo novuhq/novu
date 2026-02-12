@@ -10,7 +10,6 @@ enterprise/workers/step-resolver/
   src/auth/hmac.ts            # request signature validation
   src/utils/worker-id.ts      # worker id mapping
   wrangler.jsonc              # worker + namespace config
-  test/hmac.spec.ts           # HMAC validation tests
 ```
 
 This package is part of the pnpm workspace via `enterprise/workers/*`.
@@ -111,14 +110,12 @@ Run with workspace filter from repo root:
 
 ```bash
 pnpm --filter @novu/step-resolver-worker dev
-pnpm --filter @novu/step-resolver-worker test
 ```
 
 Or run directly from this folder:
 
 ```bash
 pnpm run dev
-pnpm run test
 ```
 
 For local `wrangler dev`, provide the secret (for example via `.dev.vars`):
@@ -166,7 +163,7 @@ If namespace names differ from your Cloudflare account, update `wrangler.jsonc`.
 ```bash
 DISPATCH_URL="https://step-resolver-dispatch-staging.<subdomain>.workers.dev"
 ORGANIZATION_ID="696a21b632ef1f83460d584d"
-STEP_RESOLVER_HASH="sr-abc12-def34"
+STEP_RESOLVER_HASH="abc12-def34"
 STEP_ID="welcome-email"
 SECRET="${STEP_RESOLVER_HMAC_SECRET:?set STEP_RESOLVER_HMAC_SECRET}"
 

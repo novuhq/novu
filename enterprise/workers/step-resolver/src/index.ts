@@ -3,7 +3,7 @@ import type { Env } from './types';
 import { generateStepResolverWorkerId } from './utils/worker-id';
 
 const AUTH_HEADERS_TO_REMOVE = ['x-novu-signature', 'authorization', 'x-internal-auth'];
-const RESOLVE_ROUTE_REGEX = /^\/resolve\/([a-f0-9]{24})\/(sr-[a-z0-9]{5}-[a-z0-9]{5})\/([^/]+)$/;
+const RESOLVE_ROUTE_REGEX = /^\/resolve\/([a-f0-9]{24})\/sr-([a-z0-9]{5}-[a-z0-9]{5})\/([^/]+)$/;
 const REQUEST_ID_HEADER = 'x-request-id';
 const JSON_CONTENT_TYPE = 'application/json';
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024; // 1MB
@@ -136,7 +136,7 @@ export default {
         organizationId,
         stepResolverHash,
       });
-      return jsonResponse({ error: 'Server configuration error: missing HMAC secret' }, 500, requestId);
+      return jsonResponse({ error: 'Server configuration error' }, 500, requestId);
     }
 
     const bodyBytes = new Uint8Array(await request.arrayBuffer());
@@ -158,14 +158,9 @@ export default {
       return jsonResponse({ error: 'Unauthorized', message: 'Missing signature' }, 401, requestId);
     }
 
-    let bodyJson: Record<string, unknown>;
-    try {
-      bodyJson = JSON.parse(new TextDecoder().decode(bodyBytes));
-    } catch (error) {
-      return jsonResponse({ error: 'Invalid JSON', message: 'Request body must be valid JSON' }, 400, requestId);
-    }
+    const bodyString = new TextDecoder().decode(bodyBytes);
 
-    const hmacValidation = await validateHmacSignature(signatureHeader, env.STEP_RESOLVER_HMAC_SECRET, bodyJson);
+    const hmacValidation = await validateHmacSignature(signatureHeader, env.STEP_RESOLVER_HMAC_SECRET, bodyString);
 
     if (!hmacValidation.valid) {
       logWarn('Rejected request due to invalid HMAC signature', {
@@ -175,6 +170,13 @@ export default {
         reason: hmacValidation.error,
       });
       return jsonResponse({ error: 'Unauthorized', message: hmacValidation.error }, 401, requestId);
+    }
+
+    let bodyJson: Record<string, unknown>;
+    try {
+      bodyJson = JSON.parse(bodyString);
+    } catch (error) {
+      return jsonResponse({ error: 'Invalid JSON', message: 'Request body must be valid JSON' }, 400, requestId);
     }
 
     let stepId: string;
@@ -235,7 +237,7 @@ export default {
       return jsonResponse(
         {
           error: 'Dispatch error',
-          message: error instanceof Error ? error.message : 'Unknown dispatch error',
+          message: 'Internal dispatch error',
           workerId,
         },
         502,

@@ -2167,9 +2167,6 @@ importers:
 
   enterprise/workers/step-resolver:
     devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20250620.0
-        version: 4.20260207.0
       typescript:
         specifier: ^5.5.2
         version: 5.8.3
