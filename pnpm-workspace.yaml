@@ -7,6 +7,8 @@ packages:
   - '!**/test/**'
   # all packages in enterprise modules
   - 'enterprise/packages/*'
+  # all cloudflare worker modules
+  - 'enterprise/workers/*'
   # playground apps
   - 'playground/*'
 
