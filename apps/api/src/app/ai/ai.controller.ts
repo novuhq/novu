@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  CacheService,
   ExternalApiAccessible,
   FeatureFlagsService,
   ParseSlugEnvironmentIdPipe,
@@ -28,16 +27,19 @@ import {
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
-import { pipeUIMessageStreamToResponse, UIMessage } from 'ai';
-import { Response } from 'express';
+import { generateId, pipeUIMessageStreamToResponse, UIMessage } from 'ai';
+import type { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { CreateChatDto, StreamGenerationDto, WorkflowSuggestionDto } from './dtos';
-import { AiAgentFactory } from './services';
+import { CancelStreamDto, CreateChatDto, SnapshotActionDto, StreamGenerationDto, WorkflowSuggestionDto } from './dtos';
+import { AiAgentFactory, CheckpointerService } from './services';
+import { CancelStreamCommand, CancelStreamUseCase } from './usecases/cancel-stream';
 import { GetChatCommand, GetChatUseCase } from './usecases/get-chat';
 import { GetLatestChatCommand, GetLatestChatUseCase } from './usecases/get-latest-chat';
 import { GetSuggestionsUseCase } from './usecases/get-suggestions';
+import { KeepAiChangesCommand, KeepAiChangesUseCase } from './usecases/keep-ai-changes';
+import { RevertMessageCommand, RevertMessageUseCase } from './usecases/revert-message';
 import { UpsertChatCommand, UpsertChatUseCase } from './usecases/upsert-chat';
 
 @ApiExcludeController()
@@ -49,13 +51,16 @@ import { UpsertChatCommand, UpsertChatUseCase } from './usecases/upsert-chat';
 @ApiCommonResponses()
 export class AiController {
   constructor(
+    private readonly cancelStreamUseCase: CancelStreamUseCase,
     private readonly getSuggestionsUseCase: GetSuggestionsUseCase,
     private readonly getChatUseCase: GetChatUseCase,
     private readonly upsertChatUseCase: UpsertChatUseCase,
     private readonly getLatestChatUseCase: GetLatestChatUseCase,
     private readonly aiAgentFactory: AiAgentFactory,
     private readonly featureFlagsService: FeatureFlagsService,
-    private readonly cacheService: CacheService
+    private readonly keepAiChangesUseCase: KeepAiChangesUseCase,
+    private readonly revertMessageUseCase: RevertMessageUseCase,
+    private readonly checkpointerService: CheckpointerService
   ) {}
 
   @Get('/workflow-suggestions')
@@ -133,11 +138,6 @@ export class AiController {
       throw new NotFoundException('Feature not enabled');
     }
 
-    const redisClient = this.cacheService.client;
-    if (!redisClient) {
-      throw new Error('Redis client not found');
-    }
-
     const agentUsecase = this.aiAgentFactory.getAgentUseCase(dto.agentType);
 
     const chat = await this.getChatUseCase.execute(
@@ -147,26 +147,46 @@ export class AiController {
       })
     );
 
+    const isResuming = !dto.message;
     const allMessages = (chat.messages as UIMessage[]) ?? [];
-    const existingMessage = allMessages.find((m) => m.id === dto.message?.id);
-    if (!existingMessage && dto.message) {
+    const existingUserMessage = allMessages.find((m) => m.id === dto.message?.id && m.role === 'user');
+    if (!existingUserMessage && dto.message) {
       allMessages.push(dto.message);
+
+      await this.keepAiChangesUseCase.execute(KeepAiChangesCommand.create({ chatId: dto.id, user }));
+    } else if (existingUserMessage && dto.message) {
+      const existingUserMessageIndex = allMessages.findIndex((m) => m.id === dto.message?.id && m.role === 'user');
+      allMessages[existingUserMessageIndex] = dto.message;
+
+      // get the current checkpoint and update it with the new message
+      const snapshot = chat.snapshots?.find((s) => s.messageId === dto.message?.id);
+      if (snapshot) {
+        const message = dto.message?.parts.find((p) => p.type === 'text')?.text ?? '';
+        await this.checkpointerService.updateUserMessage(dto.id, snapshot.checkpointId, message);
+      }
     }
+
+    const streamId = generateId();
 
     await this.upsertChatUseCase.execute(
       UpsertChatCommand.create({
         id: dto.id,
         messages: allMessages,
+        activeStreamId: streamId,
         user,
       })
     );
 
-    const langchainMessages = await toBaseMessages(allMessages);
+    const abortController = new AbortController();
+
+    request.once('aborted', () => abortController.abort());
+
+    const langchainMessages = isResuming ? null : await toBaseMessages(allMessages);
 
     const stream = await agentUsecase.execute({
       command: {
         user,
-        signal: request.signal,
+        signal: abortController.signal,
         messages: langchainMessages,
         chatId: dto.id,
       },
@@ -176,6 +196,36 @@ export class AiController {
       stream,
       response,
     });
+  }
+
+  @Post('/chat-stream/cancel')
+  @ApiOperation({
+    summary: 'Cancel active stream',
+    description: 'Clears activeStreamId for the chat when user explicitly stops the stream',
+  })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @ExternalApiAccessible()
+  async cancelStream(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Body() dto: CancelStreamDto
+  ): Promise<{ success: boolean }> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+    });
+    if (!isEnabled) {
+      throw new NotFoundException('Feature not enabled');
+    }
+
+    await this.cancelStreamUseCase.execute(
+      CancelStreamCommand.create({
+        chatId: dto.chatId,
+        user,
+      })
+    );
+
+    return { success: true };
   }
 
   @Get('/chat/:resourceType/:resourceId/latest')
@@ -235,5 +285,59 @@ export class AiController {
     );
 
     return chat;
+  }
+
+  @Post('/keep-changes')
+  @ApiOperation({
+    summary: 'Keep AI changes',
+    description: 'Accept all pending snapshots for a given message',
+  })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @ExternalApiAccessible()
+  async keepChanges(@UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData, @Body() dto: SnapshotActionDto) {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+    });
+    if (!isEnabled) {
+      throw new NotFoundException('Feature not enabled');
+    }
+
+    await this.keepAiChangesUseCase.execute(
+      KeepAiChangesCommand.create({
+        chatId: dto.chatId,
+        messageId: dto.messageId,
+        user,
+      })
+    );
+
+    return { success: true };
+  }
+
+  @Post('/revert-message')
+  @ApiOperation({
+    summary: 'Revert AI message',
+    description: 'Restore from the earliest snapshot for a given message and remove all related snapshots',
+  })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @ExternalApiAccessible()
+  async revertMessage(@UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData, @Body() dto: SnapshotActionDto) {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+    });
+    if (!isEnabled) {
+      throw new NotFoundException('Feature not enabled');
+    }
+
+    return this.revertMessageUseCase.execute(
+      RevertMessageCommand.create({
+        chatId: dto.chatId,
+        messageId: dto.messageId,
+        user,
+      })
+    );
   }
 }

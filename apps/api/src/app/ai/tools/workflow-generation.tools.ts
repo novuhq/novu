@@ -9,6 +9,7 @@ import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos';
 import { UpsertStepDataCommand } from '../../workflows-v2/usecases';
 import { buildStepSystemPrompt, buildStepUserPrompt, STEP_CONTENT_PROMPTS } from '../prompts/step.prompt';
+import { WORKFLOW_METADATA_PROMPT } from '../prompts/workflow.prompt';
 import {
   chatStepOutputSchema,
   delayStepOutputSchema,
@@ -23,6 +24,7 @@ import {
 import {
   completeWorkflowInputSchema,
   organizationMetaInputSchema,
+  workflowMetadataInputSchema,
   workflowMetadataOutputSchema,
 } from '../schemas/workflow-generation.schema';
 import { LlmService } from '../services/llm.service';
@@ -112,6 +114,42 @@ export function createWorkflowGenerationTools({
   draftState: DraftWorkflowState;
   getActiveIntegrationsUsecase: GetActiveIntegrations;
 }) {
+  const setWorkflowMetadataTool = tool(
+    async (input: z.infer<typeof workflowMetadataInputSchema>, config: ToolRuntime) => {
+      const writer = config.writer ?? (() => {});
+      const toolCallId = config.toolCallId;
+
+      await writeToolReasoningInChunks(generateId(), toolCallId, `**User request:**\n${input.userRequest}`, writer);
+
+      const result = await llmService.generateObject(
+        {
+          systemPrompt: WORKFLOW_METADATA_PROMPT,
+          userPrompt: input.userRequest,
+          schema: workflowMetadataOutputSchema,
+        },
+        { modelId: 'gpt-5-mini', provider: 'openai' }
+      );
+      draftState.setWorkflowMetadata(result);
+
+      const reasoningText =
+        `**Workflow details**\n\n` +
+        `**Name:** ${result.name}\n\n` +
+        `**Description:** ${result.description || 'no description'}\n\n` +
+        `**Tags:** ${result.tags?.join(', ') || 'none'}\n\n` +
+        `**Severity:** ${result.severity.toString().toLowerCase()}\n\n` +
+        `**Critical:** ${result.critical ? 'yes' : 'no'}`;
+
+      await writeToolReasoningInChunks(generateId(), toolCallId, reasoningText, writer);
+
+      return result;
+    },
+    {
+      name: AiWorkflowToolsEnum.SET_WORKFLOW_METADATA,
+      description: `Generate workflow metadata including name, description, tags, criticality, and severity based on the user's request. Call this tool only once with the user's original request.`,
+      schema: zodToJsonSchema(workflowMetadataInputSchema),
+    }
+  );
+
   const retrieveOrganizationMetaTool = tool(
     async () => {
       const activeIntegrations = await getActiveIntegrationsUsecase.execute(
@@ -125,6 +163,7 @@ export function createWorkflowGenerationTools({
       const channels = activeIntegrations
         .filter((integration) => integration._environmentId === command.user.environmentId)
         .map((integration) => integration.channel);
+      // TODO: implement fetching and reusing existing tags
       return { channels: [...new Set(channels)] };
     },
     {
@@ -472,6 +511,7 @@ export function createWorkflowGenerationTools({
   );
 
   return [
+    setWorkflowMetadataTool,
     retrieveOrganizationMetaTool,
     addEmailStepTool,
     addInAppStepTool,

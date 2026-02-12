@@ -17,4 +17,28 @@ export class CheckpointerService implements OnModuleInit {
   public getCheckpointer(): MongoDBSaver {
     return this.checkpointer;
   }
+
+  public async deleteThread(threadId: string): Promise<void> {
+    await this.checkpointer.deleteThread(threadId);
+  }
+
+  public async updateUserMessage(chatId: string, checkpointId: string | undefined, message: string): Promise<void> {
+    const checkpointer = this.getCheckpointer();
+    const config = { configurable: { thread_id: chatId, checkpoint_id: checkpointId } };
+    const checkpointTuple = await checkpointer.getTuple(config);
+    const checkpoint = checkpointTuple?.checkpoint;
+    const metadata = checkpointTuple?.metadata;
+
+    if (!checkpoint || !metadata) return;
+
+    const messages = checkpoint.channel_values?.messages;
+    if (!Array.isArray(messages)) return;
+
+    const lastHumanMessage = [...messages].reverse().find((msg) => msg.type === 'human');
+    if (!lastHumanMessage) return;
+
+    lastHumanMessage.content = message;
+
+    await checkpointer.put(config, checkpoint, metadata);
+  }
 }

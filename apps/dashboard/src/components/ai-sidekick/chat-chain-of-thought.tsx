@@ -24,11 +24,11 @@ const TOOL_DISPLAY_CONFIG: Record<
   { label: string; getDescription?: (input: ToolUIPart['input'], output: ToolUIPart['output']) => string }
 > = {
   [AiWorkflowToolsEnum.RETRIEVE_ORGANIZATION_META]: {
-    label: 'Organization metadata',
+    label: 'Checking organization metadata',
     getDescription: () => 'Organization metadata has been retrieved.',
   },
   [AiWorkflowToolsEnum.SET_WORKFLOW_METADATA]: {
-    label: 'Workflow metadata',
+    label: 'Generated workflow metadata',
     getDescription: () => 'Workflow tags, descriptions and other metadata has been added based on the workflow.',
   },
   [AiWorkflowToolsEnum.ADD_EMAIL_STEP]: {

@@ -12,7 +12,17 @@ export class UpsertChatUseCase {
   ) {}
 
   async execute(command: UpsertChatCommand): Promise<AiChatEntity> {
-    const { user, id, messages, activeStreamId, resourceType, resourceId } = command;
+    const {
+      user,
+      id,
+      messages,
+      activeStreamId,
+      resourceType,
+      resourceId,
+      session,
+      hasPendingChanges,
+      resumeCheckpointId,
+    } = command;
     const { environmentId, organizationId, _id: userId } = user;
 
     if (!id) {
@@ -23,23 +33,30 @@ export class UpsertChatUseCase {
         await this.resourceValidatorService.validateWorkflowLimit(command.user.environmentId);
       }
 
-      return this.aiChatRepository.create({
+      return this.aiChatRepository.create(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _userId: userId,
+          resourceType,
+          resourceId,
+          messages: messages ?? [],
+          activeStreamId: activeStreamId ?? null,
+        },
+        { session }
+      );
+    }
+
+    const existingChat = await this.aiChatRepository.findOne(
+      {
+        _id: id,
         _environmentId: environmentId,
         _organizationId: organizationId,
         _userId: userId,
-        resourceType,
-        resourceId,
-        messages: messages ?? [],
-        activeStreamId: activeStreamId ?? null,
-      });
-    }
-
-    const existingChat = await this.aiChatRepository.findOne({
-      _id: id,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _userId: userId,
-    });
+      },
+      undefined,
+      { session }
+    );
 
     if (!existingChat) {
       throw new NotFoundException(`Chat with id ${id} not found`);
@@ -50,6 +67,8 @@ export class UpsertChatUseCase {
       activeStreamId: activeStreamId,
       resourceType,
       resourceId,
+      hasPendingChanges,
+      resumeCheckpointId,
     };
 
     await this.aiChatRepository.update(
@@ -58,15 +77,20 @@ export class UpsertChatUseCase {
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
-      { $set: updateData }
+      { $set: updateData },
+      { session }
     );
 
-    const updated = await this.aiChatRepository.findOne({
-      _id: id,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _userId: userId,
-    });
+    const updated = await this.aiChatRepository.findOne(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _userId: userId,
+      },
+      undefined,
+      { session }
+    );
 
     if (!updated) {
       throw new Error(`Failed to update chat with id ${id}`);

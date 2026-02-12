@@ -1,9 +1,10 @@
 import { DynamicToolUIPart } from 'ai';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowRightSLine, RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
 import { ChainOfThoughtStep } from '../ai-elements/chain-of-thought';
 import { Shimmer } from '../ai-elements/shimmer';
+import { Button } from '../primitives/button';
 import { StyledMessageResponse } from './chat-message-response';
 
 function getToolStatus(state?: string): 'complete' | 'active' | 'pending' {
@@ -20,13 +21,24 @@ type WorkflowCompletionSummary = {
 };
 
 type WhatsChangedSectionProps = {
+  lastUserMessageId: string;
   completedToolPart: DynamicToolUIPart;
-  onApplyAll?: () => void;
-  onDiscard?: () => void;
-  onTryAgain?: () => void;
+  isReviewingChanges?: boolean;
+  isActionPending?: boolean;
+  onKeepAll: () => void;
+  onDiscard: (messageId: string) => void;
+  onTryAgain: (messageId: string) => void;
 };
 
-export function WhatsChangedSection({ completedToolPart }: WhatsChangedSectionProps) {
+export function WhatsChangedSection({
+  lastUserMessageId,
+  completedToolPart,
+  isReviewingChanges,
+  isActionPending,
+  onKeepAll,
+  onDiscard,
+  onTryAgain,
+}: WhatsChangedSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const status = getToolStatus(completedToolPart.state);
 
@@ -108,6 +120,56 @@ export function WhatsChangedSection({ completedToolPart }: WhatsChangedSectionPr
           )}
         </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {isReviewingChanges && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-start gap-1.5 py-1.5"
+          >
+            <span className="text-label-xs text-[#99A0AE]">Suggestions are ready. You can discard them if needed.</span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent"
+                onClick={onKeepAll}
+                disabled={isActionPending}
+                trailingIcon={RiCheckLine}
+              >
+                Keep all
+              </Button>
+              <span className="text-[#99A0AE]">·</span>
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent"
+                onClick={() => onDiscard(lastUserMessageId)}
+                disabled={isActionPending}
+                trailingIcon={RiCloseLine}
+              >
+                Discard
+              </Button>
+              <span className="text-[#99A0AE]">·</span>
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                onClick={() => onTryAgain(lastUserMessageId)}
+                disabled={isActionPending}
+                trailingIcon={RiRefreshLine}
+              >
+                Try again
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -37,6 +37,12 @@ export type GenerateWorkflowResponse = {
   reasoning: WorkflowReasoning;
 };
 
+export type AiChatSnapshotRef = {
+  _snapshotId: string;
+  messageId: string;
+  checkpointId?: string;
+};
+
 export type AiChatResponseDto = {
   _id: string;
   _organizationId: string;
@@ -48,6 +54,9 @@ export type AiChatResponseDto = {
 
   messages: UIMessage[];
   activeStreamId?: string | null;
+  snapshots?: AiChatSnapshotRef[];
+
+  hasPendingChanges: boolean;
 
   createdAt: string;
   updatedAt: string;
@@ -104,4 +113,51 @@ export function getChatSteamUrl(): string {
 
 export function getChatStreamResumeUrl(id: string): string {
   return `${getApiBaseUrl()}/v2/ai/chat/${id}/stream`;
+}
+
+export async function keepAiChanges({
+  environment,
+  chatId,
+  messageId,
+}: {
+  environment: IEnvironment;
+  chatId: string;
+  messageId: string;
+}): Promise<{ success: boolean }> {
+  const { data: responseData } = await postV2<{ data: { success: boolean } }>('/ai/keep-changes', {
+    environment,
+    body: { chatId, messageId },
+  });
+
+  return responseData;
+}
+
+export async function revertMessage({
+  environment,
+  chatId,
+  messageId,
+}: {
+  environment: IEnvironment;
+  chatId: string;
+  messageId: string;
+}): Promise<void> {
+  await postV2('/ai/revert-message', {
+    environment,
+    body: { chatId, messageId },
+  });
+}
+
+export async function cancelStream({
+  environment,
+  chatId,
+}: {
+  environment: IEnvironment;
+  chatId: string;
+}): Promise<{ success: boolean }> {
+  const { data: responseData } = await postV2<{ data: { success: boolean } }>('/ai/chat-stream/cancel', {
+    environment,
+    body: { chatId },
+  });
+
+  return responseData;
 }

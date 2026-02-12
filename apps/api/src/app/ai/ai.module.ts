@@ -1,31 +1,37 @@
 import { Module } from '@nestjs/common';
 import { ResourceValidatorService } from '@novu/application-generic';
-import { AiChatRepository } from '@novu/dal';
+import { AiChatRepository, SnapshotRepository } from '@novu/dal';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
 import { AiController } from './ai.controller';
 import { AiAgentFactory, LlmService } from './services';
 import { CheckpointerService } from './services/checkpointer.service';
+import { CancelStreamUseCase } from './usecases/cancel-stream';
 import { GetChatUseCase } from './usecases/get-chat';
 import { GetLatestChatUseCase } from './usecases/get-latest-chat';
 import { GetSuggestionsUseCase } from './usecases/get-suggestions';
-import { StreamCreateWorkflowUseCase } from './usecases/stream-create-workflow';
-import { StreamWorkflowStepsGenerationUseCase } from './usecases/stream-workflow-steps-generation';
+import { KeepAiChangesUseCase } from './usecases/keep-ai-changes';
+import { RevertMessageUseCase, RevertResourceFactory, WorkflowRevertStrategy } from './usecases/revert-message';
+import { StreamWorkflowGenerationUseCase } from './usecases/stream-workflow-generation';
 import { UpsertChatUseCase } from './usecases/upsert-chat';
 
 const USE_CASES = [
+  CancelStreamUseCase,
   GetChatUseCase,
   GetLatestChatUseCase,
   GetSuggestionsUseCase,
-  StreamCreateWorkflowUseCase,
-  StreamWorkflowStepsGenerationUseCase,
+  KeepAiChangesUseCase,
+  RevertMessageUseCase,
+  RevertResourceFactory,
+  WorkflowRevertStrategy,
+  StreamWorkflowGenerationUseCase,
   UpsertChatUseCase,
   ResourceValidatorService,
   CheckpointerService,
 ];
 
-const REPOSITORIES = [AiChatRepository];
+const REPOSITORIES = [AiChatRepository, SnapshotRepository];
 
 const SERVICES = [LlmService, AiAgentFactory];
 

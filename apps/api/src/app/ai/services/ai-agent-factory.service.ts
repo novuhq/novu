@@ -1,20 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AiAgentTypeEnum } from '@novu/shared';
 import { BaseStreamGenerationAgent } from '../types';
-import { StreamCreateWorkflowUseCase } from '../usecases/stream-create-workflow';
-import { StreamWorkflowStepsGenerationUseCase } from '../usecases/stream-workflow-steps-generation';
+import { StreamWorkflowGenerationUseCase } from '../usecases/stream-workflow-generation';
 
 @Injectable()
 export class AiAgentFactory {
   private readonly agents: Map<AiAgentTypeEnum, BaseStreamGenerationAgent>;
 
-  constructor(
-    private readonly createWorkflowUseCase: StreamCreateWorkflowUseCase,
-    private readonly addStepsUseCase: StreamWorkflowStepsGenerationUseCase
-  ) {
+  constructor(private readonly addStepsUseCase: StreamWorkflowGenerationUseCase) {
     this.agents = new Map<AiAgentTypeEnum, BaseStreamGenerationAgent>([
-      [AiAgentTypeEnum.CREATE_WORKFLOW, this.createWorkflowUseCase],
-      [AiAgentTypeEnum.ADD_WORKFLOW_STEPS, this.addStepsUseCase],
+      [AiAgentTypeEnum.GENERATE_WORKFLOW, this.addStepsUseCase],
     ]);
   }
 

@@ -86,22 +86,34 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     onValueChange: handleClose,
   });
 
-  const handleData = useCallback<ChatOnDataCallback<UIMessage>>((data) => {
-    if (
-      data &&
-      typeof data === 'object' &&
-      'type' in data &&
-      (data as { type: string }).type === 'data-workflow-created'
-    ) {
-      const workflowCreatedEvent = data.data as unknown as WorkflowCreatedEvent;
-      createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
-    }
-  }, []);
+  const handleData = useCallback<ChatOnDataCallback<UIMessage>>(
+    (data) => {
+      if (
+        data &&
+        typeof data === 'object' &&
+        'type' in data &&
+        (data as { type: string }).type === 'data-workflow-created'
+      ) {
+        const workflowCreatedEvent = data.data as unknown as WorkflowCreatedEvent;
+        createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
+        setTimeout(() => {
+          navigate(
+            buildRoute(ROUTES.EDIT_WORKFLOW, {
+              environmentSlug: currentEnvironment?.slug ?? '',
+              workflowSlug: createdWorkflowSlugRef.current ?? '',
+            }),
+            { state: { chatId: workflowCreatedEvent.chatId } }
+          );
+        }, 1000);
+      }
+    },
+    [currentEnvironment?.slug, navigate]
+  );
 
   const chatId = useMemo(() => generateId(), []);
   const { sendPrompt, messages, isGenerating } = useAiChatStream({
     id: chatId,
-    agentType: AiAgentTypeEnum.CREATE_WORKFLOW,
+    agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
     onData: handleData,
   });
 
@@ -132,16 +144,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
           showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
         },
         onSuccess: async (chat) => {
-          await sendPrompt({ chatId: chat._id, prompt });
-          setTimeout(() => {
-            navigate(
-              buildRoute(ROUTES.EDIT_WORKFLOW, {
-                environmentSlug: currentEnvironment?.slug ?? '',
-                workflowSlug: createdWorkflowSlugRef.current ?? '',
-              }),
-              { state: { chatId: chat._id } }
-            );
-          }, 1000);
+          sendPrompt({ chatId: chat._id, prompt });
         },
       }
     );

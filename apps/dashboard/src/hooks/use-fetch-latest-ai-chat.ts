@@ -13,7 +13,7 @@ export const useFetchLatestAiChat = ({
 }) => {
   const { currentEnvironment } = useEnvironment();
 
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: [QueryKeys.fetchChat, currentEnvironment?._id, resourceType, resourceId],
     queryFn: () => fetchLatestChat({ environment: currentEnvironment!, resourceType, resourceId: resourceId! }),
     enabled: !!currentEnvironment && !!resourceType && !!resourceId,
@@ -25,5 +25,6 @@ export const useFetchLatestAiChat = ({
     latestChat: data,
     isPending,
     error,
+    refetch,
   };
 };

@@ -111,7 +111,7 @@ export const aiSkipConditionSchema = z
   .union([aiJsonLogicConditionSchema, aiJsonLogicVarSchema])
   .nullable()
   .describe(
-    'JSONLogic condition for conditionally skipping step execution. When condition evaluates to true, step is SKIPPED. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, true] } skips when online. { "!=": [{ "var": "payload.priority" }, "high"] } skips when not high priority.'
+    'JSONLogic condition for conditionally executing the workflow step. When condition evaluates to true, step is executed. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, "false"] } step is executed when subscriber is not online, { "!=": [{ "var": "payload.priority" }, "high"] } step is executed when is not high priority.'
   );
 
 /**

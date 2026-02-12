@@ -23,6 +23,7 @@ export * from './repositories/notification-template';
 export * from './repositories/organization';
 export * from './repositories/preferences';
 export * from './repositories/schema-default.options';
+export * from './repositories/snapshot';
 export * from './repositories/subscriber';
 export * from './repositories/tenant';
 export * from './repositories/topic';

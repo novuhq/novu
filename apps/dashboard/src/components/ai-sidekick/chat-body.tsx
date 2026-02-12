@@ -1,7 +1,8 @@
 import { AiWorkflowToolsEnum } from '@novu/shared';
 import { ChatStatus, DataUIPart, DynamicToolUIPart, UIMessage } from 'ai';
+import { RiArrowGoBackLine, RiRefreshLine } from 'react-icons/ri';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
-import { Message, MessageContent, MessageResponse } from '../ai-elements/message';
+import { Message } from '../ai-elements/message';
 import {
   PromptInput,
   PromptInputBody,
@@ -10,26 +11,28 @@ import {
   PromptInputTextarea,
 } from '../ai-elements/prompt-input';
 import { Shimmer } from '../ai-elements/shimmer';
+import { Button } from '../primitives/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { ChatChainOfThought } from './chat-chain-of-thought';
 import { WhatsChangedSection } from './whats-changed-section';
 
-function parseToolParts(messages: UIMessage[], includeAll = false): Array<DynamicToolUIPart> {
+function getToolPartsFromMessage(message: UIMessage): Array<DynamicToolUIPart> {
   const tools: Array<DynamicToolUIPart> = [];
 
-  for (const message of messages) {
-    if (message.role !== 'assistant') continue;
-
-    for (const part of message.parts) {
-      if (part.type.startsWith('dynamic-tool')) {
-        const toolPart = part as DynamicToolUIPart;
-        if (includeAll || toolPart.state === 'output-available') {
-          tools.push(toolPart);
-        }
-      }
+  for (const part of message.parts) {
+    if (part.type.startsWith('dynamic-tool')) {
+      tools.push(part as DynamicToolUIPart);
     }
   }
 
   return tools;
+}
+
+function getToolCallIdFromReasoningPart(
+  part: DataUIPart<{ reasoning: { toolCallId: string; text: string } }>
+): string | undefined {
+  const data = part.data as { toolCallId?: string; reasoning?: { toolCallId: string } };
+  return data.toolCallId ?? data.reasoning?.toolCallId;
 }
 
 function extractMessageContent(message: UIMessage): { text: string } {
@@ -77,19 +80,35 @@ export const ChatBody = ({
   onInputChange,
   isGenerating,
   status,
+  stop,
   onSubmit,
   messages,
   dataParts,
   isSubmitDisabled,
+  isReviewingChanges,
+  isActionPending,
+  lastUserMessageId,
+  onKeepAll,
+  onDiscard,
+  onTryAgain,
+  onRevertMessage,
 }: {
   inputText: string;
   onInputChange: (text: string) => void;
   isGenerating: boolean;
   status: ChatStatus;
+  stop: () => void;
   onSubmit: (message: string) => void;
   messages: UIMessage[];
   dataParts: Array<DataUIPart<{ reasoning: { toolCallId: string; text: string } }>>;
   isSubmitDisabled: boolean;
+  isReviewingChanges?: boolean;
+  isActionPending?: boolean;
+  lastUserMessageId?: string;
+  onKeepAll: () => void;
+  onDiscard: (messageId: string) => void;
+  onTryAgain: (messageId: string) => void;
+  onRevertMessage: (messageId: string) => void;
 }) => {
   return (
     <>
@@ -97,20 +116,60 @@ export const ChatBody = ({
         <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
           {messages.map((chatMessage) => {
             const { text } = extractMessageContent(chatMessage);
-            const toolReasoningParts = dataParts.filter((p) => p.type === 'data-reasoning');
-            const allToolParts = parseToolParts(messages, true).filter(
-              (t) => t.toolName !== AiWorkflowToolsEnum.COMPLETE_WORKFLOW
-            );
-            const completedToolPart = parseToolParts(messages, true).find(
+            const messageToolParts = getToolPartsFromMessage(chatMessage);
+            const allToolParts = messageToolParts.filter((t) => t.toolName !== AiWorkflowToolsEnum.COMPLETE_WORKFLOW);
+            const completedToolPart = messageToolParts.find(
               (t) => t.toolName === AiWorkflowToolsEnum.COMPLETE_WORKFLOW
             );
+            const toolCallIds = new Set(messageToolParts.map((t) => t.toolCallId));
+            const toolReasoningParts = dataParts.filter((p) => {
+              if (p.type !== 'data-reasoning') return false;
+              const partToolCallId = getToolCallIdFromReasoningPart(p);
+              return partToolCallId != null && toolCallIds.has(partToolCallId);
+            });
 
             return (
               <Message from={chatMessage.role} key={chatMessage.id}>
+                {chatMessage.role === 'user' && (
+                  <div className="flex justify-end gap-1 -mb-1">
+                    <Tooltip delayDuration={2000}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          mode="ghost"
+                          size="2xs"
+                          className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                          onClick={() => onRevertMessage(chatMessage.id)}
+                          disabled={isGenerating || isActionPending}
+                          trailingIcon={RiArrowGoBackLine}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Revert</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip delayDuration={2000}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          mode="ghost"
+                          size="2xs"
+                          className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                          onClick={() => onTryAgain(chatMessage.id)}
+                          disabled={isGenerating || isActionPending}
+                          trailingIcon={RiRefreshLine}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Try again</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                )}
                 {chatMessage.role === 'user' && text && (
-                  <MessageContent>
-                    <MessageResponse>{text}</MessageResponse>
-                  </MessageContent>
+                  <div className="flex justify-end bg-[#F1F1F1] rounded-lg p-2 max-w-full self-end">
+                    <span className="text-label-xs text-text-sub">{text}</span>
+                  </div>
                 )}
                 {chatMessage.role === 'assistant' && (
                   <>
@@ -121,7 +180,17 @@ export const ChatBody = ({
                         isStreaming={isGenerating}
                       />
                     )}
-                    {completedToolPart && <WhatsChangedSection completedToolPart={completedToolPart} />}
+                    {completedToolPart && lastUserMessageId && (
+                      <WhatsChangedSection
+                        lastUserMessageId={lastUserMessageId}
+                        completedToolPart={completedToolPart}
+                        isReviewingChanges={isReviewingChanges}
+                        isActionPending={isActionPending}
+                        onKeepAll={onKeepAll}
+                        onDiscard={onDiscard}
+                        onTryAgain={onTryAgain}
+                      />
+                    )}
                   </>
                 )}
               </Message>

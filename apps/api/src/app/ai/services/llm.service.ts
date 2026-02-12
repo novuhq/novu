@@ -35,7 +35,7 @@ export class LlmService {
 
   constructor(private readonly logger: PinoLogger) {
     const provider = (process.env.AI_LLM_PROVIDER as LlmProvider) || 'openai';
-    const apiKey = process.env.AI_LLM_API_KEY;
+    const apiKey = process.env.AI_LLM_API_KEY as string;
 
     if (!apiKey) {
       this.logger.warn('LLM service AI_LLM_API_KEY not configured.');

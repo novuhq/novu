@@ -1,7 +1,15 @@
 import { UIMessage, useChat as useChatStream } from '@ai-sdk/react';
 import { AiAgentTypeEnum } from '@novu/shared';
-import { ChatOnDataCallback, ChatOnToolCallCallback, DataUIPart, DefaultChatTransport, UIDataTypes, UITools } from 'ai';
-import { useCallback, useMemo } from 'react';
+import {
+  ChatOnDataCallback,
+  ChatOnFinishCallback,
+  ChatOnToolCallCallback,
+  DataUIPart,
+  DefaultChatTransport,
+  UIDataTypes,
+  UITools,
+} from 'ai';
+import { useCallback, useMemo, useState } from 'react';
 import { getChatSteamUrl } from '@/api/ai';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getToken } from '@/utils/auth';
@@ -23,7 +31,7 @@ type UseAiChatOptions<D extends UIDataTypes = UIDataTypes, T extends UITools = U
   initialMessages?: UIMessage<unknown, D, T>[];
   onData?: ChatOnDataCallback<UIMessage>;
   onToolCall?: ChatOnToolCallCallback<UIMessage>;
-  onFinish?: () => void;
+  onFinish?: ChatOnFinishCallback<UIMessage<unknown, D, T>>;
   onError?: (error: Error) => void;
 };
 
@@ -38,6 +46,7 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
   const { currentEnvironment } = useEnvironment();
   const environmentIdRef = useDataRef(currentEnvironment?._id);
   const agentTypeRef = useDataRef(agentType);
+  const [isAborted, setIsAborted] = useState(false);
 
   const transport = useMemo(() => {
     return new DefaultChatTransport({
@@ -52,10 +61,13 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
         };
       },
       prepareSendMessagesRequest: (options) => {
+        const resumeMessage = options.messages.length > 0 ? options.messages[options.messages.length - 1] : null;
+        const isResume = (options.requestMetadata as { resume?: boolean })?.resume ?? false;
+
         return {
           body: {
             id: options.id,
-            message: options.messages.length > 0 ? options.messages[options.messages.length - 1] : null,
+            message: isResume ? undefined : resumeMessage,
             agentType: agentTypeRef.current,
             ...options.body,
           },
@@ -77,14 +89,16 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
   const isGenerating = status === 'streaming' || status === 'submitted';
 
   const sendPrompt = useCallback(
-    ({ chatId, prompt }: { chatId?: string; prompt: string }) => {
-      return sendMessage({ text: prompt }, { body: { id: chatId, agentType } });
+    ({ messageId, chatId, prompt }: { messageId?: string; chatId?: string; prompt: string }) => {
+      setIsAborted(false);
+      return sendMessage({ text: prompt, messageId }, { body: { id: chatId, agentType } });
     },
     [sendMessage, agentType]
   );
 
   const resume = useCallback(() => {
-    sendMessage(undefined);
+    setIsAborted(false);
+    sendMessage(undefined, { metadata: { resume: true } });
   }, [sendMessage]);
 
   const isReady = status === 'ready';
@@ -117,13 +131,19 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
     return parts;
   }, [messages]);
 
+  const handleStop = useCallback(() => {
+    setIsAborted(true);
+    stop();
+  }, [stop]);
+
   return {
     id,
     messages,
     sendPrompt,
     status,
     error,
-    stop,
+    isAborted,
+    stop: handleStop,
     setMessages,
     resume,
     isGenerating,

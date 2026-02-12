@@ -9,14 +9,17 @@ export enum AiResourceTypeEnum {
 }
 
 export enum AiAgentTypeEnum {
-  CREATE_WORKFLOW = 'create-workflow',
-  ADD_WORKFLOW_STEPS = 'add-workflow-steps',
+  GENERATE_WORKFLOW = 'generate-workflow',
 }
 
 export enum AiMessageRoleEnum {
   USER = 'user',
   ASSISTANT = 'assistant',
   SYSTEM = 'system',
+}
+
+export enum SnapshotSourceTypeEnum {
+  AI_CHAT = 'ai-chat',
 }
 
 export enum AiWorkflowToolsEnum {
