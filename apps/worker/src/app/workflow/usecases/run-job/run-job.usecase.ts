@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -7,6 +7,8 @@ import {
   GetSubscriberSchedule,
   GetSubscriberScheduleCommand,
   getJobDigest,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
@@ -34,7 +36,6 @@ import {
 import { setUser } from '@sentry/node';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { LRUCache } from 'lru-cache';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { PartialNotificationEntity } from '../add-job/add-job.command';
@@ -48,13 +49,6 @@ import { RunJobCommand } from './run-job.command';
 import { calculateNextAvailableTime, isWithinSchedule } from './schedule-validator';
 
 const nr = require('newrelic');
-
-const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
-  max: 1000,
-  ttl: 1000 * 30,
-});
-
-const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | undefined>>();
 
 export type SelectedWorkflowFields = Pick<NotificationTemplateEntity, 'steps'>;
 
@@ -84,7 +78,8 @@ export class RunJob {
     private logger: PinoLogger,
     private subscriberRepository: SubscriberRepository,
     private featureFlagsService: FeatureFlagsService,
-    private executeBridgeJob: ExecuteBridgeJob
+    private executeBridgeJob: ExecuteBridgeJob,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -390,7 +385,7 @@ export class RunJob {
       throw caughtError;
     } finally {
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
-        await this.tryQueueNextJobs(job, notification);
+        await this.tryQueueNextJobs(job, notification, !!error);
       } else if (!isJobExtendedToSubscriberSchedule) {
         // Update workflow run status based on step runs when halting on step failure
         await this.workflowRunService.updateDeliveryLifecycle({
@@ -400,6 +395,7 @@ export class RunJob {
           organizationId: job._organizationId,
           _subscriberId: job._subscriberId,
           notification,
+          currentJob: { type: job.type, _id: job._id },
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -413,51 +409,27 @@ export class RunJob {
     environmentId: string,
     organizationId: string,
     source?: string
-  ): Promise<NotificationTemplateEntity | undefined> {
-    const cacheKey = `${environmentId}:${templateId}`;
+  ): Promise<NotificationTemplateEntity> {
+    const workflow = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.WORKFLOW,
+      `${environmentId}:${templateId}`,
+      async () => {
+        const result = await this.notificationTemplateRepository.findById(templateId, environmentId);
 
-    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-      component: 'worker-workflow',
-    });
-
-    const isCacheEnabled = isFeatureFlagEnabled && !source;
-
-    if (isCacheEnabled) {
-      const cached = workflowCache.get(cacheKey);
-      if (cached) {
-        return cached;
+        return result;
+      },
+      {
+        environmentId,
+        organizationId,
+        skipCache: !!source,
       }
+    );
 
-      const inflightRequest = workflowInflightRequests.get(cacheKey);
-      if (inflightRequest) {
-        return inflightRequest;
-      }
+    if (!workflow) {
+      throw new NotFoundException(`Workflow ${templateId} not found`);
     }
 
-    const fetchPromise = this.notificationTemplateRepository
-      .findById(templateId, environmentId)
-      .then((workflow) => {
-        if (workflow && isCacheEnabled) {
-          workflowCache.set(cacheKey, workflow);
-        }
-
-        return workflow ?? undefined;
-      })
-      .finally(() => {
-        if (isCacheEnabled) {
-          workflowInflightRequests.delete(cacheKey);
-        }
-      });
-
-    if (isCacheEnabled) {
-      workflowInflightRequests.set(cacheKey, fetchPromise);
-    }
-
-    return fetchPromise;
+    return workflow;
   }
 
   private isUnsnoozeJob(job: JobEntity) {
@@ -468,8 +440,16 @@ export class RunJob {
    * Attempts to queue subsequent jobs in the workflow chain.
    * If queueNextJob.execute returns undefined, we stop the workflow.
    * Otherwise, we continue trying to queue the next job in the chain.
+   *
+   * @param hasCurrentJobError - If true, the current job failed with an error. When the workflow
+   *   ends (no next job), we skip creating the status trace here and let setJobAsFailed handle it
+   *   to avoid duplicate traces and ensure correct error status.
    */
-  private async tryQueueNextJobs(job: JobEntity, notification?: PartialNotificationEntity | null): Promise<void> {
+  private async tryQueueNextJobs(
+    job: JobEntity,
+    notification?: PartialNotificationEntity | null,
+    hasCurrentJobError = false
+  ): Promise<void> {
     let currentJob: JobEntity | null = job;
     let nextJob: JobEntity | null = null;
     if (!currentJob) {
@@ -490,15 +470,18 @@ export class RunJob {
         });
 
         if (!nextJob) {
-          // Update workflow run status when there is no next job (workflow complete)
-          await this.workflowRunService.updateDeliveryLifecycle({
-            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            notificationId: currentJob._notificationId,
-            environmentId: currentJob._environmentId,
-            organizationId: currentJob._organizationId,
-            _subscriberId: currentJob._subscriberId,
-            notification,
-          });
+          if (!hasCurrentJobError) {
+            // Update workflow run status when there is no next job (workflow complete successfully)
+            await this.workflowRunService.updateDeliveryLifecycle({
+              workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+              notificationId: currentJob._notificationId,
+              environmentId: currentJob._environmentId,
+              organizationId: currentJob._organizationId,
+              _subscriberId: currentJob._subscriberId,
+              notification,
+              currentJob: { type: currentJob.type, _id: currentJob._id },
+            });
+          }
 
           return;
         }
@@ -558,6 +541,7 @@ export class RunJob {
             organizationId: nextJob._organizationId,
             _subscriberId: nextJob._subscriberId,
             notification,
+            currentJob: { type: nextJob.type, _id: nextJob._id },
           });
         }
       } catch (error: unknown) {
@@ -571,6 +555,7 @@ export class RunJob {
             organizationId: currentJob._organizationId,
             _subscriberId: currentJob._subscriberId,
             notification,
+            currentJob: { type: currentJob.type, _id: currentJob._id },
           });
 
           return;
@@ -585,7 +570,7 @@ export class RunJob {
         );
 
         const isHaltingWorkflow = shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error as Error);
-        const isLastJobInWorkflow = !jobAfterNext || isHaltingWorkflow;
+        const isLastJobFailed = !jobAfterNext || isHaltingWorkflow;
 
         await this.setJobAsFailed.execute(
           SetJobAsFailedCommand.create({
@@ -593,7 +578,7 @@ export class RunJob {
             jobId: nextJob._id,
             organizationId: nextJob._organizationId,
             userId: nextJob._userId,
-            isLastJobInWorkflow,
+            isLastJobFailed,
           }),
           error as Error
         );
@@ -747,10 +732,17 @@ export class RunJob {
   }
 
   /**
-   * Conditionally updates the delivery lifecycle only if there are no remaining action steps
-   * in the workflow. This optimization avoids unnecessary calculations for workflows that
-   * will complete quickly. Also skips updating if the current job itself is an action step.
-   * Additionally, skips execution if the current step is the last step in the workflow, because it will be updated as part of the workflow run finalization.
+   * Conditionally updates the delivery lifecycle based on workflow state and feature flags.
+   *
+   * When IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED is ON:
+   * - Optimizes by skipping updates when there are no remaining action steps (delay, digest, etc.)
+   * - Also skips for the last step since finalization handles it via state machine transitions
+   * - The transition-based approach correctly handles "all at once" finalization scenarios
+   *
+   * When IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED is OFF:
+   * - Always calls updateDeliveryLifecycle for channel steps
+   * - The legacy shouldCreateTrace logic requires incremental calls to work correctly
+   *   (it checks for length === 1 to prevent duplicates)
    */
   private async conditionallyUpdateDeliveryLifecycle(
     job: JobEntity,
@@ -770,37 +762,48 @@ export class RunJob {
       return;
     }
 
-    const workflowWithSteps: SelectedWorkflowFields | null =
-      workflow ??
-      (await this.notificationTemplateRepository.findOne(
-        {
-          _id: job._templateId,
-          _environmentId: job._environmentId,
-        },
-        SELECTED_WORKFLOW_FIELDS_PROJECTION
-      ));
+    const isTransitionEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED,
+      organization: { _id: job._organizationId },
+      environment: { _id: job._environmentId },
+      defaultValue: false,
+    });
 
-    if (!workflowWithSteps || !workflowWithSteps.steps) {
-      return;
-    }
+    if (isTransitionEnabled) {
+      const workflowWithSteps: SelectedWorkflowFields | null =
+        workflow ??
+        (await this.notificationTemplateRepository.findOne(
+          {
+            _id: job._templateId,
+            _environmentId: job._environmentId,
+          },
+          SELECTED_WORKFLOW_FIELDS_PROJECTION
+        ));
 
-    const isLastStep = await this.isLastStepInWorkflow(job, workflowWithSteps);
-    if (isLastStep) {
-      this.logger.trace(
-        { nv: { jobId: job._id, stepId: job.step?._id } },
-        'Skipping delivery lifecycle update for last step in workflow'
-      );
-      return;
-    }
+      if (!workflowWithSteps || !workflowWithSteps.steps) {
+        return;
+      }
 
-    const hasActionSteps = await this.hasRemainingActionSteps(job, workflowWithSteps);
+      const isLastStep = await this.isLastStepInWorkflow(job, workflowWithSteps);
+      if (isLastStep) {
+        this.logger.trace(
+          { nv: { jobId: job._id, stepId: job.step?._id } },
+          'Skipping delivery lifecycle update for last step in workflow (transition enabled)'
+        );
 
-    if (hasActionSteps) {
-      this.logger.trace(
-        { nv: { jobId: job._id, stepId: job.step?._id } },
-        'Skipping delivery lifecycle update for step with action type'
-      );
-      return;
+        return;
+      }
+
+      const hasActionSteps = await this.hasRemainingActionSteps(job, workflowWithSteps);
+
+      if (!hasActionSteps) {
+        this.logger.trace(
+          { nv: { jobId: job._id, stepId: job.step?._id } },
+          'Skipping delivery lifecycle update - no remaining action steps (transition enabled)'
+        );
+
+        return;
+      }
     }
 
     await this.workflowRunService.updateDeliveryLifecycle({
@@ -810,6 +813,7 @@ export class RunJob {
       organizationId: job._organizationId,
       _subscriberId: job._subscriberId,
       notification,
+      currentJob: { type: job.type, _id: job._id },
     });
   }
 

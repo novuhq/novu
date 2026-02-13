@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
-import { cacheService, PlatformException } from '@novu/application-generic';
+import { cacheService, featureFlagsService, InMemoryLRUCacheService, PlatformException } from '@novu/application-generic';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { AuthService } from './services/auth.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
@@ -23,6 +23,8 @@ export function getEEModuleConfig(): ModuleMetadata {
       JwtSubscriberStrategy,
       AuthService,
       cacheService,
+      featureFlagsService,
+      InMemoryLRUCacheService,
       RootEnvironmentGuard,
     ],
     exports: [...eeAuthModule.exports, RootEnvironmentGuard, AuthService],

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DeliveryLifecycleEventType, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { subMonths, subWeeks } from 'date-fns';
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 
@@ -8,6 +8,25 @@ import { EnvironmentId } from '../environment';
 import { NotificationDBModel, NotificationEntity } from './notification.entity';
 import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
 import { Notification } from './notification.schema';
+
+const DELIVERY_LIFECYCLE_ORDER: Record<DeliveryLifecycleEventType, number> = {
+  workflow_run_delivery_pending: 0,
+  workflow_run_delivery_sent: 1,
+  workflow_run_delivery_delivered: 2,
+  workflow_run_delivery_interacted: 3,
+  workflow_run_delivery_skipped: -1,
+  workflow_run_delivery_canceled: -1,
+  workflow_run_delivery_errored: -1,
+  workflow_run_delivery_merged: -1,
+};
+
+const TERMINAL_EVENTS: DeliveryLifecycleEventType[] = [
+  'workflow_run_delivery_skipped',
+  'workflow_run_delivery_canceled',
+  'workflow_run_delivery_errored',
+  'workflow_run_delivery_merged',
+  'workflow_run_delivery_interacted',
+];
 
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
@@ -345,5 +364,55 @@ export class NotificationRepository extends BaseRepository<
 
   estimatedDocumentCount() {
     return this.MongooseModel.estimatedDocumentCount();
+  }
+
+  /**
+   * Atomically transitions a notification's delivery lifecycle event forward only.
+   * Prevents backward transitions and returns whether the update succeeded.
+   */
+  async tryDeliveryLifecycleTransition(
+    notificationId: string,
+    organizationId: string,
+    environmentId: string,
+    targetEvent: DeliveryLifecycleEventType
+  ): Promise<{ isUpdated: boolean; previousEvent?: DeliveryLifecycleEventType }> {
+    const targetOrder = DELIVERY_LIFECYCLE_ORDER[targetEvent];
+    const isTerminal = TERMINAL_EVENTS.includes(targetEvent);
+
+    const progressionEvents = Object.entries(DELIVERY_LIFECYCLE_ORDER)
+      .filter(([, order]) => order >= 0 && order < targetOrder)
+      .map(([event]) => event as DeliveryLifecycleEventType);
+
+    const condition: FilterQuery<NotificationDBModel> = isTerminal
+      ? {
+          $or: [
+            { lastEmittedDeliveryEvent: { $exists: false } },
+            { lastEmittedDeliveryEvent: null },
+            { lastEmittedDeliveryEvent: 'workflow_run_delivery_pending' },
+          ],
+        }
+      : {
+          $or: [
+            { lastEmittedDeliveryEvent: { $exists: false } },
+            { lastEmittedDeliveryEvent: null },
+            { lastEmittedDeliveryEvent: { $in: progressionEvents } },
+          ],
+        };
+
+    const result = await this.findOneAndUpdate(
+      {
+        _id: notificationId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        ...condition,
+      },
+      { $set: { lastEmittedDeliveryEvent: targetEvent } },
+      { returnDocument: 'before' }
+    );
+
+    return {
+      isUpdated: result !== null,
+      previousEvent: result?.lastEmittedDeliveryEvent as DeliveryLifecycleEventType | undefined,
+    };
   }
 }

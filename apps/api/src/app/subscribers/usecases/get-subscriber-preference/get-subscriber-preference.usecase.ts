@@ -4,6 +4,8 @@ import {
   filteredPreference,
   GetPreferences,
   GetPreferencesResponseDto,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   MergePreferences,
@@ -17,6 +19,7 @@ import {
   NotificationTemplateRepository,
   PreferencesEntity,
   PreferencesRepository,
+  SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import {
@@ -25,6 +28,7 @@ import {
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
+  SeverityLevelEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
 import { chunk } from 'es-toolkit';
@@ -36,24 +40,27 @@ export class GetSubscriberPreference {
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private preferencesRepository: PreferencesRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
-    const subscriber =
+    const subscriber: Pick<SubscriberEntity, '_id'> | null =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId, false, '_id'));
     if (!subscriber) {
       throw new NotFoundException(`Subscriber with id: ${command.subscriberId} not found`);
     }
 
-    const workflowList = await this.notificationTemplateRepository.filterActive({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      tags: command.tags,
-      severity: command.severity,
-    });
+    const workflowList =
+      command.workflowList ??
+      (await this.getActiveWorkflows({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        tags: command.tags,
+        severity: command.severity,
+      }));
 
     const workflowIds = workflowList.map((wf) => wf._id);
 
@@ -327,5 +334,47 @@ export class GetSubscriberPreference {
       subscriberWorkflowPreferences,
       subscriberGlobalPreference: subscriberGlobalPreferences[0] ?? null,
     };
+  }
+
+  @Instrument()
+  private async getActiveWorkflows({
+    organizationId,
+    environmentId,
+    tags,
+    severity,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    tags?: string[];
+    severity?: SeverityLevelEnum[];
+  }): Promise<NotificationTemplateEntity[]> {
+    const cacheKey = `${organizationId}:${environmentId}`;
+    const cacheVariant = this.buildCacheVariant(tags, severity);
+
+    return this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.ACTIVE_WORKFLOWS,
+      cacheKey,
+      () =>
+        this.notificationTemplateRepository.filterActive({
+          organizationId,
+          environmentId,
+          tags,
+          severity,
+        }),
+      {
+        organizationId,
+        environmentId,
+        cacheVariant,
+      }
+    );
+  }
+
+  private buildCacheVariant(tags?: string[], severity?: SeverityLevelEnum[]): string {
+    const filters = {
+      ...(tags && tags.length > 0 && { tags: [...tags].sort() }),
+      ...(severity && severity.length > 0 && { severity: [...severity].sort() }),
+    };
+
+    return Object.keys(filters).length > 0 ? JSON.stringify(filters) : 'default';
   }
 }

@@ -9,6 +9,8 @@ import {
   FeatureFlagsService,
   GetPreferences,
   GetPreferencesCommand,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   LogRepository,
@@ -39,18 +41,10 @@ import {
 } from '@novu/shared';
 import type { RulesLogic } from 'json-logic-js';
 import jsonLogic from 'json-logic-js';
-import { LRUCache } from 'lru-cache';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
-
-const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
-  max: 1000,
-  ttl: 1000 * 30,
-});
-
-const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | null>>();
 
 @Injectable()
 export class SubscriberJobBound {
@@ -65,7 +59,8 @@ export class SubscriberJobBound {
     private traceLogRepository: TraceLogRepository,
     private getPreferences: GetPreferences,
     private preferencesRepository: PreferencesRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -319,50 +314,16 @@ export class SubscriberJobBound {
     organizationId: string;
     source?: string;
   }): Promise<NotificationTemplateEntity | null> {
-    const cacheKey = `${environmentId}:${_id}`;
-
-    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-      component: 'worker-workflow',
-    });
-
-    const isCacheEnabled = isFeatureFlagEnabled && !source;
-
-    if (isCacheEnabled) {
-      const cached = workflowCache.get(cacheKey);
-      if (cached) {
-        return cached;
+    return this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.WORKFLOW,
+      `${environmentId}:${_id}`,
+      () => this.notificationTemplateRepository.findById(_id, environmentId),
+      {
+        environmentId,
+        organizationId,
+        skipCache: !!source,
       }
-
-      const inflightRequest = workflowInflightRequests.get(cacheKey);
-      if (inflightRequest) {
-        return inflightRequest;
-      }
-    }
-
-    const fetchPromise = this.notificationTemplateRepository
-      .findById(_id, environmentId)
-      .then((workflow) => {
-        if (workflow && isCacheEnabled) {
-          workflowCache.set(cacheKey, workflow);
-        }
-
-        return workflow;
-      })
-      .finally(() => {
-        if (isCacheEnabled) {
-          workflowInflightRequests.delete(cacheKey);
-        }
-      });
-
-    if (isCacheEnabled) {
-      workflowInflightRequests.set(cacheKey, fetchPromise);
-    }
-
-    return fetchPromise;
+    );
   }
 
   @InstrumentUsecase()

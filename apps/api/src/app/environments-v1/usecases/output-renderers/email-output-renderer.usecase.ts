@@ -130,6 +130,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       subject: controlSubject,
       disableOutputSanitization,
       layoutId: stepLayoutId,
+      from,
     } = renderCommand.controlValues as EmailControlType;
 
     if (!body || typeof body !== 'string') {
@@ -142,6 +143,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return {
         subject: controlSubject as string,
         body: body as string,
+        ...(from && { from }),
       };
     }
 
@@ -203,7 +205,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
-      return { subject: translatedSubject, body: cleanedHtml };
+      return {
+        subject: translatedSubject,
+        body: cleanedHtml,
+        ...(from && { from }),
+      };
     }
 
     const sanitizedBody = sanitizeHTML(cleanedHtml);
@@ -211,6 +217,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     return {
       subject: translatedSubject,
       body: sanitizedBody,
+      ...(from && { from }),
     };
   }
 

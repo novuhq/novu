@@ -26,8 +26,8 @@ export class BaseStepConfigDto {
 
   @ApiPropertyOptional({ description: 'Unique identifier for the step' })
   @IsString()
-  @Matches(/^[a-zA-Z0-9]+(?:[-_][a-zA-Z0-9]+)*$/, {
-    message: 'stepId must be a valid slug format (letters, numbers, hyphens, and underscores only)',
+  @Matches(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
+    message: 'stepId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
   })
   @IsOptional()
   stepId?: string;
