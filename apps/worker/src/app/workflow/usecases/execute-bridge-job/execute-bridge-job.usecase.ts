@@ -7,7 +7,8 @@ import {
   EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
-  FeatureFlagsService,
+  ExecuteStepResolver,
+  ExecuteStepResolverCommand,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -16,15 +17,16 @@ import {
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
-  EnvironmentEntity,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
   MessageRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
+  ContextResolved,
   DelayResult,
   DigestResult,
   Event,
@@ -55,8 +57,8 @@ export class ExecuteBridgeJob {
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
+    private executeStepResolver: ExecuteStepResolver,
     private logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -112,9 +114,25 @@ export class ExecuteBridgeJob {
 
     const state = await this.generateState(command);
 
-    const variablesStores = isStateful
+    const controlValuesResult = isStateful
       ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
-      : command.job.step.controlVariables;
+      : { controls: command.job.step.controlVariables, stepResolverHash: undefined };
+
+    const variablesStores = controlValuesResult.controls;
+    const { stepResolverHash } = controlValuesResult;
+
+    // If step resolver is configured, use it instead of bridge
+    if (stepResolverHash) {
+      return await this.sendStepResolverRequest({
+        command,
+        stepId,
+        stepResolverHash,
+        state,
+        payload,
+        subscriber,
+        context,
+      });
+    }
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
       payload: payload ?? {},
@@ -148,24 +166,38 @@ export class ExecuteBridgeJob {
     return bridgeResponse;
   }
 
-  private async findControlValues(command: ExecuteBridgeJobCommand, workflow: NotificationTemplateEntity) {
-    const controls = await this.controlValuesRepository.findOne({
+  private async findControlValues(
+    command: ExecuteBridgeJobCommand,
+    workflow: NotificationTemplateEntity
+  ): Promise<{
+    controls: Record<string, unknown>;
+    stepResolverHash?: string;
+  }> {
+    const controlsEntity = await this.controlValuesRepository.findOne({
       _organizationId: command.organizationId,
       _workflowId: workflow._id,
       _stepId: command.job.step._id,
       level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
-    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD) {
-      return controls?.controls
-        ? dashboardSanitizeControlValues(this.logger, controls.controls, command.job?.step?.template?.type)
-        : {};
+    const rawControls = controlsEntity?.controls;
+    const stepResolverHash = rawControls?.stepResolverHash as string | undefined;
+
+    let sanitizedControls: Record<string, unknown> = {};
+    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && rawControls) {
+      const result = dashboardSanitizeControlValues(this.logger, rawControls, command.job?.step?.template?.type);
+      sanitizedControls = result ?? {};
+    } else {
+      sanitizedControls = rawControls ?? {};
     }
 
-    return controls?.controls;
+    return {
+      controls: sanitizedControls,
+      stepResolverHash,
+    };
   }
 
-  private normalizePayload(originalPayload: ITriggerPayload = {}) {
+  private normalizePayload(originalPayload: ITriggerPayload = {}): Omit<ITriggerPayload, '__source'> {
     // Remove internal params
     const { __source, ...payload } = originalPayload;
 
@@ -197,6 +229,35 @@ export class ExecuteBridgeJob {
     }
 
     return previousJobs;
+  }
+
+  @Instrument()
+  private async sendStepResolverRequest(params: {
+    command: ExecuteBridgeJobCommand;
+    stepId: string;
+    stepResolverHash: string;
+    state: State[];
+    payload: ITriggerPayload;
+    subscriber?: SubscriberEntity;
+    context?: ContextResolved;
+  }): Promise<ExecuteOutput> {
+    const { command, stepId, stepResolverHash, state, payload, subscriber, context } = params;
+
+    return this.executeStepResolver.execute(
+      ExecuteStepResolverCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        stepResolverHash,
+        stepId,
+        payload: {
+          payload: payload,
+          subscriber: subscriber,
+          context: context,
+          steps: state,
+        },
+        job: command.job,
+      })
+    );
   }
 
   @Instrument()

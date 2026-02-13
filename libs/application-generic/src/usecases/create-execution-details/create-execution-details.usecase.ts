@@ -80,6 +80,10 @@ const mapDetailToEventType = {
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
   [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
 
+  // Step resolver events
+  [DetailEnum.FAILED_STEP_RESOLVER_EXECUTION]: 'step_resolver_execution_failed',
+  [DetailEnum.STEP_RESOLVER_EXECUTION_TIMEOUT]: 'step_resolver_execution_timeout',
+
   // Webhook events
   [DetailEnum.WEBHOOK_FILTER_FAILED_RETRY]: 'webhook_filter_retrying',
   [DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY]: 'webhook_filter_failed',

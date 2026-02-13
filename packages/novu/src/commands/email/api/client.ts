@@ -108,7 +108,6 @@ export class StepResolverClient {
           if (stepContext) {
             throw new Error(`Not found: ${stepContext}. Make sure the workflow and its steps exist before publishing.`);
           }
-          throw new Error('Workflow or step not found. Make sure the workflow and its steps exist before publishing.');
         }
         if (error.response?.status === 429) {
           throw new Error('Rate limit exceeded. Please try again later.');

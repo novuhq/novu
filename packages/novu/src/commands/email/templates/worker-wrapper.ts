@@ -109,11 +109,11 @@ function generateBodyValidation(): string {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
-      const stepOutputs = body.steps ?? {};
+      const stepOutputs = body.steps ?? [];
 
-      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs)) {
+      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !Array.isArray(stepOutputs)) {
         return jsonResponse(
-          { error: 'Invalid request body', message: 'payload, subscriber, context, and steps must be JSON objects' },
+          { error: 'Invalid request body', message: 'payload, subscriber, and context must be objects; steps must be an array' },
           400
         );
       }`;

@@ -63,6 +63,8 @@ export const envValidators = {
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   SCHEDULER_URL: str({ default: undefined }),
   SCHEDULER_API_KEY: str({ default: undefined }),
+  STEP_RESOLVER_DISPATCH_URL: url({ default: '' }),
+  STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   // Feature Flags
   ...Object.keys(FeatureFlagsKeysEnum).reduce(
     (acc, key) => {
