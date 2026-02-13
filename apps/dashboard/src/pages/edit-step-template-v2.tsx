@@ -1,5 +1,5 @@
 import { StepUpdateDto } from '@novu/shared';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageMeta } from '@/components/page-meta';
 import { Form, FormRoot } from '@/components/primitives/form/form';
@@ -16,20 +16,39 @@ export function EditStepTemplateV2Page() {
 
   const defaultValues = useMemo(() => (step ? getControlsDefaultValues(step) : {}), [step]);
 
+  const hasOverrides = step?.controlValues != null && Object.keys(step?.controlValues ?? {}).length > 0;
+  const initialFormValues = hasOverrides ? step?.controlValues : step?.controls.values;
+  const shouldSaveOnAutosaveRef = useRef(hasOverrides);
+
   const form = useForm({
     defaultValues,
-    values: step?.controls.values,
+    values: initialFormValues,
     shouldFocusError: false,
     resetOptions: {
       keepDirtyValues: true,
     },
   });
 
+  const enableOverrides = useCallback(() => {
+    shouldSaveOnAutosaveRef.current = true;
+  }, []);
+
+  const disableOverrides = useCallback(() => {
+    shouldSaveOnAutosaveRef.current = false;
+  }, []);
+
   const { onBlur, saveForm } = useFormAutosave({
     previousData: defaultValues,
     form,
     save: (data, { onSuccess }) => {
       if (!workflow || !step) return;
+
+      const hasFormData = Object.keys(data).length > 0;
+      const shouldSave = shouldSaveOnAutosaveRef.current;
+
+      if (!hasFormData) return;
+
+      if (!shouldSave) return;
 
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: data,
@@ -71,7 +90,10 @@ export function EditStepTemplateV2Page() {
     setIssuesFromStep();
   }, [setIssuesFromStep]);
 
-  const value = useMemo(() => ({ saveForm }), [saveForm]);
+  const value = useMemo(
+    () => ({ saveForm, enableOverrides, disableOverrides }),
+    [saveForm, enableOverrides, disableOverrides]
+  );
 
   if (!workflow || !step) {
     return null;

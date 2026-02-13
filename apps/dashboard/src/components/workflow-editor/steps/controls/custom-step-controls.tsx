@@ -15,6 +15,7 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { ResourceOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
 import { cn } from '@/utils/ui';
+import { updateStepInWorkflow } from '../../step-utils';
 import { useWorkflow } from '../../workflow-provider';
 import { JsonForm } from './json-form';
 
@@ -29,10 +30,12 @@ const CONTROLS_DOCS_LINK = 'https://docs.novu.co/framework/controls';
 export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { className, dataSchema, origin } = props;
   const [isRestoreDefaultModalOpen, setIsRestoreDefaultModalOpen] = useState(false);
-  const { step } = useWorkflow();
-  const [isOverridden, setIsOverridden] = useState(() => Object.keys(step?.controls.values ?? {}).length > 0);
+  const { step, workflow, update } = useWorkflow();
+  const [isOverridden, setIsOverridden] = useState(
+    () => step?.controlValues != null && Object.keys(step?.controlValues ?? {}).length > 0
+  );
   const { reset } = useFormContext();
-  const { saveForm } = useSaveForm();
+  const { saveForm, enableOverrides, disableOverrides } = useSaveForm();
 
   if (origin !== ResourceOriginEnum.EXTERNAL || Object.keys(dataSchema?.properties ?? {}).length === 0) {
     return (
@@ -98,9 +101,12 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
         open={isRestoreDefaultModalOpen}
         onOpenChange={setIsRestoreDefaultModalOpen}
         onConfirm={async () => {
-          const defaultValues = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
+          if (!workflow || !step) return;
+
+          const defaultValues = buildDefaultValuesOfDataSchema(step.controls.dataSchema ?? {});
           reset(defaultValues);
-          saveForm({ forceSubmit: true });
+          disableOverrides?.();
+          update(updateStepInWorkflow(workflow, step.stepId, { controlValues: null }));
           setIsRestoreDefaultModalOpen(false);
           setIsOverridden(false);
         }}
@@ -122,8 +128,8 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
               setIsRestoreDefaultModalOpen(true);
               return;
             }
-
             setIsOverridden(checked);
+            enableOverrides?.();
             saveForm({ forceSubmit: true });
           }}
           data-testid="override-defaults-switch"
