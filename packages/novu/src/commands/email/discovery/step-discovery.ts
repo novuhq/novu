@@ -141,7 +141,8 @@ function hasReactEmailImportInFile(sourceFile: ts.SourceFile): boolean {
 
   function visit(node: ts.Node) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      if (node.moduleSpecifier.text === '@react-email/components') {
+      const moduleText = node.moduleSpecifier.text;
+      if (moduleText === 'react-email' || moduleText.startsWith('@react-email/')) {
         hasImport = true;
       }
     }
@@ -217,7 +218,9 @@ function buildErrorsForDuplicates(filesByKey: Map<string, AnalyzedStepFile[]>): 
       continue;
     }
 
-    const [workflowId, stepId] = compositeKey.split(':');
+    const firstColonIndex = compositeKey.indexOf(':');
+    const workflowId = firstColonIndex >= 0 ? compositeKey.substring(0, firstColonIndex) : compositeKey;
+    const stepId = firstColonIndex >= 0 ? compositeKey.substring(firstColonIndex + 1) : '';
     const relativePaths = files.map((file) => path.relative(process.cwd(), file.filePath));
 
     for (const file of files) {

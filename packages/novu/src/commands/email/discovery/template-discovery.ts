@@ -71,20 +71,12 @@ async function findReactEmailExportsTsAst(filePath: string): Promise<string[]> {
     return [];
   }
 
-  // Cheap prefilter to avoid parsing everything
-  if (!text.includes('@react-email/') && !text.includes('@react-email/components') && !text.includes('react-email')) {
+  // Quick check to skip files without React Email imports
+  if (!text.includes('@react-email/') && !text.includes('react-email')) {
     return [];
   }
 
-  const ext = path.extname(filePath).toLowerCase();
-  const scriptKind =
-    ext === '.tsx'
-      ? ts.ScriptKind.TSX
-      : ext === '.ts'
-        ? ts.ScriptKind.TS
-        : ext === '.jsx'
-          ? ts.ScriptKind.JSX
-          : ts.ScriptKind.JS;
+  const scriptKind = getScriptKind(filePath);
 
   const sf = ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, /*setParentNodes*/ true, scriptKind);
 
@@ -143,4 +135,21 @@ async function findReactEmailExportsTsAst(filePath: string): Promise<string[]> {
 
   if (!hasReactEmailImport || !hasJsx || exports.length === 0) return [];
   return Array.from(new Set(exports));
+}
+
+function getScriptKind(filePath: string): ts.ScriptKind {
+  const extension = path.extname(filePath).toLowerCase();
+
+  switch (extension) {
+    case '.tsx':
+      return ts.ScriptKind.TSX;
+    case '.ts':
+      return ts.ScriptKind.TS;
+    case '.jsx':
+      return ts.ScriptKind.JSX;
+    case '.js':
+      return ts.ScriptKind.JS;
+    default:
+      return ts.ScriptKind.JS;
+  }
 }

@@ -36,11 +36,10 @@ describe('discoverEmailTemplates', () => {
   it('should return templates with correct structure', async () => {
     const templates = await discoverEmailTemplates(fixturesDir);
 
-    if (templates.length > 0) {
-      const template = templates[0];
-      expect(template).toHaveProperty('filePath');
-      expect(template).toHaveProperty('relativePath');
-    }
+    expect(templates.length).toBeGreaterThan(0);
+    const template = templates[0];
+    expect(template).toHaveProperty('filePath');
+    expect(template).toHaveProperty('relativePath');
   });
 
   it('should handle empty directory', async () => {
