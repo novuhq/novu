@@ -46,7 +46,15 @@ export class GetPreferences {
 
   @InstrumentUsecase()
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
-    const items = await this.getPreferencesFromDb(command);
+    const useOptimizedFetch = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_PREFERENCE_FETCH_OPTIMIZATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const items = useOptimizedFetch
+      ? await this.getPreferencesFromDbOptimized(command)
+      : await this.getPreferencesFromDb(command);
 
     const mergedPreferences = MergePreferences.execute(
       MergePreferencesCommand.create({
@@ -227,6 +235,79 @@ export class GetPreferences {
 
     if (subscriberGlobalPreference) {
       result.subscriberGlobalPreference = subscriberGlobalPreference as PreferenceSet['subscriberGlobalPreference'];
+    }
+
+    return result;
+  }
+
+  @Instrument()
+  private async getPreferencesFromDbOptimized(command: GetPreferencesCommand): Promise<PreferenceSet> {
+    const baseQuery = {
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    };
+
+    const queryOptions = { readPreference: 'secondaryPreferred' as const };
+
+    const orConditions: Array<Record<string, unknown>> = [
+      {
+        _templateId: command.templateId,
+        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+      },
+    ];
+
+    if (command.subscriberId) {
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
+
+      orConditions.push(
+        {
+          _subscriberId: command.subscriberId,
+          _templateId: command.templateId,
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          ...contextQuery,
+        },
+        {
+          _subscriberId: command.subscriberId,
+          type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          ...contextQuery,
+        }
+      );
+    }
+
+    const allPreferences = await this.preferencesRepository.find(
+      {
+        ...baseQuery,
+        $or: orConditions,
+      },
+      undefined,
+      queryOptions
+    );
+
+    const result: PreferenceSet = {};
+
+    for (const preference of allPreferences) {
+      switch (preference.type) {
+        case PreferencesTypeEnum.WORKFLOW_RESOURCE:
+          result.workflowResourcePreference = preference as PreferenceSet['workflowResourcePreference'];
+          break;
+        case PreferencesTypeEnum.USER_WORKFLOW:
+          result.workflowUserPreference = preference as PreferenceSet['workflowUserPreference'];
+          break;
+        case PreferencesTypeEnum.SUBSCRIBER_WORKFLOW:
+          result.subscriberWorkflowPreference = preference as PreferenceSet['subscriberWorkflowPreference'];
+          break;
+        case PreferencesTypeEnum.SUBSCRIBER_GLOBAL:
+          result.subscriberGlobalPreference = preference as PreferenceSet['subscriberGlobalPreference'];
+          break;
+      }
     }
 
     return result;

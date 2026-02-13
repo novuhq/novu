@@ -130,7 +130,6 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
             }
             setIsOverridden(checked);
             enableOverrides?.();
-            saveForm({ forceSubmit: true });
           }}
           data-testid="override-defaults-switch"
         />
