@@ -193,6 +193,6 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: gmsEmailConfig,
     docReference: 'https://developers.gms.net/',
-    logoFileName: { light: 'gms.svg', dark: 'gms.svg' },
+    logoFileName: { light: 'gms-email.svg', dark: 'gms-email.svg' },
   },
 ];

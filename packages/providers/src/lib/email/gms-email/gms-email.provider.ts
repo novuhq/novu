@@ -1,6 +1,8 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
+  CheckIntegrationResponseEnum,
+  ICheckIntegrationResponse,
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
@@ -27,6 +29,14 @@ export class GmsEmailEmailProvider
     }
   ) {
     super();
+  }
+
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
+    };
   }
 
   async sendMessage(
