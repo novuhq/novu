@@ -179,7 +179,20 @@ export class AiController {
 
     const abortController = new AbortController();
 
-    request.once('aborted', () => abortController.abort());
+    const handleSocketClose = (): void => {
+      if (request.destroyed) {
+        abortController.abort();
+      }
+    };
+
+    const cleanupSocketListener = (): void => {
+      request.socket.off('close', handleSocketClose);
+    };
+
+    request.socket.on('close', handleSocketClose);
+    response.on('finish', cleanupSocketListener);
+    response.on('error', cleanupSocketListener);
+    response.on('close', cleanupSocketListener);
 
     const langchainMessages = isResuming ? null : await toBaseMessages(allMessages);
 

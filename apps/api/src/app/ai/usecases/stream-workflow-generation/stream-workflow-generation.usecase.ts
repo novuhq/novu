@@ -237,7 +237,8 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     const uiMessageStream = createUIMessageStream({
       originalMessages: chatMessages,
       generateId,
-      onFinish: async ({ messages }) => {
+      onFinish: async ({ messages, isAborted, isContinuation }) => {
+        const finalIsAborted = isAborted || command.signal.aborted;
         const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
         const isAssistantMessage = lastMessage?.role === 'assistant';
 
@@ -245,7 +246,7 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
           UpsertChatCommand.create({
             id: command.chatId,
             messages,
-            activeStreamId: null,
+            activeStreamId: finalIsAborted || isContinuation ? undefined : null,
             hasPendingChanges: !!isAssistantMessage && lastMessage.id !== lastUserMessageId,
             user: command.user,
           })
