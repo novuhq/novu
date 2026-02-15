@@ -76,7 +76,7 @@ export interface WorkflowStatusUpdateParams {
   currentJob?: Pick<JobEntity, 'type' | '_id'>;
 }
 
-type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
+type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id' | '_mergedDigestId'>;
 type MessageResult = Pick<
   MessageEntity,
   'seen' | 'read' | 'snoozedUntil' | 'archived' | 'channel' | 'deliveredAt' | '_jobId'
@@ -91,6 +91,7 @@ const jobResultProjection: ProjectionFromPick<JobResult> = {
   type: 1,
   status: 1,
   deliveryLifecycleState: 1,
+  _mergedDigestId: 1,
 };
 
 const messageResultProjection: ProjectionFromPick<MessageResult> = {
@@ -926,9 +927,11 @@ export class WorkflowRunService {
       };
     }
 
-    // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found)
+    // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found and no _mergedDigestId)
     const hasUserCanceled = channelJobs.some(
-      (job) => isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatusEnum.CANCELED
+      (job) =>
+        (isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatusEnum.CANCELED) &&
+        !job._mergedDigestId
     );
     if (hasUserCanceled) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.CANCELED };
@@ -941,8 +944,12 @@ export class WorkflowRunService {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED };
     }
 
-    // Priority 7: MERGED - If all steps are merged
-    const allStepsMerged = channelJobs.every((job) => job.status === JobStatusEnum.MERGED);
+    // Priority 7: MERGED - If all steps are merged or canceled with _mergedDigestId
+    const allStepsMerged = channelJobs.every(
+      (job) =>
+        job.status === JobStatusEnum.MERGED ||
+        (job.status === JobStatusEnum.CANCELED && !!job._mergedDigestId)
+    );
     if (allStepsMerged) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED };
     }
