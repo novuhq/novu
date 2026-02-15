@@ -1,3 +1,31 @@
+## v3.14.0 (2026-02-12)
+
+### 🚀 Features
+
+- **js, react, api-service:** In-app notifications timeframe filter fixes NV-7045 ([#9873](https://github.com/novuhq/novu/pull/9873))
+- **js:** allow passing socket options to the novu js configuration ([#9896](https://github.com/novuhq/novu/pull/9896))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Gabriel Pan Gantes @Gabrielpanga
+
+## v3.13.0 (2026-01-28)
+
+### 🚀 Features
+
+- **api-service,js:** ensure backwards compatibility for context prefs fixes NV-7072 ([#9890](https://github.com/novuhq/novu/pull/9890))
+- **api-service,js:** context bound topic subscriptions fixes NV-6980 ([#9840](https://github.com/novuhq/novu/pull/9840))
+
+### 🩹 Fixes
+
+- **js:** Inbox requestLock error when not available fixes NV-7033 ([#9844](https://github.com/novuhq/novu/pull/9844))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
+
 ## v3.12.0 (2026-01-07)
 
 ### 🚀 Features

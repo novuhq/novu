@@ -180,18 +180,31 @@ export class UpsertPreferences {
       PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     ].includes(command.type);
 
-    return await this.preferencesRepository.create({
-      _subscriberId: command._subscriberId,
-      _userId: command.userId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _templateId: command.templateId,
-      _topicSubscriptionId: command.topicSubscriptionId,
-      preferences: command.preferences,
-      type: command.type,
-      schedule: command.schedule,
-      contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
-    });
+    try {
+      return await this.preferencesRepository.create({
+        _subscriberId: command._subscriberId,
+        _userId: command.userId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _templateId: command.templateId,
+        _topicSubscriptionId: command.topicSubscriptionId,
+        preferences: command.preferences,
+        type: command.type,
+        schedule: command.schedule,
+        contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
+      });
+    } catch (error) {
+      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+
+      if (isDuplicateKeyError) {
+        const existingPreference = await this.getPreference(command);
+        if (existingPreference) {
+          return existingPreference;
+        }
+      }
+
+      throw error;
+    }
   }
 
   private async updatePreferences(
@@ -235,11 +248,19 @@ export class UpsertPreferences {
   }
 
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
-    const contextQuery = await this.buildContextExactMatchQuery(
-      command.contextKeys,
-      command.type,
-      command.organizationId
-    );
+    // Non-context-scoped types (universal/workflow-level) - no context filter
+    const nonContextScopedTypes = [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW];
+    const useContextFiltering = nonContextScopedTypes.includes(command.type)
+      ? false
+      : await this.featureFlagsService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+          defaultValue: false,
+          organization: { _id: command.organizationId },
+        });
+
+    const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: command.environmentId,
@@ -252,36 +273,5 @@ export class UpsertPreferences {
     };
 
     return await this.preferencesRepository.findOne(query);
-  }
-
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    type: PreferencesTypeEnum,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    // Non-context-scoped types (universal/workflow-level) - no context filter
-    const nonContextScopedTypes = [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW];
-
-    if (nonContextScopedTypes.includes(type)) {
-      return {};
-    }
-
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {};
-    }
-
-    // undefined or empty array = match only "no context" preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return { $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }] };
-    }
-
-    // Match records with exact same context keys (order-independent)
-    return { contextKeys: { $all: contextKeys, $size: contextKeys.length } };
   }
 }

@@ -92,7 +92,7 @@ export class UpdateAllNotifications {
         event: WebSocketEventEnum.UNREAD,
         userId: subscriber._id,
         _environmentId: command.environmentId,
-        ...(command.contextKeys && { contextKeys: command.contextKeys }),
+        contextKeys: command.contextKeys ?? [],
       },
       groupId: subscriber._organizationId,
     });

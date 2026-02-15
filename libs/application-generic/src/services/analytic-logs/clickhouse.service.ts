@@ -1,5 +1,5 @@
 import { ClickHouseClient, ClickHouseSettings, createClient, PingResult } from '@clickhouse/client';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable } from '@nestjs/common';
 
 export { ClickHouseClient };
 
@@ -9,7 +9,7 @@ export type InsertOptions = {
 };
 
 @Injectable()
-export class ClickHouseService implements OnModuleDestroy {
+export class ClickHouseService implements BeforeApplicationShutdown {
   private _client: ClickHouseClient | undefined;
 
   async init() {
@@ -58,12 +58,11 @@ export class ClickHouseService implements OnModuleDestroy {
     return this._client;
   }
 
-  async onModuleDestroy() {
+  async beforeApplicationShutdown(signal?: string) {
     if (!this._client) {
       return;
     }
     await this._client.close();
-    // this.logger.info('ClickHouse client closed');
   }
 
   async ping(): Promise<PingResult> {

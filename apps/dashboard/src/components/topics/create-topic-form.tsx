@@ -1,10 +1,10 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
+import { slugify } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
-import { slugify } from '@novu/shared';
 import { NovuApiError } from '@/api/api.client';
 import {
   Form,
@@ -75,12 +75,12 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
     },
   });
 
-  const form = useForm<z.infer<typeof TopicFormSchema>>({
+  const form = useForm({
     defaultValues: {
       name: '',
       key: '',
     },
-    resolver: zodResolver(TopicFormSchema),
+    resolver: standardSchemaResolver(TopicFormSchema),
     shouldFocusError: false,
     mode: 'onSubmit',
     reValidateMode: 'onChange',

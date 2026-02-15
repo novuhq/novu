@@ -17,7 +17,4 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
   @IsDefined()
   @IsBoolean()
   includeInactiveChannels: boolean;
-
-  @IsOptional()
-  subscriptionId?: string;
 }

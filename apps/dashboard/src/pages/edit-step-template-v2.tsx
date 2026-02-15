@@ -77,6 +77,23 @@ export function EditStepTemplateV2Page() {
     return null;
   }
 
+  const formValues = form.getValues();
+  const hasFormValues = Object.keys(formValues).length > 0;
+  const stepControlValues = step.controls.values;
+  const hasStepControlValues = stepControlValues && Object.keys(stepControlValues).length > 0;
+
+  // Wait for form to sync with step values when step has values to sync
+  // If stepControlValues is undefined, step hasn't loaded yet - don't render
+  // If stepControlValues is defined but has values, wait for form to sync - don't render until hasFormValues is true
+  // If stepControlValues is defined but empty {}, that's valid - render immediately
+  if (stepControlValues === undefined) {
+    return null;
+  }
+
+  if (hasStepControlValues && !hasFormValues) {
+    return null;
+  }
+
   return (
     <>
       <PageMeta title={`Edit ${step.name} Template`} />

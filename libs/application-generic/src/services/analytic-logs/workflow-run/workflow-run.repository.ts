@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   NotificationEntity,
   NotificationRepository,
@@ -15,6 +15,7 @@ import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
@@ -71,9 +72,10 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     protected readonly logger: PinoLogger,
     protected readonly featureFlagsService: FeatureFlagsService,
     private readonly notificationRepository: NotificationRepository,
-    private readonly notificationTemplateRepository: NotificationTemplateRepository
+    private readonly notificationTemplateRepository: NotificationTemplateRepository,
+    @Optional() protected readonly batchService?: ClickHouseBatchService
   ) {
-    super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService);
+    super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService, batchService);
     this.logger.setContext(this.constructor.name);
   }
 
@@ -193,7 +195,11 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       environmentId: string;
     },
     deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum,
-    deliveryLifecycleDetail?: DeliveryLifecycleDetail
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail,
+    prefetchedData?: {
+      notification?: QueryNotificationEntity | null;
+      workflow?: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null;
+    }
   ): Promise<void> {
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
@@ -208,31 +214,33 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const notification: QueryNotificationEntity | null = await this.notificationRepository.findOne(
-        {
-          _id: workflowRunId,
-          _organizationId: context.organizationId,
-          _environmentId: context.environmentId,
-        },
-        {
-          _id: 1,
-          _templateId: 1,
-          _organizationId: 1,
-          _environmentId: 1,
-          _subscriberId: 1,
-          transactionId: 1,
-          channels: 1,
-          to: 1,
-          payload: 1,
-          controls: 1,
-          topics: 1,
-          _digestedNotificationId: 1,
-          createdAt: 1,
-          severity: 1,
-          critical: 1,
-          contextKeys: 1,
-        }
-      );
+      const notification: QueryNotificationEntity | null =
+        (prefetchedData?.notification as QueryNotificationEntity | null) ??
+        (await this.notificationRepository.findOne(
+          {
+            _id: workflowRunId,
+            _organizationId: context.organizationId,
+            _environmentId: context.environmentId,
+          },
+          {
+            _id: 1,
+            _templateId: 1,
+            _organizationId: 1,
+            _environmentId: 1,
+            _subscriberId: 1,
+            transactionId: 1,
+            channels: 1,
+            to: 1,
+            payload: 1,
+            controls: 1,
+            topics: 1,
+            _digestedNotificationId: 1,
+            createdAt: 1,
+            severity: 1,
+            critical: 1,
+            contextKeys: 1,
+          }
+        ));
 
       if (!notification) {
         this.logger.warn(
@@ -243,19 +251,22 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           },
           'Notification not found for workflow run status update'
         );
+
         return;
       }
 
-      const workflow = await this.notificationTemplateRepository.findOne(
-        {
-          _id: notification._templateId,
-          _environmentId: context.environmentId,
-        },
-        {
-          name: 1,
-          triggers: 1,
-        }
-      );
+      const workflow =
+        prefetchedData?.workflow ??
+        (await this.notificationTemplateRepository.findOne(
+          {
+            _id: notification._templateId,
+            _environmentId: context.environmentId,
+          },
+          {
+            name: 1,
+            triggers: 1,
+          }
+        ));
 
       if (!workflow) {
         this.logger.warn(
@@ -266,10 +277,11 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           },
           'Notification template not found for workflow run status update'
         );
+
         return;
       }
 
-      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow as NotificationTemplateEntity, {
         status,
         deliveryLifecycleStatus,
         deliveryLifecycleDetail,

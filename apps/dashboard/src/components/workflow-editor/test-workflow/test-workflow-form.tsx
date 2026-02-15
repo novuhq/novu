@@ -57,16 +57,16 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
   const identifier = workflow?.workflowId ?? '';
   const snippetValue = useMemo(() => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[activeSnippetTab];
-    return snippetUtil({ identifier, to, payload });
+    return snippetUtil({ identifier, to: to as Record<string, unknown>, payload: (payload ?? '') as string });
   }, [activeSnippetTab, identifier, to, payload]);
 
   // Parse JSON data for JsonViewer and initialize with workflow payloadExample if available
   useMemo(() => {
     if (isPayloadSchemaEnabled) {
       try {
-        const parsed = JSON.parse(payload || '{}');
+        const parsed = JSON.parse((payload as string) || '{}');
         setPayloadJsonData(parsed);
-      } catch (error) {
+      } catch {
         // If parsing fails and we have a workflow payloadExample, use it as fallback
         if (workflow?.payloadExample) {
           setPayloadJsonData(workflow.payloadExample);
@@ -126,7 +126,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
               <FormField
                 control={control}
                 name="payload"
-                render={({ field: { ref: _ref, ...restField } }) => (
+                render={({ field: { ref: _ref, value, ...restField } }) => (
                   <FormItem className="flex flex-1 flex-col gap-2 overflow-auto">
                     <FormControl>
                       <>
@@ -144,6 +144,7 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
                             extensions={extensions}
                             className="overflow-auto"
                             {...restField}
+                            value={value as string}
                             multiline
                           />
                         )}
@@ -215,8 +216,8 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
         workflow={workflow}
-        to={to}
-        payload={payload}
+        to={(to ?? {}) as Record<string, string>}
+        payload={(payload ?? '') as string | Record<string, unknown>}
       />
     </>
   );

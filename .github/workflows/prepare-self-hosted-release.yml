@@ -164,7 +164,7 @@ jobs:
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@v2
         with:
-          version: v24.0.6
+          version: v27.0.3
           daemon-config: |
             {
               "features": {
@@ -176,11 +176,13 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64,linux/arm64
+          image: tonistiigi/binfmt:qemu-v8.0.4
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: "image=moby/buildkit:v0.13.1"
+          driver-opts: "image=moby/buildkit:v0.15.0"
+          platforms: linux/amd64,linux/arm64
 
       - uses: ./.github/actions/free-space
         name: Extend space in Action Container

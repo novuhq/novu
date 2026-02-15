@@ -139,6 +139,7 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
           onClick={() => selectItem(groupIndex, commandIndex)}
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
+          onMouseDown={(e) => e.preventDefault()}
           type="button"
           ref={isActive ? activeCommandRef : null}
           data-item-key={itemKey}

@@ -36,7 +36,15 @@ export class DeleteTopicSubscription {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const contextQuery = this.topicSubscribersRepository.buildContextExactMatchQuery(command.contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
@@ -69,32 +77,5 @@ export class DeleteTopicSubscription {
     });
 
     return { success: true };
-  }
-
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {}; // FF OFF: no context filtering (pre-feature behavior)
-    }
-
-    // undefined or empty array = match only "no context" subscriptions/preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 }

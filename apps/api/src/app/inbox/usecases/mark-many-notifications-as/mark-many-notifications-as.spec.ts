@@ -142,6 +142,7 @@ describe('MarkManyNotificationsAs', () => {
           event: WebSocketEventEnum.UNREAD,
           userId: mockSubscriber._id,
           _environmentId: mockSubscriber._environmentId,
+          contextKeys: [],
         },
         groupId: mockSubscriber._organizationId,
       },

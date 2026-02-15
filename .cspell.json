@@ -311,6 +311,7 @@
     "Keymap",
     "keyrings",
     "keysize",
+    "KILLSWITCH",
     "kitterma",
     "Kitterman",
     "klass",
@@ -777,7 +778,8 @@
     "Arik",
     "Chakma",
     "selectednode",
-    "valibot"
+    "valibot",
+    "jsonlogic"
   ],
   "flagWords": [],
   "patterns": [

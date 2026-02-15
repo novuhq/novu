@@ -34,7 +34,6 @@ const userSchema = new Schema<UserDBModel>(
       lastFailedAttempt: Schema.Types.Date,
     },
     servicesHashes: {
-      intercom: Schema.Types.String,
       plain: Schema.Types.String,
     },
     jobTitle: Schema.Types.String,
@@ -44,7 +43,7 @@ const userSchema = new Schema<UserDBModel>(
 );
 
 // Create a unique index for email field only when self-hosted
-if (process.env.SELF_HOSTED === 'true') {
+if (process.env.IS_SELF_HOSTED === 'true') {
   userSchema.index(
     { email: 1 },
     {

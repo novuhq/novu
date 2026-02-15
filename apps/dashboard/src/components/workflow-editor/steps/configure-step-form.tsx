@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   EnvironmentTypeEnum,
   IEnvironment,
@@ -150,10 +150,10 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     [step, registerInlineControlValues]
   );
 
-  const form = useForm<z.infer<typeof stepSchema>>({
+  const form = useForm({
     defaultValues,
     shouldFocusError: false,
-    resolver: zodResolver(stepSchema),
+    resolver: standardSchemaResolver(stepSchema),
   });
 
   const { onBlur, saveForm } = useFormAutosave({

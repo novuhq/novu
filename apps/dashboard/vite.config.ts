@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   const isSelfHosted = env.VITE_SELF_HOSTED === 'true';
+  const eeAuthProvider = env.VITE_EE_AUTH_PROVIDER || 'clerk';
   const isEnterprise = env.VITE_NOVU_ENTERPRISE === 'true';
   const isCommunitySelHosted = isSelfHosted && !isEnterprise;
 
@@ -20,6 +21,7 @@ export default defineConfig(({ mode }) => {
     name: 'exclude-cloud-files',
     enforce: 'pre',
     resolveId(source, importer) {
+      if (!isSelfHosted && eeAuthProvider !== 'better-auth') return null;
       if (!isCommunitySelHosted) return null;
 
       // Redirect direct imports of region-context.tsx to the self-hosted version
@@ -88,7 +90,20 @@ export default defineConfig(({ mode }) => {
                 './src/utils/self-hosted/organization-switcher.tsx'
               ),
             }
-          : {}),
+          : eeAuthProvider === 'better-auth'
+            ? {
+                '@clerk/clerk-react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
+                '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
+                '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
+                  __dirname,
+                  './src/utils/better-auth/components/organization-dropdown.tsx'
+                ),
+                '@/components/auth/create-organization': path.resolve(
+                  __dirname,
+                  './src/utils/better-auth/components/organization-create.tsx'
+                ),
+              }
+            : {}),
         '@': path.resolve(__dirname, './src'),
         // Explicitly map prettier imports to browser-compatible versions
         'prettier/standalone': path.resolve(__dirname, './node_modules/prettier/standalone.js'),

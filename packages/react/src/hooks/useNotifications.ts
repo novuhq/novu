@@ -24,6 +24,12 @@ import { useNovu } from './NovuProvider';
  * const { notifications } = useNotifications({
  *   read: false
  * });
+ *
+ * // Get notifications from a specific time period
+ * const { notifications } = useNotifications({
+ *   createdGte: 1704067200000,
+ *   createdLte: 1735689599999
+ * });
  * ```
  */
 export type UseNotificationsProps = {
@@ -34,6 +40,8 @@ export type UseNotificationsProps = {
   snoozed?: NotificationFilter['snoozed'];
   seen?: NotificationFilter['seen'];
   severity?: NotificationFilter['severity'];
+  createdGte?: NotificationFilter['createdGte'];
+  createdLte?: NotificationFilter['createdLte'];
   limit?: number;
   onSuccess?: (data: Notification[]) => void;
   onError?: (error: NovuError) => void;
@@ -74,12 +82,24 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     snoozed = false,
     seen,
     severity,
+    createdGte,
+    createdLte,
     limit = 10,
     onSuccess,
     onError,
   } = props || {};
   const limitRef = useDataRef<number | undefined>(limit);
-  const filterRef = useDataRef<NotificationFilter>({ tags, data: dataFilter, read, archived, snoozed, seen, severity });
+  const filterRef = useDataRef<NotificationFilter>({
+    tags,
+    data: dataFilter,
+    read,
+    archived,
+    snoozed,
+    seen,
+    severity,
+    createdGte,
+    createdLte,
+  });
   const novu = useNovu();
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();

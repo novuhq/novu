@@ -35,7 +35,7 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   SubscriberRepository,
-  TopicPreferencesSummary,
+  TopicPreferenceEvaluation,
 } from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
@@ -121,7 +121,11 @@ export class AddJob {
       };
     }
 
-    this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    if (job.type === StepTypeEnum.TRIGGER) {
+      this.logger.debug(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    } else {
+      this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    }
 
     const notification =
       command.notification ??
@@ -169,7 +173,7 @@ export class AddJob {
   }
 
   private formatTopicsContextForExecution(
-    topics: Array<{ _topicId: string; topicKey: string; preferenceEvaluation?: TopicPreferencesSummary }>
+    topics: Array<{ _topicId: string; topicKey: string; preferenceEvaluation?: TopicPreferenceEvaluation }>
   ) {
     return {
       topics: topics.map((topic) => ({

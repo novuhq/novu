@@ -55,7 +55,15 @@ export function useAddTopicSubscribers() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ topicKey, subscribers }: { topicKey: string; subscribers: string[] }) => {
+    mutationFn: ({
+      topicKey,
+      subscribers,
+      contextKeys,
+    }: {
+      topicKey: string;
+      subscribers: string[];
+      contextKeys?: string[];
+    }) => {
       if (!currentEnvironment) {
         throw new Error('Environment not found');
       }
@@ -64,6 +72,7 @@ export function useAddTopicSubscribers() {
         environment: currentEnvironment,
         topicKey,
         subscribers,
+        contextKeys,
       });
     },
     onSuccess: (_, variables) => {

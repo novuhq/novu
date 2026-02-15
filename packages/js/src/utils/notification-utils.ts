@@ -44,7 +44,9 @@ export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationF
     filter1.archived === filter2.archived &&
     filter1.snoozed === filter2.snoozed &&
     filter1.seen === filter2.seen &&
-    areSeveritiesEqual(filter1.severity, filter2.severity)
+    areSeveritiesEqual(filter1.severity, filter2.severity) &&
+    filter1.createdGte === filter2.createdGte &&
+    filter1.createdLte === filter2.createdLte
   );
 };
 
@@ -150,6 +152,35 @@ export function checkBasicFilters(
 }
 
 /**
+ * Check if notification falls within the specified time range.
+ */
+export function checkNotificationTimeframeFilter(
+  notificationCreatedAt: string,
+  createdGte?: number,
+  createdLte?: number
+): boolean {
+  if (!createdGte && !createdLte) {
+    return true;
+  }
+
+  const createdAtDate = new Date(notificationCreatedAt).getTime();
+
+  if (createdGte) {
+    if (createdAtDate < createdGte) {
+      return false;
+    }
+  }
+
+  if (createdLte) {
+    if (createdAtDate > createdLte) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * Complete notification filter check combining all criteria.
  * This is the main function that should be used by both React and SolidJS implementations.
  */
@@ -157,6 +188,7 @@ export function checkNotificationMatchesFilter(notification: Notification, filte
   return (
     checkBasicFilters(notification, filter) &&
     checkNotificationTagFilter(notification.tags, filter.tags) &&
-    checkNotificationDataFilter(notification.data, filter.data)
+    checkNotificationDataFilter(notification.data, filter.data) &&
+    checkNotificationTimeframeFilter(notification.createdAt, filter.createdGte, filter.createdLte)
   );
 }
