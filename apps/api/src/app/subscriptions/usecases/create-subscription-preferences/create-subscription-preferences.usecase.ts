@@ -48,16 +48,35 @@ export class CreateSubscriptionPreferencesUsecase {
         continue;
       }
 
-      const createdPreference = await this.preferencesRepository.create({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _subscriberId: command._subscriberId,
-        _templateId: workflow._id,
-        _topicSubscriptionId: command._topicSubscriptionId,
-        type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-        preferences: workflowPreferences,
-        contextKeys: command.contextKeys,
-      });
+      let createdPreference;
+      try {
+        createdPreference = await this.preferencesRepository.create({
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _subscriberId: command._subscriberId,
+          _templateId: workflow._id,
+          _topicSubscriptionId: command._topicSubscriptionId,
+          type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+          preferences: workflowPreferences,
+          contextKeys: command.contextKeys,
+        });
+      } catch (error) {
+        const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+
+        if (isDuplicateKeyError) {
+          createdPreference = await this.preferencesRepository.findOne({
+            _environmentId: command.environmentId,
+            _subscriberId: command._subscriberId,
+            _templateId: workflow._id,
+            _topicSubscriptionId: command._topicSubscriptionId,
+            type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+          });
+        }
+
+        if (!isDuplicateKeyError || !createdPreference) {
+          throw error;
+        }
+      }
 
       if (createdPreference) {
         preferencesResult.push({
