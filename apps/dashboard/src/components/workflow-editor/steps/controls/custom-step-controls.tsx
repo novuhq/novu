@@ -11,6 +11,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { ResourceOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
@@ -29,7 +30,7 @@ const CONTROLS_DOCS_LINK = 'https://docs.novu.co/framework/controls';
 export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { className, dataSchema, origin } = props;
   const [isRestoreDefaultModalOpen, setIsRestoreDefaultModalOpen] = useState(false);
-  const { step } = useWorkflow();
+  const { step, workflow, update } = useWorkflow();
   const [isOverridden, setIsOverridden] = useState(() => Object.keys(step?.controls.values ?? {}).length > 0);
   const { reset } = useFormContext();
   const { saveForm } = useSaveForm();
@@ -98,9 +99,11 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
         open={isRestoreDefaultModalOpen}
         onOpenChange={setIsRestoreDefaultModalOpen}
         onConfirm={async () => {
-          const defaultValues = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
+          if (!workflow || !step) return;
+
+          const defaultValues = buildDefaultValuesOfDataSchema(step.controls.dataSchema ?? {});
           reset(defaultValues);
-          saveForm({ forceSubmit: true });
+          update(updateStepInWorkflow(workflow, step.stepId, { controlValues: null }));
           setIsRestoreDefaultModalOpen(false);
           setIsOverridden(false);
         }}
@@ -149,7 +152,12 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
           </AccordionTrigger>
 
           <AccordionContent>
-            <div className="bg-background rounded-md border border-dashed p-3">
+            <div
+              className={cn(
+                'bg-background rounded-md border border-dashed p-3',
+                !isOverridden && 'opacity-60 pointer-events-none'
+              )}
+            >
               <JsonForm schema={(dataSchema as RJSFSchema) || {}} disabled={!isOverridden} />
             </div>
           </AccordionContent>
