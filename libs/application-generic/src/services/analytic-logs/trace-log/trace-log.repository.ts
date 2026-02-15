@@ -322,6 +322,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
   }
 
   async getMessagesSentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getMessagesSentCount' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return 0;
+    }
+
     const query = `
       SELECT count(*) as count
       FROM traces
@@ -347,6 +356,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
   }
 
   async getUniqueSubscribers(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUniqueSubscribers' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return 0;
+    }
+
     const query = `
       SELECT count(DISTINCT subscriber_id) as count
       FROM traces
@@ -376,6 +394,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     startDate: Date,
     endDate: Date
   ): Promise<{ interactions: number; interactionRate: number }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getInAppInteractionRate' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return { interactions: 0, interactionRate: 0 };
+    }
+
     const interactionEventsQuery = `
       SELECT count(*) as count
       FROM traces
@@ -434,6 +461,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     startDate: Date,
     endDate: Date
   ): Promise<Array<{ step_run_type: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getChannelBreakdown' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
     const query = `
       SELECT 
         step_run_type,
@@ -472,6 +508,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     endDate: Date,
     limit: number = 5
   ): Promise<Array<{ provider_id: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getTopProviders' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
     const query = `
       SELECT 
         provider_id,
@@ -515,6 +560,19 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     uniqueSubscribers: number;
     interactions: number;
   }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportScalarStats' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return {
+        messagesSentCount: 0,
+        uniqueSubscribers: 0,
+        interactions: 0,
+      };
+    }
+
     const query = `
       SELECT 
         countIf(event_type = 'message_sent') as messages_sent_count,
@@ -566,6 +624,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     startDate: Date,
     endDate: Date
   ): Promise<Array<{ step_run_type: string; provider_id: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportBreakdown' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
     const query = `
       SELECT 
         step_run_type,
