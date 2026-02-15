@@ -6,8 +6,8 @@ export const controlValueSchema = z.object({
 });
 
 export const payloadSchema = z.object({
-  name: z.string(),
-  dateRange: z.string(),
+  dateRangeFrom: z.string().datetime(),
+  dateRangeTo: z.string().datetime().optional(),
   messagesSent: z.number(),
   messagesSentChange: z.number(),
   messagesSentUp: z.boolean(),
@@ -22,7 +22,6 @@ export const payloadSchema = z.object({
     z.object({
       name: z.string(),
       count: z.number(),
-      icon: z.string().optional(),
     })
   ),
   topWorkflows: z.array(
@@ -35,24 +34,10 @@ export const payloadSchema = z.object({
     z.object({
       name: z.string(),
       value: z.number(),
-      color: z.string(),
-      dashArray: z.string(),
-    })
-  ),
-  topFailures: z.array(
-    z.object({
-      message: z.string(),
-      count: z.number(),
-      percentage: z.number(),
-    })
-  ),
-  topFailingWorkflows: z.array(
-    z.object({
-      name: z.string(),
-      count: z.number(),
     })
   ),
   dashboardUrl: z.string(),
+  previewText: z.string().optional(),
 });
 
 export type PayloadSchemaType = z.infer<typeof payloadSchema>;

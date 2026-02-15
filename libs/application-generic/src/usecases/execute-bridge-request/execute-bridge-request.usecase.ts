@@ -240,7 +240,24 @@ export class ExecuteBridgeRequest {
             return delay;
           }
 
-          this.logger.info({ err: error }, 'Error is not retryable. Stopping retry attempts.');
+          let errorDetails = {};
+          if (error?.response?.body) {
+            try {
+              errorDetails = JSON.parse(error.response.body as string);
+            } catch {
+              errorDetails = { rawBody: error.response.body };
+            }
+          }
+
+          this.logger.info(
+            {
+              err: error,
+              statusCode: error?.response?.statusCode,
+              bridgeErrorDetails: errorDetails,
+              errorCode: error?.code,
+            },
+            'Error is not retryable. Stopping retry attempts.'
+          );
 
           return 0; // Don't retry for other errors
         },

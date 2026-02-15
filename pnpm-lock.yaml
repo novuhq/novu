@@ -2804,6 +2804,9 @@ importers:
       '@react-email/render':
         specifier: ^1.2.1
         version: 1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      millify:
+        specifier: ^6.1.0
+        version: 6.1.0
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -20837,6 +20840,10 @@ packages:
   micromatch@4.0.8:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
+
+  millify@6.1.0:
+    resolution: {integrity: sha512-H/E3J6t+DQs/F2YgfDhxUVZz/dF8JXPPKTLHL/yHCcLZLtCXJDUaqvhJXQwqOVBvbyNn4T0WjLpIHd7PAw7fBA==}
+    hasBin: true
 
   mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
@@ -50867,6 +50874,10 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
+
+  millify@6.1.0:
+    dependencies:
+      yargs: 17.7.2
 
   mime-db@1.52.0: {}
 

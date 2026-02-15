@@ -12,6 +12,7 @@ import {
   render,
   Section,
 } from '@react-email/components';
+import millify from 'millify';
 import React from 'react';
 
 const defaultDetailValueStyle: React.CSSProperties = {
@@ -84,26 +85,41 @@ export function Text({ style, children, ...props }: TextProps) {
   );
 }
 
-interface ITopProvider {
+interface IRankedItem {
   name: string;
   count: number;
   icon?: string;
 }
 
-interface ITopWorkflow {
+interface ITopProvider {
   name: string;
   count: number;
+  icon: string;
 }
+
+interface ITopWorkflow extends IRankedItem {}
 
 interface IChannel {
   name: string;
   value: number;
   color: string;
   dashArray: string;
+  icon?: string;
+}
+
+interface ITopProviderInput {
+  name: string;
+  count: number;
+}
+
+interface IChannelInput {
+  name: string;
+  value: number;
 }
 
 export interface IEmailProps {
-  dateRange: string;
+  dateRangeFrom: string;
+  dateRangeTo?: string;
   messagesSent: number;
   messagesSentChange: number;
   messagesSentUp: boolean;
@@ -114,15 +130,73 @@ export interface IEmailProps {
   successRate: number;
   userInteractions: number;
   interactionRate: number;
-  topProviders: ITopProvider[];
+  topProviders: ITopProviderInput[];
   topWorkflows: ITopWorkflow[];
-  channels: IChannel[];
+  channels: IChannelInput[];
   dashboardUrl: string;
   previewText?: string;
 }
 
 const NOVU_LOGO_URL = 'https://dashboard.novu.co/static/images/novu-logo-dark.svg';
 const EMAIL_ICONS_BASE_URL = 'https://dashboard.novu.co/static/images';
+
+const CHANNEL_CONFIG: Record<string, Omit<IChannel, 'value'>> = {
+  in_app: {
+    name: 'In-app',
+    color: '#3b82f6',
+    dashArray: '0',
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/bell.svg`,
+  },
+  email: {
+    name: 'Email',
+    color: '#f59e0b',
+    dashArray: '0',
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/email.svg`,
+  },
+  chat: {
+    name: 'Chat',
+    color: '#8b5cf6',
+    dashArray: '0',
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/chat.svg`,
+  },
+  push: {
+    name: 'Push',
+    color: '#ec4899',
+    dashArray: '0',
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/push.svg`,
+  },
+  sms: {
+    name: 'SMS',
+    color: '#ef4444',
+    dashArray: '0',
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/sms.svg`,
+  },
+};
+
+const PROVIDER_CONFIG: Record<string, { name: string }> = {
+  novu: { name: 'In-app' },
+  sendgrid: { name: 'SendGrid' },
+  twilio: { name: 'Twilio' },
+  slack: { name: 'Slack' },
+  mailgun: { name: 'Mailgun' },
+  postmark: { name: 'Postmark' },
+  sns: { name: 'AWS SNS' },
+  ses: { name: 'AWS SES' },
+  nodemailer: { name: 'Nodemailer' },
+  mandrill: { name: 'Mandrill' },
+  mailjet: { name: 'Mailjet' },
+  infobip: { name: 'Infobip' },
+  resend: { name: 'Resend' },
+  'azure-sms': { name: 'Azure SMS' },
+  clickatell: { name: 'Clickatell' },
+  discord: { name: 'Discord' },
+  'expo-push': { name: 'Expo Push' },
+  fcm: { name: 'FCM' },
+  'one-signal': { name: 'OneSignal' },
+  'push-webhook': { name: 'Push Webhook' },
+  pusher: { name: 'Pusher Beams' },
+  pushpad: { name: 'Pushpad' },
+};
 
 const COLORS = {
   bg: '#f9fafb',
@@ -147,7 +221,7 @@ const COLORS = {
 
 const sectionLabelStyle: React.CSSProperties = {
   fontSize: '12px',
-  fontWeight: 700,
+  fontWeight: 600,
   letterSpacing: '0.12px',
   textTransform: 'uppercase',
   color: COLORS.textSoft,
@@ -157,7 +231,7 @@ const sectionLabelStyle: React.CSSProperties = {
 
 const mediumNumberStyle: React.CSSProperties = {
   fontSize: '32px',
-  fontWeight: 700,
+  fontWeight: 600,
   color: COLORS.primary,
   lineHeight: '1.1',
   margin: '0',
@@ -169,6 +243,7 @@ const listValueCellStyle: React.CSSProperties = {
   fontSize: '12px',
   fontWeight: 500,
   color: COLORS.primary,
+  fontFamily: "'Manrope', sans-serif",
 };
 
 /**
@@ -182,28 +257,95 @@ function getProviderIconUrl(providerName: string): string {
 }
 
 /**
- * Formats a number with locale-aware thousands separators.
- * @example formatNumber(1500000) // "1,500,000"
  */
-function formatNumber(value: number): string {
-  return value.toLocaleString();
+function humanizeNumber(value: number): string {
+  // if (value === 0) return '0';
+  // if (value < 1000) return value.toLocaleString();
+
+  return millify(value, {
+    precision: 1,
+    lowercase: false,
+  });
 }
 
-function formatCompact(value: number): string {
-  if (value < 1000) return String(Math.round(value));
-  if (value < 1e6) {
-    const k = Math.round(value / 1000);
-    return k >= 1000 ? '1m' : k + 'k';
+/**
+ * Formats a date to "MMM D, YYYY" format.
+ * @example formatDate(new Date('2024-01-15')) // "Jan 15, 2024"
+ */
+function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[d.getMonth()];
+  const day = d.getDate();
+  const year = d.getFullYear();
+  return `${month} ${day}, ${year}`;
+}
+
+/**
+ * Formats a date range for display.
+ * If only dateFrom is provided, returns just that date.
+ * If both dates are provided, returns "MMM D - MMM D, YYYY" or "MMM D, YYYY - MMM D, YYYY"
+ */
+function formatDateRange(dateFrom: Date | string, dateTo?: Date | string): string {
+  if (!dateTo) {
+    return formatDate(dateFrom);
   }
-  if (value < 1e9) {
-    const m = Math.round(value / 1e6);
-    return m >= 1000 ? '1b' : m + 'm';
+
+  const from = typeof dateFrom === 'string' ? new Date(dateFrom) : dateFrom;
+  const to = typeof dateTo === 'string' ? new Date(dateTo) : dateTo;
+  const fromMonth = from.getMonth();
+  const fromYear = from.getFullYear();
+  const toMonth = to.getMonth();
+  const toYear = to.getFullYear();
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  if (fromYear === toYear && fromMonth === toMonth) {
+    return `${monthNames[fromMonth]} ${from.getDate()} - ${to.getDate()}, ${fromYear}`;
   }
-  if (value < 1e12) {
-    const b = Math.round(value / 1e9);
-    return b >= 1000 ? '1t' : b + 'b';
+
+  if (fromYear === toYear) {
+    return `${monthNames[fromMonth]} ${from.getDate()} - ${monthNames[toMonth]} ${to.getDate()}, ${fromYear}`;
   }
-  return Math.round(value / 1e12) + 't';
+
+  return `${formatDate(dateFrom)} - ${formatDate(dateTo)}`;
+}
+
+/**
+ * Maps channel input data to full channel objects with styling and icons.
+ */
+function mapChannels(channels: IChannelInput[]): IChannel[] {
+  return channels
+    .map((channel) => {
+      const config = CHANNEL_CONFIG[channel.name.toLowerCase()];
+      if (!config) {
+        return null;
+      }
+      return {
+        ...config,
+        value: channel.value,
+      };
+    })
+    .filter((ch): ch is IChannel => ch !== null);
+}
+
+/**
+ * Maps provider input data to full provider objects with names and icons.
+ */
+function mapProviders(providers: ITopProviderInput[]): ITopProvider[] {
+  return providers
+    .map((provider) => {
+      const config = PROVIDER_CONFIG[provider.name.toLowerCase()];
+      if (!config) {
+        return null;
+      }
+      return {
+        name: config.name,
+        count: provider.count,
+        icon: getProviderIconUrl(config.name),
+      };
+    })
+    .filter((p): p is ITopProvider => p !== null);
 }
 
 function NovuLogo() {
@@ -371,7 +513,7 @@ function CardWithChange({
           letterSpacing: '-0.192px',
         }}
       >
-        {formatNumber(value)}
+        {humanizeNumber(value)}
       </Text>
     </Card>
   );
@@ -407,7 +549,7 @@ function CardWithDetail({
         <tbody>
           <tr>
             <td style={{ padding: '0 8px 0 0', verticalAlign: 'baseline' }}>
-              <span style={mediumNumberStyle}>{formatNumber(value)}</span>
+              <span style={mediumNumberStyle}>{humanizeNumber(value)}</span>
             </td>
             <td style={{ padding: '0', verticalAlign: 'baseline' }}>
               <Text style={{ ...sectionLabelStyle }}>{unit}</Text>
@@ -425,6 +567,27 @@ function CardWithDetail({
   );
 }
 
+/**
+ * Renders invisible placeholder rows so adjacent ranked list cards (e.g. Top Providers and Top Workflows)
+ * keep the same row count and align visually when one list has fewer items than the other.
+ */
+function EmptyListPlaceholderRows({ count }: { count: number }) {
+  if (count <= 0) return null;
+
+  return (
+    <>
+      {Array.from({ length: count }).map((_, idx) => (
+        <Row key={`placeholder-${idx}`} style={{ margin: '0', padding: '3px' }}>
+          <Column>
+            <span style={{ fontSize: '8px', color: 'transparent' }}>&nbsp;</span>
+          </Column>
+          <Column style={{ ...listValueCellStyle }}>&nbsp;</Column>
+        </Row>
+      ))}
+    </>
+  );
+}
+
 function RankedListCard({
   items,
   title,
@@ -432,7 +595,7 @@ function RankedListCard({
   showProviderIcon = false,
   minRows = 0,
 }: {
-  items: ITopProvider[];
+  items: IRankedItem[];
   title: string;
   showWorkflowIcon?: boolean;
   showProviderIcon?: boolean;
@@ -457,124 +620,45 @@ function RankedListCard({
           return (
             <Row key={idx} style={{ margin: '0', padding: '3px' }}>
               <Column>
-                <table role="presentation" cellPadding="0" cellSpacing="0" style={{ borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      {showWorkflowIcon && (
-                        <td style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '12px' }}>
-                          <Img
-                            src={`${EMAIL_ICONS_BASE_URL}/report-emails/winding-arrow.svg`}
-                            alt=""
-                            width={12}
-                            height={9}
-                            style={{ display: 'block' }}
-                          />
-                        </td>
-                      )}
-                      {iconUrl && (
-                        <td style={{ padding: '0 10px 0 0', verticalAlign: 'middle' }}>
-                          <Img src={iconUrl} alt="icon" width={16} height={16} style={{ display: 'block' }} />
-                        </td>
-                      )}
-                      <td style={{ padding: '0', verticalAlign: 'middle' }}>
-                        <span style={{ fontSize: '12px', color: COLORS.dark, fontWeight: 500 }}>{item.name}</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <Row>
+                  {showWorkflowIcon && (
+                    <Column style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '12px' }}>
+                      <Img
+                        src={`${EMAIL_ICONS_BASE_URL}/report-emails/winding-arrow.svg`}
+                        alt=""
+                        width={12}
+                        height={9}
+                        style={{ display: 'block' }}
+                      />
+                    </Column>
+                  )}
+                  {iconUrl && (
+                    <Column style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '16px' }}>
+                      <Img src={iconUrl} alt="icon" width={16} height={16} style={{ display: 'block' }} />
+                    </Column>
+                  )}
+                  <Column style={{ padding: '0', verticalAlign: 'middle' }}>
+                    <Text
+                      style={{
+                        fontSize: '12px',
+                        color: COLORS.dark,
+                        fontWeight: 500,
+                        fontFamily: "'Manrope', sans-serif",
+                      }}
+                      title={item.name.length > 26 ? item.name : undefined}
+                    >
+                      {item.name.length > 26 ? `${item.name.slice(0, 26)}...` : item.name}
+                    </Text>
+                  </Column>
+                </Row>
               </Column>
-              <Column style={{ ...listValueCellStyle }}>{formatNumber(item.count)}</Column>
+              <Column style={{ ...listValueCellStyle }}>{humanizeNumber(item.count)}</Column>
             </Row>
           );
         })}
-        {Array.from({ length: emptyRowCount }).map((_, idx) => (
-          <Row key={`spacer-${idx}`} style={{ margin: '0', padding: '3px' }}>
-            <Column>
-              <span style={{ fontSize: '8px', color: 'transparent' }}>&nbsp;</span>
-            </Column>
-            <Column style={{ ...listValueCellStyle }}>&nbsp;</Column>
-          </Row>
-        ))}
+        <EmptyListPlaceholderRows count={emptyRowCount} />
       </Section>
     </Card>
-  );
-}
-
-function CircularProgress({
-  percentage,
-  value,
-  color,
-  size = 100,
-  strokeWidth = 10,
-}: {
-  percentage: number;
-  value: number;
-  color: string;
-  size?: number;
-  strokeWidth?: number;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
-  const center = size / 2;
-
-  const textSize = size * 0.12;
-  const compact = formatCompact(value);
-
-  return (
-    <table role="presentation" cellPadding="0" cellSpacing="0" style={{ width: '100%', margin: '0', padding: '0' }}>
-      <tbody>
-        <tr>
-          <td align="center" style={{ padding: '0' }}>
-            <svg
-              width={size}
-              height={size}
-              viewBox={`0 0 ${size} ${size}`}
-              style={{
-                display: 'block',
-                margin: '0 auto',
-              }}
-            >
-              <g transform={`rotate(-90 ${center} ${center})`}>
-                <circle
-                  cx={center}
-                  cy={center}
-                  r={radius}
-                  fill="none"
-                  stroke={COLORS.border}
-                  strokeWidth={strokeWidth}
-                />
-                <circle
-                  cx={center}
-                  cy={center}
-                  r={radius}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={circumference}
-                  strokeDashoffset={offset}
-                  strokeLinecap="round"
-                />
-              </g>
-              <text
-                x={center}
-                y={center}
-                textAnchor="middle"
-                dominantBaseline="central"
-                style={{
-                  fontSize: textSize,
-                  fontWeight: 700,
-                  fill: 'black',
-                  fontFamily: 'Manrope, sans-serif',
-                }}
-              >
-                {compact}
-              </text>
-            </svg>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   );
 }
 
@@ -582,49 +666,189 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
   const activeChannels = channels.filter((ch) => ch.value > 0);
   const totalMessages = activeChannels.reduce((sum, ch) => sum + ch.value, 0);
 
-  const channelsWithPercentage = activeChannels.map((channel) => ({
-    ...channel,
-    percentage: totalMessages > 0 ? Math.round((channel.value / totalMessages) * 100) : 0,
-  }));
+  const sortedChannels = [...activeChannels].sort((a, b) => b.value - a.value);
+  const topChannel = sortedChannels[0];
+  const otherChannels = sortedChannels.slice(1);
+
+  if (!topChannel) {
+    return null;
+  }
 
   return (
     <Card style={{ marginBottom: '12px' }}>
-      <Text style={sectionLabelStyle}>Delivery by Channels</Text>
-      <Section style={{ marginTop: '24px' }}>
+      <Section>
         <Row>
-          {channelsWithPercentage.map((channel, idx) => (
+          <Column
+            style={{
+              width: otherChannels.length > 0 ? '50%' : '100%',
+              padding: '0 12px 0 0',
+              verticalAlign: 'top' as const,
+            }}
+          >
+            <Text style={sectionLabelStyle}>Delivery by Channels</Text>
+            <Section style={{ width: '100%', marginTop: '12px' }}>
+              <Row>
+                <Column style={{ paddingBottom: '12px' }}>
+                  <Section>
+                    <Row>
+                      <Column style={{ paddingRight: '8px', verticalAlign: 'middle', width: '32px' }}>
+                        <Section
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            display: 'inline-block',
+                          }}
+                        >
+                          {topChannel.icon && (
+                            <Img
+                              src={topChannel.icon}
+                              alt=""
+                              width={16}
+                              height={16}
+                              style={{ display: 'block', padding: '4px' }}
+                            />
+                          )}
+                        </Section>
+                      </Column>
+                      <Column style={{ verticalAlign: 'middle' }}>
+                        <Text
+                          style={{
+                            fontSize: '24px',
+                            fontWeight: 600,
+                            color: COLORS.cardText,
+                            fontFamily: "'Manrope', sans-serif",
+                            letterSpacing: '-0.144px',
+                            lineHeight: '32px',
+                            margin: 0,
+                          }}
+                        >
+                          {topChannel.name}
+                        </Text>
+                      </Column>
+                    </Row>
+                  </Section>
+                </Column>
+              </Row>
+              <Row>
+                <Column>
+                  <Text
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: COLORS.textSoft,
+                      fontFamily: "'Manrope', sans-serif",
+                      lineHeight: 'normal',
+                      margin: 0,
+                    }}
+                  >
+                    is your top channel with{' '}
+                    <Text style={{ color: '#525866' }}>{humanizeNumber(topChannel.value)} messages</Text> sent
+                    <br />
+                    out of {humanizeNumber(totalMessages)} overall.
+                  </Text>
+                </Column>
+              </Row>
+            </Section>
+          </Column>
+
+          {otherChannels.length > 0 && (
             <Column
-              key={idx}
               style={{
-                textAlign: 'center' as const,
-                padding: '12px 8px',
+                width: '50%',
+                padding: '0 0 0 12px',
                 verticalAlign: 'top' as const,
               }}
             >
-              <div style={{ marginBottom: '16px' }}>
-                <CircularProgress
-                  percentage={channel.percentage}
-                  value={channel.value}
-                  color={channel.color}
-                  size={100}
-                  strokeWidth={10}
-                />
-              </div>
-              <Text
+              <Section
                 style={{
-                  fontSize: '12px',
-                  color: COLORS.muted,
-                  textTransform: 'uppercase' as const,
-                  fontWeight: 500,
-                  letterSpacing: '0.5px',
-                  margin: '0',
-                  fontFamily: 'Inter, sans-serif',
+                  width: '100%',
+                  backgroundColor: COLORS.listBg,
+                  borderRadius: '4px',
+                  padding: '8px',
                 }}
               >
-                {channel.name}
-              </Text>
+                <Row>
+                  <Column style={{ paddingBottom: '4px' }}>
+                    <Text
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: COLORS.textSoft,
+                        fontFamily: "'Manrope', sans-serif",
+                        margin: 0,
+                      }}
+                    >
+                      followed by,
+                    </Text>
+                  </Column>
+                </Row>
+                {otherChannels.map((channel, idx) => (
+                  <Row key={idx}>
+                    <Column style={{ paddingTop: idx > 0 ? '4px' : '0' }}>
+                      <Section style={{ width: '100%' }}>
+                        <Row>
+                          <Column style={{ width: '175px', padding: '3px 0' }}>
+                            <Section>
+                              <Row>
+                                <Column style={{ paddingRight: '4px', verticalAlign: 'middle', width: '28px' }}>
+                                  <Section
+                                    style={{
+                                      width: '24px',
+                                      height: '24px',
+                                      borderRadius: '6px',
+                                      display: 'inline-block',
+                                    }}
+                                  >
+                                    {channel.icon && (
+                                      <Img
+                                        src={channel.icon}
+                                        alt=""
+                                        width={16}
+                                        height={16}
+                                        style={{ display: 'block', padding: '4px', margin: '0 auto' }}
+                                      />
+                                    )}
+                                  </Section>
+                                </Column>
+                                <Column style={{ verticalAlign: 'middle' }}>
+                                  <Text
+                                    style={{
+                                      fontSize: '12px',
+                                      fontWeight: 600,
+                                      color: '#525866',
+                                      fontFamily: "'Manrope', sans-serif",
+                                      margin: 0,
+                                    }}
+                                  >
+                                    {channel.name}
+                                  </Text>
+                                </Column>
+                              </Row>
+                            </Section>
+                          </Column>
+                          <Column style={{ textAlign: 'right' as const, padding: '3px 0' }}>
+                            <Text
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                fontFamily: "'Manrope', sans-serif",
+                                margin: 0,
+                                whiteSpace: 'nowrap' as const,
+                              }}
+                            >
+                              <Text style={{ color: '#0E121B' }}>{humanizeNumber(channel.value)} </Text>
+                              <Text style={{ color: COLORS.textSoft }}>messages</Text>
+                            </Text>
+                          </Column>
+                        </Row>
+                      </Section>
+                    </Column>
+                  </Row>
+                ))}
+              </Section>
             </Column>
-          ))}
+          )}
         </Row>
       </Section>
     </Card>
@@ -695,21 +919,20 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
           <Button
             href={dashboardUrl}
             style={{
-              background:
-                'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.00) 100%), var(--novu-500, #DD2450)',
-              backgroundColor: COLORS.accent,
+              background: '#DF2E5B',
               color: COLORS.white,
               fontSize: '14px',
               fontWeight: 600,
               padding: '12px 28px',
               borderRadius: 'var(--radius-8, 8px)',
-              border: '1px solid var(--gradients-linear-12, rgba(255, 255, 255, 0.12))',
-              boxShadow: '0 1px 2px 0 rgba(14, 18, 27, 0.24), 0 0 0 1px var(--primary-base, #DD2450)',
+              border: '1px solid #B8244A',
+              boxShadow: '0 1px 2px 0 #C92952',
               textDecoration: 'none',
               display: 'inline-block',
+              fontFamily: "'Manrope', sans-serif",
             }}
           >
-            View dashboard &gt;
+            View dashboard
           </Button>
         </Column>
       </Row>
@@ -725,13 +948,12 @@ function EmailFooter() {
     lineHeight: '1.5',
   };
 
-  const socialDotStyle: React.CSSProperties = {
+  const socialIconStyle: React.CSSProperties = {
     display: 'inline-block',
-    width: '8px',
-    height: '8px',
-    backgroundColor: COLORS.faint,
-    borderRadius: '50%',
+    width: 8,
+    height: 8,
     margin: '0 4px',
+    verticalAlign: 'middle',
   };
 
   return (
@@ -739,14 +961,32 @@ function EmailFooter() {
       <Text style={footerTextStyle}>Novu, Inc.,</Text>
       <Text style={footerTextStyle}>1209 Orange Street, Wilmington, DE 19801, United States</Text>
       <Text style={{ marginTop: '12px', marginBottom: '0' }}>
-        <Link href="https://linkedin.com/company/novu" style={{ textDecoration: 'none' }}>
-          <span style={socialDotStyle} />
+        <Link href="https://linkedin.com/company/novuco" style={{ textDecoration: 'none' }}>
+          <Img
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/linkedin-dot.svg`}
+            alt="LinkedIn"
+            width={8}
+            height={8}
+            style={socialIconStyle}
+          />
         </Link>
-        <Link href="https://youtube.com/@novu" style={{ textDecoration: 'none' }}>
-          <span style={socialDotStyle} />
+        <Link href="https://youtube.com/@novuhq" style={{ textDecoration: 'none' }}>
+          <Img
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/youtube-dot.svg`}
+            alt="YouTube"
+            width={8}
+            height={8}
+            style={socialIconStyle}
+          />
         </Link>
-        <Link href="https://twitter.com/novuhq" style={{ textDecoration: 'none' }}>
-          <span style={socialDotStyle} />
+        <Link href="https://x.com/novuhq" style={{ textDecoration: 'none' }}>
+          <Img
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/x-dot.svg`}
+            alt="X"
+            width={8}
+            height={8}
+            style={socialIconStyle}
+          />
         </Link>
       </Text>
     </Section>
@@ -755,7 +995,8 @@ function EmailFooter() {
 
 export function UsageReportEmail({ props }: { props: IEmailProps }) {
   const {
-    dateRange,
+    dateRangeFrom,
+    dateRangeTo,
     messagesSent,
     messagesSentChange,
     messagesSentUp,
@@ -766,12 +1007,16 @@ export function UsageReportEmail({ props }: { props: IEmailProps }) {
     userInteractions,
     successRate,
     interactionRate,
-    topProviders,
+    topProviders: topProvidersInput,
     topWorkflows,
-    channels,
+    channels: channelsInput,
     dashboardUrl,
     previewText = 'Your monthly Novu usage report',
   } = props;
+
+  const dateRange = formatDateRange(dateRangeFrom, dateRangeTo);
+  const channels = mapChannels(channelsInput);
+  const topProviders = mapProviders(topProvidersInput);
 
   return (
     <Html lang="en">
@@ -828,7 +1073,6 @@ export function UsageReportEmail({ props }: { props: IEmailProps }) {
                   detail={{
                     value: `${interactionRate}%`,
                     suffix: ' of all in-app messages are interacted.',
-                    // valueStyle: { fontWeight: 500 },
                   }}
                 />
               </Column>
@@ -870,8 +1114,9 @@ export function UsageReportEmail({ props }: { props: IEmailProps }) {
 //   return (
 //     <UsageReportEmail
 //       props={{
-//         dateRange: 'Jan 1 - Jan 31, 2024',
-//         messagesSent: 45678,
+//         dateRangeFrom: '2025-02-01',
+//         dateRangeTo: '2025-02-28',
+//         messagesSent: 4512212321121332,
 //         messagesSentChange: 12,
 //         messagesSentUp: true,
 //         usersReached: 12345,
@@ -882,18 +1127,20 @@ export function UsageReportEmail({ props }: { props: IEmailProps }) {
 //         userInteractions: 8910,
 //         interactionRate: 95.5,
 //         topProviders: [
-//           { name: 'SendGrid', count: 15234, icon: 'https://placehold.co/16x16' },
-//           { name: 'Twilio', count: 8456, icon: 'https://placehold.co/16x16' },
-//           { name: 'Slack', count: 5678, icon: 'https://placehold.co/16x16' },
+//           { name: 'sendgrid', count: 15234 },
+//           { name: 'twilio', count: 8456 },
+//           { name: 'slack', count: 5678 },
 //         ],
 //         topWorkflows: [
 //           { name: 'Welcome Email', count: 5678 },
-//           { name: 'Order Confirmation', count: 2345 },
+//           { name: 'Order Confirmation sadqw2e1e1221e12e1e12e12e1e1e12e12e12e12e12e12e1e21e21e12e1', count: 2345 },
 //         ],
 //         channels: [
-//           { name: 'Email', value: 25678, color: '#3b82f6', dashArray: '0' },
-//           { name: 'SMS', value: 12345, color: '#10b981', dashArray: '0' },
-//           { name: 'Push', value: 7655, color: '#f59e0b', dashArray: '0' },
+//           // { name: 'in_app', value: 2300 },
+//           // { name: 'email', value: 1762 },
+//           // { name: 'chat', value: 562 },
+//           { name: 'push', value: 22362 },
+//           { name: 'sms', value: 62 },
 //         ],
 //         dashboardUrl: 'https://dashboard.novu.co',
 //         previewText: 'Your monthly Novu usage report',
