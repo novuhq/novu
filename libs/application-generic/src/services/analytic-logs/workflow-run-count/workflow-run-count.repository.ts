@@ -249,4 +249,65 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
       failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
     };
   }
+
+  async getUsageReportStats(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    totalCreated: number;
+    totalRuns: number;
+    successRate: number;
+    failureRate: number;
+  }> {
+    const query = `
+      SELECT 
+        sumIf(count, event_type = 'workflow_run_status_processing') as total_created,
+        sumIf(count, event_type = 'workflow_run_status_completed') as succeeded,
+        sumIf(count, event_type = 'workflow_run_status_error') as failed
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type IN (
+          'workflow_run_status_processing',
+          'workflow_run_status_completed',
+          'workflow_run_status_error'
+        )
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const result = await this.clickhouseService.query<{
+      total_created: string;
+      succeeded: string;
+      failed: string;
+    }>({
+      query,
+      params,
+    });
+
+    const stats = result.data[0] || {
+      total_created: '0',
+      succeeded: '0',
+      failed: '0',
+    };
+
+    const totalCreated = parseInt(stats.total_created, 10);
+    const succeeded = parseInt(stats.succeeded, 10);
+    const failed = parseInt(stats.failed, 10);
+    const totalRuns = succeeded + failed;
+
+    return {
+      totalCreated,
+      totalRuns,
+      successRate: totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0,
+      failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
+    };
+  }
 }

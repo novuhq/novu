@@ -1072,7 +1072,7 @@ export function UsageReportEmail({ props }: { props: IEmailProps }) {
                   unit="interactions"
                   detail={{
                     value: `${interactionRate}%`,
-                    suffix: ' of all in-app messages are interacted.',
+                    suffix: ' of all messages are interacted.',
                   }}
                 />
               </Column>
