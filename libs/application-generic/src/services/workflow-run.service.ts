@@ -888,7 +888,10 @@ export class WorkflowRunService {
     ];
     const allStepsFinished = channelJobs.every((job) => finishedStatuses.includes(job.status));
     const skippedJobs = channelJobs.filter(
-      (job) => job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped'
+      (job) =>
+        job.deliveryLifecycleState?.status &&
+        job.deliveryLifecycleState.status === 'skipped' &&
+        !job._mergedDigestId
     );
 
     if (allStepsFinished && skippedJobs.length > 0) {
@@ -927,11 +930,9 @@ export class WorkflowRunService {
       };
     }
 
-    // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found and no _mergedDigestId)
+    // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found)
     const hasUserCanceled = channelJobs.some(
-      (job) =>
-        (isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatusEnum.CANCELED) &&
-        !job._mergedDigestId
+      (job) => isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatusEnum.CANCELED
     );
     if (hasUserCanceled) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.CANCELED };
@@ -944,11 +945,11 @@ export class WorkflowRunService {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED };
     }
 
-    // Priority 7: MERGED - If all steps are merged or canceled with _mergedDigestId
+    // Priority 7: MERGED - If all steps are merged or skipped with _mergedDigestId
     const allStepsMerged = channelJobs.every(
       (job) =>
         job.status === JobStatusEnum.MERGED ||
-        (job.status === JobStatusEnum.CANCELED && !!job._mergedDigestId)
+        (job.status === JobStatusEnum.SKIPPED && !!job._mergedDigestId)
     );
     if (allStepsMerged) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED };
