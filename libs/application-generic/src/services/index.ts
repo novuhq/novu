@@ -19,6 +19,7 @@ export * from './cloudflare-scheduler';
 export * from './content.service';
 export * from './cron';
 export * from './feature-flags';
+export * from './in-memory-lru-cache';
 export * from './in-memory-provider';
 export {
   MessageInteractionResult,

@@ -1,3 +1,18 @@
+## v3.14.0 (2026-02-12)
+
+### 🚀 Features
+
+- **js, react, api-service:** In-app notifications timeframe filter fixes NV-7045 ([#9873](https://github.com/novuhq/novu/pull/9873))
+
+### 🩹 Fixes
+
+- **api-service:** add support of dot in workflow id fixes NV-7092 ([#9974](https://github.com/novuhq/novu/pull/9974))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Pawan Jain
+
 ## v3.13.0 (2026-01-28)
 
 This was a version bump only for @novu/react to align it with other projects, there were no code changes.

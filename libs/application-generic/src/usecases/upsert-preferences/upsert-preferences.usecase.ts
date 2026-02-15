@@ -180,18 +180,31 @@ export class UpsertPreferences {
       PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     ].includes(command.type);
 
-    return await this.preferencesRepository.create({
-      _subscriberId: command._subscriberId,
-      _userId: command.userId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _templateId: command.templateId,
-      _topicSubscriptionId: command.topicSubscriptionId,
-      preferences: command.preferences,
-      type: command.type,
-      schedule: command.schedule,
-      contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
-    });
+    try {
+      return await this.preferencesRepository.create({
+        _subscriberId: command._subscriberId,
+        _userId: command.userId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _templateId: command.templateId,
+        _topicSubscriptionId: command.topicSubscriptionId,
+        preferences: command.preferences,
+        type: command.type,
+        schedule: command.schedule,
+        contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
+      });
+    } catch (error) {
+      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+
+      if (isDuplicateKeyError) {
+        const existingPreference = await this.getPreference(command);
+        if (existingPreference) {
+          return existingPreference;
+        }
+      }
+
+      throw error;
+    }
   }
 
   private async updatePreferences(

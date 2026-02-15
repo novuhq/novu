@@ -138,6 +138,8 @@ jobs:
         with:
           slim: 'true'
       - uses: mansagroup/nrwl-nx-action@v3
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           parallel: 5
@@ -168,6 +170,7 @@ jobs:
         uses: mansagroup/nrwl-nx-action@v3
         env:
           LOG_LEVEL: 'info'
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
           projects: '@novu/api'
@@ -176,6 +179,7 @@ jobs:
         uses: mansagroup/nrwl-nx-action@v3
         env:
           LOG_LEVEL: 'info'
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
@@ -195,6 +199,8 @@ jobs:
 
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
@@ -230,6 +236,8 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
           projects: '@novu/api'
@@ -237,6 +245,8 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}

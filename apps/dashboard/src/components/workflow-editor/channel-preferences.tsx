@@ -11,8 +11,7 @@ export function ChannelPreferences() {
     return null;
   }
 
-  const isReadOnly =
-    workflow.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+  const isReadOnly = currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   return <ChannelPreferencesForm workflow={workflow} update={update} isReadOnly={isReadOnly} />;
 }

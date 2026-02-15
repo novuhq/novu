@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -7,6 +7,8 @@ import {
   GetSubscriberSchedule,
   GetSubscriberScheduleCommand,
   getJobDigest,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
@@ -34,7 +36,6 @@ import {
 import { setUser } from '@sentry/node';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { LRUCache } from 'lru-cache';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { PartialNotificationEntity } from '../add-job/add-job.command';
@@ -48,13 +49,6 @@ import { RunJobCommand } from './run-job.command';
 import { calculateNextAvailableTime, isWithinSchedule } from './schedule-validator';
 
 const nr = require('newrelic');
-
-const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
-  max: 1000,
-  ttl: 1000 * 30,
-});
-
-const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | undefined>>();
 
 export type SelectedWorkflowFields = Pick<NotificationTemplateEntity, 'steps'>;
 
@@ -84,7 +78,8 @@ export class RunJob {
     private logger: PinoLogger,
     private subscriberRepository: SubscriberRepository,
     private featureFlagsService: FeatureFlagsService,
-    private executeBridgeJob: ExecuteBridgeJob
+    private executeBridgeJob: ExecuteBridgeJob,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -414,51 +409,27 @@ export class RunJob {
     environmentId: string,
     organizationId: string,
     source?: string
-  ): Promise<NotificationTemplateEntity | undefined> {
-    const cacheKey = `${environmentId}:${templateId}`;
+  ): Promise<NotificationTemplateEntity> {
+    const workflow = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.WORKFLOW,
+      `${environmentId}:${templateId}`,
+      async () => {
+        const result = await this.notificationTemplateRepository.findById(templateId, environmentId);
 
-    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-      component: 'worker-workflow',
-    });
-
-    const isCacheEnabled = isFeatureFlagEnabled && !source;
-
-    if (isCacheEnabled) {
-      const cached = workflowCache.get(cacheKey);
-      if (cached) {
-        return cached;
+        return result;
+      },
+      {
+        environmentId,
+        organizationId,
+        skipCache: !!source,
       }
+    );
 
-      const inflightRequest = workflowInflightRequests.get(cacheKey);
-      if (inflightRequest) {
-        return inflightRequest;
-      }
+    if (!workflow) {
+      throw new NotFoundException(`Workflow ${templateId} not found`);
     }
 
-    const fetchPromise = this.notificationTemplateRepository
-      .findById(templateId, environmentId)
-      .then((workflow) => {
-        if (workflow && isCacheEnabled) {
-          workflowCache.set(cacheKey, workflow);
-        }
-
-        return workflow ?? undefined;
-      })
-      .finally(() => {
-        if (isCacheEnabled) {
-          workflowInflightRequests.delete(cacheKey);
-        }
-      });
-
-    if (isCacheEnabled) {
-      workflowInflightRequests.set(cacheKey, fetchPromise);
-    }
-
-    return fetchPromise;
+    return workflow;
   }
 
   private isUnsnoozeJob(job: JobEntity) {

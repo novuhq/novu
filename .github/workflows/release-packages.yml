@@ -120,6 +120,8 @@ jobs:
           fi
 
       - name: Build packages
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: |
           if [ "${{ github.event.inputs.release_type }}" != "stable" ]; then
             pnpm run build:packages
@@ -236,6 +238,8 @@ jobs:
           pnpm install --frozen-lockfile
 
       - name: Build packages
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: pnpm run build:packages
 
       - name: Publish packages to NPM

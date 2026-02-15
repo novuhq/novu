@@ -28,7 +28,7 @@ export const WorkflowRunActivityDrawer = forwardRef<HTMLDivElement, WorkflowRunA
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent ref={forwardedRef} className="w-[490px]">
-          <SheetTitle className="text-label-sm text-text-strong border-b border-neutral-200 p-3">Event Logs</SheetTitle>
+          <SheetTitle className="text-label-sm text-text-strong border-b border-neutral-200 p-3">Workflow run</SheetTitle>
 
           <div className="flex h-full max-h-full flex-1 flex-col overflow-auto">
             {currentActivityId ? (

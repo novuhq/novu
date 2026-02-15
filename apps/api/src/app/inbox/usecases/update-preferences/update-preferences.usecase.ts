@@ -80,6 +80,7 @@ export class UpdatePreferences {
       objectType: WebhookObjectTypeEnum.PREFERENCE,
       payload: {
         object: newPreference,
+        subscriberId: command.subscriberId,
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,

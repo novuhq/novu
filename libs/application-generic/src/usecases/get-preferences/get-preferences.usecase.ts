@@ -11,6 +11,7 @@ import {
 } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
+import { InMemoryLRUCacheService, InMemoryLRUCacheStore } from '../../services/in-memory-lru-cache';
 import { MergePreferencesCommand } from '../merge-preferences/merge-preferences.command';
 import { MergePreferences } from '../merge-preferences/merge-preferences.usecase';
 import { GetPreferencesCommand } from './get-preferences.command';
@@ -41,12 +42,21 @@ class PreferencesNotFoundException extends BadRequestException {
 export class GetPreferences {
   constructor(
     private preferencesRepository: PreferencesRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
-    const items = await this.getPreferencesFromDb(command);
+    const useOptimizedFetch = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_PREFERENCE_FETCH_OPTIMIZATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const items = useOptimizedFetch
+      ? await this.getPreferencesFromDbOptimized(command)
+      : await this.getPreferencesFromDb(command);
 
     const mergedPreferences = MergePreferences.execute(
       MergePreferencesCommand.create({
@@ -209,6 +219,106 @@ export class GetPreferences {
       subscriberWorkflowPreference,
       subscriberGlobalPreference,
     ] = await Promise.all(queries);
+
+    const result: PreferenceSet = {};
+
+    if (workflowResourcePreference) {
+      result.workflowResourcePreference = workflowResourcePreference as PreferenceSet['workflowResourcePreference'];
+    }
+
+    if (workflowUserPreference) {
+      result.workflowUserPreference = workflowUserPreference as PreferenceSet['workflowUserPreference'];
+    }
+
+    if (subscriberWorkflowPreference) {
+      result.subscriberWorkflowPreference =
+        subscriberWorkflowPreference as PreferenceSet['subscriberWorkflowPreference'];
+    }
+
+    if (subscriberGlobalPreference) {
+      result.subscriberGlobalPreference = subscriberGlobalPreference as PreferenceSet['subscriberGlobalPreference'];
+    }
+
+    return result;
+  }
+
+  @Instrument()
+  private async getPreferencesFromDbOptimized(command: GetPreferencesCommand): Promise<PreferenceSet> {
+    const baseQuery = {
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    };
+
+    const queryOptions = { readPreference: 'secondaryPreferred' as const };
+
+    const cacheOptions = {
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    };
+
+    const workflowPreferences = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+      `${command.environmentId}:${command.templateId}`,
+      async (): Promise<[PreferencesEntity | null, PreferencesEntity | null]> => {
+        const preferences = await this.preferencesRepository.find(
+          {
+            ...baseQuery,
+            _templateId: command.templateId,
+            type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+          },
+          undefined,
+          queryOptions
+        );
+
+        const workflowResourcePreference =
+          preferences.find((p) => p.type === PreferencesTypeEnum.WORKFLOW_RESOURCE) ?? null;
+        const workflowUserPreference = preferences.find((p) => p.type === PreferencesTypeEnum.USER_WORKFLOW) ?? null;
+
+        return [workflowResourcePreference, workflowUserPreference];
+      },
+      cacheOptions
+    );
+
+    const [workflowResourcePreference, workflowUserPreference] = workflowPreferences;
+
+    let subscriberWorkflowPreference: PreferencesEntity | null = null;
+    let subscriberGlobalPreference: PreferencesEntity | null = null;
+
+    if (command.subscriberId) {
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
+
+      [subscriberWorkflowPreference, subscriberGlobalPreference] = await Promise.all([
+        this.preferencesRepository.findOne(
+          {
+            ...baseQuery,
+            _subscriberId: command.subscriberId,
+            _templateId: command.templateId,
+            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+            ...contextQuery,
+          },
+          undefined,
+          queryOptions
+        ),
+        this.preferencesRepository.findOne(
+          {
+            ...baseQuery,
+            _subscriberId: command.subscriberId,
+            type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+            ...contextQuery,
+          },
+          undefined,
+          queryOptions
+        ),
+      ]);
+    }
 
     const result: PreferenceSet = {};
 

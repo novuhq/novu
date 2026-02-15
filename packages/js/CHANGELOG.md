@@ -1,3 +1,15 @@
+## v3.14.0 (2026-02-12)
+
+### 🚀 Features
+
+- **js, react, api-service:** In-app notifications timeframe filter fixes NV-7045 ([#9873](https://github.com/novuhq/novu/pull/9873))
+- **js:** allow passing socket options to the novu js configuration ([#9896](https://github.com/novuhq/novu/pull/9896))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Gabriel Pan Gantes @Gabrielpanga
+
 ## v3.13.0 (2026-01-28)
 
 ### 🚀 Features
