@@ -276,6 +276,11 @@ async function runInitInteractive(options: InitOptions): Promise<void> {
       initial: '',
     });
 
+    if (!subjectResponse || !('subject' in subjectResponse)) {
+      console.log(yellow('\n⚠️  Setup cancelled\n'));
+      process.exit(130);
+    }
+
     existingStepIds.add(stepResponse.stepId);
     existingStepIdsByWorkflow.set(workflowId, existingStepIds);
 
