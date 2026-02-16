@@ -101,7 +101,7 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     const emailSendResponse = await this.mailerSend.email.send(emailParams);
     const code = this.mapResponse(emailSendResponse.statusCode);
 
-    if (emailSendResponse.statusCode === 200 && code === CheckIntegrationResponseEnum.SUCCESS) {
+    if (code === CheckIntegrationResponseEnum.SUCCESS) {
       return {
         success: true,
         message: 'Integrated successfully!',
