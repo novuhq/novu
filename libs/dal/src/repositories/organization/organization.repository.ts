@@ -69,13 +69,13 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.find(query, select, options);
   }
 
-  async *findBatch(
+  findBatch(
     query: any,
     select?: string | undefined,
     options?: any,
     batchSize?: number | undefined
   ): AsyncGenerator<any, any, unknown> {
-    yield* this.organizationRepository.findBatch(query, select, options, batchSize);
+    return this.organizationRepository.findBatch(query, select, options, batchSize);
   }
 
   insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {

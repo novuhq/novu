@@ -111,13 +111,13 @@ export class MemberRepository implements IMemberRepository {
     return this.memberRepository.find(query, select, options);
   }
 
-  async *findBatch(
+  findBatch(
     query: any,
     select?: string | undefined,
     options?: any,
     batchSize?: number | undefined
   ): AsyncGenerator<any, any, unknown> {
-    yield* this.memberRepository.findBatch(query, select, options, batchSize);
+    return this.memberRepository.findBatch(query, select, options, batchSize);
   }
 
   insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {
