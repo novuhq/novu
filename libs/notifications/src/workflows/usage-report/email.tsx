@@ -618,7 +618,7 @@ function RankedListCard({
         {items.map((item, idx) => {
           const iconUrl = showProviderIcon ? getProviderIconUrl(item.name) : undefined;
 
-          if (!iconUrl) {
+          if (showProviderIcon && !iconUrl) {
             throw new Error(`Icon URL not found for provider: "${item.name}"`);
           }
 
