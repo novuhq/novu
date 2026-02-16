@@ -858,49 +858,4 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     return result.data;
   }
-
-  async getUsageStatistics(environmentIds: string[], startDate: Date, endDate: Date) {
-    const query = `
-      SELECT 
-        count(*) as totalRuns,
-        countIf(status = 'completed') as succeeded,
-        countIf(status != 'completed') as failed
-      FROM workflow_runs FINAL
-      WHERE 
-        environment_id IN {environmentIds:Array(String)}
-        AND created_at >= {startDate:DateTime64(3)}
-        AND created_at <= {endDate:DateTime64(3)}
-    `;
-
-    const params = {
-      environmentIds,
-      startDate: LogRepository.formatDateTime64(startDate),
-      endDate: LogRepository.formatDateTime64(endDate),
-    };
-
-    const result = await this.clickhouseService.query<{
-      totalRuns: string;
-      succeeded: string;
-      failed: string;
-    }>({
-      query,
-      params,
-    });
-
-    const stats = result.data[0] || {
-      totalRuns: '0',
-      succeeded: '0',
-      failed: '0',
-    };
-
-    const totalRuns = parseInt(stats.totalRuns, 10);
-    const succeeded = parseInt(stats.succeeded, 10);
-    const failed = parseInt(stats.failed, 10);
-
-    return {
-      totalRuns,
-      successRate: totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0,
-      failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
-    };
-  }
 }
