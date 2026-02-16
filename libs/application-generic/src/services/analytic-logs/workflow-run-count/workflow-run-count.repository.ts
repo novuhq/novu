@@ -115,6 +115,15 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   async getTotalCreatedCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getTotalCreatedCount' },
+        'Skipping workflow run count query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return 0;
+    }
+
     const query = `
       SELECT sum(count) as total
       FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
@@ -140,6 +149,15 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   async getTotalInteractionsCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getTotalInteractionsCount' },
+        'Skipping workflow run count query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return 0;
+    }
+
     const query = `
       SELECT sum(count) as total
       FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
@@ -170,6 +188,15 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     endDate: Date,
     limit: number = 5
   ): Promise<Array<{ workflow_run_id: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getTopWorkflows' },
+        'Skipping workflow run count query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
     const query = `
       SELECT 
         workflow_run_id,
@@ -208,6 +235,15 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     startDate: Date,
     endDate: Date
   ): Promise<{ totalRuns: number; successRate: number; failureRate: number }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getWorkflowRunStatistics' },
+        'Skipping workflow run count query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return { totalRuns: 0, successRate: 0, failureRate: 0 };
+    }
+
     const query = `
       SELECT 
         sumIf(count, event_type = 'workflow_run_status_completed') as succeeded,
@@ -260,6 +296,15 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     successRate: number;
     failureRate: number;
   }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportStats' },
+        'Skipping workflow run count query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return { totalCreated: 0, totalRuns: 0, successRate: 0, failureRate: 0 };
+    }
+
     const query = `
       SELECT 
         sumIf(count, event_type = 'workflow_run_status_processing') as total_created,
