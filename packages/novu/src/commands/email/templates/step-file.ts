@@ -1,5 +1,9 @@
 import type { EmailStepConfig } from '../config/schema';
 
+function escapeString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 export function generateStepFile(
   stepId: string,
   workflowId: string,
@@ -9,15 +13,15 @@ export function generateStepFile(
   const defaultSubject = emailConfig.subject || 'No Subject';
 
   return `import { render } from '@react-email/components';
-import EmailTemplate from '${templateImportPath}';
+import EmailTemplate from '${escapeString(templateImportPath)}';
 
-export const stepId = '${stepId}';
-export const workflowId = '${workflowId}';
+export const stepId = '${escapeString(stepId)}';
+export const workflowId = '${escapeString(workflowId)}';
 export const type = 'email';
 
 export default async function({ payload, subscriber, context, steps }) {
   return {
-    subject: payload.subject || '${defaultSubject}',
+    subject: payload.subject || '${escapeString(defaultSubject)}',
     body: await render(
       <EmailTemplate
         {...payload}

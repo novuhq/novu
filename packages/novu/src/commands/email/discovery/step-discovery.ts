@@ -68,17 +68,29 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
 }
 
 function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFile {
-  const sourceCode = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true, getScriptKind(filePath));
+  try {
+    const sourceCode = fs.readFileSync(filePath, 'utf-8');
+    const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true, getScriptKind(filePath));
 
-  return {
-    filePath,
-    relativePath,
-    metadata: extractStepMetadata(sourceFile),
-    hasDefaultExport: hasDefaultExportInFile(sourceFile),
-    hasReactEmailImport: hasReactEmailImportInFile(sourceFile),
-    parseErrors: extractParseDiagnostics(sourceFile),
-  };
+    return {
+      filePath,
+      relativePath,
+      metadata: extractStepMetadata(sourceFile),
+      hasDefaultExport: hasDefaultExportInFile(sourceFile),
+      hasReactEmailImport: hasReactEmailImportInFile(sourceFile),
+      parseErrors: extractParseDiagnostics(sourceFile),
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      filePath,
+      relativePath,
+      metadata: {},
+      hasDefaultExport: false,
+      hasReactEmailImport: false,
+      parseErrors: [`Failed to read or parse file: ${errorMessage}`],
+    };
+  }
 }
 
 function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
@@ -141,7 +153,8 @@ function hasReactEmailImportInFile(sourceFile: ts.SourceFile): boolean {
 
   function visit(node: ts.Node) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      if (node.moduleSpecifier.text === '@react-email/components') {
+      const moduleText = node.moduleSpecifier.text;
+      if (moduleText === 'react-email' || moduleText.startsWith('@react-email/')) {
         hasImport = true;
       }
     }
@@ -181,7 +194,7 @@ function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
   }
 
   if (!analysis.hasReactEmailImport) {
-    errors.push("Missing import from '@react-email/components'");
+    errors.push("Missing import from '@react-email'");
   }
 
   return errors;
@@ -217,7 +230,9 @@ function buildErrorsForDuplicates(filesByKey: Map<string, AnalyzedStepFile[]>): 
       continue;
     }
 
-    const [workflowId, stepId] = compositeKey.split(':');
+    const firstColonIndex = compositeKey.indexOf(':');
+    const workflowId = firstColonIndex >= 0 ? compositeKey.substring(0, firstColonIndex) : compositeKey;
+    const stepId = firstColonIndex >= 0 ? compositeKey.substring(firstColonIndex + 1) : '';
     const relativePaths = files.map((file) => path.relative(process.cwd(), file.filePath));
 
     for (const file of files) {

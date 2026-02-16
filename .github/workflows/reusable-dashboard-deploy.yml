@@ -54,6 +54,8 @@ jobs:
           submodules: true
 
       - name: Build
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: CI='' pnpm build:dashboard --skip-nx-cache
 
       - name: Deploy Dashboard to Netlify

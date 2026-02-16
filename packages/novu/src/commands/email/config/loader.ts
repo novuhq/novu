@@ -75,6 +75,10 @@ async function loadTypeScriptConfig(filePath: string): Promise<unknown> {
     logLevel: 'silent',
   });
 
+  if (!result.outputFiles || result.outputFiles.length === 0) {
+    throw new Error('esbuild produced no output for config file');
+  }
+
   const code = result.outputFiles[0].text;
   const tempModule: { exports: { default?: unknown; [key: string]: unknown } } = {
     exports: {},

@@ -41,6 +41,8 @@ jobs:
         run: pnpm run packages:set-latest
 
       - name: Build
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: pnpm run preview:pkg:build
 
       - name: Release package previews to pkg.pr.new
