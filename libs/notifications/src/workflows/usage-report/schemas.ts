@@ -37,6 +37,8 @@ export const payloadSchema = z.object({
     })
   ),
   dashboardUrl: z.string(),
+  _nvDelayDuration: z.string().datetime().optional(),
+  _nvIsDelayEnabled: z.boolean().optional(),
 });
 
 export type PayloadSchemaType = z.infer<typeof payloadSchema>;
