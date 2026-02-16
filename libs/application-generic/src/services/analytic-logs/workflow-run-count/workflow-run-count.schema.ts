@@ -1,3 +1,4 @@
+import { DeliveryLifecycleEventType } from '@novu/shared';
 import {
   CHDate,
   CHLowCardinality,
@@ -7,7 +8,7 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
-import { EventType } from '..';
+import { WorkflowRunStatusType } from '../trace-log/trace-log.schema';
 
 export const WORKFLOW_RUN_COUNT_TABLE_NAME = 'workflow_run_count';
 
@@ -40,8 +41,10 @@ export const workflowRunCountSchema = new ClickhouseSchema(schemaDefinition, cli
 
 type NativeWorkflowRunCount = InferClickhouseSchemaType<typeof workflowRunCountSchema>;
 
+type WorkflowRunCountEventType = WorkflowRunStatusType | DeliveryLifecycleEventType;
+
 export type WorkflowRunCountComplex = Omit<NativeWorkflowRunCount, 'event_type'> & {
-  event_type: EventType;
+  event_type: WorkflowRunCountEventType;
 };
 
 export type WorkflowRunCount = Prettify<WorkflowRunCountComplex>;

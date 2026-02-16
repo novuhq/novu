@@ -178,4 +178,43 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
       failureRate,
     };
   }
+
+  async getActiveOrganizationIds(
+    startDate: Date,
+    endDate: Date,
+    minWorkflowRuns: number = 500,
+    minSentMessages: number = 100
+  ): Promise<string[]> {
+    const query = `
+      SELECT 
+        organization_id,
+        sumIf(count, event_type = 'workflow_run_status_processing') as total_workflow_runs,
+        sumIf(count, event_type = 'workflow_run_delivery_sent') as total_sent_messages
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        date >= {startDate:Date}
+        AND date <= {endDate:Date}
+      GROUP BY organization_id
+      HAVING total_workflow_runs >= {minWorkflowRuns:UInt32}
+        AND total_sent_messages >= {minSentMessages:UInt32}
+    `;
+
+    const params: Record<string, unknown> = {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      minWorkflowRuns,
+      minSentMessages,
+    };
+
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      total_workflow_runs: string;
+      total_sent_messages: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data.map((row) => row.organization_id);
+  }
 }
