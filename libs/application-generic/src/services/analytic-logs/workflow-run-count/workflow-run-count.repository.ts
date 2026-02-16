@@ -279,10 +279,13 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     const failed = parseInt(stats.failed, 10);
     const totalRuns = succeeded + failed;
 
+    const successRate = totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0;
+    const failureRate = totalRuns > 0 ? Math.max(0, 100 - successRate) : 0;
+
     return {
       totalRuns,
-      successRate: totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0,
-      failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
+      successRate,
+      failureRate,
     };
   }
 
@@ -348,11 +351,14 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     const failed = parseInt(stats.failed, 10);
     const totalRuns = succeeded + failed;
 
+    const successRate = totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0;
+    const failureRate = totalRuns > 0 ? Math.max(0, 100 - successRate) : 0;
+
     return {
       totalCreated,
       totalRuns,
-      successRate: totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0,
-      failureRate: totalRuns > 0 ? Math.round((failed / totalRuns) * 100) : 0,
+      successRate,
+      failureRate,
     };
   }
 }
