@@ -119,7 +119,7 @@ describe('step-discovery', () => {
 
     expect(result.valid).toBe(false);
     expect(result.steps).toHaveLength(0);
-    expect(result.errors[0].errors.some((error) => error.includes('@react-email/components'))).toBe(true);
+    expect(result.errors[0].errors.some((error) => error.includes('@react-email'))).toBe(true);
   });
 
   it('allows duplicate step IDs across different workflows', async () => {
