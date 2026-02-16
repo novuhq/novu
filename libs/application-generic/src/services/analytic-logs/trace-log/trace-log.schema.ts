@@ -85,6 +85,11 @@ const clickhouseSchemaOptions = {
 
 export const traceLogSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
+export type WorkflowRunStatusType =
+  | 'workflow_run_status_processing'
+  | 'workflow_run_status_completed'
+  | 'workflow_run_status_error';
+
 export type EventType =
   | 'message_seen'
   | 'message_unseen'
@@ -200,9 +205,7 @@ export type EventType =
   | 'step_skipped_max_extensions_reached'
   | 'push_invalid_token_removed'
   | 'topic_subscription_preference_evaluation'
-  | 'workflow_run_status_processing'
-  | 'workflow_run_status_completed'
-  | 'workflow_run_status_error'
+  | WorkflowRunStatusType
   | DeliveryLifecycleEventType;
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';
