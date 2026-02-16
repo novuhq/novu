@@ -226,7 +226,12 @@ async function runInitInteractive(options: InitOptions): Promise<void> {
       initial: true,
     });
 
-    if (!includeResponse.include) {
+    if (includeResponse.include === undefined) {
+      console.log(yellow('\n⚠️  Setup cancelled\n'));
+      process.exit(130);
+    }
+
+    if (includeResponse.include === false) {
       console.log(yellow('   Skipped'));
       continue;
     }
@@ -284,6 +289,13 @@ async function runInitInteractive(options: InitOptions): Promise<void> {
     });
 
     console.log('');
+  }
+
+  if (configuredSteps.length === 0) {
+    console.log('');
+    console.log(yellow('⚠️  No templates selected — aborting initialization'));
+    console.log('');
+    return;
   }
 
   console.log(cyan('💾 Saving configuration to novu.config.ts...'));

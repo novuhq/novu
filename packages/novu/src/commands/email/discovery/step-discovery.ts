@@ -68,17 +68,29 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
 }
 
 function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFile {
-  const sourceCode = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true, getScriptKind(filePath));
+  try {
+    const sourceCode = fs.readFileSync(filePath, 'utf-8');
+    const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true, getScriptKind(filePath));
 
-  return {
-    filePath,
-    relativePath,
-    metadata: extractStepMetadata(sourceFile),
-    hasDefaultExport: hasDefaultExportInFile(sourceFile),
-    hasReactEmailImport: hasReactEmailImportInFile(sourceFile),
-    parseErrors: extractParseDiagnostics(sourceFile),
-  };
+    return {
+      filePath,
+      relativePath,
+      metadata: extractStepMetadata(sourceFile),
+      hasDefaultExport: hasDefaultExportInFile(sourceFile),
+      hasReactEmailImport: hasReactEmailImportInFile(sourceFile),
+      parseErrors: extractParseDiagnostics(sourceFile),
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      filePath,
+      relativePath,
+      metadata: {},
+      hasDefaultExport: false,
+      hasReactEmailImport: false,
+      parseErrors: [`Failed to read or parse file: ${errorMessage}`],
+    };
+  }
 }
 
 function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
@@ -182,7 +194,7 @@ function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
   }
 
   if (!analysis.hasReactEmailImport) {
-    errors.push("Missing import from '@react-email/components'");
+    errors.push("Missing import from '@react-email'");
   }
 
   return errors;
