@@ -14,6 +14,7 @@ import {
 } from '@react-email/components';
 import millify from 'millify';
 import React from 'react';
+import { ControlValueSchema, PayloadSchemaType } from './schemas';
 
 const defaultDetailValueStyle: React.CSSProperties = {
   color: '#525866',
@@ -314,7 +315,7 @@ function formatDateRange(dateFrom: Date | string, dateTo?: Date | string): strin
 /**
  * Maps channel input data to full channel objects with styling and icons.
  */
-function mapChannels(channels: IChannelInput[]): IChannel[] {
+function mapChannels(channels: PayloadSchemaType['channels']): IChannel[] {
   return channels
     .map((channel) => {
       const config = CHANNEL_CONFIG[channel.name.toLowerCase()];
@@ -332,7 +333,7 @@ function mapChannels(channels: IChannelInput[]): IChannel[] {
 /**
  * Maps provider input data to full provider objects with names and icons.
  */
-function mapProviders(providers: ITopProviderInput[]): ITopProvider[] {
+function mapProviders(providers: PayloadSchemaType['topProviders']): ITopProvider[] {
   return providers
     .map((provider) => {
       const config = PROVIDER_CONFIG[provider.name.toLowerCase()];
@@ -595,7 +596,7 @@ function RankedListCard({
   showProviderIcon = false,
   minRows = 0,
 }: {
-  items: IRankedItem[];
+  items: PayloadSchemaType['topProviders'];
   title: string;
   showWorkflowIcon?: boolean;
   showProviderIcon?: boolean;
@@ -615,7 +616,11 @@ function RankedListCard({
         }}
       >
         {items.map((item, idx) => {
-          const iconUrl = showProviderIcon ? getProviderIconUrl(item.name) : item.icon;
+          const iconUrl = showProviderIcon ? getProviderIconUrl(item.name) : undefined;
+
+          if (!iconUrl) {
+            throw new Error(`Icon URL not found for provider: "${item.name}"`);
+          }
 
           return (
             <Row key={idx} style={{ margin: '0', padding: '3px' }}>
@@ -993,7 +998,7 @@ function EmailFooter() {
   );
 }
 
-export function UsageReportEmail({ props }: { props: IEmailProps }) {
+export function UsageReportEmail({ props }: { props: PayloadSchemaType & ControlValueSchema }) {
   const {
     dateRangeFrom,
     dateRangeTo,
@@ -1149,6 +1154,6 @@ export function UsageReportEmail({ props }: { props: IEmailProps }) {
 //   );
 // }
 
-export default async function renderEmail(payload: any, controls: any) {
+export default async function renderEmail(payload: PayloadSchemaType, controls: ControlValueSchema) {
   return await render(<UsageReportEmail props={{ ...payload, ...controls }} />);
 }
