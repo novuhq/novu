@@ -366,45 +366,6 @@ export class NotificationRepository extends BaseRepository<
     return this.MongooseModel.estimatedDocumentCount();
   }
 
-  async getUsageStatistics(environmentIds: string[], startDate: Date, endDate: Date) {
-    const notifications = await this.aggregate([
-      {
-        $match: {
-          _environmentId: { $in: environmentIds.map((id) => this.convertStringToObjectId(id)) },
-          createdAt: { $gte: startDate, $lte: endDate },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalMessages: { $sum: 1 },
-          uniqueSubscribers: { $addToSet: '$_subscriberId' },
-          interacted: {
-            $sum: {
-              $cond: [{ $eq: ['$lastEmittedDeliveryEvent', 'workflow_run_delivery_interacted'] }, 1, 0],
-            },
-          },
-        },
-      },
-    ]);
-
-    const stats = notifications[0] || {
-      totalMessages: 0,
-      uniqueSubscribers: [],
-      interacted: 0,
-    };
-
-    return {
-      totalMessages: stats.totalMessages,
-      uniqueSubscribers: stats.uniqueSubscribers.length,
-      interactions: stats.interacted,
-      interactionRate: stats.totalMessages > 0 ? Math.round((stats.interacted / stats.totalMessages) * 100) : 0,
-      topProviders: [],
-      topWorkflows: [],
-      channelBreakdown: [],
-    };
-  }
-
   /**
    * Atomically transitions a notification's delivery lifecycle event forward only.
    * Prevents backward transitions and returns whether the update succeeded.
