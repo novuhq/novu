@@ -156,30 +156,26 @@ export class GetPreferences {
 
     const queryOptions = { readPreference: 'secondaryPreferred' as const };
 
-    const result: PreferenceSet = {};
-
-    const workflowQueries = command.templateId
-      ? Promise.all([
-          this.preferencesRepository.findOne(
-            {
-              ...baseQuery,
-              _templateId: command.templateId,
-              type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-            },
-            undefined,
-            queryOptions
-          ),
-          this.preferencesRepository.findOne(
-            {
-              ...baseQuery,
-              _templateId: command.templateId,
-              type: PreferencesTypeEnum.USER_WORKFLOW,
-            },
-            undefined,
-            queryOptions
-          ),
-        ])
-      : Promise.resolve([null, null] as const);
+    const queries = [
+      this.preferencesRepository.findOne(
+        {
+          ...baseQuery,
+          _templateId: command.templateId,
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
+        },
+        undefined,
+        queryOptions
+      ),
+      this.preferencesRepository.findOne(
+        {
+          ...baseQuery,
+          _templateId: command.templateId,
+          type: PreferencesTypeEnum.USER_WORKFLOW,
+        },
+        undefined,
+        queryOptions
+      ),
+    ];
 
     if (command.subscriberId) {
       const useContextFiltering = await this.featureFlagsService.getFlag({
@@ -192,20 +188,18 @@ export class GetPreferences {
         enabled: useContextFiltering,
       });
 
-      const subscriberQueries = [
-        command.templateId
-          ? this.preferencesRepository.findOne(
-              {
-                ...baseQuery,
-                _subscriberId: command.subscriberId,
-                _templateId: command.templateId,
-                type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-                ...contextQuery,
-              },
-              undefined,
-              queryOptions
-            )
-          : Promise.resolve(null),
+      queries.push(
+        this.preferencesRepository.findOne(
+          {
+            ...baseQuery,
+            _subscriberId: command.subscriberId,
+            _templateId: command.templateId,
+            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+            ...contextQuery,
+          },
+          undefined,
+          queryOptions
+        ),
         this.preferencesRepository.findOne(
           {
             ...baseQuery,
@@ -215,38 +209,34 @@ export class GetPreferences {
           },
           undefined,
           queryOptions
-        ),
-      ];
+        )
+      );
+    }
 
-      const [[workflowResourcePreference, workflowUserPreference], [subscriberWorkflowPreference, subscriberGlobalPreference]] =
-        await Promise.all([workflowQueries, Promise.all(subscriberQueries)]);
+    const [
+      workflowResourcePreference,
+      workflowUserPreference,
+      subscriberWorkflowPreference,
+      subscriberGlobalPreference,
+    ] = await Promise.all(queries);
 
-      if (workflowResourcePreference) {
-        result.workflowResourcePreference = workflowResourcePreference as PreferenceSet['workflowResourcePreference'];
-      }
+    const result: PreferenceSet = {};
 
-      if (workflowUserPreference) {
-        result.workflowUserPreference = workflowUserPreference as PreferenceSet['workflowUserPreference'];
-      }
+    if (workflowResourcePreference) {
+      result.workflowResourcePreference = workflowResourcePreference as PreferenceSet['workflowResourcePreference'];
+    }
 
-      if (subscriberWorkflowPreference) {
-        result.subscriberWorkflowPreference =
-          subscriberWorkflowPreference as PreferenceSet['subscriberWorkflowPreference'];
-      }
+    if (workflowUserPreference) {
+      result.workflowUserPreference = workflowUserPreference as PreferenceSet['workflowUserPreference'];
+    }
 
-      if (subscriberGlobalPreference) {
-        result.subscriberGlobalPreference = subscriberGlobalPreference as PreferenceSet['subscriberGlobalPreference'];
-      }
-    } else {
-      const [workflowResourcePreference, workflowUserPreference] = await workflowQueries;
+    if (subscriberWorkflowPreference) {
+      result.subscriberWorkflowPreference =
+        subscriberWorkflowPreference as PreferenceSet['subscriberWorkflowPreference'];
+    }
 
-      if (workflowResourcePreference) {
-        result.workflowResourcePreference = workflowResourcePreference as PreferenceSet['workflowResourcePreference'];
-      }
-
-      if (workflowUserPreference) {
-        result.workflowUserPreference = workflowUserPreference as PreferenceSet['workflowUserPreference'];
-      }
+    if (subscriberGlobalPreference) {
+      result.subscriberGlobalPreference = subscriberGlobalPreference as PreferenceSet['subscriberGlobalPreference'];
     }
 
     return result;
