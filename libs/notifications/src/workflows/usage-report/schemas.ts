@@ -37,7 +37,6 @@ export const payloadSchema = z.object({
     })
   ),
   dashboardUrl: z.string(),
-  previewText: z.string().optional(),
 });
 
 export type PayloadSchemaType = z.infer<typeof payloadSchema>;
