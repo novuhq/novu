@@ -72,7 +72,7 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     }
 
     if (options.replyTo) {
-      const replyTo = new Recipient(options.replyTo);
+      const replyTo = new Sender(options.replyTo);
       emailParams.setReplyTo(replyTo);
     }
 
@@ -91,7 +91,7 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
      * The fallback treats the actual response object as an array of responses.
      */
     return {
-      id: response[0]?.['X-Message-Id'] || response.headers['x-message-id'],
+      id: response.headers['x-message-id'],
       date: new Date().toISOString(),
     };
   }
