@@ -84,7 +84,7 @@
     "@uiw/codemirror-themes": "^4.23.6",
     "@uiw/react-codemirror": "^4.23.6",
     "@xyflow/react": "^12.3.2",
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "ajv-formats": "^2.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
