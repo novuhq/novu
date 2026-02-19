@@ -215,7 +215,7 @@ function FinalStatusWorkflowRunsTrendChart({ data, isLoading, error }: WorkflowR
 }
 
 export function WorkflowRunsTrendChart(props: WorkflowRunsTrendChartProps) {
-  const isFinalStatusOnly = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_TRACES_ENABLED);
+  const isFinalStatusOnly = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_ROLLUP_ENABLED);
 
   if (isFinalStatusOnly) {
     return <FinalStatusWorkflowRunsTrendChart {...props} />;
