@@ -197,10 +197,8 @@ export class WorkflowController {
     return this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
         workflowIdOrInternalId,
-        user: {
-          ...user,
-          environmentId: environmentId || user.environmentId,
-        },
+        user,
+        environmentId,
       })
     );
   }
