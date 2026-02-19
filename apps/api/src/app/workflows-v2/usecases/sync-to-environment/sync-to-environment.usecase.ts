@@ -147,9 +147,17 @@ export class SyncToEnvironmentUseCase {
   }
 
   private async validateTargetEnvironment(targetEnvironmentId: string, organizationId: string): Promise<void> {
-    const environment = await this.environmentRepository.findByIdAndOrganization(targetEnvironmentId, organizationId);
+    try {
+      const environment = await this.environmentRepository.findByIdAndOrganization(targetEnvironmentId, organizationId);
 
-    if (!environment) {
+      if (!environment) {
+        throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
       throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
     }
   }
