@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
 import {
   ClientSession,
+  EnvironmentRepository,
   LocalizationResourceEnum,
   NotificationTemplateRepository,
   PreferencesEntity,
@@ -52,6 +53,7 @@ export class SyncToEnvironmentUseCase {
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
     private moduleRef: ModuleRef,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private environmentRepository: EnvironmentRepository,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -61,6 +63,8 @@ export class SyncToEnvironmentUseCase {
     if (command.user.environmentId === command.targetEnvironmentId) {
       throw new BadRequestException('Cannot sync workflow to the same environment');
     }
+
+    await this.validateTargetEnvironment(command.targetEnvironmentId, command.user.organizationId);
 
     const sourceWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
@@ -140,6 +144,14 @@ export class SyncToEnvironmentUseCase {
     }
 
     return upsertedWorkflow;
+  }
+
+  private async validateTargetEnvironment(targetEnvironmentId: string, organizationId: string): Promise<void> {
+    const environment = await this.environmentRepository.findByIdAndOrganization(targetEnvironmentId, organizationId);
+
+    if (!environment) {
+      throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
+    }
   }
 
   private async publishTranslationGroup(
