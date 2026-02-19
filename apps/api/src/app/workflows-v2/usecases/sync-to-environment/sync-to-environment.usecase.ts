@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, Optional } from '@n
 import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
 import {
+  BaseRepository,
   ClientSession,
   EnvironmentRepository,
   LocalizationResourceEnum,
@@ -147,17 +148,13 @@ export class SyncToEnvironmentUseCase {
   }
 
   private async validateTargetEnvironment(targetEnvironmentId: string, organizationId: string): Promise<void> {
-    try {
-      const environment = await this.environmentRepository.findByIdAndOrganization(targetEnvironmentId, organizationId);
+    if (!BaseRepository.isInternalId(targetEnvironmentId)) {
+      throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
+    }
 
-      if (!environment) {
-        throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
-      }
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
+    const environment = await this.environmentRepository.findByIdAndOrganization(targetEnvironmentId, organizationId);
 
+    if (!environment) {
       throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
     }
   }
