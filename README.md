@@ -118,56 +118,56 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 💌 Email
 
-- [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
-- [x] [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
-- [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
-- [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
-- [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
-- [x] [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
-- [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
-- [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [x] [Brevo (formerly SendinBlue)](https://github.com/novuhq/novu/tree/main/providers/brevo)
-- [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
-- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
-- [x] [Resend](https://github.com/novuhq/novu/tree/main/providers/resend)
-- [x] [SparkPost](https://github.com/novuhq/novu/tree/main/providers/sparkpost)
-- [x] [Outlook 365](https://github.com/novuhq/novu/tree/main/providers/outlook365)
+- [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/sendgrid)
+- [x] [Netcore](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/netcore)
+- [x] [Mailgun](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/mailgun)
+- [x] [SES](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/ses)
+- [x] [Postmark](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/postmark)
+- [x] [Custom SMTP](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/nodemailer)
+- [x] [Mailjet](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/mailjet)
+- [x] [Mandrill](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/mandrill)
+- [x] [Brevo (formerly SendinBlue)](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/brevo)
+- [x] [MailerSend](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/mailersend)
+- [x] [Infobip](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/infobip)
+- [x] [Resend](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/resend)
+- [x] [SparkPost](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/sparkpost)
+- [x] [Outlook 365](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/outlook365)
 
 #### 📞 SMS
 
-- [x] [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
-- [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [x] [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
-- [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
-- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
-- [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
-- [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
-- [x] [SMS Central](https://github.com/novuhq/novu/tree/main/providers/sms-central)
-- [x] [Maqsam](https://github.com/novuhq/novu/tree/main/providers/maqsam)
-- [x] [46elks](https://github.com/novuhq/novu/tree/main/providers/forty-six-elks)
-- [x] [Clickatell](https://github.com/novuhq/novu/tree/main/providers/clickatell)
-- [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/providers/burst-sms)
-- [x] [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
-- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
+- [x] [Twilio](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/twilio)
+- [x] [Plivo](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/plivo)
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/sns)
+- [x] [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/nexmo)
+- [x] [Sms77](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/sms77)
+- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/telnyx)
+- [x] [Termii](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/termii)
+- [x] [Gupshup](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/gupshup)
+- [x] [SMS Central](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/sms-central)
+- [x] [Maqsam](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/maqsam)
+- [x] [46elks](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/forty-six-elks)
+- [x] [Clickatell](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/clickatell)
+- [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/burst-sms)
+- [x] [Firetext](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/firetext)
+- [x] [Infobip](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/infobip)
 - [ ] Bandwidth
 - [ ] RingCentral
 
 #### 📱 Push
 
-- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
-- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
-- [x] [OneSignal](https://github.com/novuhq/novu/tree/main/providers/one-signal)
-- [x] [Pushpad](https://github.com/novuhq/novu/tree/main/providers/pushpad)
+- [x] [FCM](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/fcm)
+- [x] [Expo](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/expo)
+- [x] [APNS](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/apns)
+- [x] [OneSignal](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/one-signal)
+- [x] [Pushpad](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/pushpad)
 - [ ] Pushwoosh
 
 #### 👇 Chat
 
-- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
-- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
-- [x] [MS Teams](https://github.com/novuhq/novu/tree/main/providers/ms-teams)
-- [x] [Mattermost](https://github.com/novuhq/novu/tree/main/providers/mattermost)
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/discord)
+- [x] [MS Teams](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/msTeams)
+- [x] [Mattermost](https://github.com/novuhq/novu/tree/main/packages/providers/src/lib/mattermost)
 
 #### 📱 In-App
 
