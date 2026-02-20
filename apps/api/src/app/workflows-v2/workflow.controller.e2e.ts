@@ -696,9 +696,22 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(error?.message).to.equal('Cannot sync workflow to the same environment');
     });
 
-    it('should throw an error if the workflow to promote is not found', async () => {
+    it('should throw an error if the target environment is not found', async () => {
       const { error } = await expectSdkExceptionGeneric(() =>
         apiClient.workflows.sync({ targetEnvironmentId: '123' }, '123')
+      );
+
+      expect(error?.statusCode).to.equal(404);
+      expect(error?.message).to.equal('Environment 123 not found');
+    });
+
+    it('should throw an error if the workflow to promote is not found', async () => {
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const { error } = await expectSdkExceptionGeneric(() =>
+        apiClient.workflows.sync({ targetEnvironmentId: prodEnvironmentId }, '123')
       );
 
       expect(error?.statusCode).to.equal(404);
