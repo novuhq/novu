@@ -1,6 +1,7 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
+  EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
   NotificationStepEntity,
@@ -29,6 +30,7 @@ export class GetWorkflowUseCase {
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
     private integrationsRepository: IntegrationRepository,
+    private environmentRepository: EnvironmentRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -39,11 +41,15 @@ export class GetWorkflowUseCase {
     command: GetWorkflowCommand,
     workflowDataContainer?: WorkflowDataContainer
   ): Promise<WorkflowResponseDto> {
+    const effectiveEnvironmentId = await this.resolveEnvironmentId(command);
+
+    const user: UserSessionData = {
+      ...command.user,
+      environmentId: effectiveEnvironmentId,
+    };
+
     if (workflowDataContainer) {
-      const cachedDto = workflowDataContainer.getWorkflowDto(
-        command.workflowIdOrInternalId,
-        command.user.environmentId
-      );
+      const cachedDto = workflowDataContainer.getWorkflowDto(command.workflowIdOrInternalId, effectiveEnvironmentId);
 
       if (cachedDto) {
         this.logger.debug(`Using cached workflow DTO for ${command.workflowIdOrInternalId}`);
@@ -54,19 +60,38 @@ export class GetWorkflowUseCase {
 
     const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
       GetWorkflowWithPreferencesCommand.create({
-        environmentId: command.user.environmentId,
+        environmentId: effectiveEnvironmentId,
         organizationId: command.user.organizationId,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
         userId: command.user._id,
       })
     );
 
-    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
+    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, user);
     const payloadExample = await generatePayloadExample(workflowWithPreferences);
 
     const workflowDto = toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
 
     return workflowDto;
+  }
+
+  private async resolveEnvironmentId(command: GetWorkflowCommand): Promise<string> {
+    const { environmentId } = command;
+
+    if (!environmentId || environmentId === command.user.environmentId) {
+      return command.user.environmentId;
+    }
+
+    const environment = await this.environmentRepository.findByIdAndOrganization(
+      environmentId,
+      command.user.organizationId
+    );
+
+    if (!environment) {
+      throw new NotFoundException(`Environment ${environmentId} not found`);
+    }
+
+    return environmentId;
   }
 
   private async getFullWorkflowSteps(
