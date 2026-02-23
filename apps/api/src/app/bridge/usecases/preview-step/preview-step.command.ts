@@ -14,6 +14,7 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   state?: FrameworkPreviousStepsOutputState[];
   skipLayoutRendering?: boolean;
   layoutId?: string;
+  stepResolverHash?: string;
 }
 export type FrameworkPreviousStepsOutputState = {
   stepId: string;

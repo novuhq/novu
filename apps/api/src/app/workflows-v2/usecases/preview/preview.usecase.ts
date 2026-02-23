@@ -80,7 +80,7 @@ export class PreviewUsecase {
           schema: context.variableSchema,
         };
       } catch (error) {
-        this.logger.error(error, 'Error executing preview');
+        this.logger.error({ err: error }, 'Error executing preview');
 
         /*
          * If preview execution fails, still return valid schema and payload example
@@ -151,6 +151,11 @@ export class PreviewUsecase {
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
 
+    const stepResolverHash =
+      typeof stepData.controls.values?.stepResolverHash === 'string'
+        ? stepData.controls.values.stepResolverHash
+        : undefined;
+
     return await this.previewStepUsecase.execute(
       PreviewStepCommand.create({
         payload: previewPayloadExample.payload || {},
@@ -165,6 +170,7 @@ export class PreviewUsecase {
         workflowOrigin: stepData.origin,
         state,
         skipLayoutRendering: command.skipLayoutRendering,
+        stepResolverHash,
       })
     );
   }

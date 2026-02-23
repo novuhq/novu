@@ -140,7 +140,7 @@ export class ExecuteStepResolverRequest {
 
   private buildRequestHeaders(event: unknown, hmacSecret: string): Record<string, string> {
     const timestamp = Date.now();
-    const bodyString = JSON.stringify(event);
+    const bodyString = JSON.stringify(event ?? {});
     const publicKey = `${timestamp}.${bodyString}`;
     const hmac = createHmac('sha256', hmacSecret).update(publicKey).digest('hex');
 

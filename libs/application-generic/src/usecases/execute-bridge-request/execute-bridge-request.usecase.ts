@@ -33,7 +33,9 @@ export class ExecuteBridgeRequest {
           );
         }
 
-        return this.stepResolverRequest.execute(command) as Promise<ExecuteBridgeRequestDto<T>>;
+        const result = await this.stepResolverRequest.execute(command);
+
+        return result as ExecuteBridgeRequestDto<T>;
       }
     }
 

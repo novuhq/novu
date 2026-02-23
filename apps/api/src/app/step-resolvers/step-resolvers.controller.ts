@@ -50,6 +50,10 @@ export class StepResolversController {
     @Body() body: DeployStepResolverRequestDto,
     @UploadedFile() bundle: UploadedBundleFile
   ): Promise<DeployStepResolverResponseDto> {
+    if (!bundle) {
+      throw new BadRequestException('Bundle file is required and must not be empty');
+    }
+
     const bundleBuffer = bundle.buffer;
     if (!bundleBuffer || bundleBuffer.byteLength === 0 || bundle.size === 0) {
       throw new BadRequestException('Bundle file is required and must not be empty');

@@ -155,8 +155,8 @@ export class ExecuteFrameworkRequest {
     [
       ParseError,
       {
-        errorDef: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED,
-        statusCode: HttpStatus.BAD_REQUEST,
+        errorDef: BRIDGE_EXECUTION_ERROR.RESPONSE_PARSE_ERROR,
+        statusCode: HttpStatus.BAD_GATEWAY,
         logMessage: (url) => `Bridge URL response code is 2xx, but parsing body fails. \`${url}\``,
         shouldLog: true, // System error
       },
@@ -464,7 +464,7 @@ export class ExecuteFrameworkRequest {
     error: unknown,
     url: string,
     processError: ExecuteBridgeRequestCommand['processError']
-  ) {
+  ): Promise<never> {
     let bridgeErrorData: Pick<BridgeError, 'data' | 'code' | 'statusCode' | 'message' | 'cause'>;
 
     if (!(error instanceof RequestError)) {

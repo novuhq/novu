@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 
 const CF_COMPATIBILITY_DATE = '2025-11-18';
 const WORKER_SCRIPT_NAME = 'worker.js';
+const DEPLOY_TIMEOUT_MS = 30_000;
 
 interface DeployStepResolverToCloudflareCommand {
   workerId: string;
@@ -67,6 +68,11 @@ export class CloudflareStepResolverDeployService {
         throw error;
       }
 
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        this.logger.error(logContext, `Cloudflare deploy request timed out after ${DEPLOY_TIMEOUT_MS}ms`);
+        throw new ServiceUnavailableException(`Cloudflare deployment request timed out after ${DEPLOY_TIMEOUT_MS}ms`);
+      }
+
       this.logger.error(
         {
           ...logContext,
@@ -112,6 +118,7 @@ export class CloudflareStepResolverDeployService {
         Authorization: `Bearer ${config.apiToken}`,
       },
       body: formData,
+      signal: AbortSignal.timeout(DEPLOY_TIMEOUT_MS),
     });
   }
 

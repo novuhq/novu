@@ -10,7 +10,7 @@ export class PreviewStep {
 
   @InstrumentUsecase()
   async execute(command: PreviewStepCommand): Promise<ExecuteOutput> {
-    const stepResolverHash = command.controls?.stepResolverHash as string | undefined;
+    const stepResolverHash = command.stepResolverHash;
 
     const event = this.buildBridgeEventPayload(command);
 

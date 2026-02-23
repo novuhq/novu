@@ -44,8 +44,6 @@ export class DeployStepResolverUsecase {
     const stepResolverHash = this.generateStepResolverHash(command.bundleBuffer);
     const workerId = generateStepResolverWorkerId(command.user.organizationId, stepResolverHash);
 
-    console.log('resolvedManifestSteps', resolvedManifestSteps);
-
     this.logger.info(
       {
         workerId,
@@ -133,37 +131,42 @@ export class DeployStepResolverUsecase {
     resolvedSteps: ResolvedManifestStep[],
     stepResolverHash: string
   ): Promise<void> {
-    for (const step of resolvedSteps) {
-      const existingControls = this.readControlObject(step.existingControlValues);
-      const mergedControls = {
-        ...existingControls,
-        stepResolverHash,
-      };
+    await this.controlValuesRepository.withTransaction(async (session) => {
+      for (const step of resolvedSteps) {
+        const existingControls = this.readControlObject(step.existingControlValues);
+        const mergedControls = {
+          ...existingControls,
+          stepResolverHash,
+        };
 
-      if (step.existingControlValues) {
-        await this.controlValuesRepository.update(
-          {
-            _id: step.existingControlValues._id,
-            _organizationId: command.user.organizationId,
-          },
-          {
-            priority: 0,
-            controls: mergedControls,
-          }
-        );
-        continue;
+        if (step.existingControlValues) {
+          await this.controlValuesRepository.update(
+            {
+              _id: step.existingControlValues._id,
+              _organizationId: command.user.organizationId,
+            },
+            {
+              priority: 0,
+              controls: mergedControls,
+            },
+            { session }
+          );
+        } else {
+          await this.controlValuesRepository.create(
+            {
+              _organizationId: command.user.organizationId,
+              _environmentId: command.user.environmentId,
+              _workflowId: step.workflowInternalId,
+              _stepId: step.stepInternalId,
+              level: ControlValuesLevelEnum.STEP_CONTROLS,
+              priority: 0,
+              controls: mergedControls,
+            },
+            { session }
+          );
+        }
       }
-
-      await this.controlValuesRepository.create({
-        _organizationId: command.user.organizationId,
-        _environmentId: command.user.environmentId,
-        _workflowId: step.workflowInternalId,
-        _stepId: step.stepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-        priority: 0,
-        controls: mergedControls,
-      });
-    }
+    });
   }
 
   private readControlObject(controlValues: ControlValuesEntity | null): Record<string, unknown> {
