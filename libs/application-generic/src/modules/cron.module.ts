@@ -15,7 +15,11 @@ import { MetricsModule } from './metrics.module';
  * the job names. This would allow us to specify the cron jobs in a more explicit way for each worker.
  */
 const cronJobsFromWorkers: Partial<Record<JobTopicNameEnum, Array<JobCronNameEnum>>> = {
-  [JobTopicNameEnum.STANDARD]: [JobCronNameEnum.CREATE_BILLING_USAGE_RECORDS, JobCronNameEnum.SEND_CRON_METRICS],
+  [JobTopicNameEnum.STANDARD]: [
+    JobCronNameEnum.CREATE_BILLING_USAGE_RECORDS,
+    JobCronNameEnum.SEND_CRON_METRICS,
+    JobCronNameEnum.SEND_USAGE_REPORT,
+  ],
 };
 
 export const cronService = {

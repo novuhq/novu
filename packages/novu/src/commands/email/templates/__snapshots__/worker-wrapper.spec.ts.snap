@@ -1,0 +1,258 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateWorkerWrapper > should handle empty steps array > empty-steps 1`] = `
+"
+
+const stepHandlers = new Map([
+
+]);
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function jsonResponse(body, status, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...extraHeaders },
+  });
+}
+
+export default {
+  async fetch(request) {
+    try {
+      if (request.method !== 'POST') {
+        return jsonResponse({ error: 'Method not allowed' }, 405, { Allow: 'POST' });
+      }
+
+      const url = new URL(request.url);
+      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
+      
+      if (!stepName) {
+        return jsonResponse(
+          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          400
+        );
+      }
+
+      const step = stepHandlers.get(stepName);
+      if (!step) {
+        return jsonResponse(
+          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          404
+        );
+      }
+
+      let body = {};
+      const rawBody = await request.text();
+      if (rawBody) {
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+      }
+
+      if (!isObject(body)) {
+        return jsonResponse({ error: 'Invalid request body', message: 'Body must be a JSON object' }, 400);
+      }
+
+      const payload = body.payload ?? {};
+      const subscriber = body.subscriber ?? {};
+      const context = body.context ?? {};
+      const stepOutputs = body.steps ?? {};
+
+      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs)) {
+        return jsonResponse(
+          { error: 'Invalid request body', message: 'payload, subscriber, context, and steps must be JSON objects' },
+          400
+        );
+      }
+
+      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs });
+
+      return jsonResponse(
+        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        200
+      );
+    } catch (error) {
+      console.error('Error executing step handler:', error);
+      return jsonResponse({ error: 'Step execution failed', message: 'Internal server error' }, 500);
+    }
+  },
+};"
+`;
+
+exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
+"import stepHandler0, { stepId as stepId0, workflowId as workflowId0 } from "./novu/welcome-email.step";
+
+const stepHandlers = new Map([
+  ["welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }]
+]);
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function jsonResponse(body, status, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...extraHeaders },
+  });
+}
+
+export default {
+  async fetch(request) {
+    try {
+      if (request.method !== 'POST') {
+        return jsonResponse({ error: 'Method not allowed' }, 405, { Allow: 'POST' });
+      }
+
+      const url = new URL(request.url);
+      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
+      
+      if (!stepName) {
+        return jsonResponse(
+          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          400
+        );
+      }
+
+      const step = stepHandlers.get(stepName);
+      if (!step) {
+        return jsonResponse(
+          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          404
+        );
+      }
+
+      let body = {};
+      const rawBody = await request.text();
+      if (rawBody) {
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+      }
+
+      if (!isObject(body)) {
+        return jsonResponse({ error: 'Invalid request body', message: 'Body must be a JSON object' }, 400);
+      }
+
+      const payload = body.payload ?? {};
+      const subscriber = body.subscriber ?? {};
+      const context = body.context ?? {};
+      const stepOutputs = body.steps ?? {};
+
+      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs)) {
+        return jsonResponse(
+          { error: 'Invalid request body', message: 'payload, subscriber, context, and steps must be JSON objects' },
+          400
+        );
+      }
+
+      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs });
+
+      return jsonResponse(
+        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        200
+      );
+    } catch (error) {
+      console.error('Error executing step handler:', error);
+      return jsonResponse({ error: 'Step execution failed', message: 'Internal server error' }, 500);
+    }
+  },
+};"
+`;
+
+exports[`generateWorkerWrapper > should match snapshot 1`] = `
+"import stepHandler0, { stepId as stepId0, workflowId as workflowId0 } from "./novu/welcome-email.step";
+import stepHandler1, { stepId as stepId1, workflowId as workflowId1 } from "./novu/verify-email.step";
+
+const stepHandlers = new Map([
+  ["welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }],
+  ["verify-email", { handler: stepHandler1, stepId: stepId1, workflowId: workflowId1 }]
+]);
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function jsonResponse(body, status, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...extraHeaders },
+  });
+}
+
+export default {
+  async fetch(request) {
+    try {
+      if (request.method !== 'POST') {
+        return jsonResponse({ error: 'Method not allowed' }, 405, { Allow: 'POST' });
+      }
+
+      const url = new URL(request.url);
+      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
+      
+      if (!stepName) {
+        return jsonResponse(
+          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          400
+        );
+      }
+
+      const step = stepHandlers.get(stepName);
+      if (!step) {
+        return jsonResponse(
+          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          404
+        );
+      }
+
+      let body = {};
+      const rawBody = await request.text();
+      if (rawBody) {
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+      }
+
+      if (!isObject(body)) {
+        return jsonResponse({ error: 'Invalid request body', message: 'Body must be a JSON object' }, 400);
+      }
+
+      const payload = body.payload ?? {};
+      const subscriber = body.subscriber ?? {};
+      const context = body.context ?? {};
+      const stepOutputs = body.steps ?? {};
+
+      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs)) {
+        return jsonResponse(
+          { error: 'Invalid request body', message: 'payload, subscriber, context, and steps must be JSON objects' },
+          400
+        );
+      }
+
+      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs });
+
+      return jsonResponse(
+        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        200
+      );
+    } catch (error) {
+      console.error('Error executing step handler:', error);
+      return jsonResponse({ error: 'Step execution failed', message: 'Internal server error' }, 500);
+    }
+  },
+};"
+`;

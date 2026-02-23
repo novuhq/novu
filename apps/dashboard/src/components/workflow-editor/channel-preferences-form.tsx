@@ -242,7 +242,6 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                               new_status: checked,
                             });
                           }}
-                          disabled={isReadOnly}
                         />
                       </FormControl>
                     </FormItem>

@@ -21,9 +21,11 @@ export enum ObservabilityBackgroundTransactionEnum {
   WS_SOCKET_SOCKET_CONNECTION = 'ws_socket_handle_connection',
   WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
   CRON_JOB_QUEUE = 'cron-job-queue',
+  CLICKHOUSE_BATCH_FLUSH = 'clickhouse-batch-flush',
 }
 
 export enum JobCronNameEnum {
   SEND_CRON_METRICS = 'send-cron-metrics',
   CREATE_BILLING_USAGE_RECORDS = 'create-billing-usage-records',
+  SEND_USAGE_REPORT = 'send-usage-report',
 }

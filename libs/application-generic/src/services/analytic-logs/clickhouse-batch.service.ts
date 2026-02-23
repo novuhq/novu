@@ -1,8 +1,11 @@
 import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
 import { QueueBaseService } from '../queues';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
+
+const nr = require('newrelic');
 
 type Row = Record<string, unknown>;
 
@@ -221,44 +224,62 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
     const maxRetries = buffer.config.maxRetries ?? DEFAULT_MAX_RETRIES;
     const retryDelayMs = buffer.config.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
 
-    try {
-      await this.flushBatchWithRetry(table, batchToFlush, buffer.config.insertOptions, maxRetries, retryDelayMs);
+    const _this = this;
 
-      buffer.metrics.totalFlushed += batchToFlush.length;
+    return new Promise<void>((resolve) => {
+      nr.startBackgroundTransaction(
+        ObservabilityBackgroundTransactionEnum.CLICKHOUSE_BATCH_FLUSH,
+        `ClickHouse-${table}`,
+        function processFlush() {
+          const transaction = nr.getTransaction();
 
-      this.logger.debug(
-        {
-          table,
-          rowCount: batchToFlush.length,
-          totalFlushed: buffer.metrics.totalFlushed,
-        },
-        'Successfully flushed batch to ClickHouse'
+          _this
+            .flushBatchWithRetry(table, batchToFlush, buffer.config.insertOptions, maxRetries, retryDelayMs)
+            .then(() => {
+              buffer.metrics.totalFlushed += batchToFlush.length;
+
+              _this.logger.debug(
+                {
+                  table,
+                  rowCount: batchToFlush.length,
+                  totalFlushed: buffer.metrics.totalFlushed,
+                },
+                'Successfully flushed batch to ClickHouse'
+              );
+            })
+            .catch((error) => {
+              nr.noticeError(error);
+              buffer.metrics.totalFailed += batchToFlush.length;
+
+              _this.logger.error(
+                {
+                  err: error,
+                  table,
+                  rowCount: batchToFlush.length,
+                  totalFailed: buffer.metrics.totalFailed,
+                  errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                },
+                'Failed to flush batch to ClickHouse after retries'
+              );
+
+              buffer.rows = [...batchToFlush, ...buffer.rows];
+
+              _this.logger.warn(
+                {
+                  table,
+                  rowCount: batchToFlush.length,
+                  bufferSize: buffer.rows.length,
+                },
+                'Re-queued failed batch back into buffer'
+              );
+            })
+            .finally(() => {
+              transaction.end();
+              resolve();
+            });
+        }
       );
-    } catch (error) {
-      buffer.metrics.totalFailed += batchToFlush.length;
-
-      this.logger.error(
-        {
-          err: error,
-          table,
-          rowCount: batchToFlush.length,
-          totalFailed: buffer.metrics.totalFailed,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        },
-        'Failed to flush batch to ClickHouse after retries'
-      );
-
-      buffer.rows = [...batchToFlush, ...buffer.rows];
-
-      this.logger.warn(
-        {
-          table,
-          rowCount: batchToFlush.length,
-          bufferSize: buffer.rows.length,
-        },
-        'Re-queued failed batch back into buffer'
-      );
-    }
+    });
   }
 
   private async flushBatchWithRetry(

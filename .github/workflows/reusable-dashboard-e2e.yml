@@ -93,6 +93,8 @@ jobs:
           echo NODE_ENV=test >> .env.playwright
 
       - uses: mansagroup/nrwl-nx-action@v3
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
           projects: '@novu/dashboard,@novu/api-service,@novu/worker'

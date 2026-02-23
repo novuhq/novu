@@ -6,6 +6,7 @@ import {
   FeatureFlagsService,
   GetDecryptedSecretKey,
   GetLayoutUseCase as GetLayoutUseCaseV1,
+  InMemoryLRUCacheService,
   TraceLogRepository,
 } from '@novu/application-generic';
 
@@ -84,6 +85,7 @@ export const featureFlagsService = {
     ClickHouseService,
     CreateExecutionDetails,
     featureFlagsService,
+    InMemoryLRUCacheService,
   ],
 })
 export class NovuBridgeModule {}

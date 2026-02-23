@@ -1,5 +1,5 @@
 import { EnvironmentWithSubscriber } from '@novu/application-generic';
-import { SubscriberEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 
@@ -23,5 +23,8 @@ export class GetSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
   criticality: WorkflowCriticalityEnum;
 
   @IsOptional()
-  subscriber?: SubscriberEntity;
+  subscriber?: Pick<SubscriberEntity, '_id'>;
+
+  @IsOptional()
+  workflowList?: NotificationTemplateEntity[];
 }

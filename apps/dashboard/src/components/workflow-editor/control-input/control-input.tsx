@@ -43,6 +43,7 @@ type ControlInputProps = {
   indentWithTab?: boolean;
   enableTranslations?: boolean;
   disabled?: boolean;
+  readOnly?: boolean;
 };
 
 export function ControlInput({
@@ -60,6 +61,7 @@ export function ControlInput({
   isAllowedVariable,
   enableTranslations = false,
   disabled = false,
+  readOnly = false,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -134,6 +136,7 @@ export function ControlInput({
       onManageSchemaClick={openSchemaDrawer}
       onCreateNewVariable={handleCreateNewVariable}
       disabled={disabled}
+      readOnly={readOnly}
     >
       <EditorOverlays
         resourceId={resourceId}

@@ -36,6 +36,8 @@ jobs:
       - uses: ./.github/actions/setup-project
 
       - name: build api
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: pnpm build:inbound-mail
 
       - uses: crazy-max/ghaction-setup-docker@v2
