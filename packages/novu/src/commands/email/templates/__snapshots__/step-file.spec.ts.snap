@@ -10,7 +10,7 @@ export const type = 'email';
 
 export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'No Subject',
+    subject: controls.subject ?? payload.subject ?? 'No Subject',
     body: await render(
       <EmailTemplate
         {...payload}
@@ -35,7 +35,7 @@ export const type = 'email';
 
 export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'No Subject',
+    subject: controls.subject ?? payload.subject ?? 'No Subject',
     body: await render(
       <EmailTemplate
         {...payload}
@@ -60,7 +60,7 @@ export const type = 'email';
 
 export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'No Subject',
+    subject: controls.subject ?? payload.subject ?? 'No Subject',
     body: await render(
       <EmailTemplate
         {...payload}
@@ -85,7 +85,7 @@ export const type = 'email';
 
 export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'Welcome to Acme!',
+    subject: controls.subject ?? payload.subject ?? 'Welcome to Acme!',
     body: await render(
       <EmailTemplate
         {...payload}
