@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { GetActionEnum, PostActionEnum } from '@novu/framework/internal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 import { ExecuteStepResolverRequest } from '../execute-step-resolver/execute-step-resolver-request.usecase';
 import { ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
 import { ExecuteFrameworkRequest } from './execute-framework-request.usecase';
@@ -9,7 +11,8 @@ import { ExecuteFrameworkRequest } from './execute-framework-request.usecase';
 export class ExecuteBridgeRequest {
   constructor(
     private frameworkRequest: ExecuteFrameworkRequest,
-    private stepResolverRequest: ExecuteStepResolverRequest
+    private stepResolverRequest: ExecuteStepResolverRequest,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -17,13 +20,21 @@ export class ExecuteBridgeRequest {
     command: ExecuteBridgeRequestCommand
   ): Promise<ExecuteBridgeRequestDto<T>> {
     if (command.stepResolverHash) {
-      if (![PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(command.action as PostActionEnum)) {
-        throw new BadRequestException(
-          `Step Resolver only supports EXECUTE and PREVIEW actions, got: ${command.action}`
-        );
-      }
+      const isStepResolverEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
 
-      return this.stepResolverRequest.execute(command) as Promise<ExecuteBridgeRequestDto<T>>;
+      if (isStepResolverEnabled) {
+        if (![PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(command.action as PostActionEnum)) {
+          throw new BadRequestException(
+            `Step Resolver only supports EXECUTE and PREVIEW actions, got: ${command.action}`
+          );
+        }
+
+        return this.stepResolverRequest.execute(command) as Promise<ExecuteBridgeRequestDto<T>>;
+      }
     }
 
     return this.frameworkRequest.execute(command);
