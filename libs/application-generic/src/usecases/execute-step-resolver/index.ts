@@ -1,2 +1,1 @@
-export * from './execute-step-resolver.command';
-export * from './execute-step-resolver.usecase';
+export { ExecuteStepResolverRequest } from './execute-step-resolver-request.usecase';

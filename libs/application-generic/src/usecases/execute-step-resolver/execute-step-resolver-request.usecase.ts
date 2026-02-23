@@ -1,13 +1,14 @@
 import { createHmac } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { ExecuteOutput } from '@novu/framework/internal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ExecuteOutput, HttpQueryKeysEnum } from '@novu/framework/internal';
 import got, { HTTPError } from 'got';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
-import { ExecuteStepResolverCommand, StepResolverError } from './execute-step-resolver.command';
+import {
+  BridgeError,
+  ExecuteBridgeRequestCommand,
+  ProcessError,
+} from '../execute-bridge-request/execute-bridge-request.command';
 
 export const DEFAULT_TIMEOUT = 30_000; // 30 seconds
 export const DEFAULT_RETRIES_LIMIT = 2;
@@ -42,7 +43,7 @@ const HTTP_ERROR_MAPPINGS: Record<number, { code: string; message: string }> = {
 };
 
 class StepResolverRequestError extends HttpException {
-  constructor(stepResolverError: StepResolverError) {
+  constructor(stepResolverError: BridgeError) {
     super(
       {
         message: stepResolverError.message,
@@ -63,16 +64,13 @@ interface StepResolverResponse {
 }
 
 @Injectable()
-export class ExecuteStepResolver {
-  constructor(
-    private logger: PinoLogger,
-    private createExecutionDetails: CreateExecutionDetails
-  ) {
+export class ExecuteStepResolverRequest {
+  constructor(private logger: PinoLogger) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
-  async execute(command: ExecuteStepResolverCommand): Promise<ExecuteOutput> {
+  async execute(command: ExecuteBridgeRequestCommand): Promise<ExecuteOutput> {
     const startTime = performance.now();
     const dispatchUrl = process.env.STEP_RESOLVER_DISPATCH_URL;
     const hmacSecret = process.env.STEP_RESOLVER_HMAC_SECRET;
@@ -85,17 +83,26 @@ export class ExecuteStepResolver {
       throw new NotFoundException('Step resolver HMAC secret is not configured');
     }
 
-    const url = this.buildResolverUrl(dispatchUrl, command.organizationId, command.stepResolverHash, command.stepId);
+    const stepId = command.searchParams?.[HttpQueryKeysEnum.STEP_ID];
 
+    if (!command.stepResolverHash || !stepId) {
+      throw new NotFoundException('stepResolverHash and searchParams.stepId are required for Step Resolver');
+    }
+
+    if (!command.organizationId) {
+      throw new NotFoundException('organizationId is required for Step Resolver');
+    }
+
+    const url = this.buildResolverUrl(dispatchUrl, command.organizationId, command.stepResolverHash, stepId);
     const retriesLimit = command.retriesLimit ?? DEFAULT_RETRIES_LIMIT;
-    const headers = this.buildRequestHeaders(command, hmacSecret);
+    const headers = this.buildRequestHeaders(command.event, hmacSecret);
 
     this.logger.debug({ url, stepResolverHash: command.stepResolverHash }, 'Making step resolver request');
 
     try {
       const response = await got
         .post(url, {
-          json: command.payload,
+          json: command.event,
           headers,
           timeout: { request: DEFAULT_TIMEOUT },
           retry: {
@@ -110,7 +117,7 @@ export class ExecuteStepResolver {
 
       return this.transformToExecuteOutput(response, duration);
     } catch (error) {
-      await this.handleResponseError(error, url, command);
+      await this.handleResponseError(error, url, command.stepResolverHash, command.processError);
     }
   }
 
@@ -131,22 +138,16 @@ export class ExecuteStepResolver {
     };
   }
 
-  private buildRequestHeaders(command: ExecuteStepResolverCommand, hmacSecret: string): Record<string, string> {
-    const novuSignatureHeader = this.buildRequestSignature(command, hmacSecret);
-
-    return {
-      'Content-Type': 'application/json',
-      'X-Novu-Signature': novuSignatureHeader,
-    };
-  }
-
-  private buildRequestSignature(command: ExecuteStepResolverCommand, hmacSecret: string): string {
+  private buildRequestHeaders(event: unknown, hmacSecret: string): Record<string, string> {
     const timestamp = Date.now();
-    const bodyString = JSON.stringify(command.payload);
+    const bodyString = JSON.stringify(event);
     const publicKey = `${timestamp}.${bodyString}`;
     const hmac = createHmac('sha256', hmacSecret).update(publicKey).digest('hex');
 
-    return `t=${timestamp},v1=${hmac}`;
+    return {
+      'Content-Type': 'application/json',
+      'X-Novu-Signature': `t=${timestamp},v1=${hmac}`,
+    };
   }
 
   private buildResolverUrl(baseUrl: string, organizationId: string, stepResolverHash: string, stepId: string): string {
@@ -155,35 +156,28 @@ export class ExecuteStepResolver {
     return url.toString();
   }
 
-  private async handleResponseError(error: unknown, url: string, command: ExecuteStepResolverCommand): Promise<never> {
-    const stepResolverError = this.buildErrorResponse(error, url);
+  private async handleResponseError(
+    error: unknown,
+    url: string,
+    stepResolverHash: string,
+    processError?: ProcessError
+  ): Promise<never> {
+    const stepResolverError = this.buildErrorResponse(error, url, stepResolverHash);
 
-    await this.createExecutionDetails.execute({
-      ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-      detail: DetailEnum.FAILED_STEP_RESOLVER_EXECUTION,
-      source: ExecutionDetailsSourceEnum.INTERNAL,
-      status: ExecutionDetailsStatusEnum.FAILED,
-      isTest: false,
-      isRetry: false,
-      raw: JSON.stringify({
-        stepResolverHash: command.stepResolverHash,
-        url: stepResolverError.url,
-        statusCode: stepResolverError.statusCode,
-        message: stepResolverError.message,
-        code: stepResolverError.code,
-      }),
-    });
+    if (processError) {
+      await processError(stepResolverError);
+    }
 
     throw new StepResolverRequestError(stepResolverError);
   }
 
-  private buildErrorResponse(error: unknown, url: string): StepResolverError {
+  private buildErrorResponse(error: unknown, url: string, stepResolverHash: string): BridgeError {
     if (error instanceof HTTPError) {
       const statusCode = error.response.statusCode;
       const shouldLog = statusCode >= 500;
 
       if (shouldLog) {
-        this.logger.error({ error, statusCode }, `Step resolver HTTP error: ${statusCode}`);
+        this.logger.error({ error, statusCode, url, stepResolverHash }, `Step resolver HTTP error: ${statusCode}`);
       }
 
       const mapping = HTTP_ERROR_MAPPINGS[statusCode];
@@ -193,21 +187,21 @@ export class ExecuteStepResolver {
       return {
         url,
         code,
-        message,
+        message: `${message}: ${url}`,
         statusCode,
         data: error.response.body,
         cause: error,
       };
     }
 
-    this.logger.error({ error }, `Step resolver request failed: ${url}`);
+    this.logger.error({ error, url, stepResolverHash }, `Step resolver request failed: ${url}`);
 
     const isTimeout = typeof error === 'object' && error !== null && 'code' in error && error.code === 'ETIMEDOUT';
 
     return {
       url,
       code: isTimeout ? 'STEP_RESOLVER_TIMEOUT' : 'STEP_RESOLVER_ERROR',
-      message: isTimeout ? 'Step resolver request timeout' : 'Step resolver request failed',
+      message: isTimeout ? `Step resolver request timeout: ${url}` : `Step resolver request failed: ${url}`,
       statusCode: isTimeout ? HttpStatus.REQUEST_TIMEOUT : HttpStatus.INTERNAL_SERVER_ERROR,
       cause: error,
     };

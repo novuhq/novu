@@ -4,6 +4,7 @@ import {
   CreateMessageTemplate,
   DeleteMessageTemplate,
   DeletePreferencesUseCase,
+  ExecuteStepResolverRequest,
   GetPreferences,
   GetWorkflowByIdsUseCase,
   ResourceValidatorService,
@@ -49,6 +50,7 @@ const PROVIDERS = [
   BuildStepIssuesUsecase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
+  ExecuteStepResolverRequest,
 ];
 
 const MODULES = [SharedModule, OutboundWebhooksModule.forRoot()];

@@ -7,8 +7,6 @@ import {
   EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
-  ExecuteStepResolver,
-  ExecuteStepResolverCommand,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -23,10 +21,8 @@ import {
   MessageRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  SubscriberEntity,
 } from '@novu/dal';
 import {
-  ContextResolved,
   DelayResult,
   DigestResult,
   Event,
@@ -57,7 +53,6 @@ export class ExecuteBridgeJob {
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
-    private executeStepResolver: ExecuteStepResolver,
     private logger: PinoLogger,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
@@ -121,19 +116,6 @@ export class ExecuteBridgeJob {
     const variablesStores = controlValuesResult.controls;
     const { stepResolverHash } = controlValuesResult;
 
-    // If step resolver is configured, use it instead of bridge
-    if (stepResolverHash) {
-      return await this.sendStepResolverRequest({
-        command,
-        stepId,
-        stepResolverHash,
-        state,
-        payload,
-        subscriber,
-        context,
-      });
-    }
-
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
       payload: payload ?? {},
       controls: variablesStores ?? {},
@@ -148,6 +130,7 @@ export class ExecuteBridgeJob {
 
     const bridgeResponse = await this.sendBridgeRequest({
       environmentId: command.environmentId,
+      organizationId: command.organizationId,
       /*
        * TODO: We fallback to external due to lack of backfilling origin for existing Workflows.
        * Once we backfill the origin field for existing Workflows, we should remove the fallback.
@@ -156,6 +139,7 @@ export class ExecuteBridgeJob {
       statelessBridgeUrl: command.job.step.bridgeUrl,
       event: bridgeEvent,
       job: command.job,
+      stepResolverHash,
       searchParams: {
         workflowId,
         stepId,
@@ -232,35 +216,6 @@ export class ExecuteBridgeJob {
   }
 
   @Instrument()
-  private async sendStepResolverRequest(params: {
-    command: ExecuteBridgeJobCommand;
-    stepId: string;
-    stepResolverHash: string;
-    state: State[];
-    payload: ITriggerPayload;
-    subscriber?: SubscriberEntity;
-    context?: ContextResolved;
-  }): Promise<ExecuteOutput> {
-    const { command, stepId, stepResolverHash, state, payload, subscriber, context } = params;
-
-    return this.executeStepResolver.execute(
-      ExecuteStepResolverCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        stepResolverHash,
-        stepId,
-        payload: {
-          payload: payload,
-          subscriber: subscriber,
-          context: context,
-          steps: state,
-        },
-        job: command.job,
-      })
-    );
-  }
-
-  @Instrument()
   private async sendBridgeRequest({
     statelessBridgeUrl,
     event,
@@ -268,6 +223,8 @@ export class ExecuteBridgeJob {
     searchParams,
     workflowOrigin,
     environmentId,
+    organizationId,
+    stepResolverHash,
   }: Omit<ExecuteBridgeRequestCommand, 'processError' | 'action' | 'retriesLimit'> & {
     job: JobEntity;
   }): Promise<ExecuteOutput> {
@@ -278,10 +235,12 @@ export class ExecuteBridgeJob {
       searchParams,
       workflowOrigin,
       environmentId,
+      organizationId,
+      stepResolverHash,
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.FAILED_BRIDGE_EXECUTION,
+          detail: stepResolverHash ? DetailEnum.FAILED_STEP_RESOLVER_EXECUTION : DetailEnum.FAILED_BRIDGE_EXECUTION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
