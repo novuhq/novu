@@ -79,7 +79,8 @@ export class DeployStepResolverUsecase {
     manifestSteps: DeployStepResolverManifestStepCommand[]
   ): Promise<ResolvedManifestStep[]> {
     const workflowCache = new Map<string, Awaited<ReturnType<GetWorkflowByIdsUseCase['execute']>>>();
-    const resolvedSteps: ResolvedManifestStep[] = [];
+
+    const partialSteps: Omit<ResolvedManifestStep, 'existingControlValues'>[] = [];
 
     for (const manifestStep of manifestSteps) {
       let workflow = workflowCache.get(manifestStep.workflowId);
@@ -104,26 +105,30 @@ export class DeployStepResolverUsecase {
         });
       }
 
-      const workflowInternalId = String(workflow._id);
-      const stepInternalId = String(step._templateId);
-      const existingControlValues = await this.controlValuesRepository.findFirst({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
-        _workflowId: workflowInternalId,
-        _stepId: stepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-
-      resolvedSteps.push({
+      partialSteps.push({
         workflowId: manifestStep.workflowId,
-        workflowInternalId,
+        workflowInternalId: String(workflow._id),
         stepId: manifestStep.stepId,
-        stepInternalId,
-        existingControlValues,
+        stepInternalId: String(step._templateId),
       });
     }
 
-    return resolvedSteps;
+    const existingControlValuesResults = await Promise.all(
+      partialSteps.map((step) =>
+        this.controlValuesRepository.findFirst({
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          _workflowId: step.workflowInternalId,
+          _stepId: step.stepInternalId,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+        })
+      )
+    );
+
+    return partialSteps.map((step, index) => ({
+      ...step,
+      existingControlValues: existingControlValuesResults[index],
+    }));
   }
 
   private async upsertControlValues(

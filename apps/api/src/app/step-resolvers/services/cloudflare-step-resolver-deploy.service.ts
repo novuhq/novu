@@ -73,15 +73,17 @@ export class CloudflareStepResolverDeployService {
         throw new ServiceUnavailableException(`Cloudflare deployment request timed out after ${DEPLOY_TIMEOUT_MS}ms`);
       }
 
+      const formattedError = this.formatUnknownError(error);
+
       this.logger.error(
         {
           ...logContext,
-          error: this.formatUnknownError(error),
+          error: formattedError,
         },
         'Cloudflare deploy request failed'
       );
 
-      throw new ServiceUnavailableException(`Cloudflare deployment request failed: ${this.formatUnknownError(error)}`);
+      throw new ServiceUnavailableException(`Cloudflare deployment request failed: ${formattedError}`);
     }
   }
 
@@ -110,7 +112,7 @@ export class CloudflareStepResolverDeployService {
       new Blob([command.bundleBuffer], { type: 'application/javascript+module' }),
       WORKER_SCRIPT_NAME
     );
-    formData.append('metadata', JSON.stringify(metadata));
+    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
 
     return fetch(url, {
       method: 'PUT',

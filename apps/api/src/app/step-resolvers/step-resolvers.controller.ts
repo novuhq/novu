@@ -51,12 +51,12 @@ export class StepResolversController {
     @UploadedFile() bundle: UploadedBundleFile
   ): Promise<DeployStepResolverResponseDto> {
     if (!bundle) {
-      throw new BadRequestException('Bundle file is required and must not be empty');
+      throw new BadRequestException('Bundle file is required');
     }
 
     const bundleBuffer = bundle.buffer;
     if (!bundleBuffer || bundleBuffer.byteLength === 0 || bundle.size === 0) {
-      throw new BadRequestException('Bundle file is required and must not be empty');
+      throw new BadRequestException('Bundle file must not be empty');
     }
     const manifest = parseManifestOrThrow(body.manifest);
 
@@ -81,7 +81,6 @@ function parseManifestOrThrow(rawManifest: string): DeployStepResolverManifestDt
   const manifestDto = plainToInstance(DeployStepResolverManifestDto, parsedManifest);
   const validationErrors = validateSync(manifestDto, {
     whitelist: true,
-    forbidUnknownValues: false,
   });
 
   if (validationErrors.length > 0) {

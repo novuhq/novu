@@ -9,6 +9,7 @@ import {
   ExecuteBridgeRequestCommand,
   ProcessError,
 } from '../execute-bridge-request/execute-bridge-request.command';
+import { RETRYABLE_ERROR_CODES } from '../execute-bridge-request/execute-framework-request.usecase';
 
 export const DEFAULT_TIMEOUT = 30_000; // 30 seconds
 export const DEFAULT_RETRIES_LIMIT = 2;
@@ -95,20 +96,22 @@ export class ExecuteStepResolverRequest {
 
     const url = this.buildResolverUrl(dispatchUrl, command.organizationId, command.stepResolverHash, stepId);
     const retriesLimit = command.retriesLimit ?? DEFAULT_RETRIES_LIMIT;
-    const headers = this.buildRequestHeaders(command.event, hmacSecret);
+    const normalizedEvent = command.event ?? {};
+    const headers = this.buildRequestHeaders(normalizedEvent, hmacSecret);
 
     this.logger.debug({ url, stepResolverHash: command.stepResolverHash }, 'Making step resolver request');
 
     try {
       const response = await got
         .post(url, {
-          json: command.event,
+          json: normalizedEvent,
           headers,
           timeout: { request: DEFAULT_TIMEOUT },
           retry: {
             limit: retriesLimit,
             methods: ['POST'],
             statusCodes: RETRYABLE_HTTP_CODES,
+            errorCodes: RETRYABLE_ERROR_CODES,
           },
         })
         .json<StepResolverResponse>();
@@ -140,7 +143,7 @@ export class ExecuteStepResolverRequest {
 
   private buildRequestHeaders(event: unknown, hmacSecret: string): Record<string, string> {
     const timestamp = Date.now();
-    const bodyString = JSON.stringify(event ?? {});
+    const bodyString = JSON.stringify(event);
     const publicKey = `${timestamp}.${bodyString}`;
     const hmac = createHmac('sha256', hmacSecret).update(publicKey).digest('hex');
 
