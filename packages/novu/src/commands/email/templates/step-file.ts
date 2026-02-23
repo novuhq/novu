@@ -21,7 +21,7 @@ export const type = 'email';
 
 export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: controls.subject || payload.subject || '${escapeString(defaultSubject)}',
+    subject: controls.subject ?? payload.subject ?? '${escapeString(defaultSubject)}',
     body: await render(
       <EmailTemplate
         {...payload}
