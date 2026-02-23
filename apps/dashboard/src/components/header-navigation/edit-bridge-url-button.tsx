@@ -92,7 +92,11 @@ export const EditBridgeUrlButton = () => {
               <div
                 className={cn(
                   'relative flex size-4 items-center justify-center rounded-lg',
-                  status === ConnectionStatus.DISCONNECTED ? 'bg-[rgba(220,38,38,0.1)]' : 'bg-[rgba(31,193,107,0.1)]'
+                  status === ConnectionStatus.DISCONNECTED
+                    ? 'bg-[rgba(220,38,38,0.1)]'
+                    : status === ConnectionStatus.LOADING
+                      ? 'bg-[rgba(59,130,246,0.1)]'
+                      : 'bg-[rgba(31,193,107,0.1)]'
                 )}
               >
                 <div
@@ -100,7 +104,9 @@ export const EditBridgeUrlButton = () => {
                     'flex size-full items-center justify-center rounded-lg p-1',
                     status === ConnectionStatus.DISCONNECTED
                       ? 'bg-[rgba(220,38,38,0.16)]'
-                      : 'bg-[rgba(31,193,107,0.16)]'
+                      : status === ConnectionStatus.LOADING
+                        ? 'bg-[rgba(59,130,246,0.16)]'
+                        : 'bg-[rgba(31,193,107,0.16)]'
                   )}
                 >
                   <div
@@ -109,7 +115,7 @@ export const EditBridgeUrlButton = () => {
                       status === ConnectionStatus.DISCONNECTED
                         ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(220,38,38,0.6)] [--pulse-color:rgba(220,38,38,1)]'
                         : status === ConnectionStatus.LOADING
-                          ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(31,193,107,0.6)] [--pulse-color:rgba(31,193,107,1)]'
+                          ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(59,130,246,0.6)] [--pulse-color:rgba(59,130,246,1)]'
                           : 'bg-[rgba(31,193,107,0.6)]'
                     )}
                   />
@@ -132,7 +138,7 @@ export const EditBridgeUrlButton = () => {
                     <FormItem>
                       <FormLabel required>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} readOnly={isReadOnly} />
+                        <Input leadingIcon={RiLinkM} id={`bridgeUrl-${field.name}`} {...field} readOnly={isReadOnly} />
                       </FormControl>
                       <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>

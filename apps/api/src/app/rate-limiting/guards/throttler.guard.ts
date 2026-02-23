@@ -75,13 +75,18 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const isAllowedRoute = this.isAllowedRoute(context);
 
     if (!isAllowedAuthScheme && !isAllowedEnvironment && !isAllowedRoute) {
-      this.logger.debug({
-        message: 'Rate limiting skipped - request criteria not met',
-        _event: {
-          path: req.path,
-          authScheme: req.authScheme,
+      this.logger.debug(
+        {
+          _nv: {
+            isAllowedAuthScheme,
+            isAllowedEnvironment,
+            isAllowedRoute,
+            path: req.path,
+            authScheme: req.authScheme,
+          },
         },
-      });
+        'Rate limiting skipped - request criteria not met'
+      );
 
       return true;
     }

@@ -52,14 +52,6 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
         return;
       }
 
-      const organizationExists = await this.organizationExist(data);
-
-      if (!organizationExists) {
-        Logger.log(`Organization not found for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
-
-        return;
-      }
-
       return await new Promise((resolve, reject) => {
         const _this = this;
 
