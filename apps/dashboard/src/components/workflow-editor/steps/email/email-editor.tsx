@@ -22,8 +22,12 @@ export const EmailEditor = (props: EmailEditorProps) => {
   const { uiSchema, isEditorV2 = false } = props;
   const [senderDrawerOpen, setSenderDrawerOpen] = useState(false);
   const { control } = useFormContext();
+  const editorTypeValue = useWatch({ name: 'editorType', control });
   const rendererType = useWatch({ name: 'rendererType', control });
   const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
+
+  const isCodeEditor = editorTypeValue === 'html';
+  const isReactEmail = isCodeEditor && isStepResolverEnabled && rendererType === 'react-email';
 
   if (uiSchema.group !== UiSchemaGroupEnum.EMAIL) {
     return null;
@@ -54,10 +58,10 @@ export const EmailEditor = (props: EmailEditorProps) => {
 
           <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
           <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-1">
-            {isStepResolverEnabled &&
+            {isCodeEditor &&
+              isStepResolverEnabled &&
               getComponentByType({ component: rendererTypeSchema?.component ?? UiComponentEnum.EMAIL_RENDERER_SELECT })}
-            {(!isStepResolverEnabled || rendererType !== 'react-email') &&
-              getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
+            {!isReactEmail && getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
           </div>
         </div>
         {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (

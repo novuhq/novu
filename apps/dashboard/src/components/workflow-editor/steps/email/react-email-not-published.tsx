@@ -1,13 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiFileCopyLine, RiLoaderLine } from 'react-icons/ri';
 
 function CodeBlock({ command }: { command: string }) {
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(command);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard write failed silently
+    }
   };
 
   return (
@@ -74,7 +85,7 @@ export const ReactEmailNotPublished = ({ workflowId, stepId }: ReactEmailNotPubl
 
   return (
     <div className="h-full overflow-y-auto bg-[#fbfbfb] px-8 pt-8">
-      <div className="flex flex-col px-8">
+      <div className="flex flex-col">
         {/* Timeline steps */}
         <div className="flex w-full flex-col">
           {steps.map((step, index) => {

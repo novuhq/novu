@@ -290,11 +290,7 @@ export const EmailBodyMaily = () => {
               resourceId={resourceId}
               resourceType={resourceType}
               isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
-              onPayloadSchemaDrawerOpenChange={(isOpen) => {
-                if (!isOpen) {
-                  closeSchemaDrawer();
-                }
-              }}
+              onPayloadSchemaDrawerOpenChange={(isOpen) => !isOpen && closeSchemaDrawer()}
               highlightedVariableKey={highlightedVariableKey}
             />
           </Maily>

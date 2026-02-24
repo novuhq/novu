@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class EmailControlDto extends SkipControlDto {
@@ -30,6 +30,7 @@ export class EmailControlDto extends SkipControlDto {
     default: 'html',
   })
   @IsString()
+  @IsIn(['html', 'react-email'])
   @IsOptional()
   rendererType?: 'html' | 'react-email' = 'html';
 

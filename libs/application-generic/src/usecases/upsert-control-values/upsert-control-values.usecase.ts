@@ -38,10 +38,7 @@ export class UpsertControlValuesUseCase {
     command: UpsertControlValuesCommand,
     controlValues: Record<string, unknown>
   ) {
-    const mergedControlValues = this.preserveExternallySetFields(
-      found.controls as Record<string, unknown>,
-      controlValues
-    );
+    const mergedControlValues = this.preserveExternallySetFields(found.controls, controlValues);
 
     await this.controlValuesRepository.update(
       {
@@ -71,7 +68,7 @@ export class UpsertControlValuesUseCase {
    *     from react-email renderer).
    */
   private preserveExternallySetFields(
-    existingControls: Record<string, unknown>,
+    existingControls: Record<string, unknown> | null | undefined,
     incomingControls: Record<string, unknown>
   ): Record<string, unknown> {
     const existingHash = existingControls?.stepResolverHash;

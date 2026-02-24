@@ -130,11 +130,7 @@ export const EmailBodyHtml = () => {
               resourceId={resourceId}
               resourceType={resourceType}
               isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
-              onPayloadSchemaDrawerOpenChange={(isOpen) => {
-                if (!isOpen) {
-                  closeSchemaDrawer();
-                }
-              }}
+              onPayloadSchemaDrawerOpenChange={(isOpen) => !isOpen && closeSchemaDrawer()}
               highlightedVariableKey={highlightedVariableKey}
               enableTranslations={shouldEnableTranslations}
             />

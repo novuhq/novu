@@ -58,6 +58,7 @@ function ReactEmailNoControlsEmptyState() {
         <Link
           to={REACT_EMAIL_CONTROLS_DOCS_LINK}
           target="_blank"
+          rel="noreferrer noopener"
           className="flex items-center gap-1.5 text-xs text-neutral-600 underline"
         >
           <RiBookMarkedLine className="size-4" />

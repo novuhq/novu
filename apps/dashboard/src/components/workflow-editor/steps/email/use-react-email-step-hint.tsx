@@ -8,7 +8,7 @@ const REACT_EMAIL_DOCS_LINK = 'https://docs.novu.co/framework/react-email';
 export function useReactEmailStepHint(): React.ReactNode {
   const { controlValues } = useStepEditor();
   const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
-  const values = controlValues as Record<string, unknown>;
+  const values = (controlValues ?? {}) as Record<string, unknown>;
   const rendererType = values.rendererType;
   const stepResolverHash = values.stepResolverHash;
 
