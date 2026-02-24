@@ -19,7 +19,7 @@ export const stepId = '${escapeString(stepId)}';
 export const workflowId = '${escapeString(workflowId)}';
 export const type = 'email';
 
-export default async function({ payload, subscriber, context, steps, controls = {} }) {
+export default async function({ payload, subscriber, context, steps, controls }) {
   return {
     subject: controls.subject ?? payload.subject ?? '${escapeString(defaultSubject)}',
     body: await render(
