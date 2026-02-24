@@ -53,7 +53,6 @@ import { UpdateAllNotificationsCommand } from '../inbox/usecases/update-all-noti
 import { UpdateAllNotifications } from '../inbox/usecases/update-all-notifications/update-all-notifications.usecase';
 import { UpdateNotificationActionCommand } from '../inbox/usecases/update-notification-action/update-notification-action.command';
 import { UpdateNotificationAction } from '../inbox/usecases/update-notification-action/update-notification-action.usecase';
-import type { InboxNotification } from '../inbox/utils/types';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
@@ -69,10 +68,12 @@ import { ListSubscriberSubscriptionsUseCase } from '../topics-v2/usecases/list-s
 import { BulkUpdateSubscriberPreferencesDto } from './dtos/bulk-update-subscriber-preferences.dto';
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 import { GetSubscriberNotificationsCountQueryDto } from './dtos/get-subscriber-notifications-count-query.dto';
+import { GetSubscriberNotificationsCountResponseDto } from './dtos/get-subscriber-notifications-count-response.dto';
 import { GetSubscriberNotificationsQueryDto } from './dtos/get-subscriber-notifications-query.dto';
 import { GetSubscriberNotificationsResponseDto } from './dtos/get-subscriber-notifications-response.dto';
 import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.dto';
 import { GetSubscriberPreferencesRequestDto } from './dtos/get-subscriber-preferences-request.dto';
+import { InboxNotificationDto } from './dtos/inbox-notification.dto';
 import { ListSubscribersQueryDto } from './dtos/list-subscribers-query.dto';
 import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto';
 import { MarkSubscriberNotificationsAsSeenDto } from './dtos/mark-subscriber-notifications-as-seen.dto';
@@ -480,6 +481,7 @@ export class SubscribersController {
     Supports multiple filters to count notifications by different criteria, including context keys.`,
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
+  @ApiResponse(GetSubscriberNotificationsCountResponseDto)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('count')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
@@ -507,6 +509,7 @@ export class SubscribersController {
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('markAsRead')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -515,7 +518,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
@@ -537,6 +540,7 @@ export class SubscribersController {
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('markAsUnread')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -545,7 +549,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
@@ -567,6 +571,7 @@ export class SubscribersController {
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('archive')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -575,7 +580,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
@@ -597,6 +602,7 @@ export class SubscribersController {
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('unarchive')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -605,7 +611,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
@@ -636,7 +642,7 @@ export class SubscribersController {
     @Param('notificationId') notificationId: string,
     @Body() body: SnoozeSubscriberNotificationDto,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.snoozeNotificationUsecase.execute(
       SnoozeNotificationCommand.create({
         organizationId: user.organizationId,
@@ -666,7 +672,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.unsnoozeNotificationUsecase.execute(
       UnsnoozeNotificationCommand.create({
         organizationId: user.organizationId,
@@ -733,7 +739,7 @@ export class SubscribersController {
     @Param('notificationId') notificationId: string,
     @Param('actionType') actionType: ButtonTypeEnum,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
         organizationId: user.organizationId,
@@ -772,7 +778,7 @@ export class SubscribersController {
     @Param('notificationId') notificationId: string,
     @Param('actionType') actionType: ButtonTypeEnum,
     @Query('contextKeys') contextKeys?: string[]
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
         organizationId: user.organizationId,

@@ -1,7 +1,8 @@
-import type { InboxNotification, NotificationFilter } from '../utils/types';
+import type { NotificationFilter } from '../utils/types';
+import { InboxNotificationDto } from './inbox-notification.dto';
 
 export class GetNotificationsResponseDto {
-  data: InboxNotification[];
+  data: InboxNotificationDto[];
   hasMore: boolean;
   filter: NotificationFilter;
 }

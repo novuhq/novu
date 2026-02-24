@@ -26,7 +26,7 @@ export class GetSubscriberNotificationsQueryDto
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => (value === undefined || value === null || value === '' ? undefined : value === 'true'))
   @ApiPropertyOptional({
     description: 'Filter by read/unread state',
     type: Boolean,
@@ -35,7 +35,7 @@ export class GetSubscriberNotificationsQueryDto
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => (value === undefined || value === null || value === '' ? undefined : value === 'true'))
   @ApiPropertyOptional({
     description: 'Filter by archived state',
     type: Boolean,
@@ -44,7 +44,7 @@ export class GetSubscriberNotificationsQueryDto
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => (value === undefined || value === null || value === '' ? undefined : value === 'true'))
   @ApiPropertyOptional({
     description: 'Filter by snoozed state',
     type: Boolean,
@@ -53,7 +53,7 @@ export class GetSubscriberNotificationsQueryDto
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => (value === undefined || value === null || value === '' ? undefined : value === 'true'))
   @ApiPropertyOptional({
     description: 'Filter by seen state',
     type: Boolean,

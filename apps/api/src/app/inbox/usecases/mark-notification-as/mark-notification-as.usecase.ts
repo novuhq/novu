@@ -3,9 +3,9 @@ import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
+import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
-import { InboxNotification } from '../../utils/types';
 import { MarkManyNotificationsAsCommand } from '../mark-many-notifications-as/mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
 import { MarkNotificationAsCommand } from './mark-notification-as.command';
@@ -19,7 +19,7 @@ export class MarkNotificationAs {
     private messageRepository: MessageRepository
   ) {}
 
-  async execute(command: MarkNotificationAsCommand): Promise<InboxNotification> {
+  async execute(command: MarkNotificationAsCommand): Promise<InboxNotificationDto> {
     const subscriber = await this.getSubscriber.execute({
       environmentId: command.environmentId,
       organizationId: command.organizationId,

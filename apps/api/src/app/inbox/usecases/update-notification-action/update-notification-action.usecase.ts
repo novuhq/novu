@@ -4,9 +4,9 @@ import { MessageEntity, MessageRepository } from '@novu/dal';
 import { ButtonTypeEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
+import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
-import { InboxNotification } from '../../utils/types';
 import type { UpdateNotificationActionCommand } from './update-notification-action.command';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class UpdateNotificationAction {
     private messageRepository: MessageRepository
   ) {}
 
-  async execute(command: UpdateNotificationActionCommand): Promise<InboxNotification> {
+  async execute(command: UpdateNotificationActionCommand): Promise<InboxNotificationDto> {
     const subscriber = await this.getSubscriber.execute({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
