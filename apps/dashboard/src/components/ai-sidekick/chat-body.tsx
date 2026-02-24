@@ -1,12 +1,8 @@
-import { AiResourceTypeEnum, AiWorkflowToolsNameEnum } from '@novu/shared';
-import { ToolUIPart, UIMessage } from 'ai';
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useAiChat } from '@/hooks/use-ai-chat';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { AiWorkflowToolsEnum } from '@novu/shared';
+import { ChatStatus, DynamicToolUIPart, UIMessage } from 'ai';
+import { RiArrowGoBackLine, RiRefreshLine } from 'react-icons/ri';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
-import { Message, MessageContent, MessageResponse } from '../ai-elements/message';
+import { Message } from '../ai-elements/message';
 import {
   PromptInput,
   PromptInputBody,
@@ -15,24 +11,17 @@ import {
   PromptInputTextarea,
 } from '../ai-elements/prompt-input';
 import { Shimmer } from '../ai-elements/shimmer';
-import { useWorkflow } from '../workflow-editor/workflow-provider';
+import { Button } from '../primitives/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { ChatChainOfThought } from './chat-chain-of-thought';
-import { ChatMessage } from './types';
 import { WhatsChangedSection } from './whats-changed-section';
 
-function parseToolParts(messages: UIMessage[], includeAll = false): ToolUIPart[] {
-  const tools: ToolUIPart[] = [];
+function getToolPartsFromMessage(message: UIMessage): Array<DynamicToolUIPart> {
+  const tools: Array<DynamicToolUIPart> = [];
 
-  for (const message of messages) {
-    if (message.role !== 'assistant') continue;
-
-    for (const part of message.parts) {
-      if (part.type.startsWith('tool-')) {
-        const toolPart = part as ToolUIPart;
-        if (includeAll || toolPart.state === 'output-available') {
-          tools.push(toolPart);
-        }
-      }
+  for (const part of message.parts) {
+    if (part.type.startsWith('dynamic-tool')) {
+      tools.push(part as DynamicToolUIPart);
     }
   }
 
@@ -80,90 +69,122 @@ export const ChatBodySkeleton = () => {
 };
 
 export const ChatBody = ({
-  chatId,
-  resume,
-  prompt,
-  initialMessages,
+  inputText,
+  onInputChange,
+  isGenerating,
+  status,
+  stop,
+  onSubmit,
+  messages,
+  isSubmitDisabled,
+  isReviewingChanges,
+  isActionPending,
+  lastUserMessageId,
+  onKeepAll,
+  onDiscard,
+  onTryAgain,
+  onRevertMessage,
 }: {
-  chatId: string;
-  resume: boolean;
-  prompt?: string;
-  initialMessages: ChatMessage[];
+  inputText: string;
+  onInputChange: (text: string) => void;
+  isGenerating: boolean;
+  status: ChatStatus;
+  stop: () => void;
+  onSubmit: (message: string) => void;
+  messages: UIMessage[];
+  isSubmitDisabled: boolean;
+  isReviewingChanges?: boolean;
+  isActionPending?: boolean;
+  lastUserMessageId?: string;
+  onKeepAll: () => void;
+  onDiscard: (messageId: string) => void;
+  onTryAgain: (messageId: string) => void;
+  onRevertMessage: (messageId: string) => void;
 }) => {
-  const [inputText, setInputText] = useState('');
-  const { currentEnvironment } = useEnvironment();
-  const navigate = useNavigate();
-  const { refetch } = useWorkflow();
-  const isMountedRef = useRef(false);
-
-  const { sendPrompt, stop, status, isGenerating, messages, dataParts } = useAiChat<{
-    'tool-reasoning': { toolCallId: string; text: string };
-  }>({
-    id: chatId,
-    resume,
-    initialMessages,
-    resourceType: AiResourceTypeEnum.WORKFLOW,
-    onData: (data) => {
-      if (isMountedRef.current && data.type === 'data-workflow-created') {
-        const workflowSlug = data.data as string;
-        navigate(
-          buildRoute(ROUTES.EDIT_WORKFLOW, {
-            environmentSlug: currentEnvironment?.slug ?? '',
-            workflowSlug,
-          }),
-          { replace: true, state: { chatId, prompt } }
-        );
-      } else if (isMountedRef.current && (data.type === 'data-step-added' || data.type === 'data-workflow-completed')) {
-        refetch({ cancelRefetch: true });
-      }
-    },
-  });
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  const handleSendMessage = (message: string) => {
-    if (chatId && message.trim()) {
-      sendPrompt({ chatId, prompt: message });
-      setInputText('');
-    }
-  };
-
   return (
     <>
       <Conversation className="min-h-0">
         <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
           {messages.map((chatMessage) => {
             const { text } = extractMessageContent(chatMessage);
-            const toolReasoningParts = dataParts.filter((p) => p.type === 'data-tool-reasoning');
-            const allToolParts = parseToolParts(messages, true).filter(
-              (t) => t.type !== AiWorkflowToolsNameEnum.COMPLETE_WORKFLOW
+            const messageToolParts = getToolPartsFromMessage(chatMessage);
+            const completedToolPart = messageToolParts.find(
+              (t) => t.toolName === AiWorkflowToolsEnum.COMPLETE_WORKFLOW
             );
-            const completedToolPart = parseToolParts(messages, true).find(
-              (t) => t.type === AiWorkflowToolsNameEnum.COMPLETE_WORKFLOW
+            const hasChainOfThoughtContent = (chatMessage.parts ?? []).some(
+              (p) =>
+                p.type === 'reasoning' ||
+                (p.type?.startsWith('dynamic-tool') &&
+                  (p as DynamicToolUIPart).toolName !== AiWorkflowToolsEnum.COMPLETE_WORKFLOW)
             );
+            const isLastMessage = chatMessage.id === messages[messages.length - 1].id;
+            const isLastAssistantMessage =
+              chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
 
             return (
               <Message from={chatMessage.role} key={chatMessage.id}>
+                {chatMessage.role === 'user' && (
+                  <div className="flex justify-end gap-1 -mb-1">
+                    <Tooltip delayDuration={2000}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          mode="ghost"
+                          size="2xs"
+                          className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                          onClick={() => onRevertMessage(chatMessage.id)}
+                          disabled={isGenerating || isActionPending}
+                          trailingIcon={RiArrowGoBackLine}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Revert</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip delayDuration={2000}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          mode="ghost"
+                          size="2xs"
+                          className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                          onClick={() => onTryAgain(chatMessage.id)}
+                          disabled={isGenerating || isActionPending}
+                          trailingIcon={RiRefreshLine}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Try again</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                )}
                 {chatMessage.role === 'user' && text && (
-                  <MessageContent>
-                    <MessageResponse>{text}</MessageResponse>
-                  </MessageContent>
+                  <div className="flex justify-end bg-[#F1F1F1] rounded-lg p-2 max-w-full self-end">
+                    <span className="text-label-xs text-text-sub">{text}</span>
+                  </div>
                 )}
                 {chatMessage.role === 'assistant' && (
                   <>
-                    {(isGenerating || allToolParts.length > 0) && (
+                    {(isGenerating || hasChainOfThoughtContent) && (
                       <ChatChainOfThought
-                        toolParts={allToolParts}
-                        toolReasoningParts={toolReasoningParts}
-                        isStreaming={isGenerating}
+                        defaultIsExpanded={isGenerating && isLastMessage}
+                        message={chatMessage}
+                        isStreaming={isGenerating && isLastMessage}
                       />
                     )}
-                    {completedToolPart && <WhatsChangedSection completedToolPart={completedToolPart} />}
+                    {completedToolPart && lastUserMessageId && (
+                      <WhatsChangedSection
+                        defaultIsExpanded={isLastMessage}
+                        lastUserMessageId={lastUserMessageId}
+                        completedToolPart={completedToolPart}
+                        showMessageActions={!isGenerating && isReviewingChanges && isLastAssistantMessage}
+                        isActionPending={isActionPending}
+                        onKeepAll={onKeepAll}
+                        onDiscard={onDiscard}
+                        onTryAgain={onTryAgain}
+                      />
+                    )}
                   </>
                 )}
               </Message>
@@ -175,17 +196,17 @@ export const ChatBody = ({
       </Conversation>
 
       <div className="shrink-0 p-3">
-        <PromptInput onSubmit={(message) => handleSendMessage(message.text)}>
+        <PromptInput onSubmit={(message) => onSubmit(message.text)}>
           <PromptInputBody>
             <PromptInputTextarea
-              onChange={(event) => setInputText(event.target.value)}
+              onChange={(event) => onInputChange(event.target.value)}
               value={inputText}
               placeholder="Ask for changes… eg: Make the workflow high severity.."
             />
           </PromptInputBody>
           <PromptInputFooter>
             <PromptInputSubmit
-              disabled={!inputText.trim() || isGenerating}
+              disabled={!inputText.trim() || isGenerating || isSubmitDisabled}
               status={status}
               onStop={stop}
               className="ml-auto"

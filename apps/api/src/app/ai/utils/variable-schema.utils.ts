@@ -196,6 +196,14 @@ function addVariableToSchema(schema: JSONSchemaDto, variable: PayloadVariable): 
         required: [],
         additionalProperties: false,
       };
+    } else if ((currentSchema.properties[part] as JSONSchemaDto).type !== JsonSchemaTypeEnum.OBJECT) {
+      // Conflict: existing scalar at intermediate path — promote to object
+      currentSchema.properties[part] = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      };
     }
 
     if (!currentSchema.required) {

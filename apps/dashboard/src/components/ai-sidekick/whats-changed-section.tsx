@@ -1,9 +1,9 @@
-import { ToolUIPart } from 'ai';
+import { DynamicToolUIPart } from 'ai';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowRightSLine, RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
 import { ChainOfThoughtStep } from '../ai-elements/chain-of-thought';
-import { Shimmer } from '../ai-elements/shimmer';
+import { Button } from '../primitives/button';
 import { StyledMessageResponse } from './chat-message-response';
 
 function getToolStatus(state?: string): 'complete' | 'active' | 'pending' {
@@ -20,14 +20,27 @@ type WorkflowCompletionSummary = {
 };
 
 type WhatsChangedSectionProps = {
-  completedToolPart: ToolUIPart;
-  onApplyAll?: () => void;
-  onDiscard?: () => void;
-  onTryAgain?: () => void;
+  defaultIsExpanded?: boolean;
+  lastUserMessageId: string;
+  completedToolPart: DynamicToolUIPart;
+  showMessageActions?: boolean;
+  isActionPending?: boolean;
+  onKeepAll: () => void;
+  onDiscard: (messageId: string) => void;
+  onTryAgain: (messageId: string) => void;
 };
 
-export function WhatsChangedSection({ completedToolPart }: WhatsChangedSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+export function WhatsChangedSection({
+  defaultIsExpanded,
+  lastUserMessageId,
+  completedToolPart,
+  showMessageActions,
+  isActionPending,
+  onKeepAll,
+  onDiscard,
+  onTryAgain,
+}: WhatsChangedSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultIsExpanded ?? false);
   const status = getToolStatus(completedToolPart.state);
 
   if (!completedToolPart.input) {
@@ -74,28 +87,15 @@ export function WhatsChangedSection({ completedToolPart }: WhatsChangedSectionPr
               <div className="flex flex-col gap-2 bg-[#FBFBFB] py-2 pl-1 pr-2">
                 {summary.summary && (
                   <ChainOfThoughtStep
-                    label={<Shimmer className="text-label-xs text-text-sub">Workflow Summary</Shimmer>}
+                    label={<span className="text-label-xs text-text-sub">Summary</span>}
                     status={status}
                   >
                     <StyledMessageResponse>{summary.summary}</StyledMessageResponse>
                   </ChainOfThoughtStep>
                 )}
-                {summary.channelRecommendations?.length > 0 && (
-                  <ChainOfThoughtStep
-                    label={<Shimmer className="text-label-xs text-text-sub">Step recommendations applied</Shimmer>}
-                    status={status}
-                  >
-                    <StyledMessageResponse>
-                      {summary.channelRecommendations
-                        .map((channel) => channel.reason)
-                        .map((reason) => `\n- ${reason}`)
-                        .join('')}
-                    </StyledMessageResponse>
-                  </ChainOfThoughtStep>
-                )}
                 {summary.bestPractices?.length > 0 && (
                   <ChainOfThoughtStep
-                    label={<Shimmer className="text-label-xs text-text-sub">Best practices</Shimmer>}
+                    label={<span className="text-label-xs text-text-sub">Best practices</span>}
                     status={status}
                   >
                     <StyledMessageResponse>
@@ -108,6 +108,56 @@ export function WhatsChangedSection({ completedToolPart }: WhatsChangedSectionPr
           )}
         </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {showMessageActions && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-start gap-1.5 py-1.5"
+          >
+            <span className="text-label-xs text-[#99A0AE]">Suggestions are ready. You can discard them if needed.</span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent"
+                onClick={onKeepAll}
+                disabled={isActionPending}
+                trailingIcon={RiCheckLine}
+              >
+                Keep all
+              </Button>
+              <span className="text-[#99A0AE]">·</span>
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent"
+                onClick={() => onDiscard(lastUserMessageId)}
+                disabled={isActionPending}
+                trailingIcon={RiCloseLine}
+              >
+                Discard
+              </Button>
+              <span className="text-[#99A0AE]">·</span>
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                onClick={() => onTryAgain(lastUserMessageId)}
+                disabled={isActionPending}
+                trailingIcon={RiRefreshLine}
+              >
+                Try again
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

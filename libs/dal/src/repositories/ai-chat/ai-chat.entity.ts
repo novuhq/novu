@@ -3,6 +3,12 @@ import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 
+export type AiChatSnapshotRef = {
+  _snapshotId: string;
+  messageId: string;
+  checkpointId?: string;
+};
+
 export class AiChatEntity {
   _id: string;
   _organizationId: OrganizationId;
@@ -14,6 +20,11 @@ export class AiChatEntity {
 
   messages: unknown[];
   activeStreamId?: string | null;
+
+  snapshots?: AiChatSnapshotRef[];
+  resumeCheckpointId?: string;
+
+  hasPendingChanges: boolean;
 
   createdAt: string;
   updatedAt: string;

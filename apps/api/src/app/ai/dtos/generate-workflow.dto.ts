@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { AiResourceTypeEnum } from '@novu/shared';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AiAgentTypeEnum, AiResourceTypeEnum } from '@novu/shared';
 import { UIMessage } from 'ai';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowSuggestionType {
   WELCOME = 'welcome',
@@ -15,23 +15,43 @@ export enum WorkflowSuggestionType {
 
 export class StreamGenerationDto {
   @ApiProperty({ description: 'Chat ID' })
-  @IsString()
+  @IsDefined()
+  @IsMongoId()
   id: string;
 
-  @ApiProperty({
-    description: 'Chat message to send to the AI',
+  @ApiPropertyOptional({
+    description: 'Chat message to send to the AI, if not provided, the chat will be resumed',
   })
-  @IsNotEmpty()
-  message: UIMessage;
+  @IsOptional()
+  message?: UIMessage | null;
 
   @ApiProperty({
-    description: 'Type of resource to determine the AI agent to use',
-    enum: AiResourceTypeEnum,
-    example: AiResourceTypeEnum.WORKFLOW,
+    description: 'Type of agent to use for streaming',
+    enum: AiAgentTypeEnum,
+    example: AiAgentTypeEnum.GENERATE_WORKFLOW,
   })
   @IsNotEmpty()
-  @IsEnum(AiResourceTypeEnum)
-  resourceType: AiResourceTypeEnum;
+  @IsEnum(AiAgentTypeEnum)
+  agentType: AiAgentTypeEnum;
+}
+
+export class CancelStreamDto {
+  @ApiProperty({ description: 'Chat ID' })
+  @IsDefined()
+  @IsMongoId()
+  chatId: string;
+}
+
+export class SnapshotActionDto {
+  @ApiProperty({ description: 'Chat ID' })
+  @IsDefined()
+  @IsMongoId()
+  chatId: string;
+
+  @ApiProperty({ description: 'User message ID that triggered the generation' })
+  @IsString()
+  @IsDefined()
+  messageId: string;
 }
 
 export class CreateChatDto {

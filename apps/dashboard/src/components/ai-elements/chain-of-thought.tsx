@@ -1,7 +1,7 @@
 'use client';
 
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
-import { BrainIcon, ChevronDownIcon, DotIcon, type LucideIcon } from 'lucide-react';
+import { BrainIcon, ChevronDownIcon, ChevronRightIcon, DotIcon, type LucideIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { createContext, memo, useContext, useMemo } from 'react';
 import { Badge } from '@/components/primitives/badge';
@@ -76,6 +76,8 @@ export type ChainOfThoughtStepProps = ComponentProps<'div'> & {
   label: ReactNode;
   description?: ReactNode;
   status?: 'complete' | 'active' | 'pending';
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 };
 
 export const ChainOfThoughtStep = memo(
@@ -85,6 +87,8 @@ export const ChainOfThoughtStep = memo(
     label,
     description,
     status = 'complete',
+    collapsible = false,
+    defaultOpen = true,
     children,
     ...props
   }: ChainOfThoughtStepProps) => {
@@ -104,15 +108,39 @@ export const ChainOfThoughtStep = memo(
         )}
         {...props}
       >
-        <div className="relative mt-0.5">
-          <Icon className="size-4" />
-          <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
-        </div>
-        <div className="flex-1 space-y-2 overflow-hidden">
-          <div>{label}</div>
-          {description && <div className="text-muted-foreground text-xs">{description}</div>}
-          {children}
-        </div>
+        {collapsible && children ? (
+          <Collapsible className="group flex flex-1 gap-2 w-full" defaultOpen={defaultOpen}>
+            <div className="relative shrink-0 self-stretch">
+              <CollapsibleTrigger className="block p-0 transition-opacity hover:opacity-80 h-5">
+                <ChevronRightIcon className="size-3.5 transition-transform group-data-[state=open]:rotate-90" />
+              </CollapsibleTrigger>
+              <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <CollapsibleTrigger className="flex w-full items-start gap-2 text-left transition-opacity hover:opacity-80 h-5">
+                <div className="min-w-0 flex-1">{label}</div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                <div className="flex-1 space-y-2 overflow-hidden">
+                  {description && <div className="text-muted-foreground text-xs">{description}</div>}
+                  {children}
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        ) : (
+          <>
+            <div className="relative mt-0.5">
+              <Icon className="size-4" />
+              <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
+            </div>
+            <div className="flex-1 space-y-2 overflow-hidden">
+              <div>{label}</div>
+              {description && <div className="text-muted-foreground text-xs">{description}</div>}
+              {children}
+            </div>
+          </>
+        )}
       </div>
     );
   }

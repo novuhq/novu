@@ -1,0 +1,12 @@
+---
+description: Rules for working with DAL repositories in the Novu monorepo
+globs: libs/dal/**/*.ts, apps/api/**/*.ts
+alwaysApply: false
+---
+
+### DAL Repository Rules
+
+- **Never use `_model` or `MongooseModel` directly** in repository methods. Always use the `BaseRepository` inherited methods (`update`, `find`, `findOne`, `delete`, `create`, `bulkWrite`, etc.) which enforce `_environmentId` / `_organizationId` via the `EnforceEnvOrOrgIds` type.
+- All query methods must include `_environmentId` or `_organizationId` in their filter to satisfy the enforcement type constraint.
+- When adding new repository methods that need `$push`, `$pull`, or other update operators, pass the `environmentId` as a parameter and use `this.update()` with the enforcement fields.
+- For bulk operations, use `this.bulkWrite()` instead of `this._model.updateMany()`.

@@ -1,29 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AiResourceTypeEnum } from '@novu/shared';
+import { AiAgentTypeEnum } from '@novu/shared';
 import { BaseStreamGenerationAgent } from '../types';
 import { StreamWorkflowGenerationUseCase } from '../usecases/stream-workflow-generation';
 
 @Injectable()
 export class AiAgentFactory {
-  private readonly agents: Map<AiResourceTypeEnum, BaseStreamGenerationAgent>;
+  private readonly agents: Map<AiAgentTypeEnum, BaseStreamGenerationAgent>;
 
-  constructor(private readonly workflowGenerationAgent: StreamWorkflowGenerationUseCase) {
-    this.agents = new Map<AiResourceTypeEnum, BaseStreamGenerationAgent>([
-      [AiResourceTypeEnum.WORKFLOW, this.workflowGenerationAgent],
+  constructor(private readonly addStepsUseCase: StreamWorkflowGenerationUseCase) {
+    this.agents = new Map<AiAgentTypeEnum, BaseStreamGenerationAgent>([
+      [AiAgentTypeEnum.GENERATE_WORKFLOW, this.addStepsUseCase],
     ]);
   }
 
-  getAgent(resourceType: AiResourceTypeEnum): BaseStreamGenerationAgent {
-    const agent = this.agents.get(resourceType);
+  getAgentUseCase(agentType: AiAgentTypeEnum): BaseStreamGenerationAgent {
+    const agent = this.agents.get(agentType);
 
     if (!agent) {
-      throw new NotFoundException(`No AI agent found for resource type: ${resourceType}`);
+      throw new NotFoundException(`No AI agent found for agent type: ${agentType}`);
     }
 
     return agent;
   }
 
-  getSupportedResourceTypes(): AiResourceTypeEnum[] {
+  getSupportedAgentTypes(): AiAgentTypeEnum[] {
     return Array.from(this.agents.keys());
   }
 }

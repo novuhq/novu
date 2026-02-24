@@ -37,6 +37,27 @@ const aiChatSchema = new Schema<AiChatDBModel>(
       required: false,
       default: null,
     },
+    snapshots: {
+      type: [
+        {
+          _snapshotId: { type: Schema.Types.String, required: true },
+          messageId: { type: Schema.Types.String, required: true },
+          checkpointId: { type: Schema.Types.String, required: false },
+        },
+      ],
+      required: false,
+      default: [],
+    },
+    resumeCheckpointId: {
+      type: Schema.Types.String,
+      required: false,
+      default: null,
+    },
+    hasPendingChanges: {
+      type: Schema.Types.Boolean,
+      required: true,
+      default: false,
+    },
   },
   { ...schemaOptions, minimize: false }
 );
