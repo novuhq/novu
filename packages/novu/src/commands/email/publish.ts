@@ -21,6 +21,7 @@ interface PublishOptions {
   config?: string;
   out?: string;
   workflow?: string[] | string;
+  step?: string[] | string;
   bundleOutDir?: string | boolean;
   dryRun?: boolean;
 }
@@ -43,9 +44,12 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     const client = new StepResolverClient(apiUrl, secretKey);
     await authenticate(client, apiUrl);
 
+    assertStepRequiresWorkflow(options.step, options.workflow);
+
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
-    const selectedSteps = selectStepsByWorkflow(discoveredSteps, options.workflow);
-    printDiscoveredSteps(selectedSteps, discoveredSteps.length, options.workflow);
+    const workflowFilteredSteps = selectStepsByWorkflow(discoveredSteps, options.workflow);
+    const selectedSteps = selectStepsByStepId(workflowFilteredSteps, options.step);
+    printDiscoveredSteps(selectedSteps, discoveredSteps.length, options.workflow, options.step);
 
     const shouldMinifyBundles = !options.bundleOutDir;
     if (!shouldMinifyBundles) {
@@ -77,6 +81,53 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     console.error('');
     process.exit(1);
   }
+}
+
+function assertStepRequiresWorkflow(stepOption?: string[] | string, workflowOption?: string[] | string): void {
+  const steps = normalizeRequestedWorkflows(stepOption);
+  if (steps.length === 0) return;
+
+  const workflows = normalizeRequestedWorkflows(workflowOption);
+  if (workflows.length > 0) return;
+
+  console.error('');
+  console.error(red('❌ --step requires --workflow'));
+  console.error('');
+  console.error(
+    'The --step flag must be used together with --workflow because step IDs are only unique within a workflow.'
+  );
+  console.error('');
+  console.error('Example:');
+  console.error('  npx novu email publish --workflow=onboarding --step=welcome-email');
+  console.error('');
+  process.exit(1);
+}
+
+function selectStepsByStepId(
+  workflowFilteredSteps: DiscoveredStep[],
+  requestedStepOption?: string[] | string
+): DiscoveredStep[] {
+  const requestedSteps = normalizeRequestedWorkflows(requestedStepOption);
+  if (requestedSteps.length === 0) {
+    return workflowFilteredSteps;
+  }
+
+  const requestedSet = new Set(requestedSteps);
+  const selectedSteps = workflowFilteredSteps.filter((step) => requestedSet.has(step.stepId));
+  const missingSteps = requestedSteps.filter((stepId) => !selectedSteps.some((step) => step.stepId === stepId));
+
+  if (missingSteps.length > 0) {
+    console.error(red(`❌ Step(s) not found: ${missingSteps.join(', ')}`));
+    console.error('');
+    console.error('Available steps in the selected workflow(s):');
+    for (const step of workflowFilteredSteps) {
+      console.error(`  • ${step.stepId} (workflow: ${step.workflowId})`);
+    }
+    console.error('');
+    process.exit(1);
+  }
+
+  return selectedSteps;
 }
 
 function assertSecretKey(secretKey?: string): asserts secretKey is string {
@@ -206,17 +257,20 @@ function normalizeRequestedWorkflows(requestedWorkflowOption?: string[] | string
 function printDiscoveredSteps(
   steps: DiscoveredStep[],
   totalDiscoveredSteps: number,
-  selectedWorkflowOption?: string[] | string
+  selectedWorkflowOption?: string[] | string,
+  selectedStepOption?: string[] | string
 ) {
   for (const step of steps) {
     console.log(`   ${green('✓')} ${step.stepId} (workflow: ${step.workflowId})`);
   }
 
   const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
-  const requestedWorkflows = normalizeRequestedWorkflows(selectedWorkflowOption);
+  const isFiltered =
+    normalizeRequestedWorkflows(selectedWorkflowOption).length > 0 ||
+    normalizeRequestedWorkflows(selectedStepOption).length > 0;
 
   console.log('');
-  if (requestedWorkflows.length > 0) {
+  if (isFiltered) {
     console.log(
       `   Found ${steps.length} step(s) across ${workflowCount} workflow(s) (filtered from ${totalDiscoveredSteps} total step(s))`
     );
