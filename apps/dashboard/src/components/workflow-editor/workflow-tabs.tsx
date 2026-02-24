@@ -320,7 +320,13 @@ export const WorkflowTabs = () => {
       isResourceLoading: isWorkflowPending,
       onRefetchResource: () => refetchWorkflow({ cancelRefetch: true }),
       onData: (data: { type: string }) => {
-        if (data.type === 'data-step-added' || data.type === 'data-workflow-completed') {
+        if (
+          data.type === 'data-step-added' ||
+          data.type === 'data-workflow-completed' ||
+          data.type === 'data-step-updated' ||
+          data.type === 'data-step-removed' ||
+          data.type === 'data-workflow-metadata-updated'
+        ) {
           refetchWorkflow({ cancelRefetch: true });
         }
       },

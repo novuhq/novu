@@ -1,7 +1,7 @@
 import { toUIMessageStream } from '@ai-sdk/langchain';
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, ResourceValidatorService } from '@novu/application-generic';
-import { AiChatEntity, AiChatRepository, ClientSession, SnapshotRepository } from '@novu/dal';
+import { AiChatRepository, AiChatSnapshotRef, ClientSession, SnapshotRepository } from '@novu/dal';
 import {
   AiResourceTypeEnum,
   AiWorkflowToolsEnum,
@@ -11,7 +11,7 @@ import {
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import { createUIMessageStream, generateId, UIMessage } from 'ai';
-import { createAgent, createMiddleware } from 'langchain';
+import { BaseMessage, createAgent, createMiddleware } from 'langchain';
 import { z } from 'zod';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
@@ -22,7 +22,7 @@ import {
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
 } from '../../../workflows-v2/usecases/upsert-workflow';
-import { GENERATE_WORKFLOW_AGENT_SYSTEM_PROMPT } from '../../prompts';
+import { buildWorkflowAgentSystemPrompt } from '../../prompts';
 import { workflowMetadataOutputSchema } from '../../schemas/workflow-generation.schema';
 import { CheckpointerService } from '../../services/checkpointer.service';
 import { LlmService } from '../../services/llm.service';
@@ -63,6 +63,8 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
         user: command.user,
       })
     );
+    // chat snapshots perf improvement: avoid the database query for the snapshots
+    const localSnapshots = [...(chat.snapshots ?? [])];
     const chatMessages = chat.messages as UIMessage[];
     const lastUserMessageId = chatMessages.filter((m) => m.role === 'user').pop()?.id ?? '';
 
@@ -82,18 +84,6 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
         command.user.organizationId,
         existingWorkflow.steps
       );
-
-      const checkpointer = this.checkpointerService.getCheckpointer();
-      const checkpointTuple = await checkpointer.getTuple({ configurable: { thread_id: command.chatId } });
-      const currentCheckpointId = checkpointTuple?.checkpoint.id;
-
-      await this.createSnapshotForWorkflowCreation(
-        command,
-        existingWorkflow,
-        chat,
-        lastUserMessageId,
-        currentCheckpointId
-      );
     } else {
       await this.resourceValidatorService.validateWorkflowLimit(command.user.environmentId);
     }
@@ -107,11 +97,13 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
       getActiveIntegrationsUsecase: this.getActiveIntegrationsUsecase,
     });
 
+    const checkpointer = this.checkpointerService.getCheckpointer();
+
     const agent = createAgent({
       model: this.llmService.getModel(),
       tools,
-      systemPrompt: GENERATE_WORKFLOW_AGENT_SYSTEM_PROMPT,
-      checkpointer: this.checkpointerService.getCheckpointer(),
+      systemPrompt: buildWorkflowAgentSystemPrompt(existingWorkflow),
+      checkpointer,
       middleware: [
         // TODO: create a middleware that will protect from the malicious prompt injection and jailbreak attacks
         // TODO: use middleware to summarize the messages before the agent starts, to avoid the context window limit
@@ -120,10 +112,21 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
           wrapToolCall: async (request, handler) => {
             const toolName = request.toolCall.name;
             const writer = request.runtime.writer;
-
-            const checkpointer = this.checkpointerService.getCheckpointer();
+            // important: get the current checkpoint id before the tool call
             const checkpointTuple = await checkpointer.getTuple({ configurable: { thread_id: command.chatId } });
             const currentCheckpointId = checkpointTuple?.checkpoint.id;
+
+            // create a snapshot for the last (new) user message if it doesn't exist
+            const lastUserMessageSnapshot = localSnapshots.find((s) => s.messageId === lastUserMessageId);
+            if (existingWorkflow && !lastUserMessageSnapshot) {
+              await this.createSnapshotForWorkflowCreation({
+                command,
+                workflow: existingWorkflow,
+                lastUserMessageId,
+                currentCheckpointId,
+                chatSnapshotRef: (ref) => localSnapshots.push(ref),
+              });
+            }
 
             const result = await handler(request);
 
@@ -150,13 +153,17 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                         session,
                       })
                     );
-                    await this.createSnapshotForWorkflowCreation(
-                      command,
-                      minimalWorkflow,
-                      chat,
-                      lastUserMessageId,
-                      currentCheckpointId
-                    );
+
+                    const snapshot = localSnapshots.find((s) => s.messageId === lastUserMessageId);
+                    if (!snapshot) {
+                      await this.createSnapshotForWorkflowCreation({
+                        command,
+                        workflow: minimalWorkflow,
+                        lastUserMessageId,
+                        currentCheckpointId,
+                        chatSnapshotRef: (ref) => localSnapshots.push(ref),
+                      });
+                    }
 
                     // update the workflow with the metadata
                     const updatedWorkflow = await this.updateWorkflow(
@@ -191,14 +198,7 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                 });
                 break;
               }
-              case AiWorkflowToolsEnum.ADD_EMAIL_STEP:
-              case AiWorkflowToolsEnum.ADD_IN_APP_STEP:
-              case AiWorkflowToolsEnum.ADD_SMS_STEP:
-              case AiWorkflowToolsEnum.ADD_PUSH_STEP:
-              case AiWorkflowToolsEnum.ADD_CHAT_STEP:
-              case AiWorkflowToolsEnum.ADD_DIGEST_STEP:
-              case AiWorkflowToolsEnum.ADD_DELAY_STEP:
-              case AiWorkflowToolsEnum.ADD_THROTTLE_STEP: {
+              case AiWorkflowToolsEnum.ADD_STEP: {
                 const workflow = draftState.getWorkflow();
                 const latestStep = draftState.getSteps().pop();
                 if (!workflow || !latestStep) {
@@ -210,6 +210,53 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                 writer?.({ type: 'step-added', step: latestStep });
 
                 this.logger.info({ stepCount: draftState.getSteps().length }, `AI Step added: ${toolName}`);
+                break;
+              }
+
+              case AiWorkflowToolsEnum.EDIT_STEP_CONTENT: {
+                const workflow = draftState.getWorkflow();
+                const updatedStep =
+                  'content' in result && typeof result.content === 'string'
+                    ? (JSON.parse(result.content) as UpsertStepDataCommand)
+                    : undefined;
+
+                if (!workflow || !updatedStep?.stepId) {
+                  throw new Error('Workflow or updated step not found');
+                }
+
+                await this.updateWorkflowStep({
+                  workflowId: workflow._id,
+                  command,
+                  step: updatedStep,
+                  draftState,
+                });
+
+                writer?.({ type: 'step-updated', step: updatedStep });
+
+                this.logger.info({ stepId: updatedStep.stepId }, 'AI Step updated via agent');
+                break;
+              }
+
+              case AiWorkflowToolsEnum.REMOVE_STEP: {
+                const workflow = draftState.getWorkflow();
+                const removeResult =
+                  'content' in result && typeof result.content === 'string'
+                    ? (JSON.parse(result.content) as { removedStepId: string })
+                    : undefined;
+                if (!workflow || !removeResult?.removedStepId) {
+                  throw new Error('Workflow or step ID not found');
+                }
+
+                await this.removeWorkflowStep({
+                  workflowId: workflow._id,
+                  command,
+                  stepId: removeResult.removedStepId,
+                  draftState,
+                });
+
+                writer?.({ type: 'step-removed', stepId: removeResult.removedStepId });
+
+                this.logger.info({ stepId: removeResult.removedStepId }, 'AI Step removed via agent');
                 break;
               }
 
@@ -267,13 +314,16 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
         }
 
         // the cases:
-        // 1. when there are no messages - resume action - graph execution from where it left off
-        // 2. when there is a checkpoint and no messages - try again action - will fork the graph execution and play from the checkpoint
-        // 3. when there is a checkpoint with messages - revert and edit action - will fork the graph execution and play from the checkpoint with the updated messages
-        const agentMessages = command.messages;
-        const resume = !agentMessages || agentMessages.length === 0 || (!!chat.resumeCheckpointId && !agentMessages);
+        // 1. when there are no last human message - resume action - graph execution from where it left off
+        // 2. when there is a checkpoint and no last human message - try again action - will fork the graph execution and play from the checkpoint
+        // 3. when there is a checkpoint with last human message - revert and edit action - will fork the graph execution and play from the checkpoint with the updated messages
+        const allChatMessages = command.messages;
+        const isNewMessage = command.isNewMessage;
+        const lastHumanMessage = isNewMessage ? allChatMessages?.filter((m) => m.type === 'human').pop() : undefined;
+        const messages: Array<BaseMessage> = lastHumanMessage ? [lastHumanMessage] : [];
+        const resume = !lastHumanMessage || (!!chat.resumeCheckpointId && !lastHumanMessage);
 
-        const agentStream = await agent.stream(resume ? null : { messages: agentMessages }, {
+        const agentStream = await agent.stream(resume ? null : { messages }, {
           configurable,
           signal: command.signal,
           streamMode: ['values', 'messages', 'custom'],
@@ -291,45 +341,46 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     return uiMessageStream;
   }
 
-  private async createSnapshotForWorkflowCreation(
-    command: StreamGenerationCommand,
-    workflow: WorkflowResponseDto,
-    chat: AiChatEntity,
-    lastUserMessageId: string,
-    currentCheckpointId?: string
-  ): Promise<void> {
+  private async createSnapshotForWorkflowCreation({
+    command,
+    workflow,
+    lastUserMessageId,
+    currentCheckpointId,
+    chatSnapshotRef,
+  }: {
+    command: StreamGenerationCommand;
+    workflow: WorkflowResponseDto;
+    lastUserMessageId: string;
+    currentCheckpointId?: string;
+    chatSnapshotRef: (ref: AiChatSnapshotRef) => void;
+  }): Promise<void> {
     await this.snapshotRepository.withTransaction(async (session) => {
       // create a snapshot for the workflow creation
-      const existingSnapshot = chat.snapshots?.find((s) => s.messageId === lastUserMessageId);
-      if (!existingSnapshot) {
-        const snapshot = await this.snapshotRepository.createSnapshot(
-          {
-            _environmentId: command.user.environmentId,
-            _organizationId: command.user.organizationId,
-            resourceType: AiResourceTypeEnum.WORKFLOW,
-            resourceId: workflow._id,
-            sourceType: SnapshotSourceTypeEnum.AI_CHAT,
-            sourceId: command.chatId,
-            data: workflow,
-          },
-          { session }
-        );
-        await this.aiChatRepository.pushSnapshotRef(
-          command.user.environmentId,
-          command.chatId,
-          {
-            _snapshotId: snapshot._id,
-            messageId: lastUserMessageId,
-            checkpointId: currentCheckpointId,
-          },
-          { session }
-        );
+      const snapshot = await this.snapshotRepository.createSnapshot(
+        {
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          resourceType: AiResourceTypeEnum.WORKFLOW,
+          resourceId: workflow._id,
+          sourceType: SnapshotSourceTypeEnum.AI_CHAT,
+          sourceId: command.chatId,
+          data: workflow,
+        },
+        { session }
+      );
+      const snapshotRef: AiChatSnapshotRef = {
+        _snapshotId: snapshot._id,
+        messageId: lastUserMessageId,
+        checkpointId: currentCheckpointId,
+      };
+      await this.aiChatRepository.pushSnapshotRef(command.user.environmentId, command.chatId, snapshotRef, { session });
 
-        this.logger.info(
-          { snapshotId: snapshot._id, checkpointId: currentCheckpointId },
-          'AI Snapshot created for workflow creation'
-        );
-      }
+      chatSnapshotRef(snapshotRef);
+
+      this.logger.info(
+        { snapshotId: snapshot._id, checkpointId: currentCheckpointId },
+        'AI Snapshot created for workflow creation'
+      );
     });
   }
 
@@ -368,13 +419,21 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     metadata: WorkflowMetadata,
     session: ClientSession | null
   ): Promise<WorkflowResponseDto> {
+    const steps = workflow.steps.map((s) => ({
+      _id: s._id,
+      stepId: s.stepId,
+      name: s.name,
+      type: s.type,
+      controlValues: s.controlValues ?? {},
+    }));
+
     const workflowDto: UpsertWorkflowDataCommand = {
       ...workflow,
       name: metadata.name,
       description: metadata.description,
       tags: metadata.tags,
       severity: metadata.severity,
-      steps: [],
+      steps,
       ...(metadata.critical
         ? {
             preferences: {
@@ -463,6 +522,102 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
 
       throw error;
     }
+  }
+
+  private async updateWorkflowStep({
+    workflowId,
+    command,
+    step,
+    draftState,
+  }: {
+    workflowId: string;
+    command: StreamGenerationCommand;
+    step: UpsertStepDataCommand;
+    draftState: DraftWorkflowState;
+  }): Promise<WorkflowResponseDto> {
+    const latestWorkflow = await this.getWorkflowUseCase.execute(
+      GetWorkflowCommand.create({
+        workflowIdOrInternalId: workflowId,
+        user: command.user,
+      })
+    );
+
+    const steps = latestWorkflow.steps.map((s) =>
+      s.stepId === step.stepId
+        ? {
+            ...s,
+            name: step.name ?? s.name,
+            controlValues: step.controlValues ?? s.controlValues ?? {},
+          }
+        : s
+    );
+
+    const persistedWorkflow = await this.upsertWorkflowUseCase.execute(
+      UpsertWorkflowCommand.create({
+        workflowDto: {
+          ...latestWorkflow,
+          steps,
+        },
+        user: command.user,
+        workflowIdOrInternalId: workflowId,
+      })
+    );
+    draftState.setWorkflow(persistedWorkflow);
+
+    this.logger.info(
+      { _id: persistedWorkflow._id, slug: persistedWorkflow.slug },
+      `AI Workflow step updated: ${step.name}`
+    );
+
+    return persistedWorkflow;
+  }
+
+  private async removeWorkflowStep({
+    workflowId,
+    command,
+    stepId,
+    draftState,
+  }: {
+    workflowId: string;
+    command: StreamGenerationCommand;
+    stepId: string;
+    draftState: DraftWorkflowState;
+  }): Promise<WorkflowResponseDto> {
+    const latestWorkflow = await this.getWorkflowUseCase.execute(
+      GetWorkflowCommand.create({
+        workflowIdOrInternalId: workflowId,
+        user: command.user,
+      })
+    );
+
+    const steps = latestWorkflow.steps
+      .filter((s) => s.stepId !== stepId)
+      .map((s) => ({
+        _id: s._id,
+        stepId: s.stepId,
+        name: s.name,
+        type: s.type,
+        controlValues: s.controlValues ?? {},
+      }));
+
+    const persistedWorkflow = await this.upsertWorkflowUseCase.execute(
+      UpsertWorkflowCommand.create({
+        workflowDto: {
+          ...latestWorkflow,
+          steps,
+        },
+        user: command.user,
+        workflowIdOrInternalId: workflowId,
+      })
+    );
+    draftState.setWorkflow(persistedWorkflow);
+
+    this.logger.info(
+      { _id: persistedWorkflow._id, slug: persistedWorkflow.slug },
+      `AI Workflow step removed: ${stepId}`
+    );
+
+    return persistedWorkflow;
   }
 
   private async updateWorkflowPayloadSchema({

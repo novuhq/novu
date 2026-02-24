@@ -1,9 +1,18 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { AiAgentTypeEnum, AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
 import { ChatOnDataCallback, generateId, UIMessage } from 'ai';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiArrowRightSLine, RiCloseLine, RiLoopLeftLine, RiRouteFill } from 'react-icons/ri';
+import {
+  RiArrowRightSLine,
+  RiCheckboxCircleFill,
+  RiCloseLine,
+  RiLoader3Line,
+  RiLoader4Fill,
+  RiLoopLeftLine,
+  RiRouteFill,
+} from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Sparkling } from '@/components/icons/sparkling';
@@ -36,7 +45,6 @@ import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { StyledMessageResponse } from './ai-sidekick/chat-message-response';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormRoot } from './primitives/form/form';
 import { showErrorToast } from './primitives/sonner-helpers';
 
@@ -111,11 +119,17 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   );
 
   const chatId = useMemo(() => generateId(), []);
-  const { sendPrompt, messages, isGenerating } = useAiChatStream({
+  const { sendPrompt, stop, isGenerating } = useAiChatStream({
     id: chatId,
     agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
     onData: handleData,
   });
+
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
 
   const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
   const createWorkflowHook = useCreateWorkflow();
@@ -149,18 +163,6 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
       }
     );
   }
-
-  const reasoningText = useMemo(() => {
-    const workflowReasoningParts = messages
-      .filter((m) => m.role === 'assistant')
-      .flatMap((m) => m.parts.filter((p) => p.type === 'data-reasoning'));
-
-    return workflowReasoningParts
-      .map((p) =>
-        'data' in p && p.data && typeof p.data === 'object' && 'text' in p.data ? (p.data as { text: string }).text : ''
-      )
-      .join('\n');
-  }, [messages]);
 
   const isDuplicateMode = mode === 'duplicate';
   const showTabs = !isDuplicateMode;
@@ -219,7 +221,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
               </>
             )}
 
-            {showGuidedContent && <GuidedModeContent onSubmit={handleGuidedSubmit} reasoningText={reasoningText} />}
+            {showGuidedContent && <GuidedModeContent onSubmit={handleGuidedSubmit} isGenerating={isGenerating} />}
 
             {showManualContent &&
               (isLoadingTemplate ? (
@@ -273,35 +275,67 @@ const schema = z.object({
 
 type GuidedModeContentProps = {
   onSubmit: (values: z.infer<typeof schema>) => void;
-  isGenerating?: boolean;
-  reasoningText?: string;
+  isGenerating: boolean;
 };
 
-function GuidedModeContent({ onSubmit, reasoningText }: GuidedModeContentProps) {
+const STEP_DELAY_MS = 2000;
+
+const GENERATION_STEPS = [
+  { id: 'spinning', text: 'Spinning up a fresh workflow' },
+  { id: 'coffee', text: 'Sipping a little bit of coffee' },
+  {
+    id: 'workflow-id',
+    text: 'Generating a unique workflow ID',
+  },
+  {
+    id: 'tags',
+    text: 'Setting up tags',
+  },
+  { id: 'canvas', text: 'Laying out the workflow canvas' },
+  { id: 'moment', text: 'One moment while we set this up' },
+] as const;
+
+type GenerationStepStatus = 'success' | 'progress' | 'pending';
+
+type GenerationStep = {
+  id: string;
+  text: string;
+  status: GenerationStepStatus;
+};
+
+function GuidedModeContent({ onSubmit, isGenerating }: GuidedModeContentProps) {
   const form = useForm<z.infer<typeof schema>>({
     defaultValues: {
       prompt: '',
     },
   });
 
+  const [animatedStepIndex, setAnimatedStepIndex] = useState(-1);
+
+  useEffect(() => {
+    if (!isGenerating) return;
+
+    setAnimatedStepIndex(0);
+
+    const interval = setInterval(() => {
+      setAnimatedStepIndex((prev) => {
+        if (prev >= GENERATION_STEPS.length - 1) {
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, STEP_DELAY_MS);
+
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
   function handleSuggestionClick(suggestion: string) {
     form.setValue('prompt', suggestion);
   }
 
-  if (reasoningText) {
-    return (
-      <div className="flex flex-1 flex-col gap-2 p-3 pb-6">
-        <div className="flex flex-col items-start gap-2 py-4">
-          <Sparkling className="size-8 animate-pulse" />
-        </div>
-        <StyledMessageResponse>{reasoningText}</StyledMessageResponse>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-1 flex-col justify-end gap-2 p-3 pb-6">
-      <div className="flex flex-col items-start gap-2 py-8">
+  const header = useMemo(
+    () => (
+      <div className="flex flex-col items-start gap-2 pt-8 pb-0">
         <Sparkling className="size-8" />
         <div className="flex flex-col gap-1">
           <span className="text-label-md text-text-strong font-medium">
@@ -313,8 +347,79 @@ function GuidedModeContent({ onSubmit, reasoningText }: GuidedModeContentProps) 
           </span>
         </div>
       </div>
+    ),
+    []
+  );
 
-      <div className="flex flex-wrap items-center gap-2">
+  if (isGenerating || animatedStepIndex >= 0) {
+    const effectiveStepIndex = animatedStepIndex === -1 && isGenerating ? 0 : animatedStepIndex;
+
+    const steps: GenerationStep[] = GENERATION_STEPS.map((step, index) => {
+      const status: GenerationStepStatus =
+        index < effectiveStepIndex ? 'success' : index === effectiveStepIndex ? 'progress' : 'pending';
+
+      return { id: step.id, text: step.text, status };
+    });
+
+    const ITEM_HEIGHT = 16;
+    const GAP = 8;
+    const CONTAINER_HEIGHT = 190;
+    const activeIndex = effectiveStepIndex;
+
+    return (
+      <div className="flex flex-col gap-2 p-3 pb-6">
+        {header}
+        <div className="relative flex flex-1 flex-col overflow-hidden" style={{ minHeight: CONTAINER_HEIGHT }}>
+          <div
+            className="absolute inset-0 overflow-hidden"
+            style={{
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 50%, black 60%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 50%, black 60%, transparent 100%)',
+            }}
+          >
+            <motion.div
+              className="absolute left-0 right-0 flex flex-col gap-2 px-3"
+              initial={false}
+              animate={{ y: CONTAINER_HEIGHT / 2 - ITEM_HEIGHT / 2 - activeIndex * (ITEM_HEIGHT + GAP) }}
+              transition={{ type: 'tween', ease: 'easeInOut' }}
+            >
+              {steps.map((step, index) => (
+                <motion.div
+                  key={step.id}
+                  className="flex items-center gap-2 shrink-0"
+                  animate={{ opacity: index === activeIndex ? 1 : 0.4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {step.status === 'success' && (
+                    <div className="flex size-4 shrink-0 items-center justify-center rounded-full shadow-xs">
+                      <RiCheckboxCircleFill className="size-3 text-success" />
+                    </div>
+                  )}
+                  {step.status === 'progress' && (
+                    <div className="flex size-4 shrink-0 items-center justify-center rounded-full shadow-xs">
+                      <RiLoader4Fill className="size-3 animate-spin text-text-sub" />
+                    </div>
+                  )}
+                  {step.status === 'pending' && (
+                    <div className="flex size-4 shrink-0 items-center justify-center rounded-full shadow-xs">
+                      <RiLoader3Line className="size-3 text-text-sub" />
+                    </div>
+                  )}
+                  <span className="text-label-xs text-text-sub">{step.text}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 p-3 pb-6">
+      {header}
+
+      <div className="flex flex-wrap items-center gap-2 mt-8">
         {WORKFLOW_SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion}

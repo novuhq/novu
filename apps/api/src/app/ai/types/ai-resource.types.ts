@@ -15,6 +15,7 @@ export interface UIMessageInput {
 
 export type StreamGenerationCommand = {
   user: UserSessionData;
+  isNewMessage?: boolean;
   messages?: Array<BaseMessage> | null;
   signal: AbortSignal;
   chatId: string;

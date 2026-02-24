@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { stepInputSchema } from '../schemas/steps-control.schema';
+import { editStepInputSchema, stepInputSchema } from '../schemas/steps-control.schema';
 import { DraftWorkflowState } from '../tools';
 import { formatVariableSchemaForPrompt } from '../utils/variable-schema.utils';
 import { getVariableSchemaPrompt } from './general.prompt';
@@ -198,4 +198,35 @@ export function buildStepSystemPrompt(basePrompt: string, draftState: DraftWorkf
 
 export function buildStepUserPrompt(input: z.infer<typeof stepInputSchema>): string {
   return `Step: ${input.name}\nIntent: ${input.intent}\nStep ID: ${input.stepId}`;
+}
+
+const EDIT_STEP_INSTRUCTION = `
+## Edit Task
+Modify the content according to the user's intent. Preserve everything not explicitly asked to change.
+Keep the same editorType (block or html for email) and structure. Only update the parts the user requested.`;
+
+export function buildEditStepSystemPrompt(
+  basePrompt: string,
+  currentControlValues: Record<string, unknown>,
+  draftState: DraftWorkflowState
+): string {
+  const workflow = draftState.getWorkflow();
+  const variableSchema = workflow?.payloadSchema ?? draftState.getFullVariableSchema();
+  const variableSchemaPrompt = formatVariableSchemaForPrompt(variableSchema);
+  const currentContentJson = JSON.stringify(currentControlValues, null, 2);
+
+  const variableSection = variableSchemaPrompt ? `\n## ${getVariableSchemaPrompt(variableSchemaPrompt)}` : '';
+
+  return `${basePrompt}
+${EDIT_STEP_INSTRUCTION}
+
+## Current Step Content
+\`\`\`json
+${currentContentJson}
+\`\`\`
+${variableSection}`;
+}
+
+export function buildEditStepUserPrompt(input: z.infer<typeof editStepInputSchema>): string {
+  return `Step ID: ${input.stepId}\nEdit intent: ${input.intent}`;
 }

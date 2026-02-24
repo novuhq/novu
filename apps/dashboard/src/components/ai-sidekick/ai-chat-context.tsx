@@ -7,6 +7,7 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
 import { useCreateAiChat } from '@/hooks/use-create-ai-chat';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useKeepAiChanges } from '@/hooks/use-keep-ai-changes';
 import { useRevertMessage } from '@/hooks/use-revert-message';
@@ -116,6 +117,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
         refetchLatestChat();
       },
     });
+  const dataRef = useDataRef({ isGenerating, resourceType, resourceId, isAborted, latestChat, messages });
 
   const { keepChanges, isPending: isKeepPending } = useKeepAiChanges();
   const { revertMessage, isPending: isRevertPending } = useRevertMessage();
@@ -143,9 +145,11 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
     return () => {
       isMountedRef.current = false;
-      stop();
+      if (dataRef.current.isGenerating) {
+        stop();
+      }
     };
-  }, [stop]);
+  }, [dataRef, stop]);
 
   const lastUserMessageId = useMemo(() => {
     const userMessages = messages.filter((m) => m.role === AiMessageRoleEnum.USER);
@@ -159,21 +163,20 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     return latestChat.hasPendingChanges;
   }, [latestChat]);
 
-  const isLastUserMessage = useMemo(() => {
-    return messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
-  }, [messages]);
-
   const isFirstUserMessage = useMemo(() => {
     return messages.length === 1 && messages[0].role === AiMessageRoleEnum.USER;
   }, [messages]);
 
   const handleSendMessage = useCallback(
     async (message: string) => {
+      const { resourceType, resourceId, isAborted, latestChat, messages } = dataRef.current;
+      const isLastUserMessage = messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
+
       const messageToSend = message.trim();
       if (!latestChat) {
-        const chat = await createAiChat({ resourceType, resourceId });
+        const newChat = await createAiChat({ resourceType, resourceId });
         await refetchLatestChat();
-        sendPrompt({ chatId: chat._id, prompt: messageToSend });
+        sendPrompt({ chatId: newChat._id, prompt: messageToSend });
       } else if (isLastUserMessage || isAborted) {
         const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
         sendPrompt({ messageId: lastUserMessage?.id, chatId: latestChat._id, prompt: messageToSend });
@@ -182,17 +185,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       }
       setInputText('');
     },
-    [
-      latestChat,
-      messages,
-      isLastUserMessage,
-      resourceType,
-      resourceId,
-      isAborted,
-      createAiChat,
-      refetchLatestChat,
-      sendPrompt,
-    ]
+    [dataRef, createAiChat, refetchLatestChat, sendPrompt]
   );
 
   const handleLastUserMessage = useCallback((chat?: AiChatResponseDto) => {

@@ -21,9 +21,10 @@ type WorkflowCompletionSummary = {
 };
 
 type WhatsChangedSectionProps = {
+  defaultIsExpanded?: boolean;
   lastUserMessageId: string;
   completedToolPart: DynamicToolUIPart;
-  isReviewingChanges?: boolean;
+  showMessageActions?: boolean;
   isActionPending?: boolean;
   onKeepAll: () => void;
   onDiscard: (messageId: string) => void;
@@ -31,15 +32,16 @@ type WhatsChangedSectionProps = {
 };
 
 export function WhatsChangedSection({
+  defaultIsExpanded,
   lastUserMessageId,
   completedToolPart,
-  isReviewingChanges,
+  showMessageActions,
   isActionPending,
   onKeepAll,
   onDiscard,
   onTryAgain,
 }: WhatsChangedSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(defaultIsExpanded ?? false);
   const status = getToolStatus(completedToolPart.state);
 
   if (!completedToolPart.input) {
@@ -86,28 +88,15 @@ export function WhatsChangedSection({
               <div className="flex flex-col gap-2 bg-[#FBFBFB] py-2 pl-1 pr-2">
                 {summary.summary && (
                   <ChainOfThoughtStep
-                    label={<Shimmer className="text-label-xs text-text-sub">Workflow Summary</Shimmer>}
+                    label={<span className="text-label-xs text-text-sub">Summary</span>}
                     status={status}
                   >
                     <StyledMessageResponse>{summary.summary}</StyledMessageResponse>
                   </ChainOfThoughtStep>
                 )}
-                {summary.channelRecommendations?.length > 0 && (
-                  <ChainOfThoughtStep
-                    label={<Shimmer className="text-label-xs text-text-sub">Step recommendations applied</Shimmer>}
-                    status={status}
-                  >
-                    <StyledMessageResponse>
-                      {summary.channelRecommendations
-                        .map((channel) => channel.reason)
-                        .map((reason) => `\n- ${reason}`)
-                        .join('')}
-                    </StyledMessageResponse>
-                  </ChainOfThoughtStep>
-                )}
                 {summary.bestPractices?.length > 0 && (
                   <ChainOfThoughtStep
-                    label={<Shimmer className="text-label-xs text-text-sub">Best practices</Shimmer>}
+                    label={<span className="text-label-xs text-text-sub">Best practices</span>}
                     status={status}
                   >
                     <StyledMessageResponse>
@@ -121,7 +110,7 @@ export function WhatsChangedSection({
         </AnimatePresence>
       </div>
       <AnimatePresence>
-        {isReviewingChanges && (
+        {showMessageActions && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}

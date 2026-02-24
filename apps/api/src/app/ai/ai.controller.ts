@@ -150,8 +150,9 @@ export class AiController {
     const isResuming = !dto.message;
     const allMessages = (chat.messages as UIMessage[]) ?? [];
     const existingUserMessage = allMessages.find((m) => m.id === dto.message?.id && m.role === 'user');
-    if (!existingUserMessage && dto.message) {
-      allMessages.push(dto.message);
+    const isNewMessage = !existingUserMessage && !!dto.message;
+    if (isNewMessage) {
+      allMessages.push(dto.message!);
 
       await this.keepAiChangesUseCase.execute(KeepAiChangesCommand.create({ chatId: dto.id, user }));
     } else if (existingUserMessage && dto.message) {
@@ -199,6 +200,7 @@ export class AiController {
     const stream = await agentUsecase.execute({
       command: {
         user,
+        isNewMessage,
         signal: abortController.signal,
         messages: langchainMessages,
         chatId: dto.id,

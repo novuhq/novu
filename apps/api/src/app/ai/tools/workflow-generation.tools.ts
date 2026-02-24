@@ -1,5 +1,4 @@
 import { AiWorkflowToolsEnum, StepTypeEnum } from '@novu/shared';
-import { generateId } from 'ai';
 import { ToolRuntime, tool } from 'langchain';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -8,15 +7,23 @@ import { GetActiveIntegrations } from '../../integrations/usecases/get-active-in
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos';
 import { UpsertStepDataCommand } from '../../workflows-v2/usecases';
-import { buildStepSystemPrompt, buildStepUserPrompt, STEP_CONTENT_PROMPTS } from '../prompts/step.prompt';
+import {
+  buildEditStepSystemPrompt,
+  buildEditStepUserPrompt,
+  buildStepSystemPrompt,
+  buildStepUserPrompt,
+  STEP_CONTENT_PROMPTS,
+} from '../prompts/step.prompt';
 import { WORKFLOW_METADATA_PROMPT } from '../prompts/workflow.prompt';
 import {
   chatStepOutputSchema,
   delayStepOutputSchema,
   digestStepOutputSchema,
+  editStepInputSchema,
   emailStepOutputSchema,
   inAppStepOutputSchema,
   pushStepOutputSchema,
+  removeStepInputSchema,
   smsStepOutputSchema,
   stepInputSchema,
   throttleStepOutputSchema,
@@ -29,7 +36,6 @@ import {
 } from '../schemas/workflow-generation.schema';
 import { LlmService } from '../services/llm.service';
 import { StreamGenerationCommand } from '../types';
-import { writeToolReasoningInChunks } from '../utils/streaming';
 import {
   buildFullVariableSchema,
   createInitialVariableSchemaContext,
@@ -84,6 +90,43 @@ export class DraftWorkflowState {
     return this.workflow;
   }
 
+  getStepByStepId(
+    stepId: string
+  ): (WorkflowResponseDto['steps'][number] & { controlValues?: Record<string, unknown> }) | null {
+    const step = this.workflow?.steps.find((s) => s.stepId === stepId);
+
+    return step ?? null;
+  }
+
+  updateStep(stepId: string, updatedStepData: UpsertStepDataCommand): UpsertStepDataCommand {
+    const step = this.getStepByStepId(stepId);
+    if (!step || !this.workflow) {
+      throw new Error(`Step ${stepId} not found`);
+    }
+
+    const mergedStep: UpsertStepDataCommand = {
+      _id: step._id,
+      stepId: step.stepId,
+      name: updatedStepData.name ?? step.name,
+      type: step.type,
+      controlValues: (updatedStepData.controlValues ?? step.controlValues ?? {}) as Record<string, unknown>,
+    };
+
+    const index = this.workflow.steps.findIndex((s) => s.stepId === stepId);
+    const controlValues = mergedStep.controlValues ?? {};
+    this.workflow.steps[index] = { ...this.workflow.steps[index], controlValues };
+
+    return mergedStep;
+  }
+
+  removeStep(stepId: string): void {
+    if (!this.workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    this.workflow.steps = this.workflow.steps.filter((s) => s.stepId !== stepId);
+  }
+
   getFullVariableSchema(): JSONSchemaDto {
     return buildFullVariableSchema(this.variableSchemaContext);
   }
@@ -114,32 +157,19 @@ export function createWorkflowGenerationTools({
   draftState: DraftWorkflowState;
   getActiveIntegrationsUsecase: GetActiveIntegrations;
 }) {
+  const model = { modelId: 'gpt-5-mini', provider: 'openai' } as const;
+
   const setWorkflowMetadataTool = tool(
-    async (input: z.infer<typeof workflowMetadataInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, `**User request:**\n${input.userRequest}`, writer);
-
+    async (input: z.infer<typeof workflowMetadataInputSchema>, _: ToolRuntime) => {
       const result = await llmService.generateObject(
         {
           systemPrompt: WORKFLOW_METADATA_PROMPT,
           userPrompt: input.userRequest,
           schema: workflowMetadataOutputSchema,
         },
-        { modelId: 'gpt-5-mini', provider: 'openai' }
+        model
       );
       draftState.setWorkflowMetadata(result);
-
-      const reasoningText =
-        `**Workflow details**\n\n` +
-        `**Name:** ${result.name}\n\n` +
-        `**Description:** ${result.description || 'no description'}\n\n` +
-        `**Tags:** ${result.tags?.join(', ') || 'none'}\n\n` +
-        `**Severity:** ${result.severity.toString().toLowerCase()}\n\n` +
-        `**Critical:** ${result.critical ? 'yes' : 'no'}`;
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, reasoningText, writer);
 
       return result;
     },
@@ -173,27 +203,35 @@ export function createWorkflowGenerationTools({
     }
   );
 
-  const addEmailStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
+  const stepTypeToSchemaAndPrompt: Partial<Record<StepTypeEnum, { schema: z.ZodType; prompt: string }>> = {
+    [StepTypeEnum.EMAIL]: { schema: emailStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.email },
+    [StepTypeEnum.IN_APP]: { schema: inAppStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.in_app },
+    [StepTypeEnum.SMS]: { schema: smsStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.sms },
+    [StepTypeEnum.PUSH]: { schema: pushStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.push },
+    [StepTypeEnum.CHAT]: { schema: chatStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.chat },
+    [StepTypeEnum.DIGEST]: { schema: digestStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.digest },
+    [StepTypeEnum.DELAY]: { schema: delayStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.delay },
+    [StepTypeEnum.THROTTLE]: { schema: throttleStepOutputSchema, prompt: STEP_CONTENT_PROMPTS.throttle },
+  };
 
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** Email
-- **Name:** ${input.name}`,
-        writer
+  const addStepTool = tool(
+    async (input: z.infer<typeof stepInputSchema>, _: ToolRuntime) => {
+      const stepConfig = stepTypeToSchemaAndPrompt[input.stepType];
+
+      if (!stepConfig) {
+        throw new Error(`Unsupported step type for adding: ${input.stepType}`);
+      }
+
+      const result = await llmService.generateObject(
+        {
+          systemPrompt: buildStepSystemPrompt(stepConfig.prompt, draftState),
+          userPrompt: buildStepUserPrompt(input),
+          schema: stepConfig.schema,
+        },
+        model
       );
 
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.email, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: emailStepOutputSchema,
-      });
-
-      if (result.controlValues?.editorType === 'block') {
+      if (input.stepType === StepTypeEnum.EMAIL && result.controlValues?.editorType === 'block') {
         result.controlValues.body = JSON.stringify(result.controlValues.body ?? {}) as any;
       }
 
@@ -206,292 +244,64 @@ export function createWorkflowGenerationTools({
 
       draftState.addStepAndExtractVariables(result);
 
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
-
       return result;
     },
     {
-      name: AiWorkflowToolsEnum.ADD_EMAIL_STEP,
-      description: `Add an email step to the workflow. Provide the step ID, name, and intent. The email content will be generated based on the intent.`,
+      name: AiWorkflowToolsEnum.ADD_STEP,
+      description: `Add a step to the workflow. Provide the step ID, name, type, and intent. The step content will be generated based on the intent.`,
       schema: zodToJsonSchema(stepInputSchema),
     }
   );
 
-  const addInAppStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** In-App
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.in_app, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: inAppStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
+  const editStepContentTool = tool(
+    async (input: z.infer<typeof editStepInputSchema>, _: ToolRuntime) => {
+      const step = draftState.getStepByStepId(input.stepId);
+      if (!step) {
+        throw new Error(`Step ${input.stepId} not found in workflow`);
       }
 
-      draftState.addStepAndExtractVariables(result);
+      const stepConfig =
+        stepTypeToSchemaAndPrompt[step.type as StepTypeEnum] ?? stepTypeToSchemaAndPrompt[StepTypeEnum.IN_APP];
+      if (!stepConfig) {
+        throw new Error(`Unsupported step type for editing: ${step.type}`);
+      }
+      const { schema, prompt } = stepConfig;
+      const currentControlValues = (step.controlValues ?? step.controls?.values ?? {}) as Record<string, unknown>;
 
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
+      const result = await llmService.generateObject(
+        {
+          systemPrompt: buildEditStepSystemPrompt(prompt, currentControlValues, draftState),
+          userPrompt: buildEditStepUserPrompt(input),
+          schema,
+        },
+        model
+      );
 
-      return result;
+      if (result.controlValues?.editorType === 'block') {
+        result.controlValues.body = JSON.stringify(result.controlValues.body ?? {}) as typeof result.controlValues.body;
+      }
+
+      const updatedStep = draftState.updateStep(input.stepId, result);
+
+      return updatedStep;
     },
     {
-      name: AiWorkflowToolsEnum.ADD_IN_APP_STEP,
-      description: `Add an in-app notification step to the workflow. Provide the step ID, name, and intent. The notification content will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
+      name: AiWorkflowToolsEnum.EDIT_STEP_CONTENT,
+      description: `Edit the content of an existing workflow step. Use when the user asks to modify step content (e.g., email body, subject, in-app message). Provide the step ID and a clear description of the change.`,
+      schema: zodToJsonSchema(editStepInputSchema),
     }
   );
 
-  const addSmsStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
+  const removeStepTool = tool(
+    async (input: z.infer<typeof removeStepInputSchema>) => {
+      draftState.removeStep(input.stepId);
 
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** SMS
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.sms, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: smsStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
-      }
-
-      draftState.addStepAndExtractVariables(result);
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
-
-      return result;
+      return { removedStepId: input.stepId, reason: input.reason };
     },
     {
-      name: AiWorkflowToolsEnum.ADD_SMS_STEP,
-      description: `Add an SMS step to the workflow. Provide the step ID, name, and intent. The SMS content will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
-    }
-  );
-
-  const addPushStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** Push
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.push, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: pushStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
-      }
-
-      draftState.addStepAndExtractVariables(result);
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
-
-      return result;
-    },
-    {
-      name: AiWorkflowToolsEnum.ADD_PUSH_STEP,
-      description: `Add a push notification step to the workflow. Provide the step ID, name, and intent. The push notification content will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
-    }
-  );
-
-  const addChatStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** Chat
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.chat, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: chatStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
-      }
-
-      draftState.addStepAndExtractVariables(result);
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
-
-      return result;
-    },
-    {
-      name: AiWorkflowToolsEnum.ADD_CHAT_STEP,
-      description: `Add a chat step (Slack/Discord/Teams) to the workflow. Provide the step ID, name, and intent. The chat message content will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
-    }
-  );
-
-  const addDigestStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** Digest
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.digest, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: digestStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
-      }
-
-      draftState.addStepAndExtractVariables(result);
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
-
-      return result;
-    },
-    {
-      name: AiWorkflowToolsEnum.ADD_DIGEST_STEP,
-      description: `Add a digest step to batch multiple notifications. Provide the step ID, name, and intent. The digest configuration will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
-    }
-  );
-
-  const addDelayStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** Delay
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.delay, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: delayStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
-      }
-
-      draftState.addStepAndExtractVariables(result);
-
-      return result;
-    },
-    {
-      name: AiWorkflowToolsEnum.ADD_DELAY_STEP,
-      description: `Add a delay step to pause workflow execution. Provide the step ID, name, and intent. The delay configuration will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
-    }
-  );
-
-  const addThrottleStepTool = tool(
-    async (input: z.infer<typeof stepInputSchema>, config: ToolRuntime) => {
-      const writer = config.writer ?? (() => {});
-      const toolCallId = config.toolCallId;
-
-      await writeToolReasoningInChunks(
-        generateId(),
-        toolCallId,
-        `⚙️ **Creating step:**
-- **Type:** Throttle
-- **Name:** ${input.name}`,
-        writer
-      );
-
-      const result = await llmService.generateObject({
-        systemPrompt: buildStepSystemPrompt(STEP_CONTENT_PROMPTS.throttle, draftState),
-        userPrompt: buildStepUserPrompt(input),
-        schema: throttleStepOutputSchema,
-      });
-
-      if (input.skip) {
-        result.controlValues = {
-          ...result.controlValues,
-          skip: input.skip,
-        } as any;
-      }
-
-      draftState.addStepAndExtractVariables(result);
-
-      await writeToolReasoningInChunks(generateId(), toolCallId, `\n\n✅ **Done!**`, writer);
-
-      return result;
-    },
-    {
-      name: AiWorkflowToolsEnum.ADD_THROTTLE_STEP,
-      description: `Add a throttle step to limit notification frequency. Provide the step ID, name, and intent. The throttle configuration will be generated based on the intent.`,
-      schema: zodToJsonSchema(stepInputSchema),
+      name: AiWorkflowToolsEnum.REMOVE_STEP,
+      description: `Remove a step from the workflow. Use when the user asks to delete or remove a step. Provide the step ID and reason.`,
+      schema: zodToJsonSchema(removeStepInputSchema),
     }
   );
 
@@ -499,13 +309,11 @@ export function createWorkflowGenerationTools({
     async (input: z.infer<typeof completeWorkflowInputSchema>) => {
       draftState.setReasoning(input);
 
-      return {
-        ...input,
-      };
+      return 'success';
     },
     {
       name: AiWorkflowToolsEnum.COMPLETE_WORKFLOW,
-      description: `Mark the workflow generation as complete. Call this as last tool after all steps have been added. Provide a summary of the reasoning behind the workflow design. This will return the complete draft workflow with all metadata and steps.`,
+      description: `Mark the workflow generation as complete. Call this as last tool after all steps have been added or modified. Provide a summary of the reasoning behind the workflow design.`,
       schema: zodToJsonSchema(completeWorkflowInputSchema),
     }
   );
@@ -513,14 +321,9 @@ export function createWorkflowGenerationTools({
   return [
     setWorkflowMetadataTool,
     retrieveOrganizationMetaTool,
-    addEmailStepTool,
-    addInAppStepTool,
-    addSmsStepTool,
-    addPushStepTool,
-    addChatStepTool,
-    addDigestStepTool,
-    addDelayStepTool,
-    addThrottleStepTool,
+    addStepTool,
+    editStepContentTool,
+    removeStepTool,
     completeWorkflowTool,
   ];
 }

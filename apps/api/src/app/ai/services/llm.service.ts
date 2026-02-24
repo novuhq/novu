@@ -82,7 +82,7 @@ export class LlmService {
       maxTokens: config?.maxOutputTokens ?? 4096,
       ...(!isReasoning ? { temperature: config?.temperature } : {}),
       maxRetries: config?.maxRetries ?? 3,
-      ...(isReasoning ? { reasoning: { effort: 'medium', summary: 'concise' } } : {}),
+      ...(isReasoning ? { reasoning: { effort: 'low' } } : {}),
     });
   }
 

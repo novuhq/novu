@@ -52,15 +52,17 @@ export class MessageTemplateRepository extends BaseRepository<
 
   async deleteById(query: DeleteMsgByIdQuery, options: RepositoryOptions = {}) {
     const { session } = options;
-    const deleteOptions = session ? { session } : {};
 
-    return await this.messageTemplate.delete(
-      {
-        _id: query._id,
-        _environmentId: query._environmentId,
-      },
-      deleteOptions
-    );
+    const deleteQuery = this.messageTemplate.delete({
+      _id: query._id,
+      _environmentId: query._environmentId,
+    });
+
+    if (session) {
+      deleteQuery.session(session);
+    }
+
+    return await deleteQuery;
   }
 
   async findDeleted(query: MessageTemplateQuery): Promise<MessageTemplateEntity> {

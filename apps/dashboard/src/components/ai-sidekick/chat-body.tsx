@@ -1,5 +1,5 @@
 import { AiWorkflowToolsEnum } from '@novu/shared';
-import { ChatStatus, DataUIPart, DynamicToolUIPart, UIMessage } from 'ai';
+import { ChatStatus, DynamicToolUIPart, UIMessage } from 'ai';
 import { RiArrowGoBackLine, RiRefreshLine } from 'react-icons/ri';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
 import { Message } from '../ai-elements/message';
@@ -26,13 +26,6 @@ function getToolPartsFromMessage(message: UIMessage): Array<DynamicToolUIPart> {
   }
 
   return tools;
-}
-
-function getToolCallIdFromReasoningPart(
-  part: DataUIPart<{ reasoning: { toolCallId: string; text: string } }>
-): string | undefined {
-  const data = part.data as { toolCallId?: string; reasoning?: { toolCallId: string } };
-  return data.toolCallId ?? data.reasoning?.toolCallId;
 }
 
 function extractMessageContent(message: UIMessage): { text: string } {
@@ -83,7 +76,6 @@ export const ChatBody = ({
   stop,
   onSubmit,
   messages,
-  dataParts,
   isSubmitDisabled,
   isReviewingChanges,
   isActionPending,
@@ -100,7 +92,6 @@ export const ChatBody = ({
   stop: () => void;
   onSubmit: (message: string) => void;
   messages: UIMessage[];
-  dataParts: Array<DataUIPart<{ reasoning: { toolCallId: string; text: string } }>>;
   isSubmitDisabled: boolean;
   isReviewingChanges?: boolean;
   isActionPending?: boolean;
@@ -117,16 +108,18 @@ export const ChatBody = ({
           {messages.map((chatMessage) => {
             const { text } = extractMessageContent(chatMessage);
             const messageToolParts = getToolPartsFromMessage(chatMessage);
-            const allToolParts = messageToolParts.filter((t) => t.toolName !== AiWorkflowToolsEnum.COMPLETE_WORKFLOW);
             const completedToolPart = messageToolParts.find(
               (t) => t.toolName === AiWorkflowToolsEnum.COMPLETE_WORKFLOW
             );
-            const toolCallIds = new Set(messageToolParts.map((t) => t.toolCallId));
-            const toolReasoningParts = dataParts.filter((p) => {
-              if (p.type !== 'data-reasoning') return false;
-              const partToolCallId = getToolCallIdFromReasoningPart(p);
-              return partToolCallId != null && toolCallIds.has(partToolCallId);
-            });
+            const hasChainOfThoughtContent = (chatMessage.parts ?? []).some(
+              (p) =>
+                p.type === 'reasoning' ||
+                (p.type?.startsWith('dynamic-tool') &&
+                  (p as DynamicToolUIPart).toolName !== AiWorkflowToolsEnum.COMPLETE_WORKFLOW)
+            );
+            const isLastMessage = chatMessage.id === messages[messages.length - 1].id;
+            const isLastAssistantMessage =
+              chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
 
             return (
               <Message from={chatMessage.role} key={chatMessage.id}>
@@ -173,18 +166,19 @@ export const ChatBody = ({
                 )}
                 {chatMessage.role === 'assistant' && (
                   <>
-                    {(isGenerating || allToolParts.length > 0) && (
+                    {(isGenerating || hasChainOfThoughtContent) && (
                       <ChatChainOfThought
-                        toolParts={allToolParts}
-                        toolReasoningParts={toolReasoningParts}
-                        isStreaming={isGenerating}
+                        defaultIsExpanded={isGenerating && isLastMessage}
+                        message={chatMessage}
+                        isStreaming={isGenerating && isLastMessage}
                       />
                     )}
                     {completedToolPart && lastUserMessageId && (
                       <WhatsChangedSection
+                        defaultIsExpanded={isLastMessage}
                         lastUserMessageId={lastUserMessageId}
                         completedToolPart={completedToolPart}
-                        isReviewingChanges={isReviewingChanges}
+                        showMessageActions={!isGenerating && isReviewingChanges && isLastAssistantMessage}
                         isActionPending={isActionPending}
                         onKeepAll={onKeepAll}
                         onDiscard={onDiscard}

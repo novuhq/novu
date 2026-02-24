@@ -284,7 +284,29 @@ export const stepInputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-email")'),
   name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
   intent: z.string().describe('Brief description of what this step should accomplish'),
+  stepType: z
+    .enum([
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+      StepTypeEnum.SMS,
+      StepTypeEnum.DELAY,
+      StepTypeEnum.DIGEST,
+      StepTypeEnum.THROTTLE,
+    ])
+    .describe('Type of the step to add'),
   skip: aiSkipConditionSchema,
+});
+
+export const editStepInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier of the step to edit'),
+  intent: z.string().describe('Description of the change the user wants to make'),
+});
+
+export const removeStepInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier of the step to remove'),
+  reason: z.string().describe('Brief reason for removing the step'),
 });
 
 export const emailStepOutputSchema = z.object({

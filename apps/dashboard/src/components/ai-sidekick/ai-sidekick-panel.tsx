@@ -8,7 +8,6 @@ export function AiSidekickPanel() {
   const { currentEnvironment } = useEnvironment();
   const {
     messages,
-    dataParts,
     status,
     handleStop,
     isGenerating,
@@ -61,7 +60,6 @@ export function AiSidekickPanel() {
           stop={handleStop}
           onSubmit={handleSendMessage}
           messages={messages}
-          dataParts={dataParts}
           isSubmitDisabled={isCreatingChat}
           isReviewingChanges={isReviewingChanges}
           isActionPending={isActionPending}

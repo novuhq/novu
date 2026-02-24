@@ -39,16 +39,15 @@ export const workflowMetadataOutputSchema = z.object({
     ),
 });
 
+export const updateWorkflowMetadataInputSchema = z.object({
+  name: z.string().min(1).max(MAX_NAME_LENGTH).optional().describe('Updated workflow name'),
+  description: z.string().max(MAX_DESCRIPTION_LENGTH).nullable().optional().describe('Updated workflow description'),
+  tags: z.array(z.string().max(MAX_TAG_LENGTH)).max(5).nullable().optional().describe('Updated tags'),
+  severity: z.enum(severityValues).optional().describe('Updated severity level'),
+  critical: z.boolean().optional().describe('Updated critical flag'),
+});
+
 export const completeWorkflowInputSchema = z.object({
   summary: z.string().describe('Summary of the AI reasoning for this workflow design'),
-  channelRecommendations: z
-    .array(
-      z.object({
-        channel: z.string().describe('Channel type'),
-        reason: z.string().describe('Why this channel was chosen'),
-        priority: z.number().int().min(1).describe('Priority order (1 = first)'),
-      })
-    )
-    .describe('Explanation of channel choices'),
   bestPractices: z.array(z.string()).describe('Best practices applied to this workflow'),
 });
