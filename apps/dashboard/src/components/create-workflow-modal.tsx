@@ -104,15 +104,13 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
       ) {
         const workflowCreatedEvent = data.data as unknown as WorkflowCreatedEvent;
         createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
-        setTimeout(() => {
-          navigate(
-            buildRoute(ROUTES.EDIT_WORKFLOW, {
-              environmentSlug: currentEnvironment?.slug ?? '',
-              workflowSlug: createdWorkflowSlugRef.current ?? '',
-            }),
-            { state: { chatId: workflowCreatedEvent.chatId } }
-          );
-        }, 1000);
+        navigate(
+          buildRoute(ROUTES.EDIT_WORKFLOW, {
+            environmentSlug: currentEnvironment?.slug ?? '',
+            workflowSlug: createdWorkflowSlugRef.current ?? '',
+          }),
+          { state: { chatId: workflowCreatedEvent.chatId } }
+        );
       }
     },
     [currentEnvironment?.slug, navigate]

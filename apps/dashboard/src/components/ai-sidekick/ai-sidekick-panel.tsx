@@ -1,11 +1,8 @@
-import { EnvironmentTypeEnum } from '@novu/shared';
-import { useEnvironment } from '@/context/environment/hooks';
 import { BroomSparkle } from '../icons/broom-sparkle';
 import { useAiChat } from './ai-chat-context';
 import { ChatBody, ChatBodySkeleton } from './chat-body';
 
 export function AiSidekickPanel() {
-  const { currentEnvironment } = useEnvironment();
   const {
     messages,
     status,
@@ -24,10 +21,6 @@ export function AiSidekickPanel() {
     handleRevertMessage,
     handleDiscard,
   } = useAiChat();
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return null;
-  }
 
   return (
     <div className="flex h-full min-w-[360px] w-[360px] flex-col overflow-hidden border-r bg-white">

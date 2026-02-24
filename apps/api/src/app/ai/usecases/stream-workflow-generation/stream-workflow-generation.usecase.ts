@@ -13,6 +13,7 @@ import {
 import { createUIMessageStream, generateId, UIMessage } from 'ai';
 import { BaseMessage, createAgent, createMiddleware } from 'langchain';
 import { z } from 'zod';
+import { safeParse } from '../../../../utils/json';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow';
@@ -200,7 +201,8 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
               }
               case AiWorkflowToolsEnum.ADD_STEP: {
                 const workflow = draftState.getWorkflow();
-                const latestStep = draftState.getSteps().pop();
+                const steps = draftState.getSteps();
+                const latestStep = steps.length > 0 ? steps[steps.length - 1] : undefined;
                 if (!workflow || !latestStep) {
                   throw new Error('Workflow or latest step not found');
                 }
@@ -217,7 +219,7 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                 const workflow = draftState.getWorkflow();
                 const updatedStep =
                   'content' in result && typeof result.content === 'string'
-                    ? (JSON.parse(result.content) as UpsertStepDataCommand)
+                    ? (safeParse(result.content) as UpsertStepDataCommand)
                     : undefined;
 
                 if (!workflow || !updatedStep?.stepId) {
@@ -241,7 +243,7 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                 const workflow = draftState.getWorkflow();
                 const removeResult =
                   'content' in result && typeof result.content === 'string'
-                    ? (JSON.parse(result.content) as { removedStepId: string })
+                    ? (safeParse(result.content) as { removedStepId: string })
                     : undefined;
                 if (!workflow || !removeResult?.removedStepId) {
                   throw new Error('Workflow or step ID not found');
@@ -265,8 +267,6 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                 if (!workflow) {
                   throw new Error('Workflow not found');
                 }
-
-                await this.updateWorkflowPayloadSchema({ workflowId: workflow._id, command, draftState });
 
                 writer?.({ type: 'workflow-completed', workflowSlug: workflow.slug });
 
@@ -499,11 +499,16 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     }
 
     try {
+      const payloadSchema = draftState.getPayloadSchema();
+      const validatePayload = !!payloadSchema;
+
       const persistedWorkflow = await this.upsertWorkflowUseCase.execute(
         UpsertWorkflowCommand.create({
           workflowDto: {
             ...latestWorkflow,
             steps: [...latestWorkflow.steps, step],
+            validatePayload,
+            payloadSchema: payloadSchema ?? undefined,
           },
           user: command.user,
           workflowIdOrInternalId: workflowId,
@@ -552,24 +557,35 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
         : s
     );
 
-    const persistedWorkflow = await this.upsertWorkflowUseCase.execute(
-      UpsertWorkflowCommand.create({
-        workflowDto: {
-          ...latestWorkflow,
-          steps,
-        },
-        user: command.user,
-        workflowIdOrInternalId: workflowId,
-      })
-    );
-    draftState.setWorkflow(persistedWorkflow);
+    try {
+      const payloadSchema = draftState.getPayloadSchema();
+      const validatePayload = !!payloadSchema;
 
-    this.logger.info(
-      { _id: persistedWorkflow._id, slug: persistedWorkflow.slug },
-      `AI Workflow step updated: ${step.name}`
-    );
+      const persistedWorkflow = await this.upsertWorkflowUseCase.execute(
+        UpsertWorkflowCommand.create({
+          workflowDto: {
+            ...latestWorkflow,
+            steps,
+            validatePayload,
+            payloadSchema: payloadSchema ?? undefined,
+          },
+          user: command.user,
+          workflowIdOrInternalId: workflowId,
+        })
+      );
+      draftState.setWorkflow(persistedWorkflow);
 
-    return persistedWorkflow;
+      this.logger.info(
+        { _id: persistedWorkflow._id, slug: persistedWorkflow.slug },
+        `AI Workflow step updated: ${step.name}`
+      );
+
+      return persistedWorkflow;
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to update workflow step');
+
+      throw error;
+    }
   }
 
   private async removeWorkflowStep({

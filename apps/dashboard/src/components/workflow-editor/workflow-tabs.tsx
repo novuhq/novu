@@ -54,6 +54,7 @@ export const WorkflowTabs = () => {
   const userFirstName = currentUser?.firstName;
   const userLastName = currentUser?.lastName;
   const userEmail = currentUser?.email;
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   // API key management
   const has = useHasPermission();
@@ -64,7 +65,7 @@ export const WorkflowTabs = () => {
     isNewWorkflowSlug ||
     workflow?.origin === ResourceOriginEnum.EXTERNAL ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
-    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+    !isDevEnvironment;
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
@@ -464,10 +465,10 @@ export const WorkflowTabs = () => {
             </div>
           </TabsList>
           <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-            {isAiWorkflowGenerationEnabled && <AiSidekickPanel />}
+            {isAiWorkflowGenerationEnabled && isDevEnvironment && <AiSidekickPanel />}
             <div className="relative flex-1">
               <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
-              {isAiWorkflowGenerationEnabled && <WorkflowCanvasToast />}
+              {isAiWorkflowGenerationEnabled && isDevEnvironment && <WorkflowCanvasToast />}
             </div>
           </TabsContent>
           <TabsContent value="activity" className="mt-0 h-full max-w-full">

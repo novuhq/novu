@@ -60,6 +60,8 @@ export class AiChatRepository extends BaseRepository<AiChatDBModel, AiChatEntity
     snapshotIds: string[],
     options: { session?: ClientSession | null } = {}
   ): Promise<void> {
+    if (snapshotIds.length === 0) return;
+
     await this.update(
       { _id: chatId, _environmentId: environmentId },
       { $pull: { snapshots: { _snapshotId: { $in: snapshotIds } } } } as any,

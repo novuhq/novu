@@ -104,10 +104,11 @@ export async function fetchChat({
   id: string;
 }): Promise<AiChatResponseDto> {
   const { data: responseData } = await getV2<{ data: AiChatResponseDto }>(`/ai/chat/${id}`, { environment });
+
   return responseData;
 }
 
-export function getChatSteamUrl(): string {
+export function getChatStreamUrl(): string {
   return `${getApiBaseUrl()}/v2/ai/chat-stream`;
 }
 

@@ -38,6 +38,7 @@ import { LlmService } from '../services/llm.service';
 import { StreamGenerationCommand } from '../types';
 import {
   buildFullVariableSchema,
+  createEmptyPayloadSchema,
   createInitialVariableSchemaContext,
   extractPayloadVariablesFromControlValues,
   GeneratedStep,
@@ -61,9 +62,12 @@ export class DraftWorkflowState {
     return this.workflowMetadata;
   }
 
-  addStepAndExtractVariables(step: UpsertStepDataCommand): void {
+  addStep(step: UpsertStepDataCommand): void {
     this.steps.push(step);
+    this.extractVariablesFromStep(step);
+  }
 
+  private extractVariablesFromStep(step: UpsertStepDataCommand): void {
     const extractedVariables = extractPayloadVariablesFromControlValues(step.controlValues ?? {});
     const generatedStep: GeneratedStep = {
       stepId: step.stepId ?? '',
@@ -84,6 +88,22 @@ export class DraftWorkflowState {
 
   setWorkflow(workflow: WorkflowResponseDto): void {
     this.workflow = workflow;
+    this.rebuildVariableSchemaFromWorkflow(workflow);
+  }
+
+  private rebuildVariableSchemaFromWorkflow(workflow: WorkflowResponseDto): void {
+    const payloadSchema = workflow.payloadSchema
+      ? (workflow.payloadSchema as JSONSchemaDto)
+      : createEmptyPayloadSchema();
+
+    const previousSteps: GeneratedStep[] = workflow.steps.map((step) => ({
+      stepId: step.stepId,
+      name: step.name,
+      type: step.type as StepTypeEnum,
+      controlValues: (step.controlValues ?? step.controls?.values ?? {}) as Record<string, unknown>,
+    }));
+
+    this.variableSchemaContext = { payloadSchema, previousSteps };
   }
 
   getWorkflow(): WorkflowResponseDto | null {
@@ -116,6 +136,13 @@ export class DraftWorkflowState {
     const controlValues = mergedStep.controlValues ?? {};
     this.workflow.steps[index] = { ...this.workflow.steps[index], controlValues };
 
+    const stepsIndex = this.steps.findIndex((s) => s.stepId === stepId);
+    if (stepsIndex !== -1) {
+      this.steps[stepsIndex] = mergedStep;
+    }
+
+    this.extractVariablesFromStep(mergedStep);
+
     return mergedStep;
   }
 
@@ -125,6 +152,7 @@ export class DraftWorkflowState {
     }
 
     this.workflow.steps = this.workflow.steps.filter((s) => s.stepId !== stepId);
+    this.steps = this.steps.filter((s) => s.stepId !== stepId);
   }
 
   getFullVariableSchema(): JSONSchemaDto {
@@ -242,7 +270,7 @@ export function createWorkflowGenerationTools({
         } as any;
       }
 
-      draftState.addStepAndExtractVariables(result);
+      draftState.addStep(result);
 
       return result;
     },
@@ -260,8 +288,7 @@ export function createWorkflowGenerationTools({
         throw new Error(`Step ${input.stepId} not found in workflow`);
       }
 
-      const stepConfig =
-        stepTypeToSchemaAndPrompt[step.type as StepTypeEnum] ?? stepTypeToSchemaAndPrompt[StepTypeEnum.IN_APP];
+      const stepConfig = stepTypeToSchemaAndPrompt[step.type as StepTypeEnum];
       if (!stepConfig) {
         throw new Error(`Unsupported step type for editing: ${step.type}`);
       }
@@ -279,6 +306,13 @@ export function createWorkflowGenerationTools({
 
       if (result.controlValues?.editorType === 'block') {
         result.controlValues.body = JSON.stringify(result.controlValues.body ?? {}) as typeof result.controlValues.body;
+      }
+
+      if (step.controlValues?.skip) {
+        result.controlValues = {
+          ...result.controlValues,
+          skip: step.controlValues.skip,
+        } as any;
       }
 
       const updatedStep = draftState.updateStep(input.stepId, result);

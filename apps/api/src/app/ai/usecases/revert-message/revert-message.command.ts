@@ -6,6 +6,7 @@ export class RevertMessageCommand extends EnvironmentWithUserObjectCommand {
   @IsMongoId()
   chatId: string;
 
+  @IsDefined()
   @IsNotEmpty()
   @IsString()
   messageId: string;

@@ -173,6 +173,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       const isLastUserMessage = messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
 
       const messageToSend = message.trim();
+      if (!messageToSend) return;
+
       if (!latestChat) {
         const newChat = await createAiChat({ resourceType, resourceId });
         await refetchLatestChat();
@@ -218,6 +220,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       const previousMessages = [...messages];
       const messageIndex = messages.findIndex((m) => m.id === userMessageId);
+      if (messageIndex === -1) return;
 
       setMessages(messages.slice(0, messageIndex + 1));
 
@@ -245,8 +248,9 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       const previousMessages = [...messages];
       const messageIndex = messages.findIndex((m) => m.id === messageId);
-      const optimisticMessages = messages.slice(0, messageIndex + 1);
+      if (messageIndex === -1) return;
 
+      const optimisticMessages = messages.slice(0, messageIndex + 1);
       setMessages(optimisticMessages);
 
       await revertMessage(

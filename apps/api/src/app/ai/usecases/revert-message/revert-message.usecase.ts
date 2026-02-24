@@ -38,6 +38,10 @@ export class RevertMessageUseCase {
 
     const allMessages = (chat.messages as Array<{ id: string }>) ?? [];
     const messageIndex = allMessages.findIndex((m) => m.id === command.messageId);
+    if (messageIndex === -1) {
+      throw new NotFoundException('Message not found in chat');
+    }
+
     const messagesAfterRevert = allMessages.slice(messageIndex + 1);
     const messageIdsAfterRevert = new Set(messagesAfterRevert.map((m) => m.id));
     const snapshotsToDelete = refs.filter((r) => messageIdsAfterRevert.has(r.messageId));
@@ -53,6 +57,7 @@ export class RevertMessageUseCase {
           id: command.chatId,
           messages: truncatedMessages,
           user: command.user,
+          session,
         })
       );
 

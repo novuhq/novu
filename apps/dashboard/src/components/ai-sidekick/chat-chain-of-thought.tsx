@@ -26,9 +26,9 @@ function slugify(text: string): string {
     .replace(/^_|_$/g, '');
 }
 
-function getAddStepParts(parts: MessagePart[]): DynamicToolUIPart[] {
+function getDynamicToolParts(parts: MessagePart[], toolName: AiWorkflowToolsEnum): DynamicToolUIPart[] {
   return parts.filter(
-    (p) => p.type.startsWith('dynamic-tool') && (p as DynamicToolUIPart).toolName === AiWorkflowToolsEnum.ADD_STEP
+    (p) => p.type.startsWith('dynamic-tool') && (p as DynamicToolUIPart).toolName === toolName
   ) as DynamicToolUIPart[];
 }
 
@@ -144,14 +144,18 @@ function WorkflowStepItem({ output }: { output: { stepId: string; name: string; 
   );
 }
 
-function BuildingWorkflowStructureSection({
-  addStepParts,
+function WorkflowStepsSection({
+  parts,
   isStreaming,
+  labelStreaming,
+  labelComplete,
 }: {
-  addStepParts: DynamicToolUIPart[];
+  parts: DynamicToolUIPart[];
   isStreaming: boolean;
+  labelStreaming: string;
+  labelComplete: string;
 }) {
-  const stepsWithOutput = addStepParts.filter((p) => p.state === 'output-available' && p.output);
+  const stepsWithOutput = parts.filter((p) => p.state === 'output-available' && p.output);
 
   if (stepsWithOutput.length === 0) return null;
 
@@ -160,9 +164,9 @@ function BuildingWorkflowStructureSection({
       label={
         <span className={cn('flex items-center justify-between gap-1')}>
           {isStreaming ? (
-            <Shimmer className={cn('text-label-xs font-medium')}>Building the workflow structure</Shimmer>
+            <Shimmer className={cn('text-label-xs font-medium')}>{labelStreaming}</Shimmer>
           ) : (
-            <span className="text-label-xs font-medium text-text-sub">Built the workflow structure</span>
+            <span className="text-label-xs font-medium text-text-sub">{labelComplete}</span>
           )}
           <span className="text-label-xs text-text-sub pr-2">
             {stepsWithOutput.length} {stepsWithOutput.length === 1 ? 'STEP' : 'STEPS'}
@@ -214,17 +218,20 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
   }, [isStreaming]);
 
   const parts = message.parts ?? [];
-  const addStepParts = getAddStepParts(parts);
+  const addStepParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.ADD_STEP);
+  const editStepParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.EDIT_STEP_CONTENT);
 
   const renderItems: Array<
     | { type: 'text'; text: string; state?: 'streaming' | 'done' }
     | { type: 'reasoning'; text: string; state?: 'streaming' | 'done' }
     | { type: 'workflowInit'; output: WorkflowMetadataOutput }
-    | { type: 'buildWorkflow'; steps: DynamicToolUIPart[] }
+    | { type: 'addStep'; steps: DynamicToolUIPart[] }
+    | { type: 'editStep'; steps: DynamicToolUIPart[] }
   > = [];
 
   let workflowInitAdded = false;
   let buildWorkflowAdded = false;
+  let editStepContentAdded = false;
 
   for (const part of parts) {
     if (part.type === 'reasoning' && 'text' in part && typeof part.text === 'string') {
@@ -251,8 +258,16 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
       if (tool.toolName === AiWorkflowToolsEnum.ADD_STEP && !buildWorkflowAdded) {
         const stepsSoFar = addStepParts.filter((p) => p.state === 'output-available' && p.output);
         if (stepsSoFar.length > 0) {
-          renderItems.push({ type: 'buildWorkflow', steps: stepsSoFar });
+          renderItems.push({ type: 'addStep', steps: stepsSoFar });
           buildWorkflowAdded = true;
+        }
+      }
+
+      if (tool.toolName === AiWorkflowToolsEnum.EDIT_STEP_CONTENT && !editStepContentAdded) {
+        const stepsSoFar = editStepParts.filter((p) => p.state === 'output-available' && p.output);
+        if (stepsSoFar.length > 0) {
+          renderItems.push({ type: 'editStep', steps: stepsSoFar });
+          editStepContentAdded = true;
         }
       }
     }
@@ -302,12 +317,26 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
               return <WorkflowInitializedSection key="workflow-init" output={item.output} />;
             }
 
-            if (item.type === 'buildWorkflow') {
+            if (item.type === 'addStep') {
               return (
-                <BuildingWorkflowStructureSection
+                <WorkflowStepsSection
                   key="build-workflow"
-                  addStepParts={item.steps}
+                  parts={item.steps}
                   isStreaming={isStreaming}
+                  labelStreaming="Building the workflow structure"
+                  labelComplete="Built the workflow structure"
+                />
+              );
+            }
+
+            if (item.type === 'editStep') {
+              return (
+                <WorkflowStepsSection
+                  key="edit-step-content"
+                  parts={item.steps}
+                  isStreaming={isStreaming}
+                  labelStreaming="Editing step content"
+                  labelComplete="Edited step content"
                 />
               );
             }

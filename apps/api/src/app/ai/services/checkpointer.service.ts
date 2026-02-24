@@ -5,7 +5,7 @@ import { DalService } from '@novu/dal';
 
 @Injectable()
 export class CheckpointerService implements OnModuleInit {
-  private checkpointer!: MongoDBSaver;
+  private checkpointer: MongoDBSaver;
 
   public constructor(private readonly dalService: DalService) {}
 
@@ -15,6 +15,8 @@ export class CheckpointerService implements OnModuleInit {
   }
 
   public getCheckpointer(): MongoDBSaver {
+    if (!this.checkpointer) throw new Error('CheckpointerService not initialized');
+
     return this.checkpointer;
   }
 

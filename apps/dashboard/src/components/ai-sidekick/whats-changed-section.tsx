@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine, RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
 import { ChainOfThoughtStep } from '../ai-elements/chain-of-thought';
-import { Shimmer } from '../ai-elements/shimmer';
 import { Button } from '../primitives/button';
 import { StyledMessageResponse } from './chat-message-response';
 

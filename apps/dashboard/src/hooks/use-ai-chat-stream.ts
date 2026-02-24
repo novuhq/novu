@@ -10,20 +10,10 @@ import {
   UITools,
 } from 'ai';
 import { useCallback, useMemo, useState } from 'react';
-import { getChatSteamUrl } from '@/api/ai';
+import { getChatStreamUrl } from '@/api/ai';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getToken } from '@/utils/auth';
 import { useDataRef } from './use-data-ref';
-
-export type ToolInvocationPart = {
-  type: 'tool-invocation';
-  toolInvocation: {
-    toolName: string;
-    args: Record<string, unknown>;
-    state: 'call' | 'result';
-    result?: unknown;
-  };
-};
 
 type UseAiChatOptions<D extends UIDataTypes = UIDataTypes, T extends UITools = UITools> = {
   id: string;
@@ -38,6 +28,7 @@ type UseAiChatOptions<D extends UIDataTypes = UIDataTypes, T extends UITools = U
 export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends UITools = UITools>({
   id,
   agentType,
+  initialMessages,
   onData,
   onToolCall,
   onFinish,
@@ -50,7 +41,7 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
 
   const transport = useMemo(() => {
     return new DefaultChatTransport({
-      api: getChatSteamUrl(),
+      api: getChatStreamUrl(),
       headers: async () => {
         const token = await getToken();
 
@@ -78,6 +69,7 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
 
   const { messages, sendMessage, status, error, stop, setMessages } = useChatStream<UIMessage<unknown, D, T>>({
     id,
+    messages: initialMessages,
     transport,
     experimental_throttle: 50,
     onFinish,
@@ -117,20 +109,6 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
       .flatMap((m) => m.parts.filter((p) => p.type.startsWith('data-'))) as DataUIPart<D>[];
   }, [messages]);
 
-  const toolParts = useMemo((): ToolInvocationPart[] => {
-    const parts: ToolInvocationPart[] = [];
-    for (const message of messages) {
-      if (message.role !== 'assistant') continue;
-      for (const part of message.parts) {
-        if (part.type.startsWith('tool-') && 'toolInvocation' in part) {
-          parts.push(part as unknown as ToolInvocationPart);
-        }
-      }
-    }
-
-    return parts;
-  }, [messages]);
-
   const handleStop = useCallback(() => {
     setIsAborted(true);
     stop();
@@ -150,7 +128,6 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
     isReady,
     reasoningParts,
     textParts,
-    toolParts,
     dataParts,
   };
 }

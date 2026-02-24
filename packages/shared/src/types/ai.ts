@@ -37,6 +37,5 @@ export enum AiWorkflowToolsNameEnum {
   ADD_STEP = 'tool-addStep',
   COMPLETE_WORKFLOW = 'tool-completeWorkflow',
   EDIT_STEP_CONTENT = 'tool-editStepContent',
-  UPDATE_WORKFLOW_METADATA = 'tool-updateWorkflowMetadata',
   REMOVE_STEP = 'tool-removeStep',
 }

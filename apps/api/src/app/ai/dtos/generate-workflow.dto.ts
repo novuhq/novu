@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AiAgentTypeEnum, AiResourceTypeEnum } from '@novu/shared';
 import { UIMessage } from 'ai';
 import { IsDefined, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
@@ -19,7 +19,7 @@ export class StreamGenerationDto {
   @IsMongoId()
   id: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Chat message to send to the AI, if not provided, the chat will be resumed',
   })
   @IsOptional()
@@ -38,7 +38,7 @@ export class StreamGenerationDto {
 export class CancelStreamDto {
   @ApiProperty({ description: 'Chat ID' })
   @IsDefined()
-  @IsString()
+  @IsMongoId()
   chatId: string;
 }
 

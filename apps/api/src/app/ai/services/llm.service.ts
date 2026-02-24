@@ -35,8 +35,7 @@ export class LlmService {
 
   constructor(private readonly logger: PinoLogger) {
     const provider = (process.env.AI_LLM_PROVIDER as LlmProvider) || 'openai';
-    const apiKey = process.env.AI_LLM_API_KEY as string;
-
+    const apiKey = process.env.AI_LLM_API_KEY;
     if (!apiKey) {
       this.logger.warn('LLM service AI_LLM_API_KEY not configured.');
     }
@@ -96,12 +95,11 @@ export class LlmService {
 
   getModel(modelId?: string, provider?: LlmProvider): BaseChatModel {
     if (modelId) {
-      const modelToUse = modelId ?? this.config.model;
       return this.createModel({
         ...this.config,
-        model: modelToUse,
+        model: modelId,
         provider: provider ?? this.config.provider,
-        isReasoning: this.isReasoningModel(modelToUse),
+        isReasoning: this.isReasoningModel(modelId),
       });
     }
 
@@ -118,15 +116,18 @@ export class LlmService {
   ): Promise<z.infer<T>> {
     const messages = [new SystemMessage(input.systemPrompt), new HumanMessage(input.userPrompt)];
 
-    let model = options.modelId ? this.getModel(options.modelId, options.provider) : this.model;
+    const needsCustomModel = options.modelId || input.maxOutputTokens !== undefined || input.temperature !== undefined;
 
-    if (input.maxOutputTokens !== undefined || input.temperature !== undefined) {
-      model = this.createModel({
-        ...this.config,
-        maxOutputTokens: input.maxOutputTokens ?? this.config.maxOutputTokens,
-        temperature: input.temperature ?? this.config.temperature,
-      });
-    }
+    const model = needsCustomModel
+      ? this.createModel({
+          ...this.config,
+          model: options.modelId ?? this.config.model,
+          provider: options.provider ?? this.config.provider,
+          isReasoning: this.isReasoningModel(options.modelId ?? this.config.model),
+          maxOutputTokens: input.maxOutputTokens ?? this.config.maxOutputTokens,
+          temperature: input.temperature ?? this.config.temperature,
+        })
+      : this.model;
 
     const structuredModel = model.withStructuredOutput(zodToJsonSchema(input.schema), {
       name: 'structured_output',
