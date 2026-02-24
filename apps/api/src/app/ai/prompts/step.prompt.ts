@@ -1,51 +1,33 @@
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
-import { StepMetadata, WorkflowMetadata } from '../schemas/workflow-generation.schema';
-import { formatVariableSchemaForPrompt } from '../usecases/generate-workflow/variable-schema.utils';
-import {
-  ASSISTANT_DESCRIPTION,
-  GENERAL_CONTENT_GUIDELINES,
-  NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS,
-  NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS,
-  STEP_VALID_JSON_ROOT_OUTPUT_REQUIREMENTS,
-  VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS,
-} from './general.prompt';
+import { z } from 'zod';
+import { editStepInputSchema, stepInputSchema } from '../schemas/steps-control.schema';
+import { DraftWorkflowState } from '../tools';
+import { formatVariableSchemaForPrompt } from '../utils/variable-schema.utils';
+import { getVariableSchemaPrompt } from './general.prompt';
 import { EXAMPLE_BLOCK_EDITOR_JSON } from './maily-blocks';
 
-// Step Critical Output Requirements
-export const STEP_CRITICAL_OUTPUT_REQUIREMENTS = `## CRITICAL OUTPUT FORMAT:
-${STEP_VALID_JSON_ROOT_OUTPUT_REQUIREMENTS}
-${VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS}
-${NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS}
-${NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS}`;
-
-// Step Content Guidelines
-export const STEP_CONTENT_GUIDELINES = `${GENERAL_CONTENT_GUIDELINES}
-- Use appropriate formatting and styling only when it is necessary to improve the readability of the content
-- Align content with the workflow's purpose and the user's original request
-- Keep the content consistent with the other steps in the workflow
-- Use appropriate personalization with Liquid templating ({{ subscriber.firstName }}, {{ payload.* }})
-- Never put hardcoded URLs, names, product names, etc. in the content. Always use the existing variables or create new variables if needed, for example: {{ payload.actionUrl }}, {{ subscriber.firstName }}, {{ payload.productName }}.`;
+export const STEP_CONTENT_GUIDELINES = `## Content Guidelines
+- Use Liquid variables for personalization: {{ subscriber.firstName }}, {{ payload.* }}
+- Never hardcode URLs, names, or product names - use variables instead
+- Keep content consistent with other workflow steps`;
 
 export const STEP_CONTENT_PROMPTS = {
-  email: `${ASSISTANT_DESCRIPTION}
+  email: `Email step for detailed content, formal communications, receipts.
 
 ## Your task
 Generate the email step content. Choose either HTML or Block editor format.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
 
 ${STEP_CONTENT_GUIDELINES}
 
 ## Schema Requirements (choose one editorType)
 
 ### Option 1: Block Editor Format (Recommended for simple email layouts)
-- ALWAYS return required properties: subject, editorType, body
+- Always return required properties: subject, editorType, body
 - subject: string - Email subject line.
 - editorType: "block"
 - body: object - Email body in Maily TipTap JSON format
 
 ### Option 2: HTML Format (Recommended for complex email layouts)
-- ALWAYS return required properties: subject, editorType, body
+- Always return required properties: subject, editorType, body
 - subject: string - Email subject line
 - editorType: "html"
 - body: string - Email body always in the HTML format. Use semantic HTML with inline styles. Structure with headings, paragraphs, and styled buttons.
@@ -132,219 +114,119 @@ ${EXAMPLE_BLOCK_EDITOR_JSON}
 \`\`\`
 `,
 
-  in_app: `${ASSISTANT_DESCRIPTION}
-
-## Your task
-Generate the in-app notification content.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
+  in_app: `In-app notification for real-time updates, activity feeds, high engagement.
 
 ${STEP_CONTENT_GUIDELINES}
 
-## Schema Requirements
-- subject: string | null - Notification title (required if body is null)
-- body: string | null - Notification message (required if subject is null)
-- avatar: string | null - Avatar image URL (set to null if not needed)
-- primaryAction: object | null - Main action button { label: string, redirect: { url: string, target: "_self" | "_blank" } | null }
-- secondaryAction: object | null - Secondary action (set to null if not needed)
-- redirect: object | null - Click redirect { url: string, target: "_self" | "_blank" } (set to null if not needed)
+Guidelines:
+- Include action buttons for engagement
+- Focus on single action or piece of information
+- Can be longer than push notifications`,
 
-## Content Guidelines
-- Can be slightly longer than push notifications
-- Include action buttons when appropriate for user engagement
-- Be contextual to the user's current state in the app
-- Use clear, actionable language
-- Keep the message focused on a single action or piece of information
-
-## Personalization
-Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}`,
-
-  sms: `${ASSISTANT_DESCRIPTION}
-
-## Your task
-Generate the SMS message content.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
+  sms: `SMS step for urgent alerts, verification codes, time-sensitive messages.
 
 ${STEP_CONTENT_GUIDELINES}
 
-## Schema Requirements
-- body: string (required) - SMS message text
+Guidelines:
+- Under 160 characters (avoid message splitting)
+- Direct and actionable, essential info only
+- Avoid special characters and unnecessary URLs
 
-## Content Guidelines
-- Keep messages under 160 characters to avoid splitting into multiple messages
-- Be direct and actionable - get to the point immediately
-- Include only essential information
-- Avoid special characters that might not render properly on all devices
-- Don't include URLs unless absolutely necessary (use link shorteners if needed)
-- Include a clear call-to-action
+Example: "Hi {{ subscriber.firstName }}, your order #{{ payload.orderNumber }} has shipped! Track: {{ payload.trackingUrl }}"`,
 
-## Personalization
-Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}
-
-## Example
-"Hi {{ subscriber.firstName }}, your order #{{ payload.orderNumber }} has shipped! Track it here: {{ payload.trackingUrl }}"`,
-
-  push: `${ASSISTANT_DESCRIPTION}
-
-## Your task
-Generate the push notification content.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
+  push: `Push notification for mobile engagement, re-engagement, time-sensitive updates.
 
 ${STEP_CONTENT_GUIDELINES}
 
-## Schema Requirements
-- subject: string (required) - Push notification title
-- body: string (required) - Push notification body
+Guidelines:
+- Title: under 50 characters (truncated on devices)
+- Body: under 150 characters
+- Action-oriented, front-load important info
 
-## Content Guidelines
-- Title should be under 50 characters (gets truncated on most devices)
-- Body should be under 150 characters for full visibility
-- Create urgency or communicate clear value proposition
-- Be specific about what the user should do
-- Use action-oriented language
-- Front-load the most important information
-
-## Personalization
-Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}
-
-## Example
+Example:
 Title: "Your order is on its way!"
-Body: "{{ subscriber.firstName }}, your package will arrive by {{ payload.deliveryDate }}. Tap to track."`,
+Body: "{{ subscriber.firstName }}, your package arrives {{ payload.deliveryDate }}. Tap to track."`,
 
-  chat: `${ASSISTANT_DESCRIPTION}
-
-## Your task
-Generate the chat message content for platforms like Slack or Discord.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
+  chat: `Chat step for Slack/Discord/Teams - team notifications, developer alerts.
 
 ${STEP_CONTENT_GUIDELINES}
 
-## Schema Requirements
-- body: string (required) - Chat message content
+Guidelines:
+- Conversational tone, standalone context
+- Markdown supported on most platforms
 
-## Content Guidelines
-- Keep messages conversational and natural
-- Be friendly but professional
-- Include relevant context so the message makes sense standalone
-- Make it easy to respond or take action
-- Use appropriate formatting (markdown supported on most platforms)
-- Consider that chat messages appear in a stream of other content
+Example: "Hey {{ subscriber.firstName }}! Your {{ payload.projectName }} deployment completed. Details: {{ payload.deploymentUrl }}"`,
 
-## Personalization
-Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}
+  delay: `Delay step to pause workflow execution. Place BEFORE channel steps.
 
-## Example
-"Hey {{ subscriber.firstName }}! 👋 Your {{ payload.projectName }} deployment completed successfully. View the details: {{ payload.deploymentUrl }}"`,
+Common patterns:
+- 1-2 hours before reminders
+- 24 hours before follow-up emails
+- 5-10 minutes between push and email for urgent notifications`,
 
-  delay: `${ASSISTANT_DESCRIPTION}
+  digest: `Digest step to batch multiple notifications. Place BEFORE channel steps.
 
-## Your task
-Generate the delay step configuration.
+Digest Types:
+- "regular" (default): with look back window - digest only if recent message sent; without - groups all events in time window
+- "timed": with cron expression - collects until scheduled time (UTC)
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
+Common patterns:
+- Pass first event immediately, digest the rest
+- Batch activity updates hourly
+- Group by key (e.g., "payload.projectId") for per-project digests`,
 
-## Schema Requirements
-- type: "regular" (required) - Delay type
-- amount: number (required) - Number of time units to wait
-- unit: string (required) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
+  throttle: `Throttle step to limit notification frequency and prevent fatigue.
 
-## Usage Guidelines
-- Use delays to space out multi-channel notifications
-- Common patterns:
-  - Wait 1-2 hours before sending a reminder
-  - Wait 24 hours before follow-up emails
-  - Wait 5-10 minutes between push and email for urgent notifications`,
-
-  digest: `${ASSISTANT_DESCRIPTION}
-
-## Your task
-Generate the digest step configuration.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
-## Schema Requirements
-- type: "regular" | null - Digest type (set to null for default behavior)
-- amount: number (required) - Number of time units for the digest window
-- unit: string (required) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
-- digestKey: string | null - Key to group events (set to null to group all events together)
-
-## Usage Guidelines
-- Use digest to batch multiple events into a single notification
-- Common patterns:
-  - Batch activity updates every hour
-  - Daily digest of all notifications
-  - Group by specific key (e.g., "payload.projectId") for per-project digests`,
-
-  throttle: `${ASSISTANT_DESCRIPTION}
-
-## Your task
-Generate the throttle step configuration.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
-## Schema Requirements
-- type: "fixed" | "dynamic" - Throttle type (fixed for time-window based throttling)
-- amount: number (required for fixed) - Number of time units for throttle window
-- unit: string (required for fixed) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
-- threshold: number (required) - Maximum number of notifications allowed in the window
-- throttleKey: string (required for fixed) - Key to group throttle rules
-- dynamicKey: string (required for dynamic) - Key for dynamic grouping
-
-## Usage Guidelines
-- Use throttle to prevent notification fatigue
-- Common patterns:
-  - Max 3 notifications per hour per user
-  - Max 1 notification per day for marketing
-  - Throttle by specific key (e.g., "payload.alertType") for grouped limits`,
+Common patterns:
+- Max 3 per hour per user
+- Max 1 per day for marketing
+- Throttle by key (e.g., "payload.alertType") for grouped limits`,
 };
 
-export const buildStepPrompt = ({
-  step,
-  workflowMetadata,
-  userPrompt,
-  variableSchema,
-}: {
-  step: StepMetadata;
-  workflowMetadata: WorkflowMetadata;
-  userPrompt: string;
-  variableSchema?: JSONSchemaDto;
-}): string => {
-  const { name: workflowName, description, steps, reasoning } = workflowMetadata;
+export function buildStepSystemPrompt(basePrompt: string, draftState: DraftWorkflowState): string {
+  const variableSchema = draftState.getFullVariableSchema();
+  const variableSchemaPrompt = formatVariableSchemaForPrompt(variableSchema);
 
-  const stepsOverview = steps.map((s, i) => `${i + 1}. ${s.name} (${s.type})`).join('\n');
-  const variableSchemaSection = variableSchema ? formatVariableSchemaForPrompt(variableSchema) : '';
+  if (variableSchemaPrompt) {
+    return `${basePrompt}
 
-  const variableInstructions = variableSchemaSection
-    ? `## Available Variables Context
-IMPORTANT: When using variables, prefer reusing the existing variables listed below to maintain consistency across the workflow. 
-- Only introduce new payload variables if they are truly needed for this step's specific content.
+## ${getVariableSchemaPrompt(variableSchemaPrompt)}`;
+  }
 
-### Variable Semantics
-IMPORTANT: Always use the variables in the appropriate context when the content is created.
-- workflow.*: Current workflow meta data like workflowId, name, description, tags, severity, etc.
-- subscriber.*: Subscriber's / recipient's personal information like first name, last name, email, phone, etc.
-- payload.*: Payload's data like action URL, product name, order number, etc.
-- steps.*: Steps's data like events, event count, in the digest step, etc.
-- context.*: Context is a user-defined data object that stores metadata (like tenant, region, or app details) to organize and personalize notifications.
+  return basePrompt;
+}
 
-${variableSchemaSection}`
-    : '';
+export function buildStepUserPrompt(input: z.infer<typeof stepInputSchema>): string {
+  return `Step: ${input.name}\nIntent: ${input.intent}\nStep ID: ${input.stepId}`;
+}
 
-  return `Generate the content for step: **${step.name}** (type: ${step.type})
+const EDIT_STEP_INSTRUCTION = `
+## Edit Task
+Modify the content according to the user's intent. Preserve everything not explicitly asked to change.
+Keep the same editorType (block or html for email) and structure. Only update the parts the user requested.`;
 
-## Context of the user's workflow request
-${userPrompt}
+export function buildEditStepSystemPrompt(
+  basePrompt: string,
+  currentControlValues: Record<string, unknown>,
+  draftState: DraftWorkflowState
+): string {
+  const workflow = draftState.getWorkflow();
+  const variableSchema = workflow?.payloadSchema ?? draftState.getFullVariableSchema();
+  const variableSchemaPrompt = formatVariableSchemaForPrompt(variableSchema);
+  const currentContentJson = JSON.stringify(currentControlValues, null, 2);
 
-## The Generated Workflow Context
-- **Workflow Name**: ${workflowName}
-- **Description**: ${description || 'Not specified'}
-- **Design Rationale**: ${reasoning.summary}
+  const variableSection = variableSchemaPrompt ? `\n## ${getVariableSchemaPrompt(variableSchemaPrompt)}` : '';
 
-## The Generated Workflow Steps Overview
-${stepsOverview}
+  return `${basePrompt}
+${EDIT_STEP_INSTRUCTION}
 
-${variableInstructions}`;
-};
+## Current Step Content
+\`\`\`json
+${currentContentJson}
+\`\`\`
+${variableSection}`;
+}
+
+export function buildEditStepUserPrompt(input: z.infer<typeof editStepInputSchema>): string {
+  return `Step ID: ${input.stepId}\nEdit intent: ${input.intent}`;
+}

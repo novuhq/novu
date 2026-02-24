@@ -1,0 +1,163 @@
+import { DynamicToolUIPart } from 'ai';
+import { AnimatePresence, motion } from 'motion/react';
+import { useState } from 'react';
+import { RiArrowDownSLine, RiArrowRightSLine, RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
+import { ChainOfThoughtStep } from '../ai-elements/chain-of-thought';
+import { Button } from '../primitives/button';
+import { StyledMessageResponse } from './chat-message-response';
+
+function getToolStatus(state?: string): 'complete' | 'active' | 'pending' {
+  if (state === 'output-available') return 'complete';
+  if (state === 'streaming' || state === 'partial-call') return 'active';
+
+  return 'pending';
+}
+
+type WorkflowCompletionSummary = {
+  bestPractices: Array<string>;
+  channelRecommendations: Array<{ channel: string; reason: string; priority: number }>;
+  summary: string;
+};
+
+type WhatsChangedSectionProps = {
+  defaultIsExpanded?: boolean;
+  lastUserMessageId: string;
+  completedToolPart: DynamicToolUIPart;
+  showMessageActions?: boolean;
+  isActionPending?: boolean;
+  onKeepAll: () => void;
+  onDiscard: (messageId: string) => void;
+  onTryAgain: (messageId: string) => void;
+};
+
+export function WhatsChangedSection({
+  defaultIsExpanded,
+  lastUserMessageId,
+  completedToolPart,
+  showMessageActions,
+  isActionPending,
+  onKeepAll,
+  onDiscard,
+  onTryAgain,
+}: WhatsChangedSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultIsExpanded ?? false);
+  const status = getToolStatus(completedToolPart.state);
+
+  if (!completedToolPart.input) {
+    return null;
+  }
+
+  const summary = completedToolPart.input as WorkflowCompletionSummary;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="overflow-hidden rounded-lg border border-[#E1E4EA]">
+        <button
+          type="button"
+          className="flex w-full items-center gap-1 border-b border-[#E1E4EA] bg-[#FBFBFB] px-2 py-1.5 text-left"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? (
+            <RiArrowDownSLine className="size-4 text-text-sub" />
+          ) : (
+            <RiArrowRightSLine className="size-4 text-text-sub" />
+          )}
+          <span
+            className="text-label-xs font-medium"
+            style={{
+              background: 'linear-gradient(90deg, #939292 0%, #646464 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            What's changed
+          </span>
+        </button>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-col gap-2 bg-[#FBFBFB] py-2 pl-1 pr-2">
+                {summary.summary && (
+                  <ChainOfThoughtStep
+                    label={<span className="text-label-xs text-text-sub">Summary</span>}
+                    status={status}
+                  >
+                    <StyledMessageResponse>{summary.summary}</StyledMessageResponse>
+                  </ChainOfThoughtStep>
+                )}
+                {summary.bestPractices?.length > 0 && (
+                  <ChainOfThoughtStep
+                    label={<span className="text-label-xs text-text-sub">Best practices</span>}
+                    status={status}
+                  >
+                    <StyledMessageResponse>
+                      {summary.bestPractices.map((bestPractice) => `\n- ${bestPractice}`).join('')}
+                    </StyledMessageResponse>
+                  </ChainOfThoughtStep>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <AnimatePresence>
+        {showMessageActions && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-start gap-1.5 py-1.5"
+          >
+            <span className="text-label-xs text-[#99A0AE]">Suggestions are ready. You can discard them if needed.</span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent"
+                onClick={onKeepAll}
+                disabled={isActionPending}
+                trailingIcon={RiCheckLine}
+              >
+                Keep all
+              </Button>
+              <span className="text-[#99A0AE]">·</span>
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent"
+                onClick={() => onDiscard(lastUserMessageId)}
+                disabled={isActionPending}
+                trailingIcon={RiCloseLine}
+              >
+                Discard
+              </Button>
+              <span className="text-[#99A0AE]">·</span>
+              <Button
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                onClick={() => onTryAgain(lastUserMessageId)}
+                disabled={isActionPending}
+                trailingIcon={RiRefreshLine}
+              >
+                Try again
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

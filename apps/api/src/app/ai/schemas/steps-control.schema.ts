@@ -1,4 +1,4 @@
-import { DelayTypeEnum, DigestTypeEnum, RedirectTargetEnum, TimeUnitEnum } from '@novu/shared';
+import { DelayTypeEnum, DigestTypeEnum, RedirectTargetEnum, StepTypeEnum, TimeUnitEnum } from '@novu/shared';
 import { z } from 'zod';
 import { mailyBodySchema } from './maily.schema';
 
@@ -7,6 +7,112 @@ const ThrottleTypeEnum = {
   FIXED: 'fixed',
   DYNAMIC: 'dynamic',
 } as const;
+
+const aiJsonLogicVarSchema = z
+  .object({
+    var: z
+      .string()
+      .describe(
+        'Path to the variable value. Use "payload." prefix for trigger payload data (e.g., "payload.amount"), "subscriber." prefix for subscriber data (e.g., "subscriber.firstName")'
+      ),
+  })
+  .describe('Variable reference to access payload or subscriber data');
+
+const aiJsonLogicValueSchema = z.union([
+  z.string().describe('String literal value'),
+  z.number().describe('Numeric literal value'),
+  z.boolean().describe('Boolean literal value'),
+  z.null().describe('Null value'),
+  aiJsonLogicVarSchema,
+]);
+
+type JsonLogicCondition =
+  | { and: JsonLogicCondition[] }
+  | { or: JsonLogicCondition[] }
+  | { '!': JsonLogicCondition[] }
+  | { '==': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '!=': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '>': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '>=': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '<': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '<=': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { in: unknown[] };
+
+const aiJsonLogicComparisonSchema = z.union([
+  z
+    .object({
+      '==': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values to compare for equality'),
+    })
+    .describe('Equality comparison'),
+  z
+    .object({
+      '!=': z
+        .array(aiJsonLogicValueSchema)
+        .min(2)
+        .max(2)
+        .describe('Array of exactly 2 values to compare for inequality'),
+    })
+    .describe('Inequality comparison'),
+  z
+    .object({
+      '>': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first > second'),
+    })
+    .describe('Greater than comparison'),
+  z
+    .object({
+      '>=': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first >= second'),
+    })
+    .describe('Greater than or equal comparison'),
+  z
+    .object({
+      '<': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first < second'),
+    })
+    .describe('Less than comparison'),
+  z
+    .object({
+      '<=': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first <= second'),
+    })
+    .describe('Less than or equal comparison'),
+  z
+    .object({
+      in: z
+        .array(z.union([aiJsonLogicValueSchema, z.array(aiJsonLogicValueSchema)]))
+        .min(2)
+        .max(2)
+        .describe(
+          'Array of [value, array] - checks if first element exists in second element (which should be an array)'
+        ),
+    })
+    .describe('Check if value exists in array'),
+]);
+
+const aiJsonLogicConditionSchema: z.ZodType<JsonLogicCondition> = z.lazy(() =>
+  z.union([
+    z
+      .object({
+        and: z.array(aiJsonLogicConditionSchema).min(1).describe('Array of conditions that must ALL be true'),
+      })
+      .describe('Logical AND - all conditions must be true'),
+    z
+      .object({
+        or: z.array(aiJsonLogicConditionSchema).min(1).describe('Array of conditions where at least ONE must be true'),
+      })
+      .describe('Logical OR - at least one condition must be true'),
+    z
+      .object({
+        '!': z.array(aiJsonLogicConditionSchema).length(1).describe('Single condition to negate'),
+      })
+      .describe('Logical NOT - negates the condition'),
+    aiJsonLogicComparisonSchema,
+  ])
+);
+
+export const aiSkipConditionSchema = z
+  .union([aiJsonLogicConditionSchema, aiJsonLogicVarSchema])
+  .nullable()
+  .describe(
+    'JSONLogic condition for conditionally executing the workflow step. When condition evaluates to true, step is executed. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, "false"] } step is executed when subscriber is not online, { "!=": [{ "var": "payload.priority" }, "high"] } step is executed when is not high priority.'
+  );
 
 /**
  * AI-compatible control schemas for OpenAI structured outputs. Link: https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
@@ -36,74 +142,106 @@ const aiRedirectSchema = z
 
 const aiActionSchema = z
   .object({
-    label: z.string(),
-    redirect: aiRedirectSchema.nullable(),
+    label: z.string().describe('Label for the action button'),
+    redirect: aiRedirectSchema.nullable().describe('Redirect configuration for the action'),
   })
   .nullable();
 
 const aiInAppSubjectRequiredSchema = z.object({
-  subject: z.string().min(1),
-  body: z.string().nullable(),
-  avatar: z.string().regex(redirectUrlRegex).nullable(),
-  primaryAction: aiActionSchema,
-  secondaryAction: aiActionSchema,
-  redirect: aiRedirectSchema,
+  subject: z.string().min(1).describe('In-app notification title'),
+  body: z.string().nullable().describe('In-app notification body'),
+  avatar: z.string().regex(redirectUrlRegex).nullable().describe('Avatar image URL for the in-app notification'),
+  primaryAction: aiActionSchema.describe('Primary action button for the in-app notification'),
+  secondaryAction: aiActionSchema.describe('Secondary action button for the in-app notification'),
+  redirect: aiRedirectSchema.describe('Redirect configuration for the in-app notification'),
 });
 
 const aiInAppBodyRequiredSchema = z.object({
-  subject: z.string().nullable(),
-  body: z.string().min(1),
-  avatar: z.string().regex(redirectUrlRegex).nullable(),
-  primaryAction: aiActionSchema,
-  secondaryAction: aiActionSchema,
-  redirect: aiRedirectSchema,
+  subject: z.string().nullable().describe('In-app notification title'),
+  body: z.string().min(1).describe('In-app notification body'),
+  avatar: z.string().regex(redirectUrlRegex).nullable().describe('Avatar image URL for the in-app notification'),
+  primaryAction: aiActionSchema.describe('Primary action button for the in-app notification'),
+  secondaryAction: aiActionSchema.describe('Secondary action button for the in-app notification'),
+  redirect: aiRedirectSchema.describe('Redirect configuration for the in-app notification'),
 });
 
-const aiInAppControlSchema = z.union([aiInAppSubjectRequiredSchema, aiInAppBodyRequiredSchema]);
+export const aiInAppControlSchema = z.union([aiInAppSubjectRequiredSchema, aiInAppBodyRequiredSchema]);
 
-const aiSmsControlSchema = z.object({
-  body: z.string().min(1).describe('SMS message body'),
+export const aiSmsControlSchema = z.object({
+  body: z.string().min(1).describe('SMS message body. Keep messages under 160 characters to avoid splitting'),
 });
 
-const aiPushControlSchema = z.object({
-  subject: z.string().min(1).describe('Push notification title'),
-  body: z.string().min(1).describe('Push notification body'),
+export const aiPushControlSchema = z.object({
+  subject: z
+    .string()
+    .min(1)
+    .describe(
+      'Push notification title. Title (subject) should be under 50 characters (gets truncated on most devices)'
+    ),
+  body: z.string().min(1).describe('Push notification body. Body should be under 150 characters for full visibility'),
 });
 
-const aiChatControlSchema = z.object({
-  body: z.string().min(1).describe('Chat message body'),
+export const aiChatControlSchema = z.object({
+  body: z.string().min(1).describe('Chat message body. Be specific about what the user should do'),
 });
 
 const aiDelayRegularControlSchema = z.object({
-  type: z.literal(DelayTypeEnum.REGULAR),
+  type: z.literal(DelayTypeEnum.REGULAR).describe('Regular delay type, always use "regular" for AI generation'),
   amount: z.number().min(1).describe('Amount of time to delay'),
   unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for delay'),
 });
 
 const aiDelayTimedControlSchema = z.object({
-  type: z.literal(DelayTypeEnum.TIMED),
+  type: z.literal(DelayTypeEnum.TIMED).describe('Timed delay type, always use "timed" for AI generation'),
   cron: z.string().min(1).describe('Cron expression for timed delay'),
 });
 
-const aiDelayControlSchema = z.discriminatedUnion('type', [aiDelayRegularControlSchema, aiDelayTimedControlSchema]);
+export const aiDelayControlSchema = z.discriminatedUnion('type', [
+  aiDelayRegularControlSchema,
+  aiDelayTimedControlSchema,
+]);
 
-const aiDigestRegularControlSchema = z.object({
-  type: z.literal(DigestTypeEnum.REGULAR).nullable(),
-  amount: z.number().min(1).describe('Amount of time for digest window'),
-  unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for digest window'),
-  digestKey: z.string().nullable().describe('Key to group notifications for digest'),
-});
+const aiDigestRegularControlSchema = z
+  .object({
+    type: z
+      .literal(DigestTypeEnum.REGULAR)
+      .nullable()
+      .describe('Regular digest type, always use "regular" for AI generation'),
+    amount: z.number().min(1).describe('Amount of time for digest window'),
+    unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for digest window'),
+    digestKey: z.string().nullable().describe('Key to group notifications for digest'),
+    lookBackWindow: z
+      .object({
+        amount: z.number().min(1).describe('Amount of time for look back window'),
+        unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for look back window'),
+        extendToSchedule: z.boolean().nullable().describe('Extend the digest window to the schedule'),
+      })
+      .nullable()
+      .describe('Look back window for digest'),
+    extendToSchedule: z.boolean().nullable().describe('Extend the digest window to the schedule'),
+  })
+  .describe(
+    'Always groups events within the configured time window. A digest is created on the first event and delivered only when the window ends.'
+  );
 
-const aiDigestTimedControlSchema = z.object({
-  type: z.literal(DigestTypeEnum.TIMED).nullable(),
-  cron: z.string().min(1).describe('Cron expression for timed digest'),
-  digestKey: z.string().nullable().describe('Key to group notifications for digest'),
-});
+const aiDigestTimedControlSchema = z
+  .object({
+    type: z
+      .literal(DigestTypeEnum.TIMED)
+      .nullable()
+      .describe('Timed digest type, always use "timed" for AI generation'),
+    cron: z.string().min(1).describe('Cron expression for timed digest'),
+    digestKey: z.string().nullable().describe('Key to group notifications for digest'),
+    extendToSchedule: z.boolean().nullable().describe('Extend the digest window to the schedule'),
+  })
+  .describe(
+    'Collects events until a specific scheduled time (UTC). Once the scheduled time is reached, the workflow continues with all collected events.'
+  );
 
-const aiDigestControlSchema = z.union([aiDigestRegularControlSchema, aiDigestTimedControlSchema]);
+export const aiDigestControlSchema = z.union([aiDigestRegularControlSchema, aiDigestTimedControlSchema]);
 
 const aiThrottleFixedControlSchema = z.object({
-  type: z.literal(ThrottleTypeEnum.FIXED).describe('Fixed throttle type, always use fixed for AI generation'),
+  type: z.literal(ThrottleTypeEnum.FIXED).describe('Fixed throttle type, always use "fixed" for AI generation'),
   amount: z.number().min(1).describe('Amount of time for throttle window'),
   unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for throttle window'),
   dynamicKey: z.string().nullable().describe('Key to group notifications for throttle'),
@@ -112,22 +250,22 @@ const aiThrottleFixedControlSchema = z.object({
 });
 
 const aiThrottleDynamicControlSchema = z.object({
-  type: z.literal(ThrottleTypeEnum.DYNAMIC).describe('Dynamic throttle type, use dynamic for AI generation'),
+  type: z.literal(ThrottleTypeEnum.DYNAMIC).describe('Dynamic throttle type, always use "dynamic" for AI generation'),
   dynamicKey: z.string().min(1).describe('Key to group notifications for throttle'),
   threshold: z.number().min(1).describe('Threshold for throttle'),
   throttleKey: z.string().nullable().describe('Key to group throttle rules'),
 });
 
-const aiThrottleControlSchema = z.union([aiThrottleFixedControlSchema, aiThrottleDynamicControlSchema]);
+export const aiThrottleControlSchema = z.union([aiThrottleFixedControlSchema, aiThrottleDynamicControlSchema]);
 
 const aiEmailBlockControlSchema = z.object({
-  editorType: z.literal('block').describe('Block editor mode'),
+  editorType: z.literal('block').describe('Block editor mode, always use "block" for AI generation'),
   subject: z.string().min(1).describe('Email subject line'),
   body: mailyBodySchema.describe('Email body in Maily TipTap JSON format'),
 });
 
 const aiEmailHtmlControlSchema = z.object({
-  editorType: z.literal('html').describe('HTML editor mode - always use html for AI generation'),
+  editorType: z.literal('html').describe('HTML editor mode, always use "html" for AI generation'),
   subject: z.string().min(1).describe('Email subject line'),
   body: z
     .string()
@@ -137,46 +275,92 @@ const aiEmailHtmlControlSchema = z.object({
     ),
 });
 
-const aiEmailControlSchema = z.discriminatedUnion('editorType', [aiEmailBlockControlSchema, aiEmailHtmlControlSchema]);
+export const aiEmailControlSchema = z.discriminatedUnion('editorType', [
+  aiEmailBlockControlSchema,
+  aiEmailHtmlControlSchema,
+]);
 
-/**
- * Wrapped step control schemas for OpenAI structured outputs.
- *
- * OpenAI structured outputs don't support unions/discriminatedUnions at the root level.
- * By wrapping each schema in an object with a step-type key, we ensure the root is always
- * a plain object, while unions can exist nested inside.
- *
- * Example: Instead of returning { subject: "...", body: "..." } directly,
- * we return { root: { subject: "...", body: "..." } }
- */
-export const wrappedEmailControlSchema = z.object({
-  root: aiEmailControlSchema,
+export const stepInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-email")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  intent: z.string().describe('Brief description of what this step should accomplish'),
+  stepType: z
+    .enum([
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+      StepTypeEnum.SMS,
+      StepTypeEnum.DELAY,
+      StepTypeEnum.DIGEST,
+      StepTypeEnum.THROTTLE,
+    ])
+    .describe('Type of the step to add'),
+  skip: aiSkipConditionSchema,
 });
 
-export const wrappedInAppControlSchema = z.object({
-  root: aiInAppControlSchema,
+export const editStepInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier of the step to edit'),
+  intent: z.string().describe('Description of the change the user wants to make'),
 });
 
-export const wrappedSmsControlSchema = z.object({
-  root: aiSmsControlSchema,
+export const removeStepInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier of the step to remove'),
+  reason: z.string().describe('Brief reason for removing the step'),
 });
 
-export const wrappedPushControlSchema = z.object({
-  root: aiPushControlSchema,
+export const emailStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-email")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.EMAIL),
+  controlValues: aiEmailControlSchema,
 });
 
-export const wrappedChatControlSchema = z.object({
-  root: aiChatControlSchema,
+export const inAppStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-in-app")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.IN_APP),
+  controlValues: aiInAppControlSchema,
 });
 
-export const wrappedDelayControlSchema = z.object({
-  root: aiDelayControlSchema,
+export const smsStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-sms")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.SMS),
+  controlValues: aiSmsControlSchema,
 });
 
-export const wrappedDigestControlSchema = z.object({
-  root: aiDigestControlSchema,
+export const pushStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-push")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.PUSH),
+  controlValues: aiPushControlSchema,
 });
 
-export const wrappedThrottleControlSchema = z.object({
-  root: aiThrottleControlSchema,
+export const chatStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-chat")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.CHAT),
+  controlValues: aiChatControlSchema,
+});
+
+export const digestStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-digest")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.DIGEST),
+  controlValues: aiDigestControlSchema,
+});
+
+export const delayStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-delay")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.DELAY),
+  controlValues: aiDelayControlSchema,
+});
+
+export const throttleStepOutputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-throttle")'),
+  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  type: z.literal(StepTypeEnum.THROTTLE),
+  controlValues: aiThrottleControlSchema,
 });

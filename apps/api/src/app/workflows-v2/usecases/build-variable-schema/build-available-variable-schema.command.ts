@@ -1,7 +1,8 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { ControlValuesEntity, NotificationTemplateEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos';
 
 // Type for optimistic step data used during sync
@@ -39,4 +40,11 @@ export class BuildVariableSchemaCommand extends EnvironmentWithUserCommand {
    */
   @IsOptional()
   preloadedControlValues?: ControlValuesEntity[];
+
+  /**
+   * When set, takes precedence over workflow.payloadSchema for validation.
+   * Needed when the payload schema is being updated in the same upsert operation.
+   */
+  @IsOptional()
+  optimisticPayloadSchema?: JSONSchemaDto;
 }

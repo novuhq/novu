@@ -1,11 +1,20 @@
-import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
+import {
+  AiAgentTypeEnum,
+  AiResourceTypeEnum,
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  ResourceOriginEnum,
+} from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
-import { Link, useMatch, useNavigate } from 'react-router-dom';
+import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
@@ -13,11 +22,14 @@ import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { AiChatProvider, AiSidekickPanel, useAiChat } from '../ai-sidekick';
+import { SidekickToast } from '../ai-sidekick/sidekick-toast';
+import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
 import { Button } from '../primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '../primitives/button-group';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { ToastClose, ToastIcon } from '../primitives/sonner';
-import { showErrorToast, showToast } from '../primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
@@ -25,12 +37,15 @@ import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
 
 export const WorkflowTabs = () => {
-  const { workflow, isPending: isWorkflowPending } = useWorkflow();
+  const { workflow, isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
+  const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
+  const isNewWorkflowSlug = workflowSlug === 'new';
 
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
@@ -39,6 +54,7 @@ export const WorkflowTabs = () => {
   const userFirstName = currentUser?.firstName;
   const userLastName = currentUser?.lastName;
   const userEmail = currentUser?.email;
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   // API key management
   const has = useHasPermission();
@@ -46,9 +62,10 @@ export const WorkflowTabs = () => {
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
   const isReadOnly =
+    isNewWorkflowSlug ||
     workflow?.origin === ResourceOriginEnum.EXTERNAL ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
-    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+    !isDevEnvironment;
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
@@ -294,126 +311,205 @@ export const WorkflowTabs = () => {
   // Determine current tab based on URL
   const currentTab = activityMatch ? 'activity' : 'workflow';
 
-  return (
-    <div className="flex h-full w-full flex-1 flex-nowrap">
-      <Tabs defaultValue="workflow" className="-mt-px flex h-full max-w-full flex-1 flex-col" value={currentTab}>
-        <TabsList variant="regular" className="items-center">
-          <TabsTrigger
-            value="workflow"
-            asChild
-            variant="regular"
-            size="lg"
-            disabled={isWorkflowPending || areEnvironmentsInitialLoading}
-          >
-            {currentEnvironment && workflow ? (
-              <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW, {
-                  environmentSlug: currentEnvironment?.slug ?? '',
-                  workflowSlug: workflow?.slug ?? '',
-                })}
-              >
-                Workflow
-              </Link>
-            ) : (
-              <span>Workflow</span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="activity"
-            asChild
-            variant="regular"
-            size="lg"
-            disabled={isWorkflowPending || areEnvironmentsInitialLoading}
-          >
-            {currentEnvironment && workflow ? (
-              <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                  environmentSlug: currentEnvironment?.slug ?? '',
-                  workflowSlug: workflow?.slug ?? '',
-                })}
-              >
-                Activity
-              </Link>
-            ) : (
-              <span>Activity</span>
-            )}
-          </TabsTrigger>
-          <div className="my-auto ml-auto flex items-center gap-2">
-            <Protect permission={PermissionsEnum.EVENT_WRITE}>
-              <Button
-                variant="secondary"
-                size="2xs"
-                mode="ghost"
-                leadingIcon={RiCodeSSlashLine}
-                onClick={handleIntegrateWorkflowClick}
-              >
-                Integrate workflow
-              </Button>
-              <ButtonGroupRoot size="xs">
-                <ButtonGroupItem asChild>
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    mode="gradient"
-                    className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
-                    onClick={() => {
-                      navigate(
-                        buildRoute(ROUTES.TRIGGER_WORKFLOW, {
-                          environmentSlug: currentEnvironment?.slug ?? '',
-                          workflowSlug: workflow?.slug ?? '',
-                        })
-                      );
-                    }}
-                  >
-                    Test Workflow
-                  </Button>
-                </ButtonGroupItem>
-                <ButtonGroupItem asChild>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="xs"
-                        mode="gradient"
-                        className="rounded-l-none px-1.5 rounded-r-lg border-none text-white"
-                        leadingIcon={RiArrowDownSLine}
-                      />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleFireAndForget} className="cursor-pointer" disabled={isPending}>
-                        <RiPlayCircleLine />
-                        Quick Trigger
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
-                        <RiFileCopyLine />
-                        Copy cURL
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleCopyPostmanCollection} className="cursor-pointer">
-                        <RiFileCopyLine />
-                        Copy postman collection
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </ButtonGroupItem>
-              </ButtonGroupRoot>
-            </Protect>
-          </div>
-        </TabsList>
-        <TabsContent value="workflow" className="mt-0 h-full max-w-full">
-          {workflow && <WorkflowCanvas steps={workflow.steps || []} isReadOnly={isReadOnly} />}
-        </TabsContent>
-        <TabsContent value="activity" className="mt-0 h-full max-w-full">
-          <WorkflowActivity />
-        </TabsContent>
-      </Tabs>
+  const { deleteWorkflow, isPending: isDeletePending } = useDeleteWorkflow();
 
-      <TestWorkflowInstructions
-        isOpen={isIntegrateDrawerOpen}
-        onClose={() => setIsIntegrateDrawerOpen(false)}
-        workflow={workflow}
-        to={subscriberData}
-        payload={JSON.stringify(integrationPayload, null, 2)}
-      />
-    </div>
+  const aiChatConfig = useMemo(
+    () => ({
+      resourceType: AiResourceTypeEnum.WORKFLOW,
+      resourceId: workflow?._id,
+      agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
+      isResourceLoading: isWorkflowPending,
+      onRefetchResource: () => refetchWorkflow({ cancelRefetch: true }),
+      onData: (data: { type: string }) => {
+        if (
+          data.type === 'data-step-added' ||
+          data.type === 'data-workflow-completed' ||
+          data.type === 'data-step-updated' ||
+          data.type === 'data-step-removed' ||
+          data.type === 'data-workflow-metadata-updated'
+        ) {
+          refetchWorkflow({ cancelRefetch: true });
+        }
+      },
+      onKeepSuccess: () => showSuccessToast('Changes are successfully applied'),
+      onKeepError: () => showErrorToast('Failed to apply changes'),
+      firstMessageRevert: workflow
+        ? {
+            renderDialog: (props: {
+              open: boolean;
+              onOpenChange: (open: boolean) => void;
+              onConfirm: () => Promise<void>;
+            }) => (
+              <DeleteWorkflowDialog
+                workflow={workflow}
+                open={props.open}
+                onOpenChange={props.onOpenChange}
+                onConfirm={props.onConfirm}
+                isLoading={isDeletePending}
+              />
+            ),
+            onConfirm: async () => {
+              await deleteWorkflow({ workflowSlug: workflow.slug });
+              navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' }));
+            },
+          }
+        : undefined,
+    }),
+    [workflow, isWorkflowPending, refetchWorkflow, deleteWorkflow, isDeletePending, navigate, currentEnvironment?.slug]
+  );
+
+  return (
+    <AiChatProvider config={aiChatConfig}>
+      <div className="flex h-full w-full flex-1 flex-nowrap">
+        <Tabs defaultValue="workflow" className="-mt-px flex h-full max-w-full flex-1 flex-col" value={currentTab}>
+          <TabsList variant="regular" className="items-center">
+            <TabsTrigger
+              value="workflow"
+              asChild
+              variant="regular"
+              size="lg"
+              disabled={isWorkflowPending || areEnvironmentsInitialLoading}
+            >
+              {currentEnvironment && workflow ? (
+                <Link
+                  to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    workflowSlug: workflow?.slug ?? '',
+                  })}
+                >
+                  Workflow
+                </Link>
+              ) : (
+                <span>Workflow</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              asChild
+              variant="regular"
+              size="lg"
+              disabled={isWorkflowPending || areEnvironmentsInitialLoading}
+            >
+              {currentEnvironment && workflow ? (
+                <Link
+                  to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    workflowSlug: workflow?.slug ?? '',
+                  })}
+                >
+                  Activity
+                </Link>
+              ) : (
+                <span>Activity</span>
+              )}
+            </TabsTrigger>
+            <div className="my-auto ml-auto flex items-center gap-2">
+              <Protect permission={PermissionsEnum.EVENT_WRITE}>
+                <Button
+                  variant="secondary"
+                  size="2xs"
+                  mode="ghost"
+                  leadingIcon={RiCodeSSlashLine}
+                  onClick={handleIntegrateWorkflowClick}
+                >
+                  Integrate workflow
+                </Button>
+                <ButtonGroupRoot size="xs">
+                  <ButtonGroupItem asChild>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      mode="gradient"
+                      className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
+                      onClick={() => {
+                        navigate(
+                          buildRoute(ROUTES.TRIGGER_WORKFLOW, {
+                            environmentSlug: currentEnvironment?.slug ?? '',
+                            workflowSlug: workflow?.slug ?? '',
+                          })
+                        );
+                      }}
+                    >
+                      Test Workflow
+                    </Button>
+                  </ButtonGroupItem>
+                  <ButtonGroupItem asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="xs"
+                          mode="gradient"
+                          className="rounded-l-none px-1.5 rounded-r-lg border-none text-white"
+                          leadingIcon={RiArrowDownSLine}
+                        />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleFireAndForget} className="cursor-pointer" disabled={isPending}>
+                          <RiPlayCircleLine />
+                          Quick Trigger
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy cURL
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleCopyPostmanCollection} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy postman collection
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </ButtonGroupItem>
+                </ButtonGroupRoot>
+              </Protect>
+            </div>
+          </TabsList>
+          <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
+            {isAiWorkflowGenerationEnabled && isDevEnvironment && <AiSidekickPanel />}
+            <div className="relative flex-1">
+              <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+              {isAiWorkflowGenerationEnabled && isDevEnvironment && <WorkflowCanvasToast />}
+            </div>
+          </TabsContent>
+          <TabsContent value="activity" className="mt-0 h-full max-w-full">
+            <WorkflowActivity />
+          </TabsContent>
+        </Tabs>
+
+        <TestWorkflowInstructions
+          isOpen={isIntegrateDrawerOpen}
+          onClose={() => setIsIntegrateDrawerOpen(false)}
+          workflow={workflow}
+          to={subscriberData}
+          payload={JSON.stringify(integrationPayload, null, 2)}
+        />
+      </div>
+    </AiChatProvider>
   );
 };
+
+function WorkflowCanvasToast() {
+  const {
+    isGenerating,
+    isReviewingChanges,
+    isActionPending,
+    lastUserMessageId,
+    handleStop,
+    handleKeepAll,
+    handleDiscard,
+  } = useAiChat();
+
+  const isVisible = isGenerating || isReviewingChanges;
+  const variant = isGenerating ? 'generating' : 'reviewing';
+
+  return (
+    <SidekickToast
+      isVisible={isVisible}
+      variant={variant}
+      isActionPending={isActionPending}
+      onCancel={handleStop}
+      onKeepAll={handleKeepAll}
+      onDiscard={() => lastUserMessageId && handleDiscard(lastUserMessageId)}
+    />
+  );
+}
