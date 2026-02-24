@@ -1,12 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
 import { ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { createHash } from 'crypto';
 import { DeployStepResolverResponseDto } from '../../dtos';
 import { CloudflareStepResolverDeployService } from '../../services/cloudflare-step-resolver-deploy.service';
@@ -31,6 +32,7 @@ export class DeployStepResolverUsecase {
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private cloudflareStepResolverDeployService: CloudflareStepResolverDeployService,
     private controlValuesRepository: ControlValuesRepository,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -38,6 +40,16 @@ export class DeployStepResolverUsecase {
 
   @InstrumentUsecase()
   async execute(command: DeployStepResolverCommand): Promise<DeployStepResolverResponseDto> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.user.organizationId },
+    });
+
+    if (!isEnabled) {
+      throw new ForbiddenException('Step resolver feature is not enabled for this organization');
+    }
+
     this.assertBundleSize(command.bundleBuffer);
 
     const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
