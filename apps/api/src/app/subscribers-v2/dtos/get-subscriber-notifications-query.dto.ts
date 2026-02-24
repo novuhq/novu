@@ -97,6 +97,11 @@ export class GetSubscriberNotificationsQueryDto
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) return undefined;
+
+    return Array.isArray(value) ? value : [value];
+  })
   @ApiPropertyOptional({
     description: 'Context keys for filtering notifications in multi-context scenarios',
     type: [String],

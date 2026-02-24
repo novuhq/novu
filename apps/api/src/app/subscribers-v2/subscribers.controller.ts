@@ -66,6 +66,7 @@ import { ListTopicSubscriptionsResponseDto } from '../topics-v2/dtos/list-topic-
 import { ListSubscriberSubscriptionsCommand } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.command';
 import { ListSubscriberSubscriptionsUseCase } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.usecase';
 import { BulkUpdateSubscriberPreferencesDto } from './dtos/bulk-update-subscriber-preferences.dto';
+import { ContextKeysQueryDto } from './dtos/context-keys-query.dto';
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 import { GetSubscriberNotificationsCountQueryDto } from './dtos/get-subscriber-notifications-count-query.dto';
 import { GetSubscriberNotificationsCountResponseDto } from './dtos/get-subscriber-notifications-count-response.dto';
@@ -517,14 +518,14 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         read: true,
       })
@@ -548,14 +549,14 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         read: false,
       })
@@ -579,14 +580,14 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         archived: true,
       })
@@ -610,14 +611,14 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         archived: false,
       })
@@ -641,14 +642,14 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Body() body: SnoozeSubscriberNotificationDto,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.snoozeNotificationUsecase.execute(
       SnoozeNotificationCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         snoozeUntil: body.snoozeUntil,
       })
@@ -671,14 +672,14 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.unsnoozeNotificationUsecase.execute(
       UnsnoozeNotificationCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
       })
     );
@@ -701,14 +702,14 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<void> {
     await this.deleteNotificationUsecase.execute(
       DeleteNotificationCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
       })
     );
@@ -738,14 +739,14 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Param('actionType') actionType: ButtonTypeEnum,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         actionType,
         actionStatus: MessageActionStatusEnum.DONE,
@@ -777,14 +778,14 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('notificationId') notificationId: string,
     @Param('actionType') actionType: ButtonTypeEnum,
-    @Query('contextKeys') contextKeys?: string[]
+    @Query() query: ContextKeysQueryDto
   ): Promise<InboxNotificationDto> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
         organizationId: user.organizationId,
         subscriberId,
         environmentId: user.environmentId,
-        contextKeys,
+        contextKeys: query.contextKeys,
         notificationId,
         actionType,
         actionStatus: MessageActionStatusEnum.PENDING,
