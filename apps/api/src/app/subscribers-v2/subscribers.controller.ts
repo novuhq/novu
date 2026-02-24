@@ -167,6 +167,7 @@ export class SubscribersController {
     description: `Retrieve a subscriber by its unique key identifier **subscriberId**. 
     **subscriberId** field is required.`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('retrieve')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
@@ -239,6 +240,7 @@ export class SubscribersController {
     description: `Update a subscriber by its unique key identifier **subscriberId**. 
     **subscriberId** is a required field, rest other fields are optional`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('patch')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -259,13 +261,14 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
-  @ApiResponse(RemoveSubscriberResponseDto, 200)
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Delete a subscriber',
     description: `Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions. 
       **subscriberId** is a required field.`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
+  @ApiResponse(RemoveSubscriberResponseDto, 200)
   @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async removeSubscriber(
@@ -288,6 +291,7 @@ export class SubscribersController {
     description: `Retrieve subscriber channel preferences by its unique key identifier **subscriberId**. 
     This API returns all five channels preferences for all workflows and global preferences.`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('list')
@@ -314,6 +318,7 @@ export class SubscribersController {
     summary: 'Retrieve subscriber global preference',
     description: `Retrieve subscriber global preference. This API returns all five global channels preferences and subscriber schedule.`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(SubscriberGlobalPreferenceDto)
   @SdkGroupName('Subscribers.Preferences')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
@@ -342,6 +347,7 @@ export class SubscribersController {
     description: `Bulk update subscriber preferences by its unique key identifier **subscriberId**. 
     This API allows updating multiple workflow preferences in a single request.`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(GetPreferencesResponseDto, 200, true)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('bulkUpdate')
@@ -379,6 +385,7 @@ export class SubscribersController {
     **workflowId** is optional field, if provided, this API will update that workflow preference, 
     otherwise it will update global preferences`,
   })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(GetSubscriberPreferencesDto)
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('update')
@@ -634,6 +641,7 @@ export class SubscribersController {
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('snooze')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -665,6 +673,7 @@ export class SubscribersController {
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('unsnooze')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -731,6 +740,7 @@ export class SubscribersController {
     type: String,
   })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('completeAction')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
@@ -770,6 +780,7 @@ export class SubscribersController {
     type: String,
   })
   @ApiQuery({ name: 'contextKeys', required: false, type: [String], description: 'Context keys for filtering' })
+  @ApiResponse(InboxNotificationDto, 200, false, false)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('revertAction')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
