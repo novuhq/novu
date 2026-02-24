@@ -191,7 +191,7 @@ export class ExecuteBridgeRequest {
       command.action
     );
 
-    this.logger.info(
+    this.logger.debug(
       `Resolved bridge URL: ${bridgeUrl} for environment ${command.environmentId} and origin ${command.workflowOrigin}`
     );
 
@@ -240,7 +240,24 @@ export class ExecuteBridgeRequest {
             return delay;
           }
 
-          this.logger.info({ err: error }, 'Error is not retryable. Stopping retry attempts.');
+          let errorDetails = {};
+          if (error?.response?.body) {
+            try {
+              errorDetails = JSON.parse(error.response.body as string);
+            } catch {
+              errorDetails = { rawBody: error.response.body };
+            }
+          }
+
+          this.logger.info(
+            {
+              err: error,
+              statusCode: error?.response?.statusCode,
+              bridgeErrorDetails: errorDetails,
+              errorCode: error?.code,
+            },
+            'Error is not retryable. Stopping retry attempts.'
+          );
 
           return 0; // Don't retry for other errors
         },
@@ -260,7 +277,7 @@ export class ExecuteBridgeRequest {
 
     const headers = await this.buildRequestHeaders(command);
 
-    this.logger.info(`Making bridge request to \`${url}\``);
+    this.logger.debug(`Making bridge request to \`${url}\``);
     try {
       return await request(url, {
         ...options,

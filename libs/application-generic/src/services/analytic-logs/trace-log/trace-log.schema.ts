@@ -1,7 +1,7 @@
+import { DeliveryLifecycleEventType } from '@novu/shared';
 import {
   CHArray,
   CHBoolean,
-  CHDate,
   CHDateTime64,
   CHLowCardinality,
   CHString,
@@ -84,6 +84,11 @@ const clickhouseSchemaOptions = {
 };
 
 export const traceLogSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
+
+export type WorkflowRunStatusType =
+  | 'workflow_run_status_processing'
+  | 'workflow_run_status_completed'
+  | 'workflow_run_status_error';
 
 export type EventType =
   | 'message_seen'
@@ -200,21 +205,12 @@ export type EventType =
   | 'step_skipped_max_extensions_reached'
   | 'push_invalid_token_removed'
   | 'topic_subscription_preference_evaluation'
-  | 'workflow_run_status_processing'
-  | 'workflow_run_status_completed'
-  | 'workflow_run_status_error'
-  | 'workflow_run_delivery_pending'
-  | 'workflow_run_delivery_sent'
-  | 'workflow_run_delivery_errored'
-  | 'workflow_run_delivery_skipped'
-  | 'workflow_run_delivery_canceled'
-  | 'workflow_run_delivery_merged'
-  | 'workflow_run_delivery_delivered'
-  | 'workflow_run_delivery_interacted';
+  | WorkflowRunStatusType
+  | DeliveryLifecycleEventType;
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';
 
-export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
+export type TraceStatus = 'success' | 'error' | 'warning' | 'pending' | '';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 

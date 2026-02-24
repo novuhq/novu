@@ -54,6 +54,8 @@ jobs:
 
         # Runs a single command using the runners shell
       - name: Build worker
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: CI='' pnpm build:worker
 
       # Runs a set of commands using the runners shell

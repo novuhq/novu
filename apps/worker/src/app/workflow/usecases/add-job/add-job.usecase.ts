@@ -121,7 +121,11 @@ export class AddJob {
       };
     }
 
-    this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    if (job.type === StepTypeEnum.TRIGGER) {
+      this.logger.debug(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    } else {
+      this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    }
 
     const notification =
       command.notification ??

@@ -146,7 +146,7 @@ async function closeClickHouseConnection(): Promise<void> {
     await analyticsConnection.close();
   }
   if (clickHouseService) {
-    await clickHouseService.onModuleDestroy();
+    await clickHouseService.beforeApplicationShutdown();
   }
 }
 

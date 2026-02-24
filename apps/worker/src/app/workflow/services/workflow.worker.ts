@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
   BullMqService,
+  FeatureFlagsService,
   getWorkflowWorkerOptions,
   IWorkflowDataDto,
   PinoLogger,
+  SqsService,
   Store,
   storage,
   TriggerEvent,
@@ -13,7 +15,7 @@ import {
   WorkflowWorkerService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const nr = require('newrelic');
 
@@ -23,10 +25,13 @@ export class WorkflowWorker extends WorkflowWorkerService {
     private triggerEventUsecase: TriggerEvent,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
-    private logger: PinoLogger
+    sqsService: SqsService,
+    protected logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
     this.logger.setContext(this.constructor.name);
+
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
@@ -34,8 +39,26 @@ export class WorkflowWorker extends WorkflowWorkerService {
     return getWorkflowWorkerOptions();
   }
 
+  private async isKillSwitchEnabled(data: IWorkflowDataDto): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: data.organizationId },
+      environment: { _id: data.environmentId },
+      component: 'worker',
+    });
+  }
+
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
+      const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
+
+      if (isKillSwitchEnabled) {
+        this.logger.warn(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`);
+
+        return;
+      }
+
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
@@ -75,7 +98,6 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private async organizationExist(data: IWorkflowDataDto): Promise<boolean> {
     const { organizationId } = data;
-
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
 
     return !!organization;

@@ -1,12 +1,13 @@
-import { forwardRef } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
   AnalyticsService,
   CacheInMemoryProviderService,
   CacheService,
+  ClickHouseBatchService,
   ClickHouseService,
   FeatureFlagsService,
+  QueueBaseService,
 } from '../services';
 
 export const featureFlagsService = {
@@ -67,4 +68,12 @@ export const clickHouseService = {
 
     return service;
   },
+};
+
+export const clickHouseBatchService = {
+  provide: ClickHouseBatchService,
+  useFactory: async (clickhouseService: ClickHouseService, logger: PinoLogger, queueServices?: QueueBaseService[]) => {
+    return new ClickHouseBatchService(clickhouseService, logger, queueServices || []);
+  },
+  inject: [ClickHouseService, PinoLogger, { token: 'BULLMQ_LIST', optional: true }],
 };

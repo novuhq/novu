@@ -116,7 +116,7 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
           </div>
           <div className="flex flex-col gap-2">
             <p className="text-foreground-400 max-w-[30ch] text-sm">
-              No logs to show, trigger test run to see event logs appear here
+              No logs to show, trigger test run to see workflow run appear here
             </p>
           </div>
         </div>

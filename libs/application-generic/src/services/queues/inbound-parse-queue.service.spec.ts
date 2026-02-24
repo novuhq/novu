@@ -1,6 +1,3 @@
-import { Test } from '@nestjs/testing';
-import { IHeaders, IInboundParseJobDto } from '../../dtos';
-import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { InboundParseQueueService } from './inbound-parse-queue.service';
 
@@ -24,7 +21,7 @@ describe('Inbound Parse Queue service', () => {
     it('should be initialised properly', async () => {
       expect(inboundParseQueueService).toBeDefined();
       expect(Object.keys(inboundParseQueueService)).toEqual(
-        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
       expect(inboundParseQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(inboundParseQueueService.topic).toEqual('inbound-parse-mail');

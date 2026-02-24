@@ -8,6 +8,7 @@ import {
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
+  InMemoryLRUCacheService,
   InvalidateCacheService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
@@ -87,6 +88,7 @@ const DAL_MODELS = [
     CommunityOrganizationRepository,
     featureFlagsService,
     EnvironmentRepository,
+    InMemoryLRUCacheService,
   ],
 })
 export class SubscribersModule {}

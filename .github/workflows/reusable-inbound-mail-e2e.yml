@@ -50,6 +50,8 @@ jobs:
 
         # Runs a single command using the runners shell
       - name: Build Inbound Mail
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: CI='' pnpm build:inbound-mail
 
       - name: Run unit tests

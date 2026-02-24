@@ -62,8 +62,8 @@ export type StepCreateDto =
 export class CreateWorkflowDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier for the workflow' })
   @IsString()
-  @Matches(/^[a-zA-Z0-9]+(?:[-_][a-zA-Z0-9]+)*$/, {
-    message: 'workflowId must be a valid slug format (letters, numbers, hyphens, and underscores only)',
+  @Matches(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
+    message: 'workflowId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
   })
   workflowId: string;
 

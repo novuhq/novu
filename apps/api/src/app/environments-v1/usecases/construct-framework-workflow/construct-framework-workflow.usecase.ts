@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   emailControlSchema,
   FeatureFlagsService,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
@@ -16,16 +18,9 @@ import {
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import {
-  EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
-  LAYOUT_PREVIEW_EMAIL_STEP,
-  LAYOUT_PREVIEW_WORKFLOW_ID,
-  StepTypeEnum,
-} from '@novu/shared';
+import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
-import { LRUCache } from 'lru-cache';
 import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
 import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
 import {
@@ -43,19 +38,6 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
-const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
-  max: 1000,
-  ttl: 1000 * 60,
-});
-
-const organizationCache = new LRUCache<string, OrganizationEntity>({
-  max: 500,
-  ttl: 1000 * 60,
-});
-
-const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity>>();
-const organizationInflightRequests = new Map<string, Promise<OrganizationEntity | undefined>>();
-
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(
@@ -71,7 +53,8 @@ export class ConstructFrameworkWorkflow {
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
     private digestOutputRendererUseCase: DigestOutputRendererUsecase,
     private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @InstrumentUsecase()
@@ -391,53 +374,33 @@ export class ConstructFrameworkWorkflow {
     workflowId: string,
     shouldUseCache: boolean
   ): Promise<NotificationTemplateEntity> {
-    const cacheKey = `${environmentId}:${workflowId}`;
-
-    const isFeatureEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      component: 'bridge-workflow',
-    });
-
-    const useCache = shouldUseCache && isFeatureEnabled;
-
-    if (useCache) {
-      const cached = workflowCache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const inflightRequest = workflowInflightRequests.get(cacheKey);
-      if (inflightRequest) {
-        return inflightRequest;
-      }
-    }
-
-    const fetchPromise = this.workflowsRepository
-      .findByTriggerIdentifier(environmentId, workflowId, null, false)
-      .then((foundWorkflow) => {
+    const workflow = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.WORKFLOW,
+      `${environmentId}:${workflowId}`,
+      async () => {
+        const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(
+          environmentId,
+          workflowId,
+          null,
+          false
+        );
         if (!foundWorkflow) {
           throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
         }
 
-        if (useCache) {
-          workflowCache.set(cacheKey, foundWorkflow);
-        }
-
         return foundWorkflow;
-      })
-      .finally(() => {
-        if (useCache) {
-          workflowInflightRequests.delete(cacheKey);
-        }
-      });
+      },
+      {
+        environmentId,
+        skipCache: !shouldUseCache,
+      }
+    );
 
-    if (useCache) {
-      workflowInflightRequests.set(cacheKey, fetchPromise);
+    if (!workflow) {
+      throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
     }
 
-    return fetchPromise;
+    return workflow;
   }
 
   private async getOrganization(
@@ -445,48 +408,18 @@ export class ConstructFrameworkWorkflow {
     shouldUseCache: boolean,
     environmentId: string
   ): Promise<OrganizationEntity | undefined> {
-    const isFeatureEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-      component: 'bridge-org',
-    });
-
-    const useCache = shouldUseCache && isFeatureEnabled;
-
-    if (useCache) {
-      const cached = organizationCache.get(organizationId);
-      if (cached) {
-        return cached;
+    const organization = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.ORGANIZATION,
+      organizationId,
+      () => this.communityOrganizationRepository.findById(organizationId),
+      {
+        environmentId,
+        organizationId,
+        skipCache: !shouldUseCache,
       }
+    );
 
-      const inflightRequest = organizationInflightRequests.get(organizationId);
-      if (inflightRequest) {
-        return inflightRequest;
-      }
-    }
-
-    const fetchPromise = this.communityOrganizationRepository
-      .findById(organizationId)
-      .then((organization) => {
-        if (organization && useCache) {
-          organizationCache.set(organizationId, organization);
-        }
-
-        return organization || undefined;
-      })
-      .finally(() => {
-        if (useCache) {
-          organizationInflightRequests.delete(organizationId);
-        }
-      });
-
-    if (useCache) {
-      organizationInflightRequests.set(organizationId, fetchPromise);
-    }
-
-    return fetchPromise;
+    return organization || undefined;
   }
 
   private async processSkipOption(

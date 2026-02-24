@@ -10,7 +10,7 @@ export class ISendProSmsHandler extends BaseSmsHandler {
   buildProvider(credentials: ICredentials) {
     const config = {
       apiKey: credentials.apiKey ?? '',
-      sender: credentials.senderId ?? 'NOVU', // optional
+      from: credentials.from ?? 'NOVU', // optional
     };
 
     this.provider = new ISendProSmsProvider(config);
