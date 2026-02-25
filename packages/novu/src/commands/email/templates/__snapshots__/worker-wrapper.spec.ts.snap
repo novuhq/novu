@@ -28,19 +28,21 @@ export default {
       }
 
       const url = new URL(request.url);
-      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
-      
-      if (!stepName) {
+      const workflowId = url.searchParams.get('workflowId');
+      const stepId = url.searchParams.get('stepId');
+
+      if (!workflowId || !stepId) {
         return jsonResponse(
-          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          { error: 'Missing routing params', message: 'Provide workflowId and stepId as query params' },
           400
         );
       }
 
-      const step = stepHandlers.get(stepName);
+      const stepKey = \`\${workflowId}/\${stepId}\`;
+      const step = stepHandlers.get(stepKey);
       if (!step) {
         return jsonResponse(
-          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          { error: 'Step not found', workflowId, stepId, available: Array.from(stepHandlers.keys()) },
           404
         );
       }
@@ -90,7 +92,7 @@ exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
 "import stepHandler0, { stepId as stepId0, workflowId as workflowId0 } from "./novu/welcome-email.step";
 
 const stepHandlers = new Map([
-  ["welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }]
+  ["onboarding/welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }]
 ]);
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -114,19 +116,21 @@ export default {
       }
 
       const url = new URL(request.url);
-      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
-      
-      if (!stepName) {
+      const workflowId = url.searchParams.get('workflowId');
+      const stepId = url.searchParams.get('stepId');
+
+      if (!workflowId || !stepId) {
         return jsonResponse(
-          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          { error: 'Missing routing params', message: 'Provide workflowId and stepId as query params' },
           400
         );
       }
 
-      const step = stepHandlers.get(stepName);
+      const stepKey = \`\${workflowId}/\${stepId}\`;
+      const step = stepHandlers.get(stepKey);
       if (!step) {
         return jsonResponse(
-          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          { error: 'Step not found', workflowId, stepId, available: Array.from(stepHandlers.keys()) },
           404
         );
       }
@@ -177,8 +181,8 @@ exports[`generateWorkerWrapper > should match snapshot 1`] = `
 import stepHandler1, { stepId as stepId1, workflowId as workflowId1 } from "./novu/verify-email.step";
 
 const stepHandlers = new Map([
-  ["welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }],
-  ["verify-email", { handler: stepHandler1, stepId: stepId1, workflowId: workflowId1 }]
+  ["onboarding/welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }],
+  ["onboarding/verify-email", { handler: stepHandler1, stepId: stepId1, workflowId: workflowId1 }]
 ]);
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -202,19 +206,21 @@ export default {
       }
 
       const url = new URL(request.url);
-      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
-      
-      if (!stepName) {
+      const workflowId = url.searchParams.get('workflowId');
+      const stepId = url.searchParams.get('stepId');
+
+      if (!workflowId || !stepId) {
         return jsonResponse(
-          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          { error: 'Missing routing params', message: 'Provide workflowId and stepId as query params' },
           400
         );
       }
 
-      const step = stepHandlers.get(stepName);
+      const stepKey = \`\${workflowId}/\${stepId}\`;
+      const step = stepHandlers.get(stepKey);
       if (!step) {
         return jsonResponse(
-          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          { error: 'Step not found', workflowId, stepId, available: Array.from(stepHandlers.keys()) },
           404
         );
       }
