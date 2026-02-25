@@ -212,7 +212,7 @@ export function SettingsPage() {
                   )}
                   {EE_AUTH_PROVIDER === 'clerk' ? (
                     <OrganizationProfile appearance={clerkAppearance}>
-                      <OrganizationProfile.Page label="members" />
+                      <OrganizationProfile.Page label="general" />
                     </OrganizationProfile>
                   ) : (
                     <TeamMembers appearance={clerkAppearance} />
