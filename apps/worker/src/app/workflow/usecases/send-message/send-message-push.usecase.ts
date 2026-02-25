@@ -156,11 +156,23 @@ export class SendMessagePush extends SendMessageBase {
     const allPushChannels = [...pushChannels, ...uniqueOverrideChannels];
 
     if (!allPushChannels.length) {
-      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
       return {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PUSH_TOKEN,
+        },
       };
     }
 
