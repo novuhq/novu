@@ -668,6 +668,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         subject: 'Example subject',
         disableOutputSanitization: false,
         editorType: 'html',
+        rendererType: 'html',
       });
 
       // Verify new created step
