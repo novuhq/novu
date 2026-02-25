@@ -82,7 +82,7 @@ function sanitizeEmail(controlValues: EmailControlType) {
     content: [{ type: 'paragraph' }],
   });
 
-  const emailControls: Required<EmailControlType> = {
+  const emailControls: EmailControlType = {
     editorType: controlValues.editorType,
     subject: sanitizeEmptyInput(controlValues.subject, ' '),
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
@@ -90,6 +90,7 @@ function sanitizeEmail(controlValues: EmailControlType) {
     disableOutputSanitization: controlValues.disableOutputSanitization,
     layoutId: controlValues.layoutId,
     from: controlValues.from,
+    stepResolverHash: controlValues.stepResolverHash,
   };
 
   return filterNullishValues(emailControls);

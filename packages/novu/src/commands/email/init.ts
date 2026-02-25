@@ -316,25 +316,21 @@ async function runInitInteractive(options: InitOptions): Promise<void> {
   await runInitWithConfig(config, options);
 }
 
-function escapeString(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-}
-
 function generateConfigFile(steps: ConfiguredStep[]): string {
   const workflowsMap = groupStepsByWorkflow(steps);
 
   let content = 'export default {\n  workflows: {\n';
 
   for (const [workflowId, workflowSteps] of workflowsMap) {
-    content += `    '${escapeString(workflowId)}': {\n`;
+    content += `    '${workflowId}': {\n`;
     content += `      steps: {\n`;
     content += `        email: {\n`;
 
     for (const { stepId, config } of workflowSteps) {
-      content += `          '${escapeString(stepId)}': {\n`;
-      content += `            template: '${escapeString(config.template)}',\n`;
+      content += `          '${stepId}': {\n`;
+      content += `            template: '${config.template}',\n`;
       if (config.subject) {
-        content += `            subject: '${escapeString(config.subject)}',\n`;
+        content += `            subject: '${config.subject}',\n`;
       }
       content += `          },\n`;
     }

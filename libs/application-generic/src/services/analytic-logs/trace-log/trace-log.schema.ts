@@ -145,6 +145,8 @@ export type EventType =
   | 'throttle_window_in_past'
   | 'bridge_response_received'
   | 'bridge_execution_failed'
+  | 'step_resolver_execution_failed'
+  | 'step_resolver_execution_timeout'
   | 'bridge_execution_skipped'
   | 'webhook_filter_retrying'
   | 'webhook_filter_failed'

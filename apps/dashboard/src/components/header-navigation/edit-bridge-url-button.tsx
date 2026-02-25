@@ -139,7 +139,7 @@ export const EditBridgeUrlButton = () => {
                     <FormItem>
                       <FormLabel required>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} readOnly={isReadOnly} />
+                        <Input leadingIcon={RiLinkM} id={`bridgeUrl-${field.name}`} {...field} readOnly={isReadOnly} />
                       </FormControl>
                       <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>

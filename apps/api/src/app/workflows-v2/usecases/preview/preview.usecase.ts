@@ -4,6 +4,7 @@ import {
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  PinoLogger,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
@@ -29,7 +30,8 @@ export class PreviewUsecase {
     private readonly controlValueSanitizer: ControlValueSanitizerService,
     private readonly payloadMerger: PayloadMergerService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
-    private readonly errorHandler: PreviewErrorHandler
+    private readonly errorHandler: PreviewErrorHandler,
+    private readonly logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -77,7 +79,9 @@ export class PreviewUsecase {
           previewPayloadExample: cleanedPayloadExample,
           schema: context.variableSchema,
         };
-      } catch {
+      } catch (error) {
+        this.logger.error({ err: error }, 'Error executing preview');
+
         /*
          * If preview execution fails, still return valid schema and payload example
          * but with an empty preview result
@@ -147,6 +151,11 @@ export class PreviewUsecase {
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
 
+    const stepResolverHash =
+      typeof stepData.controls.values?.stepResolverHash === 'string'
+        ? stepData.controls.values.stepResolverHash
+        : undefined;
+
     return await this.previewStepUsecase.execute(
       PreviewStepCommand.create({
         payload: previewPayloadExample.payload || {},
@@ -161,6 +170,7 @@ export class PreviewUsecase {
         workflowOrigin: stepData.origin,
         state,
         skipLayoutRendering: command.skipLayoutRendering,
+        stepResolverHash,
       })
     );
   }

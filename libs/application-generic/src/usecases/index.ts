@@ -13,6 +13,7 @@ export * from './create-tenant';
 export * from './delete-preferences';
 export * from './digest-filter-steps';
 export * from './execute-bridge-request';
+export * from './execute-step-resolver';
 export * from './get-decrypted-integrations';
 export * from './get-decrypted-secret-key';
 export * from './get-layout';

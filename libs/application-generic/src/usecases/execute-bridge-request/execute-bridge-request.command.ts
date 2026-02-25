@@ -9,7 +9,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
-import { IsDefined, IsOptional } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentLevelCommand } from '../../commands';
 
 export type BridgeError = {
@@ -44,6 +44,10 @@ export class ExecuteBridgeRequestCommand extends EnvironmentLevelCommand {
 
   @IsOptional()
   statelessBridgeUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  stepResolverHash?: string;
 }
 
 // will generate the output type based on the action

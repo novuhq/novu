@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
-import { GetWorkflowByIdsUseCase, UpsertControlValuesUseCase } from '@novu/application-generic';
+import {
+  ExecuteStepResolverRequest,
+  GetWorkflowByIdsUseCase,
+  UpsertControlValuesUseCase,
+} from '@novu/application-generic';
 import { AuthModule } from '../auth/auth.module';
 import { PreviewStep } from '../bridge/usecases/preview-step';
 import { LayoutsV1Module } from '../layouts-v1/layouts-v1.module';
@@ -29,6 +33,7 @@ const MODULES = [SharedModule, AuthModule, LayoutsV1Module];
     BuildStepDataUsecase,
     PayloadMergerService,
     PreviewStep,
+    ExecuteStepResolverRequest,
   ],
   exports: [...USE_CASES],
   controllers: [LayoutsController],

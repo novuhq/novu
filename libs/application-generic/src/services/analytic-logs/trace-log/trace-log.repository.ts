@@ -601,6 +601,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'bridge_execution_skipped':
       return 'Bridge execution skipped';
 
+    // Step resolver events
+    case 'step_resolver_execution_failed':
+      return 'Step resolver execution failed';
+    case 'step_resolver_execution_timeout':
+      return 'Step resolver execution timeout';
+
     // Webhook events
     case 'webhook_filter_retrying':
       return 'Webhook filter retrying';
