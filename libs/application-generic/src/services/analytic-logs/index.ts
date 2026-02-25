@@ -19,3 +19,4 @@ export {
 export * from './trace-rollup';
 export { StepType } from './types';
 export { WorkflowRun, WorkflowRunRepository, WorkflowRunStatusEnum } from './workflow-run';
+export { WorkflowRunCount, WorkflowRunCountRepository } from './workflow-run-count';

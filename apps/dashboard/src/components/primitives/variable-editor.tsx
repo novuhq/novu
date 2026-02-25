@@ -46,6 +46,7 @@ type VariableEditorProps = {
   skipContainerClick?: boolean;
   children?: React.ReactNode;
   disabled?: boolean;
+  readOnly?: boolean;
 } & Pick<
   EditorProps,
   | 'className'
@@ -97,6 +98,7 @@ export function VariableEditor({
   onManageSchemaClick = () => {},
   children,
   disabled = false,
+  readOnly = false,
 }: VariableEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const track = useTelemetry();
@@ -377,7 +379,7 @@ export function VariableEditor({
         onChange={onChange}
         onBlur={onBlur}
         tagStyles={tagStyles}
-        editable={!disabled}
+        editable={!disabled && !readOnly}
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover

@@ -5,7 +5,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
-import { usageLimitsWorkflow } from '@novu/notifications';
+import { usageLimitsWorkflow, usageReportWorkflow } from '@novu/notifications';
 import { isClerkEnabled } from '@novu/shared';
 import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
@@ -46,6 +46,7 @@ import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.
 import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
 import { SharedModule } from './app/shared/shared.module';
+import { StepResolversModule } from './app/step-resolvers/step-resolvers.module';
 import { StorageModule } from './app/storage/storage.module';
 import { SubscribersV1Module } from './app/subscribers/subscribersV1.module';
 import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
@@ -137,6 +138,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   NovuModule,
   ChannelConnectionsModule,
   ChannelEndpointsModule,
+  StepResolversModule,
 ];
 
 const enterpriseModules = enterpriseImports();
@@ -196,7 +198,7 @@ modules.push(
         process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true',
     }),
     controllerDecorators: [ApiExcludeController()],
-    workflows: [usageLimitsWorkflow],
+    workflows: [usageLimitsWorkflow, usageReportWorkflow],
   })
 );
 

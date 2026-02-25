@@ -1,6 +1,6 @@
 {
   "name": "@novu/api-service",
-  "version": "3.13.0",
+  "version": "3.14.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -41,7 +41,7 @@
     "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.716.0",
+    "@aws-sdk/client-secrets-manager": "^3.971.0",
     "@godaddy/terminus": "^4.12.1",
     "@google-cloud/storage": "^6.2.3",
     "@nestjs/axios": "3.0.3",

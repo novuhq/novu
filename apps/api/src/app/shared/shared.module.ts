@@ -12,6 +12,8 @@ import {
   DalServiceHealthIndicator,
   DeliveryTrendCountsRepository,
   ExecuteBridgeRequest,
+  ExecuteFrameworkRequest,
+  ExecuteStepResolverRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
   InMemoryLRUCacheService,
@@ -145,6 +147,8 @@ const PROVIDERS = [
   ...DAL_MODELS,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
+  ExecuteFrameworkRequest,
+  ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   ...ANALYTICS_PROVIDERS,
 ];

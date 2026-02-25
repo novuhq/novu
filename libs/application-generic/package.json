@@ -22,7 +22,7 @@
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=18.0.0"
   },
   "peerDependencies": {
     "@nestjs/common": "10.4.18",
@@ -38,16 +38,16 @@
   },
   "dependencies": {
     "p-queue": "^8.0.1",
-    "@aws-sdk/client-s3": "^3.567.0",
-    "@aws-sdk/s3-request-presigner": "^3.567.0",
+    "@aws-sdk/client-s3": "^3.971.0",
+    "@aws-sdk/client-sqs": "^3.971.0",
+    "@aws-sdk/s3-request-presigner": "^3.971.0",
     "@azure/storage-blob": "^12.11.0",
     "@clickhouse/client": "^1.11.2",
     "@google-cloud/storage": "^6.2.3",
-    "@pulsecron/pulse": "1.6.8",
     "@launchdarkly/node-server-sdk": "^9.7.3",
-    "@novu/maily-render": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
+    "@novu/maily-render": "workspace:*",
     "@novu/providers": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
@@ -68,6 +68,7 @@
     "@opentelemetry/sdk-trace-base": "~1.19.0",
     "@opentelemetry/sdk-trace-node": "~1.19.0",
     "@opentelemetry/semantic-conventions": "~1.19.0",
+    "@pulsecron/pulse": "1.6.8",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^8.33.1",
     "@team-plain/typescript-sdk": "5.8.0",
@@ -101,6 +102,8 @@
     "rxjs": "7.8.1",
     "sanitize-html": "^2.4.0",
     "shortid": "^2.2.16",
+    "sqs-consumer": "^14.2.0",
+    "sqs-producer": "^8.0.1",
     "svix": "^1.64.1",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"

@@ -320,6 +320,155 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
 
     return result.data;
   }
+
+  async getMessagesSentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getMessagesSentCount' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return 0;
+    }
+
+    const query = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
+  async getUsageReportScalarStats(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    messagesSentCount: number;
+    uniqueSubscribers: number;
+    interactions: number;
+  }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportScalarStats' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return {
+        messagesSentCount: 0,
+        uniqueSubscribers: 0,
+        interactions: 0,
+      };
+    }
+
+    const query = `
+      SELECT 
+        countIf(event_type = 'message_sent') as messages_sent_count,
+        uniqExactIf(subscriber_id, event_type = 'workflow_run_delivery_sent') as unique_subscribers,
+        countIf(
+          event_type IN (
+            'message_seen', 'message_unseen', 'message_clicked',
+            'message_read', 'message_unread', 'message_archived',
+            'message_unarchived', 'message_snoozed', 'message_unsnoozed'
+          )
+        ) as interactions
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      messages_sent_count: string;
+      unique_subscribers: string;
+      interactions: string;
+    }>({
+      query,
+      params,
+    });
+
+    const data = result.data[0] || {
+      messages_sent_count: '0',
+      unique_subscribers: '0',
+      interactions: '0',
+    };
+
+    return {
+      messagesSentCount: parseInt(data.messages_sent_count, 10),
+      uniqueSubscribers: parseInt(data.unique_subscribers, 10),
+      interactions: parseInt(data.interactions, 10),
+    };
+  }
+
+  async getUsageReportBreakdown(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ step_run_type: string; provider_id: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportBreakdown' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
+    const query = `
+      SELECT 
+        step_run_type,
+        provider_id,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+      GROUP BY step_run_type, provider_id
+      ORDER BY count DESC
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      step_run_type: string;
+      provider_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {
@@ -451,6 +600,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Bridge execution failed';
     case 'bridge_execution_skipped':
       return 'Bridge execution skipped';
+
+    // Step resolver events
+    case 'step_resolver_execution_failed':
+      return 'Step resolver execution failed';
+    case 'step_resolver_execution_timeout':
+      return 'Step resolver execution timeout';
 
     // Webhook events
     case 'webhook_filter_retrying':

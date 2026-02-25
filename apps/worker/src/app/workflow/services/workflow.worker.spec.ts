@@ -3,6 +3,7 @@ import {
   BullMqService,
   FeatureFlagsService,
   PinoLogger,
+  SqsService,
   TriggerEvent,
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
@@ -12,6 +13,19 @@ import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 import { WorkflowModule } from '../workflow.module';
 import { WorkflowWorker } from './workflow.worker';
+
+const mockSqsService = {
+  getQueueUrl: () => undefined,
+  getProducer: () => undefined,
+  getClient: () => ({}) as any,
+  isConfigured: () => false,
+  send: async () => {},
+  sendBulk: async () => {},
+} as unknown as SqsService;
+
+const mockFeatureFlagsService = {
+  getFlag: async () => false,
+} as unknown as FeatureFlagsService;
 
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;
@@ -36,11 +50,17 @@ describe('Workflow Worker', () => {
       triggerEventUseCase,
       workflowInMemoryProviderService,
       organizationRepository,
+      mockSqsService,
       new PinoLogger({}),
       featureFlagsService
     );
 
-    workflowQueueService = new WorkflowQueueService(workflowInMemoryProviderService);
+    workflowQueueService = new WorkflowQueueService(
+      workflowInMemoryProviderService,
+      mockSqsService,
+      mockFeatureFlagsService,
+      new PinoLogger({})
+    );
     await workflowQueueService.queue.obliterate();
   });
 
@@ -58,7 +78,7 @@ describe('Workflow Worker', () => {
       workerIsPaused: false,
       workerIsRunning: true,
     });
-    expect(workflowWorker.worker.opts).to.deep.include({
+    expect(workflowWorker.bullMqWorker.opts).to.deep.include({
       concurrency: 200,
       lockDuration: 90000,
     });
@@ -86,7 +106,7 @@ describe('Workflow Worker', () => {
     expect(await workflowQueueService.queue.getWaitingCount()).to.equal(0);
 
     // When we arrive to pull the job it has been already pulled by the worker
-    const nextJob = await workflowWorker.worker.getNextJob(jobId);
+    const nextJob = await workflowWorker.bullMqWorker.getNextJob(jobId);
     expect(nextJob).to.equal(undefined);
 
     await setTimeout(100);
@@ -97,7 +117,7 @@ describe('Workflow Worker', () => {
   });
 
   it('should pause the worker', async () => {
-    const isPaused = await workflowWorker.worker.isPaused();
+    const isPaused = await workflowWorker.bullMqWorker.isPaused();
     expect(isPaused).to.equal(false);
 
     const runningStatus = await workflowWorker.bullMqService.getStatus();
@@ -111,7 +131,7 @@ describe('Workflow Worker', () => {
 
     await workflowWorker.pause();
 
-    const isNowPaused = await workflowWorker.worker.isPaused();
+    const isNowPaused = await workflowWorker.bullMqWorker.isPaused();
     expect(isNowPaused).to.equal(true);
 
     const runningStatusChanged = await workflowWorker.bullMqService.getStatus();
@@ -127,7 +147,7 @@ describe('Workflow Worker', () => {
   it('should resume the worker', async () => {
     await workflowWorker.pause();
 
-    const isPaused = await workflowWorker.worker.isPaused();
+    const isPaused = await workflowWorker.bullMqWorker.isPaused();
     expect(isPaused).to.equal(true);
 
     const runningStatus = await workflowWorker.bullMqService.getStatus();
@@ -141,7 +161,7 @@ describe('Workflow Worker', () => {
 
     await workflowWorker.resume();
 
-    const isNowPaused = await workflowWorker.worker.isPaused();
+    const isNowPaused = await workflowWorker.bullMqWorker.isPaused();
     expect(isNowPaused).to.equal(false);
 
     const runningStatusChanged = await workflowWorker.bullMqService.getStatus();

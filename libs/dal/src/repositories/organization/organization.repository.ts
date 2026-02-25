@@ -69,7 +69,7 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.find(query, select, options);
   }
 
-  async *findBatch(
+  findBatch(
     query: any,
     select?: string | undefined,
     options?: any,
