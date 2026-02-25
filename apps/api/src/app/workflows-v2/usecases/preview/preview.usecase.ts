@@ -86,8 +86,6 @@ export class PreviewUsecase {
           schema: context.variableSchema,
         };
       } catch (error) {
-        this.logger.error({ err: error }, 'Error executing preview');
-
         const isStepResolverEmail = context.stepData.type === StepTypeEnum.EMAIL && stepResolverHash !== undefined;
 
         /*
