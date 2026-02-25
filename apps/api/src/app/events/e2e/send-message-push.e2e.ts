@@ -83,7 +83,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       const jobs = await jobRepository.find({
         _environmentId: session.environment._id,
         _templateId: template._id,
-        _subscriberId: session.subscriberId,
+        subscriberId: session.subscriberId,
         type: StepTypeEnum.PUSH,
       });
 
