@@ -84,22 +84,34 @@ export class ExecuteStepResolverRequest {
       throw new NotFoundException('Step resolver HMAC secret is not configured');
     }
 
+    const workflowId = command.searchParams?.[HttpQueryKeysEnum.WORKFLOW_ID];
     const stepId = command.searchParams?.[HttpQueryKeysEnum.STEP_ID];
 
-    if (!command.stepResolverHash || !stepId) {
-      throw new NotFoundException('stepResolverHash and searchParams.stepId are required for Step Resolver');
+    if (!command.stepResolverHash || !workflowId || !stepId) {
+      throw new NotFoundException(
+        'stepResolverHash, searchParams.workflowId, and searchParams.stepId are required for Step Resolver'
+      );
     }
 
     if (!command.organizationId) {
       throw new NotFoundException('organizationId is required for Step Resolver');
     }
 
-    const url = this.buildResolverUrl(dispatchUrl, command.organizationId, command.stepResolverHash, stepId);
+    const url = this.buildResolverUrl(
+      dispatchUrl,
+      command.organizationId,
+      command.stepResolverHash,
+      workflowId,
+      stepId
+    );
     const retriesLimit = command.retriesLimit ?? DEFAULT_RETRIES_LIMIT;
     const normalizedEvent = command.event ?? {};
     const headers = this.buildRequestHeaders(normalizedEvent, hmacSecret);
 
-    this.logger.debug({ url, stepResolverHash: command.stepResolverHash }, 'Making step resolver request');
+    this.logger.debug(
+      { url, stepResolverHash: command.stepResolverHash, workflowId, stepId },
+      'Making step resolver request'
+    );
 
     try {
       const response = await got
@@ -153,8 +165,17 @@ export class ExecuteStepResolverRequest {
     };
   }
 
-  private buildResolverUrl(baseUrl: string, organizationId: string, stepResolverHash: string, stepId: string): string {
-    const url = new URL(`/resolve/${organizationId}/sr-${stepResolverHash}/${encodeURIComponent(stepId)}`, baseUrl);
+  private buildResolverUrl(
+    baseUrl: string,
+    organizationId: string,
+    stepResolverHash: string,
+    workflowId: string,
+    stepId: string
+  ): string {
+    const url = new URL(
+      `/resolve/${organizationId}/sr-${stepResolverHash}/${encodeURIComponent(workflowId)}/${encodeURIComponent(stepId)}`,
+      baseUrl
+    );
 
     return url.toString();
   }
