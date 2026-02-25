@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
-    "@novu/ee-dal": "workspace:*",
     "@novu/shared": "workspace:*"
   },
   "devDependencies": {

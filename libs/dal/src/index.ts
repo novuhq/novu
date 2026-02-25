@@ -27,6 +27,8 @@ export * from './repositories/snapshot';
 export * from './repositories/subscriber';
 export * from './repositories/tenant';
 export * from './repositories/topic';
+export * from './repositories/translation-group';
+export * from './repositories/translations';
 export * from './repositories/user';
 export * from './repositories/workflow-override';
 export * from './shared';
