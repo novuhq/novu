@@ -37,6 +37,10 @@ const HTTP_ERROR_MAPPINGS: Record<number, { code: string; message: string }> = {
     code: 'STEP_RESOLVER_PAYLOAD_TOO_LARGE',
     message: 'Step resolver payload too large',
   },
+  500: {
+    code: 'STEP_RESOLVER_HTTP_ERROR',
+    message: 'Step resolver returned an internal error',
+  },
   502: {
     code: 'STEP_RESOLVER_UNAVAILABLE',
     message: 'Step resolver worker unavailable',
@@ -198,9 +202,22 @@ export class ExecuteStepResolverRequest {
   private buildErrorResponse(error: unknown, url: string, stepResolverHash: string): BridgeError {
     if (error instanceof HTTPError) {
       const statusCode = error.response.statusCode;
-      const shouldLog = statusCode >= 500;
 
-      if (shouldLog) {
+      if (statusCode === 500) {
+        const parsedBody = this.tryParseBody(error.response.body);
+
+        if (parsedBody?.error === 'STEP_HANDLER_ERROR') {
+          return {
+            url,
+            code: 'STEP_HANDLER_ERROR',
+            message: parsedBody.message ?? 'An error occurred in your template code',
+            statusCode,
+            cause: error,
+          };
+        }
+      }
+
+      if (statusCode >= 500) {
         this.logger.error({ error, statusCode, url, stepResolverHash }, `Step resolver HTTP error: ${statusCode}`);
       }
 
@@ -229,5 +246,19 @@ export class ExecuteStepResolverRequest {
       statusCode: isTimeout ? HttpStatus.REQUEST_TIMEOUT : HttpStatus.INTERNAL_SERVER_ERROR,
       cause: error,
     };
+  }
+
+  private tryParseBody(body: unknown): Record<string, string> | null {
+    try {
+      const parsed = typeof body === 'string' ? JSON.parse(body) : body;
+
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return parsed as Record<string, string>;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
   }
 }
