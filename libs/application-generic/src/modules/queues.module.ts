@@ -14,6 +14,7 @@ import {
   CloudflareSchedulerService,
   ReadinessService,
   SocketWorkerService,
+  SqsService,
   WorkflowInMemoryProviderService,
 } from '../services';
 import {
@@ -38,7 +39,12 @@ const memoryQueueService = {
 };
 
 const INTERNAL_MODULE_PROVIDERS = [memoryQueueService, featureFlagsService];
-const BASE_PROVIDERS: Provider[] = [ReadinessService, CloudflareSchedulerService, CommunityOrganizationRepository];
+const BASE_PROVIDERS: Provider[] = [
+  ReadinessService,
+  CloudflareSchedulerService,
+  CommunityOrganizationRepository,
+  SqsService,
+];
 
 @Module({
   providers: [],

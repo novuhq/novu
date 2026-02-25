@@ -4,6 +4,7 @@ import {
   CloudflareSchedulerService,
   FeatureFlagsService,
   PinoLogger,
+  SqsService,
   StandardQueueService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -49,12 +50,21 @@ const mockCloudflareSchedulerService = {
 } as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
-  getFlag: async () => 'off',
+  getFlag: async () => false,
 } as unknown as FeatureFlagsService;
 
 const mockOrganizationRepository = {
   findOne: async () => null,
 } as unknown as CommunityOrganizationRepository;
+
+const mockSqsService = {
+  getQueueUrl: () => undefined,
+  getProducer: () => undefined,
+  getClient: () => ({}) as any,
+  isConfigured: () => false,
+  send: async () => {},
+  sendBulk: async () => {},
+} as unknown as SqsService;
 
 const mockLogger = {
   setContext: () => {},
@@ -124,6 +134,7 @@ describe('Standard Worker', () => {
       mockCloudflareSchedulerService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
+      mockSqsService,
       mockLogger
     );
     await standardQueueService.queue.obliterate();
@@ -152,6 +163,8 @@ describe('Standard Worker', () => {
       workflowInMemoryProviderService,
       organizationRepository,
       jobRepository,
+      mockSqsService,
+      mockLogger,
       featureFlagsService
     );
   });
@@ -165,7 +178,7 @@ describe('Standard Worker', () => {
     expect(standardWorker).to.be.ok;
 
     expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(standardWorker.worker).to.deep.include({
+    expect(standardWorker.bullMqWorker).to.deep.include({
       _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',
@@ -177,7 +190,7 @@ describe('Standard Worker', () => {
       workerIsPaused: false,
       workerIsRunning: true,
     });
-    expect(standardWorker.worker.opts).to.deep.include({
+    expect(standardWorker.bullMqWorker.opts).to.deep.include({
       concurrency: 200,
       lockDuration: 90000,
     });
@@ -335,7 +348,7 @@ describe('Standard Worker', () => {
   });
 
   it('should pause the worker', async () => {
-    const isPaused = await standardWorker.worker.isPaused();
+    const isPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isPaused).to.equal(false);
 
     const runningStatus = await standardWorker.bullMqService.getStatus();
@@ -349,7 +362,7 @@ describe('Standard Worker', () => {
 
     await standardWorker.pause();
 
-    const isNowPaused = await standardWorker.worker.isPaused();
+    const isNowPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isNowPaused).to.equal(true);
 
     const runningStatusChanged = await standardWorker.bullMqService.getStatus();
@@ -365,7 +378,7 @@ describe('Standard Worker', () => {
   it('should resume the worker', async () => {
     await standardWorker.pause();
 
-    const isPaused = await standardWorker.worker.isPaused();
+    const isPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isPaused).to.equal(true);
 
     const runningStatus = await standardWorker.bullMqService.getStatus();
@@ -379,7 +392,7 @@ describe('Standard Worker', () => {
 
     await standardWorker.resume();
 
-    const isNowPaused = await standardWorker.worker.isPaused();
+    const isNowPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isNowPaused).to.equal(false);
 
     const runningStatusChanged = await standardWorker.bullMqService.getStatus();

@@ -165,6 +165,7 @@ emailCommand
   .option('-c, --config <path>', 'Path to config file')
   .option('--out <path>', 'Directory containing step handlers')
   .option('--workflow <id...>', 'Deploy only specific workflows')
+  .option('--step <id...>', 'Deploy only specific steps (requires --workflow)')
   .option('--bundle-out-dir [path]', 'Write bundled workflow artifacts to a directory for debugging')
   .option('--dry-run', 'Bundle without deploying')
   .action(async (options) => {

@@ -8,15 +8,16 @@ export const stepId = 'welcome-email';
 export const workflowId = 'onboarding';
 export const type = 'email';
 
-export default async function({ payload, subscriber, context, steps }) {
+export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'No Subject',
+    subject: controls.subject ?? payload.subject ?? 'No Subject',
     body: await render(
       <EmailTemplate
         {...payload}
         subscriber={subscriber}
         context={context}
         steps={steps}
+        controls={controls}
       />
     ),
   };
@@ -32,15 +33,16 @@ export const stepId = 'welcome-email';
 export const workflowId = 'onboarding';
 export const type = 'email';
 
-export default async function({ payload, subscriber, context, steps }) {
+export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'No Subject',
+    subject: controls.subject ?? payload.subject ?? 'No Subject',
     body: await render(
       <EmailTemplate
         {...payload}
         subscriber={subscriber}
         context={context}
         steps={steps}
+        controls={controls}
       />
     ),
   };
@@ -56,15 +58,16 @@ export const stepId = 'welcome-email';
 export const workflowId = 'onboarding';
 export const type = 'email';
 
-export default async function({ payload, subscriber, context, steps }) {
+export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'No Subject',
+    subject: controls.subject ?? payload.subject ?? 'No Subject',
     body: await render(
       <EmailTemplate
         {...payload}
         subscriber={subscriber}
         context={context}
         steps={steps}
+        controls={controls}
       />
     ),
   };
@@ -80,15 +83,16 @@ export const stepId = 'welcome-email';
 export const workflowId = 'onboarding';
 export const type = 'email';
 
-export default async function({ payload, subscriber, context, steps }) {
+export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || 'Welcome to Acme!',
+    subject: controls.subject ?? payload.subject ?? 'Welcome to Acme!',
     body: await render(
       <EmailTemplate
         {...payload}
         subscriber={subscriber}
         context={context}
         steps={steps}
+        controls={controls}
       />
     ),
   };

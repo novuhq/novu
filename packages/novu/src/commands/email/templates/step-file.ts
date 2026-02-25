@@ -19,15 +19,16 @@ export const stepId = '${escapeString(stepId)}';
 export const workflowId = '${escapeString(workflowId)}';
 export const type = 'email';
 
-export default async function({ payload, subscriber, context, steps }) {
+export default async function({ payload, subscriber, context, steps, controls }) {
   return {
-    subject: payload.subject || '${escapeString(defaultSubject)}',
+    subject: controls.subject ?? payload.subject ?? '${escapeString(defaultSubject)}',
     body: await render(
       <EmailTemplate
         {...payload}
         subscriber={subscriber}
         context={context}
         steps={steps}
+        controls={controls}
       />
     ),
   };

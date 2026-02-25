@@ -83,7 +83,7 @@ function generateRequestHandler(): string {
 
       ${generateBodyValidation()}
 
-      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs });
+      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs, controls });
 
       return jsonResponse(
         { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
@@ -110,10 +110,11 @@ function generateBodyValidation(): string {
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
       const stepOutputs = body.steps ?? {};
+      const controls = body.controls ?? {};
 
-      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs)) {
+      if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {
         return jsonResponse(
-          { error: 'Invalid request body', message: 'payload, subscriber, context, and steps must be JSON objects' },
+          { error: 'Invalid request body', message: 'payload, subscriber, context, steps, and controls must be JSON objects' },
           400
         );
       }`;

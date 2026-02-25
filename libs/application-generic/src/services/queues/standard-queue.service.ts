@@ -7,6 +7,7 @@ import { BullMqService } from '../bull-mq';
 import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { SqsService } from '../sqs';
 import { QueueBaseService } from './queue-base.service';
 
 const LOG_CONTEXT = 'StandardQueueService';
@@ -16,11 +17,18 @@ export class StandardQueueService extends QueueBaseService {
   constructor(
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private cloudflareSchedulerService: CloudflareSchedulerService,
-    private featureFlagsService: FeatureFlagsService,
-    private organizationRepository: CommunityOrganizationRepository,
-    private logger: PinoLogger
+    private _featureFlagsService: FeatureFlagsService,
+    private _organizationRepository: CommunityOrganizationRepository,
+    sqsService: SqsService,
+    _logger: PinoLogger
   ) {
-    super(JobTopicNameEnum.STANDARD, new BullMqService(workflowInMemoryProviderService));
+    super(
+      JobTopicNameEnum.STANDARD,
+      new BullMqService(workflowInMemoryProviderService),
+      sqsService,
+      _featureFlagsService,
+      _logger
+    );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
@@ -32,11 +40,17 @@ export class StandardQueueService extends QueueBaseService {
     const delay = data.options?.delay || 0;
     const hasDelay = delay > 0;
 
-    if (!hasDelay) {
-      return await super.add(data);
+    // For delayed jobs, use existing BullMQ + CF Scheduler system
+    if (hasDelay) {
+      return await this.handleDelayedJob(data, delay);
     }
 
-    const organization = await this.organizationRepository.findOne(
+    // For immediate jobs (delay = 0), let QueueBaseService handle SQS/BullMQ routing
+    return await super.add(data);
+  }
+
+  private async handleDelayedJob(data: IStandardJobDto, delay: number) {
+    const organization = await this._organizationRepository.findOne(
       { _id: data.data._organizationId },
       'apiServiceLevel',
       { readPreference: 'secondaryPreferred' }
@@ -45,7 +59,7 @@ export class StandardQueueService extends QueueBaseService {
       throw new Error(`Organization ${data.data._organizationId} not found`);
     }
 
-    const schedulerMode = await this.featureFlagsService.getFlag<string>({
+    const schedulerMode = await this._featureFlagsService.getFlag<string>({
       key: FeatureFlagsKeysEnum.CF_SCHEDULER_MODE,
       defaultValue: CloudflareSchedulerMode.OFF,
       organization: { _id: data.data._organizationId, apiServiceLevel: organization.apiServiceLevel },
@@ -64,7 +78,7 @@ export class StandardQueueService extends QueueBaseService {
         apiServiceLevel: organization.apiServiceLevel,
         environmentId: data.data._environmentId,
       },
-      'CF Scheduler mode evaluation'
+      'CF Scheduler mode evaluation for delayed job'
     );
 
     if (!shouldUseCFScheduler) {

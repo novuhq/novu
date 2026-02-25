@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
@@ -8,7 +8,11 @@ const LOG_CONTEXT = 'ActiveJobsMetricWorkerService';
 
 @Injectable()
 export class ActiveJobsMetricWorkerService extends WorkerBaseService {
-  constructor(private workflowInMemoryProvider: WorkflowInMemoryProviderService) {
+  /* *
+   * BullMQ-only worker - no SQS support.
+   * Tracks active job metrics internally, not part of the SQS migration.
+   */
+  constructor(workflowInMemoryProvider: WorkflowInMemoryProviderService) {
     super(JobTopicNameEnum.ACTIVE_JOBS_METRIC, new BullMqService(workflowInMemoryProvider));
   }
 }
