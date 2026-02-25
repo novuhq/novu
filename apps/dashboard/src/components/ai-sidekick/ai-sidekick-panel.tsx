@@ -6,6 +6,7 @@ export function AiSidekickPanel() {
   const {
     messages,
     status,
+    error,
     handleStop,
     isGenerating,
     isLoading,
@@ -50,6 +51,7 @@ export function AiSidekickPanel() {
           onInputChange={setInputText}
           isGenerating={isGenerating}
           status={status}
+          errorMessage={error?.message}
           stop={handleStop}
           onSubmit={handleSendMessage}
           messages={messages}

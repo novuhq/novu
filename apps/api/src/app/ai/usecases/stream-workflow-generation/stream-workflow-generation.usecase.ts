@@ -261,18 +261,6 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
                 this.logger.info({ stepId: removeResult.removedStepId }, 'AI Step removed via agent');
                 break;
               }
-
-              case AiWorkflowToolsEnum.COMPLETE_WORKFLOW: {
-                const workflow = draftState.getWorkflow();
-                if (!workflow) {
-                  throw new Error('Workflow not found');
-                }
-
-                writer?.({ type: 'workflow-completed', workflowSlug: workflow.slug });
-
-                this.logger.info('AI Workflow step addition completed');
-                break;
-              }
             }
 
             return result;
@@ -284,17 +272,18 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     const uiMessageStream = createUIMessageStream({
       originalMessages: chatMessages,
       generateId,
-      onFinish: async ({ messages, isAborted, isContinuation }) => {
+      onFinish: async ({ messages, isAborted }) => {
         const finalIsAborted = isAborted || command.signal.aborted;
         const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
         const isAssistantMessage = lastMessage?.role === 'assistant';
+        const hasPendingChanges = !!isAssistantMessage && lastMessage.id !== lastUserMessageId;
 
         await this.upsertChatUseCase.execute(
           UpsertChatCommand.create({
             id: command.chatId,
             messages,
-            activeStreamId: finalIsAborted || isContinuation ? undefined : null,
-            hasPendingChanges: !!isAssistantMessage && lastMessage.id !== lastUserMessageId,
+            activeStreamId: finalIsAborted ? undefined : null,
+            hasPendingChanges,
             user: command.user,
           })
         );

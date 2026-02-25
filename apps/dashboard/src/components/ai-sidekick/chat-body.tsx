@@ -1,5 +1,4 @@
-import { AiWorkflowToolsEnum } from '@novu/shared';
-import { ChatStatus, DynamicToolUIPart, UIMessage } from 'ai';
+import { ChatStatus, UIMessage } from 'ai';
 import { RiArrowGoBackLine, RiRefreshLine } from 'react-icons/ri';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
 import { Message } from '../ai-elements/message';
@@ -13,20 +12,9 @@ import {
 import { Shimmer } from '../ai-elements/shimmer';
 import { Button } from '../primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { ChatChainOfThought } from './chat-chain-of-thought';
-import { WhatsChangedSection } from './whats-changed-section';
-
-function getToolPartsFromMessage(message: UIMessage): Array<DynamicToolUIPart> {
-  const tools: Array<DynamicToolUIPart> = [];
-
-  for (const part of message.parts) {
-    if (part.type.startsWith('dynamic-tool')) {
-      tools.push(part as DynamicToolUIPart);
-    }
-  }
-
-  return tools;
-}
+import { ChatChainOfThoughtReasoning, ChatChainOfThoughtToolCalls } from './chat-chain-of-thought';
+import { ChatMessageActions } from './chat-message-actions';
+import { StyledMessageResponse } from './chat-message-response';
 
 function extractMessageContent(message: UIMessage): { text: string } {
   let text = '';
@@ -73,6 +61,7 @@ export const ChatBody = ({
   onInputChange,
   isGenerating,
   status,
+  errorMessage,
   stop,
   onSubmit,
   messages,
@@ -89,6 +78,7 @@ export const ChatBody = ({
   onInputChange: (text: string) => void;
   isGenerating: boolean;
   status: ChatStatus;
+  errorMessage?: string | null;
   stop: () => void;
   onSubmit: (message: string) => void;
   messages: UIMessage[];
@@ -107,16 +97,16 @@ export const ChatBody = ({
         <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
           {messages.map((chatMessage) => {
             const { text } = extractMessageContent(chatMessage);
-            const messageToolParts = getToolPartsFromMessage(chatMessage);
-            const completedToolPart = messageToolParts.find(
-              (t) => t.toolName === AiWorkflowToolsEnum.COMPLETE_WORKFLOW
-            );
-            const hasChainOfThoughtContent = (chatMessage.parts ?? []).some(
-              (p) =>
-                p.type === 'reasoning' ||
-                (p.type?.startsWith('dynamic-tool') &&
-                  (p as DynamicToolUIPart).toolName !== AiWorkflowToolsEnum.COMPLETE_WORKFLOW)
-            );
+            const hasReasoningContent = (chatMessage.parts ?? []).some((p) => p.type === 'reasoning');
+            const hasToolCallsContent = (chatMessage.parts ?? []).some((p) => p.type?.startsWith('dynamic-tool'));
+            const textParts = (chatMessage.parts ?? [])
+              .filter(
+                (p) =>
+                  p.type === 'text' &&
+                  typeof (p as { text?: string }).text === 'string' &&
+                  !(p as { text: string }).text.startsWith('{')
+              )
+              .map((p) => (p as { text: string }).text);
             const isLastMessage = chatMessage.id === messages[messages.length - 1].id;
             const isLastAssistantMessage =
               chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
@@ -166,19 +156,26 @@ export const ChatBody = ({
                 )}
                 {chatMessage.role === 'assistant' && (
                   <>
-                    {(isGenerating || hasChainOfThoughtContent) && (
-                      <ChatChainOfThought
+                    {(isGenerating || hasReasoningContent) && (
+                      <ChatChainOfThoughtReasoning
                         defaultIsExpanded={isGenerating && isLastMessage}
                         message={chatMessage}
                         isStreaming={isGenerating && isLastMessage}
                       />
                     )}
-                    {completedToolPart && lastUserMessageId && (
-                      <WhatsChangedSection
-                        defaultIsExpanded={isLastMessage}
+                    {(isGenerating || hasToolCallsContent) && (
+                      <ChatChainOfThoughtToolCalls
+                        defaultIsExpanded={isGenerating && isLastMessage}
+                        message={chatMessage}
+                        isStreaming={isGenerating && isLastMessage}
+                      />
+                    )}
+                    {textParts.map((text, i) => (
+                      <StyledMessageResponse key={`text-${chatMessage.id}-${i}`}>{text}</StyledMessageResponse>
+                    ))}
+                    {!isGenerating && isReviewingChanges && isLastAssistantMessage && lastUserMessageId && (
+                      <ChatMessageActions
                         lastUserMessageId={lastUserMessageId}
-                        completedToolPart={completedToolPart}
-                        showMessageActions={!isGenerating && isReviewingChanges && isLastAssistantMessage}
                         isActionPending={isActionPending}
                         onKeepAll={onKeepAll}
                         onDiscard={onDiscard}
@@ -190,7 +187,18 @@ export const ChatBody = ({
               </Message>
             );
           })}
-          {status === 'submitted' && <Shimmer className="text-label-xs">Thinking...</Shimmer>}
+          {status === 'submitted' && !errorMessage && (
+            <Message from="assistant">
+              <Shimmer className="text-label-xs">Thinking...</Shimmer>
+            </Message>
+          )}
+          {errorMessage && (
+            <Message from="assistant">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                <span className="text-label-xs text-red-700">{errorMessage}</span>
+              </div>
+            </Message>
+          )}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>

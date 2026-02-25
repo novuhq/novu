@@ -50,7 +50,6 @@ For NEW workflows (no existing workflow):
 1. Call ${AiWorkflowToolsNameEnum.SET_WORKFLOW_METADATA} with the user's original request
 2. Call ${AiWorkflowToolsNameEnum.RETRIEVE_ORGANIZATION_META} to get available channels
 3. Use ${AiWorkflowToolsNameEnum.ADD_STEP} to add steps
-4. Always call ${AiWorkflowToolsNameEnum.COMPLETE_WORKFLOW} as last tool call to summarize design decisions
 
 For EDITING existing workflows (when user asks to change content, metadata, or remove or add steps):
 1. Call ${AiWorkflowToolsNameEnum.RETRIEVE_ORGANIZATION_META} to get available channels
@@ -58,17 +57,11 @@ For EDITING existing workflows (when user asks to change content, metadata, or r
 3. Use ${AiWorkflowToolsNameEnum.EDIT_STEP_CONTENT} to modify step content (e.g., "edit the email to include X")
 4. Use ${AiWorkflowToolsNameEnum.ADD_STEP} to add steps
 5. Use ${AiWorkflowToolsNameEnum.REMOVE_STEP} to remove a step
-6. Always call ${AiWorkflowToolsNameEnum.COMPLETE_WORKFLOW} as last tool call to summarize changes made
 </workflow>
 
-<reasoning>
-- Before tool calls provide 1-2 sentences of reasoning.
-- Plain text only, no markdown code blocks.
-- Never include any prefixes or suffixes, like "Thought:", "Reasoning:", "Thinking:", etc.
-</reasoning>
-
 <output_format>
-Output JSON only. No markdown code blocks.
+Final summary: 2-4 sentences only. No bullet lists, no "Changes made:", no "Best practices applied:", no follow-up suggestions.
+Example: "Created a Welcome Email workflow with In-App first, Email fallback, and Push for offline users. Applied Novu best practices: In-App default, low severity, conditional Push when subscriber is offline."
 </output_format>
 
 <best_practices>

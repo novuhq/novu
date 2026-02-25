@@ -53,7 +53,7 @@ export class LlmService {
     };
 
     this.model = this.createModel(this.config);
-    this.logger.info(`LLM service initialized with provider: ${provider}`);
+    this.logger.info(`LLM service initialized with provider: ${provider}, ${modelId}`);
   }
 
   private isReasoningModel(modelId: string): boolean {
@@ -81,7 +81,7 @@ export class LlmService {
       maxTokens: config?.maxOutputTokens ?? 4096,
       ...(!isReasoning ? { temperature: config?.temperature } : {}),
       maxRetries: config?.maxRetries ?? 3,
-      ...(isReasoning ? { reasoning: { effort: 'low' } } : {}),
+      ...(isReasoning ? { reasoning: { effort: 'low', summary: 'auto' } } : {}),
     });
   }
 
@@ -129,7 +129,7 @@ export class LlmService {
         })
       : this.model;
 
-    const structuredModel = model.withStructuredOutput(zodToJsonSchema(input.schema), {
+    const structuredModel = model.withStructuredOutput(zodToJsonSchema(input.schema, { $refStrategy: 'none' }), {
       name: 'structured_output',
     });
 

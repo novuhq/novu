@@ -11,6 +11,7 @@ import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useKeepAiChanges } from '@/hooks/use-keep-ai-changes';
 import { useRevertMessage } from '@/hooks/use-revert-message';
+import { showErrorToast } from '../primitives/sonner-helpers';
 
 export type ReasoningDataPart = DataUIPart<{ reasoning: { toolCallId: string; text: string } }>;
 
@@ -19,6 +20,7 @@ export type AiChatContextValue = {
   messages: UIMessage[];
   dataParts: ReasoningDataPart[];
   status: ChatStatus;
+  error?: Error | null;
   handleStop: () => Promise<void>;
   isGenerating: boolean;
   isLoading: boolean;
@@ -97,7 +99,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     return latestChat?._id ?? generateId();
   }, [location, latestChat]);
 
-  const { setMessages, sendPrompt, stop, status, isGenerating, messages, dataParts, isAborted, resume } =
+  const { setMessages, sendPrompt, stop, status, isGenerating, messages, dataParts, isAborted, resume, error } =
     useAiChatStream<{
       reasoning: { toolCallId: string; text: string };
     }>({
@@ -233,7 +235,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
             // so we need to resume the stream to continue from that checkpoint
             resume();
           },
-          onError: async () => {
+          onError: async (error) => {
+            showErrorToast(`Failed to try again: ${error.message}`);
             setMessages(previousMessages);
           },
         }
@@ -261,7 +264,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
             handleLastUserMessage(chat);
             onRefetchResource?.();
           },
-          onError: async () => {
+          onError: async (error) => {
+            showErrorToast(`Failed to revert message: ${error.message}`);
             setMessages(previousMessages);
           },
         }
@@ -330,6 +334,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       messages,
       dataParts: dataParts as ReasoningDataPart[],
       status: status as ChatStatus,
+      error,
       handleStop,
       isGenerating,
       isLoading,
@@ -349,6 +354,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       messages,
       dataParts,
       status,
+      error,
       handleStop,
       isGenerating,
       isLoading,

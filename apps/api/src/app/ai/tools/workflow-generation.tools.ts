@@ -29,7 +29,6 @@ import {
   throttleStepOutputSchema,
 } from '../schemas/steps-control.schema';
 import {
-  completeWorkflowInputSchema,
   organizationMetaInputSchema,
   workflowMetadataInputSchema,
   workflowMetadataOutputSchema,
@@ -52,7 +51,6 @@ export class DraftWorkflowState {
   private workflowMetadata: z.infer<typeof workflowMetadataOutputSchema> | null = null;
   private steps: UpsertStepDataCommand[] = [];
   private variableSchemaContext: VariableSchemaContext = createInitialVariableSchemaContext();
-  private reasoning: z.infer<typeof completeWorkflowInputSchema> | null = null;
 
   setWorkflowMetadata(metadata: z.infer<typeof workflowMetadataOutputSchema>): void {
     this.workflowMetadata = metadata;
@@ -164,14 +162,6 @@ export class DraftWorkflowState {
 
     return hasPayloadProperties(payloadSchema) ? payloadSchema : null;
   }
-
-  setReasoning(reasoning: z.infer<typeof completeWorkflowInputSchema>): void {
-    this.reasoning = reasoning;
-  }
-
-  getReasoning(): z.infer<typeof completeWorkflowInputSchema> | null {
-    return this.reasoning;
-  }
 }
 
 export function createWorkflowGenerationTools({
@@ -185,18 +175,13 @@ export function createWorkflowGenerationTools({
   draftState: DraftWorkflowState;
   getActiveIntegrationsUsecase: GetActiveIntegrations;
 }) {
-  const model = { modelId: 'gpt-5-mini', provider: 'openai' } as const;
-
   const setWorkflowMetadataTool = tool(
     async (input: z.infer<typeof workflowMetadataInputSchema>, _: ToolRuntime) => {
-      const result = await llmService.generateObject(
-        {
-          systemPrompt: WORKFLOW_METADATA_PROMPT,
-          userPrompt: input.userRequest,
-          schema: workflowMetadataOutputSchema,
-        },
-        model
-      );
+      const result = await llmService.generateObject({
+        systemPrompt: WORKFLOW_METADATA_PROMPT,
+        userPrompt: input.userRequest,
+        schema: workflowMetadataOutputSchema,
+      });
       draftState.setWorkflowMetadata(result);
 
       return result;
@@ -250,14 +235,11 @@ export function createWorkflowGenerationTools({
         throw new Error(`Unsupported step type for adding: ${input.stepType}`);
       }
 
-      const result = await llmService.generateObject(
-        {
-          systemPrompt: buildStepSystemPrompt(stepConfig.prompt, draftState),
-          userPrompt: buildStepUserPrompt(input),
-          schema: stepConfig.schema,
-        },
-        model
-      );
+      const result = await llmService.generateObject({
+        systemPrompt: buildStepSystemPrompt(stepConfig.prompt, draftState),
+        userPrompt: buildStepUserPrompt(input),
+        schema: stepConfig.schema,
+      });
 
       if (input.stepType === StepTypeEnum.EMAIL && result.controlValues?.editorType === 'block') {
         result.controlValues.body = JSON.stringify(result.controlValues.body ?? {}) as any;
@@ -295,14 +277,11 @@ export function createWorkflowGenerationTools({
       const { schema, prompt } = stepConfig;
       const currentControlValues = (step.controlValues ?? step.controls?.values ?? {}) as Record<string, unknown>;
 
-      const result = await llmService.generateObject(
-        {
-          systemPrompt: buildEditStepSystemPrompt(prompt, currentControlValues, draftState),
-          userPrompt: buildEditStepUserPrompt(input),
-          schema,
-        },
-        model
-      );
+      const result = await llmService.generateObject({
+        systemPrompt: buildEditStepSystemPrompt(prompt, currentControlValues, draftState),
+        userPrompt: buildEditStepUserPrompt(input),
+        schema,
+      });
 
       if (result.controlValues?.editorType === 'block') {
         result.controlValues.body = JSON.stringify(result.controlValues.body ?? {}) as typeof result.controlValues.body;
@@ -339,25 +318,5 @@ export function createWorkflowGenerationTools({
     }
   );
 
-  const completeWorkflowTool = tool(
-    async (input: z.infer<typeof completeWorkflowInputSchema>) => {
-      draftState.setReasoning(input);
-
-      return 'success';
-    },
-    {
-      name: AiWorkflowToolsEnum.COMPLETE_WORKFLOW,
-      description: `Mark the workflow generation as complete. Call this as last tool after all steps have been added or modified. Provide a summary of the reasoning behind the workflow design.`,
-      schema: zodToJsonSchema(completeWorkflowInputSchema),
-    }
-  );
-
-  return [
-    setWorkflowMetadataTool,
-    retrieveOrganizationMetaTool,
-    addStepTool,
-    editStepContentTool,
-    removeStepTool,
-    completeWorkflowTool,
-  ];
+  return [setWorkflowMetadataTool, retrieveOrganizationMetaTool, addStepTool, editStepContentTool, removeStepTool];
 }

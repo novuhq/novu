@@ -46,8 +46,3 @@ export const updateWorkflowMetadataInputSchema = z.object({
   severity: z.enum(severityValues).optional().describe('Updated severity level'),
   critical: z.boolean().optional().describe('Updated critical flag'),
 });
-
-export const completeWorkflowInputSchema = z.object({
-  summary: z.string().describe('Summary of the AI reasoning for this workflow design'),
-  bestPractices: z.array(z.string()).describe('Best practices applied to this workflow'),
-});

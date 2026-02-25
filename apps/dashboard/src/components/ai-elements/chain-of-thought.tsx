@@ -3,7 +3,8 @@
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { BrainIcon, ChevronDownIcon, ChevronRightIcon, DotIcon, type LucideIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
-import { createContext, memo, useContext, useMemo } from 'react';
+import { createContext, memo, useContext, useEffect, useMemo, useState } from 'react';
+import { IconType } from 'react-icons/lib';
 import { Badge } from '@/components/primitives/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
 import { cn } from '@/utils/ui';
@@ -49,35 +50,41 @@ export const ChainOfThought = memo(
   }
 );
 
-export type ChainOfThoughtHeaderProps = ComponentProps<typeof CollapsibleTrigger>;
+export type ChainOfThoughtHeaderProps = ComponentProps<typeof CollapsibleTrigger> & {
+  icon?: IconType | LucideIcon;
+};
 
-export const ChainOfThoughtHeader = memo(({ className, children, ...props }: ChainOfThoughtHeaderProps) => {
-  const { isOpen, setIsOpen } = useChainOfThought();
+export const ChainOfThoughtHeader = memo(
+  ({ className, children, icon: Icon = BrainIcon, ...props }: ChainOfThoughtHeaderProps) => {
+    const { isOpen, setIsOpen } = useChainOfThought();
 
-  return (
-    <Collapsible onOpenChange={setIsOpen} open={isOpen}>
-      <CollapsibleTrigger
-        className={cn(
-          'flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground cursor-pointer',
-          className
-        )}
-        {...props}
-      >
-        <BrainIcon className="size-4" />
-        <span className="flex-1 text-left">{children ?? 'Chain of Thought'}</span>
-        <ChevronDownIcon className={cn('size-4 transition-transform ', isOpen ? 'rotate-180' : 'rotate-0')} />
-      </CollapsibleTrigger>
-    </Collapsible>
-  );
-});
+    return (
+      <Collapsible onOpenChange={setIsOpen} open={isOpen}>
+        <CollapsibleTrigger
+          className={cn(
+            'flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground cursor-pointer',
+            className
+          )}
+          {...props}
+        >
+          <Icon className="size-4" />
+          <span className="flex-1 text-left">{children ?? 'Chain of Thought'}</span>
+          <ChevronDownIcon className={cn('size-4 transition-transform ', isOpen ? 'rotate-180' : 'rotate-0')} />
+        </CollapsibleTrigger>
+      </Collapsible>
+    );
+  }
+);
 
 export type ChainOfThoughtStepProps = ComponentProps<'div'> & {
   icon?: LucideIcon;
-  label: ReactNode;
+  label?: ReactNode;
   description?: ReactNode;
   status?: 'complete' | 'active' | 'pending';
   collapsible?: boolean;
+  hideLabelOnOpen?: boolean;
   defaultOpen?: boolean;
+  autoCollapse?: boolean;
 };
 
 export const ChainOfThoughtStep = memo(
@@ -88,15 +95,25 @@ export const ChainOfThoughtStep = memo(
     description,
     status = 'complete',
     collapsible = false,
+    autoCollapse = false,
     defaultOpen = true,
+    hideLabelOnOpen = false,
     children,
     ...props
   }: ChainOfThoughtStepProps) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+
     const statusStyles = {
       complete: 'text-muted-foreground',
       active: 'text-foreground',
       pending: 'text-muted-foreground/50',
     };
+
+    useEffect(() => {
+      if (autoCollapse && status === 'complete') {
+        setIsOpen(false);
+      }
+    }, [autoCollapse, status]);
 
     return (
       <div
@@ -109,7 +126,7 @@ export const ChainOfThoughtStep = memo(
         {...props}
       >
         {collapsible && children ? (
-          <Collapsible className="group flex flex-1 gap-2 w-full" defaultOpen={defaultOpen}>
+          <Collapsible className="group flex flex-1 gap-2 w-full" open={isOpen} onOpenChange={setIsOpen}>
             <div className="relative shrink-0 self-stretch">
               <CollapsibleTrigger className="block p-0 transition-opacity hover:opacity-80 h-5">
                 <ChevronRightIcon className="size-3.5 transition-transform group-data-[state=open]:rotate-90" />
@@ -117,9 +134,16 @@ export const ChainOfThoughtStep = memo(
               <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
-              <CollapsibleTrigger className="flex w-full items-start gap-2 text-left transition-opacity hover:opacity-80 h-5">
-                <div className="min-w-0 flex-1">{label}</div>
-              </CollapsibleTrigger>
+              {!!label && (
+                <CollapsibleTrigger
+                  className={cn(
+                    'flex w-full items-start gap-2 text-left transition-opacity hover:opacity-80 h-5',
+                    hideLabelOnOpen && 'data-[state=open]:hidden'
+                  )}
+                >
+                  <div className="min-w-0 flex-1">{label}</div>
+                </CollapsibleTrigger>
+              )}
               <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                 <div className="flex-1 space-y-2 overflow-hidden">
                   {description && <div className="text-muted-foreground text-xs">{description}</div>}
@@ -135,7 +159,7 @@ export const ChainOfThoughtStep = memo(
               <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
             </div>
             <div className="flex-1 space-y-2 overflow-hidden">
-              <div>{label}</div>
+              {label && <div>{label}</div>}
               {description && <div className="text-muted-foreground text-xs">{description}</div>}
               {children}
             </div>

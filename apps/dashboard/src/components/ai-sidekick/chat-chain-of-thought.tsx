@@ -1,7 +1,7 @@
 import { AiWorkflowToolsEnum } from '@novu/shared';
 import { DynamicToolUIPart, UIMessage } from 'ai';
 import { useEffect, useRef, useState } from 'react';
-import { RiExpandUpDownLine } from 'react-icons/ri';
+import { RiExpandUpDownLine, RiShapesLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
@@ -24,6 +24,18 @@ function slugify(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '');
+}
+
+function getStepLabel(text: string, maxLength = 30): string {
+  const firstLine = text.split(/\r?\n/)[0].trim();
+  if (!firstLine) return 'Reasoning...';
+
+  if (firstLine.length <= maxLength) return firstLine;
+  const truncated = firstLine.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  const cut = lastSpace > maxLength / 2 ? lastSpace : maxLength;
+
+  return `${truncated.slice(0, cut).trim()}…`;
 }
 
 function getDynamicToolParts(parts: MessagePart[], toolName: AiWorkflowToolsEnum): DynamicToolUIPart[] {
@@ -54,7 +66,7 @@ function WorkflowInitializedSection({ output }: { output: WorkflowMetadataOutput
 
   return (
     <ChainOfThoughtStep
-      label={<span className="text-label-xs font-medium text-text-sub">Workflow initialized</span>}
+      label={<span className="text-label-xs font-medium text-text-sub">Workflow metadata</span>}
       status="complete"
       collapsible
       defaultOpen={true}
@@ -149,11 +161,13 @@ function WorkflowStepsSection({
   isStreaming,
   labelStreaming,
   labelComplete,
+  toolCallLabel,
 }: {
   parts: DynamicToolUIPart[];
   isStreaming: boolean;
   labelStreaming: string;
   labelComplete: string;
+  toolCallLabel: string;
 }) {
   const stepsWithOutput = parts.filter((p) => p.state === 'output-available' && p.output);
 
@@ -168,8 +182,8 @@ function WorkflowStepsSection({
           ) : (
             <span className="text-label-xs font-medium text-text-sub">{labelComplete}</span>
           )}
-          <span className="text-label-xs text-text-sub pr-2">
-            {stepsWithOutput.length} {stepsWithOutput.length === 1 ? 'STEP' : 'STEPS'}
+          <span className="text-label-xs text-text-sub pr-2 uppercase">
+            {stepsWithOutput.length} {stepsWithOutput.length === 1 ? toolCallLabel : `${toolCallLabel}s`}
           </span>
         </span>
       }
@@ -189,13 +203,17 @@ function WorkflowStepsSection({
   );
 }
 
-type ChatChainOfThoughtProps = {
+type ChatChainOfThoughtReasoningProps = {
   defaultIsExpanded?: boolean;
   message: UIMessage;
   isStreaming: boolean;
 };
 
-export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: ChatChainOfThoughtProps) {
+export function ChatChainOfThoughtReasoning({
+  defaultIsExpanded,
+  message,
+  isStreaming,
+}: ChatChainOfThoughtReasoningProps) {
   const [isExpanded, setIsExpanded] = useState(defaultIsExpanded ?? false);
   const [thinkingDuration, setThinkingDuration] = useState<number | null>(null);
   const wasStreamingRef = useRef(isStreaming);
@@ -218,12 +236,83 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
   }, [isStreaming]);
 
   const parts = message.parts ?? [];
+  const reasoningItems = parts.filter(
+    (p) => p.type === 'reasoning' && 'text' in p && typeof (p as { text: string }).text === 'string'
+  ) as Array<{ type: 'reasoning'; text: string; state?: 'streaming' | 'done' }>;
+
+  const hasContent = reasoningItems.length > 0;
+
+  if (!hasContent && !isStreaming && !thinkingDuration) {
+    return null;
+  }
+
+  const headerText = isStreaming
+    ? 'Thinking...'
+    : thinkingDuration !== null
+      ? `Thought for ${thinkingDuration}s`
+      : 'Thought';
+
+  return (
+    <ChainOfThought open={isExpanded} onOpenChange={setIsExpanded}>
+      <ChainOfThoughtHeader className="text-label-xs">
+        {isStreaming ? <Shimmer>{headerText}</Shimmer> : headerText}
+      </ChainOfThoughtHeader>
+      <ChainOfThoughtContent>
+        <div className="flex flex-col gap-3">
+          {reasoningItems.map((item, index) => (
+            <ChainOfThoughtStep
+              key={`reasoning-${index}`}
+              label={<StyledMessageResponse>{getStepLabel(item.text)}</StyledMessageResponse>}
+              hideLabelOnOpen
+              collapsible
+              autoCollapse
+              status={item.state === 'streaming' ? 'active' : 'complete'}
+              defaultOpen={item.state === 'streaming'}
+            >
+              <StyledMessageResponse>{item.text}</StyledMessageResponse>
+            </ChainOfThoughtStep>
+          ))}
+        </div>
+      </ChainOfThoughtContent>
+    </ChainOfThought>
+  );
+}
+
+type ChatChainOfThoughtToolCallsProps = {
+  defaultIsExpanded?: boolean;
+  message: UIMessage;
+  isStreaming: boolean;
+};
+
+export function ChatChainOfThoughtToolCalls({
+  defaultIsExpanded,
+  message,
+  isStreaming,
+}: ChatChainOfThoughtToolCallsProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultIsExpanded ?? false);
+  const parts = message.parts ?? [];
   const addStepParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.ADD_STEP);
   const editStepParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.EDIT_STEP_CONTENT);
+  const [thinkingDuration, setThinkingDuration] = useState<number | null>(null);
+  const wasStreamingRef = useRef(isStreaming);
+  const startTimeRef = useRef<number | null>(null);
 
-  const renderItems: Array<
-    | { type: 'text'; text: string; state?: 'streaming' | 'done' }
-    | { type: 'reasoning'; text: string; state?: 'streaming' | 'done' }
+  useEffect(() => {
+    if (isStreaming && !wasStreamingRef.current) {
+      startTimeRef.current = Date.now();
+      setThinkingDuration(null);
+    }
+
+    if (wasStreamingRef.current && !isStreaming) {
+      if (startTimeRef.current) {
+        const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+        setThinkingDuration(duration);
+      }
+    }
+    wasStreamingRef.current = isStreaming;
+  }, [isStreaming]);
+
+  const toolItems: Array<
     | { type: 'workflowInit'; output: WorkflowMetadataOutput }
     | { type: 'addStep'; steps: DynamicToolUIPart[] }
     | { type: 'editStep'; steps: DynamicToolUIPart[] }
@@ -234,14 +323,6 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
   let editStepContentAdded = false;
 
   for (const part of parts) {
-    if (part.type === 'reasoning' && 'text' in part && typeof part.text === 'string') {
-      renderItems.push({ type: 'reasoning', text: part.text, state: part.state });
-    }
-
-    if (part.type === 'text' && typeof part.text === 'string' && !part.text.startsWith('{')) {
-      renderItems.push({ type: 'text', text: part.text, state: part.state });
-    }
-
     if (part.type.startsWith('dynamic-tool')) {
       const tool = part as DynamicToolUIPart;
 
@@ -251,14 +332,14 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
         tool.output &&
         !workflowInitAdded
       ) {
-        renderItems.push({ type: 'workflowInit', output: tool.output as WorkflowMetadataOutput });
+        toolItems.push({ type: 'workflowInit', output: tool.output as WorkflowMetadataOutput });
         workflowInitAdded = true;
       }
 
       if (tool.toolName === AiWorkflowToolsEnum.ADD_STEP && !buildWorkflowAdded) {
         const stepsSoFar = addStepParts.filter((p) => p.state === 'output-available' && p.output);
         if (stepsSoFar.length > 0) {
-          renderItems.push({ type: 'addStep', steps: stepsSoFar });
+          toolItems.push({ type: 'addStep', steps: stepsSoFar });
           buildWorkflowAdded = true;
         }
       }
@@ -266,16 +347,17 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
       if (tool.toolName === AiWorkflowToolsEnum.EDIT_STEP_CONTENT && !editStepContentAdded) {
         const stepsSoFar = editStepParts.filter((p) => p.state === 'output-available' && p.output);
         if (stepsSoFar.length > 0) {
-          renderItems.push({ type: 'editStep', steps: stepsSoFar });
+          toolItems.push({ type: 'editStep', steps: stepsSoFar });
           editStepContentAdded = true;
         }
       }
     }
   }
 
-  const hasContent = renderItems.length > 0;
+  const hasContent = toolItems.length > 0;
+  const hasToolParts = parts.some((p) => p.type?.startsWith('dynamic-tool'));
 
-  if (!hasContent && !isStreaming && !thinkingDuration) {
+  if (!hasContent && !(isStreaming && hasToolParts)) {
     return null;
   }
 
@@ -287,32 +369,12 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
 
   return (
     <ChainOfThought open={isExpanded} onOpenChange={setIsExpanded}>
-      <ChainOfThoughtHeader className="text-label-xs">
+      <ChainOfThoughtHeader className="text-label-xs" icon={RiShapesLine}>
         {isStreaming ? <Shimmer>{headerText}</Shimmer> : headerText}
       </ChainOfThoughtHeader>
       <ChainOfThoughtContent>
         <div className="flex flex-col gap-3">
-          {renderItems.map((item, index) => {
-            if (item.type === 'reasoning' || item.type === 'text') {
-              return (
-                <ChainOfThoughtStep
-                  key={`reasoning-${index}`}
-                  label={
-                    item.state !== 'streaming' ? (
-                      <span className="text-label-xs font-medium text-text-sub">Thought</span>
-                    ) : (
-                      <Shimmer className={cn('text-label-xs font-medium')}>Thinking...</Shimmer>
-                    )
-                  }
-                  status={item.state === 'streaming' ? 'active' : 'complete'}
-                  collapsible
-                  defaultOpen={true}
-                >
-                  <StyledMessageResponse>{item.text}</StyledMessageResponse>
-                </ChainOfThoughtStep>
-              );
-            }
-
+          {toolItems.map((item) => {
             if (item.type === 'workflowInit') {
               return <WorkflowInitializedSection key="workflow-init" output={item.output} />;
             }
@@ -325,6 +387,7 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
                   isStreaming={isStreaming}
                   labelStreaming="Building the workflow structure"
                   labelComplete="Built the workflow structure"
+                  toolCallLabel="STEP"
                 />
               );
             }
@@ -337,6 +400,7 @@ export function ChatChainOfThought({ defaultIsExpanded, message, isStreaming }: 
                   isStreaming={isStreaming}
                   labelStreaming="Editing step content"
                   labelComplete="Edited step content"
+                  toolCallLabel="EDIT"
                 />
               );
             }

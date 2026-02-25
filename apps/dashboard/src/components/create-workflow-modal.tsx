@@ -430,13 +430,13 @@ function GuidedModeContent({ onSubmit, isGenerating }: GuidedModeContentProps) {
             </Tag>
           </button>
         ))}
-        <Button
+        {/* <Button
           className="cursor-pointer h-6 [&_svg]:size-2.5"
           variant="secondary"
           mode="ghost"
           size="2xs"
           trailingIcon={RiLoopLeftLine}
-        />
+        /> */}
       </div>
       <Form {...form}>
         <FormRoot
