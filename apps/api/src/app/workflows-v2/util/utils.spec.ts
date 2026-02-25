@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { JsonSchemaTypeEnum } from '@novu/dal';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { keysToObject, mockSchemaDefaults } from './utils';
@@ -251,12 +252,12 @@ describe('keysToObject', () => {
 describe('mockSchemaDefaults', () => {
   it('should preserve falsy default values (0, false, null, empty string)', () => {
     const schema: JSONSchemaDto = {
-      type: 'object',
+      type: JsonSchemaTypeEnum.OBJECT,
       properties: {
-        insured_value: { type: 'number', default: 0 },
-        is_return: { type: 'boolean', default: false },
-        insurance_policy_id: { type: 'number', default: null },
-        empty_string: { type: 'string', default: '' },
+        insured_value: { type: JsonSchemaTypeEnum.NUMBER, default: 0 },
+        is_return: { type: JsonSchemaTypeEnum.BOOLEAN, default: false },
+        insurance_policy_id: { type: JsonSchemaTypeEnum.NUMBER, default: null },
+        empty_string: { type: JsonSchemaTypeEnum.STRING, default: '' },
       },
     };
 
@@ -270,10 +271,10 @@ describe('mockSchemaDefaults', () => {
 
   it('should add template string defaults for properties without defaults', () => {
     const schema: JSONSchemaDto = {
-      type: 'object',
+      type: JsonSchemaTypeEnum.OBJECT,
       properties: {
-        name: { type: 'string' },
-        age: { type: 'number' },
+        name: { type: JsonSchemaTypeEnum.STRING },
+        age: { type: JsonSchemaTypeEnum.NUMBER },
       },
     };
 
@@ -285,11 +286,11 @@ describe('mockSchemaDefaults', () => {
 
   it('should preserve truthy default values', () => {
     const schema: JSONSchemaDto = {
-      type: 'object',
+      type: JsonSchemaTypeEnum.OBJECT,
       properties: {
-        name: { type: 'string', default: 'John' },
-        count: { type: 'number', default: 42 },
-        active: { type: 'boolean', default: true },
+        name: { type: JsonSchemaTypeEnum.STRING, default: 'John' },
+        count: { type: JsonSchemaTypeEnum.NUMBER, default: 42 },
+        active: { type: JsonSchemaTypeEnum.BOOLEAN, default: true },
       },
     };
 
