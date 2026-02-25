@@ -26,6 +26,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "jwks-rsa": "^3.1.0",
+    "mongoose": "^8.9.5",
     "svix": "^1.64.1"
   },
   "devDependencies": {
@@ -47,7 +48,6 @@
     "@nestjs/jwt": "10.2.0",
     "@nestjs/passport": "10.0.3",
     "@nestjs/swagger": "7.4.0",
-    "mongoose": "^8.9.5",
     "passport": "0.7.0",
     "passport-jwt": "^4.0.0"
   }
