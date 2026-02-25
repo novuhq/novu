@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Ordinal position for the digest
@@ -20,8 +19,7 @@ export const OrdinalEnum = {
 /**
  * Ordinal position for the digest
  */
-export type OrdinalEnum = OpenEnum<typeof OrdinalEnum>;
+export type OrdinalEnum = ClosedEnum<typeof OrdinalEnum>;
 
 /** @internal */
-export const OrdinalEnum$inboundSchema: z.ZodType<OrdinalEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(OrdinalEnum);
+export const OrdinalEnum$inboundSchema: z.ZodNativeEnum<typeof OrdinalEnum> = z.nativeEnum(OrdinalEnum);

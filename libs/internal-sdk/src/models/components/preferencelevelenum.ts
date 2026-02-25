@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * The level of the preference (global or template)
@@ -16,8 +15,8 @@ export const PreferenceLevelEnum = {
 /**
  * The level of the preference (global or template)
  */
-export type PreferenceLevelEnum = OpenEnum<typeof PreferenceLevelEnum>;
+export type PreferenceLevelEnum = ClosedEnum<typeof PreferenceLevelEnum>;
 
 /** @internal */
-export const PreferenceLevelEnum$inboundSchema: z.ZodType<PreferenceLevelEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(PreferenceLevelEnum);
+export const PreferenceLevelEnum$inboundSchema: z.ZodNativeEnum<typeof PreferenceLevelEnum> =
+  z.nativeEnum(PreferenceLevelEnum);

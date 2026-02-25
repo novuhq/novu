@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Severity of the workflow
@@ -18,11 +17,11 @@ export const SeverityLevelEnum = {
 /**
  * Severity of the workflow
  */
-export type SeverityLevelEnum = OpenEnum<typeof SeverityLevelEnum>;
+export type SeverityLevelEnum = ClosedEnum<typeof SeverityLevelEnum>;
 
 /** @internal */
-export const SeverityLevelEnum$inboundSchema: z.ZodType<SeverityLevelEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(SeverityLevelEnum);
+export const SeverityLevelEnum$inboundSchema: z.ZodNativeEnum<typeof SeverityLevelEnum> =
+  z.nativeEnum(SeverityLevelEnum);
 /** @internal */
-export const SeverityLevelEnum$outboundSchema: z.ZodType<string, z.ZodTypeDef, SeverityLevelEnum> =
-  openEnums.outboundSchema(SeverityLevelEnum);
+export const SeverityLevelEnum$outboundSchema: z.ZodNativeEnum<typeof SeverityLevelEnum> =
+  SeverityLevelEnum$inboundSchema;

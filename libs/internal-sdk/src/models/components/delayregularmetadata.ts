@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { ClosedEnum, OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -17,7 +16,7 @@ export const DelayRegularMetadataUnit = {
   Weeks: 'weeks',
   Months: 'months',
 } as const;
-export type DelayRegularMetadataUnit = OpenEnum<typeof DelayRegularMetadataUnit>;
+export type DelayRegularMetadataUnit = ClosedEnum<typeof DelayRegularMetadataUnit>;
 
 export const DelayRegularMetadataType = {
   Regular: 'regular',
@@ -31,8 +30,8 @@ export type DelayRegularMetadata = {
 };
 
 /** @internal */
-export const DelayRegularMetadataUnit$inboundSchema: z.ZodType<DelayRegularMetadataUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DelayRegularMetadataUnit);
+export const DelayRegularMetadataUnit$inboundSchema: z.ZodNativeEnum<typeof DelayRegularMetadataUnit> =
+  z.nativeEnum(DelayRegularMetadataUnit);
 
 /** @internal */
 export const DelayRegularMetadataType$inboundSchema: z.ZodNativeEnum<typeof DelayRegularMetadataType> =

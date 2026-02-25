@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -37,7 +36,7 @@ export const Status = {
 /**
  * Status of the event
  */
-export type Status = OpenEnum<typeof Status>;
+export type Status = ClosedEnum<typeof Status>;
 
 export type EventBody = {
   /**
@@ -67,7 +66,7 @@ export type EventBody = {
 };
 
 /** @internal */
-export const Status$inboundSchema: z.ZodType<Status, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Status);
+export const Status$inboundSchema: z.ZodNativeEnum<typeof Status> = z.nativeEnum(Status);
 
 /** @internal */
 export const EventBody$inboundSchema: z.ZodType<EventBody, z.ZodTypeDef, unknown> = z.object({

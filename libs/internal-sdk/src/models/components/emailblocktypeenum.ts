@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Type of the email block
@@ -16,8 +15,8 @@ export const EmailBlockTypeEnum = {
 /**
  * Type of the email block
  */
-export type EmailBlockTypeEnum = OpenEnum<typeof EmailBlockTypeEnum>;
+export type EmailBlockTypeEnum = ClosedEnum<typeof EmailBlockTypeEnum>;
 
 /** @internal */
-export const EmailBlockTypeEnum$inboundSchema: z.ZodType<EmailBlockTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(EmailBlockTypeEnum);
+export const EmailBlockTypeEnum$inboundSchema: z.ZodNativeEnum<typeof EmailBlockTypeEnum> =
+  z.nativeEnum(EmailBlockTypeEnum);

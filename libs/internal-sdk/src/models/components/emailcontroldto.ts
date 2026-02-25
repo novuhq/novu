@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -19,7 +18,7 @@ export const EmailControlDtoEditorType = {
 /**
  * Type of editor to use for the body.
  */
-export type EmailControlDtoEditorType = OpenEnum<typeof EmailControlDtoEditorType>;
+export type EmailControlDtoEditorType = ClosedEnum<typeof EmailControlDtoEditorType>;
 
 /**
  * Type of renderer to use (raw HTML or React Email step resolver)
@@ -31,7 +30,7 @@ export const RendererType = {
 /**
  * Type of renderer to use (raw HTML or React Email step resolver)
  */
-export type RendererType = OpenEnum<typeof RendererType>;
+export type RendererType = ClosedEnum<typeof RendererType>;
 
 export type EmailControlDto = {
   /**
@@ -65,18 +64,16 @@ export type EmailControlDto = {
 };
 
 /** @internal */
-export const EmailControlDtoEditorType$inboundSchema: z.ZodType<EmailControlDtoEditorType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(EmailControlDtoEditorType);
+export const EmailControlDtoEditorType$inboundSchema: z.ZodNativeEnum<typeof EmailControlDtoEditorType> =
+  z.nativeEnum(EmailControlDtoEditorType);
 /** @internal */
-export const EmailControlDtoEditorType$outboundSchema: z.ZodType<string, z.ZodTypeDef, EmailControlDtoEditorType> =
-  openEnums.outboundSchema(EmailControlDtoEditorType);
+export const EmailControlDtoEditorType$outboundSchema: z.ZodNativeEnum<typeof EmailControlDtoEditorType> =
+  EmailControlDtoEditorType$inboundSchema;
 
 /** @internal */
-export const RendererType$inboundSchema: z.ZodType<RendererType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(RendererType);
+export const RendererType$inboundSchema: z.ZodNativeEnum<typeof RendererType> = z.nativeEnum(RendererType);
 /** @internal */
-export const RendererType$outboundSchema: z.ZodType<string, z.ZodTypeDef, RendererType> =
-  openEnums.outboundSchema(RendererType);
+export const RendererType$outboundSchema: z.ZodNativeEnum<typeof RendererType> = RendererType$inboundSchema;
 
 /** @internal */
 export const EmailControlDto$inboundSchema: z.ZodType<EmailControlDto, z.ZodTypeDef, unknown> = z.object({

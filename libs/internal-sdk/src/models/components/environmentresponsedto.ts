@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { ApiKeyDto, ApiKeyDto$inboundSchema } from './apikeydto.js';
@@ -21,7 +20,7 @@ export const EnvironmentResponseDtoType = {
 /**
  * Type of the environment
  */
-export type EnvironmentResponseDtoType = OpenEnum<typeof EnvironmentResponseDtoType>;
+export type EnvironmentResponseDtoType = ClosedEnum<typeof EnvironmentResponseDtoType>;
 
 export type EnvironmentResponseDto = {
   /**
@@ -59,8 +58,8 @@ export type EnvironmentResponseDto = {
 };
 
 /** @internal */
-export const EnvironmentResponseDtoType$inboundSchema: z.ZodType<EnvironmentResponseDtoType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(EnvironmentResponseDtoType);
+export const EnvironmentResponseDtoType$inboundSchema: z.ZodNativeEnum<typeof EnvironmentResponseDtoType> =
+  z.nativeEnum(EnvironmentResponseDtoType);
 
 /** @internal */
 export const EnvironmentResponseDto$inboundSchema: z.ZodType<EnvironmentResponseDto, z.ZodTypeDef, unknown> = z

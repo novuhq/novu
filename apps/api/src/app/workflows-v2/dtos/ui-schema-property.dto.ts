@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, ApiPropertyOptions, getSchemaPath } from '@nestjs/swagger';
 import { UiComponentEnum } from '@novu/shared';
 import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
 
@@ -40,7 +40,14 @@ export class UiSchemaProperty {
     description: 'Component type for the UI Schema Property',
     enum: [...Object.values(UiComponentEnum)],
     enumName: 'UiComponentEnum',
-  })
+    /**
+     * Your notification system starts with email and sms, then you add push notifications.
+     * Without forward compatibility, SDK users on older versions see errors until they upgrade.
+     * With forward compatibility enabled, they receive the value gracefully.
+     * @see https://www.speakeasy.com/blog/typescript-forward-compatibility#forward-compatible-enums
+     */
+    'x-speakeasy-unknown-values': 'allow',
+  } as unknown as ApiPropertyOptions)
   @IsEnum(UiComponentEnum)
   component: UiComponentEnum;
 

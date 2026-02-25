@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { PhoneEndpointDto, PhoneEndpointDto$inboundSchema } from './phoneendpointdto.js';
@@ -26,7 +25,7 @@ export const GetChannelEndpointResponseDtoChannel = {
 /**
  * The channel type (email, sms, push, chat, etc.).
  */
-export type GetChannelEndpointResponseDtoChannel = OpenEnum<typeof GetChannelEndpointResponseDtoChannel>;
+export type GetChannelEndpointResponseDtoChannel = ClosedEnum<typeof GetChannelEndpointResponseDtoChannel>;
 
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
@@ -114,7 +113,7 @@ export const GetChannelEndpointResponseDtoProviderId = {
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
-export type GetChannelEndpointResponseDtoProviderId = OpenEnum<typeof GetChannelEndpointResponseDtoProviderId>;
+export type GetChannelEndpointResponseDtoProviderId = ClosedEnum<typeof GetChannelEndpointResponseDtoProviderId>;
 
 /**
  * Type of channel endpoint
@@ -130,7 +129,7 @@ export const GetChannelEndpointResponseDtoType = {
 /**
  * Type of channel endpoint
  */
-export type GetChannelEndpointResponseDtoType = OpenEnum<typeof GetChannelEndpointResponseDtoType>;
+export type GetChannelEndpointResponseDtoType = ClosedEnum<typeof GetChannelEndpointResponseDtoType>;
 
 /**
  * Endpoint data specific to the channel type
@@ -185,25 +184,19 @@ export type GetChannelEndpointResponseDto = {
 };
 
 /** @internal */
-export const GetChannelEndpointResponseDtoChannel$inboundSchema: z.ZodType<
-  GetChannelEndpointResponseDtoChannel,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(GetChannelEndpointResponseDtoChannel);
+export const GetChannelEndpointResponseDtoChannel$inboundSchema: z.ZodNativeEnum<
+  typeof GetChannelEndpointResponseDtoChannel
+> = z.nativeEnum(GetChannelEndpointResponseDtoChannel);
 
 /** @internal */
-export const GetChannelEndpointResponseDtoProviderId$inboundSchema: z.ZodType<
-  GetChannelEndpointResponseDtoProviderId,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(GetChannelEndpointResponseDtoProviderId);
+export const GetChannelEndpointResponseDtoProviderId$inboundSchema: z.ZodNativeEnum<
+  typeof GetChannelEndpointResponseDtoProviderId
+> = z.nativeEnum(GetChannelEndpointResponseDtoProviderId);
 
 /** @internal */
-export const GetChannelEndpointResponseDtoType$inboundSchema: z.ZodType<
-  GetChannelEndpointResponseDtoType,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(GetChannelEndpointResponseDtoType);
+export const GetChannelEndpointResponseDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof GetChannelEndpointResponseDtoType
+> = z.nativeEnum(GetChannelEndpointResponseDtoType);
 
 /** @internal */
 export const Endpoint$inboundSchema: z.ZodType<Endpoint, z.ZodTypeDef, unknown> = z.union([

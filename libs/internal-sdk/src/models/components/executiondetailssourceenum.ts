@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Source of the execution detail
@@ -18,8 +17,8 @@ export const ExecutionDetailsSourceEnum = {
 /**
  * Source of the execution detail
  */
-export type ExecutionDetailsSourceEnum = OpenEnum<typeof ExecutionDetailsSourceEnum>;
+export type ExecutionDetailsSourceEnum = ClosedEnum<typeof ExecutionDetailsSourceEnum>;
 
 /** @internal */
-export const ExecutionDetailsSourceEnum$inboundSchema: z.ZodType<ExecutionDetailsSourceEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ExecutionDetailsSourceEnum);
+export const ExecutionDetailsSourceEnum$inboundSchema: z.ZodNativeEnum<typeof ExecutionDetailsSourceEnum> =
+  z.nativeEnum(ExecutionDetailsSourceEnum);

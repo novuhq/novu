@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Type of step content issue
@@ -18,8 +17,7 @@ export const ContentIssueEnum = {
 /**
  * Type of step content issue
  */
-export type ContentIssueEnum = OpenEnum<typeof ContentIssueEnum>;
+export type ContentIssueEnum = ClosedEnum<typeof ContentIssueEnum>;
 
 /** @internal */
-export const ContentIssueEnum$inboundSchema: z.ZodType<ContentIssueEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ContentIssueEnum);
+export const ContentIssueEnum$inboundSchema: z.ZodNativeEnum<typeof ContentIssueEnum> = z.nativeEnum(ContentIssueEnum);

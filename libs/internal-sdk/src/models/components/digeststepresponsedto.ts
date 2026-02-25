@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { collectExtraKeys as collectExtraKeys$, safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
@@ -27,7 +26,7 @@ export const DigestStepResponseDtoType = {
 /**
  * The type of digest strategy. Determines which fields are applicable.
  */
-export type DigestStepResponseDtoType = OpenEnum<typeof DigestStepResponseDtoType>;
+export type DigestStepResponseDtoType = ClosedEnum<typeof DigestStepResponseDtoType>;
 
 /**
  * The unit of time for the digest interval (for REGULAR type).
@@ -43,7 +42,7 @@ export const DigestStepResponseDtoUnit = {
 /**
  * The unit of time for the digest interval (for REGULAR type).
  */
-export type DigestStepResponseDtoUnit = OpenEnum<typeof DigestStepResponseDtoUnit>;
+export type DigestStepResponseDtoUnit = ClosedEnum<typeof DigestStepResponseDtoUnit>;
 
 /**
  * Control values for the digest step
@@ -132,12 +131,12 @@ export type DigestStepResponseDto = {
 };
 
 /** @internal */
-export const DigestStepResponseDtoType$inboundSchema: z.ZodType<DigestStepResponseDtoType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestStepResponseDtoType);
+export const DigestStepResponseDtoType$inboundSchema: z.ZodNativeEnum<typeof DigestStepResponseDtoType> =
+  z.nativeEnum(DigestStepResponseDtoType);
 
 /** @internal */
-export const DigestStepResponseDtoUnit$inboundSchema: z.ZodType<DigestStepResponseDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestStepResponseDtoUnit);
+export const DigestStepResponseDtoUnit$inboundSchema: z.ZodNativeEnum<typeof DigestStepResponseDtoUnit> =
+  z.nativeEnum(DigestStepResponseDtoUnit);
 
 /** @internal */
 export const DigestStepResponseDtoControlValues$inboundSchema: z.ZodType<

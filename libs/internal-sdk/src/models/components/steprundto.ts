@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { DigestMetadataDto, DigestMetadataDto$inboundSchema } from './digestmetadatadto.js';
@@ -28,7 +27,7 @@ export const StepRunDtoStatus = {
 /**
  * Step status
  */
-export type StepRunDtoStatus = OpenEnum<typeof StepRunDtoStatus>;
+export type StepRunDtoStatus = ClosedEnum<typeof StepRunDtoStatus>;
 
 export type StepRunDto = {
   /**
@@ -74,8 +73,7 @@ export type StepRunDto = {
 };
 
 /** @internal */
-export const StepRunDtoStatus$inboundSchema: z.ZodType<StepRunDtoStatus, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(StepRunDtoStatus);
+export const StepRunDtoStatus$inboundSchema: z.ZodNativeEnum<typeof StepRunDtoStatus> = z.nativeEnum(StepRunDtoStatus);
 
 /** @internal */
 export const StepRunDto$inboundSchema: z.ZodType<StepRunDto, z.ZodTypeDef, unknown> = z.object({

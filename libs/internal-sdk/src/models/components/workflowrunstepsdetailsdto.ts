@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -26,7 +25,7 @@ export const WorkflowRunStepsDetailsDtoStatus = {
 /**
  * Step status
  */
-export type WorkflowRunStepsDetailsDtoStatus = OpenEnum<typeof WorkflowRunStepsDetailsDtoStatus>;
+export type WorkflowRunStepsDetailsDtoStatus = ClosedEnum<typeof WorkflowRunStepsDetailsDtoStatus>;
 
 export type WorkflowRunStepsDetailsDto = {
   /**
@@ -48,11 +47,8 @@ export type WorkflowRunStepsDetailsDto = {
 };
 
 /** @internal */
-export const WorkflowRunStepsDetailsDtoStatus$inboundSchema: z.ZodType<
-  WorkflowRunStepsDetailsDtoStatus,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(WorkflowRunStepsDetailsDtoStatus);
+export const WorkflowRunStepsDetailsDtoStatus$inboundSchema: z.ZodNativeEnum<typeof WorkflowRunStepsDetailsDtoStatus> =
+  z.nativeEnum(WorkflowRunStepsDetailsDtoStatus);
 
 /** @internal */
 export const WorkflowRunStepsDetailsDto$inboundSchema: z.ZodType<WorkflowRunStepsDetailsDto, z.ZodTypeDef, unknown> =

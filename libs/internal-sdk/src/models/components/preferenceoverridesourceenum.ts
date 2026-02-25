@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * The source of overrides
@@ -17,11 +16,8 @@ export const PreferenceOverrideSourceEnum = {
 /**
  * The source of overrides
  */
-export type PreferenceOverrideSourceEnum = OpenEnum<typeof PreferenceOverrideSourceEnum>;
+export type PreferenceOverrideSourceEnum = ClosedEnum<typeof PreferenceOverrideSourceEnum>;
 
 /** @internal */
-export const PreferenceOverrideSourceEnum$inboundSchema: z.ZodType<
-  PreferenceOverrideSourceEnum,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(PreferenceOverrideSourceEnum);
+export const PreferenceOverrideSourceEnum$inboundSchema: z.ZodNativeEnum<typeof PreferenceOverrideSourceEnum> =
+  z.nativeEnum(PreferenceOverrideSourceEnum);

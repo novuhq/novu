@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Text alignment for the email block
@@ -17,8 +16,7 @@ export const TextAlignEnum = {
 /**
  * Text alignment for the email block
  */
-export type TextAlignEnum = OpenEnum<typeof TextAlignEnum>;
+export type TextAlignEnum = ClosedEnum<typeof TextAlignEnum>;
 
 /** @internal */
-export const TextAlignEnum$inboundSchema: z.ZodType<TextAlignEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(TextAlignEnum);
+export const TextAlignEnum$inboundSchema: z.ZodNativeEnum<typeof TextAlignEnum> = z.nativeEnum(TextAlignEnum);

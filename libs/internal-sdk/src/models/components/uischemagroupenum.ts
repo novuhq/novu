@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Group of the UI Schema
@@ -24,8 +23,8 @@ export const UiSchemaGroupEnum = {
 /**
  * Group of the UI Schema
  */
-export type UiSchemaGroupEnum = OpenEnum<typeof UiSchemaGroupEnum>;
+export type UiSchemaGroupEnum = ClosedEnum<typeof UiSchemaGroupEnum>;
 
 /** @internal */
-export const UiSchemaGroupEnum$inboundSchema: z.ZodType<UiSchemaGroupEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(UiSchemaGroupEnum);
+export const UiSchemaGroupEnum$inboundSchema: z.ZodNativeEnum<typeof UiSchemaGroupEnum> =
+  z.nativeEnum(UiSchemaGroupEnum);

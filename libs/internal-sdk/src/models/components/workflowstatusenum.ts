@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Status of the workflow
@@ -17,11 +16,11 @@ export const WorkflowStatusEnum = {
 /**
  * Status of the workflow
  */
-export type WorkflowStatusEnum = OpenEnum<typeof WorkflowStatusEnum>;
+export type WorkflowStatusEnum = ClosedEnum<typeof WorkflowStatusEnum>;
 
 /** @internal */
-export const WorkflowStatusEnum$inboundSchema: z.ZodType<WorkflowStatusEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(WorkflowStatusEnum);
+export const WorkflowStatusEnum$inboundSchema: z.ZodNativeEnum<typeof WorkflowStatusEnum> =
+  z.nativeEnum(WorkflowStatusEnum);
 /** @internal */
-export const WorkflowStatusEnum$outboundSchema: z.ZodType<string, z.ZodTypeDef, WorkflowStatusEnum> =
-  openEnums.outboundSchema(WorkflowStatusEnum);
+export const WorkflowStatusEnum$outboundSchema: z.ZodNativeEnum<typeof WorkflowStatusEnum> =
+  WorkflowStatusEnum$inboundSchema;

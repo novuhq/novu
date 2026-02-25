@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 export const BuilderFieldTypeEnum = {
   Boolean: 'BOOLEAN',
@@ -16,11 +15,11 @@ export const BuilderFieldTypeEnum = {
   MultiList: 'MULTI_LIST',
   Group: 'GROUP',
 } as const;
-export type BuilderFieldTypeEnum = OpenEnum<typeof BuilderFieldTypeEnum>;
+export type BuilderFieldTypeEnum = ClosedEnum<typeof BuilderFieldTypeEnum>;
 
 /** @internal */
-export const BuilderFieldTypeEnum$inboundSchema: z.ZodType<BuilderFieldTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(BuilderFieldTypeEnum);
+export const BuilderFieldTypeEnum$inboundSchema: z.ZodNativeEnum<typeof BuilderFieldTypeEnum> =
+  z.nativeEnum(BuilderFieldTypeEnum);
 /** @internal */
-export const BuilderFieldTypeEnum$outboundSchema: z.ZodType<string, z.ZodTypeDef, BuilderFieldTypeEnum> =
-  openEnums.outboundSchema(BuilderFieldTypeEnum);
+export const BuilderFieldTypeEnum$outboundSchema: z.ZodNativeEnum<typeof BuilderFieldTypeEnum> =
+  BuilderFieldTypeEnum$inboundSchema;

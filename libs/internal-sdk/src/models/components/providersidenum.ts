@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Provider ID of the job
@@ -92,11 +91,9 @@ export const ProvidersIdEnum = {
 /**
  * Provider ID of the job
  */
-export type ProvidersIdEnum = OpenEnum<typeof ProvidersIdEnum>;
+export type ProvidersIdEnum = ClosedEnum<typeof ProvidersIdEnum>;
 
 /** @internal */
-export const ProvidersIdEnum$inboundSchema: z.ZodType<ProvidersIdEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ProvidersIdEnum);
+export const ProvidersIdEnum$inboundSchema: z.ZodNativeEnum<typeof ProvidersIdEnum> = z.nativeEnum(ProvidersIdEnum);
 /** @internal */
-export const ProvidersIdEnum$outboundSchema: z.ZodType<string, z.ZodTypeDef, ProvidersIdEnum> =
-  openEnums.outboundSchema(ProvidersIdEnum);
+export const ProvidersIdEnum$outboundSchema: z.ZodNativeEnum<typeof ProvidersIdEnum> = ProvidersIdEnum$inboundSchema;

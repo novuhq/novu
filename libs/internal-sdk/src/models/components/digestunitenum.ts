@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Regular digest: Unit for backoff
@@ -20,8 +19,7 @@ export const DigestUnitEnum = {
 /**
  * Regular digest: Unit for backoff
  */
-export type DigestUnitEnum = OpenEnum<typeof DigestUnitEnum>;
+export type DigestUnitEnum = ClosedEnum<typeof DigestUnitEnum>;
 
 /** @internal */
-export const DigestUnitEnum$inboundSchema: z.ZodType<DigestUnitEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestUnitEnum);
+export const DigestUnitEnum$inboundSchema: z.ZodNativeEnum<typeof DigestUnitEnum> = z.nativeEnum(DigestUnitEnum);

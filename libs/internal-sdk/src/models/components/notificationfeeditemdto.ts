@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { ActorFeedItemDto, ActorFeedItemDto$inboundSchema } from './actorfeeditemdto.js';
@@ -25,7 +24,7 @@ export const NotificationFeedItemDtoStatus = {
 /**
  * Current status of the notification.
  */
-export type NotificationFeedItemDtoStatus = OpenEnum<typeof NotificationFeedItemDtoStatus>;
+export type NotificationFeedItemDtoStatus = ClosedEnum<typeof NotificationFeedItemDtoStatus>;
 
 export type NotificationFeedItemDto = {
   /**
@@ -147,11 +146,8 @@ export type NotificationFeedItemDto = {
 };
 
 /** @internal */
-export const NotificationFeedItemDtoStatus$inboundSchema: z.ZodType<
-  NotificationFeedItemDtoStatus,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(NotificationFeedItemDtoStatus);
+export const NotificationFeedItemDtoStatus$inboundSchema: z.ZodNativeEnum<typeof NotificationFeedItemDtoStatus> =
+  z.nativeEnum(NotificationFeedItemDtoStatus);
 
 /** @internal */
 export const NotificationFeedItemDto$inboundSchema: z.ZodType<NotificationFeedItemDto, z.ZodTypeDef, unknown> = z

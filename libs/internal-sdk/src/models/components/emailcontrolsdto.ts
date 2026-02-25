@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -19,7 +18,7 @@ export const EditorType = {
 /**
  * Editor type of the layout.
  */
-export type EditorType = OpenEnum<typeof EditorType>;
+export type EditorType = ClosedEnum<typeof EditorType>;
 
 export type EmailControlsDto = {
   /**
@@ -33,11 +32,9 @@ export type EmailControlsDto = {
 };
 
 /** @internal */
-export const EditorType$inboundSchema: z.ZodType<EditorType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(EditorType);
+export const EditorType$inboundSchema: z.ZodNativeEnum<typeof EditorType> = z.nativeEnum(EditorType);
 /** @internal */
-export const EditorType$outboundSchema: z.ZodType<string, z.ZodTypeDef, EditorType> =
-  openEnums.outboundSchema(EditorType);
+export const EditorType$outboundSchema: z.ZodNativeEnum<typeof EditorType> = EditorType$inboundSchema;
 
 /** @internal */
 export const EmailControlsDto$inboundSchema: z.ZodType<EmailControlsDto, z.ZodTypeDef, unknown> = z.object({

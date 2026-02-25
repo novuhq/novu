@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Type of the layout
@@ -17,8 +16,7 @@ export const ResourceTypeEnum = {
 /**
  * Type of the layout
  */
-export type ResourceTypeEnum = OpenEnum<typeof ResourceTypeEnum>;
+export type ResourceTypeEnum = ClosedEnum<typeof ResourceTypeEnum>;
 
 /** @internal */
-export const ResourceTypeEnum$inboundSchema: z.ZodType<ResourceTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ResourceTypeEnum);
+export const ResourceTypeEnum$inboundSchema: z.ZodNativeEnum<typeof ResourceTypeEnum> = z.nativeEnum(ResourceTypeEnum);

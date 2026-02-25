@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * The type of the actor, indicating the role in the notification process.
@@ -18,8 +17,7 @@ export const ActorTypeEnum = {
 /**
  * The type of the actor, indicating the role in the notification process.
  */
-export type ActorTypeEnum = OpenEnum<typeof ActorTypeEnum>;
+export type ActorTypeEnum = ClosedEnum<typeof ActorTypeEnum>;
 
 /** @internal */
-export const ActorTypeEnum$inboundSchema: z.ZodType<ActorTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ActorTypeEnum);
+export const ActorTypeEnum$inboundSchema: z.ZodNativeEnum<typeof ActorTypeEnum> = z.nativeEnum(ActorTypeEnum);

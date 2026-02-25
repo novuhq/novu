@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { AuthDto, AuthDto$inboundSchema } from './authdto.js';
@@ -24,7 +23,7 @@ export const Channel = {
 /**
  * The channel type (email, sms, push, chat, etc.).
  */
-export type Channel = OpenEnum<typeof Channel>;
+export type Channel = ClosedEnum<typeof Channel>;
 
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
@@ -112,7 +111,7 @@ export const ProviderId = {
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
-export type ProviderId = OpenEnum<typeof ProviderId>;
+export type ProviderId = ClosedEnum<typeof ProviderId>;
 
 export type GetChannelConnectionResponseDto = {
   /**
@@ -152,11 +151,10 @@ export type GetChannelConnectionResponseDto = {
 };
 
 /** @internal */
-export const Channel$inboundSchema: z.ZodType<Channel, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Channel);
+export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z.nativeEnum(Channel);
 
 /** @internal */
-export const ProviderId$inboundSchema: z.ZodType<ProviderId, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ProviderId);
+export const ProviderId$inboundSchema: z.ZodNativeEnum<typeof ProviderId> = z.nativeEnum(ProviderId);
 
 /** @internal */
 export const GetChannelConnectionResponseDto$inboundSchema: z.ZodType<

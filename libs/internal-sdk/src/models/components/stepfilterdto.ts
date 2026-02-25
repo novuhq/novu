@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
@@ -24,7 +23,7 @@ export const StepFilterDtoValue = {
   And: 'AND',
   Or: 'OR',
 } as const;
-export type StepFilterDtoValue = OpenEnum<typeof StepFilterDtoValue>;
+export type StepFilterDtoValue = ClosedEnum<typeof StepFilterDtoValue>;
 
 export type StepFilterDto = {
   isNegated: boolean;
@@ -34,11 +33,11 @@ export type StepFilterDto = {
 };
 
 /** @internal */
-export const StepFilterDtoValue$inboundSchema: z.ZodType<StepFilterDtoValue, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(StepFilterDtoValue);
+export const StepFilterDtoValue$inboundSchema: z.ZodNativeEnum<typeof StepFilterDtoValue> =
+  z.nativeEnum(StepFilterDtoValue);
 /** @internal */
-export const StepFilterDtoValue$outboundSchema: z.ZodType<string, z.ZodTypeDef, StepFilterDtoValue> =
-  openEnums.outboundSchema(StepFilterDtoValue);
+export const StepFilterDtoValue$outboundSchema: z.ZodNativeEnum<typeof StepFilterDtoValue> =
+  StepFilterDtoValue$inboundSchema;
 
 /** @internal */
 export const StepFilterDto$inboundSchema: z.ZodType<StepFilterDto, z.ZodTypeDef, unknown> = z.object({

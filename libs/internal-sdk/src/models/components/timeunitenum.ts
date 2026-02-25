@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Time unit
@@ -20,8 +19,7 @@ export const TimeUnitEnum = {
 /**
  * Time unit
  */
-export type TimeUnitEnum = OpenEnum<typeof TimeUnitEnum>;
+export type TimeUnitEnum = ClosedEnum<typeof TimeUnitEnum>;
 
 /** @internal */
-export const TimeUnitEnum$inboundSchema: z.ZodType<TimeUnitEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(TimeUnitEnum);
+export const TimeUnitEnum$inboundSchema: z.ZodNativeEnum<typeof TimeUnitEnum> = z.nativeEnum(TimeUnitEnum);

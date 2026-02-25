@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { collectExtraKeys as collectExtraKeys$, safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
@@ -26,7 +25,7 @@ export const EmailStepResponseDtoEditorType = {
 /**
  * Type of editor to use for the body.
  */
-export type EmailStepResponseDtoEditorType = OpenEnum<typeof EmailStepResponseDtoEditorType>;
+export type EmailStepResponseDtoEditorType = ClosedEnum<typeof EmailStepResponseDtoEditorType>;
 
 /**
  * Type of renderer to use (raw HTML or React Email step resolver)
@@ -38,7 +37,7 @@ export const EmailStepResponseDtoRendererType = {
 /**
  * Type of renderer to use (raw HTML or React Email step resolver)
  */
-export type EmailStepResponseDtoRendererType = OpenEnum<typeof EmailStepResponseDtoRendererType>;
+export type EmailStepResponseDtoRendererType = ClosedEnum<typeof EmailStepResponseDtoRendererType>;
 
 /**
  * Control values for the email step
@@ -127,18 +126,12 @@ export type EmailStepResponseDto = {
 };
 
 /** @internal */
-export const EmailStepResponseDtoEditorType$inboundSchema: z.ZodType<
-  EmailStepResponseDtoEditorType,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(EmailStepResponseDtoEditorType);
+export const EmailStepResponseDtoEditorType$inboundSchema: z.ZodNativeEnum<typeof EmailStepResponseDtoEditorType> =
+  z.nativeEnum(EmailStepResponseDtoEditorType);
 
 /** @internal */
-export const EmailStepResponseDtoRendererType$inboundSchema: z.ZodType<
-  EmailStepResponseDtoRendererType,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(EmailStepResponseDtoRendererType);
+export const EmailStepResponseDtoRendererType$inboundSchema: z.ZodNativeEnum<typeof EmailStepResponseDtoRendererType> =
+  z.nativeEnum(EmailStepResponseDtoRendererType);
 
 /** @internal */
 export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<

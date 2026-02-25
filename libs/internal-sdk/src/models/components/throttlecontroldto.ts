@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -19,7 +18,7 @@ export const ThrottleControlDtoType = {
 /**
  * The type of throttle window.
  */
-export type ThrottleControlDtoType = OpenEnum<typeof ThrottleControlDtoType>;
+export type ThrottleControlDtoType = ClosedEnum<typeof ThrottleControlDtoType>;
 
 /**
  * The unit of time for the throttle window (required for fixed type).
@@ -32,7 +31,7 @@ export const ThrottleControlDtoUnit = {
 /**
  * The unit of time for the throttle window (required for fixed type).
  */
-export type ThrottleControlDtoUnit = OpenEnum<typeof ThrottleControlDtoUnit>;
+export type ThrottleControlDtoUnit = ClosedEnum<typeof ThrottleControlDtoUnit>;
 
 export type ThrottleControlDto = {
   /**
@@ -66,18 +65,18 @@ export type ThrottleControlDto = {
 };
 
 /** @internal */
-export const ThrottleControlDtoType$inboundSchema: z.ZodType<ThrottleControlDtoType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ThrottleControlDtoType);
+export const ThrottleControlDtoType$inboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoType> =
+  z.nativeEnum(ThrottleControlDtoType);
 /** @internal */
-export const ThrottleControlDtoType$outboundSchema: z.ZodType<string, z.ZodTypeDef, ThrottleControlDtoType> =
-  openEnums.outboundSchema(ThrottleControlDtoType);
+export const ThrottleControlDtoType$outboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoType> =
+  ThrottleControlDtoType$inboundSchema;
 
 /** @internal */
-export const ThrottleControlDtoUnit$inboundSchema: z.ZodType<ThrottleControlDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ThrottleControlDtoUnit);
+export const ThrottleControlDtoUnit$inboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoUnit> =
+  z.nativeEnum(ThrottleControlDtoUnit);
 /** @internal */
-export const ThrottleControlDtoUnit$outboundSchema: z.ZodType<string, z.ZodTypeDef, ThrottleControlDtoUnit> =
-  openEnums.outboundSchema(ThrottleControlDtoUnit);
+export const ThrottleControlDtoUnit$outboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoUnit> =
+  ThrottleControlDtoUnit$inboundSchema;
 
 /** @internal */
 export const ThrottleControlDto$inboundSchema: z.ZodType<ThrottleControlDto, z.ZodTypeDef, unknown> = z.object({

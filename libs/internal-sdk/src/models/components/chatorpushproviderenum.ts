@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * The provider identifier for the credentials
@@ -34,11 +33,11 @@ export const ChatOrPushProviderEnum = {
 /**
  * The provider identifier for the credentials
  */
-export type ChatOrPushProviderEnum = OpenEnum<typeof ChatOrPushProviderEnum>;
+export type ChatOrPushProviderEnum = ClosedEnum<typeof ChatOrPushProviderEnum>;
 
 /** @internal */
-export const ChatOrPushProviderEnum$inboundSchema: z.ZodType<ChatOrPushProviderEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ChatOrPushProviderEnum);
+export const ChatOrPushProviderEnum$inboundSchema: z.ZodNativeEnum<typeof ChatOrPushProviderEnum> =
+  z.nativeEnum(ChatOrPushProviderEnum);
 /** @internal */
-export const ChatOrPushProviderEnum$outboundSchema: z.ZodType<string, z.ZodTypeDef, ChatOrPushProviderEnum> =
-  openEnums.outboundSchema(ChatOrPushProviderEnum);
+export const ChatOrPushProviderEnum$outboundSchema: z.ZodNativeEnum<typeof ChatOrPushProviderEnum> =
+  ChatOrPushProviderEnum$inboundSchema;

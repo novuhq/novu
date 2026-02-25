@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -16,7 +15,7 @@ export const IssueType = {
   DuplicatedValue: 'DUPLICATED_VALUE',
   LimitReached: 'LIMIT_REACHED',
 } as const;
-export type IssueType = OpenEnum<typeof IssueType>;
+export type IssueType = ClosedEnum<typeof IssueType>;
 
 export type RuntimeIssueDto = {
   issueType: IssueType;
@@ -25,7 +24,7 @@ export type RuntimeIssueDto = {
 };
 
 /** @internal */
-export const IssueType$inboundSchema: z.ZodType<IssueType, z.ZodTypeDef, unknown> = openEnums.inboundSchema(IssueType);
+export const IssueType$inboundSchema: z.ZodNativeEnum<typeof IssueType> = z.nativeEnum(IssueType);
 
 /** @internal */
 export const RuntimeIssueDto$inboundSchema: z.ZodType<RuntimeIssueDto, z.ZodTypeDef, unknown> = z.object({

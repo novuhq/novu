@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
@@ -25,7 +24,7 @@ export const DigestControlDtoType = {
 /**
  * The type of digest strategy. Determines which fields are applicable.
  */
-export type DigestControlDtoType = OpenEnum<typeof DigestControlDtoType>;
+export type DigestControlDtoType = ClosedEnum<typeof DigestControlDtoType>;
 
 /**
  * The unit of time for the digest interval (for REGULAR type).
@@ -41,7 +40,7 @@ export const DigestControlDtoUnit = {
 /**
  * The unit of time for the digest interval (for REGULAR type).
  */
-export type DigestControlDtoUnit = OpenEnum<typeof DigestControlDtoUnit>;
+export type DigestControlDtoUnit = ClosedEnum<typeof DigestControlDtoUnit>;
 
 export type DigestControlDto = {
   /**
@@ -75,18 +74,18 @@ export type DigestControlDto = {
 };
 
 /** @internal */
-export const DigestControlDtoType$inboundSchema: z.ZodType<DigestControlDtoType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestControlDtoType);
+export const DigestControlDtoType$inboundSchema: z.ZodNativeEnum<typeof DigestControlDtoType> =
+  z.nativeEnum(DigestControlDtoType);
 /** @internal */
-export const DigestControlDtoType$outboundSchema: z.ZodType<string, z.ZodTypeDef, DigestControlDtoType> =
-  openEnums.outboundSchema(DigestControlDtoType);
+export const DigestControlDtoType$outboundSchema: z.ZodNativeEnum<typeof DigestControlDtoType> =
+  DigestControlDtoType$inboundSchema;
 
 /** @internal */
-export const DigestControlDtoUnit$inboundSchema: z.ZodType<DigestControlDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestControlDtoUnit);
+export const DigestControlDtoUnit$inboundSchema: z.ZodNativeEnum<typeof DigestControlDtoUnit> =
+  z.nativeEnum(DigestControlDtoUnit);
 /** @internal */
-export const DigestControlDtoUnit$outboundSchema: z.ZodType<string, z.ZodTypeDef, DigestControlDtoUnit> =
-  openEnums.outboundSchema(DigestControlDtoUnit);
+export const DigestControlDtoUnit$outboundSchema: z.ZodNativeEnum<typeof DigestControlDtoUnit> =
+  DigestControlDtoUnit$inboundSchema;
 
 /** @internal */
 export const DigestControlDto$inboundSchema: z.ZodType<DigestControlDto, z.ZodTypeDef, unknown> = z.object({

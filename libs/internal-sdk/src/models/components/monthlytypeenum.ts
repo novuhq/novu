@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Type of monthly schedule
@@ -16,8 +15,7 @@ export const MonthlyTypeEnum = {
 /**
  * Type of monthly schedule
  */
-export type MonthlyTypeEnum = OpenEnum<typeof MonthlyTypeEnum>;
+export type MonthlyTypeEnum = ClosedEnum<typeof MonthlyTypeEnum>;
 
 /** @internal */
-export const MonthlyTypeEnum$inboundSchema: z.ZodType<MonthlyTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(MonthlyTypeEnum);
+export const MonthlyTypeEnum$inboundSchema: z.ZodNativeEnum<typeof MonthlyTypeEnum> = z.nativeEnum(MonthlyTypeEnum);

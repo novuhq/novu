@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Type of button for the action result
@@ -16,8 +15,7 @@ export const ButtonTypeEnum = {
 /**
  * Type of button for the action result
  */
-export type ButtonTypeEnum = OpenEnum<typeof ButtonTypeEnum>;
+export type ButtonTypeEnum = ClosedEnum<typeof ButtonTypeEnum>;
 
 /** @internal */
-export const ButtonTypeEnum$inboundSchema: z.ZodType<ButtonTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ButtonTypeEnum);
+export const ButtonTypeEnum$inboundSchema: z.ZodNativeEnum<typeof ButtonTypeEnum> = z.nativeEnum(ButtonTypeEnum);

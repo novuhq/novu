@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { ConfigurationsDto, ConfigurationsDto$inboundSchema } from './configurationsdto.js';
@@ -26,7 +25,7 @@ export const IntegrationResponseDtoChannel = {
 /**
  * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
  */
-export type IntegrationResponseDtoChannel = OpenEnum<typeof IntegrationResponseDtoChannel>;
+export type IntegrationResponseDtoChannel = ClosedEnum<typeof IntegrationResponseDtoChannel>;
 
 export type IntegrationResponseDto = {
   /**
@@ -92,11 +91,8 @@ export type IntegrationResponseDto = {
 };
 
 /** @internal */
-export const IntegrationResponseDtoChannel$inboundSchema: z.ZodType<
-  IntegrationResponseDtoChannel,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(IntegrationResponseDtoChannel);
+export const IntegrationResponseDtoChannel$inboundSchema: z.ZodNativeEnum<typeof IntegrationResponseDtoChannel> =
+  z.nativeEnum(IntegrationResponseDtoChannel);
 
 /** @internal */
 export const IntegrationResponseDto$inboundSchema: z.ZodType<IntegrationResponseDto, z.ZodTypeDef, unknown> = z

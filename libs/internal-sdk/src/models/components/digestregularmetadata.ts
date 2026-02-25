@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -17,13 +16,13 @@ export const DigestRegularMetadataUnit = {
   Weeks: 'weeks',
   Months: 'months',
 } as const;
-export type DigestRegularMetadataUnit = OpenEnum<typeof DigestRegularMetadataUnit>;
+export type DigestRegularMetadataUnit = ClosedEnum<typeof DigestRegularMetadataUnit>;
 
 export const DigestRegularMetadataType = {
   Regular: 'regular',
   Backoff: 'backoff',
 } as const;
-export type DigestRegularMetadataType = OpenEnum<typeof DigestRegularMetadataType>;
+export type DigestRegularMetadataType = ClosedEnum<typeof DigestRegularMetadataType>;
 
 export const BackoffUnit = {
   Seconds: 'seconds',
@@ -33,7 +32,7 @@ export const BackoffUnit = {
   Weeks: 'weeks',
   Months: 'months',
 } as const;
-export type BackoffUnit = OpenEnum<typeof BackoffUnit>;
+export type BackoffUnit = ClosedEnum<typeof BackoffUnit>;
 
 export type DigestRegularMetadata = {
   amount?: number | undefined;
@@ -47,16 +46,15 @@ export type DigestRegularMetadata = {
 };
 
 /** @internal */
-export const DigestRegularMetadataUnit$inboundSchema: z.ZodType<DigestRegularMetadataUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestRegularMetadataUnit);
+export const DigestRegularMetadataUnit$inboundSchema: z.ZodNativeEnum<typeof DigestRegularMetadataUnit> =
+  z.nativeEnum(DigestRegularMetadataUnit);
 
 /** @internal */
-export const DigestRegularMetadataType$inboundSchema: z.ZodType<DigestRegularMetadataType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestRegularMetadataType);
+export const DigestRegularMetadataType$inboundSchema: z.ZodNativeEnum<typeof DigestRegularMetadataType> =
+  z.nativeEnum(DigestRegularMetadataType);
 
 /** @internal */
-export const BackoffUnit$inboundSchema: z.ZodType<BackoffUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(BackoffUnit);
+export const BackoffUnit$inboundSchema: z.ZodNativeEnum<typeof BackoffUnit> = z.nativeEnum(BackoffUnit);
 
 /** @internal */
 export const DigestRegularMetadata$inboundSchema: z.ZodType<DigestRegularMetadata, z.ZodTypeDef, unknown> = z.object({

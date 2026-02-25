@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
@@ -38,7 +37,7 @@ export const ActivityNotificationJobResponseDtoType = {
 /**
  * Type of the job
  */
-export type ActivityNotificationJobResponseDtoType = OpenEnum<typeof ActivityNotificationJobResponseDtoType>;
+export type ActivityNotificationJobResponseDtoType = ClosedEnum<typeof ActivityNotificationJobResponseDtoType>;
 
 /**
  * Optional payload for the job
@@ -93,11 +92,9 @@ export type ActivityNotificationJobResponseDto = {
 };
 
 /** @internal */
-export const ActivityNotificationJobResponseDtoType$inboundSchema: z.ZodType<
-  ActivityNotificationJobResponseDtoType,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(ActivityNotificationJobResponseDtoType);
+export const ActivityNotificationJobResponseDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof ActivityNotificationJobResponseDtoType
+> = z.nativeEnum(ActivityNotificationJobResponseDtoType);
 
 /** @internal */
 export const ActivityNotificationJobResponseDtoPayload$inboundSchema: z.ZodType<

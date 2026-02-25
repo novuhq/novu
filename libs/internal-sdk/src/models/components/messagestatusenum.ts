@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Status of the message
@@ -17,8 +16,8 @@ export const MessageStatusEnum = {
 /**
  * Status of the message
  */
-export type MessageStatusEnum = OpenEnum<typeof MessageStatusEnum>;
+export type MessageStatusEnum = ClosedEnum<typeof MessageStatusEnum>;
 
 /** @internal */
-export const MessageStatusEnum$inboundSchema: z.ZodType<MessageStatusEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(MessageStatusEnum);
+export const MessageStatusEnum$inboundSchema: z.ZodNativeEnum<typeof MessageStatusEnum> =
+  z.nativeEnum(MessageStatusEnum);

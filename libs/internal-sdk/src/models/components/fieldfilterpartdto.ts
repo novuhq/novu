@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -25,13 +24,13 @@ export const Operator = {
   NotLike: 'NOT_LIKE',
   In: 'IN',
 } as const;
-export type Operator = OpenEnum<typeof Operator>;
+export type Operator = ClosedEnum<typeof Operator>;
 
 export const On = {
   Subscriber: 'subscriber',
   Payload: 'payload',
 } as const;
-export type On = OpenEnum<typeof On>;
+export type On = ClosedEnum<typeof On>;
 
 export type FieldFilterPartDto = {
   field: string;
@@ -41,14 +40,14 @@ export type FieldFilterPartDto = {
 };
 
 /** @internal */
-export const Operator$inboundSchema: z.ZodType<Operator, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Operator);
+export const Operator$inboundSchema: z.ZodNativeEnum<typeof Operator> = z.nativeEnum(Operator);
 /** @internal */
-export const Operator$outboundSchema: z.ZodType<string, z.ZodTypeDef, Operator> = openEnums.outboundSchema(Operator);
+export const Operator$outboundSchema: z.ZodNativeEnum<typeof Operator> = Operator$inboundSchema;
 
 /** @internal */
-export const On$inboundSchema: z.ZodType<On, z.ZodTypeDef, unknown> = openEnums.inboundSchema(On);
+export const On$inboundSchema: z.ZodNativeEnum<typeof On> = z.nativeEnum(On);
 /** @internal */
-export const On$outboundSchema: z.ZodType<string, z.ZodTypeDef, On> = openEnums.outboundSchema(On);
+export const On$outboundSchema: z.ZodNativeEnum<typeof On> = On$inboundSchema;
 
 /** @internal */
 export const FieldFilterPartDto$inboundSchema: z.ZodType<FieldFilterPartDto, z.ZodTypeDef, unknown> = z.object({

@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { DigestTimedConfigDto, DigestTimedConfigDto$inboundSchema } from './digesttimedconfigdto.js';
@@ -26,7 +25,7 @@ export const DigestMetadataDtoUnit = {
 /**
  * Unit of the digest
  */
-export type DigestMetadataDtoUnit = OpenEnum<typeof DigestMetadataDtoUnit>;
+export type DigestMetadataDtoUnit = ClosedEnum<typeof DigestMetadataDtoUnit>;
 
 export type DigestMetadataDto = {
   /**
@@ -72,8 +71,8 @@ export type DigestMetadataDto = {
 };
 
 /** @internal */
-export const DigestMetadataDtoUnit$inboundSchema: z.ZodType<DigestMetadataDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestMetadataDtoUnit);
+export const DigestMetadataDtoUnit$inboundSchema: z.ZodNativeEnum<typeof DigestMetadataDtoUnit> =
+  z.nativeEnum(DigestMetadataDtoUnit);
 
 /** @internal */
 export const DigestMetadataDto$inboundSchema: z.ZodType<DigestMetadataDto, z.ZodTypeDef, unknown> = z.object({

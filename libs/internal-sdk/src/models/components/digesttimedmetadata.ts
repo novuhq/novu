@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { ClosedEnum, OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { TimedConfig, TimedConfig$inboundSchema } from './timedconfig.js';
@@ -18,7 +17,7 @@ export const DigestTimedMetadataUnit = {
   Weeks: 'weeks',
   Months: 'months',
 } as const;
-export type DigestTimedMetadataUnit = OpenEnum<typeof DigestTimedMetadataUnit>;
+export type DigestTimedMetadataUnit = ClosedEnum<typeof DigestTimedMetadataUnit>;
 
 export const DigestTimedMetadataType = {
   Timed: 'timed',
@@ -34,8 +33,8 @@ export type DigestTimedMetadata = {
 };
 
 /** @internal */
-export const DigestTimedMetadataUnit$inboundSchema: z.ZodType<DigestTimedMetadataUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DigestTimedMetadataUnit);
+export const DigestTimedMetadataUnit$inboundSchema: z.ZodNativeEnum<typeof DigestTimedMetadataUnit> =
+  z.nativeEnum(DigestTimedMetadataUnit);
 
 /** @internal */
 export const DigestTimedMetadataType$inboundSchema: z.ZodNativeEnum<typeof DigestTimedMetadataType> =

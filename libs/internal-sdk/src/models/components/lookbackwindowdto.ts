@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -23,7 +22,7 @@ export const LookBackWindowDtoUnit = {
 /**
  * Unit of time for the look-back window.
  */
-export type LookBackWindowDtoUnit = OpenEnum<typeof LookBackWindowDtoUnit>;
+export type LookBackWindowDtoUnit = ClosedEnum<typeof LookBackWindowDtoUnit>;
 
 export type LookBackWindowDto = {
   /**
@@ -37,11 +36,11 @@ export type LookBackWindowDto = {
 };
 
 /** @internal */
-export const LookBackWindowDtoUnit$inboundSchema: z.ZodType<LookBackWindowDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(LookBackWindowDtoUnit);
+export const LookBackWindowDtoUnit$inboundSchema: z.ZodNativeEnum<typeof LookBackWindowDtoUnit> =
+  z.nativeEnum(LookBackWindowDtoUnit);
 /** @internal */
-export const LookBackWindowDtoUnit$outboundSchema: z.ZodType<string, z.ZodTypeDef, LookBackWindowDtoUnit> =
-  openEnums.outboundSchema(LookBackWindowDtoUnit);
+export const LookBackWindowDtoUnit$outboundSchema: z.ZodNativeEnum<typeof LookBackWindowDtoUnit> =
+  LookBackWindowDtoUnit$inboundSchema;
 
 /** @internal */
 export const LookBackWindowDto$inboundSchema: z.ZodType<LookBackWindowDto, z.ZodTypeDef, unknown> = z.object({

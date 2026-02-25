@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { ClosedEnum, OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -28,7 +27,7 @@ export const Ordinal = {
   Five: '5',
   Last: 'last',
 } as const;
-export type Ordinal = OpenEnum<typeof Ordinal>;
+export type Ordinal = ClosedEnum<typeof Ordinal>;
 
 export const OrdinalValue = {
   Day: 'day',
@@ -42,13 +41,13 @@ export const OrdinalValue = {
   Friday: 'friday',
   Saturday: 'saturday',
 } as const;
-export type OrdinalValue = OpenEnum<typeof OrdinalValue>;
+export type OrdinalValue = ClosedEnum<typeof OrdinalValue>;
 
 export const MonthlyType = {
   Each: 'each',
   On: 'on',
 } as const;
-export type MonthlyType = OpenEnum<typeof MonthlyType>;
+export type MonthlyType = ClosedEnum<typeof MonthlyType>;
 
 export type TimedConfig = {
   atTime?: string | undefined;
@@ -64,15 +63,13 @@ export const TimedConfigWeekDays$inboundSchema: z.ZodNativeEnum<typeof TimedConf
   z.nativeEnum(TimedConfigWeekDays);
 
 /** @internal */
-export const Ordinal$inboundSchema: z.ZodType<Ordinal, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Ordinal);
+export const Ordinal$inboundSchema: z.ZodNativeEnum<typeof Ordinal> = z.nativeEnum(Ordinal);
 
 /** @internal */
-export const OrdinalValue$inboundSchema: z.ZodType<OrdinalValue, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(OrdinalValue);
+export const OrdinalValue$inboundSchema: z.ZodNativeEnum<typeof OrdinalValue> = z.nativeEnum(OrdinalValue);
 
 /** @internal */
-export const MonthlyType$inboundSchema: z.ZodType<MonthlyType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(MonthlyType);
+export const MonthlyType$inboundSchema: z.ZodNativeEnum<typeof MonthlyType> = z.nativeEnum(MonthlyType);
 
 /** @internal */
 export const TimedConfig$inboundSchema: z.ZodType<TimedConfig, z.ZodTypeDef, unknown> = z.object({

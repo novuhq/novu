@@ -69,7 +69,7 @@ typescript:
   flattenGlobalSecurity: true
   flatteningOrder: body-first
   formStringArrayEncodeMode: encoded-string
-  forwardCompatibleEnumsByDefault: true
+  forwardCompatibleEnumsByDefault: false
   forwardCompatibleUnionsByDefault: tagged-only
   generateExamples: true
   imports:

@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -19,7 +18,7 @@ export const TranslationGroupDtoResourceType = {
 /**
  * Resource type
  */
-export type TranslationGroupDtoResourceType = OpenEnum<typeof TranslationGroupDtoResourceType>;
+export type TranslationGroupDtoResourceType = ClosedEnum<typeof TranslationGroupDtoResourceType>;
 
 export type TranslationGroupDto = {
   /**
@@ -53,11 +52,8 @@ export type TranslationGroupDto = {
 };
 
 /** @internal */
-export const TranslationGroupDtoResourceType$inboundSchema: z.ZodType<
-  TranslationGroupDtoResourceType,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(TranslationGroupDtoResourceType);
+export const TranslationGroupDtoResourceType$inboundSchema: z.ZodNativeEnum<typeof TranslationGroupDtoResourceType> =
+  z.nativeEnum(TranslationGroupDtoResourceType);
 
 /** @internal */
 export const TranslationGroupDto$inboundSchema: z.ZodType<TranslationGroupDto, z.ZodTypeDef, unknown> = z.object({

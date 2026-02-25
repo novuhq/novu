@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { collectExtraKeys as collectExtraKeys$, safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { ResourceOriginEnum, ResourceOriginEnum$inboundSchema } from './resourceoriginenum.js';
@@ -26,7 +25,7 @@ export const ThrottleStepResponseDtoType = {
 /**
  * The type of throttle window.
  */
-export type ThrottleStepResponseDtoType = OpenEnum<typeof ThrottleStepResponseDtoType>;
+export type ThrottleStepResponseDtoType = ClosedEnum<typeof ThrottleStepResponseDtoType>;
 
 /**
  * The unit of time for the throttle window (required for fixed type).
@@ -39,7 +38,7 @@ export const ThrottleStepResponseDtoUnit = {
 /**
  * The unit of time for the throttle window (required for fixed type).
  */
-export type ThrottleStepResponseDtoUnit = OpenEnum<typeof ThrottleStepResponseDtoUnit>;
+export type ThrottleStepResponseDtoUnit = ClosedEnum<typeof ThrottleStepResponseDtoUnit>;
 
 /**
  * Control values for the throttle step
@@ -128,12 +127,12 @@ export type ThrottleStepResponseDto = {
 };
 
 /** @internal */
-export const ThrottleStepResponseDtoType$inboundSchema: z.ZodType<ThrottleStepResponseDtoType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ThrottleStepResponseDtoType);
+export const ThrottleStepResponseDtoType$inboundSchema: z.ZodNativeEnum<typeof ThrottleStepResponseDtoType> =
+  z.nativeEnum(ThrottleStepResponseDtoType);
 
 /** @internal */
-export const ThrottleStepResponseDtoUnit$inboundSchema: z.ZodType<ThrottleStepResponseDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ThrottleStepResponseDtoUnit);
+export const ThrottleStepResponseDtoUnit$inboundSchema: z.ZodNativeEnum<typeof ThrottleStepResponseDtoUnit> =
+  z.nativeEnum(ThrottleStepResponseDtoUnit);
 
 /** @internal */
 export const ThrottleStepResponseDtoControlValues$inboundSchema: z.ZodType<

@@ -5,8 +5,7 @@
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
 import { collectExtraKeys as collectExtraKeys$, safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
@@ -26,7 +25,7 @@ export const DelayStepResponseDtoType = {
 /**
  * Type of the delay. Currently only 'regular' is supported by the schema.
  */
-export type DelayStepResponseDtoType = OpenEnum<typeof DelayStepResponseDtoType>;
+export type DelayStepResponseDtoType = ClosedEnum<typeof DelayStepResponseDtoType>;
 
 /**
  * Unit of time for the delay amount.
@@ -42,7 +41,7 @@ export const DelayStepResponseDtoUnit = {
 /**
  * Unit of time for the delay amount.
  */
-export type DelayStepResponseDtoUnit = OpenEnum<typeof DelayStepResponseDtoUnit>;
+export type DelayStepResponseDtoUnit = ClosedEnum<typeof DelayStepResponseDtoUnit>;
 
 /**
  * Control values for the delay step
@@ -123,12 +122,12 @@ export type DelayStepResponseDto = {
 };
 
 /** @internal */
-export const DelayStepResponseDtoType$inboundSchema: z.ZodType<DelayStepResponseDtoType, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DelayStepResponseDtoType);
+export const DelayStepResponseDtoType$inboundSchema: z.ZodNativeEnum<typeof DelayStepResponseDtoType> =
+  z.nativeEnum(DelayStepResponseDtoType);
 
 /** @internal */
-export const DelayStepResponseDtoUnit$inboundSchema: z.ZodType<DelayStepResponseDtoUnit, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(DelayStepResponseDtoUnit);
+export const DelayStepResponseDtoUnit$inboundSchema: z.ZodNativeEnum<typeof DelayStepResponseDtoUnit> =
+  z.nativeEnum(DelayStepResponseDtoUnit);
 
 /** @internal */
 export const DelayStepResponseDtoControlValues$inboundSchema: z.ZodType<

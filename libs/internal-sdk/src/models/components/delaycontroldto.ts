@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -19,7 +18,7 @@ export const Type = {
 /**
  * Type of the delay. Currently only 'regular' is supported by the schema.
  */
-export type Type = OpenEnum<typeof Type>;
+export type Type = ClosedEnum<typeof Type>;
 
 /**
  * Unit of time for the delay amount.
@@ -35,7 +34,7 @@ export const Unit = {
 /**
  * Unit of time for the delay amount.
  */
-export type Unit = OpenEnum<typeof Unit>;
+export type Unit = ClosedEnum<typeof Unit>;
 
 export type DelayControlDto = {
   /**
@@ -61,14 +60,14 @@ export type DelayControlDto = {
 };
 
 /** @internal */
-export const Type$inboundSchema: z.ZodType<Type, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Type);
+export const Type$inboundSchema: z.ZodNativeEnum<typeof Type> = z.nativeEnum(Type);
 /** @internal */
-export const Type$outboundSchema: z.ZodType<string, z.ZodTypeDef, Type> = openEnums.outboundSchema(Type);
+export const Type$outboundSchema: z.ZodNativeEnum<typeof Type> = Type$inboundSchema;
 
 /** @internal */
-export const Unit$inboundSchema: z.ZodType<Unit, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Unit);
+export const Unit$inboundSchema: z.ZodNativeEnum<typeof Unit> = z.nativeEnum(Unit);
 /** @internal */
-export const Unit$outboundSchema: z.ZodType<string, z.ZodTypeDef, Unit> = openEnums.outboundSchema(Unit);
+export const Unit$outboundSchema: z.ZodNativeEnum<typeof Unit> = Unit$inboundSchema;
 
 /** @internal */
 export const DelayControlDto$inboundSchema: z.ZodType<DelayControlDto, z.ZodTypeDef, unknown> = z.object({

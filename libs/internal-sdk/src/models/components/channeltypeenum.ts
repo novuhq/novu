@@ -3,8 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 
 /**
  * Channel type through which the message is sent
@@ -19,11 +18,9 @@ export const ChannelTypeEnum = {
 /**
  * Channel type through which the message is sent
  */
-export type ChannelTypeEnum = OpenEnum<typeof ChannelTypeEnum>;
+export type ChannelTypeEnum = ClosedEnum<typeof ChannelTypeEnum>;
 
 /** @internal */
-export const ChannelTypeEnum$inboundSchema: z.ZodType<ChannelTypeEnum, z.ZodTypeDef, unknown> =
-  openEnums.inboundSchema(ChannelTypeEnum);
+export const ChannelTypeEnum$inboundSchema: z.ZodNativeEnum<typeof ChannelTypeEnum> = z.nativeEnum(ChannelTypeEnum);
 /** @internal */
-export const ChannelTypeEnum$outboundSchema: z.ZodType<string, z.ZodTypeDef, ChannelTypeEnum> =
-  openEnums.outboundSchema(ChannelTypeEnum);
+export const ChannelTypeEnum$outboundSchema: z.ZodNativeEnum<typeof ChannelTypeEnum> = ChannelTypeEnum$inboundSchema;

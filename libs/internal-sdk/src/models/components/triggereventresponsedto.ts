@@ -4,8 +4,7 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import * as openEnums from '../../types/enums.js';
-import { OpenEnum } from '../../types/enums.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -24,7 +23,7 @@ export const TriggerEventResponseDtoStatus = {
 /**
  * Status of the trigger
  */
-export type TriggerEventResponseDtoStatus = OpenEnum<typeof TriggerEventResponseDtoStatus>;
+export type TriggerEventResponseDtoStatus = ClosedEnum<typeof TriggerEventResponseDtoStatus>;
 
 export type JobData = {};
 
@@ -49,11 +48,8 @@ export type TriggerEventResponseDto = {
 };
 
 /** @internal */
-export const TriggerEventResponseDtoStatus$inboundSchema: z.ZodType<
-  TriggerEventResponseDtoStatus,
-  z.ZodTypeDef,
-  unknown
-> = openEnums.inboundSchema(TriggerEventResponseDtoStatus);
+export const TriggerEventResponseDtoStatus$inboundSchema: z.ZodNativeEnum<typeof TriggerEventResponseDtoStatus> =
+  z.nativeEnum(TriggerEventResponseDtoStatus);
 
 /** @internal */
 export const JobData$inboundSchema: z.ZodType<JobData, z.ZodTypeDef, unknown> = z.object({});
