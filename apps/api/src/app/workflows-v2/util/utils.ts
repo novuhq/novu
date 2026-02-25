@@ -88,7 +88,7 @@ export function mockSchemaDefaults(schema: JSONSchemaDto, parentPath = 'payload'
         mockSchemaDefaults(valueDto, `${parentPath}.${key}`, depth + 1);
       }
 
-      if (!valueDto.default && valueDto.type !== 'object') {
+      if (valueDto.default === undefined && valueDto.type !== 'object') {
         valueDto.default = `{{${parentPath}.${key}}}`;
       }
     });

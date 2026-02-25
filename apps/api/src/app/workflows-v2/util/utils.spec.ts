@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { keysToObject } from './utils';
+import { keysToObject, mockSchemaDefaults } from './utils';
 
 describe('keysToObject', () => {
   it('should convert simple paths into a nested object', () => {
@@ -244,5 +244,58 @@ describe('keysToObject', () => {
         },
       },
     });
+  });
+});
+
+describe('mockSchemaDefaults', () => {
+  it('should preserve falsy default values (0, false, null, empty string)', () => {
+    const schema = {
+      type: 'object' as const,
+      properties: {
+        insured_value: { type: 'number' as const, default: 0 },
+        is_return: { type: 'boolean' as const, default: false },
+        insurance_policy_id: { type: ['number', 'null'] as any, default: null },
+        empty_string: { type: 'string' as const, default: '' },
+      },
+    };
+
+    const result = mockSchemaDefaults(schema);
+
+    expect(result.properties!.insured_value).to.have.property('default', 0);
+    expect(result.properties!.is_return).to.have.property('default', false);
+    expect(result.properties!.insurance_policy_id).to.have.property('default', null);
+    expect(result.properties!.empty_string).to.have.property('default', '');
+  });
+
+  it('should add template string defaults for properties without defaults', () => {
+    const schema = {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string' as const },
+        age: { type: 'number' as const },
+      },
+    };
+
+    const result = mockSchemaDefaults(schema);
+
+    expect(result.properties!.name).to.have.property('default', '{{payload.name}}');
+    expect(result.properties!.age).to.have.property('default', '{{payload.age}}');
+  });
+
+  it('should preserve truthy default values', () => {
+    const schema = {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string' as const, default: 'John' },
+        count: { type: 'number' as const, default: 42 },
+        active: { type: 'boolean' as const, default: true },
+      },
+    };
+
+    const result = mockSchemaDefaults(schema);
+
+    expect(result.properties!.name).to.have.property('default', 'John');
+    expect(result.properties!.count).to.have.property('default', 42);
+    expect(result.properties!.active).to.have.property('default', true);
   });
 });
