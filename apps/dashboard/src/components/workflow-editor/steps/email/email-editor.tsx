@@ -1,9 +1,17 @@
-import { EnvironmentTypeEnum, UiComponentEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  UiComponentEnum,
+  type UiSchema,
+  UiSchemaGroupEnum,
+} from '@novu/shared';
 import { useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { SenderConfigDrawer } from '@/components/workflow-editor/steps/email/sender-config-drawer';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 
@@ -13,12 +21,26 @@ export const EmailEditor = (props: EmailEditorProps) => {
   const { currentEnvironment } = useEnvironment();
   const { uiSchema, isEditorV2 = false } = props;
   const [senderDrawerOpen, setSenderDrawerOpen] = useState(false);
+  const { control } = useFormContext();
+  const editorTypeValue = useWatch({ name: 'editorType', control });
+  const rendererType = useWatch({ name: 'rendererType', control });
+  const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
+
+  const isCodeEditor = editorTypeValue === 'html';
+  const isReactEmail = isCodeEditor && isStepResolverEnabled && rendererType === 'react-email';
 
   if (uiSchema.group !== UiSchemaGroupEnum.EMAIL) {
     return null;
   }
 
-  const { body, subject, disableOutputSanitization, editorType, layoutId } = uiSchema.properties ?? {};
+  const {
+    body,
+    subject,
+    disableOutputSanitization,
+    editorType,
+    rendererType: rendererTypeSchema,
+    layoutId,
+  } = uiSchema.properties ?? {};
 
   return (
     <>
@@ -36,7 +58,10 @@ export const EmailEditor = (props: EmailEditorProps) => {
 
           <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
           <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-1">
-            {getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
+            {isCodeEditor &&
+              isStepResolverEnabled &&
+              getComponentByType({ component: rendererTypeSchema?.component ?? UiComponentEnum.EMAIL_RENDERER_SELECT })}
+            {!isReactEmail && getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
           </div>
         </div>
         {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (
