@@ -22,8 +22,9 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     ) &&
     (!IS_SELF_HOSTED || IS_ENTERPRISE);
 
-  const disabled = !canUseTranslationFeature || isLoading || isReadOnly;
-  const checked = disabled ? false : value;
+  const isFeatureUnavailable = !canUseTranslationFeature || isLoading;
+  const disabled = isFeatureUnavailable || isReadOnly;
+  const checked = isFeatureUnavailable ? false : value;
 
   return (
     <div className="flex items-center">
