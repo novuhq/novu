@@ -513,6 +513,48 @@ export class TraceRollupRepository extends LogRepository<typeof traceRollupSchem
     };
   }
 
+  async getUsageReportBreakdown(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ provider_id: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportBreakdown' },
+        'Skipping trace rollup query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
+    const query = `
+      SELECT
+        provider_id,
+        sum(count) AS count
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
+      WHERE
+        environment_id IN {environmentIds:Array(String)}
+        AND event_type = 'message_sent'
+        AND provider_id != ''
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+      GROUP BY provider_id
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const result = await this.clickhouseService.query<{ provider_id: string; count: string }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
   async getProviderVolumeData(
     environmentId: string,
     organizationId: string,
