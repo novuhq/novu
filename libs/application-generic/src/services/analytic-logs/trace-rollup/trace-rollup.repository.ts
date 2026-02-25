@@ -446,6 +446,73 @@ export class TraceRollupRepository extends LogRepository<typeof traceRollupSchem
     return result.data;
   }
 
+  async getUsageReportScalarStats(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    messagesSentCount: number;
+    uniqueSubscribers: number;
+    interactions: number;
+  }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportScalarStats' },
+        'Skipping trace rollup query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return {
+        messagesSentCount: 0,
+        uniqueSubscribers: 0,
+        interactions: 0,
+      };
+    }
+
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    const query = `
+      SELECT
+        sumIf(count, event_type = 'message_sent') as messages_sent_count,
+        countDistinctIf(external_subscriber_id, event_type = 'message_sent' AND external_subscriber_id != '') as unique_subscribers,
+        sumIf(count, event_type IN (
+          'message_seen', 'message_read', 'message_snoozed', 'message_archived'
+        )) as interactions
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
+      WHERE
+        environment_id IN {environmentIds:Array(String)}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: startDateStr,
+      endDate: endDateStr,
+    };
+
+    const result = await this.clickhouseService.query<{
+      messages_sent_count: string;
+      unique_subscribers: string;
+      interactions: string;
+    }>({
+      query,
+      params,
+    });
+
+    const data = result.data[0] || {
+      messages_sent_count: '0',
+      unique_subscribers: '0',
+      interactions: '0',
+    };
+
+    return {
+      messagesSentCount: parseInt(data.messages_sent_count, 10),
+      uniqueSubscribers: parseInt(data.unique_subscribers, 10),
+      interactions: parseInt(data.interactions, 10),
+    };
+  }
+
   async getProviderVolumeData(
     environmentId: string,
     organizationId: string,
