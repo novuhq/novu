@@ -623,6 +623,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
                 editorType: 'html',
                 subject: 'Example subject',
                 disableOutputSanitization: false,
+                rendererType: 'html',
               },
             }),
             id: devWorkflow.steps[0].id,
