@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { keysToObject, mockSchemaDefaults } from './utils';
 
@@ -249,13 +250,13 @@ describe('keysToObject', () => {
 
 describe('mockSchemaDefaults', () => {
   it('should preserve falsy default values (0, false, null, empty string)', () => {
-    const schema = {
-      type: 'object' as const,
+    const schema: JSONSchemaDto = {
+      type: 'object',
       properties: {
-        insured_value: { type: 'number' as const, default: 0 },
-        is_return: { type: 'boolean' as const, default: false },
-        insurance_policy_id: { type: ['number', 'null'] as any, default: null },
-        empty_string: { type: 'string' as const, default: '' },
+        insured_value: { type: 'number', default: 0 },
+        is_return: { type: 'boolean', default: false },
+        insurance_policy_id: { type: 'number', default: null },
+        empty_string: { type: 'string', default: '' },
       },
     };
 
@@ -268,11 +269,11 @@ describe('mockSchemaDefaults', () => {
   });
 
   it('should add template string defaults for properties without defaults', () => {
-    const schema = {
-      type: 'object' as const,
+    const schema: JSONSchemaDto = {
+      type: 'object',
       properties: {
-        name: { type: 'string' as const },
-        age: { type: 'number' as const },
+        name: { type: 'string' },
+        age: { type: 'number' },
       },
     };
 
@@ -283,12 +284,12 @@ describe('mockSchemaDefaults', () => {
   });
 
   it('should preserve truthy default values', () => {
-    const schema = {
-      type: 'object' as const,
+    const schema: JSONSchemaDto = {
+      type: 'object',
       properties: {
-        name: { type: 'string' as const, default: 'John' },
-        count: { type: 'number' as const, default: 42 },
-        active: { type: 'boolean' as const, default: true },
+        name: { type: 'string', default: 'John' },
+        count: { type: 'number', default: 42 },
+        active: { type: 'boolean', default: true },
       },
     };
 
