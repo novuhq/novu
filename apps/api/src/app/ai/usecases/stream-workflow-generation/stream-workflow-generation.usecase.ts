@@ -12,7 +12,6 @@ import {
 } from '@novu/shared';
 import { createUIMessageStream, generateId, UIMessage } from 'ai';
 import { BaseMessage, createAgent, createMiddleware } from 'langchain';
-import { z } from 'zod';
 import { safeParse } from '../../../../utils/json';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
@@ -24,17 +23,18 @@ import {
   UpsertWorkflowUseCase,
 } from '../../../workflows-v2/usecases/upsert-workflow';
 import { buildWorkflowAgentSystemPrompt } from '../../prompts';
-import { workflowMetadataOutputSchema } from '../../schemas/workflow-generation.schema';
 import { CheckpointerService } from '../../services/checkpointer.service';
 import { LlmService } from '../../services/llm.service';
-import { createWorkflowGenerationTools, DraftWorkflowState } from '../../tools/workflow-generation.tools';
+import {
+  createWorkflowGenerationTools,
+  DraftWorkflowState,
+  WorkflowMetadata,
+} from '../../tools/workflow-generation.tools';
 import { createErrorTransform } from '../../transforms/error-transform';
 import { createToolOutputTransform } from '../../transforms/tool-output-transform';
 import { BaseStreamGenerationAgent, StreamGenerationCommand, StreamGenerationContext } from '../../types';
 import { GetChatCommand, GetChatUseCase } from '../get-chat';
 import { UpsertChatCommand, UpsertChatUseCase } from '../upsert-chat';
-
-type WorkflowMetadata = z.infer<typeof workflowMetadataOutputSchema>;
 
 @Injectable()
 export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgent {
@@ -312,7 +312,7 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
         const messages: Array<BaseMessage> = lastHumanMessage ? [lastHumanMessage] : [];
         const resume = !lastHumanMessage || (!!chat.resumeCheckpointId && !lastHumanMessage);
 
-        const agentStream = await agent.stream(resume ? null : { messages }, {
+        const agentStream = await agent.stream((resume ? null : { messages }) as Parameters<typeof agent.stream>[0], {
           configurable,
           signal: command.signal,
           streamMode: ['values', 'messages', 'custom'],

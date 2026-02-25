@@ -13,7 +13,7 @@ export interface TextShimmerProps {
 }
 
 const ShimmerComponent = ({ children, as: Component = 'p', className, duration = 2, spread = 2 }: TextShimmerProps) => {
-  const MotionComponent = motion.create(Component as keyof JSX.IntrinsicElements);
+  const MotionComponent = useMemo(() => motion.create(Component as keyof JSX.IntrinsicElements), [Component]);
 
   const dynamicSpread = useMemo(() => (children?.length ?? 0) * spread, [children, spread]);
 

@@ -112,10 +112,6 @@ export function getChatStreamUrl(): string {
   return `${getApiBaseUrl()}/v2/ai/chat-stream`;
 }
 
-export function getChatStreamResumeUrl(id: string): string {
-  return `${getApiBaseUrl()}/v2/ai/chat/${id}/stream`;
-}
-
 export async function keepAiChanges({
   environment,
   chatId,

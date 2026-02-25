@@ -86,7 +86,7 @@ const aiJsonLogicComparisonSchema = z.union([
     .describe('Check if value exists in array'),
 ]);
 
-const aiJsonLogicConditionSchema: z.ZodType<JsonLogicCondition> = z.lazy(() =>
+const aiJsonLogicConditionSchema = z.lazy(() =>
   z.union([
     z
       .object({
@@ -105,7 +105,7 @@ const aiJsonLogicConditionSchema: z.ZodType<JsonLogicCondition> = z.lazy(() =>
       .describe('Logical NOT - negates the condition'),
     aiJsonLogicComparisonSchema,
   ])
-);
+) as z.ZodType<JsonLogicCondition>;
 
 export const aiSkipConditionSchema = z
   .union([aiJsonLogicConditionSchema, aiJsonLogicVarSchema])

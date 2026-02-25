@@ -1,4 +1,4 @@
-import { AiWorkflowToolsEnum, StepTypeEnum } from '@novu/shared';
+import { AiWorkflowToolsEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { ToolRuntime, tool } from 'langchain';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -46,17 +46,25 @@ import {
   VariableSchemaContext,
 } from '../utils/variable-schema.utils';
 
+export type WorkflowMetadata = {
+  description?: string | null;
+  tags?: string[] | null;
+  name: string;
+  severity: SeverityLevelEnum;
+  critical: boolean;
+};
+
 export class DraftWorkflowState {
   private workflow: WorkflowResponseDto | null = null;
-  private workflowMetadata: z.infer<typeof workflowMetadataOutputSchema> | null = null;
+  private workflowMetadata: WorkflowMetadata | null = null;
   private steps: UpsertStepDataCommand[] = [];
   private variableSchemaContext: VariableSchemaContext = createInitialVariableSchemaContext();
 
-  setWorkflowMetadata(metadata: z.infer<typeof workflowMetadataOutputSchema>): void {
+  setWorkflowMetadata(metadata: WorkflowMetadata): void {
     this.workflowMetadata = metadata;
   }
 
-  getWorkflowMetadata(): z.infer<typeof workflowMetadataOutputSchema> | null {
+  getWorkflowMetadata(): WorkflowMetadata | null {
     return this.workflowMetadata;
   }
 
@@ -182,7 +190,7 @@ export function createWorkflowGenerationTools({
         userPrompt: input.userRequest,
         schema: workflowMetadataOutputSchema,
       });
-      draftState.setWorkflowMetadata(result);
+      draftState.setWorkflowMetadata(result as WorkflowMetadata);
 
       return result;
     },
