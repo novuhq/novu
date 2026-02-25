@@ -1,4 +1,5 @@
 export * from './dal.service';
+export { mongoose } from './dal.service';
 export * from './repositories/base-repository';
 export * from './repositories/change';
 export * from './repositories/channel-connection';
