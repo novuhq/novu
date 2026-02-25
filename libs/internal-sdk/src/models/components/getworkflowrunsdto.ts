@@ -4,7 +4,8 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import { ClosedEnum } from '../../types/enums.js';
+import * as openEnums from '../../types/enums.js';
+import { OpenEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { TopicResponseDto, TopicResponseDto$inboundSchema } from './topicresponsedto.js';
@@ -21,7 +22,7 @@ export const GetWorkflowRunsDtoStatus = {
 /**
  * Workflow run status
  */
-export type GetWorkflowRunsDtoStatus = ClosedEnum<typeof GetWorkflowRunsDtoStatus>;
+export type GetWorkflowRunsDtoStatus = OpenEnum<typeof GetWorkflowRunsDtoStatus>;
 
 /**
  * Workflow run delivery lifecycle status
@@ -39,7 +40,7 @@ export const DeliveryLifecycleStatus = {
 /**
  * Workflow run delivery lifecycle status
  */
-export type DeliveryLifecycleStatus = ClosedEnum<typeof DeliveryLifecycleStatus>;
+export type DeliveryLifecycleStatus = OpenEnum<typeof DeliveryLifecycleStatus>;
 
 /**
  * Severity
@@ -53,7 +54,7 @@ export const Severity = {
 /**
  * Severity
  */
-export type Severity = ClosedEnum<typeof Severity>;
+export type Severity = OpenEnum<typeof Severity>;
 
 export type GetWorkflowRunsDto = {
   /**
@@ -131,15 +132,15 @@ export type GetWorkflowRunsDto = {
 };
 
 /** @internal */
-export const GetWorkflowRunsDtoStatus$inboundSchema: z.ZodNativeEnum<typeof GetWorkflowRunsDtoStatus> =
-  z.nativeEnum(GetWorkflowRunsDtoStatus);
+export const GetWorkflowRunsDtoStatus$inboundSchema: z.ZodType<GetWorkflowRunsDtoStatus, z.ZodTypeDef, unknown> =
+  openEnums.inboundSchema(GetWorkflowRunsDtoStatus);
 
 /** @internal */
-export const DeliveryLifecycleStatus$inboundSchema: z.ZodNativeEnum<typeof DeliveryLifecycleStatus> =
-  z.nativeEnum(DeliveryLifecycleStatus);
+export const DeliveryLifecycleStatus$inboundSchema: z.ZodType<DeliveryLifecycleStatus, z.ZodTypeDef, unknown> =
+  openEnums.inboundSchema(DeliveryLifecycleStatus);
 
 /** @internal */
-export const Severity$inboundSchema: z.ZodNativeEnum<typeof Severity> = z.nativeEnum(Severity);
+export const Severity$inboundSchema: z.ZodType<Severity, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Severity);
 
 /** @internal */
 export const GetWorkflowRunsDto$inboundSchema: z.ZodType<GetWorkflowRunsDto, z.ZodTypeDef, unknown> = z.object({

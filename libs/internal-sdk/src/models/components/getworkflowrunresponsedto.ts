@@ -4,7 +4,8 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import { ClosedEnum } from '../../types/enums.js';
+import * as openEnums from '../../types/enums.js';
+import { OpenEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { StepRunDto, StepRunDto$inboundSchema } from './steprundto.js';
@@ -21,7 +22,7 @@ export const GetWorkflowRunResponseDtoStatus = {
 /**
  * Workflow run status
  */
-export type GetWorkflowRunResponseDtoStatus = ClosedEnum<typeof GetWorkflowRunResponseDtoStatus>;
+export type GetWorkflowRunResponseDtoStatus = OpenEnum<typeof GetWorkflowRunResponseDtoStatus>;
 
 /**
  * Workflow run delivery lifecycle status
@@ -39,7 +40,7 @@ export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus = {
 /**
  * Workflow run delivery lifecycle status
  */
-export type GetWorkflowRunResponseDtoDeliveryLifecycleStatus = ClosedEnum<
+export type GetWorkflowRunResponseDtoDeliveryLifecycleStatus = OpenEnum<
   typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus
 >;
 
@@ -55,7 +56,7 @@ export const GetWorkflowRunResponseDtoSeverity = {
 /**
  * Severity
  */
-export type GetWorkflowRunResponseDtoSeverity = ClosedEnum<typeof GetWorkflowRunResponseDtoSeverity>;
+export type GetWorkflowRunResponseDtoSeverity = OpenEnum<typeof GetWorkflowRunResponseDtoSeverity>;
 
 /**
  * Trigger payload
@@ -142,18 +143,25 @@ export type GetWorkflowRunResponseDto = {
 };
 
 /** @internal */
-export const GetWorkflowRunResponseDtoStatus$inboundSchema: z.ZodNativeEnum<typeof GetWorkflowRunResponseDtoStatus> =
-  z.nativeEnum(GetWorkflowRunResponseDtoStatus);
+export const GetWorkflowRunResponseDtoStatus$inboundSchema: z.ZodType<
+  GetWorkflowRunResponseDtoStatus,
+  z.ZodTypeDef,
+  unknown
+> = openEnums.inboundSchema(GetWorkflowRunResponseDtoStatus);
 
 /** @internal */
-export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema: z.ZodNativeEnum<
-  typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus
-> = z.nativeEnum(GetWorkflowRunResponseDtoDeliveryLifecycleStatus);
+export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema: z.ZodType<
+  GetWorkflowRunResponseDtoDeliveryLifecycleStatus,
+  z.ZodTypeDef,
+  unknown
+> = openEnums.inboundSchema(GetWorkflowRunResponseDtoDeliveryLifecycleStatus);
 
 /** @internal */
-export const GetWorkflowRunResponseDtoSeverity$inboundSchema: z.ZodNativeEnum<
-  typeof GetWorkflowRunResponseDtoSeverity
-> = z.nativeEnum(GetWorkflowRunResponseDtoSeverity);
+export const GetWorkflowRunResponseDtoSeverity$inboundSchema: z.ZodType<
+  GetWorkflowRunResponseDtoSeverity,
+  z.ZodTypeDef,
+  unknown
+> = openEnums.inboundSchema(GetWorkflowRunResponseDtoSeverity);
 
 /** @internal */
 export const Payload$inboundSchema: z.ZodType<Payload, z.ZodTypeDef, unknown> = z.object({});

@@ -4,7 +4,8 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
-import { ClosedEnum } from '../../types/enums.js';
+import * as openEnums from '../../types/enums.js';
+import { OpenEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
@@ -21,7 +22,7 @@ export const Target = {
 /**
  * Target window for the redirection.
  */
-export type Target = ClosedEnum<typeof Target>;
+export type Target = OpenEnum<typeof Target>;
 
 export type RedirectDto = {
   /**
@@ -35,9 +36,9 @@ export type RedirectDto = {
 };
 
 /** @internal */
-export const Target$inboundSchema: z.ZodNativeEnum<typeof Target> = z.nativeEnum(Target);
+export const Target$inboundSchema: z.ZodType<Target, z.ZodTypeDef, unknown> = openEnums.inboundSchema(Target);
 /** @internal */
-export const Target$outboundSchema: z.ZodNativeEnum<typeof Target> = Target$inboundSchema;
+export const Target$outboundSchema: z.ZodType<string, z.ZodTypeDef, Target> = openEnums.outboundSchema(Target);
 
 /** @internal */
 export const RedirectDto$inboundSchema: z.ZodType<RedirectDto, z.ZodTypeDef, unknown> = z.object({
