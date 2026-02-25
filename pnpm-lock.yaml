@@ -2113,62 +2113,6 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
-  enterprise/workers/scheduler:
-    dependencies:
-      '@hono/valibot-validator':
-        specifier: ^0.6.0
-        version: 0.6.1(hono@4.12.2)(valibot@1.2.0(typescript@5.8.3))
-      hono:
-        specifier: ^4.10.8
-        version: 4.12.2
-      ky:
-        specifier: ^1.14.1
-        version: 1.14.3
-      valibot:
-        specifier: ^1.2.0
-        version: 1.2.0(typescript@5.8.3)
-    devDependencies:
-      '@cloudflare/vitest-pool-workers':
-        specifier: ^0.12.7
-        version: 0.12.17(@cloudflare/workers-types@4.20260303.0)(@vitest/runner@3.2.4)(@vitest/snapshot@3.2.4)(vitest@3.2.4(@edge-runtime/vm@4.0.2)(@types/debug@4.1.12)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))
-      typescript:
-        specifier: ^5.5.2
-        version: 5.8.3
-      vitest:
-        specifier: ~3.2.0
-        version: 3.2.4(@edge-runtime/vm@4.0.2)(@types/debug@4.1.12)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
-      wrangler:
-        specifier: ^4.49.0
-        version: 4.68.1(@cloudflare/workers-types@4.20260303.0)
-
-  enterprise/workers/socket:
-    dependencies:
-      '@tsndr/cloudflare-worker-jwt':
-        specifier: ^3.2.0
-        version: 3.2.1
-      '@types/jsonwebtoken':
-        specifier: ^8.5.9
-        version: 8.5.9
-      hono:
-        specifier: ^4.8.2
-        version: 4.12.2
-      jsonwebtoken:
-        specifier: 9.0.3
-        version: 9.0.3
-      ws:
-        specifier: ^8.18.0
-        version: 8.18.0
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20250620.0
-        version: 4.20260303.0
-      typescript:
-        specifier: ^5.5.2
-        version: 5.8.3
-      wrangler:
-        specifier: ^4.20.5
-        version: 4.68.1(@cloudflare/workers-types@4.20260303.0)
-
   enterprise/workers/step-resolver:
     devDependencies:
       typescript:
@@ -5902,13 +5846,6 @@ packages:
       workerd:
         optional: true
 
-  '@cloudflare/vitest-pool-workers@0.12.17':
-    resolution: {integrity: sha512-yBq/7c1cn6HvAb5ybb94yA9l1BzYoA4axCvXopKfTgWS9Snq1XVfeytdu6Z0F8xValpM85H6YXQfIXTXAT1MAw==}
-    peerDependencies:
-      '@vitest/runner': 2.0.x - 3.2.x
-      '@vitest/snapshot': 2.0.x - 3.2.x
-      vitest: 2.0.x - 3.2.x
-
   '@cloudflare/workerd-darwin-64@1.20260302.0':
     resolution: {integrity: sha512-cGtxPByeVrgoqxbmd8qs631wuGwf8yTm/FY44dEW4HdoXrb5jhlE4oWYHFafedkQCvGjY1Vbs3puAiKnuMxTXQ==}
     engines: {node: '>=16'}
@@ -7544,12 +7481,6 @@ packages:
 
   '@hapi/topo@5.1.0':
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
-
-  '@hono/valibot-validator@0.6.1':
-    resolution: {integrity: sha512-rqKhQJI8IVR8gRRNHHf2wGtIT7sKEqV1KoGL5f2SocNytl+tBNn4EtRu4zfk/D6axgWSswnaxeiuJhM5yNFrCg==}
-    peerDependencies:
-      hono: '>=3.9.0'
-      valibot: ^1.0.0 || ^1.0.0-beta.4 || ^1.0.0-rc
 
   '@hookform/devtools@4.3.1':
     resolution: {integrity: sha512-CrWxEoHQZaOXJZVQ8KBgOuAa8p2LI8M0DAN5GTRTmdCieRwFVjVDEmuTAVazWVRRkpEQSgSt3KYp7VmmqXdEnw==}
@@ -13537,9 +13468,6 @@ packages:
   '@tsconfig/node16@1.0.3':
     resolution: {integrity: sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==}
 
-  '@tsndr/cloudflare-worker-jwt@3.2.1':
-    resolution: {integrity: sha512-1AfDEgu7DTbU0sXDSOKh4D5t7+RJ0dIRRaDmoX3LFeW0AxQdunuqTQ7AVGwNJqOnxrbxiruyvX01cf9HHqEvXQ==}
-
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
     engines: {node: ^16.14.0 || >=18.0.0}
@@ -19016,10 +18944,6 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.12.2:
-    resolution: {integrity: sha512-gJnaDHXKDayjt8ue0n8Gs0A007yKXj4Xzb8+cNjZeYsSzzwKc0Lr+OZgYwVfB0pHfUs17EPoLvrOsEaJ9mj+Tg==}
-    engines: {node: '>=16.9.0'}
-
   hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
 
@@ -20551,10 +20475,6 @@ packages:
 
   kuler@2.0.0:
     resolution: {integrity: sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==}
-
-  ky@1.14.3:
-    resolution: {integrity: sha512-9zy9lkjac+TR1c2tG+mkNSVlyOpInnWdSMiue4F+kq8TwJSgv6o8jhLRg8Ho6SnZ9wOYUq/yozts9qQCfk7bIw==}
-    engines: {node: '>=18'}
 
   kysely@0.28.11:
     resolution: {integrity: sha512-zpGIFg0HuoC893rIjYX1BETkVWdDnzTzF5e0kWXJFg5lE0k1/LfNWBejrcnOFu8Q2Rfq/hTDTU7XLUM8QOrpzg==}
@@ -26549,14 +26469,6 @@ packages:
     resolution: {integrity: sha512-6z3GW9x8G1gd+JIIgQQQxXuiJtCXeAjp6RaPEPLv62mH3iPHPxV6W3robxtCzNErRo6ZwTmzWhsbNvjyEBKzKA==}
     engines: {node: '>=10.12.0'}
 
-  valibot@1.2.0:
-    resolution: {integrity: sha512-mm1rxUsmOxzrwnX5arGS+U4T25RdvpPjPN4yR0u9pUBov9+zGVtO84tif1eY4r6zWxVxu3KzIyknJy3rxfRZZg==}
-    peerDependencies:
-      typescript: '>=5'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   valid-data-url@3.0.1:
     resolution: {integrity: sha512-jOWVmzVceKlVVdwjNSenT4PbGghU0SBIizAev8ofZVgivk/TVHXSbNL8LP6M3spZvkR9/QolkyJavGSX5Cs0UA==}
     engines: {node: '>=10'}
@@ -27774,8 +27686,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -28105,11 +28017,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.575.0':
+  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -28148,6 +28060,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)':
@@ -28665,11 +28578,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
+  '@aws-sdk/client-sts@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -28708,7 +28621,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.637.0':
@@ -29041,7 +28953,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -29667,7 +29579,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -30399,7 +30311,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -30408,7 +30320,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.614.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.609.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -32149,20 +32061,6 @@ snapshots:
     optionalDependencies:
       workerd: 1.20260302.0
 
-  '@cloudflare/vitest-pool-workers@0.12.17(@cloudflare/workers-types@4.20260303.0)(@vitest/runner@3.2.4)(@vitest/snapshot@3.2.4)(vitest@3.2.4(@edge-runtime/vm@4.0.2)(@types/debug@4.1.12)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))':
-    dependencies:
-      '@vitest/runner': 3.2.4
-      '@vitest/snapshot': 3.2.4
-      cjs-module-lexer: 1.4.1
-      esbuild: 0.27.3
-      miniflare: 4.20260302.0
-      vitest: 3.2.4(@edge-runtime/vm@4.0.2)(@types/debug@4.1.12)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
-      wrangler: 4.68.1(@cloudflare/workers-types@4.20260303.0)
-    transitivePeerDependencies:
-      - '@cloudflare/workers-types'
-      - bufferutil
-      - utf-8-validate
-
   '@cloudflare/workerd-darwin-64@1.20260302.0':
     optional: true
 
@@ -32178,7 +32076,8 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260302.0':
     optional: true
 
-  '@cloudflare/workers-types@4.20260303.0': {}
+  '@cloudflare/workers-types@4.20260303.0':
+    optional: true
 
   '@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)':
     dependencies:
@@ -33735,11 +33634,6 @@ snapshots:
   '@hapi/topo@5.1.0':
     dependencies:
       '@hapi/hoek': 9.3.0
-
-  '@hono/valibot-validator@0.6.1(hono@4.12.2)(valibot@1.2.0(typescript@5.8.3))':
-    dependencies:
-      hono: 4.12.2
-      valibot: 1.2.0(typescript@5.8.3)
 
   '@hookform/devtools@4.3.1(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -42272,8 +42166,6 @@ snapshots:
 
   '@tsconfig/node16@1.0.3': {}
 
-  '@tsndr/cloudflare-worker-jwt@3.2.1': {}
-
   '@tufjs/canonical-json@2.0.0': {}
 
   '@tybys/wasm-util@0.10.0':
@@ -42356,6 +42248,7 @@ snapshots:
     dependencies:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
+    optional: true
 
   '@types/cheerio@0.22.35':
     dependencies:
@@ -42440,7 +42333,8 @@ snapshots:
     dependencies:
       '@types/ms': 0.7.31
 
-  '@types/deep-eql@4.0.2': {}
+  '@types/deep-eql@4.0.2':
+    optional: true
 
   '@types/es-aggregate-error@1.0.6':
     dependencies:
@@ -43446,6 +43340,7 @@ snapshots:
       '@vitest/utils': 3.2.4
       chai: 5.2.0
       tinyrainbow: 2.0.0
+    optional: true
 
   '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@20.19.10)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))':
     dependencies:
@@ -43479,6 +43374,7 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 5.4.21(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+    optional: true
 
   '@vitest/pretty-format@2.1.9':
     dependencies:
@@ -43487,6 +43383,7 @@ snapshots:
   '@vitest/pretty-format@3.2.4':
     dependencies:
       tinyrainbow: 2.0.0
+    optional: true
 
   '@vitest/runner@1.6.1':
     dependencies:
@@ -43504,6 +43401,7 @@ snapshots:
       '@vitest/utils': 3.2.4
       pathe: 2.0.3
       strip-literal: 3.1.0
+    optional: true
 
   '@vitest/snapshot@1.6.1':
     dependencies:
@@ -43522,6 +43420,7 @@ snapshots:
       '@vitest/pretty-format': 3.2.4
       magic-string: 0.30.21
       pathe: 2.0.3
+    optional: true
 
   '@vitest/spy@1.6.1':
     dependencies:
@@ -43534,6 +43433,7 @@ snapshots:
   '@vitest/spy@3.2.4':
     dependencies:
       tinyspy: 4.0.4
+    optional: true
 
   '@vitest/utils@1.6.1':
     dependencies:
@@ -43553,6 +43453,7 @@ snapshots:
       '@vitest/pretty-format': 3.2.4
       loupe: 3.2.1
       tinyrainbow: 2.0.0
+    optional: true
 
   '@vonage/accounts@1.9.0(encoding@0.1.13)':
     dependencies:
@@ -46485,6 +46386,7 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+    optional: true
 
   debug@4.3.1(supports-color@8.1.1):
     dependencies:
@@ -49157,8 +49059,6 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.12.2: {}
-
   hosted-git-info@2.8.9: {}
 
   hosted-git-info@4.1.0:
@@ -51514,8 +51414,6 @@ snapshots:
 
   kuler@2.0.0: {}
 
-  ky@1.14.3: {}
-
   kysely@0.28.11: {}
 
   languagedetect@1.3.0: {}
@@ -51950,7 +51848,8 @@ snapshots:
 
   loupe@3.1.3: {}
 
-  loupe@3.2.1: {}
+  loupe@3.2.1:
+    optional: true
 
   lowdb@1.0.0:
     dependencies:
@@ -53214,7 +53113,7 @@ snapshots:
 
   needle@2.4.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.4.24
       sax: 1.4.1
     transitivePeerDependencies:
@@ -53222,7 +53121,7 @@ snapshots:
 
   needle@3.2.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.6.3
       sax: 1.4.1
     transitivePeerDependencies:
@@ -54602,7 +54501,7 @@ snapshots:
   portfinder@1.0.32:
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
@@ -57314,6 +57213,7 @@ snapshots:
   strip-literal@3.1.0:
     dependencies:
       js-tokens: 9.0.1
+    optional: true
 
   strip-outer@2.0.0: {}
 
@@ -57966,17 +57866,20 @@ snapshots:
 
   tinypool@1.0.2: {}
 
-  tinypool@1.1.1: {}
+  tinypool@1.1.1:
+    optional: true
 
   tinyrainbow@1.2.0: {}
 
-  tinyrainbow@2.0.0: {}
+  tinyrainbow@2.0.0:
+    optional: true
 
   tinyspy@2.2.1: {}
 
   tinyspy@3.0.2: {}
 
-  tinyspy@4.0.4: {}
+  tinyspy@4.0.4:
+    optional: true
 
   tippy.js@6.3.7:
     dependencies:
@@ -59065,10 +58968,6 @@ snapshots:
       '@types/istanbul-lib-coverage': 2.0.4
       convert-source-map: 1.9.0
 
-  valibot@1.2.0(typescript@5.8.3):
-    optionalDependencies:
-      typescript: 5.8.3
-
   valid-data-url@3.0.1: {}
 
   validate-html-nesting@1.2.2: {}
@@ -59342,6 +59241,7 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+    optional: true
 
   vite-plugin-ejs@1.7.0(vite@5.4.21(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)):
     dependencies:
@@ -59637,6 +59537,7 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+    optional: true
 
   vizion@2.2.1:
     dependencies:
