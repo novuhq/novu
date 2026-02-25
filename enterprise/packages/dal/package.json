@@ -20,7 +20,6 @@
   "dependencies": {
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
-    "mongoose": "^8.9.5",
     "mongoose-delete": "^1.0.7",
     "rimraf": "^3.0.2"
   },
@@ -31,6 +30,7 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "@nestjs/common": "10.4.18"
+    "@nestjs/common": "10.4.18",
+    "mongoose": "^8.9.5"
   }
 }

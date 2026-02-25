@@ -25,7 +25,6 @@
     "class-validator": "0.14.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "mongoose": "^8.9.5",
     "rxjs": "7.8.1",
     "shortid": "^2.2.16",
     "stripe": "^11.18.0",
@@ -50,6 +49,7 @@
     "@nestjs/platform-express": "10.4.18",
     "@nestjs/swagger": "7.4.0",
     "@nestjs/throttler": "6.2.1",
-    "@novu/dal": "workspace:*"
+    "@novu/dal": "workspace:*",
+    "mongoose": "^8.9.5"
   }
 }
