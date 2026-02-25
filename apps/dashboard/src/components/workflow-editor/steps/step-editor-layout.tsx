@@ -8,6 +8,7 @@ import { LocaleSelect } from '@/components/primitives/locale-select';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
+import { useReactEmailStepHint } from '@/components/workflow-editor/steps/email/use-react-email-step-hint';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
@@ -30,6 +31,7 @@ type StepEditorLayoutProps = {
 
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale } = useStepEditor();
+  const emailStepHint = useReactEmailStepHint();
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
@@ -127,7 +129,11 @@ function StepEditorContent() {
           </ResizableLayout>
         </div>
 
-        <IssuesPanel issues={step.issues} isTranslationEnabled={workflow.isTranslationEnabled} />
+        <IssuesPanel
+          issues={step.issues}
+          isTranslationEnabled={workflow.isTranslationEnabled}
+          hintMessage={emailStepHint}
+        />
       </ResizableLayout.MainContentPanel>
 
       <TestWorkflowDrawer

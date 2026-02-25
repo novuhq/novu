@@ -459,6 +459,10 @@ export class UpsertWorkflowUseCase {
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
         emailControlValues.body = '';
       }
+
+      if (emailControlValues.rendererType !== 'react-email') {
+        (emailControlValues as Record<string, unknown>).stepResolverHash = null;
+      }
     }
 
     return this.upsertControlValuesUseCase.execute(

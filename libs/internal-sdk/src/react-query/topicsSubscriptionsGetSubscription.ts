@@ -5,23 +5,19 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildTopicsSubscriptionsGetSubscriptionQuery,
   prefetchTopicsSubscriptionsGetSubscription,
   queryKeyTopicsSubscriptionsGetSubscription,
   TopicsSubscriptionsGetSubscriptionQueryData,
-} from "./topicsSubscriptionsGetSubscription.core.js";
+} from './topicsSubscriptionsGetSubscription.core.js';
 export {
   buildTopicsSubscriptionsGetSubscriptionQuery,
   prefetchTopicsSubscriptionsGetSubscription,
@@ -30,102 +26,72 @@ export {
 };
 
 /**
- * Get a topic subscription
+ * Retrieve a topic subscription
  *
  * @remarks
- * Get a subscription by its unique identifier for a topic.
+ * Retrieve a subscription by its unique identifier for a topic.
  */
 export function useTopicsSubscriptionsGetSubscription(
   topicKey: string,
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>,
+  options?: QueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>
 ): UseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTopicsSubscriptionsGetSubscriptionQuery(
-      client,
-      topicKey,
-      identifier,
-      idempotencyKey,
-      options,
-    ),
+    ...buildTopicsSubscriptionsGetSubscriptionQuery(client, topicKey, identifier, idempotencyKey, options),
     ...options,
   });
 }
 
 /**
- * Get a topic subscription
+ * Retrieve a topic subscription
  *
  * @remarks
- * Get a subscription by its unique identifier for a topic.
+ * Retrieve a subscription by its unique identifier for a topic.
  */
 export function useTopicsSubscriptionsGetSubscriptionSuspense(
   topicKey: string,
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<
-    TopicsSubscriptionsGetSubscriptionQueryData
-  >,
+  options?: SuspenseQueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>
 ): UseSuspenseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTopicsSubscriptionsGetSubscriptionQuery(
-      client,
-      topicKey,
-      identifier,
-      idempotencyKey,
-      options,
-    ),
+    ...buildTopicsSubscriptionsGetSubscriptionQuery(client, topicKey, identifier, idempotencyKey, options),
     ...options,
   });
 }
 
 export function setTopicsSubscriptionsGetSubscriptionData(
   client: QueryClient,
-  queryKeyBase: [
-    topicKey: string,
-    identifier: string,
-    parameters: { idempotencyKey?: string | undefined },
-  ],
-  data: TopicsSubscriptionsGetSubscriptionQueryData,
+  queryKeyBase: [topicKey: string, identifier: string, parameters: { idempotencyKey?: string | undefined }],
+  data: TopicsSubscriptionsGetSubscriptionQueryData
 ): TopicsSubscriptionsGetSubscriptionQueryData | undefined {
   const key = queryKeyTopicsSubscriptionsGetSubscription(...queryKeyBase);
 
-  return client.setQueryData<TopicsSubscriptionsGetSubscriptionQueryData>(
-    key,
-    data,
-  );
+  return client.setQueryData<TopicsSubscriptionsGetSubscriptionQueryData>(key, data);
 }
 
 export function invalidateTopicsSubscriptionsGetSubscription(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      topicKey: string,
-      identifier: string,
-      parameters: { idempotencyKey?: string | undefined },
-    ]
+    [topicKey: string, identifier: string, parameters: { idempotencyKey?: string | undefined }]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: [
-      "@novu/api",
-      "Subscriptions",
-      "getSubscription",
-      ...queryKeyBase,
-    ],
+    queryKey: ['@novu/api', 'Subscriptions', 'getSubscription', ...queryKeyBase],
   });
 }
 
 export function invalidateAllTopicsSubscriptionsGetSubscription(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Subscriptions", "getSubscription"],
+    queryKey: ['@novu/api', 'Subscriptions', 'getSubscription'],
   });
 }
