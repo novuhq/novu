@@ -156,11 +156,23 @@ export class SendMessagePush extends SendMessageBase {
     const allPushChannels = [...pushChannels, ...uniqueOverrideChannels];
 
     if (!allPushChannels.length) {
-      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
       return {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PUSH_TOKEN,
+        },
       };
     }
 
@@ -322,7 +334,7 @@ export class SendMessagePush extends SendMessageBase {
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.PUSH_SOME_CHANNELS_SKIPPED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
+          status: ExecutionDetailsStatusEnum.WARNING,
           isTest: false,
           isRetry: false,
         })
@@ -553,7 +565,7 @@ export class SendMessagePush extends SendMessageBase {
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
 
-      Logger.log(
+      Logger.debug(
         { jobId: command.jobId, deviceToken, overrides, step },
         `Push handler obtained for jobId ${command.jobId}`,
         LOG_CONTEXT

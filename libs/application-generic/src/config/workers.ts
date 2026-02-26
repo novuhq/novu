@@ -21,7 +21,9 @@ export const getSqsDefaultConcurrency = () =>
   process.env.SQS_DEFAULT_CONCURRENCY ? Number(process.env.SQS_DEFAULT_CONCURRENCY) : undefined;
 
 export const getSqsDefaultVisibilityTimeout = () => {
-  const value = process.env.SQS_DEFAULT_VISIBILITY_TIMEOUT ? Number(process.env.SQS_DEFAULT_VISIBILITY_TIMEOUT) : undefined;
+  const value = process.env.SQS_DEFAULT_VISIBILITY_TIMEOUT
+    ? Number(process.env.SQS_DEFAULT_VISIBILITY_TIMEOUT)
+    : undefined;
 
   return value ? Math.min(value, 43200) : undefined;
 };
@@ -33,7 +35,9 @@ export const getSqsDefaultBatchSize = () => {
 };
 
 export const getSqsDefaultWaitTimeSeconds = () => {
-  const value = process.env.SQS_DEFAULT_WAIT_TIME_SECONDS ? Number(process.env.SQS_DEFAULT_WAIT_TIME_SECONDS) : undefined;
+  const value = process.env.SQS_DEFAULT_WAIT_TIME_SECONDS
+    ? Number(process.env.SQS_DEFAULT_WAIT_TIME_SECONDS)
+    : undefined;
 
   return value ? Math.min(value, 20) : undefined;
 };

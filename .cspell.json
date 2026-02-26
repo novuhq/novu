@@ -780,7 +780,12 @@
     "Chakma",
     "selectednode",
     "valibot",
-    "jsonlogic"
+    "jsonlogic",
+    "flexbox",
+    "Checkpointer",
+    "checkpointer",
+    "langchain",
+    "langgraph"
   ],
   "flagWords": [],
   "patterns": [

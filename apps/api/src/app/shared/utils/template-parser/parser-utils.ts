@@ -23,6 +23,7 @@ export function extractLiquidExpressions(str: string): string[] {
 }
 
 export const DIGEST_EVENTS_VARIABLE_PATTERN = /^steps\.[^.]+\.events$/;
+export const DIGEST_EVENTS_PAYLOAD_VARIABLE_PATTERN = /^steps\.[^.]+\.events\.payload\./;
 export const VALID_DYNAMIC_PATHS = [
   'subscriber.data.',
   'payload.',

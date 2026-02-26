@@ -256,7 +256,7 @@ function useChecklistItems(steps: Step[]) {
         },
         link: {
           text: 'Learn how to trigger',
-          url: 'https://docs.novu.co/platform/trigger',
+          url: 'https://docs.novu.co/platform/concepts/trigger',
         },
       },
     ],

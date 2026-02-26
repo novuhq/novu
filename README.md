@@ -36,7 +36,7 @@
 
 <p align="center">
   <br />
-  <a href="https://go.novu.co/github" rel="dofollow"><strong>Learn More »</strong></a>
+  <a href="https://go.novu.co/github?utm_campaign=readme_learn_more" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
 
 <br/>
@@ -46,7 +46,7 @@
   <a href="https://docs.novu.co" target="_blank" rel="noopener noreferrer"
 >Docs</a>
   ·
-  <a href="https://go.novu.co/github" target="_blank" rel="noopener noreferrer"
+  <a href="https://go.novu.co/github?utm_campaign=readme_website" target="_blank" rel="noopener noreferrer"
 >Website</a>
   ·
   <a href="https://discord.novu.co" target="_blank" rel="noopener noreferrer"

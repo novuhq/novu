@@ -35,6 +35,7 @@ import {
 } from '@novu/shared';
 import { format } from 'prettier';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
 import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
@@ -254,6 +255,8 @@ export class UpsertWorkflowUseCase {
       type: step.type,
     }));
 
+    const optimisticPayloadSchema = command.workflowDto.payloadSchema as JSONSchemaDto | undefined;
+
     const stepsWithIssues = await Promise.all(
       command.workflowDto.steps.map(async (step, index) => {
         const existingStep: NotificationStepEntity | null | undefined =
@@ -270,6 +273,7 @@ export class UpsertWorkflowUseCase {
           controlsDto: step.controlValues,
           optimisticSteps,
           preloadedControlValues,
+          optimisticPayloadSchema,
         });
 
         const finalStep = {
@@ -458,6 +462,10 @@ export class UpsertWorkflowUseCase {
         emailControlValues.body = htmlBody;
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
         emailControlValues.body = '';
+      }
+
+      if (emailControlValues.rendererType !== 'react-email') {
+        (emailControlValues as Record<string, unknown>).stepResolverHash = null;
       }
     }
 

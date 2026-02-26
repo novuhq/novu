@@ -16,7 +16,7 @@
     "valibot": "^1.2.0"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.19",
+    "@cloudflare/vitest-pool-workers": "^0.12.7",
     "typescript": "^5.5.2",
     "vitest": "~3.2.0",
     "wrangler": "^4.49.0"

@@ -75,7 +75,7 @@ export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: Edit
           <div>
             <SheetDescription>
               Update your environment settings.{' '}
-              <ExternalLink href="https://docs.novu.co/platform/concepts/environments">Learn more</ExternalLink>
+              <ExternalLink href="https://docs.novu.co/platform/developer/environments">Learn more</ExternalLink>
             </SheetDescription>
           </div>
         </SheetHeader>
