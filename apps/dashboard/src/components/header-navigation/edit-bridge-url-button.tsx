@@ -1,8 +1,9 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { PermissionsEnum } from '@novu/shared';
 import { useLayoutEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiLinkM, RiPencilFill } from 'react-icons/ri';
+import { RiLinkM } from 'react-icons/ri';
 import * as z from 'zod';
 import {
   Form,

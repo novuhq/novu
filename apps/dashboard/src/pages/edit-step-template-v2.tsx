@@ -31,8 +31,12 @@ export function EditStepTemplateV2Page() {
     save: (data, { onSuccess }) => {
       if (!workflow || !step) return;
 
+      const { stepResolverHash: _stripped, ...controlValues } = data as Record<string, unknown> & {
+        stepResolverHash?: unknown;
+      };
+
       const updateStepData: Partial<StepUpdateDto> = {
-        controlValues: data,
+        controlValues,
       };
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), { onSuccess });
     },

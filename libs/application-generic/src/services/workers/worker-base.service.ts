@@ -1,14 +1,14 @@
 import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
-import { PinoLogger } from '../../logging';
-import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
-import { INovuWorker } from '../readiness';
 import {
   getSqsDefaultBatchSize,
   getSqsDefaultConcurrency,
   getSqsDefaultVisibilityTimeout,
   getSqsDefaultWaitTimeSeconds,
 } from '../../config/workers';
+import { PinoLogger } from '../../logging';
+import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
+import { INovuWorker } from '../readiness';
 import {
   createSqsJobAdapter,
   ISqsConsumerOptions,

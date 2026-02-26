@@ -45,4 +45,11 @@ export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
    */
   @IsOptional()
   preloadedControlValues?: ControlValuesEntity[];
+
+  /**
+   * When set, takes precedence over workflow.payloadSchema for validation.
+   * Needed when the payload schema is being updated in the same upsert operation.
+   */
+  @IsOptional()
+  optimisticPayloadSchema?: JSONSchemaDto;
 }

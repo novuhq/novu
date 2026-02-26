@@ -138,39 +138,39 @@ export interface IEmailProps {
   previewText?: string;
 }
 
-const NOVU_LOGO_URL = 'https://dashboard.novu.co/static/images/novu-logo-dark.svg';
-const EMAIL_ICONS_BASE_URL = 'https://dashboard.novu.co/static/images';
+const NOVU_LOGO_URL = 'https://dashboard.novu.co/images/report-emails/novu-logo-dark.png';
+const EMAIL_ICONS_BASE_URL = 'https://dashboard.novu.co/images';
 
 const CHANNEL_CONFIG: Record<string, Omit<IChannel, 'value'>> = {
   in_app: {
     name: 'In-app',
     color: '#3b82f6',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/bell.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/bell.png`,
   },
   email: {
     name: 'Email',
     color: '#f59e0b',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/email.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/email.png`,
   },
   chat: {
     name: 'Chat',
     color: '#8b5cf6',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/chat.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/chat.png`,
   },
   push: {
     name: 'Push',
     color: '#ec4899',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/push.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/push.png`,
   },
   sms: {
     name: 'SMS',
     color: '#ef4444',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/sms.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/sms.png`,
   },
 };
 
@@ -249,12 +249,11 @@ const listValueCellStyle: React.CSSProperties = {
 
 /**
  * Maps provider names to their icon URLs on the Novu CDN.
- * Provider icons are hosted at: https://cdn.novu.co/images/providers/light/square/{provider-name}.svg
  */
 function getProviderIconUrl(providerName: string): string {
   const normalizedName = providerName.toLowerCase().replace(/\s+/g, '-');
 
-  return `${EMAIL_ICONS_BASE_URL}/${normalizedName}.svg`;
+  return `${EMAIL_ICONS_BASE_URL}/report-emails/providers/light/${normalizedName}.png`;
 }
 
 /**
@@ -1058,7 +1057,13 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 
           <Section style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column
+                style={{
+                  width: userInteractions > 0 ? '50%' : '100%',
+                  paddingRight: userInteractions > 0 ? '6px' : '0',
+                  verticalAlign: 'top',
+                }}
+              >
                 <CardWithDetail
                   label="Workflow Runs Triggered"
                   value={workflowRuns}
@@ -1070,17 +1075,19 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                   }}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
-                <CardWithDetail
-                  label="User Interactions"
-                  value={userInteractions}
-                  unit="interactions"
-                  detail={{
-                    value: `${interactionRate}%`,
-                    suffix: ' of all messages are interacted.',
-                  }}
-                />
-              </Column>
+              {userInteractions > 0 && (
+                <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+                  <CardWithDetail
+                    label="User Interactions"
+                    value={userInteractions}
+                    unit="interactions"
+                    detail={{
+                      value: `${interactionRate}%`,
+                      suffix: ' of all messages are interacted.',
+                    }}
+                  />
+                </Column>
+              )}
             </Row>
           </Section>
 

@@ -20,6 +20,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { IsValidJsonSchema } from '../../../shared/validators/json-schema.validator';
@@ -108,13 +109,15 @@ export class UpsertWorkflowDataCommand {
 
   @IsOptional()
   @IsString()
-  description?: string;
+  @ValidateIf((_, value) => value !== null)
+  description?: string | null;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(16, { message: 'tags must contain no more than 16 elements' })
-  tags?: string[];
+  @ValidateIf((_, value) => value !== null)
+  tags?: string[] | null;
 
   @IsOptional()
   @IsBoolean()

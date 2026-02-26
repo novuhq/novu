@@ -11,6 +11,7 @@ export enum WorkflowCreationSourceEnum {
   ONBOARDING_GET_STARTED = 'onboarding_get_started',
   BRIDGE = 'bridge',
   DASHBOARD = 'dashboard',
+  AI = 'ai',
 }
 
 export type WorkflowIntegrationStatus = {

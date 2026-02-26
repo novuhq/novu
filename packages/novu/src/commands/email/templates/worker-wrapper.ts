@@ -23,7 +23,7 @@ function generateStepHandlersMap(steps: DiscoveredStep[]): string {
   const entries = steps
     .map(
       (s, i) =>
-        `  [${JSON.stringify(s.stepId)}, { handler: stepHandler${i}, stepId: stepId${i}, workflowId: workflowId${i} }]`
+        `  [${JSON.stringify(`${s.workflowId}/${s.stepId}`)}, { handler: stepHandler${i}, stepId: stepId${i}, workflowId: workflowId${i} }]`
     )
     .join(',\n');
 
@@ -64,19 +64,21 @@ function generateRequestHandler(): string {
       }
 
       const url = new URL(request.url);
-      const stepName = url.searchParams.get('step') || request.headers.get('X-Step-Name');
-      
-      if (!stepName) {
+      const workflowId = url.searchParams.get('workflowId');
+      const stepId = url.searchParams.get('stepId');
+
+      if (!workflowId || !stepId) {
         return jsonResponse(
-          { error: 'Missing step name', message: 'Provide step name via ?step=<name> query param or X-Step-Name header' },
+          { error: 'Missing routing params', message: 'Provide workflowId and stepId as query params' },
           400
         );
       }
 
-      const step = stepHandlers.get(stepName);
+      const stepKey = \`\${workflowId}/\${stepId}\`;
+      const step = stepHandlers.get(stepKey);
       if (!step) {
         return jsonResponse(
-          { error: 'Step not found', stepName, available: Array.from(stepHandlers.keys()) },
+          { error: 'Step not found', workflowId, stepId, available: Array.from(stepHandlers.keys()) },
           404
         );
       }
