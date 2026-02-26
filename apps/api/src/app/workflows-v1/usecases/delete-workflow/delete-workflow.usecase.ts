@@ -10,6 +10,7 @@ import {
   SendWebhookMessage,
 } from '@novu/application-generic';
 import {
+  ClientSession,
   ControlValuesRepository,
   LocalizationResourceEnum,
   MessageTemplateRepository,
@@ -57,19 +58,26 @@ export class DeleteWorkflowUseCase {
 
   @Instrument()
   private async deleteRelatedEntities(command: DeleteWorkflowCommand, workflow: NotificationTemplateEntity) {
-    await this.notificationTemplateRepository.withTransaction(async () => {
-      await this.controlValuesRepository.deleteMany({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _workflowId: workflow._id,
-      });
+    const deleteOps = async (session: ClientSession) => {
+      const sessionOptions = { session };
+      await this.controlValuesRepository.deleteMany(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _workflowId: workflow._id,
+        },
+        sessionOptions
+      );
 
       if (workflow.steps.length > 0) {
         for (const step of workflow.steps) {
-          await this.messageTemplateRepository.deleteById({
-            _id: step._templateId,
-            _environmentId: command.environmentId,
-          });
+          await this.messageTemplateRepository.deleteById(
+            {
+              _id: step._templateId,
+              _environmentId: command.environmentId,
+            },
+            sessionOptions
+          );
         }
       }
 
@@ -80,6 +88,7 @@ export class DeleteWorkflowUseCase {
           organizationId: command.organizationId,
           userId: command.userId,
           type: PreferencesTypeEnum.USER_WORKFLOW,
+          session,
         })
       );
 
@@ -90,20 +99,27 @@ export class DeleteWorkflowUseCase {
           organizationId: command.organizationId,
           userId: command.userId,
           type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
+          session,
         })
       );
 
-      await this.deleteTranslationGroup(command);
+      await this.deleteTranslationGroup(command, session);
 
       await this.notificationTemplateRepository.delete({
         _id: workflow._id,
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
       });
-    });
+    };
+
+    if (command.session) {
+      await deleteOps(command.session);
+    } else {
+      await this.notificationTemplateRepository.withTransaction(deleteOps);
+    }
   }
 
-  private async deleteTranslationGroup(command: DeleteWorkflowCommand) {
+  private async deleteTranslationGroup(command: DeleteWorkflowCommand, session: ClientSession) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
@@ -122,6 +138,7 @@ export class DeleteWorkflowUseCase {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        session,
       });
     } catch (error) {
       this.logger.error(`Failed to delete translations for workflow`, {

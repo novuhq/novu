@@ -17,7 +17,6 @@
   "dependencies": {
     "@date-fns/utc": "^2.1.0",
     "@novu/application-generic": "workspace:*",
-    "@novu/ee-dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/notifications": "workspace:*",

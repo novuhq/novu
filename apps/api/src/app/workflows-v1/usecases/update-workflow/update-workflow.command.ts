@@ -45,13 +45,15 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   @Length(0, MAX_DESCRIPTION_LENGTH)
-  description?: string;
+  @ValidateIf((_, value) => value !== null)
+  description?: string | null;
 
   @IsOptional()
   @IsArray()
   @ArrayUnique()
   @Length(1, MAX_TAG_LENGTH, { each: true })
-  tags?: string[];
+  @ValidateIf((_, value) => value !== null)
+  tags?: string[] | null;
 
   @IsBoolean()
   @IsOptional()
@@ -69,7 +71,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsObject()
   @ValidateNested()
   @Type(() => PreferencesRequired)
-  @ValidateIf((object, value) => value !== null)
+  @ValidateIf((_, value) => value !== null)
   @IsOptional()
   userPreferences?: PreferencesRequired | null;
 

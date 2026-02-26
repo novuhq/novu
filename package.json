@@ -231,7 +231,8 @@
       "protobufjs",
       "react-icons",
       "sharp",
-      "unrs-resolver"
+      "unrs-resolver",
+      "workerd"
     ]
   }
 }

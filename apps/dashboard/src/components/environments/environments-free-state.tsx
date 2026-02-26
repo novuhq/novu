@@ -106,7 +106,7 @@ export function FreeTierState() {
           >
             {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade to Team Tier'}
           </Button>
-          <Link to={'https://docs.novu.co/platform/concepts/environments'} target="_blank">
+          <Link to={'https://docs.novu.co/platform/developer/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
               How does this help?
             </LinkButton>

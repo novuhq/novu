@@ -1,0 +1,10 @@
+{
+  "plugins": {
+    "figma": {
+      "enabled": true
+    },
+    "linear": {
+      "enabled": true
+    }
+  }
+}

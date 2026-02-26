@@ -7,7 +7,7 @@ import { useReactEmailPolling } from '@/hooks/use-react-email-polling';
 import { useWorkflow } from '../../workflow-provider';
 import { ReactEmailNotPublished } from './react-email-not-published';
 
-const REACT_EMAIL_CONTROLS_DOCS_LINK = 'https://docs.novu.co/framework/react-email#controlschema';
+const REACT_EMAIL_CONTROLS_DOCS_LINK = 'https://docs.novu.co/framework/content/react-email#controlschema';
 
 function ControlsIllustration() {
   const id = useId();

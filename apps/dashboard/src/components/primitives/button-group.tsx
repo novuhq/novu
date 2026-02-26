@@ -4,6 +4,7 @@ import * as React from 'react';
 import { PolymorphicComponentProps } from '@/utils/polymorphic';
 import { recursiveCloneChildren } from '@/utils/recursive-clone-children';
 import { tv, type VariantProps } from '@/utils/tv';
+import { cn } from '@/utils/ui';
 
 const BUTTON_GROUP_ROOT_NAME = 'ButtonGroupRoot';
 const BUTTON_GROUP_ITEM_NAME = 'ButtonGroupItem';
@@ -142,4 +143,23 @@ function ButtonGroupIcon<T extends React.ElementType>({
 
 ButtonGroupIcon.displayName = BUTTON_GROUP_ICON_NAME;
 
-export { ButtonGroupIcon, ButtonGroupItem, ButtonGroupRoot };
+function ButtonGroupText({
+  className,
+  asChild = false,
+  ...props
+}: React.ComponentProps<'div'> & {
+  asChild?: boolean;
+}) {
+  const Comp = asChild ? Slot : 'div';
+  return (
+    <Comp
+      className={cn(
+        "bg-muted gap-2 rounded-lg border px-2.5 text-sm font-medium [&_svg:not([class*='size-'])]:size-4 flex items-center [&_svg]:pointer-events-none",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export { ButtonGroupIcon, ButtonGroupItem, ButtonGroupRoot, ButtonGroupText };

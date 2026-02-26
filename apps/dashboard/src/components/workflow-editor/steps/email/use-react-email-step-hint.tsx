@@ -3,7 +3,7 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
-const REACT_EMAIL_DOCS_LINK = 'https://docs.novu.co/framework/react-email';
+const REACT_EMAIL_DOCS_LINK = 'https://docs.novu.co/framework/content/react-email';
 
 export function useReactEmailStepHint(): React.ReactNode {
   const { controlValues } = useStepEditor();

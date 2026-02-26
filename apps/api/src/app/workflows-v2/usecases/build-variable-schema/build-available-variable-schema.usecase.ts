@@ -32,7 +32,8 @@ export class BuildVariableSchemaUsecase {
 
   @InstrumentUsecase()
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
-    const { workflow, stepInternalId, optimisticSteps, previewData, preloadedControlValues } = command;
+    const { workflow, stepInternalId, optimisticSteps, previewData, preloadedControlValues, optimisticPayloadSchema } =
+      command;
 
     let workflowControlValues: unknown[] = [];
     if (workflow) {
@@ -83,6 +84,8 @@ export class BuildVariableSchemaUsecase {
 
     const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
+    const effectivePayloadSchema = optimisticPayloadSchema ?? workflow?.payloadSchema;
+
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
@@ -90,9 +93,9 @@ export class BuildVariableSchemaUsecase {
         subscriber: buildSubscriberSchema(finalSubscriber),
         steps: buildPreviousStepsSchema({
           previousSteps,
-          payloadSchema: workflow?.payloadSchema,
+          payloadSchema: effectivePayloadSchema,
         }),
-        payload: await this.resolvePayloadSchema(workflow, finalPayload),
+        payload: await this.resolvePayloadSchema(workflow, finalPayload, optimisticPayloadSchema),
         context: buildContextSchema(finalContext),
       },
       additionalProperties: false,
@@ -148,8 +151,13 @@ export class BuildVariableSchemaUsecase {
   @Instrument()
   private async resolvePayloadSchema(
     workflow: NotificationTemplateEntity | undefined,
-    payload: unknown
+    payload: unknown,
+    optimisticPayloadSchema?: JSONSchemaDto
   ): Promise<JSONSchemaDto> {
+    if (optimisticPayloadSchema) {
+      return parsePayloadSchema(optimisticPayloadSchema, { safe: true }) || emptyJsonSchema();
+    }
+
     if (workflow && workflow.steps.length === 0) {
       return {
         type: JsonSchemaTypeEnum.OBJECT,

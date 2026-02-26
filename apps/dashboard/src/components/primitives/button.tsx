@@ -15,7 +15,7 @@ export const buttonVariants = tv({
   slots: {
     root: [
       // base
-      'group select-none relative inline-flex items-center justify-center whitespace-nowrap outline-hidden',
+      'group select-none relative inline-flex items-center justify-center whitespace-nowrap outline-hidden cursor-pointer disabled:cursor-default',
       'transition duration-200 ease-out',
       // focus
       'focus:outline-hidden',
