@@ -249,7 +249,6 @@ const listValueCellStyle: React.CSSProperties = {
 
 /**
  * Maps provider names to their icon URLs on the Novu CDN.
- * Provider icons are hosted at: https://cdn.novu.co/images/report-emails/providers/light/{provider-name}.png
  */
 function getProviderIconUrl(providerName: string): string {
   const normalizedName = providerName.toLowerCase().replace(/\s+/g, '-');
