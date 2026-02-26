@@ -248,6 +248,67 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(workflowCreated.validatePayload).to.be.false;
     });
 
+    it('should create workflow with skip condition on a step using payload variable', async () => {
+      const skipCondition = {
+        '!=': [{ var: 'payload.skipStep' }, 'true'],
+      };
+
+      const steps = [
+        buildEmailStep({
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+            disableOutputSanitization: false,
+            skip: skipCondition,
+          },
+        }),
+        buildInAppStep({
+          controlValues: {
+            body: 'In-App Body',
+          },
+        }),
+      ];
+
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          skipStep: { type: 'string' },
+        },
+        required: ['skipStep'],
+        additionalProperties: false,
+      };
+
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        name: `Skip Logic Workflow ${new Date().toISOString()}`,
+        steps: steps as any,
+        payloadSchema,
+      });
+
+      const workflow = await createWorkflow(apiClient, createWorkflowDto);
+
+      expect(workflow).to.be.ok;
+      expect(workflow.steps).to.have.lengthOf(2);
+      expect(Object.keys(workflow.issues || {}).length).to.equal(0);
+
+      const emailStep = workflow.steps[0] as EmailStepResponseDto;
+      expect(emailStep.type).to.equal('email');
+      expect(emailStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(emailStep.controls.values.subject).to.equal('Test Email Subject');
+
+      const inAppStep = workflow.steps[1] as InAppStepResponseDto;
+      expect(inAppStep.type).to.equal('in_app');
+      expect(inAppStep.controls.values.skip).to.be.undefined;
+
+      const retrievedWorkflow = await getWorkflow(workflow.id);
+      const retrievedEmailStep = retrievedWorkflow.steps[0] as EmailStepResponseDto;
+      expect(retrievedEmailStep.controls.values.skip).to.deep.equal(skipCondition);
+
+      const retrievedInAppStep = retrievedWorkflow.steps[1] as InAppStepResponseDto;
+      expect(retrievedInAppStep.controls.values.skip).to.be.undefined;
+
+      expect(retrievedWorkflow.payloadSchema).to.deep.equal(payloadSchema);
+    });
+
     it('should reject workflow creation with invalid JSON schema', async () => {
       const invalidPayloadSchema = {
         type: 'invalid-type',
