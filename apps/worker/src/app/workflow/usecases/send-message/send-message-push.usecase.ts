@@ -334,7 +334,7 @@ export class SendMessagePush extends SendMessageBase {
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.PUSH_SOME_CHANNELS_SKIPPED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
+          status: ExecutionDetailsStatusEnum.WARNING,
           isTest: false,
           isRetry: false,
         })

@@ -274,7 +274,7 @@ export class SendMessageChat extends SendMessageBase {
       await this.createExecutionDetail(
         command,
         DetailEnum.CHAT_SOME_CHANNELS_SKIPPED,
-        ExecutionDetailsStatusEnum.FAILED
+        ExecutionDetailsStatusEnum.WARNING
       );
 
       return {
