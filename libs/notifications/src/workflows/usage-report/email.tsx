@@ -1,3 +1,4 @@
+import { providers as sharedProviders } from '@novu/shared';
 import {
   Body,
   Button,
@@ -174,30 +175,9 @@ const CHANNEL_CONFIG: Record<string, Omit<IChannel, 'value'>> = {
   },
 };
 
-const PROVIDER_CONFIG: Record<string, { name: string }> = {
-  novu: { name: 'In-app' },
-  sendgrid: { name: 'SendGrid' },
-  twilio: { name: 'Twilio' },
-  slack: { name: 'Slack' },
-  mailgun: { name: 'Mailgun' },
-  postmark: { name: 'Postmark' },
-  sns: { name: 'AWS SNS' },
-  ses: { name: 'AWS SES' },
-  nodemailer: { name: 'Nodemailer' },
-  mandrill: { name: 'Mandrill' },
-  mailjet: { name: 'Mailjet' },
-  infobip: { name: 'Infobip' },
-  resend: { name: 'Resend' },
-  'azure-sms': { name: 'Azure SMS' },
-  clickatell: { name: 'Clickatell' },
-  discord: { name: 'Discord' },
-  'expo-push': { name: 'Expo Push' },
-  fcm: { name: 'FCM' },
-  'one-signal': { name: 'OneSignal' },
-  'push-webhook': { name: 'Push Webhook' },
-  pusher: { name: 'Pusher Beams' },
-  pushpad: { name: 'Pushpad' },
-};
+const PROVIDER_CONFIG: Record<string, { name: string; id: string }> = Object.fromEntries(
+  sharedProviders.map((p) => [p.id, { name: p.displayName, id: p.id }])
+);
 
 const COLORS = {
   bg: '#f9fafb',
@@ -247,13 +227,8 @@ const listValueCellStyle: React.CSSProperties = {
   fontFamily: "'Manrope', sans-serif",
 };
 
-/**
- * Maps provider names to their icon URLs on the Novu CDN.
- */
-function getProviderIconUrl(providerName: string): string {
-  const normalizedName = providerName.toLowerCase().replace(/\s+/g, '-');
-
-  return `${EMAIL_ICONS_BASE_URL}/report-emails/providers/light/${normalizedName}.png`;
+function getProviderIconUrl(providerId: string): string {
+  return `${EMAIL_ICONS_BASE_URL}/report-emails/providers/light/${providerId}.png`;
 }
 
 /**
@@ -342,7 +317,7 @@ function mapProviders(providers: PayloadSchemaType['topProviders']): ITopProvide
       return {
         name: config.name,
         count: provider.count,
-        icon: getProviderIconUrl(config.name),
+        icon: getProviderIconUrl(provider.name.toLowerCase()),
       };
     })
     .filter((p): p is ITopProvider => p !== null);
@@ -385,7 +360,7 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
               }}
             >
               <img
-                src={`${EMAIL_ICONS_BASE_URL}/report-emails/calendar.svg`}
+                src={`${EMAIL_ICONS_BASE_URL}/report-emails/calendar.png`}
                 alt=""
                 width="14"
                 height="14"
@@ -413,8 +388,8 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
 
 function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
   const iconUrl = isUp
-    ? `${EMAIL_ICONS_BASE_URL}/report-emails/trend-up.svg`
-    : `${EMAIL_ICONS_BASE_URL}/report-emails/trend-down.svg`;
+    ? `${EMAIL_ICONS_BASE_URL}/report-emails/trend-up.png`
+    : `${EMAIL_ICONS_BASE_URL}/report-emails/trend-down.png`;
 
   return (
     <table
@@ -592,13 +567,11 @@ function RankedListCard({
   items,
   title,
   showWorkflowIcon = false,
-  showProviderIcon = false,
   minRows = 0,
 }: {
-  items: PayloadSchemaType['topProviders'];
+  items: IRankedItem[];
   title: string;
   showWorkflowIcon?: boolean;
-  showProviderIcon?: boolean;
   minRows?: number;
 }) {
   const emptyRowCount = Math.max(0, minRows - items.length);
@@ -615,11 +588,7 @@ function RankedListCard({
         }}
       >
         {items.map((item, idx) => {
-          const iconUrl = showProviderIcon ? getProviderIconUrl(item.name) : undefined;
-
-          if (showProviderIcon && !iconUrl) {
-            throw new Error(`Icon URL not found for provider: "${item.name}"`);
-          }
+          const iconUrl = item.icon;
 
           return (
             <Row key={idx} style={{ margin: '0', padding: '3px' }}>
@@ -628,7 +597,7 @@ function RankedListCard({
                   {showWorkflowIcon && (
                     <Column style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '12px' }}>
                       <Img
-                        src={`${EMAIL_ICONS_BASE_URL}/report-emails/winding-arrow.svg`}
+                        src={`${EMAIL_ICONS_BASE_URL}/report-emails/winding-arrow.png`}
                         alt=""
                         width={12}
                         height={9}
@@ -967,7 +936,7 @@ function EmailFooter() {
       <Text style={{ marginTop: '12px', marginBottom: '0' }}>
         <Link href="https://linkedin.com/company/novuco" style={{ textDecoration: 'none' }}>
           <Img
-            src={`${EMAIL_ICONS_BASE_URL}/report-emails/linkedin-dot.svg`}
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/linkedin-dot.png`}
             alt="LinkedIn"
             width={8}
             height={8}
@@ -976,7 +945,7 @@ function EmailFooter() {
         </Link>
         <Link href="https://youtube.com/@novuhq" style={{ textDecoration: 'none' }}>
           <Img
-            src={`${EMAIL_ICONS_BASE_URL}/report-emails/youtube-dot.svg`}
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/youtube-dot.png`}
             alt="YouTube"
             width={8}
             height={8}
@@ -985,7 +954,7 @@ function EmailFooter() {
         </Link>
         <Link href="https://x.com/novuhq" style={{ textDecoration: 'none' }}>
           <Img
-            src={`${EMAIL_ICONS_BASE_URL}/report-emails/x-dot.svg`}
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/x-dot.png`}
             alt="X"
             width={8}
             height={8}
@@ -1097,14 +1066,13 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                 <RankedListCard
                   title="Top Delivery Providers"
                   items={topProviders}
-                  showProviderIcon
                   minRows={Math.max(topProviders.length, topWorkflows.length)}
                 />
               </Column>
               <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
                   title="Top Workflows"
-                  items={topWorkflows}
+                  items={topWorkflows as IRankedItem[]}
                   showWorkflowIcon
                   minRows={Math.max(topProviders.length, topWorkflows.length)}
                 />
