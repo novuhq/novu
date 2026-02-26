@@ -9,10 +9,14 @@ try {
 }
 
 export function addNewRelicTraceAttributes(session: UserSessionData) {
-  if (!nr) return;
+  if (!nr || typeof nr.addCustomAttributes !== 'function') return;
 
-  nr.addCustomAttributes({
-    organizationId: session.organizationId,
-    environmentId: session.environmentId,
-  });
+  try {
+    nr.addCustomAttributes({
+      organizationId: session.organizationId,
+      environmentId: session.environmentId,
+    });
+  } catch {
+    // swallow – NR failures must never break authentication
+  }
 }
