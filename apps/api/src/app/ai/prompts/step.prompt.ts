@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { editStepInputSchema, stepInputSchema } from '../schemas/steps-control.schema';
-import { DraftWorkflowState } from '../tools';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
+import { editStepInputSchema, stepInputSchema, updateStepConditionsInputSchema } from '../schemas/steps-control.schema';
 import { formatVariableSchemaForPrompt } from '../utils/variable-schema.utils';
 import { getVariableSchemaPrompt } from './general.prompt';
 import { EXAMPLE_BLOCK_EDITOR_JSON } from './maily-blocks';
@@ -183,8 +183,7 @@ Common patterns:
 - Throttle by key (e.g., "payload.alertType") for grouped limits`,
 };
 
-export function buildStepSystemPrompt(basePrompt: string, draftState: DraftWorkflowState): string {
-  const variableSchema = draftState.getFullVariableSchema();
+export function buildStepSystemPrompt(basePrompt: string, variableSchema: JSONSchemaDto): string {
   const variableSchemaPrompt = formatVariableSchemaForPrompt(variableSchema);
 
   if (variableSchemaPrompt) {
@@ -208,10 +207,8 @@ Keep the same editorType (block or html for email) and structure. Only update th
 export function buildEditStepSystemPrompt(
   basePrompt: string,
   currentControlValues: Record<string, unknown>,
-  draftState: DraftWorkflowState
+  variableSchema: JSONSchemaDto
 ): string {
-  const workflow = draftState.getWorkflow();
-  const variableSchema = workflow?.payloadSchema ?? draftState.getFullVariableSchema();
   const variableSchemaPrompt = formatVariableSchemaForPrompt(variableSchema);
   const currentContentJson = JSON.stringify(currentControlValues, null, 2);
 
@@ -229,4 +226,52 @@ ${variableSection}`;
 
 export function buildEditStepUserPrompt(input: z.infer<typeof editStepInputSchema>): string {
   return `Step ID: ${input.stepId}\nEdit intent: ${input.intent}`;
+}
+
+export const STEP_CONDITION_PROMPT = `Generate a JSONLogic condition for step execution.
+
+## When to use
+- Step executes when condition evaluates to true
+- Use null to remove the condition (step always executes)
+
+## Merge vs Replace
+- ADD/EXTEND: When user says "add", "also", "and", "in addition" - combine existing condition with new using AND: { "and": [existingCondition, newCondition] }
+- REPLACE: When user says "change to", "update to", "set to", "replace with" - return the new condition entirely, ignore existing
+- REMOVE: When user says "remove", "delete", "clear" - return null
+
+## Variable reference format
+Use "var" for variable references: { "var": "path.to.value" }
+- payload.*: trigger payload (e.g., payload.amount, payload.priority)
+- subscriber.*: subscriber data (e.g., subscriber.firstName, subscriber.isOnline)
+- steps.*: previous step state (e.g., steps.welcome-in-app.read, steps.welcome-in-app.seen)
+
+## Common patterns
+- Subscriber offline: { "==": [{ "var": "subscriber.isOnline" }, "false"] }
+- In-App not read: { "==": [{ "var": "steps.{stepId}.read" }, "false"] }
+- In-App not seen: { "==": [{ "var": "steps.{stepId}.seen" }, "false"] }
+- Payload value equals: { "==": [{ "var": "payload.priority" }, "high"] }
+- Payload value not equals: { "!=": [{ "var": "payload.priority" }, "low"] }
+- AND: { "and": [condition1, condition2] }
+- OR: { "or": [condition1, condition2] }
+- NOT: { "!": [condition] }
+
+## Output
+Return only the skip field: JSONLogic object or null.`;
+
+export function buildUpdateStepConditionsSystemPrompt(previousStepIds: string[], existingCondition: unknown): string {
+  const stepsContext =
+    previousStepIds.length > 0
+      ? `\n## Previous steps (use these stepIds in steps.* references)\n${previousStepIds.map((id) => `- ${id}`).join('\n')}`
+      : '';
+
+  const existingContext =
+    existingCondition != null
+      ? `\n## Current condition (merge with AND when user wants to add, replace entirely when user wants to change)\n\`\`\`json\n${JSON.stringify(existingCondition, null, 2)}\n\`\`\``
+      : '\n## Current condition: none (step always executes)';
+
+  return `${STEP_CONDITION_PROMPT}${existingContext}${stepsContext}`;
+}
+
+export function buildUpdateStepConditionsUserPrompt(input: z.infer<typeof updateStepConditionsInputSchema>): string {
+  return `Step ID: ${input.stepId}\nCondition intent: ${input.intent}`;
 }

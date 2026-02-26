@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ResourceValidatorService } from '@novu/application-generic';
 import { AiChatRepository, SnapshotRepository } from '@novu/dal';
+import { GetEnvironmentTags } from '../environments-v2/usecases/get-environment-tags';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
@@ -29,6 +30,7 @@ const USE_CASES = [
   UpsertChatUseCase,
   ResourceValidatorService,
   CheckpointerService,
+  GetEnvironmentTags,
 ];
 
 const REPOSITORIES = [AiChatRepository, SnapshotRepository];

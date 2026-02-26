@@ -292,7 +292,9 @@ export function ChatChainOfThoughtToolCalls({
   const [isExpanded, setIsExpanded] = useState(defaultIsExpanded ?? false);
   const parts = message.parts ?? [];
   const addStepParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.ADD_STEP);
+  const addStepInBetweenParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN);
   const editStepParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.EDIT_STEP_CONTENT);
+  const updateStepConditionsParts = getDynamicToolParts(parts, AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS);
   const [thinkingDuration, setThinkingDuration] = useState<number | null>(null);
   const wasStreamingRef = useRef(isStreaming);
   const startTimeRef = useRef<number | null>(null);
@@ -315,12 +317,16 @@ export function ChatChainOfThoughtToolCalls({
   const toolItems: Array<
     | { type: 'workflowInit'; output: WorkflowMetadataOutput }
     | { type: 'addStep'; steps: DynamicToolUIPart[] }
+    | { type: 'addStepInBetween'; steps: DynamicToolUIPart[] }
     | { type: 'editStep'; steps: DynamicToolUIPart[] }
+    | { type: 'updateStepConditions'; steps: DynamicToolUIPart[] }
   > = [];
 
   let workflowInitAdded = false;
   let buildWorkflowAdded = false;
+  let addStepInBetweenAdded = false;
   let editStepContentAdded = false;
+  let updateStepConditionsAdded = false;
 
   for (const part of parts) {
     if (part.type.startsWith('dynamic-tool')) {
@@ -344,11 +350,27 @@ export function ChatChainOfThoughtToolCalls({
         }
       }
 
+      if (tool.toolName === AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN && !addStepInBetweenAdded) {
+        const stepsSoFar = addStepInBetweenParts.filter((p) => p.state === 'output-available' && p.output);
+        if (stepsSoFar.length > 0) {
+          toolItems.push({ type: 'addStepInBetween', steps: stepsSoFar });
+          addStepInBetweenAdded = true;
+        }
+      }
+
       if (tool.toolName === AiWorkflowToolsEnum.EDIT_STEP_CONTENT && !editStepContentAdded) {
         const stepsSoFar = editStepParts.filter((p) => p.state === 'output-available' && p.output);
         if (stepsSoFar.length > 0) {
           toolItems.push({ type: 'editStep', steps: stepsSoFar });
           editStepContentAdded = true;
+        }
+      }
+
+      if (tool.toolName === AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS && !updateStepConditionsAdded) {
+        const stepsSoFar = updateStepConditionsParts.filter((p) => p.state === 'output-available' && p.output);
+        if (stepsSoFar.length > 0) {
+          toolItems.push({ type: 'updateStepConditions', steps: stepsSoFar });
+          updateStepConditionsAdded = true;
         }
       }
     }
@@ -392,6 +414,19 @@ export function ChatChainOfThoughtToolCalls({
               );
             }
 
+            if (item.type === 'addStepInBetween') {
+              return (
+                <WorkflowStepsSection
+                  key="add-step-in-between"
+                  parts={item.steps}
+                  isStreaming={isStreaming}
+                  labelStreaming="Adding step in between"
+                  labelComplete="Added step in between"
+                  toolCallLabel="STEP"
+                />
+              );
+            }
+
             if (item.type === 'editStep') {
               return (
                 <WorkflowStepsSection
@@ -401,6 +436,19 @@ export function ChatChainOfThoughtToolCalls({
                   labelStreaming="Editing step content"
                   labelComplete="Edited step content"
                   toolCallLabel="EDIT"
+                />
+              );
+            }
+
+            if (item.type === 'updateStepConditions') {
+              return (
+                <WorkflowStepsSection
+                  key="update-step-conditions"
+                  parts={item.steps}
+                  isStreaming={isStreaming}
+                  labelStreaming="Updating step conditions"
+                  labelComplete="Updated step conditions"
+                  toolCallLabel="COND"
                 />
               );
             }

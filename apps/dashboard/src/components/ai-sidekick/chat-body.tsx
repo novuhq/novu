@@ -194,8 +194,8 @@ export const ChatBody = ({
           )}
           {errorMessage && (
             <Message from="assistant">
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                <span className="text-label-xs text-red-700">{errorMessage}</span>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-2 flex">
+                <span className="text-label-xs text-red-700">Error: {errorMessage}</span>
               </div>
             </Message>
           )}
