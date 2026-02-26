@@ -93,7 +93,7 @@ export class ActiveJobsMetricService {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.log('metric job started', LOG_CONTEXT);
+        Logger.debug('metric job started', LOG_CONTEXT);
         const deploymentName = process.env.FLEET_NAME ?? 'default';
 
         try {
