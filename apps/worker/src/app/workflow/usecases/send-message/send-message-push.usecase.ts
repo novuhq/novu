@@ -553,7 +553,7 @@ export class SendMessagePush extends SendMessageBase {
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
 
-      Logger.log(
+      Logger.debug(
         { jobId: command.jobId, deviceToken, overrides, step },
         `Push handler obtained for jobId ${command.jobId}`,
         LOG_CONTEXT
