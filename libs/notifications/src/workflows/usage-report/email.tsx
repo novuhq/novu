@@ -672,17 +672,23 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                             borderRadius: '6px',
                             border: '1px solid #e2e2e2',
                             backgroundColor: '#fbfbfb',
-                            display: 'inline-block',
                             padding: '4px',
+                            textAlign: 'center',
+                            verticalAlign: 'middle',
+                            lineHeight: '22px',
                           }}
                         >
                           {topChannel.icon && (
                             <Img
                               src={topChannel.icon}
                               alt=""
-                              width={17}
-                              height={20}
-                              style={{ display: 'block', padding: '2px 3.5px' }}
+                              style={{
+                                display: 'inline-block',
+                                maxWidth: '22px',
+                                maxHeight: '22px',
+                                verticalAlign: 'middle',
+                                margin: '0 auto',
+                              }}
                             />
                           )}
                         </Section>
@@ -767,27 +773,23 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                           <Column style={{ width: '175px', padding: '3px 0' }}>
                             <Section>
                               <Row>
-                                <Column style={{ paddingRight: '4px', verticalAlign: 'middle', width: '28px' }}>
-                                  <Section
-                                    style={{
-                                      width: '24px',
-                                      height: '24px',
-                                      borderRadius: '6px',
-                                      display: 'inline-block',
-                                    }}
-                                  >
+                                <Column style={{ paddingRight: '4px', width: '28px' }}>
+                                  <Section>
                                     {channel.icon && (
                                       <Img
                                         src={channel.icon}
                                         alt=""
-                                        width={16}
-                                        height={16}
-                                        style={{ display: 'block', padding: '4px', margin: '0 auto' }}
+                                        style={{
+                                          display: 'block',
+                                          maxWidth: '16px',
+                                          maxHeight: '16px',
+                                          padding: '3.5px',
+                                        }}
                                       />
                                     )}
                                   </Section>
                                 </Column>
-                                <Column style={{ verticalAlign: 'middle' }}>
+                                <Column>
                                   <Text
                                     style={{
                                       fontSize: '12px',
