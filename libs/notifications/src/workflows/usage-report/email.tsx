@@ -326,7 +326,7 @@ function mapProviders(providers: PayloadSchemaType['topProviders']): ITopProvide
 function NovuLogo() {
   return (
     <Section style={{ textAlign: 'center', padding: '24px 0 32px' }}>
-      <Img src={NOVU_LOGO_URL} alt="Novu" width={100} height={37} style={{ margin: '0 auto' }} />
+      <Img src={NOVU_LOGO_URL} alt="Novu" width={92} height={24} style={{ margin: '0 auto' }} />
     </Section>
   );
 }
@@ -411,7 +411,7 @@ function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
               alt={isUp ? 'up' : 'down'}
               width="16"
               height="16"
-              style={{ display: 'block', width: '16px', height: '16px' }}
+              style={{ display: 'block', width: '11px', height: '6px' }}
             />
           </td>
           <td
@@ -606,11 +606,11 @@ function RankedListCard({
                     </Column>
                   )}
                   {iconUrl && (
-                    <Column style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '16px' }}>
-                      <Img src={iconUrl} alt="icon" width={16} height={16} style={{ display: 'block' }} />
+                    <Column style={{ padding: '2px', verticalAlign: 'middle', width: '8px' }}>
+                      <Img src={iconUrl} alt="icon" width={8} height={8} style={{ display: 'block' }} />
                     </Column>
                   )}
-                  <Column style={{ padding: '0', verticalAlign: 'middle' }}>
+                  <Column style={{ padding: '0 0 0 4px', verticalAlign: 'middle' }}>
                     <Text
                       style={{
                         fontSize: '12px',
