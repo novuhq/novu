@@ -8,7 +8,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 
-import MailerSend, { Attachment, EmailParams, Recipient } from 'mailersend';
+import { Attachment, EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -26,7 +26,7 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     }
   ) {
     super();
-    this.mailerSend = new MailerSend({ api_key: this.config.apiKey });
+    this.mailerSend = new MailerSend({ apiKey: this.config.apiKey });
   }
 
   private createRecipients(recipients: IEmailOptions['to']): Recipient[] {
@@ -51,10 +51,11 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     const recipients = this.createRecipients(options.to);
     const attachments = this.getAttachments(options.attachments);
 
+    const sentFrom = new Sender(options.from ?? this.config.from, options.senderName || this.config.senderName || '');
+
     const emailParams = new EmailParams()
-      .setFrom(options.from ?? this.config.from)
-      .setFromName(options.senderName || this.config.senderName || '')
-      .setRecipients(recipients)
+      .setFrom(sentFrom)
+      .setTo(recipients)
       .setSubject(options.subject)
       .setHtml(options.html)
       .setText(options.text)
@@ -71,7 +72,8 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     }
 
     if (options.replyTo) {
-      emailParams.setReplyTo(options.replyTo);
+      const replyTo = new Sender(options.replyTo);
+      emailParams.setReplyTo(replyTo);
     }
 
     return emailParams;
@@ -81,21 +83,25 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const emailParams = this.transform(bridgeProviderData, this.createMailData(options)).body;
-    const response = await this.mailerSend.send(emailParams);
+    const emailParams = this.transform(bridgeProviderData, this.createMailData(options)).body as unknown as EmailParams;
+    const response = await this.mailerSend.email.send(emailParams);
 
+    /**
+     * For some reason the response object has changed in one of the versions of mailersend API.
+     * The fallback treats the actual response object as an array of responses.
+     */
     return {
-      id: response[0]?.['X-Message-Id'],
+      id: response.headers['x-message-id'],
       date: new Date().toISOString(),
     };
   }
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     const emailParams = this.createMailData(options);
-    const emailSendResponse = await this.mailerSend.send(emailParams);
-    const code = this.mapResponse(emailSendResponse.status);
+    const emailSendResponse = await this.mailerSend.email.send(emailParams);
+    const code = this.mapResponse(emailSendResponse.statusCode);
 
-    if (emailSendResponse.ok && code === CheckIntegrationResponseEnum.SUCCESS) {
+    if (code === CheckIntegrationResponseEnum.SUCCESS) {
       return {
         success: true,
         message: 'Integrated successfully!',
@@ -103,10 +109,7 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
       };
     }
 
-    const message = await emailSendResponse
-      .json()
-      .then((res) => res?.message || 'Unknown error occurred')
-      .catch(() => 'Unknown error occurred');
+    const message = emailSendResponse.body?.message || 'Unknown error occurred';
 
     return {
       success: false,

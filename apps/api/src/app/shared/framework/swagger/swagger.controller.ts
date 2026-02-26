@@ -77,7 +77,7 @@ function buildBaseOptions() {
       url: 'https://docs.novu.co/platform/workflow/layouts',
     })
     .addTag('Translations', `Used to localize your notifications to different languages.`, {
-      url: 'https://docs.novu.co/platform/workflow/translations',
+      url: 'https://docs.novu.co/platform/workflow/advanced-features/translations',
     });
 
   return options;
@@ -239,6 +239,16 @@ function overloadGlobalSdkRetrySettings(document: OpenAPIObject) {
   };
 }
 
+function patchOpenEnumSchemas(document: OpenAPIObject) {
+  const openEnumSchemas = ['UiComponentEnum'];
+  for (const schemaName of openEnumSchemas) {
+    const schema = document.components?.schemas?.[schemaName];
+    if (schema) {
+      (schema as Record<string, unknown>)['x-speakeasy-unknown-values'] = 'allow';
+    }
+  }
+}
+
 function publishSdkSpecificDocumentAndReturnDocument(
   app: INestApplication,
   document: OpenAPIObject,
@@ -246,6 +256,7 @@ function publishSdkSpecificDocumentAndReturnDocument(
 ) {
   overloadNamingGuidelines(document);
   overloadGlobalSdkRetrySettings(document);
+  patchOpenEnumSchemas(document);
 
   let sdkDocument: OpenAPIObject = overloadDocumentForSdkGeneration(document, internalSdkGeneration);
   sdkDocument = sortOpenAPIDocument(sdkDocument);

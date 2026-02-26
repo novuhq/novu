@@ -3,7 +3,8 @@ import type { Env } from './types';
 import { generateStepResolverWorkerId } from './utils/worker-id';
 
 const AUTH_HEADERS_TO_REMOVE = ['x-novu-signature', 'authorization', 'x-internal-auth'];
-const RESOLVE_ROUTE_REGEX = /^\/resolve\/([a-f0-9]{24})\/sr-([a-z0-9]{5}-[a-z0-9]{5})\/([^/]+)$/;
+const RESOLVE_ROUTE_REGEX =
+  /^\/resolve\/(?<organizationId>[a-f0-9]{24})\/(?<stepResolverWorkerHash>sr-[^/]+)\/(?<workflowId>[^/]+)\/(?<stepId>[^/]+)$/;
 const REQUEST_ID_HEADER = 'x-request-id';
 const JSON_CONTENT_TYPE = 'application/json';
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024; // 1MB
@@ -99,8 +100,14 @@ export default {
       return jsonResponse({ error: 'Not found' }, 404, requestId);
     }
 
-    const organizationId = resolveMatch[1];
-    const stepResolverHash = resolveMatch[2];
+    // groups are always present when the regex matches since all captures are named
+    const {
+      organizationId,
+      stepResolverWorkerHash,
+      workflowId: rawWorkflowId,
+      stepId: rawStepId,
+    } = resolveMatch.groups as Record<string, string>;
+    const stepResolverHash = stepResolverWorkerHash.slice(3); // strip 'sr-' prefix
 
     if (request.method !== 'POST') {
       return methodNotAllowed('POST', requestId);
@@ -135,6 +142,8 @@ export default {
         requestId,
         organizationId,
         stepResolverHash,
+        rawWorkflowId,
+        rawStepId,
       });
       return jsonResponse({ error: 'Server configuration error' }, 500, requestId);
     }
@@ -154,6 +163,8 @@ export default {
         requestId,
         organizationId,
         stepResolverHash,
+        rawWorkflowId,
+        rawStepId,
       });
       return jsonResponse({ error: 'Unauthorized', message: 'Missing signature' }, 401, requestId);
     }
@@ -167,6 +178,8 @@ export default {
         requestId,
         organizationId,
         stepResolverHash,
+        rawWorkflowId,
+        rawStepId,
         reason: hmacValidation.error,
       });
       return jsonResponse({ error: 'Unauthorized', message: hmacValidation.error }, 401, requestId);
@@ -179,10 +192,12 @@ export default {
       return jsonResponse({ error: 'Invalid JSON', message: 'Request body must be valid JSON' }, 400, requestId);
     }
 
+    let workflowId: string;
     let stepId: string;
 
     try {
-      stepId = decodePathParam(resolveMatch[3]);
+      workflowId = decodePathParam(rawWorkflowId);
+      stepId = decodePathParam(rawStepId);
     } catch (error) {
       return jsonResponse(
         {
@@ -196,7 +211,8 @@ export default {
 
     const workerId = generateStepResolverWorkerId(organizationId, stepResolverHash);
     const workerUrl = new URL(request.url);
-    workerUrl.searchParams.set('step', stepId);
+    workerUrl.searchParams.set('workflowId', workflowId);
+    workerUrl.searchParams.set('stepId', stepId);
 
     const forwardedRequest = new Request(workerUrl.toString(), {
       method: 'POST',
@@ -210,6 +226,7 @@ export default {
         requestId,
         organizationId,
         stepResolverHash,
+        workflowId,
         stepId,
         workerId,
         statusCode: workerResponse.status,
@@ -229,6 +246,7 @@ export default {
         requestId,
         organizationId,
         stepResolverHash,
+        workflowId,
         stepId,
         workerId,
         error: error instanceof Error ? error.message : 'Unknown dispatch error',

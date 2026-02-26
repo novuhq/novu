@@ -19,6 +19,7 @@ type EmailCorePreviewProps = {
   isPreviewPending: boolean;
   isCustomHtmlEditor?: boolean;
   resourceOrigin: ResourceOriginEnum;
+  isStepResolver?: boolean;
 };
 
 const fadeVariants = {
@@ -31,6 +32,7 @@ export function EmailCorePreview({
   isPreviewPending,
   isCustomHtmlEditor,
   resourceOrigin,
+  isStepResolver,
 }: EmailCorePreviewProps) {
   const [activeTab, setActiveTab] = useState('desktop');
 
@@ -115,6 +117,7 @@ export function EmailCorePreview({
                               className="bg-background"
                               body={emailPreviewContent.body}
                               resourceOrigin={resourceOrigin}
+                              isStepResolver={isStepResolver}
                             />
                           </EmailPreviewContentMobile>
                         </div>
@@ -127,6 +130,7 @@ export function EmailCorePreview({
                           <EmailPreviewBody
                             body={emailPreviewContent.body}
                             resourceOrigin={resourceOrigin}
+                            isStepResolver={isStepResolver}
                             className={isCustomHtmlEditor ? 'bg-background max-w-auto max-w-none rounded-lg' : ''}
                           />
                         </div>

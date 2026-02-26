@@ -1,7 +1,10 @@
 import { Test } from '@nestjs/testing';
 import {
+  FeatureFlagsService,
   IWebSocketDataDto,
+  PinoLogger,
   SocketWorkerService,
+  SqsService,
   WebSocketsQueueService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -21,6 +24,27 @@ const mockSocketWorkerService = {
   sendMessage: async () => undefined,
 } as any;
 
+const mockSqsService = {
+  getQueueUrl: () => undefined,
+  getProducer: () => undefined,
+  getClient: () => ({}) as any,
+  isConfigured: () => false,
+  send: async () => {},
+  sendBulk: async () => {},
+} as unknown as SqsService;
+
+const mockFeatureFlagsService = {
+  getFlag: async () => false,
+} as unknown as FeatureFlagsService;
+
+const mockLogger = {
+  setContext: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+} as unknown as PinoLogger;
+
 describe('WebSocket Worker', () => {
   before(async () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
@@ -35,9 +59,20 @@ describe('WebSocket Worker', () => {
       WorkflowInMemoryProviderService
     );
 
-    webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
+    webSocketWorker = new WebSocketWorker(
+      externalServicesRoute,
+      workflowInMemoryProviderService,
+      mockSqsService,
+      mockLogger
+    );
 
-    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService, mockSocketWorkerService);
+    webSocketsQueueService = new WebSocketsQueueService(
+      workflowInMemoryProviderService,
+      mockSocketWorkerService,
+      mockSqsService,
+      mockFeatureFlagsService,
+      mockLogger
+    );
     await webSocketsQueueService.queue.obliterate();
   });
 
@@ -55,7 +90,7 @@ describe('WebSocket Worker', () => {
       workerIsPaused: false,
       workerIsRunning: true,
     });
-    expect(webSocketWorker.worker.opts).to.deep.include({
+    expect(webSocketWorker.bullMqWorker.opts).to.deep.include({
       concurrency: 400,
       lockDuration: 90000,
     });
@@ -82,7 +117,7 @@ describe('WebSocket Worker', () => {
     expect(await webSocketsQueueService.queue.getWaitingCount()).to.equal(0);
 
     // When we arrive to pull the job it has been already pulled by the worker
-    const nextJob = await webSocketWorker.worker.getNextJob(jobId);
+    const nextJob = await webSocketWorker.bullMqWorker.getNextJob(jobId);
     expect(nextJob).to.equal(undefined);
 
     await setTimeout(100);

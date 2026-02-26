@@ -15,6 +15,8 @@ import {
   DalServiceHealthIndicator,
   DigestFilterSteps,
   ExecuteBridgeRequest,
+  ExecuteFrameworkRequest,
+  ExecuteStepResolverRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
   GetTenant,
@@ -127,6 +129,8 @@ const PROVIDERS = [
   ...DAL_MODELS,
   ActiveJobsMetricService,
   ExecuteBridgeRequest,
+  ExecuteFrameworkRequest,
+  ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   ...ANALYTICS_PROVIDERS,
 ];

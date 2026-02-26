@@ -1,5 +1,3 @@
-import { Test } from '@nestjs/testing';
-import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { ActiveJobsMetricQueueService } from './active-jobs-metric-queue.service';
 
@@ -27,7 +25,7 @@ describe('Job metrics Queue service', () => {
     it('should be initialised properly', async () => {
       expect(activeJobsMetricQueueService).toBeDefined();
       expect(Object.keys(activeJobsMetricQueueService)).toEqual(
-        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
       expect(activeJobsMetricQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(activeJobsMetricQueueService.topic).toEqual('metric-active-jobs');

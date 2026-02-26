@@ -1,15 +1,44 @@
 import { Test } from '@nestjs/testing';
 import { IWorkflowDataDto } from '../../dtos';
+import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
+import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { SqsService } from '../sqs';
 import { WorkflowQueueService } from './workflow-queue.service';
 
 let workflowQueueService: WorkflowQueueService;
 
+const mockSqsService = {
+  getQueueUrl: jest.fn(() => undefined),
+  getProducer: jest.fn(() => undefined),
+  getClient: jest.fn(() => ({})),
+  isConfigured: jest.fn(() => false),
+  send: jest.fn(),
+  sendBulk: jest.fn(),
+} as unknown as SqsService;
+
+const mockFeatureFlagsService = {
+  getFlag: jest.fn(),
+} as unknown as FeatureFlagsService;
+
+const mockLogger = {
+  setContext: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as PinoLogger;
+
 describe('Workflow Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService());
+      workflowQueueService = new WorkflowQueueService(
+        new WorkflowInMemoryProviderService(),
+        mockSqsService,
+        mockFeatureFlagsService,
+        mockLogger
+      );
       await workflowQueueService.queue.obliterate();
     });
 
@@ -129,7 +158,12 @@ describe('Workflow Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService());
+      workflowQueueService = new WorkflowQueueService(
+        new WorkflowInMemoryProviderService(),
+        mockSqsService,
+        mockFeatureFlagsService,
+        mockLogger
+      );
       await workflowQueueService.queue.obliterate();
     });
 

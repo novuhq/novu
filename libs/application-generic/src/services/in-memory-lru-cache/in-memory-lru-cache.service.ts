@@ -2,12 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { LRUCache } from 'lru-cache';
 import { FeatureFlagsService } from '../feature-flags';
-import {
-  CacheStoreDataTypeMap,
-  InMemoryLRUCacheStore,
-  STORE_CONFIGS,
-  StoreConfig,
-} from './in-memory-lru-cache.store';
+import { CacheStoreDataTypeMap, InMemoryLRUCacheStore, STORE_CONFIGS, StoreConfig } from './in-memory-lru-cache.store';
 
 type EntityStore<T = unknown> = {
   cache: LRUCache<string, T>;

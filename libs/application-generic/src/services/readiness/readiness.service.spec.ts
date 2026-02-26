@@ -10,6 +10,7 @@ import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
+import { SqsService } from '../sqs';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import { ReadinessService } from './readiness.service';
 
@@ -31,6 +32,12 @@ const mockOrganizationRepository = {
   findOne: jest.fn(),
 } as unknown as CommunityOrganizationRepository;
 
+const mockSqsService = {
+  getQueueUrl: jest.fn(),
+  getProducer: jest.fn(),
+  getClient: jest.fn(),
+} as unknown as SqsService;
+
 const mockLogger = {
   setContext: jest.fn(),
   debug: jest.fn(),
@@ -49,10 +56,21 @@ describe('Readiness Service', () => {
       mockCloudflareSchedulerService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
+      mockSqsService,
       mockLogger
     );
-    workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService());
-    subscriberProcessQueueService = new SubscriberProcessQueueService(new WorkflowInMemoryProviderService());
+    workflowQueueService = new WorkflowQueueService(
+      new WorkflowInMemoryProviderService(),
+      mockSqsService,
+      mockFeatureFlagsService,
+      mockLogger
+    );
+    subscriberProcessQueueService = new SubscriberProcessQueueService(
+      new WorkflowInMemoryProviderService(),
+      mockSqsService,
+      mockFeatureFlagsService,
+      mockLogger
+    );
 
     await Promise.all([
       standardQueueService.workflowInMemoryProviderService.initialize(),

@@ -4,9 +4,10 @@ import {
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  PinoLogger,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
-import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 // Import new services
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
@@ -29,7 +30,8 @@ export class PreviewUsecase {
     private readonly controlValueSanitizer: ControlValueSanitizerService,
     private readonly payloadMerger: PayloadMergerService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
-    private readonly errorHandler: PreviewErrorHandler
+    private readonly errorHandler: PreviewErrorHandler,
+    private readonly logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -61,12 +63,18 @@ export class PreviewUsecase {
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
+      const stepResolverHash =
+        typeof context.stepData.controls.values?.stepResolverHash === 'string'
+          ? context.stepData.controls.values.stepResolverHash
+          : undefined;
+
       try {
         const executeOutput = await this.executePreviewUsecase(
           command,
           context.stepData,
           payloadExample,
-          previewTemplateData.controlValues
+          previewTemplateData.controlValues,
+          stepResolverHash
         );
 
         return {
@@ -77,14 +85,22 @@ export class PreviewUsecase {
           previewPayloadExample: cleanedPayloadExample,
           schema: context.variableSchema,
         };
-      } catch {
+      } catch (error) {
+        const isStepResolverEmail = context.stepData.type === StepTypeEnum.EMAIL && stepResolverHash !== undefined;
+
         /*
          * If preview execution fails, still return valid schema and payload example
-         * but with an empty preview result
+         * but with an empty preview result.
+         * For step resolver email steps, since its a runtime error, surface the error
+         * as HTML rendered in the preview panel.
          */
+        const previewResult = isStepResolverEmail
+          ? { subject: '', body: this.errorHandler.buildPreviewErrorHtml(error) }
+          : {};
+
         return {
           result: {
-            preview: {},
+            preview: previewResult,
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
@@ -143,7 +159,8 @@ export class PreviewUsecase {
     command: PreviewCommand,
     stepData: StepResponseDto,
     previewPayloadExample: PreviewPayloadDto,
-    controlValues: Record<string, unknown>
+    controlValues: Record<string, unknown>,
+    stepResolverHash: string | undefined
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
 
@@ -161,6 +178,7 @@ export class PreviewUsecase {
         workflowOrigin: stepData.origin,
         state,
         skipLayoutRendering: command.skipLayoutRendering,
+        stepResolverHash,
       })
     );
   }

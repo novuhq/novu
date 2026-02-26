@@ -24,11 +24,11 @@ export class ActiveJobsMetricService {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-      this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
+      this.activeJobsMetricWorkerService.bullMqWorker.on('completed', async (job) => {
         Logger.log({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
       });
 
-      this.activeJobsMetricWorkerService.worker.on('failed', async (job, error) => {
+      this.activeJobsMetricWorkerService.bullMqWorker.on('failed', async (job, error) => {
         Logger.error(error, 'Metric Completed Job failed', LOG_CONTEXT);
       });
 
@@ -93,7 +93,7 @@ export class ActiveJobsMetricService {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.log('metric job started', LOG_CONTEXT);
+        Logger.debug('metric job started', LOG_CONTEXT);
         const deploymentName = process.env.FLEET_NAME ?? 'default';
 
         try {

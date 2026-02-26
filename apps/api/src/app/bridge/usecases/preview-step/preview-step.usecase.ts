@@ -10,28 +10,29 @@ export class PreviewStep {
 
   @InstrumentUsecase()
   async execute(command: PreviewStepCommand): Promise<ExecuteOutput> {
-    const event = this.buildBridgeEventPayload(command);
-    const executeCommand = this.createExecuteCommand(command, event);
+    const stepResolverHash = command.stepResolverHash;
 
-    const bridgeResult = await this.executeBridgeRequest.execute(executeCommand);
+    const event = this.buildBridgeEventPayload(command);
+
+    const bridgeResult = await this.executeBridgeRequest.execute(
+      ExecuteBridgeRequestCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        action: PostActionEnum.PREVIEW,
+        event,
+        searchParams: {
+          [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
+          [HttpQueryKeysEnum.STEP_ID]: command.stepId,
+          layoutId: command.layoutId,
+          skipLayoutRendering: command.skipLayoutRendering ? 'true' : 'false',
+        },
+        workflowOrigin: command.workflowOrigin,
+        stepResolverHash,
+        retriesLimit: 1,
+      })
+    );
 
     return bridgeResult as ExecuteOutput;
-  }
-
-  private createExecuteCommand(command: PreviewStepCommand, event: Event) {
-    return ExecuteBridgeRequestCommand.create({
-      environmentId: command.environmentId,
-      action: PostActionEnum.PREVIEW,
-      event,
-      searchParams: {
-        [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
-        [HttpQueryKeysEnum.STEP_ID]: command.stepId,
-        layoutId: command.layoutId,
-        skipLayoutRendering: command.skipLayoutRendering ? 'true' : 'false',
-      },
-      workflowOrigin: command.workflowOrigin,
-      retriesLimit: 1,
-    });
   }
 
   private buildBridgeEventPayload(command: PreviewStepCommand): Event {

@@ -51,6 +51,7 @@ export enum CronExpression {
   EVERY_WEEKEND = '0 0 * * 6,0',
   EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT = '0 0 1 * *',
   EVERY_1ST_DAY_OF_MONTH_AT_NOON = '0 12 1 * *',
+  EVERY_2ND_DAY_OF_MONTH_AT_10AM = '0 10 2 * *',
   EVERY_2ND_HOUR = '0 */2 * * *',
   EVERY_2ND_HOUR_FROM_1AM_THROUGH_11PM = '0 1-23/2 * * *',
   EVERY_2ND_MONTH = '0 0 1 */2 *',

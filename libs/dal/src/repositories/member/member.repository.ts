@@ -111,7 +111,7 @@ export class MemberRepository implements IMemberRepository {
     return this.memberRepository.find(query, select, options);
   }
 
-  async *findBatch(
+  findBatch(
     query: any,
     select?: string | undefined,
     options?: any,

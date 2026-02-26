@@ -32,6 +32,7 @@ export { INovuWorker, ReadinessService } from './readiness';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
 export * from './socket-worker';
+export * from './sqs';
 export * from './storage';
 export { SupportService } from './support.service';
 export * from './throttle';

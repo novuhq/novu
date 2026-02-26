@@ -25,7 +25,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   server: Server;
 
   async handleDisconnect(connection: Socket) {
-    Logger.log(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
+    Logger.debug(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
 
     const _this = this;
 
@@ -49,7 +49,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   }
 
   async handleConnection(connection: Socket) {
-    Logger.log(`New connection received from ${connection.id}`, LOG_CONTEXT);
+    Logger.debug(`New connection received from ${connection.id}`, LOG_CONTEXT);
 
     const _this = this;
 
@@ -118,7 +118,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
     const activeConnections = await this.getActiveConnections(connection, subscriber._id);
 
-    Logger.log(
+    Logger.debug(
       `Disconnect request received from ${subscriber._id}. Active connections: ${activeConnections}`,
       LOG_CONTEXT
     );
@@ -147,7 +147,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return this.disconnect(connection);
     }
 
-    Logger.log(
+    Logger.debug(
       `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId} organization id: ${subscriber.organizationId}`,
       LOG_CONTEXT
     );
@@ -159,7 +159,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     await connection.join(subscriber._id);
 
     const contextDisplay = subscriber.contextKeys.length === 0 ? 'no context' : subscriber.contextKeys.join(', ');
-    Logger.log(
+    Logger.debug(
       `Connection ${connection.id} accepted for ${subscriber._id} with contexts: ${contextDisplay}`,
       LOG_CONTEXT
     );
@@ -186,7 +186,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
       if (this.isExactMatch(contextKeys, inboxContextKeys)) {
         socket.emit(event, data);
-        Logger.log(
+        Logger.debug(
           `Delivered to socket ${socket.id} with inbox contexts: ${inboxContextKeys.length === 0 ? 'none' : inboxContextKeys.join(', ')}`,
           LOG_CONTEXT
         );

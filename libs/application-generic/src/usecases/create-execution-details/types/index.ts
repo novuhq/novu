@@ -32,6 +32,8 @@ export enum DetailEnum {
   MESSAGE_UNSNOOZE_FAILED = 'Message unsnooze failed',
   FAILED_BRIDGE_EXECUTION = 'Bridge execution failed',
   SKIPPED_BRIDGE_EXECUTION = 'Bridge execution skipped',
+  FAILED_STEP_RESOLVER_EXECUTION = 'Step resolver execution failed',
+  STEP_RESOLVER_EXECUTION_TIMEOUT = 'Step resolver execution timeout',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
   LAYOUT_SELECTED = 'Layout selected',
   LAYOUT_NOT_FOUND = 'Layout not found ',
