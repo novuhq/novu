@@ -17,7 +17,6 @@
     "@handlebars/parser": "^2.1.0",
     "@novu/application-generic": "workspace:*",
     "@novu/ee-auth": "workspace:*",
-    "@novu/ee-dal": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",

@@ -5,23 +5,19 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildEnvironmentsGetTagsQuery,
   EnvironmentsGetTagsQueryData,
   prefetchEnvironmentsGetTags,
   queryKeyEnvironmentsGetTags,
-} from "./environmentsGetTags.core.js";
+} from './environmentsGetTags.core.js';
 export {
   buildEnvironmentsGetTagsQuery,
   type EnvironmentsGetTagsQueryData,
@@ -30,7 +26,7 @@ export {
 };
 
 /**
- * Get environment tags
+ * List environment tags
  *
  * @remarks
  * Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.
@@ -38,22 +34,17 @@ export {
 export function useEnvironmentsGetTags(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentsGetTagsQueryData>,
+  options?: QueryHookOptions<EnvironmentsGetTagsQueryData>
 ): UseQueryResult<EnvironmentsGetTagsQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
     ...options,
   });
 }
 
 /**
- * Get environment tags
+ * List environment tags
  *
  * @remarks
  * Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.
@@ -61,27 +52,19 @@ export function useEnvironmentsGetTags(
 export function useEnvironmentsGetTagsSuspense(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData>,
+  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData>
 ): UseSuspenseQueryResult<EnvironmentsGetTagsQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
     ...options,
   });
 }
 
 export function setEnvironmentsGetTagsData(
   client: QueryClient,
-  queryKeyBase: [
-    environmentId: string,
-    parameters: { idempotencyKey?: string | undefined },
-  ],
-  data: EnvironmentsGetTagsQueryData,
+  queryKeyBase: [environmentId: string, parameters: { idempotencyKey?: string | undefined }],
+  data: EnvironmentsGetTagsQueryData
 ): EnvironmentsGetTagsQueryData | undefined {
   const key = queryKeyEnvironmentsGetTags(...queryKeyBase);
 
@@ -90,23 +73,21 @@ export function setEnvironmentsGetTagsData(
 
 export function invalidateEnvironmentsGetTags(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<
-    [environmentId: string, parameters: { idempotencyKey?: string | undefined }]
-  >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  queryKeyBase: TupleToPrefixes<[environmentId: string, parameters: { idempotencyKey?: string | undefined }]>,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "getTags", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Environments', 'getTags', ...queryKeyBase],
   });
 }
 
 export function invalidateAllEnvironmentsGetTags(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "getTags"],
+    queryKey: ['@novu/api', 'Environments', 'getTags'],
   });
 }

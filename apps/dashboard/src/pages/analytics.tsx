@@ -72,10 +72,7 @@ export function AnalyticsPage() {
   ];
 
   // Request 3: Workflow charts
-  const workflowReportTypes = [
-    ReportTypeEnum.WORKFLOW_BY_VOLUME,
-    ReportTypeEnum.WORKFLOW_RUNS_TREND,
-  ];
+  const workflowReportTypes = [ReportTypeEnum.WORKFLOW_BY_VOLUME, ReportTypeEnum.WORKFLOW_RUNS_TREND];
 
   const { charts: metricsCharts, isLoading: isMetricsLoading } = useFetchCharts({
     reportType: metricsReportTypes,

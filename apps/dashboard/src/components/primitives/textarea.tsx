@@ -81,7 +81,7 @@ function ResizeHandle() {
 
 ResizeHandle.displayName = TEXTAREA_RESIZE_HANDLE_NAME;
 
-type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> &
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> &
   (
     | {
         simple: true;
@@ -89,6 +89,7 @@ type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> &
         containerClassName?: never;
         hasError?: boolean;
         showCounter?: boolean | React.ReactNode;
+        resize?: boolean;
       }
     | {
         simple?: false;
@@ -96,11 +97,15 @@ type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> &
         containerClassName?: string;
         hasError?: boolean;
         showCounter?: boolean | React.ReactNode;
+        resize?: boolean;
       }
   );
 
 const TextareaRoot = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ containerClassName, children, hasError, showCounter, maxLength, simple, ...rest }, forwardedRef) => {
+  (
+    { containerClassName, children, hasError, showCounter, maxLength, simple, resize = true, ...rest },
+    forwardedRef
+  ) => {
     if (simple) {
       return <Textarea ref={forwardedRef} simple hasError={hasError} {...rest} />;
     }
@@ -138,10 +143,10 @@ const TextareaRoot = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             <Textarea ref={forwardedRef} hasError={hasError} {...rest} />
             <div className="pointer-events-none flex items-center justify-end gap-1.5 pl-3 pr-2.5">
               {showCounter && <CharCounter current={(rest.value as string)?.length ?? 0} max={maxLength} />}
-              <ResizeHandle />
+              {resize && <ResizeHandle />}
             </div>
           </div>
-          <div className="min-h-full resize-y overflow-hidden opacity-0 [grid-area:1/1]" />
+          {resize && <div className="min-h-full resize-y overflow-hidden opacity-0 [grid-area:1/1]" />}
         </div>
       </div>
     );
