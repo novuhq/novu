@@ -49,6 +49,6 @@ describe('generateWorkerWrapper', () => {
     expect(result).toContain('function jsonResponse(body, status, extraHeaders = {})');
     expect(result).toContain("Allow: 'POST'");
     expect(result).toContain("error: 'Invalid JSON body'");
-    expect(result).toContain("message: 'Internal server error'");
+    expect(result).toContain("error: 'STEP_HANDLER_ERROR'");
   });
 });
