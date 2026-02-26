@@ -52,7 +52,10 @@ function generateFetchHandler(): string {
       ${generateRequestHandler()}
     } catch (error) {
       console.error('Error executing step handler:', error);
-      return jsonResponse({ error: 'Step execution failed', message: 'Internal server error' }, 500);
+      return jsonResponse({
+        error: 'STEP_HANDLER_ERROR',
+        message: error instanceof Error ? error.message : String(error),
+      }, 500);
     }
   },
 };`;
