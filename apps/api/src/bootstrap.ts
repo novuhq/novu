@@ -13,7 +13,6 @@ import {
 
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
-import { NewRelicTraceAttributesInterceptor } from './app/shared/framework/newrelic-trace-attributes.interceptor';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 
@@ -103,7 +102,6 @@ export async function bootstrap(
 
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
-  app.useGlobalInterceptors(new NewRelicTraceAttributesInterceptor());
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
