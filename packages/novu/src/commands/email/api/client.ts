@@ -42,6 +42,7 @@ export class StepResolverClient {
         _id: envData._id,
         name: envData.name,
         _organizationId: envData._organizationId,
+        type: envData.type ?? 'prod',
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {

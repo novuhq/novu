@@ -39,4 +39,5 @@ export interface EnvironmentInfo {
   _id: string;
   name: string;
   _organizationId: string;
+  type: 'prod' | 'dev';
 }
