@@ -1058,7 +1058,13 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 
           <Section style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column
+                style={{
+                  width: userInteractions > 0 ? '50%' : '100%',
+                  paddingRight: userInteractions > 0 ? '6px' : '0',
+                  verticalAlign: 'top',
+                }}
+              >
                 <CardWithDetail
                   label="Workflow Runs Triggered"
                   value={workflowRuns}
@@ -1070,17 +1076,19 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                   }}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
-                <CardWithDetail
-                  label="User Interactions"
-                  value={userInteractions}
-                  unit="interactions"
-                  detail={{
-                    value: `${interactionRate}%`,
-                    suffix: ' of all messages are interacted.',
-                  }}
-                />
-              </Column>
+              {userInteractions > 0 && (
+                <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+                  <CardWithDetail
+                    label="User Interactions"
+                    value={userInteractions}
+                    unit="interactions"
+                    detail={{
+                      value: `${interactionRate}%`,
+                      suffix: ' of all messages are interacted.',
+                    }}
+                  />
+                </Column>
+              )}
             </Row>
           </Section>
 
