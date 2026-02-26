@@ -667,19 +667,22 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                       <Column style={{ paddingRight: '8px', verticalAlign: 'middle', width: '32px' }}>
                         <Section
                           style={{
-                            width: '24px',
-                            height: '24px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '6px',
+                            border: '1px solid #e2e2e2',
+                            backgroundColor: '#fbfbfb',
                             display: 'inline-block',
+                            padding: '4px',
                           }}
                         >
                           {topChannel.icon && (
                             <Img
                               src={topChannel.icon}
                               alt=""
-                              width={16}
-                              height={16}
-                              style={{ display: 'block', padding: '4px' }}
+                              width={17}
+                              height={20}
+                              style={{ display: 'block', padding: '2px 3.5px' }}
                             />
                           )}
                         </Section>
