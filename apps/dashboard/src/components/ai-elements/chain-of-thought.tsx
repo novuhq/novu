@@ -1,10 +1,11 @@
 'use client';
 
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
-import { BrainIcon, ChevronDownIcon, ChevronRightIcon, DotIcon, type LucideIcon } from 'lucide-react';
+import { BrainIcon, DotIcon, type LucideIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { createContext, memo, useContext, useEffect, useMemo, useState } from 'react';
 import { IconType } from 'react-icons/lib';
+import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
 import { cn } from '@/utils/ui';
@@ -69,7 +70,9 @@ export const ChainOfThoughtHeader = memo(
         >
           <Icon className="size-4" />
           <span className="flex-1 text-left">{children ?? 'Chain of Thought'}</span>
-          <ChevronDownIcon className={cn('size-4 transition-transform ', isOpen ? 'rotate-180' : 'rotate-0')} />
+          <RiArrowDownSLine
+            className={cn('size-4 transition-transform text-text-soft ', isOpen ? 'rotate-180' : 'rotate-0')}
+          />
         </CollapsibleTrigger>
       </Collapsible>
     );
@@ -129,7 +132,7 @@ export const ChainOfThoughtStep = memo(
           <Collapsible className="group flex flex-1 gap-2 w-full" open={isOpen} onOpenChange={setIsOpen}>
             <div className="relative shrink-0 self-stretch">
               <CollapsibleTrigger className="block p-0 transition-opacity hover:opacity-80 h-5">
-                <ChevronRightIcon className="size-3.5 transition-transform group-data-[state=open]:rotate-90" />
+                <RiArrowRightSLine className="size-4 transition-transform group-data-[state=open]:rotate-90 text-text-soft" />
               </CollapsibleTrigger>
               <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
             </div>
@@ -137,7 +140,7 @@ export const ChainOfThoughtStep = memo(
               {!!label && (
                 <CollapsibleTrigger
                   className={cn(
-                    'flex w-full items-start gap-2 text-left transition-opacity hover:opacity-80 h-5',
+                    'flex items-center w-full gap-2 text-left transition-opacity hover:opacity-80 h-5',
                     hideLabelOnOpen && 'data-[state=open]:hidden'
                   )}
                 >

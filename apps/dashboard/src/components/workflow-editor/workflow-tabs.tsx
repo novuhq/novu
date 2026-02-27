@@ -31,6 +31,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { ResizableLayout } from './steps/layout/resizable-layout';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
@@ -465,11 +466,24 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-          {isAiWorkflowGenerationEnabled && isDevEnvironment && <AiSidekickPanel />}
-          <div className="relative flex-1">
-            <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
-            {isAiWorkflowGenerationEnabled && isDevEnvironment && <WorkflowCanvasToast />}
-          </div>
+          {isAiWorkflowGenerationEnabled && isDevEnvironment ? (
+            <ResizableLayout autoSaveId="workflow-editor-ai-sidekick-layout" className="flex-1 min-w-0">
+              <ResizableLayout.ContextPanel defaultSize={26} minSize={20} maxSize={80}>
+                <AiSidekickPanel />
+              </ResizableLayout.ContextPanel>
+              <ResizableLayout.Handle />
+              <ResizableLayout.MainContentPanel>
+                <div className="relative flex-1">
+                  <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+                  <WorkflowCanvasToast />
+                </div>
+              </ResizableLayout.MainContentPanel>
+            </ResizableLayout>
+          ) : (
+            <div className="relative flex-1">
+              <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />

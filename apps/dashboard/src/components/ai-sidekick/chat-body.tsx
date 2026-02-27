@@ -10,7 +10,9 @@ import {
   PromptInputTextarea,
 } from '../ai-elements/prompt-input';
 import { Shimmer } from '../ai-elements/shimmer';
+import { BroomSparkle } from '../icons/broom-sparkle';
 import { Button } from '../primitives/button';
+import { Skeleton } from '../primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { ChatChainOfThoughtReasoning, ChatChainOfThoughtToolCalls } from './chat-chain-of-thought';
 import { ChatMessageActions } from './chat-message-actions';
@@ -33,7 +35,17 @@ export const ChatBodySkeleton = () => {
     <>
       <Conversation className="min-h-0">
         <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
-          <Shimmer className="text-label-xs">Loading...</Shimmer>
+          <div className="group flex w-full flex-col gap-2 is-user ml-auto justify-end">
+            <div className="flex justify-end gap-1 -mb-1">
+              <Skeleton className="w-5 h-5" />
+              <Skeleton className="w-5 h-5" />
+            </div>
+            <Skeleton className="w-40 h-8 self-end" />
+          </div>
+          <div className="group flex w-full flex-col gap-4 is-user ml-auto justify-end">
+            <Skeleton className="w-full h-5 " />
+            <Skeleton className="w-full h-20 " />
+          </div>
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
@@ -57,6 +69,7 @@ export const ChatBodySkeleton = () => {
 };
 
 export const ChatBody = ({
+  hasNoChatHistory,
   inputText,
   onInputChange,
   isGenerating,
@@ -74,6 +87,7 @@ export const ChatBody = ({
   onTryAgain,
   onRevertMessage,
 }: {
+  hasNoChatHistory: boolean;
   inputText: string;
   onInputChange: (text: string) => void;
   isGenerating: boolean;
@@ -93,113 +107,129 @@ export const ChatBody = ({
 }) => {
   return (
     <>
-      <Conversation className="min-h-0">
-        <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
-          {messages.map((chatMessage) => {
-            const { text } = extractMessageContent(chatMessage);
-            const hasReasoningContent = (chatMessage.parts ?? []).some((p) => p.type === 'reasoning');
-            const hasToolCallsContent = (chatMessage.parts ?? []).some((p) => p.type?.startsWith('dynamic-tool'));
-            const textParts = (chatMessage.parts ?? [])
-              .filter(
-                (p) =>
-                  p.type === 'text' &&
-                  typeof (p as { text?: string }).text === 'string' &&
-                  !(p as { text: string }).text.startsWith('{')
-              )
-              .map((p) => (p as { text: string }).text);
-            const isLastMessage = chatMessage.id === messages[messages.length - 1].id;
-            const isLastAssistantMessage =
-              chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
-
-            return (
-              <Message from={chatMessage.role} key={chatMessage.id}>
-                {chatMessage.role === 'user' && (
-                  <div className="flex justify-end gap-1 -mb-1">
-                    <Tooltip delayDuration={2000}>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          mode="ghost"
-                          size="2xs"
-                          className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
-                          onClick={() => onRevertMessage(chatMessage.id)}
-                          disabled={isGenerating || isActionPending}
-                          trailingIcon={RiArrowGoBackLine}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Revert</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip delayDuration={2000}>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          mode="ghost"
-                          size="2xs"
-                          className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
-                          onClick={() => onTryAgain(chatMessage.id)}
-                          disabled={isGenerating || isActionPending}
-                          trailingIcon={RiRefreshLine}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Try again</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
-                {chatMessage.role === 'user' && text && (
-                  <div className="flex justify-end bg-[#F1F1F1] rounded-lg p-2 max-w-full self-end">
-                    <span className="text-label-xs text-text-sub">{text}</span>
-                  </div>
-                )}
-                {chatMessage.role === 'assistant' && (
-                  <>
-                    {(isGenerating || hasReasoningContent) && (
-                      <ChatChainOfThoughtReasoning
-                        defaultIsExpanded={isGenerating && isLastMessage}
-                        message={chatMessage}
-                        isStreaming={isGenerating && isLastMessage}
-                      />
-                    )}
-                    {(isGenerating || hasToolCallsContent) && (
-                      <ChatChainOfThoughtToolCalls
-                        defaultIsExpanded={isGenerating && isLastMessage}
-                        message={chatMessage}
-                        isStreaming={isGenerating && isLastMessage}
-                      />
-                    )}
-                    {textParts.map((text, i) => (
-                      <StyledMessageResponse key={`text-${chatMessage.id}-${i}`}>{text}</StyledMessageResponse>
-                    ))}
-                    {!isGenerating && isReviewingChanges && isLastAssistantMessage && lastUserMessageId && (
-                      <ChatMessageActions
-                        lastUserMessageId={lastUserMessageId}
-                        isActionPending={isActionPending}
-                        onKeepAll={onKeepAll}
-                        onDiscard={onDiscard}
-                        onTryAgain={onTryAgain}
-                      />
-                    )}
-                  </>
-                )}
-              </Message>
-            );
-          })}
-          {status === 'submitted' && !errorMessage && (
-            <Message from="assistant">
-              <Shimmer className="text-label-xs">Thinking...</Shimmer>
-            </Message>
-          )}
-          {errorMessage && (
-            <Message from="assistant">
-              <div className="rounded-lg border border-red-200 bg-red-50 p-2 flex">
-                <span className="text-label-xs text-red-700">Error: {errorMessage}</span>
+      <Conversation className="min-h-0 [&>div:first-child]:overflow-x-hidden">
+        {hasNoChatHistory && messages.length === 0 ? (
+          <div className="flex justify-start items-center h-full p-5">
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-3">
+                <BroomSparkle className="size-5" />
+                <span className="text-label-md font-normal bg-linear-to-b from-[hsla(0,0%,57%,1)] to-[hsla(0,0%,39%,1)] bg-clip-text text-transparent">
+                  Novu Sidekick
+                </span>
               </div>
-            </Message>
-          )}
-        </ConversationContent>
+              <span className="text-label-xs text-text-soft">
+                Suggests improvements, fills gaps, and applies best practices as you build.{' '}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
+            {messages.map((chatMessage) => {
+              const { text } = extractMessageContent(chatMessage);
+              const hasReasoningContent = (chatMessage.parts ?? []).some((p) => p.type === 'reasoning');
+              const hasToolCallsContent = (chatMessage.parts ?? []).some((p) => p.type?.startsWith('dynamic-tool'));
+              const textParts = (chatMessage.parts ?? [])
+                .filter(
+                  (p) =>
+                    p.type === 'text' &&
+                    typeof (p as { text?: string }).text === 'string' &&
+                    !(p as { text: string }).text.startsWith('{')
+                )
+                .map((p) => (p as { text: string }).text);
+              const isLastMessage = chatMessage.id === messages[messages.length - 1].id;
+              const isLastAssistantMessage =
+                chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
+
+              return (
+                <Message from={chatMessage.role} key={chatMessage.id}>
+                  {chatMessage.role === 'user' && (
+                    <div className="flex justify-end gap-1 -mb-1">
+                      <Tooltip delayDuration={2000}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                            onClick={() => onRevertMessage(chatMessage.id)}
+                            disabled={isGenerating || isActionPending}
+                            trailingIcon={RiArrowGoBackLine}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Revert</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip delayDuration={2000}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
+                            onClick={() => onTryAgain(chatMessage.id)}
+                            disabled={isGenerating || isActionPending}
+                            trailingIcon={RiRefreshLine}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Try again</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  )}
+                  {chatMessage.role === 'user' && text && (
+                    <div className="flex justify-end bg-[#F1F1F1] rounded-lg p-2 max-w-full self-end">
+                      <span className="text-label-xs text-text-sub">{text}</span>
+                    </div>
+                  )}
+                  {chatMessage.role === 'assistant' && (
+                    <>
+                      {(isGenerating || hasReasoningContent) && (
+                        <ChatChainOfThoughtReasoning
+                          defaultIsExpanded={isGenerating && isLastMessage}
+                          message={chatMessage}
+                          isStreaming={isGenerating && isLastMessage}
+                        />
+                      )}
+                      {(isGenerating || hasToolCallsContent) && (
+                        <ChatChainOfThoughtToolCalls
+                          defaultIsExpanded={isGenerating && isLastMessage}
+                          message={chatMessage}
+                          isStreaming={isGenerating && isLastMessage}
+                        />
+                      )}
+                      {textParts.map((text, i) => (
+                        <StyledMessageResponse key={`text-${chatMessage.id}-${i}`}>{text}</StyledMessageResponse>
+                      ))}
+                      {!isGenerating && isReviewingChanges && isLastAssistantMessage && lastUserMessageId && (
+                        <ChatMessageActions
+                          lastUserMessageId={lastUserMessageId}
+                          isActionPending={isActionPending}
+                          onKeepAll={onKeepAll}
+                          onDiscard={onDiscard}
+                          onTryAgain={onTryAgain}
+                        />
+                      )}
+                    </>
+                  )}
+                </Message>
+              );
+            })}
+            {status === 'submitted' && !errorMessage && (
+              <Message from="assistant">
+                <Shimmer className="text-label-xs">Thinking...</Shimmer>
+              </Message>
+            )}
+            {errorMessage && (
+              <Message from="assistant">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 flex">
+                  <span className="text-label-xs text-red-700">Error: {errorMessage}</span>
+                </div>
+              </Message>
+            )}
+          </ConversationContent>
+        )}
         <ConversationScrollButton />
       </Conversation>
 

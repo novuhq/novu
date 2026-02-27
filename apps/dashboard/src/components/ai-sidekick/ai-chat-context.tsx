@@ -16,6 +16,7 @@ import { showErrorToast } from '../primitives/sonner-helpers';
 export type ReasoningDataPart = DataUIPart<{ reasoning: { toolCallId: string; text: string } }>;
 
 export type AiChatContextValue = {
+  hasNoChatHistory: boolean;
   lastUserMessageId?: string;
   messages: UIMessage[];
   dataParts: ReasoningDataPart[];
@@ -89,6 +90,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     resourceType,
     resourceId,
   });
+  const hasNoChatHistory = !latestChat;
   const { createAiChat, isPending: isCreatingAiChat } = useCreateAiChat();
 
   const chatId = useMemo(() => {
@@ -330,6 +332,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
   const value: AiChatContextValue = useMemo(
     () => ({
+      hasNoChatHistory,
       lastUserMessageId,
       messages,
       dataParts: dataParts as ReasoningDataPart[],
@@ -350,6 +353,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       handleDiscard,
     }),
     [
+      hasNoChatHistory,
       lastUserMessageId,
       messages,
       dataParts,
