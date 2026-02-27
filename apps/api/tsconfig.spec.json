@@ -1,11 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "strictNullChecks": false,
-    "types": ["node", "mocha"],
-    "esModuleInterop": false,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*.spec.ts", "src/**/*.e2e.ts", "src/**/*.e2e-ee.ts", "e2e/**/*.ts"],
+  "compilerOptions": {},
   "exclude": ["node_modules"]
 }
