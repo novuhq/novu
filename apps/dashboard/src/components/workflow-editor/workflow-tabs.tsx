@@ -326,6 +326,7 @@ export const WorkflowTabs = () => {
           data.type === 'data-workflow-completed' ||
           data.type === 'data-step-updated' ||
           data.type === 'data-step-removed' ||
+          data.type === 'data-step-moved' ||
           data.type === 'data-workflow-metadata-updated'
         ) {
           refetchWorkflow({ cancelRefetch: true });

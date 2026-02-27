@@ -86,26 +86,35 @@ const aiJsonLogicComparisonSchema = z.union([
     .describe('Check if value exists in array'),
 ]);
 
-const aiJsonLogicConditionSchema = z.lazy(() =>
-  z.union([
+/**
+ * Unrolled recursive condition schema (3 levels deep) to satisfy
+ * OpenAI structured output requirements — z.lazy() produces schemas
+ * without a 'type' key on recursive items which OpenAI rejects.
+ */
+function buildConditionLevel(innerSchema: z.ZodType) {
+  return z.union([
     z
       .object({
-        and: z.array(aiJsonLogicConditionSchema).min(1).describe('Array of conditions that must ALL be true'),
+        and: z.array(innerSchema).min(1).describe('Array of conditions that must ALL be true'),
       })
       .describe('Logical AND - all conditions must be true'),
     z
       .object({
-        or: z.array(aiJsonLogicConditionSchema).min(1).describe('Array of conditions where at least ONE must be true'),
+        or: z.array(innerSchema).min(1).describe('Array of conditions where at least ONE must be true'),
       })
       .describe('Logical OR - at least one condition must be true'),
     z
       .object({
-        '!': z.array(aiJsonLogicConditionSchema).length(1).describe('Single condition to negate'),
+        '!': z.array(innerSchema).length(1).describe('Single condition to negate'),
       })
       .describe('Logical NOT - negates the condition'),
     aiJsonLogicComparisonSchema,
-  ])
-) as z.ZodType<JsonLogicCondition>;
+  ]);
+}
+
+const aiJsonLogicConditionLevel0 = aiJsonLogicComparisonSchema;
+const aiJsonLogicConditionLevel1 = buildConditionLevel(aiJsonLogicConditionLevel0);
+const aiJsonLogicConditionSchema: z.ZodType<JsonLogicCondition> = buildConditionLevel(aiJsonLogicConditionLevel1);
 
 export const aiSkipConditionSchema = z
   .union([aiJsonLogicConditionSchema, aiJsonLogicVarSchema])
@@ -301,12 +310,50 @@ export const stepInputSchema = z.object({
 
 export const editStepInputSchema = z.object({
   stepId: z.string().describe('Unique step identifier of the step to edit'),
+  type: z
+    .enum([
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+      StepTypeEnum.SMS,
+      StepTypeEnum.DELAY,
+      StepTypeEnum.DIGEST,
+      StepTypeEnum.THROTTLE,
+    ])
+    .describe('Type of the step to edit'),
   intent: z.string().describe('Description of the change the user wants to make'),
 });
 
 export const removeStepInputSchema = z.object({
   stepId: z.string().describe('Unique step identifier of the step to remove'),
   reason: z.string().describe('Brief reason for removing the step'),
+});
+
+export const moveStepInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier of the step to move'),
+  toIndex: z.number().int().min(0).describe('Target 0-based index position in the workflow steps array'),
+});
+
+export const addStepInBetweenInputSchema = stepInputSchema.extend({
+  afterStepId: z
+    .string()
+    .describe(
+      'Step ID of the step after which to insert the new step. The new step will be placed immediately after this step.'
+    ),
+});
+
+export const updateStepConditionsInputSchema = z.object({
+  stepId: z.string().describe('Unique step identifier of the step to update'),
+  intent: z
+    .string()
+    .describe(
+      'Description of the condition to apply (e.g., "only send when subscriber is offline", "skip if In-App was already read", "remove condition")'
+    ),
+});
+
+export const updateStepConditionsOutputSchema = z.object({
+  skip: aiSkipConditionSchema,
 });
 
 export const emailStepOutputSchema = z.object({

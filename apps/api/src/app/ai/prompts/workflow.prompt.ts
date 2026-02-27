@@ -55,8 +55,11 @@ For EDITING existing workflows (when user asks to change content, metadata, or r
 1. Call ${AiWorkflowToolsNameEnum.RETRIEVE_ORGANIZATION_META} to get available channels
 2. Use ${AiWorkflowToolsNameEnum.SET_WORKFLOW_METADATA} to change workflow name, description, tags, severity
 3. Use ${AiWorkflowToolsNameEnum.EDIT_STEP_CONTENT} to modify step content (e.g., "edit the email to include X")
-4. Use ${AiWorkflowToolsNameEnum.ADD_STEP} to add steps
-5. Use ${AiWorkflowToolsNameEnum.REMOVE_STEP} to remove a step
+4. Use ${AiWorkflowToolsNameEnum.UPDATE_STEP_CONDITIONS} to add, change, or remove step conditions (e.g., "only send when offline")
+5. Use ${AiWorkflowToolsNameEnum.ADD_STEP} to add steps
+6. Use ${AiWorkflowToolsNameEnum.REMOVE_STEP} to remove a step
+7. Use ${AiWorkflowToolsNameEnum.MOVE_STEP} to move a step
+8. Use ${AiWorkflowToolsNameEnum.ADD_STEP_IN_BETWEEN} to add a step in between two existing steps
 </workflow>
 
 <output_format>
