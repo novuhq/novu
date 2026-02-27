@@ -26,8 +26,26 @@ function slugify(text: string): string {
     .replace(/^_|_$/g, '');
 }
 
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]+`/g, (m) => m.slice(1, -1))
+    .replace(/\*\*([^*]+)\*\*|__([^_]+)__/g, '$1$2')
+    .replace(/\*([^*]+)\*|_([^_]+)_/g, '$1$2')
+    .replace(/^#+\s*/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^>\s*/gm, '')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .trim();
+}
+
 function getStepLabel(text: string, maxLength = 30): string {
-  const firstLine = text.split(/\r?\n/)[0].trim();
+  const rawFirstLine = text.split(/\r?\n/)[0].trim();
+  if (!rawFirstLine) return 'Reasoning...';
+
+  const plainText = stripMarkdown(rawFirstLine);
+  const firstLine = plainText || rawFirstLine;
   if (!firstLine) return 'Reasoning...';
 
   if (firstLine.length <= maxLength) return firstLine;
@@ -88,7 +106,7 @@ function WorkflowInitializedSection({ output }: { output: WorkflowMetadataOutput
               <CollapsibleTrigger className="flex w-full items-center justify-between gap-5 text-left transition-opacity hover:opacity-80">
                 <span className="font-mono text-label-xs font-medium text-text-sub">Description</span>
                 <RiExpandUpDownLine
-                  className="size-4 shrink-0 text-text-sub transition-transform group-data-[state=open]:rotate-180"
+                  className="size-4 shrink-0 text-text-soft transition-transform group-data-[state=open]:rotate-180"
                   aria-hidden
                 />
               </CollapsibleTrigger>
@@ -114,7 +132,7 @@ function WorkflowInitializedSection({ output }: { output: WorkflowMetadataOutput
               <CollapsibleTrigger className="flex w-full items-center justify-between gap-5 text-left transition-opacity hover:opacity-80">
                 <span className="font-mono text-label-xs font-medium text-text-sub">Tags</span>
                 <RiExpandUpDownLine
-                  className="size-4 shrink-0 text-text-sub transition-transform group-data-[state=open]:rotate-180"
+                  className="size-4 shrink-0 text-text-soft transition-transform group-data-[state=open]:rotate-180"
                   aria-hidden
                 />
               </CollapsibleTrigger>
@@ -141,17 +159,15 @@ function WorkflowStepItem({ output }: { output: { stepId: string; name: string; 
   const color = STEP_TYPE_TO_COLOR[stepType] ?? STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP];
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-[#E1E4EA] bg-white px-2 py-1">
+    <div className="flex items-center gap-2 rounded-lg border border-[#E1E4EA] bg-white px-2 py-1 not-last:relative not-last:after:content-[''] not-last:after:absolute not-last:after:-bottom-[9px] not-last:after:left-4.5 not-last:after:h-[9px] not-last:after:border-l not-last:after:border-bg-soft">
       <div
         className="flex size-5 items-center justify-center border opacity-40 rounded-full"
         style={{ borderColor: `hsl(var(--${color}))`, color: `hsl(var(--${color}))` }}
       >
         <Icon className="size-3" />
       </div>
-      <div className="min-w-0 flex-1">
-        <span className="text-label-xs text-foreground">{output.name}</span>
-        <span className="block truncate text-label-2xs text-text-sub">{output.stepId}</span>
-      </div>
+      <span className="text-label-xs text-text-sub truncate">{output.name}</span>
+      <span className="ml-auto block truncate text-label-xs text-text-soft font-code">{output.stepId}</span>
     </div>
   );
 }
@@ -253,23 +269,23 @@ export function ChatChainOfThoughtReasoning({
       : 'Thought';
 
   return (
-    <ChainOfThought open={isExpanded} onOpenChange={setIsExpanded}>
+    <ChainOfThought open={isExpanded} onOpenChange={setIsExpanded} className="text-text-soft">
       <ChainOfThoughtHeader className="text-label-xs">
         {isStreaming ? <Shimmer>{headerText}</Shimmer> : headerText}
       </ChainOfThoughtHeader>
-      <ChainOfThoughtContent>
+      <ChainOfThoughtContent className="mb-2">
         <div className="flex flex-col gap-3">
           {reasoningItems.map((item, index) => (
             <ChainOfThoughtStep
               key={`reasoning-${index}`}
-              label={<StyledMessageResponse>{getStepLabel(item.text)}</StyledMessageResponse>}
+              label={<span className="text-label-xs font-medium text-text-sub">{getStepLabel(item.text)}</span>}
               hideLabelOnOpen
               collapsible
               autoCollapse
               status={item.state === 'streaming' ? 'active' : 'complete'}
               defaultOpen={item.state === 'streaming'}
             >
-              <StyledMessageResponse>{item.text}</StyledMessageResponse>
+              <StyledMessageResponse className="mt-0.5">{item.text}</StyledMessageResponse>
             </ChainOfThoughtStep>
           ))}
         </div>
@@ -390,7 +406,7 @@ export function ChatChainOfThoughtToolCalls({
       : 'Drafted the workflow';
 
   return (
-    <ChainOfThought open={isExpanded} onOpenChange={setIsExpanded}>
+    <ChainOfThought open={isExpanded} onOpenChange={setIsExpanded} className="text-text-soft">
       <ChainOfThoughtHeader className="text-label-xs" icon={RiShapesLine}>
         {isStreaming ? <Shimmer>{headerText}</Shimmer> : headerText}
       </ChainOfThoughtHeader>

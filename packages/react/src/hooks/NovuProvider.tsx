@@ -41,8 +41,18 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
     [props.subscriberId, props.subscriber]
   );
 
-  const { children, subscriberHash, contextHash, backendUrl, apiUrl, socketUrl, useCache, defaultSchedule, context } =
-    props;
+  const {
+    children,
+    subscriberHash,
+    contextHash,
+    backendUrl,
+    apiUrl,
+    socketUrl,
+    socketOptions,
+    useCache,
+    defaultSchedule,
+    context,
+  } = props;
 
   const novu = useMemo(
     () =>
@@ -53,6 +63,7 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
         backendUrl,
         apiUrl,
         socketUrl,
+        socketOptions,
         useCache,
         subscriber: subscriberObj,
         defaultSchedule,
@@ -67,6 +78,7 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
       backendUrl,
       apiUrl,
       socketUrl,
+      socketOptions,
       useCache,
     ]
   );

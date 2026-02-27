@@ -130,7 +130,10 @@ export const TranslationOnboardingPage = () => {
                     description={
                       <>
                         Don't worry about getting this perfect — you can add more languages anytime.{' '}
-                        <Link to="https://docs.novu.co/platform/workflow/advanced-features/translations" className="underline">
+                        <Link
+                          to="https://docs.novu.co/platform/workflow/advanced-features/translations"
+                          className="underline"
+                        >
                           Learn more.
                         </Link>
                       </>
