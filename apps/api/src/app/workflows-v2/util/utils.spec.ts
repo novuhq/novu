@@ -1,6 +1,8 @@
 import { expect } from 'chai';
+import { JsonSchemaTypeEnum } from '@novu/dal';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { keysToObject } from './utils';
+import { keysToObject, mockSchemaDefaults } from './utils';
 
 describe('keysToObject', () => {
   it('should convert simple paths into a nested object', () => {
@@ -244,5 +246,58 @@ describe('keysToObject', () => {
         },
       },
     });
+  });
+});
+
+describe('mockSchemaDefaults', () => {
+  it('should preserve falsy default values (0, false, null, empty string)', () => {
+    const schema: JSONSchemaDto = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {
+        insured_value: { type: JsonSchemaTypeEnum.NUMBER, default: 0 },
+        is_return: { type: JsonSchemaTypeEnum.BOOLEAN, default: false },
+        insurance_policy_id: { type: JsonSchemaTypeEnum.NUMBER, default: null },
+        empty_string: { type: JsonSchemaTypeEnum.STRING, default: '' },
+      },
+    };
+
+    const result = mockSchemaDefaults(schema);
+
+    expect(result.properties!.insured_value).to.have.property('default', 0);
+    expect(result.properties!.is_return).to.have.property('default', false);
+    expect(result.properties!.insurance_policy_id).to.have.property('default', null);
+    expect(result.properties!.empty_string).to.have.property('default', '');
+  });
+
+  it('should add template string defaults for properties without defaults', () => {
+    const schema: JSONSchemaDto = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {
+        name: { type: JsonSchemaTypeEnum.STRING },
+        age: { type: JsonSchemaTypeEnum.NUMBER },
+      },
+    };
+
+    const result = mockSchemaDefaults(schema);
+
+    expect(result.properties!.name).to.have.property('default', '{{payload.name}}');
+    expect(result.properties!.age).to.have.property('default', '{{payload.age}}');
+  });
+
+  it('should preserve truthy default values', () => {
+    const schema: JSONSchemaDto = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {
+        name: { type: JsonSchemaTypeEnum.STRING, default: 'John' },
+        count: { type: JsonSchemaTypeEnum.NUMBER, default: 42 },
+        active: { type: JsonSchemaTypeEnum.BOOLEAN, default: true },
+      },
+    };
+
+    const result = mockSchemaDefaults(schema);
+
+    expect(result.properties!.name).to.have.property('default', 'John');
+    expect(result.properties!.count).to.have.property('default', 42);
+    expect(result.properties!.active).to.have.property('default', true);
   });
 });

@@ -1,3 +1,4 @@
+import { providers as sharedProviders } from '@novu/shared';
 import {
   Body,
   Button,
@@ -138,66 +139,45 @@ export interface IEmailProps {
   previewText?: string;
 }
 
-const NOVU_LOGO_URL = 'https://dashboard.novu.co/static/images/novu-logo-dark.svg';
-const EMAIL_ICONS_BASE_URL = 'https://dashboard.novu.co/static/images';
+const NOVU_LOGO_URL = 'https://dashboard.novu.co/images/report-emails/novu-logo-dark.png';
+const EMAIL_ICONS_BASE_URL = 'https://dashboard.novu.co/images';
 
 const CHANNEL_CONFIG: Record<string, Omit<IChannel, 'value'>> = {
   in_app: {
     name: 'In-app',
     color: '#3b82f6',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/bell.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/bell.png`,
   },
   email: {
     name: 'Email',
     color: '#f59e0b',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/email.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/email.png`,
   },
   chat: {
     name: 'Chat',
     color: '#8b5cf6',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/chat.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/chat.png`,
   },
   push: {
     name: 'Push',
     color: '#ec4899',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/push.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/push.png`,
   },
   sms: {
     name: 'SMS',
     color: '#ef4444',
     dashArray: '0',
-    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/sms.svg`,
+    icon: `${EMAIL_ICONS_BASE_URL}/report-emails/sms.png`,
   },
 };
 
-const PROVIDER_CONFIG: Record<string, { name: string }> = {
-  novu: { name: 'In-app' },
-  sendgrid: { name: 'SendGrid' },
-  twilio: { name: 'Twilio' },
-  slack: { name: 'Slack' },
-  mailgun: { name: 'Mailgun' },
-  postmark: { name: 'Postmark' },
-  sns: { name: 'AWS SNS' },
-  ses: { name: 'AWS SES' },
-  nodemailer: { name: 'Nodemailer' },
-  mandrill: { name: 'Mandrill' },
-  mailjet: { name: 'Mailjet' },
-  infobip: { name: 'Infobip' },
-  resend: { name: 'Resend' },
-  'azure-sms': { name: 'Azure SMS' },
-  clickatell: { name: 'Clickatell' },
-  discord: { name: 'Discord' },
-  'expo-push': { name: 'Expo Push' },
-  fcm: { name: 'FCM' },
-  'one-signal': { name: 'OneSignal' },
-  'push-webhook': { name: 'Push Webhook' },
-  pusher: { name: 'Pusher Beams' },
-  pushpad: { name: 'Pushpad' },
-};
+const PROVIDER_CONFIG: Record<string, { name: string; id: string }> = Object.fromEntries(
+  sharedProviders.map((p) => [p.id, { name: p.displayName, id: p.id }])
+);
 
 const COLORS = {
   bg: '#f9fafb',
@@ -247,14 +227,8 @@ const listValueCellStyle: React.CSSProperties = {
   fontFamily: "'Manrope', sans-serif",
 };
 
-/**
- * Maps provider names to their icon URLs on the Novu CDN.
- * Provider icons are hosted at: https://cdn.novu.co/images/providers/light/square/{provider-name}.svg
- */
-function getProviderIconUrl(providerName: string): string {
-  const normalizedName = providerName.toLowerCase().replace(/\s+/g, '-');
-
-  return `${EMAIL_ICONS_BASE_URL}/${normalizedName}.svg`;
+function getProviderIconUrl(providerId: string): string {
+  return `${EMAIL_ICONS_BASE_URL}/report-emails/providers/light/${providerId}.png`;
 }
 
 /**
@@ -343,7 +317,7 @@ function mapProviders(providers: PayloadSchemaType['topProviders']): ITopProvide
       return {
         name: config.name,
         count: provider.count,
-        icon: getProviderIconUrl(config.name),
+        icon: getProviderIconUrl(provider.name.toLowerCase()),
       };
     })
     .filter((p): p is ITopProvider => p !== null);
@@ -352,7 +326,7 @@ function mapProviders(providers: PayloadSchemaType['topProviders']): ITopProvide
 function NovuLogo() {
   return (
     <Section style={{ textAlign: 'center', padding: '24px 0 32px' }}>
-      <Img src={NOVU_LOGO_URL} alt="Novu" width={100} height={37} style={{ margin: '0 auto' }} />
+      <Img src={NOVU_LOGO_URL} alt="Novu" width={92} height={24} style={{ margin: '0 auto' }} />
     </Section>
   );
 }
@@ -386,7 +360,7 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
               }}
             >
               <img
-                src={`${EMAIL_ICONS_BASE_URL}/report-emails/calendar.svg`}
+                src={`${EMAIL_ICONS_BASE_URL}/report-emails/calendar.png`}
                 alt=""
                 width="14"
                 height="14"
@@ -414,8 +388,8 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
 
 function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
   const iconUrl = isUp
-    ? `${EMAIL_ICONS_BASE_URL}/report-emails/trend-up.svg`
-    : `${EMAIL_ICONS_BASE_URL}/report-emails/trend-down.svg`;
+    ? `${EMAIL_ICONS_BASE_URL}/report-emails/trend-up.png`
+    : `${EMAIL_ICONS_BASE_URL}/report-emails/trend-down.png`;
 
   return (
     <table
@@ -437,7 +411,7 @@ function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
               alt={isUp ? 'up' : 'down'}
               width="16"
               height="16"
-              style={{ display: 'block', width: '16px', height: '16px' }}
+              style={{ display: 'block', width: '11px', height: '6px' }}
             />
           </td>
           <td
@@ -593,13 +567,11 @@ function RankedListCard({
   items,
   title,
   showWorkflowIcon = false,
-  showProviderIcon = false,
   minRows = 0,
 }: {
-  items: PayloadSchemaType['topProviders'];
+  items: IRankedItem[];
   title: string;
   showWorkflowIcon?: boolean;
-  showProviderIcon?: boolean;
   minRows?: number;
 }) {
   const emptyRowCount = Math.max(0, minRows - items.length);
@@ -616,11 +588,7 @@ function RankedListCard({
         }}
       >
         {items.map((item, idx) => {
-          const iconUrl = showProviderIcon ? getProviderIconUrl(item.name) : undefined;
-
-          if (showProviderIcon && !iconUrl) {
-            throw new Error(`Icon URL not found for provider: "${item.name}"`);
-          }
+          const iconUrl = item.icon;
 
           return (
             <Row key={idx} style={{ margin: '0', padding: '3px' }}>
@@ -629,7 +597,7 @@ function RankedListCard({
                   {showWorkflowIcon && (
                     <Column style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '12px' }}>
                       <Img
-                        src={`${EMAIL_ICONS_BASE_URL}/report-emails/winding-arrow.svg`}
+                        src={`${EMAIL_ICONS_BASE_URL}/report-emails/winding-arrow.png`}
                         alt=""
                         width={12}
                         height={9}
@@ -638,11 +606,11 @@ function RankedListCard({
                     </Column>
                   )}
                   {iconUrl && (
-                    <Column style={{ padding: '0 10px 0 0', verticalAlign: 'middle', width: '16px' }}>
-                      <Img src={iconUrl} alt="icon" width={16} height={16} style={{ display: 'block' }} />
+                    <Column style={{ padding: '2px', verticalAlign: 'middle', width: '8px' }}>
+                      <Img src={iconUrl} alt="icon" width={8} height={8} style={{ display: 'block' }} />
                     </Column>
                   )}
-                  <Column style={{ padding: '0', verticalAlign: 'middle' }}>
+                  <Column style={{ padding: '0 0 0 4px', verticalAlign: 'middle' }}>
                     <Text
                       style={{
                         fontSize: '12px',
@@ -699,19 +667,28 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                       <Column style={{ paddingRight: '8px', verticalAlign: 'middle', width: '32px' }}>
                         <Section
                           style={{
-                            width: '24px',
-                            height: '24px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '6px',
-                            display: 'inline-block',
+                            border: '1px solid #e2e2e2',
+                            backgroundColor: '#fbfbfb',
+                            padding: '4px',
+                            textAlign: 'center',
+                            verticalAlign: 'middle',
+                            lineHeight: '22px',
                           }}
                         >
                           {topChannel.icon && (
                             <Img
                               src={topChannel.icon}
                               alt=""
-                              width={16}
-                              height={16}
-                              style={{ display: 'block', padding: '4px' }}
+                              style={{
+                                display: 'inline-block',
+                                maxWidth: '22px',
+                                maxHeight: '22px',
+                                verticalAlign: 'middle',
+                                margin: '0 auto',
+                              }}
                             />
                           )}
                         </Section>
@@ -796,27 +773,23 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                           <Column style={{ width: '175px', padding: '3px 0' }}>
                             <Section>
                               <Row>
-                                <Column style={{ paddingRight: '4px', verticalAlign: 'middle', width: '28px' }}>
-                                  <Section
-                                    style={{
-                                      width: '24px',
-                                      height: '24px',
-                                      borderRadius: '6px',
-                                      display: 'inline-block',
-                                    }}
-                                  >
+                                <Column style={{ paddingRight: '4px', width: '28px' }}>
+                                  <Section>
                                     {channel.icon && (
                                       <Img
                                         src={channel.icon}
                                         alt=""
-                                        width={16}
-                                        height={16}
-                                        style={{ display: 'block', padding: '4px', margin: '0 auto' }}
+                                        style={{
+                                          display: 'block',
+                                          maxWidth: '16px',
+                                          maxHeight: '16px',
+                                          padding: '3.5px',
+                                        }}
                                       />
                                     )}
                                   </Section>
                                 </Column>
-                                <Column style={{ verticalAlign: 'middle' }}>
+                                <Column>
                                   <Text
                                     style={{
                                       fontSize: '12px',
@@ -968,7 +941,7 @@ function EmailFooter() {
       <Text style={{ marginTop: '12px', marginBottom: '0' }}>
         <Link href="https://linkedin.com/company/novuco" style={{ textDecoration: 'none' }}>
           <Img
-            src={`${EMAIL_ICONS_BASE_URL}/report-emails/linkedin-dot.svg`}
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/linkedin-dot.png`}
             alt="LinkedIn"
             width={8}
             height={8}
@@ -977,7 +950,7 @@ function EmailFooter() {
         </Link>
         <Link href="https://youtube.com/@novuhq" style={{ textDecoration: 'none' }}>
           <Img
-            src={`${EMAIL_ICONS_BASE_URL}/report-emails/youtube-dot.svg`}
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/youtube-dot.png`}
             alt="YouTube"
             width={8}
             height={8}
@@ -986,7 +959,7 @@ function EmailFooter() {
         </Link>
         <Link href="https://x.com/novuhq" style={{ textDecoration: 'none' }}>
           <Img
-            src={`${EMAIL_ICONS_BASE_URL}/report-emails/x-dot.svg`}
+            src={`${EMAIL_ICONS_BASE_URL}/report-emails/x-dot.png`}
             alt="X"
             width={8}
             height={8}
@@ -1058,7 +1031,13 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 
           <Section style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column
+                style={{
+                  width: userInteractions > 0 ? '50%' : '100%',
+                  paddingRight: userInteractions > 0 ? '6px' : '0',
+                  verticalAlign: 'top',
+                }}
+              >
                 <CardWithDetail
                   label="Workflow Runs Triggered"
                   value={workflowRuns}
@@ -1070,17 +1049,19 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                   }}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
-                <CardWithDetail
-                  label="User Interactions"
-                  value={userInteractions}
-                  unit="interactions"
-                  detail={{
-                    value: `${interactionRate}%`,
-                    suffix: ' of all messages are interacted.',
-                  }}
-                />
-              </Column>
+              {userInteractions > 0 && (
+                <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+                  <CardWithDetail
+                    label="User Interactions"
+                    value={userInteractions}
+                    unit="interactions"
+                    detail={{
+                      value: `${interactionRate}%`,
+                      suffix: ' of all messages are interacted.',
+                    }}
+                  />
+                </Column>
+              )}
             </Row>
           </Section>
 
@@ -1090,14 +1071,13 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                 <RankedListCard
                   title="Top Delivery Providers"
                   items={topProviders}
-                  showProviderIcon
                   minRows={Math.max(topProviders.length, topWorkflows.length)}
                 />
               </Column>
               <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
                   title="Top Workflows"
-                  items={topWorkflows}
+                  items={topWorkflows as IRankedItem[]}
                   showWorkflowIcon
                   minRows={Math.max(topProviders.length, topWorkflows.length)}
                 />

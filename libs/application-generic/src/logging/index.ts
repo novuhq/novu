@@ -101,7 +101,7 @@ export function createNestLoggingModuleOptions(settings: {
         tenant: configSet.tenant,
       },
       transport: configSet.transport,
-      autoLogging: !['test'].includes(process.env.NODE_ENV),
+      autoLogging: false,
     },
   };
 }

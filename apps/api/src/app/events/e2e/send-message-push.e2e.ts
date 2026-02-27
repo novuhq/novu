@@ -5,10 +5,12 @@ import { DetailEnum } from '@novu/application-generic';
 import {
   ExecutionDetailsRepository,
   IntegrationRepository,
+  JobRepository,
+  JobStatusEnum,
   MessageRepository,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, InboxCountTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsStatusEnum, InboxCountTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -20,6 +22,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
   const executionDetailsRepository = new ExecutionDetailsRepository();
   const integrationRepository = new IntegrationRepository();
   const messageRepository = new MessageRepository();
+  const jobRepository = new JobRepository();
   let novuClient: Novu;
 
   before(async () => {
@@ -55,7 +58,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       await executionDetailsRepository.delete({ _environmentId: session.environment._id });
     });
 
-    it('should not create any message if subscriber has no configured channel', async () => {
+    it('should skip push step and not create any message if subscriber has no configured channel', async () => {
       await triggerEvent(template);
 
       await session.waitForJobCompletion(template._id);
@@ -75,6 +78,17 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       const noActiveChannel = executionDetails.find((ex) => ex.detail === DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL);
       expect(noActiveChannel).to.be.ok;
       expect(noActiveChannel?.providerId).to.equal('fcm');
+      expect(noActiveChannel?.status).to.equal(ExecutionDetailsStatusEnum.WARNING);
+
+      const jobs = await jobRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        subscriberId: session.subscriberId,
+        type: StepTypeEnum.PUSH,
+      });
+
+      expect(jobs.length).to.be.greaterThan(0);
+      expect(jobs[0].status).to.equal(JobStatusEnum.CANCELED);
     });
 
     it('should not create any message if subscriber has configured two providers without device tokens', async () => {
