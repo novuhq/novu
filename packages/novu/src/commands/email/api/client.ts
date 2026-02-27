@@ -42,6 +42,7 @@ export class StepResolverClient {
         _id: envData._id,
         name: envData.name,
         _organizationId: envData._organizationId,
+        type: normalizeEnvironmentType(envData.type),
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -209,6 +210,18 @@ export class StepResolverClient {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }
+}
+
+function normalizeEnvironmentType(raw: unknown): 'prod' | 'dev' {
+  const normalized = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+
+  if (normalized === 'dev' || normalized === 'development') {
+    return 'dev';
+  }
+
+  // Default to 'prod' for 'prod', 'production', unknown, or missing values
+  // so that unexpected API strings cannot bypass the production guard.
+  return 'prod';
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {

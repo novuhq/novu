@@ -77,7 +77,7 @@ function buildBaseOptions() {
       url: 'https://docs.novu.co/platform/workflow/layouts',
     })
     .addTag('Translations', `Used to localize your notifications to different languages.`, {
-      url: 'https://docs.novu.co/platform/workflow/translations',
+      url: 'https://docs.novu.co/platform/workflow/advanced-features/translations',
     });
 
   return options;

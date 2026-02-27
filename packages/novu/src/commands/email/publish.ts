@@ -42,8 +42,9 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     const stepsDir = path.resolve(rootDir, stepsDirLabel);
     console.log('');
     const client = new StepResolverClient(apiUrl, secretKey);
-    await authenticate(client, apiUrl);
+    const envInfo = await authenticate(client, apiUrl);
 
+    assertNotProductionEnvironment(envInfo);
     assertStepRequiresWorkflow(options.step, options.workflow);
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
@@ -81,6 +82,30 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     console.error('');
     process.exit(1);
   }
+}
+
+function assertNotProductionEnvironment(envInfo: EnvironmentInfo): void {
+  if (envInfo.type !== 'prod') {
+    return;
+  }
+
+  console.error('');
+  console.error(red('❌ Publishing to Production is not allowed via the CLI'));
+  console.error('');
+  console.error(`   Current environment: ${envInfo.name}`);
+  console.error('');
+  console.error('   The CLI publishes to non-production environments only.');
+  console.error('   To promote changes to Production, use the Promote button in the Novu dashboard:');
+  console.error('');
+  console.error('     https://dashboard.novu.co');
+  console.error('');
+  console.error('   Learn more about environments and the publish flow:');
+  console.error('     https://docs.novu.co/platform/developer/environments#publish-changes-to-other-environments');
+  console.error('');
+  console.error('   Switch to a non-production environment by using its secret key:');
+  console.error('     npx novu email publish --secret-key <dev-environment-secret-key>');
+  console.error('');
+  process.exit(1);
 }
 
 function assertStepRequiresWorkflow(stepOption?: string[] | string, workflowOption?: string[] | string): void {
