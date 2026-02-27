@@ -26,6 +26,8 @@ function buildIssueRefundTool() {
     description: 'Issue a refund to a customer for a specific order.',
     inputSchema: refundSchema,
     execute: async (args: z.infer<typeof refundSchema>) => {
+      console.log('args', args);
+      console.log('REFUNEND!');
       return {
         status: 'refunded',
         orderId: args.orderId,

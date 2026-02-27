@@ -1,35 +1,18 @@
 'use client';
 
-import { DefaultChatTransport, isToolUIPart, getToolName } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useState, useEffect } from 'react';
-import {
-  Conversation,
-  ConversationContent,
-  ConversationEmptyState,
-} from '@/components/ai-elements/conversation';
+import { Inbox } from '@novu/nextjs';
+import { DefaultChatTransport, getToolName, isToolUIPart } from 'ai';
+import { useState } from 'react';
+import { Conversation, ConversationContent, ConversationEmptyState } from '@/components/ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import {
   PromptInput,
-  PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
+  PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
-
-type HumanDecision =
-  | { type: 'approve' }
-  | { type: 'edit'; args: Record<string, unknown> }
-  | { type: 'reject'; message: string };
-
-type PendingApproval = {
-  id: string;
-  toolCall: {
-    id: string;
-    method: string;
-    args: unknown;
-  };
-  createdAt: string;
-};
+import { novuConfig } from '@/utils/config';
 
 function ToolStatusCard({ result }: { result: unknown }) {
   if (!result || typeof result !== 'object') return null;
@@ -48,8 +31,7 @@ function ToolStatusCard({ result }: { result: unknown }) {
           Waiting for approval...
         </div>
         <p className="mt-1 text-amber-600 dark:text-amber-500">
-          A refund request has been sent for human review. Use the simulator panel on the right to approve, edit, or
-          reject it.
+          A refund request has been sent for human review. Check the Inbox panel on the right to approve or reject it.
         </p>
       </div>
     );
@@ -59,9 +41,7 @@ function ToolStatusCard({ result }: { result: unknown }) {
     return (
       <div className="mt-1 rounded-md border border-red-200 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950">
         <div className="font-medium text-red-700 dark:text-red-400">Refund Rejected</div>
-        {data.message ? (
-          <p className="mt-1 text-red-600 dark:text-red-500">{String(data.message)}</p>
-        ) : null}
+        {data.message ? <p className="mt-1 text-red-600 dark:text-red-500">{String(data.message)}</p> : null}
       </div>
     );
   }
@@ -87,182 +67,55 @@ function ToolStatusCard({ result }: { result: unknown }) {
   return null;
 }
 
-function ApprovalSimulator() {
-  const [pending, setPending] = useState<PendingApproval[]>([]);
-  const [editAmounts, setEditAmounts] = useState<Record<string, string>>({});
-  const [rejectMessages, setRejectMessages] = useState<Record<string, string>>({});
-  const [activeAction, setActiveAction] = useState<Record<string, 'edit' | 'reject' | null>>({});
+async function sendDecision(
+  notification: { data?: unknown; archive: () => unknown },
+  decision: { type: 'approve' } | { type: 'reject'; message: string }
+) {
+  const toolCallId = (notification.data as Record<string, unknown> | undefined)?.toolCallId;
+  const id = toolCallId;
 
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/agent-toolkit/pending');
-        const data = await res.json();
-        setPending(data.pending ?? []);
-      } catch {
-        // ignore
-      }
-    };
+  console.log('id', id);
+  console.log('decision', { notification, decision });
+  if (!id) return;
 
-    poll();
-    const interval = setInterval(poll, 2000);
+  await fetch('/api/agent-toolkit/webhook', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ toolCallId: id, decision }),
+  });
 
-    return () => clearInterval(interval);
-  }, []);
+  notification.archive();
+}
 
-  const sendDecision = async (approval: PendingApproval, decision: HumanDecision) => {
-    await fetch('/api/agent-toolkit/webhook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toolCallId: approval.toolCall.id, decision }),
-    });
-    setPending((prev) => prev.filter((p) => p.id !== approval.id));
-    setActiveAction((prev) => ({ ...prev, [approval.id]: null }));
-  };
-
+function ApprovalInbox() {
   return (
     <div className="flex h-full flex-col border-l bg-background">
       <div className="border-b px-4 py-3">
-        <h2 className="font-semibold text-sm">Approval Simulator</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Simulates a manager reviewing refund requests</p>
+        <h2 className="font-semibold text-sm">Manager Inbox</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Approve or reject refund requests in real-time</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {pending.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-muted-foreground">
-            <div className="text-3xl">🔔</div>
-            <p className="text-sm font-medium">No pending approvals</p>
-            <p className="text-xs">Ask the agent to issue a refund to see approvals here.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pending.map((approval) => {
-              const args = approval.toolCall.args as Record<string, unknown>;
-              const action = activeAction[approval.id];
-
-              return (
-                <div key={approval.id} className="rounded-lg border bg-card p-4 shadow-sm">
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Refund Request
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(approval.createdAt).toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <dl className="mt-2 space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Order</dt>
-                        <dd className="font-medium">{String(args.orderId ?? '—')}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Amount</dt>
-                        <dd className="font-medium text-red-600">${String(args.amount ?? '0')}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-muted-foreground shrink-0">Reason</dt>
-                        <dd className="font-medium text-right">{String(args.reason ?? '—')}</dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  {action === 'edit' && (
-                    <div className="mb-3 rounded-md border bg-muted/50 p-3">
-                      <label htmlFor={`edit-amount-${approval.id}`} className="block text-xs font-medium text-muted-foreground mb-1">New amount (USD)</label>
-                      <input
-                        id={`edit-amount-${approval.id}`}
-                        type="number"
-                        className="w-full rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        placeholder={String(args.amount ?? '')}
-                        value={editAmounts[approval.id] ?? ''}
-                        onChange={(e) => setEditAmounts((prev) => ({ ...prev, [approval.id]: e.target.value }))}
-                      />
-                    </div>
-                  )}
-
-                  {action === 'reject' && (
-                    <div className="mb-3 rounded-md border bg-muted/50 p-3">
-                      <label htmlFor={`reject-msg-${approval.id}`} className="block text-xs font-medium text-muted-foreground mb-1">Rejection reason</label>
-                      <input
-                        id={`reject-msg-${approval.id}`}
-                        type="text"
-                        className="w-full rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        placeholder="e.g. Exceeds refund policy limit"
-                        value={rejectMessages[approval.id] ?? ''}
-                        onChange={(e) => setRejectMessages((prev) => ({ ...prev, [approval.id]: e.target.value }))}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    {!action ? (
-                      <>
-                        <button
-                          onClick={() => sendDecision(approval, { type: 'approve' })}
-                          className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => setActiveAction((prev) => ({ ...prev, [approval.id]: 'edit' }))}
-                          className="flex-1 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
-                        >
-                          Edit & Approve
-                        </button>
-                        <button
-                          onClick={() => setActiveAction((prev) => ({ ...prev, [approval.id]: 'reject' }))}
-                          className="flex-1 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    ) : action === 'edit' ? (
-                      <>
-                        <button
-                          onClick={() => {
-                            const newAmount = parseFloat(editAmounts[approval.id] ?? '');
-                            if (Number.isNaN(newAmount)) return;
-                            sendDecision(approval, { type: 'edit', args: { ...args, amount: newAmount } });
-                          }}
-                          className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
-                        >
-                          Confirm Edit
-                        </button>
-                        <button
-                          onClick={() => setActiveAction((prev) => ({ ...prev, [approval.id]: null }))}
-                          className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() =>
-                            sendDecision(approval, {
-                              type: 'reject',
-                              message: rejectMessages[approval.id] ?? 'Rejected by reviewer',
-                            })
-                          }
-                          className="flex-1 rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 transition-colors"
-                        >
-                          Confirm Rejection
-                        </button>
-                        <button
-                          onClick={() => setActiveAction((prev) => ({ ...prev, [approval.id]: null }))}
-                          className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <div className="flex-1 overflow-hidden">
+        <Inbox
+          {...novuConfig}
+          routerPush={() => {
+            console.log('routerPush');
+          }}
+          appearance={{
+            elements: {
+              bellContainer: 'hidden',
+              popoverContent: 'static! shadow-none! border-none! w-full! max-w-full! h-full!',
+              popoverTrigger: 'hidden',
+            },
+          }}
+          open
+          // biome-ignore lint/suspicious/noExplicitAny: Notification type is not available as a direct dependency
+          onPrimaryActionClick={(notification: any) => sendDecision(notification, { type: 'approve' })}
+          // biome-ignore lint/suspicious/noExplicitAny: Notification type is not available as a direct dependency
+          onSecondaryActionClick={(notification: any) =>
+            sendDecision(notification, { type: 'reject', message: 'Rejected by reviewer' })
+          }
+        />
       </div>
     </div>
   );
@@ -293,9 +146,7 @@ export default function AgentToolkitPage() {
             </div>
             <div>
               <h1 className="font-semibold text-sm">Refund Agent</h1>
-              <p className="text-xs text-muted-foreground">
-                Human-in-the-Loop demo — refunds require manager approval
-              </p>
+              <p className="text-xs text-muted-foreground">Human-in-the-Loop demo — refunds require manager approval</p>
             </div>
           </div>
         </div>
@@ -345,10 +196,7 @@ export default function AgentToolkitPage() {
         </Conversation>
 
         <div className="border-t px-4 py-3 shrink-0">
-          <PromptInput
-            onSubmit={handleSubmit}
-            className="max-w-full"
-          >
+          <PromptInput onSubmit={handleSubmit} className="max-w-full">
             <PromptInputTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -364,7 +212,7 @@ export default function AgentToolkitPage() {
       </div>
 
       <div className="w-80 shrink-0">
-        <ApprovalSimulator />
+        <ApprovalInbox />
       </div>
     </div>
   );
