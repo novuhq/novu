@@ -315,3 +315,45 @@ export function createEmptyPayloadSchema(): JSONSchemaDto {
 export function hasPayloadProperties(schema: JSONSchemaDto): boolean {
   return !!(schema.properties && Object.keys(schema.properties).length > 0);
 }
+
+function buildPayloadSchemaFromSteps(steps: GeneratedStep[]): JSONSchemaDto {
+  let schema = createEmptyPayloadSchema();
+
+  for (const step of steps) {
+    const extractedVariables = extractPayloadVariablesFromControlValues(step.controlValues ?? {});
+    schema = mergePayloadVariables(schema, extractedVariables);
+  }
+
+  return schema;
+}
+
+export function toGeneratedSteps(
+  steps: Array<{
+    stepId?: string;
+    name: string;
+    type: StepTypeEnum;
+    controlValues?: Record<string, unknown> | null;
+  }>
+): GeneratedStep[] {
+  return steps.map((s) => ({
+    stepId: s.stepId ?? '',
+    name: s.name,
+    type: s.type,
+    controlValues: (s.controlValues ?? {}) as Record<string, unknown>,
+  }));
+}
+
+export function computePayloadSchemaFromSteps(
+  steps: Array<{
+    stepId?: string;
+    name: string;
+    type: StepTypeEnum;
+    controlValues?: Record<string, unknown> | null;
+  }>
+): { payloadSchema: JSONSchemaDto; validatePayload: boolean } {
+  const generatedSteps = toGeneratedSteps(steps);
+  const payloadSchema = buildPayloadSchemaFromSteps(generatedSteps);
+  const validatePayload = hasPayloadProperties(payloadSchema);
+
+  return { payloadSchema, validatePayload };
+}

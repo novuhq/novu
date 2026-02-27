@@ -795,7 +795,7 @@ export const PromptInputTextarea = ({
     <InputGroupTextarea
       className={cn('field-sizing-content max-h-48 min-h-16 border-none hover:bg-transparent', className)}
       containerClassName={cn(
-        'border-none ring-0 focus-within:ring-0 focus-within:border-none focus-within:shadow-none focus-within:bg-transparent hover:bg-transparent'
+        'border-none ring-0 focus-within:ring-0 focus-within:border-none focus-within:shadow-none focus-within:!bg-transparent hover:!bg-transparent has-[[disabled]]:!bg-transparent has-[[disabled]]:focus-within:!bg-transparent'
       )}
       name="message"
       onCompositionEnd={() => setIsComposing(false)}

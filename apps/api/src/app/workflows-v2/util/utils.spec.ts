@@ -1,5 +1,5 @@
-import { expect } from 'chai';
 import { JsonSchemaTypeEnum } from '@novu/dal';
+import { expect } from 'chai';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { keysToObject, mockSchemaDefaults } from './utils';

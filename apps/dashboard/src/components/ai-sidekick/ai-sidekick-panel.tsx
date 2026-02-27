@@ -4,6 +4,7 @@ import { ChatBody, ChatBodySkeleton } from './chat-body';
 
 export function AiSidekickPanel() {
   const {
+    hasNoChatHistory,
     messages,
     status,
     error,
@@ -24,7 +25,7 @@ export function AiSidekickPanel() {
   } = useAiChat();
 
   return (
-    <div className="flex h-full min-w-[360px] w-[360px] flex-col overflow-hidden border-r bg-white">
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3 py-2">
         <div className="flex items-center gap-0.5 rounded px-0.5 py-1">
           <div className="flex size-5 items-center justify-center">
@@ -47,6 +48,7 @@ export function AiSidekickPanel() {
         <ChatBodySkeleton />
       ) : (
         <ChatBody
+          hasNoChatHistory={hasNoChatHistory}
           inputText={inputText}
           onInputChange={setInputText}
           isGenerating={isGenerating}

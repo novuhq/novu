@@ -47,6 +47,8 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const { variables = [], isAllowedVariable, getPlaceholder, getHelpText } = (props.context as ExtendedContext) ?? {};
   const { value, handleOnChange, operator, field } = props;
   const { valueAsArray, multiValueHandler } = useValueEditor(props);
+  const stringValue = typeof value === 'string' ? value : `${value}`;
+  const stringValueAsArray = valueAsArray.map((v) => (typeof v === 'string' ? v : `${v}`));
 
   if (operator === 'null' || operator === 'notNull') {
     return null;
@@ -59,7 +61,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
   if (shouldUseRelativeDateEditor(operator)) {
     return (
       <RelativeDateEditor
-        value={value}
+        value={stringValue}
         onChange={handleOnChange}
         variables={variables}
         isAllowedVariable={isAllowedVariable || (() => true)}
@@ -73,7 +75,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
   if (operator === 'between' || operator === 'notBetween') {
     return (
       <BetweenValueEditor
-        valueAsArray={valueAsArray}
+        valueAsArray={stringValueAsArray}
         multiValueHandler={multiValueHandler}
         placeholder={placeholder}
         variables={variables}
@@ -87,7 +89,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
 
   return (
     <SingleValueEditor
-      value={value}
+      value={stringValue}
       onChange={handleOnChange}
       placeholder={placeholder}
       variables={variables}

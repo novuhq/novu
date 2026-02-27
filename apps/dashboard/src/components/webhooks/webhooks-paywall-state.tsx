@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { RiSparkling2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
