@@ -154,6 +154,13 @@ export const ChatBody = ({
                     <span className="text-label-xs text-text-sub">{text}</span>
                   </div>
                 )}
+                {chatMessage.role === 'system' && text && (
+                  <div className="flex items-center justify-center py-2">
+                    <div className="rounded-lg bg-[#F8F8F8] border border-[#E5E5E5] px-3 py-2">
+                      <span className="text-label-xs text-[#737373]">{text}</span>
+                    </div>
+                  </div>
+                )}
                 {chatMessage.role === 'assistant' && (
                   <>
                     {(isGenerating || hasReasoningContent) && (

@@ -291,8 +291,51 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   );
 
   const handleDiscard = useCallback(
-    async (messageId: string) => executeRevertMessage(messageId),
-    [executeRevertMessage]
+    async (messageId: string) => {
+      if (!latestChat) return;
+
+      const previousMessages = [...messages];
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
+
+      const userMessage = messages[messageIndex];
+      const userMessageText = userMessage.parts?.find((p) => p.type === 'text')?.text ?? '';
+
+      setInputText(userMessageText);
+
+      const optimisticMessages = messages.slice(0, messageIndex);
+      optimisticMessages.push({
+        id: generateId(),
+        role: AiMessageRoleEnum.SYSTEM,
+        parts: [{ type: 'text', text: 'Changes discarded. Try again.' }],
+      });
+      setMessages(optimisticMessages);
+
+      await revertMessage(
+        { chatId: latestChat._id, messageId },
+        {
+          onSuccess: async () => {
+            const { data: chat } = await refetchLatestChat();
+            if (chat && chat.messages.length > 0) {
+              const updatedMessages = [...(chat.messages as typeof messages)];
+              updatedMessages.push({
+                id: generateId(),
+                role: AiMessageRoleEnum.SYSTEM,
+                parts: [{ type: 'text', text: 'Changes discarded. Try again.' }],
+              });
+              setMessages(updatedMessages);
+            }
+            onRefetchResource?.();
+          },
+          onError: async (error) => {
+            showErrorToast(`Failed to discard changes: ${error.message}`);
+            setMessages(previousMessages);
+            setInputText('');
+          },
+        }
+      );
+    },
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat, setInputText]
   );
 
   const handleRevertConfirmationConfirm = useCallback(async () => {
