@@ -16,7 +16,6 @@ export const payloadSchema = z.object({
   usersReachedChange: z.number(),
   usersReachedUp: z.boolean(),
   workflowRuns: z.number(),
-  successRate: z.number(),
   userInteractions: z.number(),
   interactionRate: z.number(),
   topProviders: z.array(

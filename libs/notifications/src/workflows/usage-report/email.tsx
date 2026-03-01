@@ -129,7 +129,6 @@ export interface IEmailProps {
   usersReachedChange: number;
   usersReachedUp: boolean;
   workflowRuns: number;
-  successRate: number;
   userInteractions: number;
   interactionRate: number;
   topProviders: ITopProviderInput[];
@@ -510,7 +509,7 @@ function CardWithDetail({
   label: string;
   value: number;
   unit: string;
-  detail: IDetailConfig;
+  detail?: IDetailConfig;
 }) {
   return (
     <Card>
@@ -532,12 +531,16 @@ function CardWithDetail({
           </tr>
         </tbody>
       </table>
-      <DetailTextWithValue
-        value={detail.value}
-        prefix={detail.prefix}
-        suffix={detail.suffix}
-        valueStyle={detail.valueStyle}
-      />
+      {detail ? (
+        <DetailTextWithValue
+          value={detail.value}
+          prefix={detail.prefix}
+          suffix={detail.suffix}
+          valueStyle={detail.valueStyle}
+        />
+      ) : (
+        <span style={{ ...detailTextStyle, visibility: 'hidden' }}>&nbsp;</span>
+      )}
     </Card>
   );
 }
@@ -985,7 +988,6 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
     usersReachedUp,
     workflowRuns,
     userInteractions,
-    successRate,
     interactionRate,
     topProviders: topProvidersInput,
     topWorkflows,
@@ -1060,16 +1062,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                   verticalAlign: 'top',
                 }}
               >
-                <CardWithDetail
-                  label="Workflow Runs Triggered"
-                  value={workflowRuns}
-                  unit="workflow runs"
-                  detail={{
-                    value: `${successRate}%`,
-                    prefix: 'with ',
-                    suffix: ' success rate.',
-                  }}
-                />
+                <CardWithDetail label="Workflow Runs Triggered" value={workflowRuns} unit="workflow runs" />
               </Column>
               {userInteractions > 0 && (
                 <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
