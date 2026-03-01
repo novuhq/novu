@@ -20,8 +20,8 @@ export const usageReportWorkflow = workflow(
       'email',
       async (controls) => {
         const reportDate = new Date(payload.dateRangeFrom as string);
-        const monthName = reportDate.toLocaleString('en-US', { month: 'long' });
-        const year = reportDate.getFullYear().toString();
+        const monthName = reportDate.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+        const year = reportDate.getUTCFullYear().toString();
         const subject = controls.subject.replace('{month}', monthName).replace('{year}', year);
 
         return {
