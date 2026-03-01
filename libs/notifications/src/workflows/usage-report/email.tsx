@@ -652,6 +652,7 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
       <Section>
         <Row>
           <Column
+            className="col-half"
             style={{
               width: otherChannels.length > 0 ? '50%' : '100%',
               padding: '0 12px 0 0',
@@ -736,6 +737,7 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
 
           {otherChannels.length > 0 && (
             <Column
+              className="col-half"
               style={{
                 width: '50%',
                 padding: '0 0 0 12px',
@@ -1000,7 +1002,16 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
     <Html lang="en">
       <Head>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');`}</style>
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+          @media (max-width: 600px) {
+            .col-half {
+              display: block !important;
+              width: 100% !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              margin-bottom: 12px !important;
+            }
+          }`}</style>
       </Head>
       <Preview>{previewText}</Preview>
       <Body style={{ backgroundColor: COLORS.bg }}>
@@ -1010,7 +1021,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 
           <Section style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
                 <CardWithChange
                   label="Messages Sent"
                   value={messagesSent}
@@ -1018,7 +1029,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                   isUp={messagesSentUp}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                 <CardWithChange
                   label="Users Reached"
                   value={usersReached}
@@ -1032,6 +1043,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
           <Section style={{ marginBottom: '12px' }}>
             <Row>
               <Column
+                className="col-half"
                 style={{
                   width: userInteractions > 0 ? '50%' : '100%',
                   paddingRight: userInteractions > 0 ? '6px' : '0',
@@ -1050,7 +1062,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                 />
               </Column>
               {userInteractions > 0 && (
-                <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+                <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                   <CardWithDetail
                     label="User Interactions"
                     value={userInteractions}
@@ -1067,14 +1079,14 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 
           <Section style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
                   title="Top Delivery Providers"
                   items={topProviders}
                   minRows={Math.max(topProviders.length, topWorkflows.length)}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
                   title="Top Workflows"
                   items={topWorkflows as IRankedItem[]}
