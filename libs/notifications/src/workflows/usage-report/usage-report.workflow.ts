@@ -22,7 +22,10 @@ export const usageReportWorkflow = workflow(
         const reportDate = new Date(payload.dateRangeFrom as string);
         const monthName = reportDate.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
         const year = reportDate.getUTCFullYear().toString();
-        const subject = controls.subject.replace('{month}', monthName).replace('{year}', year);
+        const subject = controls.subject
+          .replace('{orgName}', payload.organizationName)
+          .replace('{month}', monthName)
+          .replace('{year}', year);
 
         return {
           subject,
