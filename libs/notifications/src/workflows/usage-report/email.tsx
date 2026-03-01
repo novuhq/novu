@@ -1004,6 +1004,10 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
           @media (max-width: 600px) {
+            .email-container {
+              padding-left: 12px !important;
+              padding-right: 12px !important;
+            }
             .col-half {
               display: block !important;
               width: 100% !important;
@@ -1015,7 +1019,10 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
       </Head>
       <Preview>{previewText}</Preview>
       <Body style={{ backgroundColor: COLORS.bg }}>
-        <Container style={{ maxWidth: '600px', margin: '0 auto', backgroundColor: COLORS.bg }}>
+        <Container
+          className="email-container"
+          style={{ maxWidth: '600px', margin: '0 auto', backgroundColor: COLORS.bg }}
+        >
           <NovuLogo />
           <RecapHeader dateRange={dateRange} />
 
