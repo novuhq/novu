@@ -27,14 +27,14 @@ export class BuildWorkflowByVolumeChart {
   async execute(command: BuildWorkflowByVolumeChartCommand): Promise<WorkflowVolumeDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
-    const isRollupEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_ROLLUP_ENABLED,
+    const isWorkflowRunCountEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_COUNT_ENABLED,
       defaultValue: false,
       organization: { _id: organizationId },
       environment: { _id: environmentId },
     });
 
-    if (isRollupEnabled) {
+    if (isWorkflowRunCountEnabled) {
       return this.buildChartFromWorkflowRunCount(startDate, endDate, environmentId, organizationId);
     }
 
