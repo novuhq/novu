@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const controlValueSchema = z.object({
-  subject: z.string().default('Your Monthly Novu Usage Report'),
-  previewText: z.string().default('Your monthly Novu usage report'),
+  subject: z.string().default('Your Novu Usage Report for {month} {year}'),
+  previewText: z.string().default('Your Monthly Novu usage report'),
 });
 
 export const payloadSchema = z.object({

@@ -3,7 +3,7 @@ import renderEmail from './email';
 import { controlValueSchema, payloadSchema } from './schemas';
 
 export const usageReportWorkflow = workflow(
-  'monthly-usage-report',
+  'Monthly-Usage-Report',
   async ({ step, payload }) => {
     await step.delay(
       'delay',
@@ -19,8 +19,13 @@ export const usageReportWorkflow = workflow(
     await step.email(
       'email',
       async (controls) => {
+        const reportDate = new Date(payload.dateRangeFrom as string);
+        const monthName = reportDate.toLocaleString('en-US', { month: 'long' });
+        const year = reportDate.getFullYear().toString();
+        const subject = controls.subject.replace('{month}', monthName).replace('{year}', year);
+
         return {
-          subject: controls.subject,
+          subject,
           body: await renderEmail(payloadSchema.parse(payload), controls),
         };
       },
