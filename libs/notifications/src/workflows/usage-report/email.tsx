@@ -1008,6 +1008,9 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
               padding-left: 12px !important;
               padding-right: 12px !important;
             }
+            .row-section {
+              margin-bottom: 0 !important;
+            }
             .col-half {
               display: block !important;
               width: 100% !important;
@@ -1026,7 +1029,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
           <NovuLogo />
           <RecapHeader dateRange={dateRange} />
 
-          <Section style={{ marginBottom: '12px' }}>
+          <Section className="row-section" style={{ marginBottom: '12px' }}>
             <Row>
               <Column className="col-half" style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
                 <CardWithChange
@@ -1047,7 +1050,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
             </Row>
           </Section>
 
-          <Section style={{ marginBottom: '12px' }}>
+          <Section className="row-section" style={{ marginBottom: '12px' }}>
             <Row>
               <Column
                 className="col-half"
@@ -1084,7 +1087,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
             </Row>
           </Section>
 
-          <Section style={{ marginBottom: '12px' }}>
+          <Section className="row-section" style={{ marginBottom: '12px' }}>
             <Row>
               <Column className="col-half" style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
