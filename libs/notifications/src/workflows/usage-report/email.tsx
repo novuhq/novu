@@ -424,7 +424,7 @@ function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
               whiteSpace: 'nowrap',
             }}
           >
-            {value}%
+            {humanizeNumber(value)}%
           </td>
         </tr>
       </tbody>
@@ -1123,7 +1123,6 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 //         usersReachedChange: 8,
 //         usersReachedUp: true,
 //         workflowRuns: 3456,
-//         successRate: 97.7,
 //         userInteractions: 8910,
 //         interactionRate: 95.5,
 //         topProviders: [
