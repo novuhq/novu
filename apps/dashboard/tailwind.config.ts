@@ -693,9 +693,6 @@ export default {
           '80%': { transform: 'rotate(-0.75deg)' },
           '90%': { transform: 'rotate(0.3deg)' },
         },
-        'switch-disabled-cursor': {
-          '100%': { cursor: 'not-allowed' },
-        },
         jingle: {
           '0%, 100%': { transform: 'rotate(0deg)' },
           '10%': { transform: 'rotate(15deg)' },
@@ -710,7 +707,6 @@ export default {
         },
       },
       animation: {
-        'switch-disabled-cursor': 'switch-disabled-cursor 0.001s 0.15s forwards',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'collapsible-down': 'collapsible-down 0.2s ease-out',

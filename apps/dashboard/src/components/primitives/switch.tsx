@@ -6,6 +6,16 @@ const Switch = React.forwardRef<
   React.ComponentRef<typeof SwitchPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, disabled, ...rest }, forwardedRef) => {
+  const [showDisabledCursor, setShowDisabledCursor] = React.useState(false);
+  React.useEffect(() => {
+    if (!disabled) {
+      setShowDisabledCursor(false);
+      return;
+    }
+    const t = setTimeout(() => setShowDisabledCursor(true), 150);
+    return () => clearTimeout(t);
+  }, [disabled]);
+
   return (
     <SwitchPrimitives.Root
       ref={forwardedRef}
@@ -34,7 +44,7 @@ const Switch = React.forwardRef<
         ],
         // disabled
         disabled && [
-          'animate-switch-disabled-cursor',
+          showDisabledCursor && 'cursor-not-allowed',
           'bg-bg-soft!',
           'before:shadow-switch-track-disabled after:opacity-0',
         ],
