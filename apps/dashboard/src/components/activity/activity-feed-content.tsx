@@ -38,6 +38,8 @@ export function ActivityFeedContent({
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, error } = usePullActivity(activityItemId);
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const onListStateChange = useCallback((hasActivities: boolean) => setShowDetailPanel(hasActivities), []);
 
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
@@ -155,10 +157,12 @@ export function ActivityFeedContent({
               hasActiveFilters={hasActiveFilters}
               onClearFilters={handleClearFilters}
               onTriggerWorkflow={onTriggerWorkflow}
+              onListStateChange={onListStateChange}
             />
           </ResizablePanel>
 
-          <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
+          {showDetailPanel && (
+            <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activityItemId}
@@ -189,13 +193,14 @@ export function ActivityFeedContent({
                     <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
                       Nothing to show,
                       <br />
-                      Select an log on the left to view detailed info here
+                      Select a log on the left to view detailed info here
                     </p>
                   </div>
                 )}
               </motion.div>
             </AnimatePresence>
-          </ResizablePanel>
+            </ResizablePanel>
+          )}
         </ResizablePanelGroup>
       </div>
     </div>
