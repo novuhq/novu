@@ -6,7 +6,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
-import { ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { createHash } from 'crypto';
 import { DeployStepResolverResponseDto } from '../../dtos';
@@ -23,6 +23,7 @@ interface ResolvedManifestStep {
   workflowInternalId: string;
   stepId: string;
   stepInternalId: string;
+  controlSchema?: Record<string, unknown>;
   existingControlValues: ControlValuesEntity | null;
 }
 
@@ -32,6 +33,7 @@ export class DeployStepResolverUsecase {
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private cloudflareStepResolverDeployService: CloudflareStepResolverDeployService,
     private controlValuesRepository: ControlValuesRepository,
+    private messageTemplateRepository: MessageTemplateRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
@@ -76,7 +78,9 @@ export class DeployStepResolverUsecase {
       bundleBuffer: command.bundleBuffer,
     });
 
-    await this.upsertControlValues(command, resolvedManifestSteps, stepResolverHash);
+    await this.writeHashToMessageTemplates(command, resolvedManifestSteps, stepResolverHash);
+    await this.upsertControlValues(command, resolvedManifestSteps);
+    await this.updateStepControlSchemas(command, resolvedManifestSteps);
 
     return {
       stepResolverHash,
@@ -122,6 +126,7 @@ export class DeployStepResolverUsecase {
         workflowInternalId: String(workflow._id),
         stepId: manifestStep.stepId,
         stepInternalId: String(step._templateId),
+        controlSchema: manifestStep.controlSchema,
       });
     }
 
@@ -143,17 +148,32 @@ export class DeployStepResolverUsecase {
     }));
   }
 
-  private async upsertControlValues(
+  private async writeHashToMessageTemplates(
     command: DeployStepResolverCommand,
     resolvedSteps: ResolvedManifestStep[],
     stepResolverHash: string
+  ): Promise<void> {
+    await Promise.all(
+      resolvedSteps.map((step) =>
+        this.messageTemplateRepository.update(
+          { _id: step.stepInternalId, _environmentId: command.user.environmentId },
+          { $set: { stepResolverHash } }
+        )
+      )
+    );
+  }
+
+  private async upsertControlValues(
+    command: DeployStepResolverCommand,
+    resolvedSteps: ResolvedManifestStep[]
   ): Promise<void> {
     await this.controlValuesRepository.withTransaction(async (session) => {
       for (const step of resolvedSteps) {
         const existingControls = this.readControlObject(step.existingControlValues);
         const mergedControls = {
           ...existingControls,
-          stepResolverHash,
+          editorType: 'html',
+          rendererType: 'react-email',
         };
 
         if (step.existingControlValues) {
@@ -184,6 +204,29 @@ export class DeployStepResolverUsecase {
         }
       }
     });
+  }
+
+  private async updateStepControlSchemas(
+    command: DeployStepResolverCommand,
+    resolvedSteps: ResolvedManifestStep[]
+  ): Promise<void> {
+    const stepsWithSchema = resolvedSteps.filter((step) => step.controlSchema != null);
+    const stepsWithoutSchema = resolvedSteps.filter((step) => step.controlSchema == null);
+
+    await Promise.all([
+      ...stepsWithSchema.map((step) =>
+        this.messageTemplateRepository.update(
+          { _id: step.stepInternalId, _environmentId: command.user.environmentId },
+          { $set: { 'controls.schema': step.controlSchema } }
+        )
+      ),
+      ...stepsWithoutSchema.map((step) =>
+        this.messageTemplateRepository.update(
+          { _id: step.stepInternalId, _environmentId: command.user.environmentId },
+          { $unset: { 'controls.schema': '' } }
+        )
+      ),
+    ]);
   }
 
   private readControlObject(controlValues: ControlValuesEntity | null): Record<string, unknown> {

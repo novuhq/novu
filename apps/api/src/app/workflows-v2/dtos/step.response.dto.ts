@@ -80,4 +80,13 @@ export class StepResponseDto<T = Record<string, unknown>> {
   @ValidateNested()
   @Type(() => StepIssuesDto)
   issues?: StepIssuesDto;
+
+  @ApiPropertyOptional({
+    description: 'Hash identifying the deployed Cloudflare Worker for this step',
+    type: 'string',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  stepResolverHash?: string | null;
 }

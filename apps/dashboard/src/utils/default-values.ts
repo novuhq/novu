@@ -11,6 +11,7 @@ export const getControlsDefaultValues = (resource: { controls: Controls }): Reco
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
     return {
       ...uiSchemaDefaultValues,
+      ...dataSchemaDefaultValues,
       ...controlValues,
     };
   }

@@ -78,7 +78,7 @@ export const LayoutEditor = () => {
                     <TranslationStatus
                       resourceId={layout?.layoutId ?? ''}
                       resourceType={LocalizationResourceEnum.LAYOUT}
-                      isTranslationEnabledOnResource={!!layout?.isTranslationEnabled}
+                      isTranslationEnabled={isTranslationsEnabled}
                       className="h-7 text-xs"
                     />
                     <CompactButton

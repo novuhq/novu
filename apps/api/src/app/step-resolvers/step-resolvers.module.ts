@@ -4,8 +4,9 @@ import { SharedModule } from '../shared/shared.module';
 import { CloudflareStepResolverDeployService } from './services/cloudflare-step-resolver-deploy.service';
 import { StepResolversController } from './step-resolvers.controller';
 import { DeployStepResolverUsecase } from './usecases/deploy-step-resolver';
+import { DisconnectStepResolverUsecase } from './usecases/disconnect-step-resolver';
 
-const USE_CASES = [DeployStepResolverUsecase];
+const USE_CASES = [DeployStepResolverUsecase, DisconnectStepResolverUsecase];
 const SERVICES = [CloudflareStepResolverDeployService];
 
 @Module({

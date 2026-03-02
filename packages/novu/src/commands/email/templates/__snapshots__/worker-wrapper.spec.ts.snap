@@ -1,7 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`generateWorkerWrapper > should handle empty steps array > empty-steps 1`] = `
-"
+"import { validateData } from '@novu/framework/validators';
+
 
 const stepHandlers = new Map([
 
@@ -74,10 +75,22 @@ export default {
         );
       }
 
-      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs, controls });
+      let validatedControls = controls;
+      if (step.controlSchema) {
+        const controlsResult = await validateData(step.controlSchema, controls);
+        if (!controlsResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_CONTROLS', message: 'Controls failed schema validation', details: controlsResult.errors },
+            400
+          );
+        }
+        validatedControls = controlsResult.data;
+      }
+
+      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
         200
       );
     } catch (error) {
@@ -92,10 +105,11 @@ export default {
 `;
 
 exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
-"import stepHandler0, { stepId as stepId0, workflowId as workflowId0 } from "./novu/welcome-email.step";
+"import { validateData } from '@novu/framework/validators';
+import stepHandler0, { workflowId as workflowId0 } from "./novu/welcome-email.step";
 
 const stepHandlers = new Map([
-  ["onboarding/welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }]
+  [\`\${workflowId0}/\${stepHandler0.stepId}\`, stepHandler0]
 ]);
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -165,10 +179,22 @@ export default {
         );
       }
 
-      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs, controls });
+      let validatedControls = controls;
+      if (step.controlSchema) {
+        const controlsResult = await validateData(step.controlSchema, controls);
+        if (!controlsResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_CONTROLS', message: 'Controls failed schema validation', details: controlsResult.errors },
+            400
+          );
+        }
+        validatedControls = controlsResult.data;
+      }
+
+      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
         200
       );
     } catch (error) {
@@ -183,12 +209,13 @@ export default {
 `;
 
 exports[`generateWorkerWrapper > should match snapshot 1`] = `
-"import stepHandler0, { stepId as stepId0, workflowId as workflowId0 } from "./novu/welcome-email.step";
-import stepHandler1, { stepId as stepId1, workflowId as workflowId1 } from "./novu/verify-email.step";
+"import { validateData } from '@novu/framework/validators';
+import stepHandler0, { workflowId as workflowId0 } from "./novu/welcome-email.step";
+import stepHandler1, { workflowId as workflowId1 } from "./novu/verify-email.step";
 
 const stepHandlers = new Map([
-  ["onboarding/welcome-email", { handler: stepHandler0, stepId: stepId0, workflowId: workflowId0 }],
-  ["onboarding/verify-email", { handler: stepHandler1, stepId: stepId1, workflowId: workflowId1 }]
+  [\`\${workflowId0}/\${stepHandler0.stepId}\`, stepHandler0],
+  [\`\${workflowId1}/\${stepHandler1.stepId}\`, stepHandler1]
 ]);
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -258,10 +285,22 @@ export default {
         );
       }
 
-      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs, controls });
+      let validatedControls = controls;
+      if (step.controlSchema) {
+        const controlsResult = await validateData(step.controlSchema, controls);
+        if (!controlsResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_CONTROLS', message: 'Controls failed schema validation', details: controlsResult.errors },
+            400
+          );
+        }
+        validatedControls = controlsResult.data;
+      }
+
+      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
         200
       );
     } catch (error) {

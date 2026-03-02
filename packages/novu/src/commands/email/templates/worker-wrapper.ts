@@ -11,20 +11,19 @@ export function generateWorkerWrapper(steps: DiscoveredStep[], rootDir: string):
 }
 
 function generateImports(steps: DiscoveredStep[], rootDir: string): string {
-  return steps
+  const stepImports = steps
     .map(
       (s, i) =>
-        `import stepHandler${i}, { stepId as stepId${i}, workflowId as workflowId${i} } from ${JSON.stringify(getImportPath(s.filePath, rootDir))};`
+        `import stepHandler${i}, { workflowId as workflowId${i} } from ${JSON.stringify(getImportPath(s.filePath, rootDir))};`
     )
     .join('\n');
+
+  return `import { validateData } from '@novu/framework/validators';\n${stepImports}`;
 }
 
 function generateStepHandlersMap(steps: DiscoveredStep[]): string {
   const entries = steps
-    .map(
-      (s, i) =>
-        `  [${JSON.stringify(`${s.workflowId}/${s.stepId}`)}, { handler: stepHandler${i}, stepId: stepId${i}, workflowId: workflowId${i} }]`
-    )
+    .map((_s, i) => `  [\`\${workflowId${i}}/\${stepHandler${i}.stepId}\`, stepHandler${i}]`)
     .join(',\n');
 
   return `const stepHandlers = new Map([\n${entries}\n]);`;
@@ -88,10 +87,12 @@ function generateRequestHandler(): string {
 
       ${generateBodyValidation()}
 
-      const result = await step.handler({ payload, subscriber, context, steps: stepOutputs, controls });
+      ${generateSchemaValidation()}
+
+      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: step.workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
         200
       );`;
 }
@@ -122,6 +123,20 @@ function generateBodyValidation(): string {
           { error: 'Invalid request body', message: 'payload, subscriber, context, steps, and controls must be JSON objects' },
           400
         );
+      }`;
+}
+
+function generateSchemaValidation(): string {
+  return `let validatedControls = controls;
+      if (step.controlSchema) {
+        const controlsResult = await validateData(step.controlSchema, controls);
+        if (!controlsResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_CONTROLS', message: 'Controls failed schema validation', details: controlsResult.errors },
+            400
+          );
+        }
+        validatedControls = controlsResult.data;
       }`;
 }
 

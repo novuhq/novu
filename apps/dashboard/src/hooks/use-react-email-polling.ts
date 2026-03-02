@@ -1,22 +1,32 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { QueryKeys } from '@/utils/query-keys';
 
 const POLL_INTERVAL_MS = 3_000;
 
-export function useReactEmailPolling() {
+export function useReactEmailPolling({ stepResolverHash }: { stepResolverHash?: string | null }) {
   const queryClient = useQueryClient();
-  const { control } = useFormContext();
+  const { control, formState } = useFormContext();
   const rendererType = useWatch({ name: 'rendererType', control });
+  const prevHashRef = useRef(stepResolverHash);
 
   useEffect(() => {
     if (rendererType !== 'react-email') return;
 
     const interval = setInterval(() => {
+      if (formState.isDirty) return;
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [rendererType, queryClient]);
+  }, [rendererType, queryClient, formState.isDirty]);
+
+  useEffect(() => {
+    if (stepResolverHash && stepResolverHash !== prevHashRef.current) {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
+    }
+
+    prevHashRef.current = stepResolverHash;
+  }, [stepResolverHash, queryClient]);
 }

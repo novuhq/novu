@@ -4,6 +4,7 @@ import * as path from 'path';
 import { green, red, yellow } from 'picocolors';
 import { StepResolverClient } from './api';
 import { bundleRelease, formatBundleSize } from './bundler';
+import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
 import { discoverStepFiles } from './discovery';
 import type {
@@ -52,16 +53,19 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     const selectedSteps = selectStepsByStepId(workflowFilteredSteps, options.step);
     printDiscoveredSteps(selectedSteps, discoveredSteps.length, options.workflow, options.step);
 
+    const stepsWithSchemas = await extractSchemasForSteps(selectedSteps);
+
     const shouldMinifyBundles = !options.bundleOutDir;
     if (!shouldMinifyBundles) {
       console.log(yellow('ℹ Debug bundle mode enabled: generating unminified release bundle.'));
       console.log('');
     }
 
-    const releaseBundle = await buildReleaseBundle(selectedSteps, rootDir, shouldMinifyBundles, config?.aliases);
-    const manifestSteps = selectedSteps.map((step) => ({
+    const releaseBundle = await buildReleaseBundle(stepsWithSchemas, rootDir, shouldMinifyBundles, config?.aliases);
+    const manifestSteps = stepsWithSchemas.map((step) => ({
       workflowId: step.workflowId,
       stepId: step.stepId,
+      ...(step.controlSchema && { controlSchema: step.controlSchema }),
     }));
 
     const bundleOutputDir = resolveBundleOutputDir(options.bundleOutDir, rootDir);
@@ -234,6 +238,32 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
       return discovery.steps;
     },
     { successMessage: 'Discovered step files', failMessage: 'Discovery failed' }
+  );
+}
+
+async function extractSchemasForSteps(steps: DiscoveredStep[]): Promise<DiscoveredStep[]> {
+  return withSpinner(
+    'Extracting step schemas...',
+    async () => {
+      const results = await Promise.all(
+        steps.map(async (step) => {
+          const schemas = await extractStepSchemas(step.filePath);
+
+          return { ...step, ...schemas };
+        })
+      );
+
+      const stepsWithSchemas = results.filter((s) => s.controlSchema);
+
+      if (stepsWithSchemas.length > 0) {
+        for (const step of stepsWithSchemas) {
+          console.log(`   ${green('✓')} ${step.stepId} (workflow: ${step.workflowId}) — control schema extracted`);
+        }
+      }
+
+      return results;
+    },
+    { successMessage: 'Schemas extracted', failMessage: 'Schema extraction failed' }
   );
 }
 

@@ -24,7 +24,9 @@
     "next",
     "nuxt",
     "remix",
+    "step-resolver",
     "sveltekit",
+    "validators",
     "README.md"
   ],
   "scripts": {
@@ -159,6 +161,26 @@
       "import": {
         "types": "./dist/esm/internal/index.d.ts",
         "default": "./dist/esm/internal/index.js"
+      }
+    },
+    "./step-resolver": {
+      "require": {
+        "types": "./dist/cjs/step-resolver.d.cts",
+        "default": "./dist/cjs/step-resolver.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/step-resolver.d.ts",
+        "default": "./dist/esm/step-resolver.js"
+      }
+    },
+    "./validators": {
+      "require": {
+        "types": "./dist/cjs/validators.d.cts",
+        "default": "./dist/cjs/validators.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/validators.d.ts",
+        "default": "./dist/esm/validators.js"
       }
     }
   },

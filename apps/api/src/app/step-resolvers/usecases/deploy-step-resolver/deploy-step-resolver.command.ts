@@ -1,6 +1,15 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsDefined, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsDefined,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class DeployStepResolverManifestStepCommand {
   @IsString()
@@ -10,6 +19,10 @@ export class DeployStepResolverManifestStepCommand {
   @IsString()
   @IsNotEmpty()
   stepId: string;
+
+  @IsOptional()
+  @IsObject()
+  controlSchema?: Record<string, unknown>;
 }
 
 export class DeployStepResolverCommand extends EnvironmentWithUserObjectCommand {

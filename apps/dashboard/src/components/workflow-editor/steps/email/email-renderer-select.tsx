@@ -5,14 +5,16 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { FormField } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { useWorkflow } from '../../workflow-provider';
 import { useSaveForm } from '../save-form-context';
 
 export const EmailRendererSelect = () => {
   const { control, setValue } = useFormContext();
+  const { step } = useWorkflow();
   const { saveForm } = useSaveForm();
   const editorType = useWatch({ name: 'editorType', control });
   const rendererType = useWatch({ name: 'rendererType', control });
-  const stepResolverHash = useWatch({ name: 'stepResolverHash', control });
+  const stepResolverHash = step?.stepResolverHash;
   const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
   const [pendingValue, setPendingValue] = useState<string | null>(null);
 
@@ -70,7 +72,6 @@ export const EmailRendererSelect = () => {
         onConfirm={() => {
           if (pendingValue) {
             setValue('rendererType', pendingValue as 'html' | 'react-email');
-            setValue('stepResolverHash', undefined);
             saveForm({ forceSubmit: true });
           }
 

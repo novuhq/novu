@@ -38,6 +38,11 @@ import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import {
+  DisconnectStepResolverCommand,
+  DisconnectStepResolverUsecase,
+  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
+} from '../../../step-resolvers/usecases/disconnect-step-resolver';
 import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
 import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
@@ -65,6 +70,7 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
     private getLayoutUseCase: GetLayoutUseCase,
+    private disconnectStepResolverUsecase: DisconnectStepResolverUsecase,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
@@ -396,15 +402,17 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      return this.controlValuesRepository.delete(
-        {
-          _environmentId: command.user.environmentId,
-          _organizationId: command.user.organizationId,
-          _workflowId: workflowId,
-          _stepId: step._templateId,
+      const resetControlValues = step.template?.stepResolverHash ? REACT_EMAIL_STEP_RESOLVER_DEFAULTS : {};
+
+      return this.upsertControlValuesUseCase.execute(
+        UpsertControlValuesCommand.create({
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+          stepId: step._templateId,
+          workflowId,
           level: ControlValuesLevelEnum.STEP_CONTROLS,
-        },
-        { session: command.session }
+          newControlValues: resetControlValues,
+        })
       );
     }
 
@@ -464,8 +472,16 @@ export class UpsertWorkflowUseCase {
         emailControlValues.body = '';
       }
 
-      if (emailControlValues.rendererType !== 'react-email') {
-        (emailControlValues as Record<string, unknown>).stepResolverHash = null;
+      const shouldDisconnectResolver =
+        !!step.template?.stepResolverHash && emailControlValues.rendererType !== 'react-email';
+
+      if (shouldDisconnectResolver) {
+        await this.disconnectStepResolverUsecase.execute(
+          DisconnectStepResolverCommand.create({
+            stepInternalId: step._templateId,
+            user: command.user,
+          })
+        );
       }
     }
 

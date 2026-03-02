@@ -64,9 +64,7 @@ export class PreviewUsecase {
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
       const stepResolverHash =
-        typeof context.stepData.controls.values?.stepResolverHash === 'string'
-          ? context.stepData.controls.values.stepResolverHash
-          : undefined;
+        typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
 
       try {
         const executeOutput = await this.executePreviewUsecase(

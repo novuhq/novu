@@ -23,7 +23,7 @@ export function getBundlerConfig(options: BundlerConfigOptions): BuildOptions {
     conditions: ['worker', 'browser'],
     mainFields: ['browser', 'module', 'main'],
     alias: normalizedAliases,
-    external: [],
+    external: ['@novu/framework', '@novu/framework/*'],
     logLevel: 'warning',
     loader: {
       '.ts': 'tsx',

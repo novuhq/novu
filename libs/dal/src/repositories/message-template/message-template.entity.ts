@@ -62,6 +62,8 @@ export class MessageTemplateEntity {
   };
 
   code?: string;
+
+  stepResolverHash?: string | null;
 }
 export class ControlSchemas {
   schema: JSONSchemaEntity;
