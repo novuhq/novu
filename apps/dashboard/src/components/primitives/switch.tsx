@@ -34,7 +34,8 @@ const Switch = React.forwardRef<
         ],
         // disabled
         disabled && [
-          'cursor-not-allowed bg-bg-soft!',
+          'animate-switch-disabled-cursor',
+          'bg-bg-soft!',
           'before:shadow-switch-track-disabled after:opacity-0',
         ],
         className
