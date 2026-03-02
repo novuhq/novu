@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { AiChatRepository, SnapshotRepository } from '@novu/dal';
+import { RevertActionType } from '../../dtos/generate-workflow.dto';
 import { GetChatCommand, GetChatUseCase } from '../get-chat';
 import { UpsertChatCommand, UpsertChatUseCase } from '../upsert-chat';
 import { RevertMessageCommand } from './revert-message.command';
@@ -42,7 +43,10 @@ export class RevertMessageUseCase {
       throw new NotFoundException('Message not found in chat');
     }
 
-    const messagesAfterRevert = allMessages.slice(messageIndex + 1);
+    const isRevert = command.type === RevertActionType.REVERT;
+    const cutIndex = isRevert ? messageIndex : messageIndex + 1;
+
+    const messagesAfterRevert = allMessages.slice(cutIndex);
     const messageIdsAfterRevert = new Set(messagesAfterRevert.map((m) => m.id));
     const snapshotsToDelete = refs.filter((r) => messageIdsAfterRevert.has(r.messageId));
     const snapshotIdsToDelete = snapshotsToDelete.map((r) => r._snapshotId);
@@ -51,7 +55,7 @@ export class RevertMessageUseCase {
       const strategy = this.revertResourceFactory.getStrategy(latestSnapshot.resourceType);
       await strategy.revert(latestSnapshot, command.user);
 
-      const truncatedMessages = allMessages.slice(0, messageIndex + 1); // include the user message
+      const truncatedMessages = allMessages.slice(0, cutIndex);
       await this.upsertChatUseCase.execute(
         UpsertChatCommand.create({
           id: command.chatId,

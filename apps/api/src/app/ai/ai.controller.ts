@@ -32,7 +32,14 @@ import type { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { CancelStreamDto, CreateChatDto, SnapshotActionDto, StreamGenerationDto, WorkflowSuggestionDto } from './dtos';
+import {
+  CancelStreamDto,
+  CreateChatDto,
+  RevertMessageDto,
+  SnapshotActionDto,
+  StreamGenerationDto,
+  WorkflowSuggestionDto,
+} from './dtos';
 import { AiAgentFactory, CheckpointerService } from './services';
 import { CancelStreamCommand, CancelStreamUseCase } from './usecases/cancel-stream';
 import { GetChatCommand, GetChatUseCase } from './usecases/get-chat';
@@ -337,7 +344,7 @@ export class AiController {
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
-  async revertMessage(@UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData, @Body() dto: SnapshotActionDto) {
+  async revertMessage(@UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData, @Body() dto: RevertMessageDto) {
     const isEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED,
       defaultValue: false,
@@ -351,6 +358,7 @@ export class AiController {
       RevertMessageCommand.create({
         chatId: dto.chatId,
         messageId: dto.messageId,
+        type: dto.type,
         user,
       })
     );

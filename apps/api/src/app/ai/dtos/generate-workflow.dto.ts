@@ -42,6 +42,11 @@ export class CancelStreamDto {
   chatId: string;
 }
 
+export enum RevertActionType {
+  REVERT = 'revert',
+  TRY_AGAIN = 'try-again',
+}
+
 export class SnapshotActionDto {
   @ApiProperty({ description: 'Chat ID' })
   @IsDefined()
@@ -52,6 +57,13 @@ export class SnapshotActionDto {
   @IsString()
   @IsDefined()
   messageId: string;
+}
+
+export class RevertMessageDto extends SnapshotActionDto {
+  @ApiProperty({ description: 'Revert action type', enum: RevertActionType })
+  @IsDefined()
+  @IsEnum(RevertActionType)
+  type: RevertActionType;
 }
 
 export class CreateChatDto {
