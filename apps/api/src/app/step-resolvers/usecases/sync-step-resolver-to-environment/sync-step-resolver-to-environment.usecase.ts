@@ -13,12 +13,10 @@ export class SyncStepResolverToEnvironmentUsecase {
 
   @InstrumentUsecase()
   async execute(command: SyncStepResolverToEnvironmentCommand): Promise<void> {
-    const stepsWithHash = command.sourceSteps.filter((s) => s.stepResolverHash != null);
-
-    if (stepsWithHash.length === 0) return;
+    if (command.sourceSteps.length === 0) return;
 
     await Promise.all(
-      stepsWithHash.map((sourceStep) =>
+      command.sourceSteps.map((sourceStep) =>
         this.syncStepResolverData(sourceStep, command.targetSteps, command.targetEnvironmentId)
       )
     );
@@ -32,6 +30,15 @@ export class SyncStepResolverToEnvironmentUsecase {
     const targetStep = targetSteps.find((t) => t.stepId === sourceStep.stepId);
 
     if (!targetStep) return;
+
+    if (sourceStep.stepResolverHash == null) {
+      await this.messageTemplateRepository.update(
+        { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
+        { $unset: { stepResolverHash: '', 'controls.schema': '' } }
+      );
+
+      return;
+    }
 
     if (sourceStep.controlSchema != null) {
       await this.messageTemplateRepository.update(

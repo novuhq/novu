@@ -12,7 +12,7 @@ import { useSaveForm } from '../save-form-context';
 
 export const EmailRendererSelect = () => {
   const { control, setValue } = useFormContext();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const { step } = useWorkflow();
   const { saveForm } = useSaveForm();
   const editorType = useWatch({ name: 'editorType', control });
@@ -47,7 +47,7 @@ export const EmailRendererSelect = () => {
             <Select
               value={field.value ?? 'html'}
               onValueChange={handleValueChange}
-              disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+              disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV || readOnly}
             >
               <SelectTrigger
                 size="2xs"
