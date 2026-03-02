@@ -124,11 +124,21 @@ function extractWorkflowIdExport(node: ts.VariableStatement, metadata: StepMetad
   }
 }
 
-// Matches: step.email('stepId', resolver, opts)
+// Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)) and `as` casts
 function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMetadata): void {
-  if (!ts.isCallExpression(node)) return;
+  let unwrapped: ts.Expression = node;
+  while (
+    ts.isParenthesizedExpression(unwrapped) ||
+    ts.isAsExpression(unwrapped) ||
+    ts.isTypeAssertionExpression(unwrapped) ||
+    ts.isNonNullExpression(unwrapped)
+  ) {
+    unwrapped = unwrapped.expression;
+  }
 
-  const callee = node.expression;
+  if (!ts.isCallExpression(unwrapped)) return;
+
+  const callee = unwrapped.expression;
 
   if (
     !ts.isPropertyAccessExpression(callee) ||
@@ -139,7 +149,7 @@ function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMeta
   }
 
   const methodName = callee.name.text;
-  const firstArg = node.arguments[0];
+  const firstArg = unwrapped.arguments[0];
 
   if (!firstArg || !ts.isStringLiteral(firstArg)) return;
 
@@ -183,16 +193,17 @@ function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
     errors.push("Missing required export: 'workflowId' (must be a string literal)");
   }
 
+  if (!analysis.hasDefaultExport) {
+    errors.push('Missing default export');
+    return errors;
+  }
+
   if (!analysis.metadata.stepId) {
     errors.push("Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'");
   }
 
   if (analysis.metadata.type && analysis.metadata.type !== 'email') {
     errors.push(`Invalid step type: '${analysis.metadata.type}' (must be 'email')`);
-  }
-
-  if (!analysis.hasDefaultExport) {
-    errors.push('Missing default export');
   }
 
   return errors;

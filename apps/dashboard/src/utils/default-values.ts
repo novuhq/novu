@@ -31,6 +31,7 @@ export const getLayoutControlsDefaultValues = (resource: { controls: Controls })
 
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
     return {
+      ...dataSchemaDefaultValues,
       ...uiSchemaDefaultValues,
       ...controlValues,
     };

@@ -1,5 +1,6 @@
 import { type Controls } from '@novu/shared';
 import { RJSFSchema } from '@rjsf/utils';
+import isEqual from 'lodash.isequal';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -37,7 +38,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const dbValues = step?.controls.values ?? {};
   const initialIsOverridden = Object.keys(dataSchemaDefaults).some((k) => {
     const dbVal = dbValues[k];
-    return dbVal !== undefined && dbVal !== dataSchemaDefaults[k];
+    return dbVal !== undefined && !isEqual(dbVal, dataSchemaDefaults[k]);
   });
 
   const [isOverridden, setIsOverridden] = useState(initialIsOverridden);

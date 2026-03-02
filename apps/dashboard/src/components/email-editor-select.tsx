@@ -85,7 +85,7 @@ export const EmailEditorSelect = ({
               onOpenChange={setIsSwitchingToBlock}
               onConfirm={() => {
                 if (rendererType === 'react-email') {
-                  setValue('rendererType', 'html');
+                  setValue('rendererType', 'html', { shouldDirty: true });
                 }
 
                 field.onChange('block');

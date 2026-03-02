@@ -22,9 +22,9 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
       jsx: 'automatic',
       jsxImportSource: 'react',
       loader: {
-        '.ts': 'tsx',
+        '.ts': 'ts',
         '.tsx': 'tsx',
-        '.js': 'jsx',
+        '.js': 'js',
         '.jsx': 'jsx',
       },
       define: {
@@ -59,7 +59,8 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
     }
 
     return schemas;
-  } catch {
+  } catch (error) {
+    console.error('[schema-extractor] Failed to extract schemas from', filePath, error);
     return {};
   } finally {
     if (tmpFile) {

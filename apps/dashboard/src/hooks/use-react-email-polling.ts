@@ -24,10 +24,12 @@ export function useReactEmailPolling({ stepResolverHash }: { stepResolverHash?: 
 
   useEffect(() => {
     if (stepResolverHash && stepResolverHash !== prevHashRef.current) {
+      if (formState.isDirty || rendererType !== 'react-email') return;
+
       queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
       queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
     }
 
     prevHashRef.current = stepResolverHash;
-  }, [stepResolverHash, queryClient]);
+  }, [stepResolverHash, queryClient, formState.isDirty, rendererType]);
 }

@@ -473,7 +473,9 @@ export class UpsertWorkflowUseCase {
       }
 
       const shouldDisconnectResolver =
-        !!step.template?.stepResolverHash && emailControlValues.rendererType !== 'react-email';
+        !!step.template?.stepResolverHash &&
+        emailControlValues.rendererType !== undefined &&
+        emailControlValues.rendererType !== 'react-email';
 
       if (shouldDisconnectResolver) {
         await this.disconnectStepResolverUsecase.execute(

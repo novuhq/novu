@@ -50,6 +50,12 @@ describe('generateWorkerWrapper', () => {
     expect(result).toContain('step.resolve(validatedControls, {');
   });
 
+  it('should generate INVALID_CONTROLS response when schema validation fails', () => {
+    const result = generateWorkerWrapper(mockSteps, '/root');
+
+    expect(result).toContain("error: 'INVALID_CONTROLS'");
+  });
+
   it('should generate map-based dispatch and invalid JSON handling', () => {
     const result = generateWorkerWrapper(mockSteps, '/root');
 
