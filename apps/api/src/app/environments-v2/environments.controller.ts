@@ -8,7 +8,7 @@ import {
   Post,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -73,10 +73,21 @@ export class EnvironmentsController {
 
   @Post('/:targetEnvironmentId/publish')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Publish all workflows from source to target environment' })
+  @ApiOperation({
+    summary: 'Publish resources to target environment',
+    description:
+      'Publishes all workflows and resources from the source environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes.',
+  })
+  @ApiParam({
+    name: 'targetEnvironmentId',
+    description: 'Target environment ID (MongoDB ObjectId) to publish resources to',
+    type: String,
+    example: '6615943e7ace93b0540ae377',
+  })
+  @ApiBody({ type: PublishEnvironmentRequestDto, description: 'Publish request configuration' })
   @ApiResponse(PublishEnvironmentResponseDto)
   @ExternalApiAccessible()
-  @ApiExcludeEndpoint()
+  @SdkMethodName('publish')
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async publishEnvironment(
     @UserSession() user: UserSessionData,
@@ -96,10 +107,21 @@ export class EnvironmentsController {
 
   @Post('/:targetEnvironmentId/diff')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Compare workflows between source and target environments' })
+  @ApiOperation({
+    summary: 'Compare resources between environments',
+    description:
+      'Compares workflows and other resources between the source and target environments, returning detailed diff information including additions, modifications, and deletions.',
+  })
+  @ApiParam({
+    name: 'targetEnvironmentId',
+    description: 'Target environment ID (MongoDB ObjectId) to compare against',
+    type: String,
+    example: '6615943e7ace93b0540ae377',
+  })
+  @ApiBody({ type: DiffEnvironmentRequestDto, description: 'Diff request configuration' })
   @ApiResponse(DiffEnvironmentResponseDto)
   @ExternalApiAccessible()
-  @ApiExcludeEndpoint()
+  @SdkMethodName('diff')
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async diffEnvironment(
     @UserSession() user: UserSessionData,

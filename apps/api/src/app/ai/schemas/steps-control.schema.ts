@@ -291,7 +291,7 @@ export const aiEmailControlSchema = z.discriminatedUnion('editorType', [
 
 export const stepInputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-email")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Standardized step name based on type: "In-App Step" for in_app, "Email Step" for email, "SMS Step" for sms, "Push Step" for push, "Chat Step" for chat, "Delay Step" for delay, "Digest Step" for digest, "Throttle Step" for throttle'),
   intent: z.string().describe('Brief description of what this step should accomplish'),
   stepType: z
     .enum([
@@ -358,56 +358,56 @@ export const updateStepConditionsOutputSchema = z.object({
 
 export const emailStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-email")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "Email Step"'),
   type: z.literal(StepTypeEnum.EMAIL),
   controlValues: aiEmailControlSchema,
 });
 
 export const inAppStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-in-app")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "In-App Step"'),
   type: z.literal(StepTypeEnum.IN_APP),
   controlValues: aiInAppControlSchema,
 });
 
 export const smsStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-sms")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "SMS Step"'),
   type: z.literal(StepTypeEnum.SMS),
   controlValues: aiSmsControlSchema,
 });
 
 export const pushStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-push")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "Push Step"'),
   type: z.literal(StepTypeEnum.PUSH),
   controlValues: aiPushControlSchema,
 });
 
 export const chatStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-chat")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "Chat Step"'),
   type: z.literal(StepTypeEnum.CHAT),
   controlValues: aiChatControlSchema,
 });
 
 export const digestStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-digest")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "Digest Step"'),
   type: z.literal(StepTypeEnum.DIGEST),
   controlValues: aiDigestControlSchema,
 });
 
 export const delayStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-delay")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "Delay Step"'),
   type: z.literal(StepTypeEnum.DELAY),
   controlValues: aiDelayControlSchema,
 });
 
 export const throttleStepOutputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-throttle")'),
-  name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
+  name: z.string().min(1).max(100).describe('Must be exactly "Throttle Step"'),
   type: z.literal(StepTypeEnum.THROTTLE),
   controlValues: aiThrottleControlSchema,
 });

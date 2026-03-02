@@ -1,4 +1,11 @@
-import { IFailedEntity, ISkippedEntity, ISyncedEntity, ISyncResult, ResourceTypeEnum } from '../../../types/sync.types';
+import {
+  IFailedEntity,
+  ISkippedEntity,
+  ISyncedEntity,
+  ISyncResult,
+  ResourceTypeEnum,
+  SyncActionEnum,
+} from '../../../types/sync.types';
 
 export class SyncResultBuilder {
   private successful: ISyncedEntity[] = [];
@@ -7,7 +14,7 @@ export class SyncResultBuilder {
 
   constructor(private readonly resourceType: ResourceTypeEnum) {}
 
-  addSuccess(resourceId: string, resourceName: string, action: 'created' | 'updated' | 'deleted'): this {
+  addSuccess(resourceId: string, resourceName: string, action: SyncActionEnum): this {
     this.successful.push({
       resourceType: this.resourceType,
       resourceId,
