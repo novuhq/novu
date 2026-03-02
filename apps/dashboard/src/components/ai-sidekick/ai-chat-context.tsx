@@ -2,7 +2,7 @@ import { AiAgentTypeEnum, AiMessageRoleEnum, AiResourceTypeEnum } from '@novu/sh
 import { ChatStatus, DataUIPart, generateId, UIMessage } from 'ai';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AiChatResponseDto, cancelStream } from '@/api/ai';
+import { cancelStream } from '@/api/ai';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
@@ -194,13 +194,6 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     [dataRef, createAiChat, refetchLatestChat, sendPrompt]
   );
 
-  const handleLastUserMessage = useCallback((chat?: AiChatResponseDto) => {
-    if (chat && chat.messages.length > 0 && chat.messages[chat.messages.length - 1].role === AiMessageRoleEnum.USER) {
-      const promptText = chat.messages[chat.messages.length - 1].parts?.find((p) => p.type === 'text')?.text ?? '';
-      setInputText(promptText);
-    }
-  }, []);
-
   const handleKeepAll = useCallback(async () => {
     if (!lastUserMessageId || !latestChat) return;
 
@@ -229,7 +222,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       setMessages(messages.slice(0, messageIndex + 1));
 
       await revertMessage(
-        { chatId: latestChat._id, messageId: userMessageId },
+        { chatId: latestChat._id, messageId: userMessageId, type: 'try-again' },
         {
           onSuccess: async () => {
             onRefetchResource?.();
@@ -255,15 +248,19 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex === -1) return;
 
-      const optimisticMessages = messages.slice(0, messageIndex + 1);
+      const userMessage = messages[messageIndex];
+      const userMessageText = userMessage.parts?.find((p) => p.type === 'text')?.text ?? '';
+
+      setInputText(userMessageText);
+
+      const optimisticMessages = messages.slice(0, messageIndex);
       setMessages(optimisticMessages);
 
       await revertMessage(
-        { chatId: latestChat._id, messageId },
+        { chatId: latestChat._id, messageId, type: 'revert' },
         {
           onSuccess: async () => {
-            const { data: chat } = await refetchLatestChat();
-            handleLastUserMessage(chat);
+            await refetchLatestChat();
             onRefetchResource?.();
           },
           onError: async (error) => {
@@ -273,7 +270,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
         }
       );
     },
-    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat, handleLastUserMessage]
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat]
   );
 
   const handleTryAgain = useCallback(async (userMessageId: string) => {
@@ -293,8 +290,35 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   );
 
   const handleDiscard = useCallback(
-    async (messageId: string) => executeRevertMessage(messageId),
-    [executeRevertMessage]
+    async (messageId: string) => {
+      if (!latestChat) return;
+
+      const previousMessages = [...messages];
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
+
+      const userMessage = messages[messageIndex];
+      const userMessageText = userMessage.parts?.find((p) => p.type === 'text')?.text ?? '';
+
+      setInputText(userMessageText);
+      setMessages(messages.slice(0, messageIndex));
+
+      await revertMessage(
+        { chatId: latestChat._id, messageId, type: 'revert' },
+        {
+          onSuccess: async () => {
+            await refetchLatestChat();
+            onRefetchResource?.();
+          },
+          onError: async (error) => {
+            showErrorToast(`Failed to discard changes: ${error.message}`);
+            setMessages(previousMessages);
+            setInputText('');
+          },
+        }
+      );
+    },
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat]
   );
 
   const handleRevertConfirmationConfirm = useCallback(async () => {

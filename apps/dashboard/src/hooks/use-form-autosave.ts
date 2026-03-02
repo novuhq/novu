@@ -1,6 +1,6 @@
 // useFormAutosave.ts
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { FieldValues, UseFormReturn } from 'react-hook-form';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -21,6 +21,7 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
 }: UseFormAutosaveProps<U, T>) {
   const formRef = useDataRef(propsForm);
   const savePropsRef = useDataRef({ ...saveProps });
+  const lastSavedDataRef = useRef<string | null>(null);
 
   const onSave = useCallback(
     async (data: T, options?: { forceSubmit?: boolean; onSuccess?: () => void }) => {
@@ -39,6 +40,11 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
         return;
       }
 
+      const serializedData = JSON.stringify(data);
+      if (serializedData === lastSavedDataRef.current && !options?.forceSubmit) {
+        return;
+      }
+
       // manually trigger the validation of the form
       if (shouldClientValidate) {
         const isValid = await form.trigger();
@@ -53,6 +59,7 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       // so other blur/change events might trigger in the meantime
       // we also send the invalid values to api and should keep the errors in the form
       form.reset(values, { keepErrors: true });
+      lastSavedDataRef.current = serializedData;
       save(values, { onSuccess: options?.onSuccess });
     },
     [formRef, savePropsRef]

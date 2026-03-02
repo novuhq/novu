@@ -1,5 +1,6 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { IsDefined, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import { IsDefined, IsEnum, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import { RevertActionType } from '../../dtos/generate-workflow.dto';
 
 export class RevertMessageCommand extends EnvironmentWithUserObjectCommand {
   @IsDefined()
@@ -10,4 +11,8 @@ export class RevertMessageCommand extends EnvironmentWithUserObjectCommand {
   @IsNotEmpty()
   @IsString()
   messageId: string;
+
+  @IsDefined()
+  @IsEnum(RevertActionType)
+  type: RevertActionType;
 }

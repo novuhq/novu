@@ -221,6 +221,16 @@ export const shadows = {
   'button-primary-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--primary-alpha-10))'],
   'button-important-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--neutral-alpha-16))'],
   'button-error-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--red-alpha-10))'],
+  'switch-track':
+    '0px 1px 1px 0px hsl(var(--neutral-950) / 0.04) inset, 0px 2px 4px 0px hsl(var(--neutral-950) / 0.04) inset, 0px 0px 0px 0.75px hsl(var(--neutral-950) / 0.06) inset, 0px 0px 8px 0px hsl(var(--neutral-950) / 0.02) inset, 0px 2px 4px 0px hsl(var(--neutral-950) / 0.04)',
+  'switch-track-focus':
+    '0px 0px 0px 1px hsl(var(--neutral-0)), 0px 0px 0px 3px hsl(var(--primary) / 0.6), 0px 1px 1px 0px hsl(var(--neutral-950) / 0.04) inset, 0px 2px 4px 0px hsl(var(--neutral-950) / 0.04) inset, 0px 0px 0px 0.75px hsl(var(--neutral-950) / 0.06) inset, 0px 0px 8px 0px hsl(var(--neutral-950) / 0.02) inset, 0px 2px 4px 0px hsl(var(--neutral-950) / 0.04)',
+  'switch-handle':
+    '0px 0px 2px 1px hsl(var(--neutral-0)) inset, 0px 1px 0px 0px hsl(var(--neutral-0)) inset, 0px 0px 0px 0.5px hsl(var(--neutral-950) / 0.02), 0px 5px 4px 0px hsl(var(--neutral-950) / 0.02), 0px 3px 3px 0px hsl(var(--neutral-950) / 0.04), 0px 1px 2px 0px hsl(var(--neutral-950) / 0.12), 0px 0px 1px 0px hsl(var(--neutral-950) / 0.08)',
+  'switch-track-disabled':
+    '0px 1px 1px 0px hsl(var(--neutral-950) / 0.03) inset, 0px 0px 0px 0.5px hsl(var(--neutral-950) / 0.04) inset',
+  'switch-handle-disabled':
+    '0px 0px 0px 0.5px hsl(var(--neutral-950) / 0.04), 0px 1px 2px 0px hsl(var(--neutral-950) / 0.06)',
 };
 
 export default {
