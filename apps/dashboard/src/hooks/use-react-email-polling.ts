@@ -25,6 +25,7 @@ export function useReactEmailPolling({ stepResolverHash }: { stepResolverHash?: 
   useEffect(() => {
     if (stepResolverHash && stepResolverHash !== prevHashRef.current) {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
     }
 
     prevHashRef.current = stepResolverHash;
