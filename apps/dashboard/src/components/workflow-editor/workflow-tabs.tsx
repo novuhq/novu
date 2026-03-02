@@ -22,7 +22,7 @@ import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { AiChatProvider, AiSidekickPanel, useAiChat } from '../ai-sidekick';
+import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
 import { Button } from '../primitives/button';
@@ -469,7 +469,7 @@ export const WorkflowTabs = () => {
           {isAiWorkflowGenerationEnabled && isDevEnvironment ? (
             <ResizableLayout autoSaveId="workflow-editor-ai-sidekick-layout" className="flex-1 min-w-0">
               <ResizableLayout.ContextPanel defaultSize={26} minSize={20} maxSize={80}>
-                <AiSidekickPanel />
+                <NovuCopilotPanel />
               </ResizableLayout.ContextPanel>
               <ResizableLayout.Handle />
               <ResizableLayout.MainContentPanel>

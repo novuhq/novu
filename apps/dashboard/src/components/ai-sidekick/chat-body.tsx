@@ -1,5 +1,5 @@
 import { ChatStatus, UIMessage } from 'ai';
-import { RiArrowGoBackLine, RiRefreshLine } from 'react-icons/ri';
+import { useMemo } from 'react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
 import { Message } from '../ai-elements/message';
 import {
@@ -9,26 +9,12 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from '../ai-elements/prompt-input';
-import { Shimmer } from '../ai-elements/shimmer';
+import { Broom } from '../icons/broom';
 import { BroomSparkle } from '../icons/broom-sparkle';
-import { Button } from '../primitives/button';
 import { Skeleton } from '../primitives/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { ChatChainOfThoughtReasoning, ChatChainOfThoughtToolCalls } from './chat-chain-of-thought';
-import { ChatMessageActions } from './chat-message-actions';
-import { StyledMessageResponse } from './chat-message-response';
-
-function extractMessageContent(message: UIMessage): { text: string } {
-  let text = '';
-
-  for (const part of message.parts) {
-    if (part.type === 'text' && part.text) {
-      text += part.text;
-    }
-  }
-
-  return { text };
-}
+import { AssistantMessage } from './assistant-message';
+import { hasKnownMessageParts } from './message-utils';
+import { UserMessage } from './user-message';
 
 export const ChatBodySkeleton = () => {
   return (
@@ -105,6 +91,15 @@ export const ChatBody = ({
   onTryAgain: (messageId: string) => void;
   onRevertMessage: (messageId: string) => void;
 }) => {
+  const hasLastUserMessage = messages.length === 0 || messages[messages.length - 1].role === 'user';
+  const lastMessage = messages[messages.length - 1];
+  const isLastAssistantMessage = lastMessage?.role === 'assistant';
+  const lastAssistantHasKnownToolCalls = useMemo(
+    () => isLastAssistantMessage && hasKnownMessageParts(lastMessage),
+    [lastMessage, isLastAssistantMessage]
+  );
+  const isGeneratingOrSubmitted =
+    (isGenerating && hasLastUserMessage) || (isGenerating && isLastAssistantMessage && !lastAssistantHasKnownToolCalls);
   return (
     <>
       <Conversation className="min-h-0 [&>div:first-child]:overflow-x-hidden">
@@ -125,100 +120,44 @@ export const ChatBody = ({
         ) : (
           <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
             {messages.map((chatMessage) => {
-              const { text } = extractMessageContent(chatMessage);
-              const hasReasoningContent = (chatMessage.parts ?? []).some((p) => p.type === 'reasoning');
-              const hasToolCallsContent = (chatMessage.parts ?? []).some((p) => p.type?.startsWith('dynamic-tool'));
-              const textParts = (chatMessage.parts ?? [])
-                .filter(
-                  (p) =>
-                    p.type === 'text' &&
-                    typeof (p as { text?: string }).text === 'string' &&
-                    !(p as { text: string }).text.startsWith('{')
-                )
-                .map((p) => (p as { text: string }).text);
-              const isLastMessage = chatMessage.id === messages[messages.length - 1].id;
               const isLastAssistantMessage =
                 chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
 
-              return (
-                <Message from={chatMessage.role} key={chatMessage.id}>
-                  {chatMessage.role === 'user' && (
-                    <div className="flex justify-end gap-1 -mb-1">
-                      <Tooltip delayDuration={2000}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            mode="ghost"
-                            size="2xs"
-                            className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
-                            onClick={() => onRevertMessage(chatMessage.id)}
-                            disabled={isGenerating || isActionPending}
-                            trailingIcon={RiArrowGoBackLine}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Revert</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip delayDuration={2000}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            mode="ghost"
-                            size="2xs"
-                            className="p-1 h-auto hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
-                            onClick={() => onTryAgain(chatMessage.id)}
-                            disabled={isGenerating || isActionPending}
-                            trailingIcon={RiRefreshLine}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Try again</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  )}
-                  {chatMessage.role === 'user' && text && (
-                    <div className="flex justify-end bg-[#F1F1F1] rounded-lg p-2 max-w-full self-end">
-                      <span className="text-label-xs text-text-sub">{text}</span>
-                    </div>
-                  )}
-                  {chatMessage.role === 'assistant' && (
-                    <>
-                      {(isGenerating || hasReasoningContent) && (
-                        <ChatChainOfThoughtReasoning
-                          defaultIsExpanded={isGenerating && isLastMessage}
-                          message={chatMessage}
-                          isStreaming={isGenerating && isLastMessage}
-                        />
-                      )}
-                      {(isGenerating || hasToolCallsContent) && (
-                        <ChatChainOfThoughtToolCalls
-                          defaultIsExpanded={isGenerating && isLastMessage}
-                          message={chatMessage}
-                          isStreaming={isGenerating && isLastMessage}
-                        />
-                      )}
-                      {textParts.map((text, i) => (
-                        <StyledMessageResponse key={`text-${chatMessage.id}-${i}`}>{text}</StyledMessageResponse>
-                      ))}
-                      {!isGenerating && isReviewingChanges && isLastAssistantMessage && lastUserMessageId && (
-                        <ChatMessageActions
-                          lastUserMessageId={lastUserMessageId}
-                          isActionPending={isActionPending}
-                          onKeepAll={onKeepAll}
-                          onDiscard={onDiscard}
-                          onTryAgain={onTryAgain}
-                        />
-                      )}
-                    </>
-                  )}
-                </Message>
-              );
+              if (chatMessage.role === 'user') {
+                return (
+                  <UserMessage
+                    key={chatMessage.id}
+                    message={chatMessage}
+                    onRevert={onRevertMessage}
+                    onTryAgain={onTryAgain}
+                    isGenerating={isGenerating}
+                    isActionPending={isActionPending}
+                  />
+                );
+              }
+
+              if (chatMessage.role === 'assistant') {
+                return (
+                  <AssistantMessage
+                    key={chatMessage.id}
+                    message={chatMessage}
+                    isGenerating={isGenerating}
+                    isReviewingChanges={isReviewingChanges}
+                    isLastAssistantMessage={isLastAssistantMessage}
+                    lastUserMessageId={lastUserMessageId}
+                    isActionPending={isActionPending}
+                    onKeepAll={onKeepAll}
+                    onDiscard={onDiscard}
+                    onTryAgain={onTryAgain}
+                  />
+                );
+              }
+
+              return null;
             })}
-            {status === 'submitted' && !errorMessage && (
-              <Message from="assistant">
-                <Shimmer className="text-label-xs">Thinking...</Shimmer>
+            {isGeneratingOrSubmitted && !errorMessage && (
+              <Message from="assistant" className="flex flex-row items-center gap-1">
+                <Broom className="size-3" />
               </Message>
             )}
             {errorMessage && (

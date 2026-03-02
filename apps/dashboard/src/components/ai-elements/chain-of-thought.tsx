@@ -80,12 +80,11 @@ export const ChainOfThoughtHeader = memo(
 );
 
 export type ChainOfThoughtStepProps = ComponentProps<'div'> & {
-  icon?: LucideIcon;
+  icon?: IconType | LucideIcon;
   label?: ReactNode;
   description?: ReactNode;
   status?: 'complete' | 'active' | 'pending';
   collapsible?: boolean;
-  hideLabelOnOpen?: boolean;
   defaultOpen?: boolean;
   autoCollapse?: boolean;
 };
@@ -100,7 +99,6 @@ export const ChainOfThoughtStep = memo(
     collapsible = false,
     autoCollapse = false,
     defaultOpen = true,
-    hideLabelOnOpen = false,
     children,
     ...props
   }: ChainOfThoughtStepProps) => {
@@ -121,7 +119,7 @@ export const ChainOfThoughtStep = memo(
     return (
       <div
         className={cn(
-          'flex gap-2 text-sm',
+          'flex gap-2 text-sm [&:not(:last-child)_.line]:min-h-2',
           statusStyles[status],
           'fade-in-0 slide-in-from-top-2 animate-in',
           className
@@ -132,19 +130,23 @@ export const ChainOfThoughtStep = memo(
           <Collapsible className="group flex flex-1 gap-2 w-full" open={isOpen} onOpenChange={setIsOpen}>
             <div className="relative shrink-0 self-stretch">
               <CollapsibleTrigger className="block p-0 transition-opacity hover:opacity-80 h-5">
-                <RiArrowRightSLine className="size-4 transition-transform group-data-[state=open]:rotate-90 text-text-soft" />
+                {typeof Icon === 'function' ? (
+                  <Icon className="size-4 transition-transform text-text-soft cursor-pointer" />
+                ) : (
+                  <RiArrowRightSLine className="size-4 transition-transform group-data-[state=open]:rotate-90 text-text-soft" />
+                )}
               </CollapsibleTrigger>
-              <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
+              <div className="line absolute top-5.5 bottom-0 left-1/2 -mx-px w-px bg-bg-soft" />
             </div>
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="relative flex min-w-0 flex-1 flex-col">
               {!!label && (
                 <CollapsibleTrigger
                   className={cn(
-                    'flex items-center w-full gap-2 text-left transition-opacity hover:opacity-80 h-5',
-                    hideLabelOnOpen && 'data-[state=open]:hidden'
+                    'flex items-center w-full gap-1 text-left transition-opacity hover:opacity-80 h-5 cursor-pointer'
                   )}
                 >
-                  <div className="min-w-0 flex-1">{label}</div>
+                  <div className="min-w-0">{label}</div>
+                  <RiArrowRightSLine className="size-3.5 transition-transform group-data-[state=open]:rotate-90 text-text-soft" />
                 </CollapsibleTrigger>
               )}
               <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
@@ -159,7 +161,7 @@ export const ChainOfThoughtStep = memo(
           <>
             <div className="relative mt-0.5">
               <Icon className="size-4" />
-              <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-neutral-alpha-100" />
+              <div className="line absolute top-5.5 bottom-0 left-1/2 -mx-px w-px bg-bg-soft" />
             </div>
             <div className="flex-1 space-y-2 overflow-hidden">
               {label && <div>{label}</div>}

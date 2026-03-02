@@ -2,7 +2,7 @@ import { BroomSparkle } from '../icons/broom-sparkle';
 import { useAiChat } from './ai-chat-context';
 import { ChatBody, ChatBodySkeleton } from './chat-body';
 
-export function AiSidekickPanel() {
+export function NovuCopilotPanel() {
   const {
     hasNoChatHistory,
     messages,
@@ -29,7 +29,7 @@ export function AiSidekickPanel() {
       <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3 py-2">
         <div className="flex items-center gap-0.5 rounded px-0.5 py-1">
           <div className="flex size-5 items-center justify-center">
-            <BroomSparkle className="size-3" />
+            <BroomSparkle className="size-3" isAnimating={isGenerating} />
           </div>
           <span
             className="text-label-sm font-medium"
@@ -40,7 +40,7 @@ export function AiSidekickPanel() {
               backgroundClip: 'text',
             }}
           >
-            Novu Sidekick
+            Novu Copilot
           </span>
         </div>
       </div>

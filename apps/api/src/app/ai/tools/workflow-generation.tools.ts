@@ -585,6 +585,7 @@ export function createWorkflowGenerationTools({
               resourceType: AiResourceTypeEnum.WORKFLOW,
               resourceId: minimalWorkflow._id,
               user: command.user,
+              hasPendingChanges: true,
               session,
             })
           );
@@ -724,6 +725,14 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-added', step: newStep });
 
       logger.info(`AI Step added: ${AiWorkflowToolsEnum.ADD_STEP}`);
@@ -781,6 +790,14 @@ export function createWorkflowGenerationTools({
         upsertWorkflowUseCase,
         logger,
       });
+
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
 
       runtime.writer?.({ type: 'step-added', step: newStep });
 
@@ -848,6 +865,14 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-updated', step: updatedStep });
 
       logger.info({ stepId: updatedStep.stepId }, 'AI Step updated via agent');
@@ -907,11 +932,19 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-updated', step: updatedStep });
 
       logger.info({ stepId: input.stepId }, 'AI Step conditions updated via agent');
 
-      return { stepId: input.stepId, skip };
+      return { stepId: updatedStep.stepId, name: updatedStep.name, type: updatedStep.type };
     },
     {
       name: AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS,
@@ -927,6 +960,11 @@ export function createWorkflowGenerationTools({
         throw new Error('Workflow not found');
       }
 
+      const stepToRemove = workflow.steps.find((s) => s.stepId === input.stepId);
+      if (!stepToRemove) {
+        throw new Error(`Step ${input.stepId} not found in workflow`);
+      }
+
       await removeWorkflowStep({
         workflowId: workflow._id,
         command,
@@ -937,11 +975,19 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-removed', stepId: input.stepId });
 
       logger.info({ stepId: input.stepId }, 'AI Step removed via agent');
 
-      return 'success';
+      return { stepId: stepToRemove.stepId, name: stepToRemove.name, type: stepToRemove.type };
     },
     {
       name: AiWorkflowToolsEnum.REMOVE_STEP,
@@ -957,6 +1003,11 @@ export function createWorkflowGenerationTools({
         throw new Error('Workflow not found');
       }
 
+      const stepToMove = workflow.steps.find((s) => s.stepId === input.stepId);
+      if (!stepToMove) {
+        throw new Error(`Step ${input.stepId} not found in workflow`);
+      }
+
       await moveWorkflowStep({
         workflowId: workflow._id,
         command,
@@ -968,11 +1019,19 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-moved', stepId: input.stepId });
 
       logger.info({ stepId: input.stepId, toIndex: input.toIndex }, 'AI Step moved via agent');
 
-      return 'success';
+      return { stepId: stepToMove.stepId, name: stepToMove.name, type: stepToMove.type };
     },
     {
       name: AiWorkflowToolsEnum.MOVE_STEP,

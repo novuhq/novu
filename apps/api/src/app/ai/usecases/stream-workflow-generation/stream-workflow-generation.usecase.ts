@@ -154,16 +154,12 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
       generateId,
       onFinish: async ({ messages, isAborted }) => {
         const finalIsAborted = isAborted || command.signal.aborted;
-        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-        const isAssistantMessage = lastMessage?.role === 'assistant';
-        const hasPendingChanges = !!isAssistantMessage && lastMessage.id !== lastUserMessageId;
 
         await this.upsertChatUseCase.execute(
           UpsertChatCommand.create({
             id: command.chatId,
             messages,
             activeStreamId: finalIsAborted ? undefined : null,
-            hasPendingChanges,
             user: command.user,
           })
         );
