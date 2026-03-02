@@ -15,6 +15,7 @@ import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
 
 const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
+// cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
 
@@ -156,15 +157,14 @@ export class DeployStepResolverUsecase {
     stepResolverHash: string,
     session: ClientSession | null
   ): Promise<void> {
-    await Promise.all(
-      resolvedSteps.map((step) =>
-        this.messageTemplateRepository.update(
-          { _id: step.stepInternalId, _environmentId: command.user.environmentId },
-          { $set: { stepResolverHash } },
-          { session }
-        )
-      )
-    );
+    for (const step of resolvedSteps) {
+      // transactions can't be called in Promise.all, so we need to call it sequentially
+      await this.messageTemplateRepository.update(
+        { _id: step.stepInternalId, _environmentId: command.user.environmentId },
+        { $set: { stepResolverHash } },
+        { session }
+      );
+    }
   }
 
   private async upsertControlValues(
@@ -214,25 +214,21 @@ export class DeployStepResolverUsecase {
     resolvedSteps: ResolvedManifestStep[],
     session: ClientSession | null
   ): Promise<void> {
-    const stepsWithSchema = resolvedSteps.filter((step) => step.controlSchema != null);
-    const stepsWithoutSchema = resolvedSteps.filter((step) => step.controlSchema == null);
-
-    await Promise.all([
-      ...stepsWithSchema.map((step) =>
-        this.messageTemplateRepository.update(
+    for (const step of resolvedSteps) {
+      if (step.controlSchema != null) {
+        await this.messageTemplateRepository.update(
           { _id: step.stepInternalId, _environmentId: command.user.environmentId },
           { $set: { 'controls.schema': step.controlSchema } },
           { session }
-        )
-      ),
-      ...stepsWithoutSchema.map((step) =>
-        this.messageTemplateRepository.update(
+        );
+      } else {
+        await this.messageTemplateRepository.update(
           { _id: step.stepInternalId, _environmentId: command.user.environmentId },
           { $unset: { 'controls.schema': '' } },
           { session }
-        )
-      ),
-    ]);
+        );
+      }
+    }
   }
 
   private readControlObject(controlValues: ControlValuesEntity | null): Record<string, unknown> {

@@ -124,14 +124,15 @@ function extractWorkflowIdExport(node: ts.VariableStatement, metadata: StepMetad
   }
 }
 
-// Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)) and `as` casts
+// Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)), `as` casts, and `satisfies` expressions
 function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMetadata): void {
   let unwrapped: ts.Expression = node;
   while (
     ts.isParenthesizedExpression(unwrapped) ||
     ts.isAsExpression(unwrapped) ||
     ts.isTypeAssertionExpression(unwrapped) ||
-    ts.isNonNullExpression(unwrapped)
+    ts.isNonNullExpression(unwrapped) ||
+    ts.isSatisfiesExpression(unwrapped)
   ) {
     unwrapped = unwrapped.expression;
   }

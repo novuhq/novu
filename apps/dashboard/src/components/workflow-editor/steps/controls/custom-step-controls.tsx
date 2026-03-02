@@ -2,7 +2,7 @@ import { type Controls } from '@novu/shared';
 import { RJSFSchema } from '@rjsf/utils';
 import isEqual from 'lodash.isequal';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -42,6 +42,10 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   });
 
   const [isOverridden, setIsOverridden] = useState(initialIsOverridden);
+
+  useEffect(() => {
+    setIsOverridden(initialIsOverridden);
+  }, [initialIsOverridden]);
 
   if (origin !== ResourceOriginEnum.EXTERNAL || Object.keys(dataSchema?.properties ?? {}).length === 0) {
     return (

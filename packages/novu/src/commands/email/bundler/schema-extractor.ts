@@ -10,6 +10,7 @@ export interface ExtractedSchemas {
 
 export async function extractStepSchemas(filePath: string): Promise<ExtractedSchemas> {
   let tmpFile: string | undefined;
+  let moduleKey: string | undefined;
 
   try {
     const result = await esbuild.build({
@@ -45,6 +46,8 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
     // ts-node runs in CJS mode where dynamic import() is transpiled to require(),
     // which doesn't accept file:// URLs — use require() directly instead.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
+    moduleKey = require.resolve(tmpFile);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mod = require(tmpFile);
     const stepResolver = mod?.default ?? mod;
 
@@ -63,6 +66,9 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
     console.error('[schema-extractor] Failed to extract schemas from', filePath, error);
     return {};
   } finally {
+    if (moduleKey) {
+      delete require.cache[moduleKey];
+    }
     if (tmpFile) {
       await fs.unlink(tmpFile).catch(() => {});
     }
@@ -89,11 +95,16 @@ function toJsonSchema(schema: unknown): Record<string, unknown> | undefined {
   return undefined;
 }
 
+// Checking internal Zod internals (_def) is fragile; we supplement with public
+// method checks (parse/safeParse) as fallbacks for increased confidence.
 function isZodSchema(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+
+  const v = value as Record<string, unknown>;
+
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    '_def' in value &&
-    typeof (value as Record<string, unknown>)['_def'] === 'object'
+    (typeof v['_def'] === 'object' && v['_def'] !== null) ||
+    typeof v['parse'] === 'function' ||
+    typeof v['safeParse'] === 'function'
   );
 }
