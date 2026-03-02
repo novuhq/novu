@@ -5,8 +5,9 @@ import { CloudflareStepResolverDeployService } from './services/cloudflare-step-
 import { StepResolversController } from './step-resolvers.controller';
 import { DeployStepResolverUsecase } from './usecases/deploy-step-resolver';
 import { DisconnectStepResolverUsecase } from './usecases/disconnect-step-resolver';
+import { SyncStepResolverToEnvironmentUsecase } from './usecases/sync-step-resolver-to-environment';
 
-const USE_CASES = [DeployStepResolverUsecase, DisconnectStepResolverUsecase];
+const USE_CASES = [DeployStepResolverUsecase, DisconnectStepResolverUsecase, SyncStepResolverToEnvironmentUsecase];
 const SERVICES = [CloudflareStepResolverDeployService];
 
 @Module({
