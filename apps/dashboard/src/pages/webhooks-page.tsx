@@ -6,13 +6,13 @@ import {
   IEnvironment,
 } from '@novu/shared';
 import { UseMutationResult, UseQueryResult, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { RiLoaderLine, RiWebhookLine } from 'react-icons/ri';
+import { RiLoaderLine } from 'react-icons/ri';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AppPortal, SvixProvider } from 'svix-react';
 import { createWebhookPortalToken, getWebhookPortalToken } from '@/api/webhooks';
 import { Button } from '@/components/primitives/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
+import { EmptyStateSvg, WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
 import { IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -145,23 +145,39 @@ export function WebhooksPage() {
   if (currentEnvironment && !currentEnvironment?.webhookAppId) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full flex-col items-center justify-center gap-4 p-2 text-center">
-          <div className="bg-muted mb-3 flex h-16 w-16 items-center justify-center rounded-full">
-            <RiWebhookLine className="text-muted-foreground h-8 w-8" />
+        <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-4">
+          <div className="flex w-full max-w-[480px] flex-col items-center gap-6 text-center">
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex flex-col items-center gap-2">
+                <div className="mb-[50px]">
+                  <EmptyStateSvg />
+                </div>
+                <h2 className="text-foreground-900 text-label-md">Enable Webhooks for This Environment</h2>
+                <p className="text-text-soft text-label-xs mb-3 max-w-[300px]">
+                  Once enabled, you'll be able to configure webhook endpoints, monitor events, and view delivery logs for
+                  this environment.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <Button
+                onClick={handleEnableWebhooks}
+                isLoading={isEnablingWebhooks}
+                variant="primary"
+                mode="gradient"
+                size="xs"
+                className="mb-3.5"
+              >
+                Enable Webhooks
+              </Button>
+              {mutationError && (
+                <p className="text-label-xs text-red-500">
+                  Error enabling webhooks: {mutationError.message || 'An unknown error occurred.'}
+                </p>
+              )}
+            </div>
           </div>
-          <h2 className="text-foreground-900 text-xl font-semibold">Enable Webhooks for This Environment</h2>
-          <p className="text-muted-foreground max-w-md text-sm">
-            Once enabled, you'll be able to configure webhook endpoints, monitor events, and view delivery logs for this
-            environment.
-          </p>
-          <Button onClick={handleEnableWebhooks} isLoading={isEnablingWebhooks} className="mt-2">
-            {'Enable Webhooks'}
-          </Button>
-          {mutationError && (
-            <p className="mt-2 text-sm text-red-500">
-              Error enabling webhooks: {mutationError.message || 'An unknown error occurred.'}
-            </p>
-          )}
         </div>
       </DashboardLayout>
     );

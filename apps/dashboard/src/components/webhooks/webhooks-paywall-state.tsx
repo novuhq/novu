@@ -56,7 +56,7 @@ export function WebhooksPaywallState() {
   );
 }
 
-function EmptyStateSvg() {
+export function EmptyStateSvg() {
   return (
     <svg width="325" height="112" viewBox="0 0 325 112" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
