@@ -1,3 +1,4 @@
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiGitCommitFill, RiHtml5Fill, RiReactjsFill } from 'react-icons/ri';
@@ -5,11 +6,13 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { FormField } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflow } from '../../workflow-provider';
 import { useSaveForm } from '../save-form-context';
 
 export const EmailRendererSelect = () => {
   const { control, setValue } = useFormContext();
+  const { currentEnvironment } = useEnvironment();
   const { step } = useWorkflow();
   const { saveForm } = useSaveForm();
   const editorType = useWatch({ name: 'editorType', control });
@@ -41,7 +44,11 @@ export const EmailRendererSelect = () => {
           };
 
           return (
-            <Select value={field.value ?? 'html'} onValueChange={handleValueChange}>
+            <Select
+              value={field.value ?? 'html'}
+              onValueChange={handleValueChange}
+              disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+            >
               <SelectTrigger
                 size="2xs"
                 className="w-auto bg-bg-weak border-transparent hover:border-transparent hover:bg-neutral-100 [&_span]:text-neutral-600"
