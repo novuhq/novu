@@ -26,8 +26,6 @@ function buildIssueRefundTool() {
     description: 'Issue a refund to a customer for a specific order.',
     inputSchema: refundSchema,
     execute: async (args: z.infer<typeof refundSchema>) => {
-      console.log('args', args);
-      console.log('REFUNEND!');
       return {
         status: 'refunded',
         orderId: args.orderId,
@@ -46,6 +44,9 @@ export async function getToolkit() {
       backendUrl: process.env.NEXT_PUBLIC_NOVU_BACKEND_URL ?? 'https://dev.api.novu.co',
       secretKey: process.env.NOVU_SECRET_KEY ?? 'dummy-key',
       subscriberId: process.env.NOVU_SUBSCRIBER_ID ?? 'demo-subscriber',
+      workflows: {
+        tags: ['agent', 'test'],
+      },
     });
   }
 

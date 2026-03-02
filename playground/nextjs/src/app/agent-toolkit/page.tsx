@@ -3,7 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { Inbox } from '@novu/nextjs';
 import { DefaultChatTransport, getToolName, isToolUIPart } from 'ai';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Conversation, ConversationContent, ConversationEmptyState } from '@/components/ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import {
@@ -14,10 +14,34 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { novuConfig } from '@/utils/config';
 
-function ToolStatusCard({ result }: { result: unknown }) {
-  if (!result || typeof result !== 'object') return null;
+function ToolStatusCard({ result, toolCallId }: { result: unknown; toolCallId: string }) {
+  const [displayResult, setDisplayResult] = useState(result);
 
-  const data = result as Record<string, unknown>;
+  useEffect(() => {
+    const data = displayResult as Record<string, unknown> | null;
+    if (!data || data.type !== 'tool-status' || data.status !== 'pending-input') return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/agent-toolkit/result?toolCallId=${toolCallId}`);
+        const json = await res.json();
+        if (json.resolved) {
+          setDisplayResult(json.result);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 1500);
+
+    return () => clearInterval(interval);
+  }, [toolCallId, displayResult]);
+
+  if (!displayResult || typeof displayResult !== 'object') return null;
+
+  const data = displayResult as Record<string, unknown>;
 
   if (data.type !== 'tool-status') return null;
 
@@ -72,16 +96,13 @@ async function sendDecision(
   decision: { type: 'approve' } | { type: 'reject'; message: string }
 ) {
   const toolCallId = (notification.data as Record<string, unknown> | undefined)?.toolCallId;
-  const id = toolCallId;
 
-  console.log('id', id);
-  console.log('decision', { notification, decision });
-  if (!id) return;
+  if (!toolCallId) return;
 
   await fetch('/api/agent-toolkit/webhook', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ toolCallId: id, decision }),
+    body: JSON.stringify({ toolCallId, decision }),
   });
 
   notification.archive();
@@ -95,12 +116,9 @@ function ApprovalInbox() {
         <p className="text-xs text-muted-foreground mt-0.5">Approve or reject refund requests in real-time</p>
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden p-3">
         <Inbox
           {...novuConfig}
-          routerPush={() => {
-            console.log('routerPush');
-          }}
           appearance={{
             elements: {
               bellContainer: 'hidden',
@@ -177,7 +195,7 @@ export default function AgentToolkitPage() {
                       const toolCallId = part.toolCallId;
 
                       if (part.state === 'output-available') {
-                        return <ToolStatusCard key={toolCallId} result={part.output} />;
+                        return <ToolStatusCard key={toolCallId} result={part.output} toolCallId={toolCallId} />;
                       }
 
                       return (
@@ -211,7 +229,7 @@ export default function AgentToolkitPage() {
         </div>
       </div>
 
-      <div className="w-80 shrink-0">
+      <div className="w-100 shrink-0">
         <ApprovalInbox />
       </div>
     </div>
