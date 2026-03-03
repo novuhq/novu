@@ -31,7 +31,7 @@ export class StandardQueueService extends QueueBaseService {
       _logger
     );
 
-    Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Creating queue', LOG_CONTEXT);
 
     this.createQueue();
     this.logger.setContext(LOG_CONTEXT);

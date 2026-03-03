@@ -52,8 +52,6 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   }
 
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions, deferSqsStart = false): void {
-    Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
-
     if (typeof processor === 'function') {
       this.createWorker(this.wrapForBullMQ(processor), options);
       this.initSqsConsumer(processor, options);
@@ -64,6 +62,8 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     } else {
       this.createWorker(processor, options);
     }
+
+    Logger.log({ topic: this.topic, sqsEnabled: !!this.sqsConsumer }, 'Worker initialized', LOG_CONTEXT);
   }
 
   /*
@@ -112,8 +112,6 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
 
   private initSqsConsumer(processor: Processor<any, unknown, string>, options?: WorkerOptions): void {
     if (!this.sqsService?.isConfigured(this.topic)) {
-      Logger.log(`SQS consumer for ${this.topic} not configured, skipping initialization`, LOG_CONTEXT);
-
       return;
     }
 
@@ -133,14 +131,12 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
       this.logger,
       sqsConsumerOptions
     );
-
-    Logger.log(`SQS consumer for ${this.topic} initialized (pending start)`, LOG_CONTEXT);
   }
 
   public startSqsConsumer(): void {
     if (this.sqsConsumer) {
       this.sqsConsumer.start();
-      Logger.log(`SQS consumer for ${this.topic} started`, LOG_CONTEXT);
+      Logger.log({ topic: this.topic }, 'SQS consumer started', LOG_CONTEXT);
     }
   }
 
@@ -161,8 +157,12 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
             await this.sqsCompletedHandler(jobMock);
           } catch (handlerError) {
             Logger.error(
-              handlerError,
-              `SQS completed handler failed for job ${jobId} on topic ${this.topic}`,
+              {
+                error: handlerError instanceof Error ? handlerError.message : String(handlerError),
+                jobId,
+                topic: this.topic,
+              },
+              'SQS completed handler failed',
               LOG_CONTEXT
             );
           }
@@ -175,8 +175,12 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
             shouldRetry = await this.sqsFailedHandler(jobMock, error as Error);
           } catch (handlerError) {
             Logger.error(
-              handlerError,
-              `SQS failed handler error for job ${jobId} on topic ${this.topic}, defaulting to retry`,
+              {
+                error: handlerError instanceof Error ? handlerError.message : String(handlerError),
+                jobId,
+                topic: this.topic,
+              },
+              'SQS failed handler error, defaulting to retry',
               LOG_CONTEXT
             );
             shouldRetry = true;
@@ -222,16 +226,16 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     }
 
     const backends = this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
-    Logger.log(`Worker ${this.topic} paused (${backends})`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic, backends }, 'Worker paused', LOG_CONTEXT);
   }
 
   public async resume(): Promise<void> {
     await this.bullMqService.resumeWorker();
 
     if (process.env.NODE_ENV === 'test') {
-      Logger.log(`Worker ${this.topic} waiting until ready...`, LOG_CONTEXT);
+      Logger.debug({ topic: this.topic }, 'Worker waiting until ready', LOG_CONTEXT);
       await this.bullMqService.waitUntilWorkerIsReady();
-      Logger.log(`Worker ${this.topic} is now ready to process jobs`, LOG_CONTEXT);
+      Logger.debug({ topic: this.topic }, 'Worker is now ready to process jobs', LOG_CONTEXT);
     }
 
     if (this.sqsConsumer) {
@@ -239,20 +243,20 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     }
 
     const backends = this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
-    Logger.log(`Worker ${this.topic} resumed (${backends})`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic, backends }, 'Worker resumed', LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {
-    Logger.log(`Shutting the ${this.topic} worker service down`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Shutting down worker service', LOG_CONTEXT);
 
     await this.bullMqService.gracefulShutdown();
 
     if (this.sqsConsumer) {
       await this.sqsConsumer.stop();
-      Logger.log(`SQS consumer for ${this.topic} stopped`, LOG_CONTEXT);
+      Logger.debug({ topic: this.topic }, 'SQS consumer stopped during shutdown', LOG_CONTEXT);
     }
 
-    Logger.log(`Shutting down the ${this.topic} worker service has finished`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Worker service shutdown complete', LOG_CONTEXT);
   }
 
   async onModuleDestroy(): Promise<void> {

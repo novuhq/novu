@@ -80,17 +80,18 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   public async gracefulShutdown(): Promise<void> {
-    Logger.log(`Shutting the ${this.topic} queue service down`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Shutting down queue service', LOG_CONTEXT);
 
     this.queue = undefined;
     await this.bullMqService.gracefulShutdown();
 
-    Logger.log(`Shutting down the ${this.topic} queue service has finished`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Queue service shutdown complete', LOG_CONTEXT);
   }
 
   public async add(params: IJobParams) {
     if (params.options?.delay > 0) {
       Logger.log({ topic: this.topic, delay: params.options.delay }, 'Job has delay, routing to BullMQ', LOG_CONTEXT);
+
       return await this.addToBullMQ(params);
     }
 
@@ -107,23 +108,22 @@ export class QueueBaseService implements OnModuleDestroy {
     const organizationId = params.groupId;
 
     if (!organizationId) {
-      Logger.log({ topic: this.topic }, 'Job without organization ID, routing to BullMQ fallback', LOG_CONTEXT);
+      Logger.debug({ topic: this.topic }, 'Job without organization ID, routing to BullMQ fallback', LOG_CONTEXT);
+
       return await this.addToBullMQ(params);
     }
 
     const queueBackendMode = await this.getQueueBackendMode(organizationId);
 
-    Logger.log({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
+    Logger.debug({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
 
     return await this.routeByMode([params], queueBackendMode, organizationId);
   }
 
   private async getQueueBackendMode(organizationId: string): Promise<string> {
-    const organization = await this.organizationRepository?.findOne(
-      { _id: organizationId },
-      'apiServiceLevel',
-      { readPreference: 'secondaryPreferred' }
-    );
+    const organization = await this.organizationRepository?.findOne({ _id: organizationId }, 'apiServiceLevel', {
+      readPreference: 'secondaryPreferred',
+    });
 
     return await this.featureFlagsService.getFlag<string>({
       key: FeatureFlagsKeysEnum.QUEUE_BACKEND_MODE,
@@ -243,7 +243,8 @@ export class QueueBaseService implements OnModuleDestroy {
     if (messages.length === 1) {
       await this.sqsService.send(this.topic, messages[0]);
       Logger.log(
-        `Added job to SQS. Topic: ${this.topic}, Job: ${jobs[0].name}, Size: ${this.calculatePayloadSize(jobs[0].data)} bytes`,
+        { topic: this.topic, jobName: jobs[0].name, payloadSizeBytes: this.calculatePayloadSize(jobs[0].data) },
+        'Added job to SQS',
         LOG_CONTEXT
       );
     } else {
@@ -260,8 +261,9 @@ export class QueueBaseService implements OnModuleDestroy {
     };
 
     const payloadSize = this.calculatePayloadSize(params.data);
-    Logger.log(
-      `Adding job to BullMQ queue. Topic: ${this.topic}, Job: ${params.name}, Payload size: ${payloadSize} bytes`,
+    Logger.debug(
+      { topic: this.topic, jobName: params.name, payloadSizeBytes: payloadSize },
+      'Adding job to BullMQ queue',
       LOG_CONTEXT
     );
 
@@ -278,7 +280,7 @@ export class QueueBaseService implements OnModuleDestroy {
     const { delayed, immediate } = this.separateByDelay(data);
 
     if (delayed.length > 0) {
-      Logger.log({ topic: this.topic, count: delayed.length }, 'Routing delayed jobs to BullMQ', LOG_CONTEXT);
+      Logger.debug({ topic: this.topic, count: delayed.length }, 'Routing delayed jobs to BullMQ', LOG_CONTEXT);
       await this.bullMqService.addBulk(delayed);
     }
 
@@ -286,7 +288,7 @@ export class QueueBaseService implements OnModuleDestroy {
       const organizationId = immediate[0]?.groupId;
 
       if (!organizationId) {
-        Logger.log(
+        Logger.debug(
           { topic: this.topic, count: immediate.length },
           'Jobs without organization ID, routing to BullMQ fallback',
           LOG_CONTEXT
@@ -324,15 +326,19 @@ export class QueueBaseService implements OnModuleDestroy {
 
     const failedCount = payloadSizes.length - validSizes.length;
     if (failedCount > 0) {
-      Logger.warn(`Failed to serialize ${failedCount} out of ${data.length} items`, LOG_CONTEXT);
+      Logger.warn(
+        { topic: this.topic, failedCount, totalCount: data.length },
+        'Failed to serialize bulk job items',
+        LOG_CONTEXT
+      );
     }
 
-    Logger.log(
+    Logger.debug(
       {
         topic: this.topic,
         count: data.length,
-        totalSize: totalPayloadSize,
-        avgSize: avgPayloadSize,
+        totalSizeBytes: totalPayloadSize,
+        avgSizeBytes: avgPayloadSize,
       },
       'Adding bulk jobs',
       LOG_CONTEXT
@@ -346,7 +352,7 @@ export class QueueBaseService implements OnModuleDestroy {
       return Buffer.byteLength(JSON.stringify(data), 'utf8');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      Logger.warn(`Failed to calculate payload size: ${errorMessage}`, LOG_CONTEXT);
+      Logger.warn({ error: errorMessage }, 'Failed to calculate payload size', LOG_CONTEXT);
 
       return -1;
     }

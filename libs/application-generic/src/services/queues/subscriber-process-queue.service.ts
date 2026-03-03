@@ -29,7 +29,7 @@ export class SubscriberProcessQueueService extends QueueBaseService {
       logger
     );
 
-    Logger.log(`Creating queue ${this.topic}`, this.LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Creating queue', this.LOG_CONTEXT);
 
     this.createQueue();
   }

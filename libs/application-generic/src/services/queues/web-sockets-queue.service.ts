@@ -31,7 +31,7 @@ export class WebSocketsQueueService extends QueueBaseService {
       logger
     );
 
-    Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Creating queue', LOG_CONTEXT);
 
     this.createQueue();
     this.logger.setContext(LOG_CONTEXT);
@@ -52,14 +52,14 @@ export class WebSocketsQueueService extends QueueBaseService {
         contextKeys,
       });
 
-      Logger.debug(`Sent message directly to socket worker for user ${userId}, event ${event}`, LOG_CONTEXT);
+      Logger.debug({ userId, event }, 'Sent message directly to socket worker', LOG_CONTEXT);
 
       const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
         data.data._environmentId,
         data.data._organizationId
       );
       if (isLegacyWsDisabled) {
-        Logger.debug(`Legacy WS service is disabled, skipping queue push for user ${userId}`, LOG_CONTEXT);
+        Logger.debug({ userId }, 'Legacy WS service is disabled, skipping queue push', LOG_CONTEXT);
 
         return;
       }
@@ -93,14 +93,14 @@ export class WebSocketsQueueService extends QueueBaseService {
 
       await Promise.all(promises);
 
-      Logger.debug(`Sent ${data.length} messages directly to socket worker`, LOG_CONTEXT);
+      Logger.debug({ count: data.length }, 'Sent messages directly to socket worker', LOG_CONTEXT);
 
       const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
         firstItem?.data?._environmentId,
         firstItem?.data?._organizationId
       );
       if (isLegacyWsDisabled) {
-        Logger.debug(`Legacy WS service is disabled, skipping bulk queue push`, LOG_CONTEXT);
+        Logger.debug('Legacy WS service is disabled, skipping bulk queue push', LOG_CONTEXT);
 
         return;
       }
