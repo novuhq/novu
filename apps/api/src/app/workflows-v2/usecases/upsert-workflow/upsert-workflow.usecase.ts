@@ -41,8 +41,11 @@ import { removeBrandingFromHtml } from '../../../shared/utils/html';
 import {
   DisconnectStepResolverCommand,
   DisconnectStepResolverUsecase,
-  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
 } from '../../../step-resolvers/usecases/disconnect-step-resolver';
+import {
+  isStepResolverEmailStep,
+  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
+} from '../../../step-resolvers/utils/step-resolver-control-state';
 import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
 import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
@@ -402,7 +405,9 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      const resetControlValues = step.template?.stepResolverHash ? REACT_EMAIL_STEP_RESOLVER_DEFAULTS : {};
+      const resetControlValues = isStepResolverEmailStep(step.template?.type, step.template?.stepResolverHash)
+        ? REACT_EMAIL_STEP_RESOLVER_DEFAULTS
+        : {};
 
       return this.upsertControlValuesUseCase.execute(
         UpsertControlValuesCommand.create({
@@ -428,7 +433,25 @@ export class UpsertWorkflowUseCase {
         command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
     ) {
       const emailControlValues = newControlValues as EmailControlType;
-      if (typeof emailControlValues.layoutId === 'string') {
+      const isStepResolver = isStepResolverEmailStep(step.template?.type, step.template?.stepResolverHash);
+      let shouldApplyStandardEmailProcessing = true;
+      const shouldDisconnectResolver =
+        isStepResolver &&
+        emailControlValues.rendererType !== undefined &&
+        emailControlValues.rendererType !== 'react-email';
+
+      if (shouldDisconnectResolver) {
+        await this.disconnectStepResolverUsecase.execute(
+          DisconnectStepResolverCommand.create({
+            stepInternalId: step._templateId,
+            user: command.user,
+          })
+        );
+      } else if (isStepResolver) {
+        shouldApplyStandardEmailProcessing = false;
+      }
+
+      if (shouldApplyStandardEmailProcessing && typeof emailControlValues.layoutId === 'string') {
         const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: emailControlValues.layoutId,
@@ -441,49 +464,37 @@ export class UpsertWorkflowUseCase {
         emailControlValues.layoutId = layout.layoutId;
       }
 
-      const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
-      if (emailControlValues.editorType === 'html' && isMaily) {
-        const { result } = await this.previewUsecase.execute(
-          PreviewCommand.create({
-            user: command.user,
-            workflowIdOrInternalId: workflowId,
-            stepIdOrInternalId: step._id ?? step.stepId ?? '',
-            generatePreviewRequestDto: {
-              controlValues: emailControlValues,
-            },
-            skipLayoutRendering: true,
-          })
-        );
-        let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
-        try {
-          htmlBody = await format(htmlBody, {
-            parser: 'html',
-            printWidth: 120,
-            tabWidth: 2,
-            useTabs: false,
-            htmlWhitespaceSensitivity: 'css',
-          });
-        } catch (error) {
-          this.logger.warn({ err: error }, 'Failed to prettify HTML');
+      if (shouldApplyStandardEmailProcessing) {
+        const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
+        if (emailControlValues.editorType === 'html' && isMaily) {
+          const { result } = await this.previewUsecase.execute(
+            PreviewCommand.create({
+              user: command.user,
+              workflowIdOrInternalId: workflowId,
+              stepIdOrInternalId: step._id ?? step.stepId ?? '',
+              generatePreviewRequestDto: {
+                controlValues: emailControlValues,
+              },
+              skipLayoutRendering: true,
+            })
+          );
+          let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
+          try {
+            htmlBody = await format(htmlBody, {
+              parser: 'html',
+              printWidth: 120,
+              tabWidth: 2,
+              useTabs: false,
+              htmlWhitespaceSensitivity: 'css',
+            });
+          } catch (error) {
+            this.logger.warn({ err: error }, 'Failed to prettify HTML');
+          }
+
+          emailControlValues.body = htmlBody;
+        } else if (emailControlValues.editorType === 'block' && !isMaily) {
+          emailControlValues.body = '';
         }
-
-        emailControlValues.body = htmlBody;
-      } else if (emailControlValues.editorType === 'block' && !isMaily) {
-        emailControlValues.body = '';
-      }
-
-      const shouldDisconnectResolver =
-        !!step.template?.stepResolverHash &&
-        emailControlValues.rendererType !== undefined &&
-        emailControlValues.rendererType !== 'react-email';
-
-      if (shouldDisconnectResolver) {
-        await this.disconnectStepResolverUsecase.execute(
-          DisconnectStepResolverCommand.create({
-            stepInternalId: step._templateId,
-            user: command.user,
-          })
-        );
       }
     }
 

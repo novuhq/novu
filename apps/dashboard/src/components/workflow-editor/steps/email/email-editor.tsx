@@ -56,7 +56,9 @@ export const EmailEditor = (props: EmailEditorProps) => {
             </EmailPreviewHeader>
           </div>
 
-          <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
+          {subject && (
+            <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
+          )}
           <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-1">
             {isCodeEditor &&
               isStepResolverEnabled &&

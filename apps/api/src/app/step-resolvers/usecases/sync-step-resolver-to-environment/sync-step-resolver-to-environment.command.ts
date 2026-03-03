@@ -1,11 +1,16 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ClientSession } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
+import { Exclude, Type } from 'class-transformer';
+import { IsArray, IsDefined, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class StepResolverSourceData {
   @IsString()
   @IsNotEmpty()
   stepId: string;
+
+  @IsEnum(StepTypeEnum)
+  stepType: StepTypeEnum;
 
   @IsOptional()
   @IsString()
@@ -23,6 +28,10 @@ export class StepResolverTargetData {
   @IsString()
   @IsNotEmpty()
   templateId: string;
+
+  @IsOptional()
+  @IsString()
+  stepResolverHash?: string | null;
 }
 
 export class SyncStepResolverToEnvironmentCommand extends EnvironmentWithUserObjectCommand {
@@ -39,4 +48,11 @@ export class SyncStepResolverToEnvironmentCommand extends EnvironmentWithUserObj
   @ValidateNested({ each: true })
   @Type(() => StepResolverTargetData)
   targetSteps: StepResolverTargetData[];
+
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
+  @IsOptional()
+  @Exclude()
+  session?: ClientSession | null;
 }

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { MessageTemplateRepository } from '@novu/dal';
+import { ClientSession, MessageTemplateRepository } from '@novu/dal';
+import { stepTypeToControlSchema } from '../../../workflows-v2/shared';
+import { getStepResolverControlSchema, STEP_RESOLVER_EMAIL_UI_SCHEMA } from '../../utils/step-resolver-control-state';
 import {
   StepResolverSourceData,
   StepResolverTargetData,
@@ -13,43 +15,85 @@ export class SyncStepResolverToEnvironmentUsecase {
 
   @InstrumentUsecase()
   async execute(command: SyncStepResolverToEnvironmentCommand): Promise<void> {
-    if (command.sourceSteps.length === 0) return;
+    const targetStepsByStepId = new Map(command.targetSteps.map((step) => [step.stepId, step]));
 
-    await Promise.all(
-      command.sourceSteps.map((sourceStep) =>
-        this.syncStepResolverData(sourceStep, command.targetSteps, command.targetEnvironmentId)
-      )
-    );
-  }
+    const relevantSteps = command.sourceSteps.filter((sourceStep) => {
+      const targetStep = targetStepsByStepId.get(sourceStep.stepId);
+      if (!targetStep) {
+        return false;
+      }
 
-  private async syncStepResolverData(
-    sourceStep: StepResolverSourceData,
-    targetSteps: StepResolverTargetData[],
-    targetEnvironmentId: string
-  ): Promise<void> {
-    const targetStep = targetSteps.find((t) => t.stepId === sourceStep.stepId);
+      return sourceStep.stepResolverHash != null || targetStep.stepResolverHash != null;
+    });
 
-    if (!targetStep) return;
+    if (command.session) {
+      for (const sourceStep of relevantSteps) {
+        const targetStep = targetStepsByStepId.get(sourceStep.stepId);
+        if (!targetStep) {
+          continue;
+        }
 
-    if (sourceStep.stepResolverHash == null) {
-      await this.messageTemplateRepository.update(
-        { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
-        { $unset: { stepResolverHash: '', 'controls.schema': '' } }
-      );
+        if (sourceStep.stepResolverHash != null) {
+          await this.promoteStepResolver(targetStep, command.targetEnvironmentId, sourceStep, command.session);
+        } else {
+          await this.clearStepResolver(targetStep, command.targetEnvironmentId, sourceStep, command.session);
+        }
+      }
 
       return;
     }
 
-    if (sourceStep.controlSchema != null) {
-      await this.messageTemplateRepository.update(
-        { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
-        { $set: { stepResolverHash: sourceStep.stepResolverHash, 'controls.schema': sourceStep.controlSchema } }
-      );
-    } else {
-      await this.messageTemplateRepository.update(
-        { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
-        { $set: { stepResolverHash: sourceStep.stepResolverHash }, $unset: { 'controls.schema': '' } }
-      );
-    }
+    await Promise.all(
+      relevantSteps.map((sourceStep) => {
+        const targetStep = targetStepsByStepId.get(sourceStep.stepId);
+        if (!targetStep) {
+          return Promise.resolve();
+        }
+
+        return sourceStep.stepResolverHash != null
+          ? this.promoteStepResolver(targetStep, command.targetEnvironmentId, sourceStep)
+          : this.clearStepResolver(targetStep, command.targetEnvironmentId, sourceStep);
+      })
+    );
+  }
+
+  private async promoteStepResolver(
+    targetStep: StepResolverTargetData,
+    targetEnvironmentId: string,
+    sourceStep: StepResolverSourceData,
+    session?: ClientSession | null
+  ): Promise<void> {
+    await this.messageTemplateRepository.update(
+      { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
+      {
+        $set: {
+          stepResolverHash: sourceStep.stepResolverHash,
+          'controls.schema': getStepResolverControlSchema(sourceStep.controlSchema),
+          'controls.uiSchema': STEP_RESOLVER_EMAIL_UI_SCHEMA,
+        },
+      },
+      { session }
+    );
+  }
+
+  private async clearStepResolver(
+    targetStep: StepResolverTargetData,
+    targetEnvironmentId: string,
+    sourceStep: StepResolverSourceData,
+    session?: ClientSession | null
+  ): Promise<void> {
+    const controlSchema = sourceStep.controlSchema ?? stepTypeToControlSchema[sourceStep.stepType]?.schema;
+
+    await this.messageTemplateRepository.update(
+      { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
+      {
+        $set: {
+          stepResolverHash: null,
+          'controls.schema': controlSchema,
+          'controls.uiSchema': stepTypeToControlSchema[sourceStep.stepType]?.uiSchema,
+        },
+      },
+      { session }
+    );
   }
 }

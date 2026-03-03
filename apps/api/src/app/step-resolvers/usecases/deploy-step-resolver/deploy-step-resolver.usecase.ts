@@ -12,6 +12,12 @@ import { createHash } from 'crypto';
 import { DeployStepResolverResponseDto } from '../../dtos';
 import { CloudflareStepResolverDeployService } from '../../services/cloudflare-step-resolver-deploy.service';
 import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver-worker-id';
+import {
+  getStepResolverControlSchema,
+  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
+  reconcileStepResolverControlValues,
+  STEP_RESOLVER_EMAIL_UI_SCHEMA,
+} from '../../utils/step-resolver-control-state';
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
 
 const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -24,7 +30,7 @@ interface ResolvedManifestStep {
   workflowInternalId: string;
   stepId: string;
   stepInternalId: string;
-  controlSchema?: Record<string, unknown>;
+  controlSchema: Record<string, unknown>;
   existingControlValues: ControlValuesEntity | null;
 }
 
@@ -129,7 +135,7 @@ export class DeployStepResolverUsecase {
         workflowInternalId: String(workflow._id),
         stepId: manifestStep.stepId,
         stepInternalId: String(step._templateId),
-        controlSchema: manifestStep.controlSchema,
+        controlSchema: getStepResolverControlSchema(manifestStep.controlSchema),
       });
     }
 
@@ -173,11 +179,10 @@ export class DeployStepResolverUsecase {
     session: ClientSession | null
   ): Promise<void> {
     for (const step of resolvedSteps) {
-      const existingControls = this.readControlObject(step.existingControlValues);
+      // Keep values that still match the current resolver schema and drop stale ones from previous deploys.
       const mergedControls = {
-        ...existingControls,
-        editorType: 'html',
-        rendererType: 'react-email',
+        ...reconcileStepResolverControlValues(this.readControlObject(step.existingControlValues), step.controlSchema),
+        ...REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
       };
 
       if (step.existingControlValues) {
@@ -215,19 +220,16 @@ export class DeployStepResolverUsecase {
     session: ClientSession | null
   ): Promise<void> {
     for (const step of resolvedSteps) {
-      if (step.controlSchema != null) {
-        await this.messageTemplateRepository.update(
-          { _id: step.stepInternalId, _environmentId: command.user.environmentId },
-          { $set: { 'controls.schema': step.controlSchema } },
-          { session }
-        );
-      } else {
-        await this.messageTemplateRepository.update(
-          { _id: step.stepInternalId, _environmentId: command.user.environmentId },
-          { $unset: { 'controls.schema': '' } },
-          { session }
-        );
-      }
+      await this.messageTemplateRepository.update(
+        { _id: step.stepInternalId, _environmentId: command.user.environmentId },
+        {
+          $set: {
+            'controls.schema': step.controlSchema,
+            'controls.uiSchema': STEP_RESOLVER_EMAIL_UI_SCHEMA,
+          },
+        },
+        { session }
+      );
     }
   }
 

@@ -186,13 +186,16 @@ export class SyncToEnvironmentUseCase {
       SyncStepResolverToEnvironmentCommand.create({
         user: command.user,
         targetEnvironmentId: command.targetEnvironmentId,
+        session: command.session,
         sourceSteps: sourceWorkflow.steps.map((step) => ({
           stepId: step.stepId,
+          stepType: step.type,
           stepResolverHash: step.stepResolverHash,
           controlSchema: (step.controls.dataSchema as Record<string, unknown>) ?? null,
         })),
         targetSteps: upsertedWorkflow.steps.map((step) => ({
           stepId: step.stepId,
+          stepResolverHash: step.stepResolverHash,
           templateId: step._id,
         })),
       })

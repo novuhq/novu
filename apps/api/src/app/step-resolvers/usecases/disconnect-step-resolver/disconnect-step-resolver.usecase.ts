@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { emailControlSchema, InstrumentUsecase } from '@novu/application-generic';
+import { emailControlSchema, emailUiSchema, InstrumentUsecase } from '@novu/application-generic';
 import { MessageTemplateRepository } from '@novu/dal';
 import { DisconnectStepResolverCommand } from './disconnect-step-resolver.command';
-
-export const REACT_EMAIL_STEP_RESOLVER_DEFAULTS = {
-  editorType: 'html',
-  rendererType: 'react-email',
-} as const;
 
 @Injectable()
 export class DisconnectStepResolverUsecase {
@@ -16,7 +11,13 @@ export class DisconnectStepResolverUsecase {
   async execute(command: DisconnectStepResolverCommand): Promise<void> {
     await this.messageTemplateRepository.update(
       { _id: command.stepInternalId, _environmentId: command.user.environmentId },
-      { $set: { stepResolverHash: null, 'controls.schema': emailControlSchema } }
+      {
+        $set: {
+          stepResolverHash: null,
+          'controls.schema': emailControlSchema,
+          'controls.uiSchema': emailUiSchema,
+        },
+      }
     );
   }
 }

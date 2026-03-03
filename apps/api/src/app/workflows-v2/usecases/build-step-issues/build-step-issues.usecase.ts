@@ -29,6 +29,7 @@ import {
   processControlValuesByLiquid,
   processControlValuesBySchema,
 } from '../../../shared/utils/issues';
+import { isStepResolverEmailStep } from '../../../step-resolvers/utils/step-resolver-control-state';
 import { parseStepVariables } from '../../util/parse-step-variables';
 import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { BuildStepIssuesCommand } from './build-step-issues.command';
@@ -93,7 +94,13 @@ export class BuildStepIssuesUsecase {
       }
     }
 
-    const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepType);
+    const isStepResolverStep = this.isStepResolverStep(persistedWorkflow, stepInternalId);
+    const sanitizedControlValues = this.sanitizeControlValues(
+      newControlValues,
+      workflowOrigin,
+      stepType,
+      isStepResolverStep
+    );
     const schemaIssues = processControlValuesBySchema({
       controlSchema,
       controlValues: sanitizedControlValues || {},
@@ -118,11 +125,24 @@ export class BuildStepIssuesUsecase {
   private sanitizeControlValues(
     newControlValues: Record<string, unknown> | undefined,
     workflowOrigin: ResourceOriginEnum,
-    stepType: StepTypeEnum
+    stepType: StepTypeEnum,
+    isStepResolverStep = false
   ) {
-    return newControlValues && workflowOrigin === ResourceOriginEnum.NOVU_CLOUD
+    return newControlValues && workflowOrigin === ResourceOriginEnum.NOVU_CLOUD && !isStepResolverStep
       ? dashboardSanitizeControlValues(this.logger, newControlValues, stepType) || {}
       : this.frameworkSanitizeEmptyStringsToNull(newControlValues) || {};
+  }
+
+  private isStepResolverStep(persistedWorkflow?: BuildStepIssuesCommand['workflow'], stepInternalId?: string): boolean {
+    if (!persistedWorkflow || !stepInternalId) {
+      return false;
+    }
+
+    const currentStep = persistedWorkflow.steps.find(
+      (step) => step._id === stepInternalId || step._templateId === stepInternalId
+    );
+
+    return isStepResolverEmailStep(currentStep?.template?.type, currentStep?.template?.stepResolverHash);
   }
 
   @Instrument()
