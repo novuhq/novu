@@ -22,6 +22,15 @@ import { Skeleton } from '../primitives/skeleton';
 import { Tag } from '../primitives/tag';
 import { StyledMessageResponse } from './chat-message-response';
 
+const toolNameToAction: Record<string, 'add' | 'edit' | 'remove'> = {
+  [AiWorkflowToolsEnum.ADD_STEP]: 'add',
+  [AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN]: 'add',
+  [AiWorkflowToolsEnum.EDIT_STEP_CONTENT]: 'edit',
+  [AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS]: 'edit',
+  [AiWorkflowToolsEnum.REMOVE_STEP]: 'remove',
+  [AiWorkflowToolsEnum.MOVE_STEP]: 'edit',
+};
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -370,13 +379,7 @@ export function ChatChainOfThought({ message }: ChatChainOfThoughtReasoningProps
               ) {
                 const streamingLabel = toolNameToStreamingLabel[tool.toolName];
                 const completeLabel = toolNameToCompleteLabel[tool.toolName];
-                const action =
-                  tool.toolName === AiWorkflowToolsEnum.ADD_STEP ||
-                  tool.toolName === AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN
-                    ? 'add'
-                    : tool.toolName === AiWorkflowToolsEnum.REMOVE_STEP
-                      ? 'remove'
-                      : 'edit';
+                const action = toolNameToAction[tool.toolName];
 
                 return (
                   <StepTool

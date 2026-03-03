@@ -130,11 +130,7 @@ export const ChainOfThoughtStep = memo(
           <Collapsible className="group flex flex-1 gap-2 w-full" open={isOpen} onOpenChange={setIsOpen}>
             <div className="relative shrink-0 self-stretch">
               <CollapsibleTrigger className="block p-0 transition-opacity hover:opacity-80 h-5">
-                {typeof Icon === 'function' ? (
-                  <Icon className="size-4 transition-transform text-text-soft cursor-pointer" />
-                ) : (
-                  <RiArrowRightSLine className="size-4 transition-transform group-data-[state=open]:rotate-90 text-text-soft" />
-                )}
+                <Icon className="size-4 transition-transform text-text-soft cursor-pointer" />
               </CollapsibleTrigger>
               <div className="line absolute top-5.5 bottom-0 left-1/2 -mx-px w-px bg-bg-soft" />
             </div>

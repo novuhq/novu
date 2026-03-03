@@ -47,6 +47,7 @@ export const UserMessage = ({
                 onClick={() => onRevert(message.id)}
                 disabled={isGenerating || isActionPending}
                 trailingIcon={RiArrowGoBackLine}
+                aria-label="Revert"
               />
             </TooltipTrigger>
             <TooltipContent>
@@ -63,6 +64,7 @@ export const UserMessage = ({
                 onClick={() => onTryAgain(message.id)}
                 disabled={isGenerating || isActionPending}
                 trailingIcon={RefreshIcon}
+                aria-label="Try again"
               />
             </TooltipTrigger>
             <TooltipContent>

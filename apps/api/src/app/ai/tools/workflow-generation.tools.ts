@@ -619,6 +619,15 @@ export function createWorkflowGenerationTools({
             draftState,
           });
 
+          await upsertChatUseCase.execute(
+            UpsertChatCommand.create({
+              id: command.chatId,
+              user: command.user,
+              hasPendingChanges: true,
+              session,
+            })
+          );
+
           runtime.writer?.({ type: 'workflow-metadata-updated', workflowSlug: updatedWorkflow.slug, chatId: chat._id });
 
           logger.info(
