@@ -66,6 +66,9 @@ export class QueueBaseService implements OnModuleDestroy {
 
     if (!queue) return 0;
 
+    /*
+     * getGroupsJobsCount is only available in BullMQ Pro Edition, so we fallback to getWaitingCount if it's not available.
+     */
     if (typeof queue.getGroupsJobsCount !== 'function') {
       return await this.bullMqService.queue.getWaitingCount();
     }
