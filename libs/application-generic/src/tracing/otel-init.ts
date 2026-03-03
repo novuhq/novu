@@ -1,17 +1,18 @@
+import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { B3InjectEncoding, B3Propagator } from '@opentelemetry/propagator-b3';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { MetricReader, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
-import { B3InjectEncoding, B3Propagator } from '@opentelemetry/propagator-b3';
 
 let sdk: NodeSDK | undefined;
 
@@ -54,14 +55,18 @@ function buildResource(serviceName: string, version: string) {
  *   OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
  *   OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
  *   OTEL_EXPORTER_OTLP_TRACES_HEADERS
- *   OTEL_EXPORTER_OTLP_PROTOCOL          (http/protobuf | http/json | grpc)
+ *   OTEL_EXPORTER_OTLP_PROTOCOL                     (http/protobuf | http/json | grpc)
  *   OTEL_EXPORTER_OTLP_TIMEOUT
- *   OTEL_NODE_RESOURCE_DETECTORS         (env,host,os,container,process,...)
- *   OTEL_RESOURCE_ATTRIBUTES             (key=value,key2=value2)
+ *   OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE  (cumulative | delta | lowmemory)
+ *   OTEL_METRIC_EXPORT_INTERVAL                     (ms, default: 60000)
+ *   OTEL_METRIC_EXPORT_TIMEOUT                      (ms, default: 30000)
+ *   OTEL_NODE_RESOURCE_DETECTORS                    (env,host,os,container,process,...)
+ *   OTEL_RESOURCE_ATTRIBUTES                        (key=value,key2=value2)
  *
  * Novu-specific knobs (not standard OTEL):
  *   ENABLE_OTEL=true|false                   (default: false)
  *   ENABLE_OTEL_LOGS=true|false              (default: false — opt-in OTLP log export)
+ *   OTEL_LOG_LEVEL=none|error|warn|info|debug|verbose|all  (default: warn — SDK diagnostic logging)
  *   OTEL_PROMETHEUS_PORT=9464                (default: 9464)
  *   OTEL_CAPTURE_DB_STATEMENTS=true|false    (default: false — opt-in; serialises query/command
  *                                             payloads into db.statement spans. Disable in
@@ -75,6 +80,17 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
   if (sdk) {
     return sdk;
   }
+
+  const diagLevel = (process.env.OTEL_LOG_LEVEL ?? 'warn').toLowerCase();
+  const levelMap: Record<string, DiagLogLevel> = {
+    none: DiagLogLevel.NONE,
+    error: DiagLogLevel.ERROR,
+    warn: DiagLogLevel.WARN,
+    info: DiagLogLevel.INFO,
+    debug: DiagLogLevel.DEBUG,
+    verbose: DiagLogLevel.VERBOSE,
+    all: DiagLogLevel.ALL,
+  };
 
   const prometheusPort = parseInt(process.env.OTEL_PROMETHEUS_PORT ?? '9464', 10);
   const captureDbStatements = process.env.OTEL_CAPTURE_DB_STATEMENTS === 'true';
@@ -92,10 +108,14 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
    *    Useful for self-hosted setups running their own Prometheus/Grafana stack.
    *    Set OTEL_DISABLE_PROMETHEUS=true to skip starting the server.
    */
+  const metricExportIntervalMs = parseInt(process.env.OTEL_METRIC_EXPORT_INTERVAL ?? '60000', 10);
+  const metricExportTimeoutMs = parseInt(process.env.OTEL_METRIC_EXPORT_TIMEOUT ?? '30000', 10);
+
   const metricReaders: MetricReader[] = [
     new PeriodicExportingMetricReader({
       exporter: new OTLPMetricExporter(),
-      exportIntervalMillis: 60_000,
+      exportIntervalMillis: metricExportIntervalMs,
+      exportTimeoutMillis: metricExportTimeoutMs,
     }),
   ];
 
@@ -152,31 +172,27 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
     }),
     instrumentations: [
       getNodeAutoInstrumentations({
-        // High-noise instrumentations that add no value for Novu's use-case
         '@opentelemetry/instrumentation-fs': { enabled: false },
         '@opentelemetry/instrumentation-dns': { enabled: false },
 
         /*
-         * Mongoose (MongoDB ORM):
-         * suppressInternalInstrumentation=true prevents the underlying MongoDB
-         * driver instrumentation from creating a second redundant span for every
-         * Mongoose operation. Without this you get two spans per DB call.
-         *
-         * dbStatementSerializer is opt-in (OTEL_CAPTURE_DB_STATEMENTS=true)
-         * because query payloads may contain PII / sensitive filter values.
+         * MongoDB driver — produces spans with net.peer.name, db.system, etc.
+         * that observability tools use to build service maps and show
+         * upstream/downstream dependencies. enhancedDatabaseReporting captures
+         * command payloads (opt-in via OTEL_CAPTURE_DB_STATEMENTS).
          */
-        '@opentelemetry/instrumentation-mongoose': {
-          suppressInternalInstrumentation: true,
-          ...(captureDbStatements && {
-            dbStatementSerializer: (operation, payload) => {
-              try {
-                return JSON.stringify({ op: operation, ...payload });
-              } catch {
-                return operation;
-              }
-            },
-          }),
+        '@opentelemetry/instrumentation-mongodb': {
+          enhancedDatabaseReporting: captureDbStatements,
         },
+
+        /*
+         * Mongoose ORM instrumentation disabled — its suppressInternalInstrumentation
+         * flag blocks context propagation into the mongodb driver, which kills
+         * service-map dependency links. Without suppression it creates duplicate spans.
+         * The mongodb driver instrumentation above covers all DB operations with the
+         * network-level attributes needed for service maps.
+         */
+        '@opentelemetry/instrumentation-mongoose': { enabled: false },
 
         /*
          * IORedis:
@@ -233,6 +249,11 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
         },
       }),
     ],
+  });
+
+  diag.setLogger(new DiagConsoleLogger(), {
+    logLevel: levelMap[diagLevel] ?? DiagLogLevel.WARN,
+    suppressOverrideMessage: true,
   });
 
   sdk.start();
