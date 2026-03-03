@@ -6,63 +6,67 @@ const Switch = React.forwardRef<
   React.ComponentRef<typeof SwitchPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, disabled, ...rest }, forwardedRef) => {
+  const [showDisabledCursor, setShowDisabledCursor] = React.useState(false);
+  React.useEffect(() => {
+    if (!disabled) {
+      setShowDisabledCursor(false);
+      return;
+    }
+    const t = setTimeout(() => setShowDisabledCursor(true), 150);
+    return () => clearTimeout(t);
+  }, [disabled]);
+
   return (
     <SwitchPrimitives.Root
-      className={cn('group/switch block h-5 w-8 shrink-0 p-0.5 outline-hidden focus:outline-hidden', className)}
       ref={forwardedRef}
       disabled={disabled}
+      className={cn(
+        // base
+        'group/switch relative inline-flex h-[16px] w-[28px] shrink-0 cursor-pointer items-center rounded-full outline-none transition-all',
+        'bg-bg-soft',
+        'before:absolute before:inset-0 before:rounded-full before:content-[""] before:shadow-switch-track',
+        'after:absolute after:inset-0 after:rounded-full after:content-[""] after:bg-linear-to-b after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity',
+        !disabled && [
+          // hover
+          'hover:bg-bg-sub data-[state=unchecked]:hover:after:opacity-100',
+          // focus
+          'focus-visible:shadow-switch-track-focus',
+          // pressed
+          'active:bg-bg-soft',
+          // checked
+          'data-[state=checked]:bg-primary-base',
+          // checked hover
+          'data-[state=checked]:hover:bg-primary-darker',
+          // checked pressed
+          'data-[state=checked]:active:bg-primary-base',
+          // focus
+          'focus:outline-none',
+        ],
+        // disabled
+        disabled && [
+          showDisabledCursor && 'cursor-not-allowed',
+          'bg-bg-soft!',
+          'before:shadow-switch-track-disabled after:opacity-0',
+        ],
+        className
+      )}
       {...rest}
     >
-      <div
+      <SwitchPrimitives.Thumb
         className={cn(
           // base
-          'bg-bg-soft h-4 w-7 rounded-full p-0.5 outline-hidden',
-          'transition duration-200 ease-out',
+          'pointer-events-none block h-[12px] w-[12px] shrink-0 rounded-full transition-transform',
+          'translate-x-0.5 data-[state=checked]:translate-x-[14px]',
           !disabled && [
-            // hover
-            'group-hover/switch:bg-bg-sub',
-            // focus
-            'group-focus-visible/switch:bg-bg-sub',
+            // default
+            'bg-static-white shadow-switch-handle',
             // pressed
-            'group-active/switch:bg-bg-soft',
-            // checked
-            'group-data-[state=checked]/switch:bg-primary-base',
-            // checked hover
-            'group-hover:data-[state=checked]/switch:bg-primary-darker',
-            // checked pressed
-            'group-active:data-[state=checked]/switch:bg-primary-base',
-            // focus
-            'group-focus/switch:outline-hidden',
+            'group-active/switch:scale-90',
           ],
           // disabled
-          disabled && ['bg-bg-white ring-stroke-soft p-[3px] ring-1 ring-inset']
+          disabled && 'bg-static-white! shadow-switch-handle-disabled!'
         )}
-      >
-        <SwitchPrimitives.Thumb
-          className={cn(
-            // base
-            'pointer-events-none relative block size-3',
-            'transition-transform duration-200 ease-out',
-            // checked
-            'data-[state=checked]:translate-x-3',
-            !disabled && [
-              // before
-              'before:bg-static-white before:absolute before:inset-y-0 before:left-1/2 before:w-3 before:-translate-x-1/2 before:rounded-full',
-              'before:[mask:var(--mask)]',
-              // after
-              'after:shadow-switch-thumb after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 after:rounded-full',
-              // pressed
-              'group-active/switch:scale-[.833]',
-            ],
-            // disabled,
-            disabled && ['bg-bg-soft size-2.5 rounded-full shadow-none']
-          )}
-          style={{
-            ['--mask' as any]:
-              'radial-gradient(circle farthest-side at 50% 50%, #0000 1.95px, #000 2.05px 100%) 50% 50%/100% 100% no-repeat',
-          }}
-        />
-      </div>
+      />
     </SwitchPrimitives.Root>
   );
 });
