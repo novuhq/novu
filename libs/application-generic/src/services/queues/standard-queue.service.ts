@@ -27,6 +27,7 @@ export class StandardQueueService extends QueueBaseService {
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
       _featureFlagsService,
+      _organizationRepository,
       _logger
     );
 

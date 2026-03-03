@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 import { PinoLogger } from '../../logging';
@@ -18,6 +19,7 @@ export class WebSocketsQueueService extends QueueBaseService {
     private socketWorkerService: SocketWorkerService,
     sqsService: SqsService,
     featureFlagsService: FeatureFlagsService,
+    organizationRepository: CommunityOrganizationRepository,
     logger: PinoLogger
   ) {
     super(
@@ -25,6 +27,7 @@ export class WebSocketsQueueService extends QueueBaseService {
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
       featureFlagsService,
+      organizationRepository,
       logger
     );
 

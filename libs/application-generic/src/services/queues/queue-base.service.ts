@@ -1,4 +1,5 @@
 import { Logger, OnModuleDestroy } from '@nestjs/common';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, JobTopicNameEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 
@@ -19,6 +20,7 @@ export class QueueBaseService implements OnModuleDestroy {
     bullMqService: BullMqService,
     protected sqsService?: SqsService,
     protected featureFlagsService?: FeatureFlagsService,
+    protected organizationRepository?: CommunityOrganizationRepository,
     protected logger?: PinoLogger
   ) {
     this.bullMqService = bullMqService;
@@ -117,10 +119,16 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   private async getQueueBackendMode(organizationId: string): Promise<string> {
+    const organization = await this.organizationRepository?.findOne(
+      { _id: organizationId },
+      'apiServiceLevel',
+      { readPreference: 'secondaryPreferred' }
+    );
+
     return await this.featureFlagsService.getFlag<string>({
       key: FeatureFlagsKeysEnum.QUEUE_BACKEND_MODE,
       defaultValue: QueueBackendMode.BULLMQ,
-      organization: { _id: organizationId },
+      organization: { _id: organizationId, apiServiceLevel: organization?.apiServiceLevel },
     });
   }
 
