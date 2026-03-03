@@ -8,6 +8,7 @@ import {
   WebSocketsQueueService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
@@ -36,6 +37,10 @@ const mockSqsService = {
 const mockFeatureFlagsService = {
   getFlag: async () => false,
 } as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
+} as unknown as CommunityOrganizationRepository;
 
 const mockLogger = {
   setContext: () => {},
@@ -71,6 +76,7 @@ describe('WebSocket Worker', () => {
       mockSocketWorkerService,
       mockSqsService,
       mockFeatureFlagsService,
+      mockOrganizationRepository,
       mockLogger
     );
     await webSocketsQueueService.queue.obliterate();
