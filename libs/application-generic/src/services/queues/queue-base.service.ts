@@ -1,6 +1,6 @@
 import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum, JobTopicNameEnum, QueueBackendMode } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, JobTopicNameEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
@@ -114,21 +114,39 @@ export class QueueBaseService implements OnModuleDestroy {
     }
 
     const queueBackendMode = await this.getQueueBackendMode(organizationId);
+    if (queueBackendMode === null) {
+      return;
+    }
 
     Logger.debug({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
 
     return await this.routeByMode([params], queueBackendMode, organizationId);
   }
 
-  private async getQueueBackendMode(organizationId: string): Promise<string> {
-    const organization = await this.organizationRepository?.findOne({ _id: organizationId }, 'apiServiceLevel', {
-      readPreference: 'secondaryPreferred',
-    });
+  private async getQueueBackendMode(organizationId: string): Promise<string | null> {
+    let organization: { _id: string; apiServiceLevel?: ApiServiceLevelEnum } | undefined;
+    try {
+      organization = await this.organizationRepository?.findOne({ _id: organizationId }, 'apiServiceLevel', {
+        readPreference: 'secondaryPreferred',
+      });
+    } catch (error) {
+      Logger.warn(
+        { organizationId, error: error instanceof Error ? error.message : String(error) },
+        'Failed to fetch organization for queue backend mode flag',
+        LOG_CONTEXT
+      );
+    }
+
+    if (!organization) {
+      Logger.warn({ organizationId, topic: this.topic }, 'Organization not found, skipping job', LOG_CONTEXT);
+
+      return null;
+    }
 
     return await this.featureFlagsService.getFlag<string>({
       key: FeatureFlagsKeysEnum.QUEUE_BACKEND_MODE,
       defaultValue: QueueBackendMode.BULLMQ,
-      organization: { _id: organizationId, apiServiceLevel: organization?.apiServiceLevel },
+      organization: { _id: organizationId, apiServiceLevel: organization.apiServiceLevel },
     });
   }
 
@@ -299,6 +317,10 @@ export class QueueBaseService implements OnModuleDestroy {
       }
 
       const queueBackendMode = await this.getQueueBackendMode(organizationId);
+      if (queueBackendMode === null) {
+        return;
+      }
+
       await this.routeByMode(immediate, queueBackendMode, organizationId);
     }
   }
