@@ -4,23 +4,26 @@ export function ReactEmailPreviewPlaceholder() {
   return (
     <div className="flex size-full flex-col items-center justify-center gap-6 px-8 pt-8">
       <div className="flex flex-col items-center gap-[33px]">
-        {/* Top dashed card with mail icon */}
         <div className="rounded-[8px] border border-dashed border-[#e1e4ea] p-1">
           <div className="flex h-[38px] w-[128px] items-center justify-center rounded-[6px] border border-[#e1e4ea] bg-white">
-            <img alt="" className="size-4" src={imgMailIcon} />
+            <img alt="" className="size-4" height={16} loading="lazy" src={imgMailIcon} width={16} />
           </div>
         </div>
 
-        {/* Connector line */}
         <div className="-my-[33px] h-[33px] w-px bg-[#e1e4ea]" />
 
-        {/* Bottom card: email mockup */}
         <div className="rounded-[8px] border border-[#e1e4ea] bg-white p-1">
           <div className="flex w-[197px] flex-col overflow-hidden rounded-[6px] border border-[#e1e4ea]">
-            {/* Header row */}
             <div className="flex items-center gap-1 border-b border-[#e1e4ea] p-2">
               <div className="size-4 shrink-0 overflow-hidden rounded-full bg-[#f4f5f6]">
-                <img alt="" className="size-full object-cover" src="/images/building.svg" />
+                <img
+                  alt=""
+                  className="size-full object-cover"
+                  height={16}
+                  loading="lazy"
+                  src="/images/building.svg"
+                  width={16}
+                />
               </div>
               <div className="flex flex-col gap-[3px]">
                 <div className="h-[5px] w-11 rounded-full bg-gradient-to-r from-[#f1efef] to-[rgba(249,248,248,0.75)]" />
@@ -28,13 +31,10 @@ export function ReactEmailPreviewPlaceholder() {
               </div>
             </div>
 
-            {/* Body area */}
             <div className="flex flex-col items-center bg-[#fbfbfb] px-6 py-4">
               <div className="flex w-full flex-col gap-2.5 rounded-[6px] border border-[#e1e4ea] bg-white p-2">
-                {/* Heading skeleton */}
                 <div className="size-3 rounded bg-gradient-to-r from-[#f1efef] to-[rgba(249,248,248,0.75)]" />
                 <div className="h-1 w-[77px] rounded-full bg-gradient-to-r from-[#f1efef] to-[rgba(249,248,248,0.75)]" />
-                {/* Body text skeletons */}
                 <div className="flex flex-wrap gap-[3px]">
                   <div className="h-1 w-16 rounded-full bg-gradient-to-r from-[#f1efef] to-[rgba(249,248,248,0.75)]" />
                   <div className="h-1 w-8 rounded-full bg-gradient-to-r from-[#f1efef] to-[rgba(249,248,248,0.75)]" />
@@ -48,7 +48,6 @@ export function ReactEmailPreviewPlaceholder() {
         </div>
       </div>
 
-      {/* Caption */}
       <div className="flex flex-col items-center gap-0.5 text-center">
         <p className="text-label-xs font-medium text-[#99a0ae]">Nothing to preview</p>
         <p className="text-label-xs text-[#99a0ae]">Preview will appear once React Email is linked to this step.</p>

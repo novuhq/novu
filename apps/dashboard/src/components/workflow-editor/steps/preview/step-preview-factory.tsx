@@ -42,7 +42,8 @@ export function StepPreviewFactory() {
 
   switch (step.type) {
     case StepTypeEnum.EMAIL: {
-      const isReactEmailUnpublished = controlValues?.rendererType === 'react-email' && !step.stepResolverHash;
+      const isReactEmailUnpublished =
+        controlValues?.rendererType === 'react-email' && controlValues?.editorType === 'html' && !step.stepResolverHash;
 
       if (isReactEmailUnpublished) {
         return <ReactEmailPreviewPlaceholder />;

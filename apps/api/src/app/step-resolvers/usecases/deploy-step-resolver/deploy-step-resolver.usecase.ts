@@ -278,7 +278,7 @@ export class DeployStepResolverUsecase {
       if (!step.existingControlValues) return false;
 
       const controls = step.existingControlValues.controls;
-      if (!isPlainObject(controls)) return false;
+      if (!isPlainObject(controls)) return true;
 
       return controls.rendererType !== 'react-email';
     });

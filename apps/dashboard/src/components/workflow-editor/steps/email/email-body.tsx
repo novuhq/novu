@@ -14,7 +14,10 @@ export const EmailBody = () => {
   const rendererType = useWatch({ name: 'rendererType', control });
   const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
 
-  useReactEmailPolling({ stepResolverHash: step?.stepResolverHash });
+  useReactEmailPolling({
+    stepResolverHash: step?.stepResolverHash,
+    isReactEmailMode: editorType === 'html' && rendererType === 'react-email' && isStepResolverEnabled,
+  });
 
   if (editorType === 'html' && rendererType === 'react-email' && isStepResolverEnabled) {
     return <EmailBodyReactEmail />;
