@@ -785,7 +785,8 @@
     "Checkpointer",
     "checkpointer",
     "langchain",
-    "langgraph"
+    "langgraph",
+    "Vitest"
   ],
   "flagWords": [],
   "patterns": [
