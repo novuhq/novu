@@ -1,6 +1,8 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
 import {
+  ControlValuesEntity,
+  ControlValuesRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   NotificationGroupRepository,
@@ -10,6 +12,7 @@ import {
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
+  ControlValuesLevelEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
@@ -42,7 +45,8 @@ export class Sync {
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private controlValuesRepository: ControlValuesRepository
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
     const environment = await this.findEnvironment(command);
@@ -160,10 +164,13 @@ export class Sync {
     command: SyncCommand,
     workflowsFromBridge: DiscoverWorkflowOutput[]
   ): Promise<NotificationTemplateEntity[]> {
-    const existingFrameworkWorkflows = await Promise.all(
-      workflowsFromBridge.map((workflow) =>
-        this.notificationTemplateRepository.findByTriggerIdentifier(command.environmentId, workflow.workflowId)
-      )
+    const identifiers = workflowsFromBridge.map((w) => w.workflowId);
+    const bulkResults = await this.notificationTemplateRepository.findByTriggerIdentifierBulk(
+      command.environmentId,
+      identifiers
+    );
+    const existingFrameworkWorkflows = workflowsFromBridge.map(
+      (workflow) => bulkResults.find((r) => r.triggers.some((t) => t.identifier === workflow.workflowId)) ?? null
     );
 
     existingFrameworkWorkflows.forEach((workflow, index) => {
@@ -254,6 +261,7 @@ export class Sync {
 
     return {
       id: workflowExist._id,
+      existingWorkflow: workflowExist,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       userId: command.userId,
@@ -279,6 +287,17 @@ export class Sync {
     commandWorkflowSteps: DiscoverStepOutput[],
     workflow?: NotificationTemplateEntity | undefined
   ): Promise<NotificationStep[]> {
+    let preloadedControlValues: ControlValuesEntity[] | undefined;
+
+    if (workflow?._id) {
+      preloadedControlValues = await this.controlValuesRepository.find({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _workflowId: workflow._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+    }
+
     return Promise.all(
       commandWorkflowSteps.map(async (step: DiscoverStepOutput) => {
         const foundStep = workflow?.steps?.find((workflowStep) => workflowStep.stepId === step.stepId);
@@ -294,6 +313,7 @@ export class Sync {
           workflow,
           stepType: step.type as StepTypeEnum,
           controlSchema: step.controls?.schema as unknown as JSONSchemaDto,
+          ...(preloadedControlValues ? { preloadedControlValues } : {}),
         });
 
         const template = {

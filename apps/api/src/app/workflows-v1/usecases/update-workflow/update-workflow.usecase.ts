@@ -80,13 +80,15 @@ export class UpdateWorkflow {
   async execute(command: UpdateWorkflowCommand): Promise<WorkflowWithPreferencesResponseDto> {
     await this.validatePayload(command);
 
-    const existingTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
-      GetWorkflowWithPreferencesCommand.create({
-        workflowIdOrInternalId: command.id,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    const existingTemplate =
+      command.existingWorkflow ??
+      (await this.getWorkflowWithPreferencesUseCase.execute(
+        GetWorkflowWithPreferencesCommand.create({
+          workflowIdOrInternalId: command.id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      ));
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
     let updatePayload: Partial<WorkflowWithPreferencesResponseDto> = {};
@@ -107,16 +109,20 @@ export class UpdateWorkflow {
     }
 
     if (command.workflowId) {
-      const isExistingIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
-        command.environmentId,
-        command.workflowId
-      );
+      const existingIdentifier = existingTemplate.triggers?.[0]?.identifier;
 
-      if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
-        throw new BadRequestException(`Workflow with identifier ${command.workflowId} already exists`);
-      } else {
-        updatePayload['triggers.0.identifier'] = command.workflowId;
+      if (existingIdentifier !== command.workflowId) {
+        const isExistingIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
+          command.environmentId,
+          command.workflowId
+        );
+
+        if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
+          throw new BadRequestException(`Workflow with identifier ${command.workflowId} already exists`);
+        }
       }
+
+      updatePayload['triggers.0.identifier'] = command.workflowId;
     }
 
     if (command.notificationGroupId) {
