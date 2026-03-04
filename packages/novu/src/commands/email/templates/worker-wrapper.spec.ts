@@ -35,11 +35,25 @@ describe('generateWorkerWrapper', () => {
     expect(result).toMatchSnapshot('single-step');
   });
 
-  it('should keep workflow IDs in step entries', () => {
+  it('should use workflowId named imports and stepHandler.stepId for map keys', () => {
     const result = generateWorkerWrapper(mockSteps, '/root');
 
-    expect(result).toContain('workflowId: workflowId0');
-    expect(result).toContain('workflowId: workflowId1');
+    expect(result).toContain('workflowId as workflowId0');
+    expect(result).toContain('workflowId as workflowId1');
+    expect(result).toContain('stepHandler0.stepId');
+    expect(result).toContain('stepHandler1.stepId');
+  });
+
+  it('should call step.resolve with validatedControls as first arg and ctx as second', () => {
+    const result = generateWorkerWrapper(mockSteps, '/root');
+
+    expect(result).toContain('step.resolve(validatedControls, {');
+  });
+
+  it('should generate INVALID_CONTROLS response when schema validation fails', () => {
+    const result = generateWorkerWrapper(mockSteps, '/root');
+
+    expect(result).toContain("error: 'INVALID_CONTROLS'");
   });
 
   it('should generate map-based dispatch and invalid JSON handling', () => {

@@ -6,7 +6,7 @@ import {
   NotificationStep,
   PreferencesRequired,
 } from '@novu/application-generic';
-import { ClientSession } from '@novu/dal';
+import { ClientSession, NotificationTemplateEntity } from '@novu/dal';
 import {
   CustomDataType,
   MAX_DESCRIPTION_LENGTH,
@@ -139,6 +139,10 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @Exclude()
   session?: ClientSession | null;
+
+  @IsOptional()
+  @Exclude()
+  existingWorkflow?: NotificationTemplateEntity;
 
   @IsOptional()
   @IsEnum(SeverityLevelEnum)

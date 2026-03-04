@@ -19,7 +19,6 @@ export const emailControlZodSchema = z
         name: z.string().optional(),
       })
       .optional(),
-    stepResolverHash: z.string().nullish(),
   })
   .strict();
 

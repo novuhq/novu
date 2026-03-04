@@ -7,12 +7,12 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
-import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-// Import new services
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { isStepResolverEmailStep } from '../../../step-resolvers/utils/step-resolver-control-state';
 import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { PreviewCommand } from './preview.command';
@@ -38,12 +38,17 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const context = await this.initializePreviewContext(command);
+      const stepResolverHash =
+        typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
+      const isStepResolverEmail = isStepResolverEmailStep(context.stepData.type, stepResolverHash);
 
-      const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
-        context.controlValues,
-        context.stepData.type,
-        context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
-      );
+      const sanitizedControls = isStepResolverEmail
+        ? context.controlValues
+        : this.controlValueSanitizer.sanitizeControlsForPreview(
+            context.controlValues,
+            context.stepData.type,
+            context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
+          );
 
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
         sanitizedControls,
@@ -63,11 +68,6 @@ export class PreviewUsecase {
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
-      const stepResolverHash =
-        typeof context.stepData.controls.values?.stepResolverHash === 'string'
-          ? context.stepData.controls.values.stepResolverHash
-          : undefined;
-
       try {
         const executeOutput = await this.executePreviewUsecase(
           command,
@@ -86,8 +86,6 @@ export class PreviewUsecase {
           schema: context.variableSchema,
         };
       } catch (error) {
-        const isStepResolverEmail = context.stepData.type === StepTypeEnum.EMAIL && stepResolverHash !== undefined;
-
         /*
          * If preview execution fails, still return valid schema and payload example
          * but with an empty preview result.

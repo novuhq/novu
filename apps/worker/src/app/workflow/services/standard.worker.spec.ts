@@ -54,7 +54,7 @@ const mockFeatureFlagsService = {
 } as unknown as FeatureFlagsService;
 
 const mockOrganizationRepository = {
-  findOne: async () => null,
+  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
 } as unknown as CommunityOrganizationRepository;
 
 const mockSqsService = {

@@ -90,7 +90,6 @@ function sanitizeEmail(controlValues: EmailControlType) {
     disableOutputSanitization: controlValues.disableOutputSanitization,
     layoutId: controlValues.layoutId,
     from: controlValues.from,
-    stepResolverHash: controlValues.stepResolverHash,
   };
 
   return filterNullishValues(emailControls);

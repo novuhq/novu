@@ -15,7 +15,6 @@ interface AnalyzedStepFile {
   relativePath: string;
   metadata: StepMetadata;
   hasDefaultExport: boolean;
-  hasReactEmailImport: boolean;
   parseErrors: string[];
 }
 
@@ -77,7 +76,6 @@ function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFi
       relativePath,
       metadata: extractStepMetadata(sourceFile),
       hasDefaultExport: hasDefaultExportInFile(sourceFile),
-      hasReactEmailImport: hasReactEmailImportInFile(sourceFile),
       parseErrors: extractParseDiagnostics(sourceFile),
     };
   } catch (error) {
@@ -87,7 +85,6 @@ function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFi
       relativePath,
       metadata: {},
       hasDefaultExport: false,
-      hasReactEmailImport: false,
       parseErrors: [`Failed to read or parse file: ${errorMessage}`],
     };
   }
@@ -98,16 +95,20 @@ function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
 
   function visit(node: ts.Node) {
     if (ts.isVariableStatement(node) && hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword)) {
-      extractExportedStringLiterals(node, metadata);
+      extractWorkflowIdExport(node, metadata);
+    }
+    if (ts.isExportAssignment(node) && !node.isExportEquals) {
+      extractStepResolverCallMetadata(node.expression, metadata);
     }
     ts.forEachChild(node, visit);
   }
 
   visit(sourceFile);
+
   return metadata;
 }
 
-function extractExportedStringLiterals(node: ts.VariableStatement, metadata: StepMetadata): void {
+function extractWorkflowIdExport(node: ts.VariableStatement, metadata: StepMetadata): void {
   for (const declaration of node.declarationList.declarations) {
     if (
       !ts.isIdentifier(declaration.name) ||
@@ -117,13 +118,44 @@ function extractExportedStringLiterals(node: ts.VariableStatement, metadata: Ste
       continue;
     }
 
-    const exportName = declaration.name.text;
-    const exportValue = declaration.initializer.text;
-
-    if (exportName === 'stepId') metadata.stepId = exportValue;
-    if (exportName === 'workflowId') metadata.workflowId = exportValue;
-    if (exportName === 'type') metadata.type = exportValue;
+    if (declaration.name.text === 'workflowId') {
+      metadata.workflowId = declaration.initializer.text;
+    }
   }
+}
+
+// Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)), `as` casts, and `satisfies` expressions
+function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMetadata): void {
+  let unwrapped: ts.Expression = node;
+  while (
+    ts.isParenthesizedExpression(unwrapped) ||
+    ts.isAsExpression(unwrapped) ||
+    ts.isTypeAssertionExpression(unwrapped) ||
+    ts.isNonNullExpression(unwrapped) ||
+    ts.isSatisfiesExpression(unwrapped)
+  ) {
+    unwrapped = unwrapped.expression;
+  }
+
+  if (!ts.isCallExpression(unwrapped)) return;
+
+  const callee = unwrapped.expression;
+
+  if (
+    !ts.isPropertyAccessExpression(callee) ||
+    !ts.isIdentifier(callee.expression) ||
+    callee.expression.text !== 'step'
+  ) {
+    return;
+  }
+
+  const methodName = callee.name.text;
+  const firstArg = unwrapped.arguments[0];
+
+  if (!firstArg || !ts.isStringLiteral(firstArg)) return;
+
+  metadata.stepId = firstArg.text;
+  metadata.type = methodName;
 }
 
 function hasDefaultExportInFile(sourceFile: ts.SourceFile): boolean {
@@ -148,23 +180,6 @@ function hasDefaultExportInFile(sourceFile: ts.SourceFile): boolean {
   return hasExport;
 }
 
-function hasReactEmailImportInFile(sourceFile: ts.SourceFile): boolean {
-  let hasImport = false;
-
-  function visit(node: ts.Node) {
-    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      const moduleText = node.moduleSpecifier.text;
-      if (moduleText === 'react-email' || moduleText.startsWith('@react-email/')) {
-        hasImport = true;
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return hasImport;
-}
-
 function extractParseDiagnostics(sourceFile: ts.SourceFile): string[] {
   const parseDiagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics?: readonly ts.DiagnosticWithLocation[] })
     .parseDiagnostics;
@@ -175,26 +190,21 @@ function extractParseDiagnostics(sourceFile: ts.SourceFile): string[] {
 function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
   const errors: string[] = [...analysis.parseErrors];
 
-  if (!analysis.metadata.stepId) {
-    errors.push("Missing required export: 'stepId' (must be a string literal)");
-  }
-
   if (!analysis.metadata.workflowId) {
     errors.push("Missing required export: 'workflowId' (must be a string literal)");
   }
 
-  if (!analysis.metadata.type) {
-    errors.push("Missing required export: 'type' (must be a string literal)");
-  } else if (analysis.metadata.type !== 'email') {
-    errors.push(`Invalid type: '${analysis.metadata.type}' (must be 'email')`);
-  }
-
   if (!analysis.hasDefaultExport) {
-    errors.push('Missing default function export');
+    errors.push('Missing default export');
+    return errors;
   }
 
-  if (!analysis.hasReactEmailImport) {
-    errors.push("Missing import from '@react-email'");
+  if (!analysis.metadata.stepId) {
+    errors.push("Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'");
+  }
+
+  if (analysis.metadata.type && analysis.metadata.type !== 'email') {
+    errors.push(`Invalid step type: '${analysis.metadata.type}' (must be 'email')`);
   }
 
   return errors;

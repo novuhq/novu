@@ -15,6 +15,7 @@ export type StepResponseDto = {
   workflowId: string;
   workflowDatabaseId: string;
   issues?: StepIssuesDto;
+  stepResolverHash?: string;
 };
 
 export type StepUpdateDto = StepCreateDto & {

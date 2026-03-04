@@ -36,9 +36,10 @@ function StepEditorContent() {
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
-  const isTranslationsEnabled = useIsTranslationEnabled({
-    isTranslationEnabledOnResource: workflow?.isTranslationEnabled ?? false,
-  });
+  const isTranslationsEnabled =
+    useIsTranslationEnabled({
+      isTranslationEnabledOnResource: workflow?.isTranslationEnabled ?? false,
+    }) && !step.stepResolverHash;
 
   // Fetch translation group to get outdated locales status
   const { data: translationGroup } = useFetchTranslationGroup({
@@ -89,7 +90,7 @@ function StepEditorContent() {
                 <TranslationStatus
                   resourceId={workflow.workflowId}
                   resourceType={LocalizationResourceEnum.WORKFLOW}
-                  isTranslationEnabledOnResource={!!workflow.isTranslationEnabled}
+                  isTranslationEnabled={isTranslationsEnabled}
                   className="h-7 text-xs"
                 />
               </PanelHeader>

@@ -38,7 +38,7 @@ export const LayoutSelect = () => {
       name="layoutId"
       render={({ field }) => {
         return (
-          <FormItem className="w-full">
+          <FormItem className="w-auto">
             <FormControl>
               <Tooltip>
                 <TooltipTrigger disabled={layoutsSortedByDefault?.length === 0}>

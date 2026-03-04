@@ -8,6 +8,7 @@ import { PushPreview } from '@/components/workflow-editor/steps/push/push-previe
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
+import { ReactEmailPreviewPlaceholder } from './previews/react-email-preview-placeholder';
 
 const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   return (
@@ -34,13 +35,20 @@ export function StepPreviewFactory() {
     isPreviewPending: isInitialLoad,
   };
 
-  const isStepResolver = typeof controlValues?.stepResolverHash === 'string';
+  const isStepResolver = typeof step.stepResolverHash === 'string';
 
   const mobilePreviewDescription =
     'This preview shows how your message will appear on mobile. Actual rendering may vary by device.';
 
   switch (step.type) {
-    case StepTypeEnum.EMAIL:
+    case StepTypeEnum.EMAIL: {
+      const isReactEmailUnpublished =
+        controlValues?.rendererType === 'react-email' && controlValues?.editorType === 'html' && !step.stepResolverHash;
+
+      if (isReactEmailUnpublished) {
+        return <ReactEmailPreviewPlaceholder />;
+      }
+
       return (
         <EmailCorePreview
           {...commonProps}
@@ -49,6 +57,7 @@ export function StepPreviewFactory() {
           isStepResolver={isStepResolver}
         />
       );
+    }
 
     case StepTypeEnum.IN_APP:
       return <InboxPreview {...commonProps} />;

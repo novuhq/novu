@@ -78,10 +78,13 @@ describe('step-discovery', () => {
   });
 
   it.each([
-    ['stepId', { includeStepId: false }, "Missing required export: 'stepId' (must be a string literal)"],
     ['workflowId', { includeWorkflowId: false }, "Missing required export: 'workflowId' (must be a string literal)"],
-    ['type', { includeType: false }, "Missing required export: 'type' (must be a string literal)"],
-  ])('detects missing %s export', async (_name, options, expectedError) => {
+    [
+      'stepId',
+      { includeStepId: false },
+      "Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'",
+    ],
+  ])('detects missing %s', async (_name, options, expectedError) => {
     writeStepFile('missing-required.step.tsx', createStepFileContent(options));
 
     const result = await discoverStepFiles(tempDir);
@@ -92,7 +95,7 @@ describe('step-discovery', () => {
     expect(result.errors[0].errors).toContain(expectedError);
   });
 
-  it('detects invalid type export', async () => {
+  it('detects invalid step type', async () => {
     writeStepFile('invalid-type.step.tsx', createStepFileContent({ type: 'sms' }));
 
     const result = await discoverStepFiles(tempDir);
@@ -109,17 +112,7 @@ describe('step-discovery', () => {
 
     expect(result.valid).toBe(false);
     expect(result.steps).toHaveLength(0);
-    expect(result.errors[0].errors.some((error) => error.includes('default function'))).toBe(true);
-  });
-
-  it('detects missing react-email import', async () => {
-    writeStepFile('missing-import.step.tsx', createStepFileContent({ includeReactEmailImport: false }));
-
-    const result = await discoverStepFiles(tempDir);
-
-    expect(result.valid).toBe(false);
-    expect(result.steps).toHaveLength(0);
-    expect(result.errors[0].errors.some((error) => error.includes('@react-email'))).toBe(true);
+    expect(result.errors[0].errors.some((error) => error.includes('default export'))).toBe(true);
   });
 
   it('allows duplicate step IDs across different workflows', async () => {
@@ -191,9 +184,7 @@ describe('step-discovery', () => {
     type = 'email',
     includeStepId = true,
     includeWorkflowId = true,
-    includeType = true,
     includeDefaultExport = true,
-    includeReactEmailImport = true,
     useJsx = true,
   }: {
     stepId?: string;
@@ -201,16 +192,13 @@ describe('step-discovery', () => {
     type?: string;
     includeStepId?: boolean;
     includeWorkflowId?: boolean;
-    includeType?: boolean;
     includeDefaultExport?: boolean;
-    includeReactEmailImport?: boolean;
     useJsx?: boolean;
   } = {}): string {
     const lines: string[] = [];
 
-    if (includeReactEmailImport) {
-      lines.push("import { render } from '@react-email/components';");
-    }
+    lines.push("import { step } from '@novu/framework/step-resolver';");
+    lines.push("import { render } from '@react-email/components';");
 
     if (useJsx) {
       lines.push("import EmailTemplate from '../emails/welcome';");
@@ -218,33 +206,25 @@ describe('step-discovery', () => {
 
     lines.push('');
 
-    if (includeStepId) {
-      lines.push(`export const stepId = '${stepId}';`);
-    }
-
     if (includeWorkflowId) {
       lines.push(`export const workflowId = '${workflowId}';`);
-    }
-
-    if (includeType) {
-      lines.push(`export const type = '${type}';`);
     }
 
     lines.push('');
 
     if (includeDefaultExport) {
-      lines.push('export default async function({ payload }) {');
-      lines.push('  return {');
-      lines.push("    subject: payload?.subject || 'Welcome',");
-
-      if (useJsx) {
-        lines.push('    body: await render(<EmailTemplate {...payload} />),');
+      if (includeStepId) {
+        lines.push(`export default step.${type}('${stepId}', async (controls, { payload }) => ({`);
       } else {
-        lines.push("    body: await render('Hello'),");
+        lines.push(`export default step.${type}(async (controls, { payload }) => ({`);
       }
-
-      lines.push('  };');
-      lines.push('}');
+      lines.push("  subject: payload?.subject || 'Welcome',");
+      if (useJsx) {
+        lines.push('  body: await render(<EmailTemplate {...payload} />),');
+      } else {
+        lines.push("  body: 'Hello',");
+      }
+      lines.push('}));');
     }
 
     lines.push('');

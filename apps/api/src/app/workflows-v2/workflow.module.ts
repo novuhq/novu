@@ -20,6 +20,7 @@ import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.m
 import { ControlValueSanitizerService } from '../shared/services/control-value-sanitizer.service';
 import { SharedModule } from '../shared/shared.module';
 import { CreateVariablesObject } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { StepResolversModule } from '../step-resolvers/step-resolvers.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
@@ -54,6 +55,7 @@ const MODULES = [
   IntegrationModule,
   LayoutsV2Module,
   OutboundWebhooksModule.forRoot(),
+  StepResolversModule,
 ];
 
 @Module({

@@ -136,6 +136,42 @@ describe('sanitize util', () => {
     });
   });
 
+  it('should strip oncontentvisibilityautostatechange attribute', () => {
+    const myTestObject = {
+      input:
+        '<a oncontentvisibilityautostatechange="alert(window.origin)" style="display:block;content-visibility:auto">click</a>',
+    };
+    const result = sanitizeHtmlInObject(myTestObject);
+
+    expect(result.input).not.toContain('oncontentvisibilityautostatechange');
+    expect(result.input).not.toContain('alert');
+    expect(result.input).toContain('<a');
+    expect(result.input).toContain('style="display:block;content-visibility:auto"');
+  });
+
+  it('should strip any attribute starting with "on" as event handlers', () => {
+    const myTestObject = {
+      input: '<div onfutureevent="alert(1)" data-value="safe">Content</div>',
+    };
+    const result = sanitizeHtmlInObject(myTestObject);
+
+    expect(result.input).not.toContain('onfutureevent');
+    expect(result.input).not.toContain('alert');
+    expect(result.input).toContain('data-value="safe"');
+    expect(result.input).toContain('Content');
+  });
+
+  it('should strip onclick from non-img tags', () => {
+    const myTestObject = {
+      input: '<a href="https://example.com" onclick="alert(1)">Link</a>',
+    };
+    const result = sanitizeHtmlInObject(myTestObject);
+
+    expect(result.input).not.toContain('onclick');
+    expect(result.input).toContain('href="https://example.com"');
+    expect(result.input).toContain('Link');
+  });
+
   const removeTagTestCases: TestCase[] = [
     {
       tag: 'script',
