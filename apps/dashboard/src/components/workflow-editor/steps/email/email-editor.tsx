@@ -32,7 +32,8 @@ export const EmailEditor = (props: EmailEditorProps) => {
 
   const isCodeEditor = editorTypeValue === 'html';
   const isReactEmail = isCodeEditor && isStepResolverEnabled && rendererType === 'react-email';
-  const showReactEmailHint = isCodeEditor && isStepResolverEnabled && !isReactEmail;
+  const showReactEmailHint =
+    isCodeEditor && isStepResolverEnabled && !isReactEmail && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const canSwitchToReactEmail = currentEnvironment?.type === EnvironmentTypeEnum.DEV && !readOnly;
 
   const handleSwitchToReactEmail = () => {
