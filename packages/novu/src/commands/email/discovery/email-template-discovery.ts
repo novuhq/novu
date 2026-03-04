@@ -3,10 +3,10 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as ts from 'typescript';
 
-export type DiscoveredTemplate = {
+export interface DiscoveredTemplate {
   filePath: string;
   relativePath: string;
-};
+}
 
 const DEFAULT_IGNORES = [
   '**/node_modules/**',
@@ -106,6 +106,15 @@ async function checkIsReactEmailTemplate(filePath: string): Promise<boolean> {
     }
 
     if (ts.isFunctionDeclaration(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)) {
+      hasDefaultExport = true;
+    }
+
+    if (
+      ts.isExportDeclaration(node) &&
+      node.exportClause &&
+      ts.isNamedExports(node.exportClause) &&
+      node.exportClause.elements.some((e) => e.name.text === 'default')
+    ) {
       hasDefaultExport = true;
     }
 

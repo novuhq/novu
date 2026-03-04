@@ -194,7 +194,7 @@ async function promptForTemplate(templates: DiscoveredTemplate[]): Promise<strin
   if (selectResponse.template !== MANUAL_ENTRY_VALUE) {
     console.log('');
 
-    return selectResponse.template as string;
+    return selectResponse.template;
   }
 
   const textResponse = await prompts(
@@ -215,7 +215,7 @@ async function promptForTemplate(templates: DiscoveredTemplate[]): Promise<strin
 
   console.log('');
 
-  return textResponse.template as string | undefined;
+  return textResponse.template;
 }
 
 function assertTemplateRequiresWorkflowAndStep(
