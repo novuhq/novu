@@ -5,10 +5,11 @@ interface BundlerConfigOptions {
   rootDir: string;
   minify?: boolean;
   aliases?: Record<string, string>;
+  nodePaths?: string[];
 }
 
 export function getBundlerConfig(options: BundlerConfigOptions): BuildOptions {
-  const { rootDir, minify = true, aliases } = options;
+  const { rootDir, minify = true, aliases, nodePaths } = options;
   const normalizedAliases = normalizeAliases(aliases, rootDir);
 
   return {
@@ -23,7 +24,7 @@ export function getBundlerConfig(options: BundlerConfigOptions): BuildOptions {
     conditions: ['worker', 'browser'],
     mainFields: ['browser', 'module', 'main'],
     alias: normalizedAliases,
-    external: ['@novu/framework', '@novu/framework/*'],
+    nodePaths,
     logLevel: 'warning',
     loader: {
       '.ts': 'tsx',

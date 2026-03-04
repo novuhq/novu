@@ -1,3 +1,4 @@
+import * as fsSync from 'fs';
 import * as fs from 'fs/promises';
 import ora from 'ora';
 import * as path from 'path';
@@ -7,6 +8,7 @@ import { bundleRelease, formatBundleSize } from './bundler';
 import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
 import { discoverStepFiles } from './discovery';
+import { generateStepFile } from './templates/step-file';
 import type {
   DeploymentResult,
   DiscoveredStep,
@@ -14,7 +16,7 @@ import type {
   StepResolverManifestStep,
   StepResolverReleaseBundle,
 } from './types';
-import { renderTable, withSpinner } from './utils';
+import { renderTable, StepFilePathResolver, withSpinner } from './utils';
 
 interface PublishOptions {
   secretKey?: string;
@@ -23,6 +25,7 @@ interface PublishOptions {
   out?: string;
   workflow?: string[] | string;
   step?: string[] | string;
+  template?: string;
   bundleOutDir?: string | boolean;
   dryRun?: boolean;
 }
@@ -47,6 +50,13 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
 
     assertNotProductionEnvironment(envInfo);
     assertStepRequiresWorkflow(options.step, options.workflow);
+    assertTemplateRequiresWorkflowAndStep(options.template, options.workflow, options.step);
+
+    if (options.template) {
+      const workflowIds = normalizeRequestedWorkflows(options.workflow);
+      const stepIds = normalizeRequestedWorkflows(options.step);
+      await scaffoldStepFileIfNeeded(options.template, workflowIds[0], stepIds[0], rootDir, config?.outDir);
+    }
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
     const workflowFilteredSteps = selectStepsByWorkflow(discoveredSteps, options.workflow);
@@ -86,6 +96,88 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     console.error('');
     process.exit(1);
   }
+}
+
+function assertTemplateRequiresWorkflowAndStep(
+  templateOption?: string,
+  workflowOption?: string[] | string,
+  stepOption?: string[] | string
+): void {
+  if (!templateOption) return;
+
+  const workflows = normalizeRequestedWorkflows(workflowOption);
+  const steps = normalizeRequestedWorkflows(stepOption);
+
+  if (workflows.length !== 1) {
+    console.error('');
+    console.error(red('❌ --template requires exactly one --workflow'));
+    console.error('');
+    console.error('Example:');
+    console.error(
+      '  npx novu email publish --workflow=onboarding --step=welcome-email --template=./emails/welcome.tsx'
+    );
+    console.error('');
+    process.exit(1);
+  }
+
+  if (steps.length !== 1) {
+    console.error('');
+    console.error(red('❌ --template requires exactly one --step'));
+    console.error('');
+    console.error('Example:');
+    console.error(
+      '  npx novu email publish --workflow=onboarding --step=welcome-email --template=./emails/welcome.tsx'
+    );
+    console.error('');
+    process.exit(1);
+  }
+}
+
+async function scaffoldStepFileIfNeeded(
+  templatePath: string,
+  workflowId: string,
+  stepId: string,
+  rootDir: string,
+  configOutDir?: string
+): Promise<void> {
+  const outDir = configOutDir || './novu';
+  const outDirPath = path.resolve(rootDir, outDir);
+  const pathResolver = new StepFilePathResolver(rootDir, outDirPath);
+  const stepFilePath = pathResolver.getStepFilePath(workflowId, stepId);
+
+  if (fsSync.existsSync(stepFilePath)) {
+    const relPath = path.relative(rootDir, stepFilePath);
+    console.log(yellow(`ℹ  ${relPath} already exists — --template flag ignored`));
+    console.log('');
+
+    return;
+  }
+
+  const templateAbsPath = path.resolve(rootDir, templatePath);
+  if (!fsSync.existsSync(templateAbsPath)) {
+    console.error('');
+    console.error(red(`❌ Template not found: ${templatePath}`));
+    console.error('');
+    console.error(`  Resolved to: ${templateAbsPath}`);
+    console.error('  Make sure the path is relative to your project root.');
+    console.error('');
+    process.exit(1);
+  }
+
+  const workflowDir = pathResolver.getWorkflowDir(workflowId);
+  fsSync.mkdirSync(workflowDir, { recursive: true });
+
+  const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
+  const stepFileContent = generateStepFile(stepId, workflowId, templateImportPath, { template: templatePath });
+
+  fsSync.writeFileSync(stepFilePath, stepFileContent, 'utf8');
+
+  const relPath = path.relative(rootDir, stepFilePath);
+  console.log(`   ${green('✓')} Created ${relPath}`);
+  console.log('');
+  console.log(`   ${yellow('ℹ')}  For TypeScript types in your editor:`);
+  console.log(`      npm install --save-dev @novu/framework`);
+  console.log('');
 }
 
 function assertNotProductionEnvironment(envInfo: EnvironmentInfo): void {

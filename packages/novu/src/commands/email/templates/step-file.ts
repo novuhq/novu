@@ -1,4 +1,7 @@
-import type { EmailStepConfig } from '../config/schema';
+type EmailStepConfig = {
+  template: string;
+  subject?: string;
+};
 
 function escapeString(value: string): string {
   return value

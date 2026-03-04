@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { EmailStepConfig } from '../config/schema';
 import { generateStepFile } from './step-file';
 
 describe('generateStepFile', () => {
   const stepId = 'welcome-email';
   const workflowId = 'onboarding';
-  const baseConfig: EmailStepConfig = {
+  const baseConfig = {
     template: 'emails/welcome.tsx',
   };
 
@@ -15,7 +14,7 @@ describe('generateStepFile', () => {
   });
 
   it('should match snapshot with subject', () => {
-    const config: EmailStepConfig = {
+    const config = {
       ...baseConfig,
       subject: 'Welcome to Acme!',
     };
