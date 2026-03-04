@@ -3,12 +3,14 @@ import * as fs from 'fs/promises';
 import ora from 'ora';
 import * as path from 'path';
 import { green, red, yellow } from 'picocolors';
+import prompts from 'prompts';
 import type { RendererConflictStep } from './api';
 import { RendererConflictError, StepResolverClient } from './api';
 import { bundleRelease, formatBundleSize } from './bundler';
 import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
-import { discoverStepFiles } from './discovery';
+import type { DiscoveredTemplate } from './discovery';
+import { discoverEmailTemplates, discoverStepFiles } from './discovery';
 import { generateStepFile } from './templates/step-file';
 import type {
   DeploymentResult,
@@ -53,10 +55,12 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     assertStepRequiresWorkflow(options.step, options.workflow);
     assertTemplateRequiresWorkflowAndStep(options.template, options.workflow, options.step);
 
-    if (options.template) {
+    const templatePath = options.template ?? (await resolveTemplateInteractively(options, rootDir, config?.outDir));
+
+    if (templatePath) {
       const workflowIds = normalizeRequestedWorkflows(options.workflow);
       const stepIds = normalizeRequestedWorkflows(options.step);
-      await scaffoldStepFileIfNeeded(options.template, workflowIds[0], stepIds[0], rootDir, config?.outDir);
+      await scaffoldStepFileIfNeeded(templatePath, workflowIds[0], stepIds[0], rootDir, config?.outDir);
     }
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
@@ -105,6 +109,113 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     console.error('');
     process.exit(1);
   }
+}
+
+async function resolveTemplateInteractively(
+  options: PublishOptions,
+  rootDir: string,
+  configOutDir?: string
+): Promise<string | undefined> {
+  const workflowIds = normalizeRequestedWorkflows(options.workflow);
+  const stepIds = normalizeRequestedWorkflows(options.step);
+
+  if (workflowIds.length !== 1 || stepIds.length !== 1) {
+    return undefined;
+  }
+
+  const outDir = configOutDir || './novu';
+  const outDirPath = path.resolve(rootDir, outDir);
+  const pathResolver = new StepFilePathResolver(rootDir, outDirPath);
+  const stepFilePath = pathResolver.getStepFilePath(workflowIds[0], stepIds[0]);
+
+  if (fsSync.existsSync(stepFilePath)) {
+    return undefined;
+  }
+
+  if (!process.stdout.isTTY) {
+    console.log(yellow('ℹ  No --template provided. Use --template=<path> to scaffold a step file.'));
+    console.log('');
+
+    return undefined;
+  }
+
+  const templates = await withSpinner('Discovering React Email templates...', () => discoverEmailTemplates(rootDir), {
+    successMessage: 'Template discovery complete',
+    failMessage: 'Template discovery failed',
+  });
+
+  if (templates.length === 0) {
+    console.log(yellow('ℹ  No React Email templates found in this project.'));
+    console.log('');
+    console.log(
+      `   Templates must import from ${yellow('@react-email/components')}, use JSX, and have a default export.`
+    );
+    console.log('');
+    console.log(`   To specify a template path manually, re-run with:`);
+    console.log(
+      `   npx novu email publish --workflow=${workflowIds[0]} --step=${stepIds[0]} --template=<path-to-template>`
+    );
+    console.log('');
+
+    return undefined;
+  }
+
+  return promptForTemplate(templates);
+}
+
+const MANUAL_ENTRY_VALUE = '__manual__';
+
+async function promptForTemplate(templates: DiscoveredTemplate[]): Promise<string | undefined> {
+  console.log('');
+
+  const selectResponse = await prompts(
+    {
+      type: 'select',
+      name: 'template',
+      message: 'Select a React Email template for this step',
+      choices: [
+        ...templates.map((t) => ({ title: t.relativePath, value: t.relativePath })),
+        { title: 'Enter path manually...', value: MANUAL_ENTRY_VALUE },
+      ],
+    },
+    {
+      onCancel: () => {
+        console.log('');
+        console.log(yellow('ℹ  Template selection cancelled. Step file will not be scaffolded.'));
+        console.log('');
+      },
+    }
+  );
+
+  if (!selectResponse.template) {
+    return undefined;
+  }
+
+  if (selectResponse.template !== MANUAL_ENTRY_VALUE) {
+    console.log('');
+
+    return selectResponse.template as string;
+  }
+
+  const textResponse = await prompts(
+    {
+      type: 'text',
+      name: 'template',
+      message: 'Template path (relative to project root)',
+      initial: './emails/your-template.tsx',
+    },
+    {
+      onCancel: () => {
+        console.log('');
+        console.log(yellow('ℹ  Template selection cancelled. Step file will not be scaffolded.'));
+        console.log('');
+      },
+    }
+  );
+
+  console.log('');
+
+  return textResponse.template as string | undefined;
 }
 
 function assertTemplateRequiresWorkflowAndStep(
