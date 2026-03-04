@@ -82,7 +82,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
     controls: { schema: Schema.Types.Mixed, uiSchema: Schema.Types.Mixed },
     output: { schema: Schema.Types.Mixed },
     code: Schema.Types.String,
-    stepResolverHash: { type: Schema.Types.String, default: null },
+    stepResolverHash: { type: Schema.Types.String },
   },
   schemaOptions
 );

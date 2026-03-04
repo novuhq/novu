@@ -12,8 +12,10 @@ export class DisconnectStepResolverUsecase {
     await this.messageTemplateRepository.update(
       { _id: command.stepInternalId, _environmentId: command.user.environmentId },
       {
+        $unset: {
+          stepResolverHash: 1,
+        },
         $set: {
-          stepResolverHash: null,
           'controls.schema': emailControlSchema,
           'controls.uiSchema': emailUiSchema,
         },

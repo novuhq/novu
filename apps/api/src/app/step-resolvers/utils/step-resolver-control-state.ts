@@ -51,14 +51,11 @@ const FIELD_REMOVAL_KEYWORDS = new Set([
   'not',
 ]);
 
-export function isStepResolverActive(stepResolverHash?: string | null): boolean {
+export function isStepResolverActive(stepResolverHash?: string): boolean {
   return typeof stepResolverHash === 'string' && stepResolverHash.length > 0;
 }
 
-export function isStepResolverEmailStep(
-  stepType: StepTypeEnum | null | undefined,
-  stepResolverHash?: string | null
-): boolean {
+export function isStepResolverEmailStep(stepType: StepTypeEnum | null | undefined, stepResolverHash?: string): boolean {
   return stepType === StepTypeEnum.EMAIL && isStepResolverActive(stepResolverHash);
 }
 
