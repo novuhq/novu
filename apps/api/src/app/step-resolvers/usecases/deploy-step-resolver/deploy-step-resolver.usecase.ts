@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
@@ -62,6 +62,9 @@ export class DeployStepResolverUsecase {
     this.assertBundleSize(command.bundleBuffer);
 
     const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
+
+    this.assertNoRendererConflicts(resolvedManifestSteps);
+
     const stepResolverHash = this.generateStepResolverHash(command.bundleBuffer);
     const workerId = generateStepResolverWorkerId(command.user.organizationId, stepResolverHash);
 
@@ -268,6 +271,25 @@ export class DeployStepResolverUsecase {
     }
 
     return output;
+  }
+
+  private assertNoRendererConflicts(resolvedSteps: ResolvedManifestStep[]): void {
+    const conflictingSteps = resolvedSteps.filter((step) => {
+      if (!step.existingControlValues) return false;
+
+      const controls = step.existingControlValues.controls;
+      if (!isPlainObject(controls)) return false;
+
+      return controls.rendererType !== 'react-email';
+    });
+
+    if (conflictingSteps.length === 0) return;
+
+    throw new ConflictException({
+      message: `Publishing blocked: ${conflictingSteps.length} step(s) are not using React Email. To protect existing email content from being overwritten, switch each affected step to React Email in the Novu dashboard before publishing.`,
+      errorCode: 'STEP_RENDERER_CONFLICT',
+      conflictingSteps: conflictingSteps.map((s) => ({ workflowId: s.workflowId, stepId: s.stepId })),
+    });
   }
 
   private assertBundleSize(bundleBuffer: Buffer): void {

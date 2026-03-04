@@ -3,7 +3,8 @@ import * as fs from 'fs/promises';
 import ora from 'ora';
 import * as path from 'path';
 import { green, red, yellow } from 'picocolors';
-import { StepResolverClient } from './api';
+import type { RendererConflictStep } from './api';
+import { RendererConflictError, StepResolverClient } from './api';
 import { bundleRelease, formatBundleSize } from './bundler';
 import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
@@ -88,8 +89,16 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
       return;
     }
 
-    const deployment = await deployRelease(client, releaseBundle, manifestSteps);
-    printSuccessSummary(deployment, selectedSteps);
+    try {
+      const deployment = await deployRelease(client, releaseBundle, manifestSteps);
+      printSuccessSummary(deployment, selectedSteps);
+    } catch (error) {
+      if (error instanceof RendererConflictError) {
+        printRendererConflictError(error);
+        return;
+      }
+      throw error;
+    }
   } catch (error) {
     console.error('');
     console.error(red('❌ Publish failed:'), error instanceof Error ? error.message : error);
@@ -465,6 +474,28 @@ async function deployRelease(
     deploySpinner.fail('Publishing failed');
     throw error;
   }
+}
+
+function printRendererConflictError(error: RendererConflictError): void {
+  const stepList = error.conflictingSteps
+    .map((s: RendererConflictStep) => `    • ${s.stepId} (workflow: ${s.workflowId})`)
+    .join('\n');
+
+  const isPlural = error.conflictingSteps.length > 1;
+  const stepWord = isPlural ? 'steps' : 'step';
+
+  console.error('');
+  console.error(red(`❌ ${isPlural ? 'Some steps are' : 'This step is'} not set to React Email`));
+  console.error('');
+  console.error(`   Affected ${stepWord}:`);
+  console.error(stepList);
+  console.error('');
+  console.error(`   Publishing is blocked to avoid accidentally overwriting existing email content.`);
+  console.error('');
+  console.error('   To fix this, open each affected step in the Novu dashboard,');
+  console.error('   go to the code editor, and select React Email.');
+  console.error('');
+  process.exit(1);
 }
 
 function printDryRunSummary(
