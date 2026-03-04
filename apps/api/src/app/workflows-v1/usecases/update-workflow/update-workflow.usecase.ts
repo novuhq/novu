@@ -42,6 +42,7 @@ import {
   buildWorkflowPreferences,
   ChangeEntityTypeEnum,
   ControlValuesLevelEnum,
+  DEFAULT_WORKFLOW_PREFERENCES,
   isBridgeWorkflow,
   PreferencesTypeEnum,
   ResourceOriginEnum,
@@ -80,15 +81,15 @@ export class UpdateWorkflow {
   async execute(command: UpdateWorkflowCommand): Promise<WorkflowWithPreferencesResponseDto> {
     await this.validatePayload(command);
 
-    const existingTemplate =
-      command.existingWorkflow ??
-      (await this.getWorkflowWithPreferencesUseCase.execute(
-        GetWorkflowWithPreferencesCommand.create({
-          workflowIdOrInternalId: command.id,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        })
-      ));
+    const existingTemplate: WorkflowWithPreferencesResponseDto = command.existingWorkflow
+      ? { ...command.existingWorkflow, userPreferences: null, defaultPreferences: DEFAULT_WORKFLOW_PREFERENCES }
+      : await this.getWorkflowWithPreferencesUseCase.execute(
+          GetWorkflowWithPreferencesCommand.create({
+            workflowIdOrInternalId: command.id,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+          })
+        );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
     let updatePayload: Partial<WorkflowWithPreferencesResponseDto> = {};
