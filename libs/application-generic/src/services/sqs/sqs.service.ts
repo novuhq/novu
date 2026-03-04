@@ -19,7 +19,7 @@ export class SqsService {
     if (hasConfiguredQueues) {
       this.initializeClient();
       this.initializeProducers();
-      Logger.log({ configuredTopics: Array.from(this.producers.keys()) }, 'SQS service initialized', LOG_CONTEXT);
+      Logger.log({ message: 'SQS service initialized', configuredTopics: Array.from(this.producers.keys()) }, LOG_CONTEXT);
     } else {
       this.producers = new Map();
       Logger.log('SQS service initialized with no queues configured', LOG_CONTEXT);
@@ -76,7 +76,7 @@ export class SqsService {
     });
 
     if (missingQueues.length > 0) {
-      Logger.warn({ missingTopics: missingQueues }, 'Missing SQS queue URL configuration', LOG_CONTEXT);
+      Logger.warn({ message: 'Missing SQS queue URL configuration', missingTopics: missingQueues }, LOG_CONTEXT);
     }
   }
 
@@ -130,7 +130,7 @@ export class SqsService {
     // sqs-producer will automatically batch messages (default: 10 per batch)
     await producer.send(messages);
 
-    Logger.debug({ topic, count: messages.length }, 'Sent bulk messages to SQS', LOG_CONTEXT);
+    Logger.debug({ message: 'Sent bulk messages to SQS', topic, count: messages.length }, LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {

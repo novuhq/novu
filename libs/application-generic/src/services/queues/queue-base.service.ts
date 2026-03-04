@@ -137,6 +137,11 @@ export class QueueBaseService implements OnModuleDestroy {
       );
     }
 
+    /*
+     * If the organization is not found, we return null to indicate that the job should be skipped.
+     * There is no point in trying to route the job to SQS or BullMQ if the organization is not found.
+     */
+
     if (!organization) {
       Logger.warn({ organizationId, topic: this.topic }, 'Organization not found, skipping job', LOG_CONTEXT);
 
