@@ -88,7 +88,7 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
 
   private shouldSkipProcessing(data: any, jobId: string): boolean {
     if (data?.skipProcessing) {
-      Logger.log({ topic: this.topic, jobId }, 'Skipping job - marked for skip during migration', LOG_CONTEXT);
+      Logger.debug({ topic: this.topic, jobId }, 'Skipping job - marked for skip during migration', LOG_CONTEXT);
 
       return true;
     }

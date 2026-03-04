@@ -265,14 +265,14 @@ export class QueueBaseService implements OnModuleDestroy {
 
     if (messages.length === 1) {
       await this.sqsService.send(this.topic, messages[0]);
-      Logger.log(
+      Logger.debug(
         { topic: this.topic, jobName: jobs[0].name, payloadSizeBytes: this.calculatePayloadSize(jobs[0].data) },
         'Added job to SQS',
         LOG_CONTEXT
       );
     } else {
       await this.sqsService.sendBulk(this.topic, messages);
-      Logger.log({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
+      Logger.debug({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
     }
   }
 
