@@ -87,8 +87,10 @@ export class SyncStepResolverToEnvironmentUsecase {
     await this.messageTemplateRepository.update(
       { _id: targetStep.templateId, _environmentId: targetEnvironmentId },
       {
+        $unset: {
+          stepResolverHash: 1,
+        },
         $set: {
-          stepResolverHash: null,
           'controls.schema': controlSchema,
           'controls.uiSchema': stepTypeToControlSchema[sourceStep.stepType]?.uiSchema,
         },

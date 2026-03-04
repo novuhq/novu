@@ -32,7 +32,7 @@ function buildPublishCommand({
       `  --workflow=${workflowId} \\`,
       `  --step=${stepId} \\`,
       `  --template=./emails/your-template.tsx \\`,
-      `  --secret-key=${maskedKey}`,
+      `  --secret-key=${maskedKey}${apiUrlFlag ? ' \\' : ''}`,
       ...(apiUrlFlag ? [`  ${apiUrlFlag}`] : []),
     ];
 
@@ -120,7 +120,7 @@ export const ReactEmailNotPublished = ({ workflowId, stepId }: ReactEmailNotPubl
     `  --workflow=${workflowId} \\`,
     `  --step=${stepId} \\`,
     `  --template=./emails/your-template.tsx \\`,
-    `  --secret-key=<your-secret-key>`,
+    `  --secret-key=<your-secret-key>${apiUrl ? ' \\' : ''}`,
     ...(apiUrl ? [`  --api-url=${apiUrl}`] : []),
   ].join('\n');
 

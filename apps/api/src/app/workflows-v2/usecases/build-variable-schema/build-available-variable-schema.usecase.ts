@@ -58,6 +58,7 @@ export class BuildVariableSchemaUsecase {
 
       workflowControlValues = controls
         .flatMap((item) => item.controls)
+        .filter(Boolean)
         .flatMap((obj) => Object.values(obj as Record<string, unknown>));
     }
 

@@ -14,7 +14,7 @@ export class StepResolverSourceData {
 
   @IsOptional()
   @IsString()
-  stepResolverHash?: string | null;
+  stepResolverHash?: string;
 
   @IsOptional()
   controlSchema?: Record<string, unknown> | null;
@@ -31,7 +31,7 @@ export class StepResolverTargetData {
 
   @IsOptional()
   @IsString()
-  stepResolverHash?: string | null;
+  stepResolverHash?: string;
 }
 
 export class SyncStepResolverToEnvironmentCommand extends EnvironmentWithUserObjectCommand {
