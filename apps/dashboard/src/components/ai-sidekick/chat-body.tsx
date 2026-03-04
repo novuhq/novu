@@ -6,6 +6,7 @@ import {
   PromptInput,
   PromptInputBody,
   PromptInputFooter,
+  PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
 } from '../ai-elements/prompt-input';
@@ -100,6 +101,14 @@ export const ChatBody = ({
   );
   const isGeneratingOrSubmitted =
     (isGenerating && hasLastUserMessage) || (isGenerating && isLastAssistantMessage && !lastAssistantHasKnownToolCalls);
+  const isSubmitInputDisabled = !inputText.trim() || isGenerating || isSubmitDisabled;
+
+  const onSubmitHandler = (message: PromptInputMessage) => {
+    if (isSubmitInputDisabled) return;
+
+    onSubmit(message.text);
+  };
+
   return (
     <>
       <Conversation className="min-h-0 [&>div:first-child]:overflow-x-hidden">
@@ -173,7 +182,7 @@ export const ChatBody = ({
       </Conversation>
 
       <div className="shrink-0 p-3">
-        <PromptInput onSubmit={(message) => onSubmit(message.text)}>
+        <PromptInput onSubmit={onSubmitHandler}>
           <PromptInputBody>
             <PromptInputTextarea
               onChange={(event) => onInputChange(event.target.value)}
@@ -182,12 +191,7 @@ export const ChatBody = ({
             />
           </PromptInputBody>
           <PromptInputFooter>
-            <PromptInputSubmit
-              disabled={!inputText.trim() || isGenerating || isSubmitDisabled}
-              status={status}
-              onStop={stop}
-              className="ml-auto"
-            />
+            <PromptInputSubmit disabled={isSubmitInputDisabled} status={status} onStop={stop} className="ml-auto" />
           </PromptInputFooter>
         </PromptInput>
       </div>

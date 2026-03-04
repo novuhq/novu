@@ -1,4 +1,5 @@
 import { BroomSparkle } from '../icons/broom-sparkle';
+import { Badge } from '../primitives/badge';
 import { useAiChat } from './ai-chat-context';
 import { ChatBody, ChatBodySkeleton } from './chat-body';
 
@@ -42,6 +43,9 @@ export function NovuCopilotPanel() {
           >
             Novu Copilot
           </span>
+          <Badge variant="lighter" color="gray" className="ml-1">
+            BETA
+          </Badge>
         </div>
       </div>
       {isLoading ? (

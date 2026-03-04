@@ -28,6 +28,8 @@ export type GenerateObjectInput<T extends z.ZodType> = {
 
 type BaseChatModel = ChatAnthropic | ChatOpenAI;
 
+const DEFAULT_MAX_OUTPUT_TOKENS = 16384;
+
 @Injectable()
 export class LlmService {
   private config: LlmConfig;
@@ -46,7 +48,7 @@ export class LlmService {
       provider,
       apiKey,
       model: modelId,
-      maxOutputTokens: parseInt(process.env.AI_LLM_MAX_OUTPUT_TOKENS || '4096', 10),
+      maxOutputTokens: parseInt(process.env.AI_LLM_MAX_OUTPUT_TOKENS || DEFAULT_MAX_OUTPUT_TOKENS.toString(), 10),
       temperature: parseFloat(process.env.AI_LLM_TEMPERATURE || '0'),
       maxRetries: parseInt(process.env.AI_LLM_MAX_RETRIES || '3', 10),
       isReasoning: this.isReasoningModel(modelId),
@@ -69,7 +71,7 @@ export class LlmService {
       return new ChatAnthropic({
         apiKey: config.apiKey,
         model: config.model,
-        maxTokens: config?.maxOutputTokens ?? 4096,
+        maxTokens: config?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
         temperature: config?.temperature,
         maxRetries: config?.maxRetries ?? 3,
       });
@@ -78,10 +80,10 @@ export class LlmService {
     return new ChatOpenAI({
       apiKey: config.apiKey,
       model: config.model,
-      maxTokens: config?.maxOutputTokens ?? 4096,
+      maxTokens: config?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
       ...(!isReasoning ? { temperature: config?.temperature } : {}),
       maxRetries: config?.maxRetries ?? 3,
-      ...(isReasoning ? { reasoning: { effort: 'low', summary: 'auto' } } : {}),
+      ...(isReasoning ? { reasoning: { effort: 'medium' } } : {}),
     });
   }
 

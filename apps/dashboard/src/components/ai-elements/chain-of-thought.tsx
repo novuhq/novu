@@ -104,17 +104,17 @@ export const ChainOfThoughtStep = memo(
   }: ChainOfThoughtStepProps) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
-    const statusStyles = {
-      complete: 'text-muted-foreground',
-      active: 'text-foreground',
-      pending: 'text-muted-foreground/50',
-    };
-
     useEffect(() => {
       if (autoCollapse && status === 'complete') {
         setIsOpen(false);
       }
     }, [autoCollapse, status]);
+
+    const statusStyles = {
+      complete: 'text-muted-foreground',
+      active: 'text-foreground',
+      pending: 'text-muted-foreground/50',
+    };
 
     return (
       <div

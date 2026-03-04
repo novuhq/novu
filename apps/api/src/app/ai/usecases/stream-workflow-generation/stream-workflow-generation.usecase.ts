@@ -4,7 +4,14 @@ import { PinoLogger, ResourceValidatorService } from '@novu/application-generic'
 import { AiChatRepository, AiChatSnapshotRef, SnapshotRepository } from '@novu/dal';
 import { AiResourceTypeEnum, SnapshotSourceTypeEnum } from '@novu/shared';
 import { createUIMessageStream, generateId, UIMessage } from 'ai';
-import { BaseMessage, createAgent, createMiddleware } from 'langchain';
+import {
+  BaseMessage,
+  createAgent,
+  createMiddleware,
+  openAIModerationMiddleware,
+  summarizationMiddleware,
+  toolRetryMiddleware,
+} from 'langchain';
 import { GetEnvironmentTags } from '../../../environments-v2/usecases/get-environment-tags';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
@@ -15,6 +22,7 @@ import { CheckpointerService } from '../../services/checkpointer.service';
 import { LlmService } from '../../services/llm.service';
 import { createWorkflowGenerationTools, DraftWorkflowState } from '../../tools/workflow-generation.tools';
 import { createErrorTransform } from '../../transforms/error-transform';
+import { createReasoningFilterTransform } from '../../transforms/reasoning-filter-transform';
 import { createToolOutputTransform } from '../../transforms/tool-output-transform';
 import { BaseStreamGenerationAgent, StreamGenerationCommand, StreamGenerationContext } from '../../types';
 import { GetChatCommand, GetChatUseCase } from '../get-chat';
@@ -98,8 +106,30 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
       systemPrompt: buildWorkflowAgentSystemPrompt(existingWorkflow),
       checkpointer,
       middleware: [
-        // TODO: create a middleware that will protect from the malicious prompt injection and jailbreak attacks
-        // TODO: use middleware to summarize the messages before the agent starts, to avoid the context window limit
+        // moderation middleware to protect from the malicious prompt injection and jailbreak attacks
+        openAIModerationMiddleware({
+          model: this.llmService.getModel('gpt-4o-mini', 'openai'),
+          checkInput: true,
+          checkOutput: false,
+          checkToolResults: false,
+          exitBehavior: 'error',
+          violationMessage: 'Content flagged as inappropriate.',
+        }),
+        toolRetryMiddleware({
+          maxRetries: 3, // 3 retries = 4 total attempts
+          backoffFactor: 2.0, // Exponential backoff: 1s, 2s, 4s
+          initialDelayMs: 1000, // Start with 1 second delay
+          maxDelayMs: 8000, // Cap at 8 seconds
+          jitter: true, // Add random jitter to avoid thundering herd
+          onFailure: 'return_message', // Return error message to LLM instead of raising
+        }),
+        summarizationMiddleware({
+          model: this.llmService.getModel('gpt-4o', 'openai'),
+          trigger: [
+            { fraction: 0.8 }, // 80% of the model's context size
+          ],
+          keep: { messages: 10 }, // keep the last 10 messages
+        }),
         createMiddleware({
           name: 'WorkflowStepsPersistenceMiddleware',
           wrapToolCall: async (request, handler) => {
@@ -192,13 +222,17 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
           configurable,
           signal: command.signal,
           streamMode: ['values', 'messages', 'custom'],
+          recursionLimit: 200,
           context: {
             logger: this.logger,
           },
         });
 
         await writer.merge(
-          toUIMessageStream(agentStream).pipeThrough(createToolOutputTransform()).pipeThrough(createErrorTransform())
+          toUIMessageStream(agentStream)
+            .pipeThrough(createToolOutputTransform())
+            .pipeThrough(createReasoningFilterTransform())
+            .pipeThrough(createErrorTransform())
         );
       },
     });

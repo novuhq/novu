@@ -1,6 +1,7 @@
 import { AiWorkflowToolsEnum } from '@novu/shared';
 import { DynamicToolUIPart, UIMessage } from 'ai';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import {
   RiAddBoxLine,
   RiArrowRightSLine,
@@ -21,6 +22,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../primitiv
 import { Skeleton } from '../primitives/skeleton';
 import { Tag } from '../primitives/tag';
 import { StyledMessageResponse } from './chat-message-response';
+import { unwrapToolResult } from './message-utils';
 
 const toolNameToAction: Record<string, 'add' | 'edit' | 'remove'> = {
   [AiWorkflowToolsEnum.ADD_STEP]: 'add',
@@ -36,47 +38,6 @@ function slugify(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '');
-}
-
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]+`/g, (m) => m.slice(1, -1))
-    .replace(/\*\*([^*]+)\*\*|__([^_]+)__/g, '$1$2')
-    .replace(/\*([^*]+)\*|_([^_]+)_/g, '$1$2')
-    .replace(/^#+\s*/gm, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/^>\s*/gm, '')
-    .replace(/~~([^~]+)~~/g, '$1')
-    .trim();
-}
-
-function getStepLabel(text: string, maxLength = 30): string {
-  const rawFirstLine = text.split(/\r?\n/)[0].trim();
-  if (!rawFirstLine) return 'Reasoning...';
-
-  const plainText = stripMarkdown(rawFirstLine);
-  const firstLine = plainText || rawFirstLine;
-  if (!firstLine) return 'Reasoning...';
-
-  if (firstLine.length <= maxLength) return firstLine;
-  const truncated = firstLine.slice(0, maxLength);
-  const lastSpace = truncated.lastIndexOf(' ');
-  const cut = lastSpace > maxLength / 2 ? lastSpace : maxLength;
-
-  return `${truncated.slice(0, cut).trim()}`;
-}
-
-function splitStepText(text: string): { label: string; body: string } {
-  const lines = text.split(/\r?\n/);
-  const firstLine = lines[0]?.trim() ?? '';
-  const rest = lines.slice(1).join('\n').trim();
-
-  return {
-    label: getStepLabel(text),
-    body: rest || firstLine,
-  };
 }
 
 const CheckCircleIcon = (props: React.ComponentPropsWithoutRef<typeof RiCheckLine>) => {
@@ -322,6 +283,49 @@ const toolNameToCompleteLabel = {
   [AiWorkflowToolsEnum.MOVE_STEP]: 'Moved Workflow Step',
 };
 
+const STREAMING_MAX_LINES = 4;
+const STREAMING_LINE_HEIGHT_REM = 1.25;
+const STREAMING_MAX_HEIGHT = `${STREAMING_MAX_LINES * STREAMING_LINE_HEIGHT_REM}rem`;
+
+function ScrollableReasoningBody({ body, isStreaming }: { body: string; isStreaming: boolean }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [clamped, setClamped] = useState(isStreaming);
+
+  useEffect(() => {
+    if (isStreaming) {
+      setClamped(true);
+
+      return;
+    }
+
+    const id = setTimeout(() => setClamped(false), 400);
+
+    return () => clearTimeout(id);
+  }, [isStreaming]);
+
+  useEffect(() => {
+    if (isStreaming && scrollRef.current && body.length > 0) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [body, isStreaming]);
+
+  const showClamped = isStreaming || clamped;
+
+  return (
+    <div
+      ref={scrollRef}
+      className={cn(
+        'mt-0.5 overflow-hidden',
+        showClamped &&
+          'mask-[linear-gradient(transparent_0%,black_30%)] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]'
+      )}
+      style={showClamped ? { maxHeight: STREAMING_MAX_HEIGHT } : undefined}
+    >
+      <StyledMessageResponse>{body}</StyledMessageResponse>
+    </div>
+  );
+}
+
 type ChatChainOfThoughtReasoningProps = {
   message: UIMessage;
 };
@@ -333,39 +337,42 @@ export function ChatChainOfThought({ message }: ChatChainOfThoughtReasoningProps
     <ChainOfThought open className="text-text-soft">
       <ChainOfThoughtContent className="mb-2">
         <div className="flex flex-col gap-3">
-          {parts.map((item, index) => {
-            const isReasoning =
-              item.type === 'reasoning' && 'text' in item && typeof (item as { text: string }).text === 'string';
-            if (isReasoning) {
-              const { label, body } = splitStepText(item.text);
-              const isStreaming = item.state === 'streaming';
-              return (
-                <ChainOfThoughtStep
-                  key={`${item.type}-${index}`}
-                  icon={isStreaming ? BroomIcon : CheckCircleIcon}
-                  label={
-                    isStreaming ? (
-                      <Shimmer className={cn('text-label-xs font-medium')}>{label}</Shimmer>
-                    ) : (
-                      <span className="text-label-xs font-medium text-text-soft">{label}</span>
-                    )
-                  }
-                  collapsible
-                  autoCollapse
-                  status={isStreaming ? 'active' : 'complete'}
-                  defaultOpen={isStreaming}
-                >
-                  <StyledMessageResponse className="mt-0.5">{body}</StyledMessageResponse>
-                </ChainOfThoughtStep>
-              );
-            } else if (item.type.startsWith('dynamic-tool')) {
+          {parts.map((item) => {
+            if (item.type.startsWith('dynamic-tool')) {
               const tool = item as DynamicToolUIPart;
+
+              if (tool.toolName === AiWorkflowToolsEnum.REASONING) {
+                const input = tool.input as { label?: string; thought?: string } | undefined;
+                const label = input?.label ?? 'Reasoning...';
+                const body = input?.thought ?? '';
+                const isStreaming = tool.state !== 'output-available';
+
+                return (
+                  <ChainOfThoughtStep
+                    key={`${tool.toolCallId}-${tool.toolName}`}
+                    icon={isStreaming ? BroomIcon : CheckCircleIcon}
+                    label={
+                      isStreaming ? (
+                        <Shimmer className={cn('text-label-xs font-medium')}>{label}</Shimmer>
+                      ) : (
+                        <span className="text-label-xs font-medium text-text-soft">{label}</span>
+                      )
+                    }
+                    collapsible
+                    autoCollapse
+                    status={isStreaming ? 'active' : 'complete'}
+                    defaultOpen={isStreaming}
+                  >
+                    <ScrollableReasoningBody body={body} isStreaming={isStreaming} />
+                  </ChainOfThoughtStep>
+                );
+              }
 
               if (tool.toolName === AiWorkflowToolsEnum.SET_WORKFLOW_METADATA) {
                 return (
                   <WorkflowInitializedSection
                     key={`${tool.toolCallId}-${tool.toolName}`}
-                    output={tool.output as WorkflowMetadataOutput | undefined}
+                    output={unwrapToolResult<WorkflowMetadataOutput>(tool.output)}
                     isStreaming={tool.state !== 'output-available'}
                   />
                 );
@@ -384,7 +391,7 @@ export function ChatChainOfThought({ message }: ChatChainOfThoughtReasoningProps
                 return (
                   <StepTool
                     key={`${tool.toolCallId}-${tool.toolName}`}
-                    stepOutput={tool.output as { stepId: string; name: string; type: string } | undefined}
+                    stepOutput={unwrapToolResult<{ stepId: string; name: string; type: string }>(tool.output)}
                     isStreaming={tool.state !== 'output-available'}
                     labelStreaming={streamingLabel}
                     labelComplete={completeLabel}
