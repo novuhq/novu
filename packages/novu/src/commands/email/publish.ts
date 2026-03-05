@@ -55,12 +55,13 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     assertStepRequiresWorkflow(options.step, options.workflow);
     assertTemplateRequiresWorkflowAndStep(options.template, options.workflow, options.step);
 
-    const templatePath = options.template ?? (await resolveTemplateInteractively(options, rootDir, config?.outDir));
+    const effectiveOutDir = options.out || config?.outDir;
+    const templatePath = options.template ?? (await resolveTemplateInteractively(options, rootDir, effectiveOutDir));
 
     if (templatePath) {
       const workflowIds = normalizeRequestedWorkflows(options.workflow);
       const stepIds = normalizeRequestedWorkflows(options.step);
-      await scaffoldStepFileIfNeeded(templatePath, workflowIds[0], stepIds[0], rootDir, config?.outDir);
+      await scaffoldStepFileIfNeeded(templatePath, workflowIds[0], stepIds[0], rootDir, effectiveOutDir);
     }
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
@@ -215,7 +216,12 @@ async function promptForTemplate(templates: DiscoveredTemplate[]): Promise<strin
 
   console.log('');
 
-  return textResponse.template;
+  const manualTemplatePath = textResponse.template?.trim();
+  if (!manualTemplatePath) {
+    return undefined;
+  }
+
+  return manualTemplatePath;
 }
 
 function assertTemplateRequiresWorkflowAndStep(
