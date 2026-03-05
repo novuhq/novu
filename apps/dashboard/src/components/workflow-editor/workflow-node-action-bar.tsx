@@ -19,6 +19,7 @@ type WorkflowNodeActionBarProps = {
   isVisible: boolean;
   stepType?: StepTypeEnum;
   stepName: string;
+  providerId?: string;
   onRemoveClick: () => void;
   onEditContentClick: () => void;
   onCopyClick: () => void;
@@ -29,6 +30,7 @@ export const WorkflowNodeActionBar = ({
   isVisible,
   stepType,
   stepName,
+  providerId,
   onRemoveClick,
   onEditContentClick,
   onCopyClick,
@@ -36,7 +38,8 @@ export const WorkflowNodeActionBar = ({
 }: WorkflowNodeActionBarProps) => {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isChannelStep = stepType && CHANNEL_STEP_TYPES.includes(stepType);
+  const isStepWithEditor =
+    (stepType && CHANNEL_STEP_TYPES.includes(stepType)) || (stepType === StepTypeEnum.CUSTOM && !!providerId);
 
   const handleCopyConfirm = () => {
     onCopyClick();
@@ -125,7 +128,7 @@ export const WorkflowNodeActionBar = ({
                 },
               }}
             >
-              {isChannelStep && (
+              {isStepWithEditor && (
                 <>
                   <Button
                     size="2xs"
@@ -171,7 +174,7 @@ export const WorkflowNodeActionBar = ({
                         variant="secondary"
                         mode="ghost"
                         className={`text-text-sub pointer-events-auto gap-1.5 px-2 py-1 text-xs ${
-                          isChannelStep ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
+                          isStepWithEditor ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
                         }`}
                         onClick={(e) => {
                           e.preventDefault();

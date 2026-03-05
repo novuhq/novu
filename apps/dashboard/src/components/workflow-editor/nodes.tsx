@@ -181,6 +181,7 @@ const StepNode = (props: StepNodeProps) => {
           isVisible={areActionsVisible}
           stepType={type}
           stepName={data.name || 'Untitled Step'}
+          providerId={data.providerId}
           onRemoveClick={handleRemoveStep}
           onEditContentClick={handleEditContent}
           onCopyClick={handleCopyStep}
