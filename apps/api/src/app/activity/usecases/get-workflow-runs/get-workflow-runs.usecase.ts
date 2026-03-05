@@ -72,12 +72,12 @@ export class GetWorkflowRuns {
   }
 
   async execute(command: GetWorkflowRunsCommand): Promise<GetWorkflowRunsResponseDto> {
-    this.logger.debug('Getting workflow runs with compound cursor-based pagination', {
+    this.logger.debug({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       limit: command.limit,
       cursor: command.cursor ? 'present' : 'not-present',
-    });
+    }, 'Getting workflow runs with compound cursor-based pagination');
 
     try {
       const queryBuilder = new QueryBuilder<WorkflowRun>({
@@ -189,10 +189,10 @@ export class GetWorkflowRuns {
       if (command.cursor) {
         try {
           cursor = this.decodeCursor(command.cursor);
-          this.logger.debug('Using compound cursor pagination', {
+          this.logger.debug({
             timestamp: cursor.created_at,
             workflowRunId: cursor.workflow_run_id,
-          });
+          }, 'Using compound cursor pagination');
         } catch (error) {
           throw new BadRequestException('Invalid cursor format');
         }
@@ -246,11 +246,11 @@ export class GetWorkflowRuns {
         previous: previousCursor,
       };
     } catch (error) {
-      this.logger.error('Failed to get workflow runs', {
+      this.logger.error({
         error: error.message,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      });
+      }, 'Failed to get workflow runs');
       throw error;
     }
   }
@@ -305,10 +305,10 @@ export class GetWorkflowRuns {
         workflow_run_id: lastItemOfPreviousPage.workflow_run_id,
       });
     } catch (error) {
-      this.logger.error('Failed to generate previous cursor', {
+      this.logger.error({
         error: error.message,
         currentCursor,
-      });
+      }, 'Failed to generate previous cursor');
 
       return null;
     }
@@ -388,11 +388,11 @@ export class GetWorkflowRuns {
 
       return stepRunsByCompositeKey;
     } catch (error) {
-      this.logger.warn('Failed to get step runs for workflow runs', {
+      this.logger.warn({
         error: error.message,
         transactionIds: workflowRuns.map((run) => run.transaction_id),
         subscriberIds: workflowRuns.map((run) => run.subscriber_id),
-      });
+      }, 'Failed to get step runs for workflow runs');
 
       return new Map();
     }
