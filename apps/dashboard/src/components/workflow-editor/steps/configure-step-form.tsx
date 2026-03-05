@@ -105,9 +105,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.THROTTLE,
   ];
 
-  const isIntegrationBackedCustomStep = step.type === StepTypeEnum.CUSTOM && !!step.providerId;
+  const isDestinationCustomStep = step.type === StepTypeEnum.CUSTOM && !!step.providerId;
   const integrationProviderConfig = step.providerId ? ACTION_PROVIDER_CONFIGS[step.providerId] : null;
-  const isSupportedStep = supportedStepTypes.includes(step.type) || isIntegrationBackedCustomStep;
+  const isSupportedStep = supportedStepTypes.includes(step.type) || isDestinationCustomStep;
   const isReadOnly =
     !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL || environment.type !== EnvironmentTypeEnum.DEV;
 
@@ -364,13 +364,13 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          {!isSupportedStep && !isIntegrationBackedCustomStep && (
+          {!isSupportedStep && !isDestinationCustomStep && (
             <SidebarContent>
               <SdkBanner />
             </SidebarContent>
           )}
 
-          {isIntegrationBackedCustomStep && (
+          {isDestinationCustomStep && (
             <SidebarContent>
               <Link to="./editor" relative="path" state={{ stepType: step.type }}>
                 <Button
@@ -383,6 +383,10 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                   <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
                 </Button>
               </Link>
+
+              {environment.type === EnvironmentTypeEnum.DEV && (
+                <SkipConditionsButton origin={workflow.origin} step={step} />
+              )}
             </SidebarContent>
           )}
 
