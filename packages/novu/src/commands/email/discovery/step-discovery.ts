@@ -114,7 +114,7 @@ function deriveWorkflowId(relativePath: string): string | undefined {
     return undefined;
   }
 
-  return parentDir.split(path.sep)[0];
+  return parentDir.split('/')[0];
 }
 
 // Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)), `as` casts, and `satisfies` expressions
