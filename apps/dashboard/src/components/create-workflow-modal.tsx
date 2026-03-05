@@ -141,7 +141,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
   const { createAiChat, isPending: isCreatingAiChat } = useCreateAiChat();
 
-  const isLoading = (isSubmitting || isGenerating || isCreatingAiChat) && !!error;
+  const isLoading = isSubmitting || isGenerating || isCreatingAiChat;
   const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
 
   const template: DuplicateWorkflowDto | undefined =

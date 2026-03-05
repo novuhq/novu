@@ -101,10 +101,10 @@ export const ChatBody = ({
   );
   const isGeneratingOrSubmitted =
     (isGenerating && hasLastUserMessage) || (isGenerating && isLastAssistantMessage && !lastAssistantHasKnownToolCalls);
-  const isSubmitInputDisabled = !inputText.trim() || isGenerating || isSubmitDisabled;
+  const isSubmitGuard = !inputText.trim() || isGenerating || isSubmitDisabled;
 
   const onSubmitHandler = (message: PromptInputMessage) => {
-    if (isSubmitInputDisabled) return;
+    if (isSubmitGuard) return;
 
     onSubmit(message.text);
   };
@@ -191,7 +191,7 @@ export const ChatBody = ({
             />
           </PromptInputBody>
           <PromptInputFooter>
-            <PromptInputSubmit disabled={isSubmitInputDisabled} status={status} onStop={stop} className="ml-auto" />
+            <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} className="ml-auto" />
           </PromptInputFooter>
         </PromptInput>
       </div>
