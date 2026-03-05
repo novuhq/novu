@@ -1,11 +1,9 @@
 import { EnvironmentTypeEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { RiGlobalLine } from 'react-icons/ri';
-import { Separator } from '@/components/primitives/separator';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
-import { EnforceSchemaValidation } from './enforce-schema-validation';
 import { KeyValuePairList } from './key-value-pair-list';
 import { RequestEndpoint } from './request-endpoint';
 import { ResponseBodySchema } from './response-body-schema';
@@ -64,8 +62,6 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
 
       <SidebarContent size="md" className="gap-3 p-0 pt-3">
         <ResponseBodySchema />
-
-        <EnforceSchemaValidation />
       </SidebarContent>
     </div>
   );

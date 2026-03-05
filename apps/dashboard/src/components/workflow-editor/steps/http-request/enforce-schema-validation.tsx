@@ -16,7 +16,7 @@ export function EnforceSchemaValidation() {
         control={control}
         name="enforceSchemaValidation"
         render={({ field }) => (
-          <FormItem className="m-0 flex flex-1 items-center gap-2">
+          <FormItem className="m-0 flex flex-1 flex-row items-center gap-2 space-y-0 self-center">
             <FormControl>
               <Switch
                 checked={field.value ?? false}
@@ -47,7 +47,7 @@ export function EnforceSchemaValidation() {
         variant="secondary"
         mode="outline"
         size="2xs"
-        className="flex-shrink-0 gap-1 text-xs text-text-sub"
+        className="flex-shrink-0 self-center gap-1 text-xs text-text-sub"
       >
         <RiFileCopyLine className="size-3" />
         Generate from last test
