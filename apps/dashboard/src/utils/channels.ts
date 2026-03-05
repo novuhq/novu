@@ -1,4 +1,4 @@
-import { ActionIntegrationTypeEnum, ChannelTypeEnum, IntegrationCategoryType } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.IN_APP]: 'In-App',
@@ -8,7 +8,6 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.PUSH]: 'Push',
 };
 
-export const INTEGRATION_CATEGORY_TO_STRING: Record<IntegrationCategoryType, string> = {
+export const INTEGRATION_CATEGORY_TO_STRING: Record<ChannelTypeEnum, string> = {
   ...CHANNEL_TYPE_TO_STRING,
-  [ActionIntegrationTypeEnum.HTTP]: 'HTTP',
 };

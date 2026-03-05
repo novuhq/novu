@@ -49,7 +49,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
     onBack: handleBack,
   });
 
-  const { integrationsByChannel, actionProvidersByCategory } = useIntegrationList(searchQuery);
+  const { integrationsByChannel } = useIntegrationList(searchQuery);
   const provider = providers?.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
   const {
     isPrimaryModalOpen,
@@ -135,7 +135,6 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
           <div className="scrollbar-custom flex-1 overflow-y-auto">
             <ChannelTabs
               integrationsByChannel={integrationsByChannel}
-              actionProvidersByCategory={actionProvidersByCategory}
               searchQuery={searchQuery}
               onIntegrationSelect={onIntegrationSelect}
             />
