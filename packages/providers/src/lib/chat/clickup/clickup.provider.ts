@@ -77,7 +77,7 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
 
     return {
       id: response.data.id,
-      date: new Date(response.data.date_created).toISOString(),
+      date: new Date(Number(response.data.date_created)).toISOString(),
     };
   }
 }
