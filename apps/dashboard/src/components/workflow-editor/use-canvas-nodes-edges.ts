@@ -613,9 +613,9 @@ export const useCanvasNodesEdges = ({
       if (goto === 'editor') {
         const stepType = NODE_TYPE_TO_STEP_TYPE[potentialNode?.type as keyof typeof NODE_TYPE_TO_STEP_TYPE];
         const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType);
-        const isCustomDestinationStep = stepType === NODE_TYPE_TO_STEP_TYPE.custom && !!potentialNode?.data?.providerId;
+        const isDestinationCustomStep = stepType === NODE_TYPE_TO_STEP_TYPE.custom && !!potentialNode?.data?.providerId;
 
-        if (isTemplateConfigurable || isCustomDestinationStep) {
+        if (isTemplateConfigurable || isDestinationCustomStep) {
           navigate(
             buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
               stepSlug: potentialNode?.data?.stepSlug ?? '',
