@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiAddLine } from 'react-icons/ri';
-import { Button } from '@/components/primitives/button';
 import type { JSONSchema7 } from '@/components/schema-editor';
 import { SchemaEditor } from '@/components/schema-editor';
 import { useSchemaForm } from '@/components/schema-editor/use-schema-form';

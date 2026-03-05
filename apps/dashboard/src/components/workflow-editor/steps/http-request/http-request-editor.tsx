@@ -27,7 +27,7 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
-      <TabsSection className="gap-2 pb-4">
+      <TabsSection className="gap-2 p-0">
         <div className="bg-bg-weak flex items-center gap-2 rounded-lg border border-neutral-100 px-3 py-2">
           <RiGlobalLine className="text-text-soft size-4 flex-shrink-0" />
           <p className="text-text-sub text-xs">
@@ -62,12 +62,8 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
         </p>
       </TabsSection>
 
-      <Separator />
-
-      <SidebarContent size="md" className="gap-3">
+      <SidebarContent size="md" className="gap-3 p-0 pt-3">
         <ResponseBodySchema />
-
-        <Separator />
 
         <EnforceSchemaValidation />
       </SidebarContent>
