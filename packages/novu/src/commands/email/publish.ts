@@ -19,7 +19,15 @@ import type {
   StepResolverManifestStep,
   StepResolverReleaseBundle,
 } from './types';
-import { renderTable, StepFilePathResolver, withSpinner } from './utils';
+import {
+  detectPackageManager,
+  getInstallCommand,
+  installPackageSync,
+  isPackageInstalled,
+  renderTable,
+  StepFilePathResolver,
+  withSpinner,
+} from './utils';
 
 interface PublishOptions {
   secretKey?: string;
@@ -259,6 +267,31 @@ function assertTemplateRequiresWorkflowAndStep(
   }
 }
 
+const FRAMEWORK_PACKAGE = '@novu/framework';
+
+async function installFrameworkPackageIfNeeded(rootDir: string): Promise<void> {
+  if (isPackageInstalled(FRAMEWORK_PACKAGE, rootDir)) {
+    return;
+  }
+
+  const pm = detectPackageManager(rootDir);
+  const installCmd = getInstallCommand(pm, FRAMEWORK_PACKAGE);
+
+  try {
+    await withSpinner(
+      `Installing ${FRAMEWORK_PACKAGE} for TypeScript types...`,
+      async () => {
+        installPackageSync(FRAMEWORK_PACKAGE, rootDir);
+      },
+      { successMessage: `Installed ${FRAMEWORK_PACKAGE}`, failMessage: `Failed to install ${FRAMEWORK_PACKAGE}` }
+    );
+  } catch {
+    console.log(`   ${yellow('ℹ')}  For TypeScript types in your editor, run:`);
+    console.log(`      ${installCmd}`);
+    console.log('');
+  }
+}
+
 async function scaffoldStepFileIfNeeded(
   templatePath: string,
   workflowId: string,
@@ -301,9 +334,10 @@ async function scaffoldStepFileIfNeeded(
   const relPath = path.relative(rootDir, stepFilePath);
   console.log(`   ${green('✓')} Created ${relPath}`);
   console.log('');
-  console.log(`   ${yellow('ℹ')}  For TypeScript types in your editor:`);
-  console.log(`      npm install --save-dev @novu/framework`);
+  console.log(`   ${yellow('ℹ')}  Customize the resolver logic in this file anytime, then re-run publish to redeploy.`);
   console.log('');
+
+  await installFrameworkPackageIfNeeded(rootDir);
 }
 
 function assertNotProductionEnvironment(envInfo: EnvironmentInfo): void {
