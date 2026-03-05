@@ -32,19 +32,6 @@ export function ResponseBodySchema() {
       <SectionHeader
         label="Response body schema"
         tooltip="Define the schema of the response body to use variables from it in subsequent steps"
-        rightSlot={
-          <Button
-            type="button"
-            variant="secondary"
-            mode="ghost"
-            size="2xs"
-            className="gap-1 px-1 text-xs text-text-sub"
-            onClick={() => addProperty()}
-          >
-            <RiAddLine className="size-3.5" />
-            Add property
-          </Button>
-        }
       />
 
       <SchemaEditor
