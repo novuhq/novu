@@ -115,12 +115,12 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
     }
 
     if (controlValues.enforceSchemaValidation && controlValues.responseBodySchema) {
-      const validationErrors = this.validateResponseSchema(
+      const validationResult = this.validateResponseSchema(
         result.body,
         controlValues.responseBodySchema as Record<string, unknown>
       );
 
-      if (validationErrors) {
+      if (!validationResult.isValid) {
         await this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
             ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -129,7 +129,7 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
             status: ExecutionDetailsStatusEnum.FAILED,
             isTest: false,
             isRetry: false,
-            raw: JSON.stringify({ errors: validationErrors, responseBody: result.body }),
+            raw: JSON.stringify({ errors: validationResult.errors, responseBody: result.body }),
           })
         );
 
@@ -160,7 +160,7 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
   private validateResponseSchema(
     responseBody: unknown,
     schema: Record<string, unknown>
-  ): { path: string; message: string }[] | null {
+  ): { isValid: true } | { isValid: false; errors: { path: string; message: string }[] } {
     try {
       const ajv = new Ajv({ strict: false });
       addFormats(ajv);
@@ -168,15 +168,21 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
       const valid = validate(responseBody);
 
       if (valid) {
-        return null;
+        return { isValid: true };
       }
 
-      return (validate.errors ?? []).map((err) => ({
-        path: err.instancePath,
-        message: err.message ?? 'Validation error',
-      }));
+      return {
+        isValid: false,
+        errors: (validate.errors ?? []).map((err) => ({
+          path: err.instancePath,
+          message: err.message ?? 'Validation error',
+        })),
+      };
     } catch (error) {
-      return [{ path: '', message: error instanceof Error ? error.message : 'Schema compilation error' }];
+      return {
+        isValid: false,
+        errors: [{ path: '', message: error instanceof Error ? error.message : 'Schema compilation error' }],
+      };
     }
   }
 
