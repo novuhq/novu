@@ -5,8 +5,6 @@ exports[`generateStepFile > should match snapshot 1`] = `
 import { render } from '@react-email/components';
 import EmailTemplate from '../emails/welcome';
 
-export const workflowId = 'onboarding';
-
 export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
   subject: controls.subject ?? payload.subject ?? 'No Subject',
   body: await render(
@@ -26,8 +24,6 @@ exports[`generateStepFile > should match snapshot with different import paths > 
 "import { step } from '@novu/framework/step-resolver';
 import { render } from '@react-email/components';
 import EmailTemplate from '../../src/emails/welcome';
-
-export const workflowId = 'onboarding';
 
 export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
   subject: controls.subject ?? payload.subject ?? 'No Subject',
@@ -49,8 +45,6 @@ exports[`generateStepFile > should match snapshot with different import paths > 
 import { render } from '@react-email/components';
 import EmailTemplate from './emails/welcome';
 
-export const workflowId = 'onboarding';
-
 export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
   subject: controls.subject ?? payload.subject ?? 'No Subject',
   body: await render(
@@ -70,8 +64,6 @@ exports[`generateStepFile > should match snapshot with subject > with-subject 1`
 "import { step } from '@novu/framework/step-resolver';
 import { render } from '@react-email/components';
 import EmailTemplate from '../emails/welcome';
-
-export const workflowId = 'onboarding';
 
 export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
   subject: controls.subject ?? payload.subject ?? 'Welcome to Acme!',

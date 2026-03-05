@@ -327,7 +327,7 @@ async function scaffoldStepFileIfNeeded(
   fsSync.mkdirSync(workflowDir, { recursive: true });
 
   const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
-  const stepFileContent = generateStepFile(stepId, workflowId, templateImportPath, { template: templatePath });
+  const stepFileContent = generateStepFile(stepId, templateImportPath, { template: templatePath });
 
   fsSync.writeFileSync(stepFilePath, stepFileContent, 'utf8');
 
@@ -464,7 +464,7 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
         console.error('');
         console.error('Expected *.step.tsx, *.step.ts, *.step.jsx, or *.step.js files.');
         console.error('');
-        console.error("Run 'npx novu email init' first to generate step handlers.");
+        console.error(`Run 'npx novu email publish --workflow=<id> --step=<id>' to scaffold your first step handler.`);
         console.error('');
         throw new Error('No step files found');
       }

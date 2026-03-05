@@ -148,7 +148,12 @@ export const ReactEmailNotPublished = ({ workflowId, stepId }: ReactEmailNotPubl
       label: 'Link your React Email template to this step',
       description: (
         <>
-          Run this from your project root — you'll be prompted to choose a React Email template to link to this step.
+          Run this from your project root — you'll be prompted to choose a React Email template. A step file will be
+          scaffolded at{' '}
+          <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[11px] text-[#0e121b]">
+            novu/{workflowId}/{stepId}.step.tsx
+          </code>{' '}
+          — customize the resolver logic there anytime and re-run to redeploy.
           <br />
           <br />💡 This bundles your template, links it to this step, and deploys it to our{' '}
           <span className="cursor-default decoration-dotted underline underline-offset-2">managed infrastructure</span>.
