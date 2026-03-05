@@ -80,6 +80,7 @@ const mapDetailToEventType = {
 
   // Action step events
   [DetailEnum.ACTION_STEP_EXECUTION_FAILED]: 'action_step_execution_failed',
+  [DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED]: 'action_step_execution_failed',
 
   // Bridge events
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',

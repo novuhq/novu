@@ -20,6 +20,8 @@ import {
   ProvidersIdEnum,
   ResourceOriginEnum,
 } from '@novu/shared';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
@@ -112,6 +114,29 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
       return { status: SendMessageStatus.FAILED, errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED };
     }
 
+    if (controlValues.enforceSchemaValidation && controlValues.responseBodySchema) {
+      const validationErrors = this.validateResponseSchema(
+        result.body,
+        controlValues.responseBodySchema as Record<string, unknown>
+      );
+
+      if (validationErrors) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({ errors: validationErrors, responseBody: result.body }),
+          })
+        );
+
+        return { status: SendMessageStatus.FAILED, errorMessage: DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED };
+      }
+    }
+
     await this.jobRepository.updateOne(
       { _id: command.job._id, _environmentId: command.environmentId },
       { $set: { stepOutput: result.body } }
@@ -130,6 +155,29 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
     );
 
     return { status: SendMessageStatus.SUCCESS };
+  }
+
+  private validateResponseSchema(
+    responseBody: unknown,
+    schema: Record<string, unknown>
+  ): { path: string; message: string }[] | null {
+    try {
+      const ajv = new Ajv({ strict: false });
+      addFormats(ajv);
+      const validate = ajv.compile(schema);
+      const valid = validate(responseBody);
+
+      if (valid) {
+        return null;
+      }
+
+      return (validate.errors ?? []).map((err) => ({
+        path: err.instancePath,
+        message: err.message ?? 'Validation error',
+      }));
+    } catch (error) {
+      return [{ path: '', message: error instanceof Error ? error.message : 'Schema compilation error' }];
+    }
   }
 
   private async fetchControlValues(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {
