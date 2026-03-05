@@ -143,6 +143,7 @@ const mapDetailToEventType = {
   [DetailEnum.PUSH_INVALID_TOKEN_REMOVED]: 'push_invalid_token_removed',
 
   [DetailEnum.TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION]: 'topic_subscription_preference_evaluation',
+  [DetailEnum.STEP_CANCELED]: 'step_canceled',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()

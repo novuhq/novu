@@ -44,6 +44,7 @@ import {
 import { DelayControlValues } from '@/components/workflow-editor/steps/delay/delay-control-values';
 import { DigestControlValues } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-control-values';
 import { ConfigureEmailStepPreview } from '@/components/workflow-editor/steps/email/configure-email-step-preview';
+import { StopOnFail } from '@/components/workflow-editor/steps/http-request/stop-on-fail';
 import { ConfigureInAppStepPreview } from '@/components/workflow-editor/steps/in-app/configure-in-app-step-preview';
 import { ConfigurePushStepPreview } from '@/components/workflow-editor/steps/push/configure-push-step-preview';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
@@ -140,9 +141,17 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         };
       }
 
+      if (isDestinationCustomStep) {
+        return {
+          controlValues: {
+            stopOnFail: (step.controls.values?.stopOnFail as boolean) ?? false,
+          },
+        };
+      }
+
       return {};
     };
-  }, [isInlineConfigurableStep]);
+  }, [isInlineConfigurableStep, isDestinationCustomStep]);
 
   const defaultValues = useMemo(
     () => ({
@@ -305,6 +314,32 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 <Separator />
 
                 {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
+
+                {isDestinationCustomStep && (
+                  <>
+                    <SidebarContent>
+                      <StopOnFail />
+                    </SidebarContent>
+                    <Separator />
+                    <SidebarContent>
+                      <Link to="./editor" relative="path" state={{ stepType: step.type }}>
+                        <Button
+                          variant="secondary"
+                          mode="outline"
+                          className="flex w-full justify-start gap-1.5 text-xs font-medium"
+                        >
+                          <RiEdit2Line className="h-4 w-4 text-neutral-600" />
+                          Configure {integrationProviderConfig?.displayName ?? step.providerId} Step{' '}
+                          <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                        </Button>
+                      </Link>
+
+                      {environment.type === EnvironmentTypeEnum.DEV && (
+                        <SkipConditionsButton origin={workflow.origin} step={step} />
+                      )}
+                    </SidebarContent>
+                  </>
+                )}
               </SaveFormContext.Provider>
             </FormRoot>
           </Form>
@@ -367,26 +402,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {!isSupportedStep && !isDestinationCustomStep && (
             <SidebarContent>
               <SdkBanner />
-            </SidebarContent>
-          )}
-
-          {isDestinationCustomStep && (
-            <SidebarContent>
-              <Link to="./editor" relative="path" state={{ stepType: step.type }}>
-                <Button
-                  variant="secondary"
-                  mode="outline"
-                  className="flex w-full justify-start gap-1.5 text-xs font-medium"
-                >
-                  <RiEdit2Line className="h-4 w-4 text-neutral-600" />
-                  Configure {integrationProviderConfig?.displayName ?? step.providerId} Step{' '}
-                  <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-                </Button>
-              </Link>
-
-              {environment.type === EnvironmentTypeEnum.DEV && (
-                <SkipConditionsButton origin={workflow.origin} step={step} />
-              )}
             </SidebarContent>
           )}
 

@@ -111,7 +111,11 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
         })
       );
 
-      return { status: SendMessageStatus.FAILED, errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED };
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+        shouldHalt: !!controlValues.stopOnFail,
+      };
     }
 
     if (controlValues.enforceSchemaValidation && controlValues.responseBodySchema) {
@@ -133,7 +137,11 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
           })
         );
 
-        return { status: SendMessageStatus.FAILED, errorMessage: DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED };
+        return {
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED,
+          shouldHalt: !!controlValues.stopOnFail,
+        };
       }
     }
 

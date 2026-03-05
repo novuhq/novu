@@ -33,8 +33,6 @@ interface ActivityJobItemProps {
 export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  console.log(job);
-
   return (
     <div className="relative flex items-center gap-1">
       <div
@@ -119,6 +117,10 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
 
   if (job.status === JobStatusEnum.SKIPPED) {
     return 'Step was skipped';
+  }
+
+  if (job.status === JobStatusEnum.CANCELED && (!job.executionDetails || job.executionDetails.length === 0)) {
+    return 'Step was canceled';
   }
 
   if (

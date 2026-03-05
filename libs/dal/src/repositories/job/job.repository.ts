@@ -9,7 +9,7 @@ import {
 import { sub } from 'date-fns';
 import { ProjectionType } from 'mongoose';
 import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds, IUpdateResult } from '../../types';
+import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
 import { EnvironmentEntity } from '../environment';
 import { NotificationEntity } from '../notification';
@@ -311,15 +311,21 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     transactionId: string;
     _subscriberId: string;
     _templateId: string;
-  }): Promise<IUpdateResult> {
-    return this.MongooseModel.updateMany(
-      {
-        _environmentId,
-        _subscriberId,
-        _templateId,
-        status: JobStatusEnum.PENDING,
-        transactionId,
-      },
+  }): Promise<JobEntity[]> {
+    const pendingJobs = await this.find({
+      _environmentId,
+      _subscriberId,
+      _templateId,
+      status: JobStatusEnum.PENDING,
+      transactionId,
+    });
+
+    if (pendingJobs.length === 0) {
+      return [];
+    }
+
+    await this.MongooseModel.updateMany(
+      { _id: { $in: pendingJobs.map((job) => job._id) } },
       {
         $set: {
           status: JobStatusEnum.CANCELED,
@@ -330,5 +336,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         },
       }
     );
+
+    return pendingJobs;
   }
 }

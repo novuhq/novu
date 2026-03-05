@@ -74,6 +74,10 @@ export const httpRequestControlSchema = {
       type: 'boolean',
       default: false,
     },
+    stopOnFail: {
+      type: 'boolean',
+      default: false,
+    },
   },
   required: ['method', 'url'],
   additionalProperties: false,
@@ -107,6 +111,10 @@ export const httpRequestUiSchema: UiSchema = {
     },
     enforceSchemaValidation: {
       component: UiComponentEnum.DESTINATION_ENFORCE_SCHEMA_VALIDATION,
+      placeholder: false,
+    },
+    stopOnFail: {
+      component: UiComponentEnum.DESTINATION_STOP_ON_FAIL,
       placeholder: false,
     },
   },

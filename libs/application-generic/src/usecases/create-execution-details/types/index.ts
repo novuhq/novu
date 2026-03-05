@@ -88,6 +88,7 @@ export enum DetailEnum {
   TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION = 'Topic subscription preference evaluated',
   ACTION_STEP_EXECUTION_FAILED = 'Action step execution failed',
   RESPONSE_SCHEMA_VALIDATION_FAILED = 'Response body schema validation failed',
+  STEP_CANCELED = 'Step was canceled because a previous step failed',
 }
 
 export function createProviderSelectedMessage(providerId: string): string {
