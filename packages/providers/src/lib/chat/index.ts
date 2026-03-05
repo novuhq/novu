@@ -1,4 +1,5 @@
 export * from './chat-webhook/chat-webhook.provider';
+export * from './clickup/clickup.provider';
 export * from './discord/discord.provider';
 export * from './getstream/getstream.provider';
 export * from './grafana-on-call/grafana-on-call.provider';

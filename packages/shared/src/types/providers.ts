@@ -125,6 +125,7 @@ export enum SmsProviderIdEnum {
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
+  ClickUp = 'clickup',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
   Ryver = 'ryver',

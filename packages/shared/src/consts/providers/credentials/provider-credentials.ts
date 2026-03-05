@@ -493,6 +493,16 @@ export const messagebirdConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
+export const clickUpConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Your ClickUp personal API token (starts with pk_)',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const slackConfigLegacy: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,

@@ -2,6 +2,7 @@ import { ChannelTypeEnum, ChatProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   chatWebhookConfig,
+  clickUpConfig,
   getstreamConfig,
   grafanaOnCallConfig,
   msTeamsConfig,
@@ -35,6 +36,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredential[],
     docReference: `https://docs.novu.co/platform/integrations/chat/discord${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.ClickUp,
+    displayName: 'ClickUp',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: clickUpConfig,
+    docReference: 'https://developer.clickup.com/docs/Getting%20Started',
+    logoFileName: { light: 'clickup.svg', dark: 'clickup.svg' },
   },
   {
     id: ChatProviderIdEnum.GrafanaOnCall,

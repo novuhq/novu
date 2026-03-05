@@ -1,5 +1,6 @@
 import { IntegrationEntity } from '@novu/dal';
 import { ChatWebhookHandler } from './handlers/chat-webhook.handler';
+import { ClickUpHandler } from './handlers/clickup.handler';
 import { DiscordHandler } from './handlers/discord.handler';
 import { GetstreamChatHandler } from './handlers/getstream.handler';
 import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
@@ -19,6 +20,7 @@ export class ChatFactory implements IChatFactory {
     new SlackHandler(),
     new NovuSlackHandler(),
     new DiscordHandler(),
+    new ClickUpHandler(),
     new MSTeamsHandler(),
     new MattermostHandler(),
     new RyverHandler(),
