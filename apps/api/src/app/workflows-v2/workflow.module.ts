@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import {
+  CompileTemplate,
   DeletePreferencesUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
@@ -32,6 +33,7 @@ import {
   ListWorkflowsUseCase,
   PreviewUsecase,
   SyncToEnvironmentUseCase,
+  TestHttpEndpointUsecase,
   UpsertWorkflowUseCase,
 } from './usecases';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
@@ -89,6 +91,8 @@ const MODULES = [
     PreviewPayloadProcessorService,
     MockDataGeneratorService,
     PreviewErrorHandler,
+    TestHttpEndpointUsecase,
+    CompileTemplate,
   ],
   exports: [UpsertWorkflowUseCase, SyncToEnvironmentUseCase, GetWorkflowUseCase, DeleteWorkflowUseCase],
 })

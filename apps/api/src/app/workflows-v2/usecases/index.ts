@@ -6,4 +6,5 @@ export * from './get-workflow';
 export * from './list-workflows';
 export * from './preview';
 export * from './sync-to-environment';
+export * from './test-http-endpoint';
 export * from './upsert-workflow';

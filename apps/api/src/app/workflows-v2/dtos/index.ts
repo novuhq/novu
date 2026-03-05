@@ -20,6 +20,7 @@ export * from './step-content-issue.dto';
 export * from './step-issues.dto';
 export * from './step-list-response.dto';
 export * from './sync-workflow.dto';
+export * from './test-http-endpoint.dto';
 export * from './ui-schema.dto';
 export * from './ui-schema-property.dto';
 export * from './update-workflow.dto';

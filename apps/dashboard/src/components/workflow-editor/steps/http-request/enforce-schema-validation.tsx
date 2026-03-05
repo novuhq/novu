@@ -5,10 +5,44 @@ import { FormControl, FormField, FormItem } from '@/components/primitives/form/f
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useHttpRequestTest } from './use-http-request-test';
+
+function inferJsonSchema(value: unknown): Record<string, unknown> {
+  if (value === null) return { type: 'null' };
+  if (typeof value === 'boolean') return { type: 'boolean' };
+  if (typeof value === 'number') return { type: Number.isInteger(value) ? 'integer' : 'number' };
+  if (typeof value === 'string') return { type: 'string' };
+
+  if (Array.isArray(value)) {
+    const itemSchema = value.length > 0 ? inferJsonSchema(value[0]) : { type: 'string' };
+
+    return { type: 'array', items: itemSchema };
+  }
+
+  if (typeof value === 'object') {
+    const properties: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      properties[k] = inferJsonSchema(v);
+    }
+
+    return { type: 'object', properties };
+  }
+
+  return { type: 'string' };
+}
 
 export function EnforceSchemaValidation() {
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
+  const { testResult } = useHttpRequestTest();
+
+  function handleGenerateFromLastTest() {
+    if (!testResult?.body) return;
+
+    const schema = inferJsonSchema(testResult.body);
+    setValue('responseBodySchema', schema, { shouldDirty: true });
+    saveForm();
+  }
 
   return (
     <div className="flex items-center gap-2">
@@ -48,6 +82,8 @@ export function EnforceSchemaValidation() {
         mode="outline"
         size="2xs"
         className="flex-shrink-0 self-center gap-1 text-xs text-text-sub"
+        onClick={handleGenerateFromLastTest}
+        disabled={!testResult?.body}
       >
         <RiFileCopyLine className="size-3" />
         Generate from last test

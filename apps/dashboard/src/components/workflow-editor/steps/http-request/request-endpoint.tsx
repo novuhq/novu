@@ -1,7 +1,7 @@
 import { HttpMethodEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiCornerDownRightLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
+import { RiCornerDownRightLine, RiFileCopyLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
@@ -10,7 +10,10 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { InputRoot } from '../../../primitives/input';
+import { useStepEditor } from '../context/step-editor-context';
+import { parseJsonValue } from '../utils/preview-context.utils';
 import { SectionHeader } from './section-header';
+import { useHttpRequestTest } from './use-http-request-test';
 
 const HTTP_METHODS = Object.values(HttpMethodEnum);
 
@@ -25,14 +28,23 @@ const METHOD_COLORS: Record<HttpMethodEnum, string> = {
 };
 
 export function RequestEndpoint() {
-  const { control } = useFormContext();
+  const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { editorValue } = useStepEditor();
+  const { triggerTest, isTestPending } = useHttpRequestTest();
 
   const handleCopyUrl = useCallback((url: string) => {
     if (url) navigator.clipboard.writeText(url);
   }, []);
+
+  const handleTestEndpoint = useCallback(async () => {
+    const controlValues = getValues() as Record<string, unknown>;
+    const previewPayload = parseJsonValue(editorValue);
+
+    await triggerTest({ controlValues, previewPayload });
+  }, [getValues, editorValue, triggerTest]);
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
@@ -46,9 +58,15 @@ export function RequestEndpoint() {
             mode="ghost"
             size="2xs"
             className="gap-1 px-1 text-xs font-medium text-text-strong"
+            onClick={handleTestEndpoint}
+            disabled={isTestPending}
           >
-            <RiPlayCircleLine className="size-3.5" />
-            Test endpoint
+            {isTestPending ? (
+              <RiLoader4Line className="size-3.5 animate-spin" />
+            ) : (
+              <RiPlayCircleLine className="size-3.5" />
+            )}
+            {isTestPending ? 'Testing...' : 'Test endpoint'}
           </Button>
         }
       />
