@@ -28,7 +28,7 @@ export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairList
   const [pairs, setPairs] = useState<HttpRequestKeyValuePair[]>(() => getPairs());
 
   const syncToForm = (updated: HttpRequestKeyValuePair[]) => {
-    setValue(fieldName, updated);
+    setValue(fieldName, updated, { shouldDirty: true });
     saveForm();
   };
 
