@@ -1,7 +1,7 @@
 import { HttpRequestKeyValuePair } from '@novu/shared';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiAddLine, RiDeleteBin6Line } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBin2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormField } from '@/components/primitives/form/form';
 import { InputRoot } from '@/components/primitives/input';
@@ -87,14 +87,14 @@ export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairList
             </InputRoot>
             <Button
               type="button"
-              variant="secondary"
+              variant="error"
               mode="ghost"
               size="2xs"
-              className="h-7 w-7 flex-shrink-0 p-0 text-text-soft hover:text-destructive"
+              className="border ml-0! h-7 w-7 flex-shrink-0 border-neutral-200"
+              leadingIcon={RiDeleteBin2Line}
               onClick={() => handleRemove(index)}
-            >
-              <RiDeleteBin6Line className="size-3.5" />
-            </Button>
+              aria-label="Delete header"
+            />
           </div>
         ))}
 
