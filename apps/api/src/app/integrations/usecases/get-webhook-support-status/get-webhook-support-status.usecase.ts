@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, providers } from '@novu/shared';
+import { ChannelTypeEnum, IntegrationCategoryType, providers } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 
 import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
@@ -26,7 +26,7 @@ export class GetWebhookSupportStatus {
     }
 
     const { channel, providerId } = integration;
-    if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
+    if (!([ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS] as IntegrationCategoryType[]).includes(channel)) {
       throw new BadRequestException(`Webhook for ${providerId}-${channel} is not supported yet`);
     }
 

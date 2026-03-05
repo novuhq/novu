@@ -1,4 +1,4 @@
-import { IEnvironment, ResourceOriginEnum, Slug, WorkflowResponseDto } from '@novu/shared';
+import { ACTION_PROVIDER_CONFIGS, IEnvironment, ResourceOriginEnum, Slug, WorkflowResponseDto } from '@novu/shared';
 import { Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
@@ -62,7 +62,8 @@ export const edgeTypes = {
 export const mapStepToNodeContent = (
   stepType: StepTypeEnum,
   controlValues: Record<string, unknown>,
-  workflowOrigin: ResourceOriginEnum
+  workflowOrigin: ResourceOriginEnum,
+  providerId?: string
 ): string => {
   switch (stepType) {
     case StepTypeEnum.TRIGGER:
@@ -93,8 +94,16 @@ export const mapStepToNodeContent = (
       return 'Batches events into one coherent message before delivery to the subscriber.';
     case StepTypeEnum.THROTTLE:
       return 'Limits the number of workflow executions within a specified time window.';
-    case StepTypeEnum.CUSTOM:
+    case StepTypeEnum.CUSTOM: {
+      if (providerId) {
+        const providerConfig = ACTION_PROVIDER_CONFIGS[providerId];
+        if (providerConfig?.description) {
+          return providerConfig.description;
+        }
+      }
+
       return 'Executes the business logic in your bridge application';
+    }
     default:
       return '';
   }
@@ -134,6 +143,7 @@ export const createNode = ({
   controlValues,
   isPending,
   type,
+  providerId,
 }: {
   x: number;
   y: number;
@@ -145,6 +155,7 @@ export const createNode = ({
   controlValues: Record<string, unknown>;
   isPending?: boolean;
   type: StepTypeEnum;
+  providerId?: string;
 }): Node<NodeData, keyof typeof nodeTypes> => {
   return {
     // the random id is used to identify the node and to be able to re-render the nodes and edges
@@ -158,6 +169,7 @@ export const createNode = ({
       error,
       controlValues,
       isPending,
+      providerId,
     },
     type,
   };
@@ -174,7 +186,7 @@ export const mapStepToNode = ({
   step: Step;
   workflowOrigin?: ResourceOriginEnum;
 }): Node<NodeData, keyof typeof nodeTypes> => {
-  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin);
+  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin, step.providerId);
 
   const error = step.issues
     ? getFirstErrorMessage(step.issues, 'controls') || getFirstErrorMessage(step.issues, 'integration')
@@ -190,6 +202,7 @@ export const mapStepToNode = ({
     error: error?.message ?? '',
     controlValues: step.controls.values,
     type: step.type,
+    providerId: step.providerId,
   });
 };
 

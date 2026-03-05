@@ -45,12 +45,4 @@ export class RemoveIntegration {
       _organizationId: command.organizationId,
     });
   }
-
-  private isBuiltInIntegration(integration: IntegrationEntity) {
-    return (
-      integration.providerId === EmailProviderIdEnum.Novu ||
-      integration.providerId === SmsProviderIdEnum.Novu ||
-      integration.channel === ChannelTypeEnum.IN_APP
-    );
-  }
 }

@@ -1,4 +1,5 @@
 export * from './digest';
+export { ExecuteDestinationCustomStep } from './execute-destination-custom-step.usecase';
 export { SendMessageCommand } from './send-message.command';
 export { SendMessage } from './send-message.usecase';
 export { SendMessageChannelCommand } from './send-message-channel.command';

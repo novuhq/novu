@@ -1,8 +1,10 @@
-import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { ResourceOriginEnum, StepTypeEnum, UiSchemaGroupEnum } from '@novu/shared';
 import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { CustomStepControls } from '@/components/workflow-editor/steps/controls/custom-step-controls';
+import { IntegrationStepControls } from '@/components/workflow-editor/steps/controls/integration-step-controls';
 import { EmailEditor } from '@/components/workflow-editor/steps/email/email-editor';
+import { HttpRequestEditor } from '@/components/workflow-editor/steps/http-request/http-request-editor';
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
 import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
@@ -23,6 +25,14 @@ export function StepEditorFactory() {
 
   if (workflow.origin === ResourceOriginEnum.EXTERNAL) {
     return <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />;
+  }
+
+  if (step.type === StepTypeEnum.CUSTOM && step.providerId) {
+    if (uiSchema?.group === UiSchemaGroupEnum.HTTP_REQUEST) {
+      return <HttpRequestEditor uiSchema={uiSchema} />;
+    }
+
+    return <IntegrationStepControls providerId={step.providerId} dataSchema={dataSchema} />;
   }
 
   if (!uiSchema) {

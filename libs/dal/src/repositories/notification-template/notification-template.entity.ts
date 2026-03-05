@@ -168,6 +168,10 @@ export class NotificationStepData {
    * Use IMessageTemplate.controls
    */
   controls?: ControlSchemas;
+
+  providerId?: string;
+
+  integrationIdentifier?: string;
 }
 export class NotificationStepEntity extends NotificationStepData {
   variants?: NotificationStepData[];

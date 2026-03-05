@@ -1,5 +1,5 @@
 import { MessageFilter } from '@novu/application-generic';
-import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+import { ActionIntegrationTypeEnum, ChannelTypeEnum, ICredentialsDto, IntegrationCategoryType } from '@novu/shared';
 import { IsArray, IsDefined, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
@@ -18,8 +18,8 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
   providerId: string;
 
   @IsDefined()
-  @IsEnum(ChannelTypeEnum)
-  channel: ChannelTypeEnum;
+  @IsEnum({ ...ChannelTypeEnum, ...ActionIntegrationTypeEnum })
+  channel: IntegrationCategoryType;
 
   @IsOptional()
   credentials?: ICredentialsDto;

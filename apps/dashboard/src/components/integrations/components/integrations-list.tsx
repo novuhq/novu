@@ -1,7 +1,14 @@
-import { ChannelTypeEnum, providers as novuProviders } from '@novu/shared';
+import {
+  ActionIntegrationTypeEnum,
+  actionProviders,
+  ChannelTypeEnum,
+  IntegrationCategoryType,
+  providers as novuProviders,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
+import { INTEGRATION_CATEGORY_TO_STRING } from '@/utils/channels';
 import { useFetchIntegrations } from '../../../hooks/use-fetch-integrations';
 import { TableIntegration } from '../types';
 import { IntegrationChannelGroup } from './integration-channel-group';
@@ -57,7 +64,7 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
   const groupedIntegrations = useMemo(() => {
     return integrations?.reduce(
       (acc, integration) => {
-        const channel = integration.channel;
+        const channel = integration.channel as IntegrationCategoryType;
 
         if (!acc[channel]) {
           acc[channel] = [];
@@ -67,9 +74,25 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
 
         return acc;
       },
-      {} as Record<ChannelTypeEnum, typeof integrations>
+      {} as Record<IntegrationCategoryType, typeof integrations>
     );
   }, [integrations]);
+
+  const channelIntegrationEntries = useMemo(
+    () =>
+      Object.entries(groupedIntegrations || {}).filter(([channel]) =>
+        Object.values(ChannelTypeEnum).includes(channel as ChannelTypeEnum)
+      ),
+    [groupedIntegrations]
+  );
+
+  const actionIntegrationEntries = useMemo(
+    () =>
+      Object.entries(groupedIntegrations || {}).filter(([channel]) =>
+        Object.values(ActionIntegrationTypeEnum).includes(channel as ActionIntegrationTypeEnum)
+      ),
+    [groupedIntegrations]
+  );
 
   if (isLoading || !currentEnvironment) {
     return (
@@ -81,17 +104,52 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {Object.entries(groupedIntegrations || {}).map(([channel, channelIntegrations]) => (
-        <IntegrationChannelGroup
-          key={channel}
-          channel={channel as ChannelTypeEnum}
-          integrations={channelIntegrations}
-          providers={availableIntegrations}
-          environments={environments}
-          onItemClick={onItemClick}
-        />
-      ))}
+    <div className="space-y-10">
+      {channelIntegrationEntries.length > 0 && (
+        <section className="space-y-6">
+          <h2 className="text-foreground-950 text-lg font-semibold">Channels</h2>
+          {channelIntegrationEntries.map(([channel, channelIntegrations]) => (
+            <IntegrationChannelGroup
+              key={channel}
+              channel={channel as ChannelTypeEnum}
+              integrations={channelIntegrations}
+              providers={availableIntegrations}
+              environments={environments}
+              onItemClick={onItemClick}
+            />
+          ))}
+        </section>
+      )}
+
+      {(actionIntegrationEntries.length > 0 || actionProviders.length > 0) && (
+        <section className="space-y-6">
+          <h2 className="text-foreground-950 text-lg font-semibold">Actions</h2>
+          {actionIntegrationEntries.length > 0 ? (
+            actionIntegrationEntries.map(([category, categoryIntegrations]) => (
+              <div key={category} className="space-y-4">
+                <h3 className="text-foreground-700 text-md font-medium">
+                  {INTEGRATION_CATEGORY_TO_STRING[category as IntegrationCategoryType]}
+                </h3>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {categoryIntegrations.map((integration) => {
+                    const provider = actionProviders.find((p) => p.id === integration.providerId);
+                    if (!provider) return null;
+
+                    const environment = environments?.find((env) => env._id === integration._environmentId);
+                    if (!environment) return null;
+
+                    return null;
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-muted-foreground py-4 text-sm">
+              No action integrations configured yet. Connect one from the provider list.
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

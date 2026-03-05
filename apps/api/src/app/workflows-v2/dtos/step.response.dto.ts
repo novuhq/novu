@@ -80,4 +80,14 @@ export class StepResponseDto<T = Record<string, unknown>> {
   @ValidateNested()
   @Type(() => StepIssuesDto)
   issues?: StepIssuesDto;
+
+  @ApiPropertyOptional({ description: 'Provider identifier for action steps' })
+  @IsOptional()
+  @IsString()
+  providerId?: string;
+
+  @ApiPropertyOptional({ description: 'Integration identifier for action steps' })
+  @IsOptional()
+  @IsString()
+  integrationIdentifier?: string;
 }

@@ -1,15 +1,20 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ActionProviderIdEnum, actionProviders, FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { ACTION_PROVIDER_ID_TO_COLOR, STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
-import { STEP_TYPE_TO_ICON } from '../icons/utils';
+import { ACTION_PROVIDER_ID_TO_ICON, STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Badge } from '../primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { Node } from './base-node';
+
+export type AddStepMenuSelection = {
+  type: StepTypeEnum;
+  providerId?: string;
+};
 
 const noop = () => {};
 
@@ -34,11 +39,13 @@ const MenuItem = ({
   stepType,
   disabled,
   onClick,
+  iconOverride,
 }: {
   children: ReactNode;
   stepType: StepTypeEnum;
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLSpanElement>;
+  iconOverride?: React.ReactNode;
 }) => {
   const Icon = STEP_TYPE_TO_ICON[stepType];
   const color = STEP_TYPE_TO_COLOR[stepType];
@@ -54,12 +61,14 @@ const MenuItem = ({
       )}
       data-testid={`add-step-menu-item-${stepType}`}
     >
-      <Icon
-        className={`bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40`}
-        style={{
-          color: `hsl(var(--${color}))`,
-        }}
-      />
+      {iconOverride ?? (
+        <Icon
+          className={`bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40`}
+          style={{
+            color: `hsl(var(--${color}))`,
+          }}
+        />
+      )}
       <span className="text-xs">{children}</span>
       {disabled && (
         <Badge color="gray" size="md" variant="lighter">
@@ -79,13 +88,13 @@ export const AddStepMenu = ({
   disabled?: boolean;
   visible?: boolean;
   className?: string;
-  onMenuItemClick: (stepType: StepTypeEnum) => void;
+  onMenuItemClick: (selection: AddStepMenuSelection) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const isThrottleStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_THROTTLE_STEP_ENABLED);
 
-  const handleMenuItemClick = (stepType: StepTypeEnum) => {
-    onMenuItemClick(stepType);
+  const handleMenuItemClick = (stepType: StepTypeEnum, providerId?: string) => {
+    onMenuItemClick({ type: stepType, providerId });
     setIsPopoverOpen(false);
   };
 
@@ -153,6 +162,33 @@ export const AddStepMenu = ({
                     Throttle
                   </MenuItem>
                 )}
+              </MenuItemsGroup>
+            </MenuGroup>
+            <MenuGroup>
+              <MenuTitle>Destinations</MenuTitle>
+              <MenuItemsGroup>
+                {actionProviders.map((provider) => {
+                  const providerId = provider.id as ActionProviderIdEnum;
+                  const ProviderIcon = ACTION_PROVIDER_ID_TO_ICON[providerId];
+                  const color = ACTION_PROVIDER_ID_TO_COLOR[providerId] ?? STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM];
+                  const iconOverride = ProviderIcon ? (
+                    <ProviderIcon
+                      className="bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40"
+                      style={{ color: `hsl(var(--${color}))` }}
+                    />
+                  ) : undefined;
+
+                  return (
+                    <MenuItem
+                      key={provider.id}
+                      stepType={StepTypeEnum.CUSTOM}
+                      onClick={() => handleMenuItemClick(StepTypeEnum.CUSTOM, provider.id)}
+                      iconOverride={iconOverride}
+                    >
+                      {provider.displayName}
+                    </MenuItem>
+                  );
+                })}
               </MenuItemsGroup>
             </MenuGroup>
           </div>

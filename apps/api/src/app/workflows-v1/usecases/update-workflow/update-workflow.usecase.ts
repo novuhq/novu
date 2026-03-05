@@ -583,6 +583,14 @@ export class UpdateWorkflow {
       partialNotificationStep.issues = message.issues;
     }
 
+    if (message.providerId !== undefined) {
+      partialNotificationStep.providerId = message.providerId;
+    }
+
+    if (message.integrationIdentifier !== undefined) {
+      partialNotificationStep.integrationIdentifier = message.integrationIdentifier;
+    }
+
     return partialNotificationStep;
   }
 

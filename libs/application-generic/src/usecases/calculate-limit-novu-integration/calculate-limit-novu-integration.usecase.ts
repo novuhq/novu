@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  IntegrationCategoryType,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import { endOfMonth, startOfMonth } from 'date-fns';
 
 import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '../../utils/novu-integrations';
@@ -53,7 +59,7 @@ export class CalculateLimitNovuIntegration {
     };
   }
 
-  static getProviderId(type: ChannelTypeEnum) {
+  static getProviderId(type: IntegrationCategoryType) {
     switch (type) {
       case ChannelTypeEnum.EMAIL:
         return EmailProviderIdEnum.Novu;
@@ -66,7 +72,7 @@ export class CalculateLimitNovuIntegration {
     }
   }
 
-  static getLimit(type: ChannelTypeEnum): number {
+  static getLimit(type: IntegrationCategoryType): number {
     switch (type) {
       case ChannelTypeEnum.EMAIL:
         return CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS;

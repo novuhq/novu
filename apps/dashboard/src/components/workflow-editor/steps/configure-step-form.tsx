@@ -1,5 +1,6 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
+  ACTION_PROVIDER_CONFIGS,
   EnvironmentTypeEnum,
   IEnvironment,
   ResourceOriginEnum,
@@ -104,7 +105,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.THROTTLE,
   ];
 
-  const isSupportedStep = supportedStepTypes.includes(step.type);
+  const isIntegrationBackedCustomStep = step.type === StepTypeEnum.CUSTOM && !!step.providerId;
+  const integrationProviderConfig = step.providerId ? ACTION_PROVIDER_CONFIGS[step.providerId] : null;
+  const isSupportedStep = supportedStepTypes.includes(step.type) || isIntegrationBackedCustomStep;
   const isReadOnly =
     !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL || environment.type !== EnvironmentTypeEnum.DEV;
 
@@ -361,9 +364,25 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          {!isSupportedStep && (
+          {!isSupportedStep && !isIntegrationBackedCustomStep && (
             <SidebarContent>
               <SdkBanner />
+            </SidebarContent>
+          )}
+
+          {isIntegrationBackedCustomStep && (
+            <SidebarContent>
+              <Link to="./editor" relative="path" state={{ stepType: step.type }}>
+                <Button
+                  variant="secondary"
+                  mode="outline"
+                  className="flex w-full justify-start gap-1.5 text-xs font-medium"
+                >
+                  <RiEdit2Line className="h-4 w-4 text-neutral-600" />
+                  Configure {integrationProviderConfig?.displayName ?? step.providerId} Step{' '}
+                  <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                </Button>
+              </Link>
             </SidebarContent>
           )}
 

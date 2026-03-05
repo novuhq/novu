@@ -1,4 +1,6 @@
 import {
+  ACTION_PROVIDER_CONFIGS,
+  ActionProviderIdEnum,
   type IActivityJob,
   type IDelayRegularMetadata,
   type IDigestRegularMetadata,
@@ -12,9 +14,9 @@ import { useState } from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-import { STEP_TYPE_TO_COLOR } from '../../utils/color';
+import { ACTION_PROVIDER_ID_TO_COLOR, STEP_TYPE_TO_COLOR } from '../../utils/color';
 import { formatJSONString } from '../../utils/string';
-import { STEP_TYPE_TO_ICON } from '../icons/utils';
+import { ACTION_PROVIDER_ID_TO_ICON, STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Card, CardContent, CardHeader } from '../primitives/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
@@ -30,6 +32,8 @@ interface ActivityJobItemProps {
 
 export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  console.log(job);
 
   return (
     <div className="relative flex items-center gap-1">
@@ -50,16 +54,14 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-1.5">
-            <div
-              className={`h-5 w-5 rounded-full border opacity-40 border-${STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR]}`}
-            >
+            <div className={`h-5 w-5 rounded-full border opacity-40 border-${getJobColor(job)}`}>
               <div
-                className={`h-full w-full rounded-full bg-neutral-50 text-${STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR]} flex items-center justify-center`}
+                className={`h-full w-full rounded-full bg-neutral-50 text-${getJobColor(job)} flex items-center justify-center`}
               >
-                {getJobIcon(job.type)}
+                {getJobIcon(job)}
               </div>
             </div>
-            <span className="text-foreground-950 text-xs capitalize">{job?.step?.name || formatJobType(job.type)}</span>
+            <span className="text-foreground-950 text-xs capitalize">{getJobDisplayLabel(job)}</span>
           </div>
 
           <Button
@@ -96,6 +98,14 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
 
 function formatJobType(type?: StepTypeEnum): string {
   return type?.replace(/_/g, ' ') || '';
+}
+
+function getJobDisplayLabel(job: IActivityJob): string {
+  if (job.providerId && ACTION_PROVIDER_CONFIGS[job.providerId]) {
+    return ACTION_PROVIDER_CONFIGS[job.providerId].displayName;
+  }
+
+  return job?.step?.name || formatJobType(job.type);
 }
 
 function getStatusMessage(job: IActivityJob): string | React.ReactNode {
@@ -238,8 +248,21 @@ function TraceTooltip({ message, raw, variant = 'error' }: { message: string; ra
   );
 }
 
-function getJobIcon(type?: StepTypeEnum) {
-  const Icon = STEP_TYPE_TO_ICON[type?.toLowerCase() as keyof typeof STEP_TYPE_TO_ICON] ?? Route;
+function getJobColor(job: IActivityJob): string {
+  const providerId = job.providerId as ActionProviderIdEnum | undefined;
+
+  return (
+    (providerId && ACTION_PROVIDER_ID_TO_COLOR[providerId]) ||
+    STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR]
+  );
+}
+
+function getJobIcon(job: IActivityJob) {
+  const providerId = job.providerId as ActionProviderIdEnum | undefined;
+  const Icon =
+    (providerId && ACTION_PROVIDER_ID_TO_ICON[providerId]) ||
+    STEP_TYPE_TO_ICON[job.type?.toLowerCase() as keyof typeof STEP_TYPE_TO_ICON] ||
+    Route;
 
   return <Icon className="h-3.5 w-3.5" />;
 }

@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildSubscriberKey,
-  CachedResponse,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
@@ -23,7 +21,6 @@ import {
   ContextRepository,
   JobEntity,
   NotificationTemplateRepository,
-  SubscriberEntity,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
@@ -44,7 +41,8 @@ import {
 } from '@novu/shared';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
-import { ExecuteStepCustom } from './execute-step-custom.usecase';
+import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
+import { ExecuteDestinationCustomStep } from './execute-destination-custom-step.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageChat } from './send-message-chat.usecase';
@@ -70,7 +68,8 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private sendMessageDelay: SendMessageDelay,
     private throttle: Throttle,
-    private executeStepCustom: ExecuteStepCustom,
+    private executeCodeFirstCustomStep: ExecuteCodeFirstCustomStep,
+    private executeDestinationCustomStep: ExecuteDestinationCustomStep,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
@@ -97,9 +96,11 @@ export class SendMessage {
     );
 
     const stepType = command.step?.template?.type;
+    const stepProviderId = command.step?.providerId;
+    const isDestinationCustomStep = stepType === StepTypeEnum.CUSTOM && !!stepProviderId;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (isChannelStep(stepType)) {
+    if (!isActionStep(stepType) && !isDestinationCustomStep) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -205,7 +206,11 @@ export class SendMessage {
         return await this.throttle.execute(command);
       }
       case StepTypeEnum.CUSTOM: {
-        return await this.executeStepCustom.execute(sendMessageChannelCommand);
+        if (stepProviderId) {
+          return await this.executeDestinationCustomStep.execute(sendMessageChannelCommand);
+        }
+
+        return await this.executeCodeFirstCustomStep.execute(sendMessageChannelCommand);
       }
       default: {
         throw new Error(`Unsupported step type: ${stepType}`);
@@ -562,6 +567,21 @@ export class SendMessage {
   }
 }
 
-function isChannelStep(stepType: StepTypeEnum | undefined) {
-  return ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum);
+const ACTION_STEP_MAP: Record<StepTypeEnum, boolean> = {
+  [StepTypeEnum.IN_APP]: false,
+  [StepTypeEnum.EMAIL]: false,
+  [StepTypeEnum.SMS]: false,
+  [StepTypeEnum.CHAT]: false,
+  [StepTypeEnum.PUSH]: false,
+  [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.DIGEST]: true,
+  [StepTypeEnum.DELAY]: true,
+  [StepTypeEnum.TRIGGER]: true,
+  [StepTypeEnum.THROTTLE]: true,
+};
+
+function isActionStep(stepType: StepTypeEnum | undefined): boolean {
+  if (!stepType) return false;
+
+  return ACTION_STEP_MAP[stepType];
 }

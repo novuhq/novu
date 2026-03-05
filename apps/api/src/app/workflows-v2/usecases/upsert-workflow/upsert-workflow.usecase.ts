@@ -23,6 +23,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
+  ACTION_PROVIDER_ID_TO_CATEGORY_MAP,
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   ResourceOriginEnum,
@@ -262,7 +263,12 @@ export class UpsertWorkflowUseCase {
         const existingStep: NotificationStepEntity | null | undefined =
           '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
-        const controlSchemas: ControlSchemas = existingStep?.template?.controls || stepTypeToControlSchema[step.type];
+        const controlSchemaKey =
+          step.type === StepTypeEnum.CUSTOM && step.providerId
+            ? (ACTION_PROVIDER_ID_TO_CATEGORY_MAP[step.providerId] ?? step.type)
+            : step.type;
+        const controlSchemas: ControlSchemas =
+          existingStep?.template?.controls || stepTypeToControlSchema[controlSchemaKey];
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
           workflowOrigin,
           user,
@@ -286,6 +292,8 @@ export class UpsertWorkflowUseCase {
           stepId: stepIds[index],
           name: step.name,
           issues,
+          ...(step.providerId ? { providerId: step.providerId } : {}),
+          ...(step.integrationIdentifier ? { integrationIdentifier: step.integrationIdentifier } : {}),
         };
 
         if (existingStep) {

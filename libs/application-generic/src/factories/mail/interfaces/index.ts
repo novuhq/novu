@@ -1,10 +1,10 @@
 import { IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum, IConfigurations, ICredentials, IEmailOptions } from '@novu/shared';
+import { IConfigurations, ICredentials, IEmailOptions, IntegrationCategoryType } from '@novu/shared';
 import { ICheckIntegrationResponse, IEmailProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import { IHandler } from '../../shared/interfaces';
 
 export interface IMailHandler extends IHandler {
-  canHandle(providerId: string, channelType: ChannelTypeEnum);
+  canHandle(providerId: string, channelType: IntegrationCategoryType);
 
   buildProvider(credentials: ICredentials & IConfigurations, from?: string);
 

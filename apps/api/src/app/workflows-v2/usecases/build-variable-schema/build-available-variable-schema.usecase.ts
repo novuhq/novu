@@ -23,6 +23,14 @@ import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
 
+type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
+
+const SELECTED_CONTROL_VALUES_PROJECTION: Record<keyof SelectedControlValuesFields, 1> & { _id: 0 } = {
+  controls: 1,
+  _stepId: 1,
+  _id: 0,
+} as const;
+
 @Injectable()
 export class BuildVariableSchemaUsecase {
   constructor(
@@ -36,10 +44,10 @@ export class BuildVariableSchemaUsecase {
       command;
 
     let workflowControlValues: unknown[] = [];
+    let controls: SelectedControlValuesFields[] = [];
     if (workflow) {
-      let controls: ControlValuesEntity[];
       if (preloadedControlValues) {
-        controls = preloadedControlValues;
+        controls = preloadedControlValues as SelectedControlValuesFields[];
       } else {
         controls = await this.controlValuesRepository.find(
           {
@@ -49,10 +57,7 @@ export class BuildVariableSchemaUsecase {
             level: ControlValuesLevelEnum.STEP_CONTROLS,
             controls: { $ne: null },
           },
-          {
-            controls: 1,
-            _id: 0,
-          }
+          SELECTED_CONTROL_VALUES_PROJECTION
         );
       }
 
@@ -86,6 +91,13 @@ export class BuildVariableSchemaUsecase {
 
     const effectivePayloadSchema = optimisticPayloadSchema ?? workflow?.payloadSchema;
 
+    const controlValuesMap: Record<string, Record<string, unknown>> = {};
+    for (const cv of controls) {
+      if (cv._stepId) {
+        controlValuesMap[cv._stepId] = cv.controls;
+      }
+    }
+
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
@@ -94,6 +106,7 @@ export class BuildVariableSchemaUsecase {
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: effectivePayloadSchema,
+          controlValuesMap,
         }),
         payload: await this.resolvePayloadSchema(workflow, finalPayload, optimisticPayloadSchema),
         context: buildContextSchema(finalContext),
@@ -191,20 +204,30 @@ export class BuildVariableSchemaUsecase {
 function buildPreviousStepsProperties({
   previousSteps,
   payloadSchema,
+  controlValuesMap,
 }: {
   previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
+  controlValuesMap?: Record<string, Record<string, unknown>>;
 }) {
   return (previousSteps || []).reduce(
     (acc, step) => {
       // Handle both persisted steps and optimistic steps
       let stepId: string | undefined;
       let stepType: StepTypeEnum | undefined;
+      let customResultSchema: JSONSchemaDto | undefined;
 
       if ('template' in step && step.template?.type) {
         // Persisted step
         stepId = step.stepId;
         stepType = step.template.type;
+
+        if (stepType === StepTypeEnum.CUSTOM && step.providerId && step._id && controlValuesMap) {
+          const stepControls = controlValuesMap[step._id];
+          if (stepControls?.responseBodySchema) {
+            customResultSchema = stepControls.responseBodySchema as JSONSchemaDto;
+          }
+        }
       } else if ('type' in step) {
         // Optimistic step
         stepId = step.stepId;
@@ -215,6 +238,7 @@ function buildPreviousStepsProperties({
         acc[stepId] = computeResultSchema({
           stepType,
           payloadSchema,
+          customResultSchema,
         });
       }
 
@@ -227,15 +251,18 @@ function buildPreviousStepsProperties({
 function buildPreviousStepsSchema({
   previousSteps,
   payloadSchema,
+  controlValuesMap,
 }: {
   previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
+  controlValuesMap?: Record<string, Record<string, unknown>>;
 }): JSONSchemaDto {
   return {
     type: JsonSchemaTypeEnum.OBJECT,
     properties: buildPreviousStepsProperties({
       previousSteps,
       payloadSchema,
+      controlValuesMap,
     }),
     required: [],
     additionalProperties: false,

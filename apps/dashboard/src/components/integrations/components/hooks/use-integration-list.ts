@@ -1,7 +1,10 @@
 import {
+  ActionIntegrationTypeEnum,
+  actionProviders,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  IActionProviderConfig,
   IProviderConfig,
   NOVU_PROVIDERS,
   ProvidersIdEnum,
@@ -84,8 +87,31 @@ export function useIntegrationList(searchQuery: string = '') {
     );
   }, [filteredIntegrations]);
 
+  const filteredActionProviders = useMemo(() => {
+    if (!actionProviders) return [];
+
+    return actionProviders.filter((provider: IActionProviderConfig) =>
+      provider.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+
+  const actionProvidersByCategory = useMemo(() => {
+    return Object.values(ActionIntegrationTypeEnum).reduce(
+      (acc, category) => {
+        acc[category] = filteredActionProviders.filter(
+          (provider: IActionProviderConfig) => provider.category === category
+        );
+
+        return acc;
+      },
+      {} as Record<ActionIntegrationTypeEnum, IActionProviderConfig[]>
+    );
+  }, [filteredActionProviders]);
+
   return {
     filteredIntegrations,
     integrationsByChannel,
+    filteredActionProviders,
+    actionProvidersByCategory,
   };
 }

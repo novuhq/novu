@@ -490,6 +490,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter failed';
     case 'step_completed':
       return 'Step completed';
+    case 'step_processed':
+      return 'Step processed';
     case 'step_canceled':
       return 'Step canceled';
     case 'step_throttled':
@@ -570,6 +572,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Throttle window in past';
 
     // Provider events
+    case 'provider_missing':
+      return 'Provider missing';
     case 'provider_error':
       return 'Provider error';
     case 'provider_limit_exceeded':
@@ -748,6 +752,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Invalid push device token was removed from subscriber';
     case 'topic_subscription_preference_evaluation':
       return 'Topic subscription preference evaluated';
+    case 'action_step_execution_failed':
+      return 'Action step execution failed';
 
     // Workflow run status events
     case 'workflow_run_status_processing':

@@ -55,6 +55,8 @@ const variantSchemePart = {
   _parentId: {
     type: Schema.Types.ObjectId,
   },
+  providerId: Schema.Types.String,
+  integrationIdentifier: Schema.Types.String,
   metadata: {
     amount: {
       type: Schema.Types.Number,

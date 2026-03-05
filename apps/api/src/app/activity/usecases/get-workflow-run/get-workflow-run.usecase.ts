@@ -10,7 +10,7 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
@@ -82,43 +82,6 @@ export class GetWorkflowRun {
     this.logger.setContext(this.constructor.name);
   }
 
-  /**
-   * BACKWARD COMPATIBILITY: This method fetches digest data from Job entities at runtime
-   * for step runs that don't have digest data stored in ClickHouse.
-   * TODO: Remove this method as part of task nv-6576 once all step runs have digest data stored
-   */
-  private async getJobDigestDataByTransactionId(
-    transactionId: string,
-    command: GetWorkflowRunCommand
-  ): Promise<Map<string, string | null>> {
-    try {
-      const jobs: Pick<JobEntity, '_id' | 'step' | 'digest'>[] = await this.jobRepository.find(
-        {
-          transactionId,
-          _environmentId: command.environmentId,
-        },
-        '_id step digest'
-      );
-
-      const digestDataByStepId = new Map<string, string | null>();
-
-      for (const job of jobs) {
-        if (job.digest && job.step?.stepId) {
-          digestDataByStepId.set(job._id, JSON.stringify(job.digest));
-        }
-      }
-
-      return digestDataByStepId;
-    } catch (error) {
-      this.logger.warn('Failed to get job digest data', {
-        error: error.message,
-        transactionId,
-      });
-
-      return new Map();
-    }
-  }
-
   async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
     this.logger.debug('Getting workflow run from ClickHouse', {
       organizationId: command.organizationId,
@@ -158,6 +121,43 @@ export class GetWorkflowRun {
         workflowRunId: command.workflowRunId,
       });
       throw error;
+    }
+  }
+
+  /**
+   * BACKWARD COMPATIBILITY: This method fetches digest data from Job entities at runtime
+   * for step runs that don't have digest data stored in ClickHouse.
+   * TODO: Remove this method as part of task nv-6576 once all step runs have digest data stored
+   */
+  private async getJobDigestDataByTransactionId(
+    transactionId: string,
+    command: GetWorkflowRunCommand
+  ): Promise<Map<string, string | null>> {
+    try {
+      const jobs: Pick<JobEntity, '_id' | 'step' | 'digest'>[] = await this.jobRepository.find(
+        {
+          transactionId,
+          _environmentId: command.environmentId,
+        },
+        '_id step digest'
+      );
+
+      const digestDataByStepId = new Map<string, string | null>();
+
+      for (const job of jobs) {
+        if (job.digest && job.step?.stepId) {
+          digestDataByStepId.set(job._id, JSON.stringify(job.digest));
+        }
+      }
+
+      return digestDataByStepId;
+    } catch (error) {
+      this.logger.warn('Failed to get job digest data', {
+        error: error.message,
+        transactionId,
+      });
+
+      return new Map();
     }
   }
 

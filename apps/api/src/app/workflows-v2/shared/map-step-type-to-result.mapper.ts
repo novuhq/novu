@@ -6,9 +6,11 @@ import { StepTypeEnum } from '@novu/shared';
 export function computeResultSchema({
   stepType,
   payloadSchema,
+  customResultSchema,
 }: {
   stepType: StepTypeEnum;
   payloadSchema?: JSONSchema;
+  customResultSchema?: JSONSchema;
 }) {
   const mapStepTypeToResult: Record<ChannelStepEnum & ActionStepEnum, JSONSchema> = {
     [ChannelStepEnum.SMS]: channelStepSchemas[ChannelStepEnum.SMS].result,
@@ -18,6 +20,11 @@ export function computeResultSchema({
     [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].result,
     [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].result,
     [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema }),
+    [ActionStepEnum.CUSTOM]: customResultSchema ?? {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {},
+      additionalProperties: true,
+    },
   };
 
   return mapStepTypeToResult[stepType];

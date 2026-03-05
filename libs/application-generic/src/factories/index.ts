@@ -1,3 +1,4 @@
+export * from './action';
 export * from './channel.factory';
 export * from './chat/chat.factory';
 export * from './mail/interfaces';

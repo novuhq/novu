@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
+import {
+  ActionIntegrationTypeEnum,
+  ChannelTypeEnum,
+  ICreateIntegrationBodyDto,
+  IntegrationCategoryType,
+} from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -37,12 +42,12 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   providerId: string;
 
   @ApiProperty({
-    enum: ChannelTypeEnum,
-    description: 'The channel type for the integration',
+    enum: { ...ChannelTypeEnum, ...ActionIntegrationTypeEnum },
+    description: 'The channel or action category type for the integration',
   })
   @IsDefined()
-  @IsEnum(ChannelTypeEnum)
-  channel: ChannelTypeEnum;
+  @IsEnum({ ...ChannelTypeEnum, ...ActionIntegrationTypeEnum })
+  channel: IntegrationCategoryType;
 
   @ApiPropertyOptional({
     type: CredentialsDto,

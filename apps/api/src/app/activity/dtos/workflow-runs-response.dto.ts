@@ -13,9 +13,18 @@ export class WorkflowRunStepsDetailsDto {
   @IsString()
   stepRunId: string;
 
+  @ApiProperty({ description: 'Step identifier' })
+  @IsString()
+  stepId: string;
+
   @ApiProperty({ description: 'Step type' })
   @IsString()
   stepType: string;
+
+  @ApiPropertyOptional({ description: 'Provider identifier' })
+  @IsOptional()
+  @IsString()
+  providerId?: string;
 
   @ApiProperty({
     description: 'Step status',

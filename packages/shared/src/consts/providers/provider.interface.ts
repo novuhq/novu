@@ -1,4 +1,12 @@
-import { ChannelTypeEnum, ConfigurationKey, CredentialsKeyEnum, ProvidersIdEnum } from '../../types';
+import {
+  ActionIntegrationTypeEnum,
+  ActionProviderIdEnum,
+  ChannelTypeEnum,
+  ConfigurationKey,
+  CredentialsKeyEnum,
+  IntegrationCategoryType,
+  ProvidersIdEnum,
+} from '../../types';
 
 export type ConfigConfiguration = {
   key: ConfigurationKey;
@@ -43,6 +51,28 @@ export interface IProviderConfig {
   betaVersion?: boolean;
 }
 
+export interface IActionProviderConfig {
+  id: ActionProviderIdEnum;
+  displayName: string;
+  description?: string;
+  category: ActionIntegrationTypeEnum;
+  credentials: IConfigCredential[];
+  configurations?: ConfigConfigurationGroup[];
+  logoFileName: ILogoFileName;
+  docReference: string;
+  comingSoon?: boolean;
+  betaVersion?: boolean;
+  iconName?: string;
+  color?: string;
+  badgeLabel?: string;
+}
+
+export type IAnyProviderConfig = IProviderConfig | IActionProviderConfig;
+
+export function isActionProviderConfig(config: IAnyProviderConfig): config is IActionProviderConfig {
+  return 'category' in config;
+}
+
 type CredentialsType =
   | 'string'
   | 'dropdown'
@@ -55,6 +85,18 @@ type CredentialsType =
   | 'pushResources'
   | 'crossChannelConfigs'
   | 'inboxCount';
+
+type CredentialTypeToTS = {
+  string: string;
+  number: number;
+  boolean: boolean;
+  switch: boolean;
+};
+
+export type CredentialsFromConfig<T extends readonly IConfigCredential[]> = {
+  // biome-ignore lint/suspicious/noExplicitAny: unmapped credential types intentionally fall back to any
+  [K in T[number] as K['key']]: K['type'] extends keyof CredentialTypeToTS ? CredentialTypeToTS[K['type']] : any;
+};
 
 export interface IConfigCredential {
   key: CredentialsKeyEnum;

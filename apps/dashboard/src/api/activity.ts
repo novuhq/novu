@@ -150,7 +150,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       status: step.status === 'queued' ? 'pending' : (step.status as any),
       _templateId: workflowRun.workflowId,
       payload: 'payload' in workflowRun ? workflowRun.payload : {},
-      providerId: undefined,
+      providerId: step.providerId,
       overrides: {},
       transactionId: workflowRun.transactionId,
       createdAt: workflowRun.createdAt,

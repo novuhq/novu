@@ -1,3 +1,4 @@
+import { ACTION_PROVIDER_CONFIGS, ActionProviderIdEnum } from '@novu/shared';
 import { StepTypeEnum } from './enums';
 
 export enum StepColorEnum {
@@ -11,6 +12,12 @@ export enum StepColorEnum {
   HIGHLIGHTED = 'highlighted',
   WARNING = 'warning',
 }
+
+export const ACTION_PROVIDER_ID_TO_COLOR: Partial<Record<ActionProviderIdEnum, StepColorEnum>> = Object.fromEntries(
+  Object.values(ACTION_PROVIDER_CONFIGS)
+    .filter((c) => c.color)
+    .map((c) => [c.id, c.color as StepColorEnum])
+);
 
 export const STEP_TYPE_TO_COLOR: Record<StepTypeEnum, StepColorEnum> = {
   [StepTypeEnum.TRIGGER]: StepColorEnum.NEUTRAL,

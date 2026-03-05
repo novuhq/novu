@@ -2339,6 +2339,9 @@ importers:
       json-logic-js:
         specifier: ^2.0.5
         version: 2.0.5
+      json-schema-to-ts:
+        specifier: ^3.0.0
+        version: 3.1.1
       jsonwebtoken:
         specifier: 9.0.3
         version: 9.0.3

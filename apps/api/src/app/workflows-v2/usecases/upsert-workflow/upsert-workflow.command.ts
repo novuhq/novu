@@ -81,6 +81,14 @@ export class UpsertStepDataCommand {
   @IsOptional()
   @IsString()
   stepId?: string;
+
+  @IsOptional()
+  @IsString()
+  providerId?: string;
+
+  @IsOptional()
+  @IsString()
+  integrationIdentifier?: string;
 }
 
 export class UpsertWorkflowDataCommand {

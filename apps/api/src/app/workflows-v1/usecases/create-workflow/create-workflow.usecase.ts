@@ -466,6 +466,8 @@ export class CreateWorkflow {
         metadata: step.metadata,
         stepId: step.stepId,
         issues: step.issues,
+        ...(step.providerId ? { providerId: step.providerId } : {}),
+        ...(step.integrationIdentifier ? { integrationIdentifier: step.integrationIdentifier } : {}),
       };
 
       if (storedVariants.length) {

@@ -1,4 +1,4 @@
-import { Slug } from '@novu/shared';
+import { ACTION_PROVIDER_CONFIGS, ActionProviderIdEnum, Slug } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ComponentProps, KeyboardEventHandler, useCallback, useState } from 'react';
@@ -6,10 +6,10 @@ import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
-import { STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { ACTION_PROVIDER_ID_TO_COLOR, STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
-import { STEP_TYPE_TO_ICON } from '../icons/utils';
+import { ACTION_PROVIDER_ID_TO_ICON, STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { AnimationStepWrapper } from './animation-step-wrapper';
 import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
@@ -26,6 +26,7 @@ export type NodeData = {
   controlValues?: Record<string, unknown>;
   isPending?: boolean;
   triggerLink?: string;
+  providerId?: string;
 };
 
 export type NodeType = FlowNode<NodeData>;
@@ -454,19 +455,25 @@ export const ThrottleNode = (props: NodeProps<NodeType>) => {
 
 export const CustomNode = (props: NodeProps<NodeType>) => {
   const { id, data } = props;
-  const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.CUSTOM];
+  const providerConfig = data.providerId ? ACTION_PROVIDER_CONFIGS[data.providerId] : null;
+  const providerId = data.providerId as ActionProviderIdEnum | undefined;
+  const Icon = (providerId && ACTION_PROVIDER_ID_TO_ICON[providerId]) || STEP_TYPE_TO_ICON[StepTypeEnum.CUSTOM];
+  const color = (providerId && ACTION_PROVIDER_ID_TO_COLOR[providerId]) || STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM];
+  const label = data.name || providerConfig?.displayName || 'Custom Step';
+  const content = providerConfig?.description ?? data.content;
+  const badgeLabel = providerConfig?.badgeLabel;
 
   return (
     <NodeWrapper id={id} type={StepTypeEnum.CUSTOM}>
       <StepNode id={id} data={data} type={StepTypeEnum.CUSTOM}>
-        <NodeHeader type={StepTypeEnum.CUSTOM}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM]}>
+        <NodeHeader type={StepTypeEnum.CUSTOM} badgeLabel={badgeLabel} badgeColor={color}>
+          <NodeIcon variant={color}>
             <Icon />
           </NodeIcon>
-          <NodeName>{data.name || 'Custom Step'}</NodeName>
+          <NodeName>{label}</NodeName>
         </NodeHeader>
         <NodeBody type={StepTypeEnum.CUSTOM} controlValues={data.controlValues ?? {}}>
-          {data.content}
+          {content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}
         {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
@@ -516,7 +523,7 @@ export const AddNode = (props: NodeProps<NodeType>) => {
             disabled={isReadOnly}
             visible
             className="-mt-1"
-            onMenuItemClick={(stepType) => addNode(data.index, stepType)}
+            onMenuItemClick={(selection) => addNode(data.index, selection)}
           />
         )}
       </motion.div>

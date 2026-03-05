@@ -152,12 +152,17 @@ export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
 
+export enum ActionProviderIdEnum {
+  HttpRequest = 'http-request',
+}
+
 export type ProvidersIdEnum =
   | EmailProviderIdEnum
   | SmsProviderIdEnum
   | PushProviderIdEnum
   | InAppProviderIdEnum
-  | ChatProviderIdEnum;
+  | ChatProviderIdEnum
+  | ActionProviderIdEnum;
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
