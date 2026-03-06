@@ -110,21 +110,21 @@ export class GetWorkflowRun {
 
       return digestDataByStepId;
     } catch (error) {
-      this.logger.warn('Failed to get job digest data', {
+      this.logger.warn({
         error: error.message,
         transactionId,
-      });
+      }, 'Failed to get job digest data');
 
       return new Map();
     }
   }
 
   async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
-    this.logger.debug('Getting workflow run from ClickHouse', {
+    this.logger.debug({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       workflowRunId: command.workflowRunId,
-    });
+    }, 'Getting workflow run from ClickHouse');
 
     try {
       const workflowRunQuery = new QueryBuilder<WorkflowRun>({
@@ -151,12 +151,12 @@ export class GetWorkflowRun {
 
       return workflowRunDto;
     } catch (error) {
-      this.logger.error('Failed to get workflow run', {
+      this.logger.error({
         error: error.message,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         workflowRunId: command.workflowRunId,
-      });
+      }, 'Failed to get workflow run');
       throw error;
     }
   }
@@ -260,10 +260,10 @@ export class GetWorkflowRun {
 
       return executionDetailsByEntityId;
     } catch (error) {
-      this.logger.warn('Failed to get execution details from traces', {
+      this.logger.warn({
         error: error.message,
         entityIds,
-      });
+      }, 'Failed to get execution details from traces');
 
       return new Map();
     }

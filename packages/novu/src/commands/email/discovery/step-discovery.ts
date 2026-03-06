@@ -6,7 +6,6 @@ import type { DiscoveredStep, StepDiscoveryResult, ValidationError } from '../ty
 
 interface StepMetadata {
   stepId?: string;
-  workflowId?: string;
   type?: string;
 }
 
@@ -31,13 +30,17 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
   const analyses = relativeStepFiles.map((relativePath) =>
     analyzeStepFile(path.resolve(stepsDir, relativePath), relativePath)
   );
-  const duplicateStepIdErrors = buildDuplicateStepIdErrors(analyses);
+  const duplicateStepIdErrors = buildDuplicateStepIdErrors(analyses, (rp) => deriveWorkflowId(rp));
 
   const steps: DiscoveredStep[] = [];
   const errors: ValidationError[] = [];
 
   for (const analysis of analyses) {
-    const fileErrors = [...buildValidationErrors(analysis), ...(duplicateStepIdErrors.get(analysis.filePath) ?? [])];
+    const workflowId = deriveWorkflowId(analysis.relativePath);
+    const fileErrors = [
+      ...buildValidationErrors(analysis, workflowId),
+      ...(duplicateStepIdErrors.get(analysis.filePath) ?? []),
+    ];
     if (fileErrors.length > 0) {
       errors.push({
         filePath: path.relative(process.cwd(), analysis.filePath),
@@ -46,7 +49,7 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
       continue;
     }
 
-    const { stepId, workflowId, type } = analysis.metadata;
+    const { stepId, type } = analysis.metadata;
     if (stepId && workflowId && type) {
       steps.push({
         stepId,
@@ -94,9 +97,6 @@ function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
   const metadata: StepMetadata = {};
 
   function visit(node: ts.Node) {
-    if (ts.isVariableStatement(node) && hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword)) {
-      extractWorkflowIdExport(node, metadata);
-    }
     if (ts.isExportAssignment(node) && !node.isExportEquals) {
       extractStepResolverCallMetadata(node.expression, metadata);
     }
@@ -108,20 +108,13 @@ function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
   return metadata;
 }
 
-function extractWorkflowIdExport(node: ts.VariableStatement, metadata: StepMetadata): void {
-  for (const declaration of node.declarationList.declarations) {
-    if (
-      !ts.isIdentifier(declaration.name) ||
-      !declaration.initializer ||
-      !ts.isStringLiteral(declaration.initializer)
-    ) {
-      continue;
-    }
-
-    if (declaration.name.text === 'workflowId') {
-      metadata.workflowId = declaration.initializer.text;
-    }
+function deriveWorkflowId(relativePath: string): string | undefined {
+  const parentDir = path.dirname(relativePath);
+  if (parentDir === '.' || parentDir === '') {
+    return undefined;
   }
+
+  return parentDir.split('/')[0];
 }
 
 // Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)), `as` casts, and `satisfies` expressions
@@ -187,15 +180,16 @@ function extractParseDiagnostics(sourceFile: ts.SourceFile): string[] {
   return (parseDiagnostics ?? []).map((diagnostic) => formatParseDiagnostic(sourceFile, diagnostic));
 }
 
-function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
+function buildValidationErrors(analysis: AnalyzedStepFile, workflowId: string | undefined): string[] {
   const errors: string[] = [...analysis.parseErrors];
 
-  if (!analysis.metadata.workflowId) {
-    errors.push("Missing required export: 'workflowId' (must be a string literal)");
+  if (!workflowId) {
+    errors.push('Step file must be inside a workflow folder (e.g., novu/{workflowId}/step-name.step.tsx)');
   }
 
   if (!analysis.hasDefaultExport) {
     errors.push('Missing default export');
+
     return errors;
   }
 
@@ -210,20 +204,28 @@ function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
   return errors;
 }
 
-function buildDuplicateStepIdErrors(analyses: AnalyzedStepFile[]): Map<string, string[]> {
-  const filesByCompositeKey = groupAnalysesByCompositeKey(analyses);
+function buildDuplicateStepIdErrors(
+  analyses: AnalyzedStepFile[],
+  getWorkflowId: (relativePath: string) => string | undefined
+): Map<string, string[]> {
+  const filesByCompositeKey = groupAnalysesByCompositeKey(analyses, getWorkflowId);
+
   return buildErrorsForDuplicates(filesByCompositeKey);
 }
 
-function groupAnalysesByCompositeKey(analyses: AnalyzedStepFile[]): Map<string, AnalyzedStepFile[]> {
+function groupAnalysesByCompositeKey(
+  analyses: AnalyzedStepFile[],
+  getWorkflowId: (relativePath: string) => string | undefined
+): Map<string, AnalyzedStepFile[]> {
   const grouped = new Map<string, AnalyzedStepFile[]>();
 
   for (const analysis of analyses) {
-    if (!analysis.metadata.stepId || !analysis.metadata.workflowId) {
+    const workflowId = getWorkflowId(analysis.relativePath);
+    if (!analysis.metadata.stepId || !workflowId) {
       continue;
     }
 
-    const key = `${analysis.metadata.workflowId}:${analysis.metadata.stepId}`;
+    const key = `${workflowId}:${analysis.metadata.stepId}`;
     const files = grouped.get(key) ?? [];
     files.push(analysis);
     grouped.set(key, files);

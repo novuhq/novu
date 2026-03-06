@@ -65,7 +65,8 @@ export default {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
-      const stepOutputs = body.steps ?? {};
+      const stateArray = Array.isArray(body.state) ? body.state : [];
+      const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
 
       if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {
@@ -106,10 +107,10 @@ export default {
 
 exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
 "import { validateData } from '@novu/framework/validators';
-import stepHandler0, { workflowId as workflowId0 } from "./novu/welcome-email.step";
+import stepHandler0 from "./novu/welcome-email.step";
 
 const stepHandlers = new Map([
-  [\`\${workflowId0}/\${stepHandler0.stepId}\`, stepHandler0]
+  ["onboarding" + '/' + stepHandler0.stepId, stepHandler0]
 ]);
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -169,7 +170,8 @@ export default {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
-      const stepOutputs = body.steps ?? {};
+      const stateArray = Array.isArray(body.state) ? body.state : [];
+      const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
 
       if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {
@@ -210,12 +212,12 @@ export default {
 
 exports[`generateWorkerWrapper > should match snapshot 1`] = `
 "import { validateData } from '@novu/framework/validators';
-import stepHandler0, { workflowId as workflowId0 } from "./novu/welcome-email.step";
-import stepHandler1, { workflowId as workflowId1 } from "./novu/verify-email.step";
+import stepHandler0 from "./novu/welcome-email.step";
+import stepHandler1 from "./novu/verify-email.step";
 
 const stepHandlers = new Map([
-  [\`\${workflowId0}/\${stepHandler0.stepId}\`, stepHandler0],
-  [\`\${workflowId1}/\${stepHandler1.stepId}\`, stepHandler1]
+  ["onboarding" + '/' + stepHandler0.stepId, stepHandler0],
+  ["onboarding" + '/' + stepHandler1.stepId, stepHandler1]
 ]);
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -275,7 +277,8 @@ export default {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
-      const stepOutputs = body.steps ?? {};
+      const stateArray = Array.isArray(body.state) ? body.state : [];
+      const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
 
       if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {

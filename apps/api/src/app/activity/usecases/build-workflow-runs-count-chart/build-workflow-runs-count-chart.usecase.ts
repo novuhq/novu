@@ -34,10 +34,10 @@ export class BuildWorkflowRunsCountChart {
       topicKey,
     } = command;
 
-    this.logger.debug('Getting workflow runs count for chart', {
+    this.logger.debug({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
-    });
+    }, 'Getting workflow runs count for chart');
 
     try {
       const queryBuilder = new QueryBuilder<WorkflowRun>({
@@ -103,11 +103,11 @@ export class BuildWorkflowRunsCountChart {
         count: result,
       };
     } catch (error) {
-      this.logger.error('Failed to get workflow runs count for chart', {
+      this.logger.error({
         error: error.message,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      });
+      }, 'Failed to get workflow runs count for chart');
       throw error;
     }
   }

@@ -23,14 +23,15 @@ describe('bundleRelease', () => {
 
     fs.writeFileSync(path.join(sourceDir, 'utils.ts'), "export const body = 'Hello from alias';\n", 'utf8');
 
-    const stepFilePath = path.join(stepDir, 'welcome.step.ts');
+    const workflowDir = path.join(stepDir, 'onboarding');
+    fs.mkdirSync(workflowDir, { recursive: true });
+    const stepFilePath = path.join(workflowDir, 'welcome.step.ts');
     fs.writeFileSync(
       stepFilePath,
       `
 import { body } from '@emails/utils';
 
 export const stepId = 'welcome-email';
-export const workflowId = 'onboarding';
 export const type = 'email';
 
 export default async function () {
@@ -49,7 +50,7 @@ export default async function () {
         workflowId: 'onboarding',
         type: 'email',
         filePath: stepFilePath,
-        relativePath: 'welcome.step.ts',
+        relativePath: 'onboarding/welcome.step.ts',
       },
     ];
 
@@ -69,14 +70,15 @@ export default async function () {
     const stepDir = path.join(tempDir, 'novu');
     fs.mkdirSync(stepDir, { recursive: true });
 
-    const stepFilePath = path.join(stepDir, 'missing-alias.step.ts');
+    const workflowDir = path.join(stepDir, 'onboarding');
+    fs.mkdirSync(workflowDir, { recursive: true });
+    const stepFilePath = path.join(workflowDir, 'missing-alias.step.ts');
     fs.writeFileSync(
       stepFilePath,
       `
 import { body } from '@emails/utils';
 
 export const stepId = 'missing-alias';
-export const workflowId = 'onboarding';
 export const type = 'email';
 
 export default async function () {
@@ -95,7 +97,7 @@ export default async function () {
         workflowId: 'onboarding',
         type: 'email',
         filePath: stepFilePath,
-        relativePath: 'missing-alias.step.ts',
+        relativePath: 'onboarding/missing-alias.step.ts',
       },
     ];
 

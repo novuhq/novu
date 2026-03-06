@@ -1,14 +1,15 @@
 import * as fsSync from 'fs';
 import * as fs from 'fs/promises';
-import ora from 'ora';
 import * as path from 'path';
-import { green, red, yellow } from 'picocolors';
+import { dim, green, red, yellow } from 'picocolors';
+import prompts from 'prompts';
 import type { RendererConflictStep } from './api';
 import { RendererConflictError, StepResolverClient } from './api';
 import { bundleRelease, formatBundleSize } from './bundler';
 import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
-import { discoverStepFiles } from './discovery';
+import type { DiscoveredTemplate } from './discovery';
+import { discoverEmailTemplates, discoverStepFiles } from './discovery';
 import { generateStepFile } from './templates/step-file';
 import type {
   DeploymentResult,
@@ -17,7 +18,15 @@ import type {
   StepResolverManifestStep,
   StepResolverReleaseBundle,
 } from './types';
-import { renderTable, StepFilePathResolver, withSpinner } from './utils';
+import {
+  detectPackageManager,
+  getInstallCommand,
+  installPackageSync,
+  isPackageInstalled,
+  renderTable,
+  StepFilePathResolver,
+  withSpinner,
+} from './utils';
 
 interface PublishOptions {
   secretKey?: string;
@@ -37,6 +46,7 @@ const RELEASE_ARTIFACT_BASENAME = 'step-resolver-release';
 
 export async function emailPublish(options: PublishOptions): Promise<void> {
   try {
+    const startTime = Date.now();
     const rootDir = process.cwd();
     const config = await loadConfig(options.config);
     const apiUrl = options.apiUrl || process.env.NOVU_API_URL || config?.apiUrl || DEFAULT_API_URL;
@@ -53,18 +63,18 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     assertStepRequiresWorkflow(options.step, options.workflow);
     assertTemplateRequiresWorkflowAndStep(options.template, options.workflow, options.step);
 
-    if (options.template) {
+    const effectiveOutDir = options.out || config?.outDir;
+    const templatePath = options.template ?? (await resolveTemplateInteractively(options, rootDir, effectiveOutDir));
+
+    if (templatePath) {
       const workflowIds = normalizeRequestedWorkflows(options.workflow);
       const stepIds = normalizeRequestedWorkflows(options.step);
-      await scaffoldStepFileIfNeeded(options.template, workflowIds[0], stepIds[0], rootDir, config?.outDir);
+      await scaffoldStepFileIfNeeded(templatePath, workflowIds[0], stepIds[0], rootDir, effectiveOutDir);
     }
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
     const workflowFilteredSteps = selectStepsByWorkflow(discoveredSteps, options.workflow);
     const selectedSteps = selectStepsByStepId(workflowFilteredSteps, options.step);
-    printDiscoveredSteps(selectedSteps, discoveredSteps.length, options.workflow, options.step);
-
-    const stepsWithSchemas = await extractSchemasForSteps(selectedSteps);
 
     const shouldMinifyBundles = !options.bundleOutDir;
     if (!shouldMinifyBundles) {
@@ -72,7 +82,12 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
       console.log('');
     }
 
-    const releaseBundle = await buildReleaseBundle(stepsWithSchemas, rootDir, shouldMinifyBundles, config?.aliases);
+    const { bundle: releaseBundle, stepsWithSchemas } = await buildReleaseBundle(
+      selectedSteps,
+      rootDir,
+      shouldMinifyBundles,
+      config?.aliases
+    );
     const manifestSteps = stepsWithSchemas.map((step) => ({
       workflowId: step.workflowId,
       stepId: step.stepId,
@@ -85,13 +100,13 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     }
 
     if (options.dryRun) {
-      printDryRunSummary(releaseBundle, selectedSteps, manifestSteps);
+      printDryRunSummary(releaseBundle, selectedSteps, startTime);
       return;
     }
 
     try {
       const deployment = await deployRelease(client, releaseBundle, manifestSteps);
-      printSuccessSummary(deployment, selectedSteps);
+      printSuccessSummary(deployment, selectedSteps, startTime);
     } catch (error) {
       if (error instanceof RendererConflictError) {
         printRendererConflictError(error);
@@ -105,6 +120,118 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     console.error('');
     process.exit(1);
   }
+}
+
+async function resolveTemplateInteractively(
+  options: PublishOptions,
+  rootDir: string,
+  configOutDir?: string
+): Promise<string | undefined> {
+  const workflowIds = normalizeRequestedWorkflows(options.workflow);
+  const stepIds = normalizeRequestedWorkflows(options.step);
+
+  if (workflowIds.length !== 1 || stepIds.length !== 1) {
+    return undefined;
+  }
+
+  const outDir = configOutDir || './novu';
+  const outDirPath = path.resolve(rootDir, outDir);
+  const pathResolver = new StepFilePathResolver(rootDir, outDirPath);
+  const stepFilePath = pathResolver.getStepFilePath(workflowIds[0], stepIds[0]);
+
+  if (fsSync.existsSync(stepFilePath)) {
+    return undefined;
+  }
+
+  if (!process.stdout.isTTY) {
+    console.log(yellow('ℹ  No --template provided. Use --template=<path> to scaffold a step file.'));
+    console.log('');
+
+    return undefined;
+  }
+
+  const templates = await withSpinner('Discovering React Email templates...', () => discoverEmailTemplates(rootDir), {
+    successMessage: (found) => `Found ${found.length} ${found.length === 1 ? 'template' : 'templates'}`,
+    failMessage: 'Template discovery failed',
+  });
+
+  if (templates.length === 0) {
+    console.log(yellow('ℹ  No React Email templates found in this project.'));
+    console.log('');
+    console.log(
+      `   Templates must import from ${yellow('@react-email/components')}, use JSX, and have a default export.`
+    );
+    console.log('');
+    console.log(`   To specify a template path manually, re-run with:`);
+    console.log(
+      `   npx novu email publish --workflow=${workflowIds[0]} --step=${stepIds[0]} --template=<path-to-template>`
+    );
+    console.log('');
+
+    return undefined;
+  }
+
+  return promptForTemplate(templates);
+}
+
+const MANUAL_ENTRY_VALUE = '__manual__';
+
+async function promptForTemplate(templates: DiscoveredTemplate[]): Promise<string | undefined> {
+  console.log('');
+
+  const selectResponse = await prompts(
+    {
+      type: 'select',
+      name: 'template',
+      message: 'Select a React Email template for this step',
+      choices: [
+        ...templates.map((t) => ({ title: t.relativePath, value: t.relativePath })),
+        { title: 'Enter path manually...', value: MANUAL_ENTRY_VALUE },
+      ],
+    },
+    {
+      onCancel: () => {
+        console.log('');
+        console.log(yellow('ℹ  Template selection cancelled. Step file will not be scaffolded.'));
+        console.log('');
+      },
+    }
+  );
+
+  if (!selectResponse.template) {
+    return undefined;
+  }
+
+  if (selectResponse.template !== MANUAL_ENTRY_VALUE) {
+    console.log('');
+
+    return selectResponse.template;
+  }
+
+  const textResponse = await prompts(
+    {
+      type: 'text',
+      name: 'template',
+      message: 'Template path (relative to project root)',
+      initial: './emails/your-template.tsx',
+    },
+    {
+      onCancel: () => {
+        console.log('');
+        console.log(yellow('ℹ  Template selection cancelled. Step file will not be scaffolded.'));
+        console.log('');
+      },
+    }
+  );
+
+  console.log('');
+
+  const manualTemplatePath = textResponse.template?.trim();
+  if (!manualTemplatePath) {
+    return undefined;
+  }
+
+  return manualTemplatePath;
 }
 
 function assertTemplateRequiresWorkflowAndStep(
@@ -139,6 +266,31 @@ function assertTemplateRequiresWorkflowAndStep(
     );
     console.error('');
     process.exit(1);
+  }
+}
+
+const FRAMEWORK_PACKAGE = '@novu/framework';
+
+async function installFrameworkPackageIfNeeded(rootDir: string): Promise<void> {
+  if (isPackageInstalled(FRAMEWORK_PACKAGE, rootDir)) {
+    return;
+  }
+
+  const pm = detectPackageManager(rootDir);
+  const installCmd = getInstallCommand(pm, FRAMEWORK_PACKAGE);
+
+  try {
+    await withSpinner(
+      `Installing ${FRAMEWORK_PACKAGE} for TypeScript types...`,
+      async () => {
+        installPackageSync(FRAMEWORK_PACKAGE, rootDir);
+      },
+      { successMessage: `Installed ${FRAMEWORK_PACKAGE}`, failMessage: `Failed to install ${FRAMEWORK_PACKAGE}` }
+    );
+  } catch {
+    console.log(`   ${yellow('ℹ')}  For TypeScript types in your editor, run:`);
+    console.log(`      ${installCmd}`);
+    console.log('');
   }
 }
 
@@ -177,16 +329,17 @@ async function scaffoldStepFileIfNeeded(
   fsSync.mkdirSync(workflowDir, { recursive: true });
 
   const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
-  const stepFileContent = generateStepFile(stepId, workflowId, templateImportPath, { template: templatePath });
+  const stepFileContent = generateStepFile(stepId, templateImportPath, { template: templatePath });
 
   fsSync.writeFileSync(stepFilePath, stepFileContent, 'utf8');
 
   const relPath = path.relative(rootDir, stepFilePath);
   console.log(`   ${green('✓')} Created ${relPath}`);
   console.log('');
-  console.log(`   ${yellow('ℹ')}  For TypeScript types in your editor:`);
-  console.log(`      npm install --save-dev @novu/framework`);
+  console.log(`   ${yellow('ℹ')}  Customize the resolver logic in this file anytime, then re-run publish to redeploy.`);
   console.log('');
+
+  await installFrameworkPackageIfNeeded(rootDir);
 }
 
 function assertNotProductionEnvironment(envInfo: EnvironmentInfo): void {
@@ -279,26 +432,22 @@ function assertSecretKey(secretKey?: string): asserts secretKey is string {
 }
 
 async function authenticate(client: StepResolverClient, apiUrl: string): Promise<EnvironmentInfo> {
-  const envInfo = await withSpinner(
-    'Authenticating with Novu...',
+  return withSpinner(
+    'Authenticating...',
     async () => {
       try {
         await client.validateConnection();
-        const envInfo = await client.getEnvironmentInfo();
-        return envInfo;
+        return await client.getEnvironmentInfo();
       } catch (error) {
-        console.error(`Using API URL: ${apiUrl}`);
-        console.error('(For EU region, use: --api-url https://eu.api.novu.co)');
-        console.error('');
-        throw error;
+        const msg = error instanceof Error ? error.message : String(error);
+        throw new Error(`${msg}\n   API URL: ${apiUrl}\n   For EU region: --api-url https://eu.api.novu.co`);
       }
     },
-    { successMessage: 'Authenticated with Novu', failMessage: 'Authentication failed' }
+    {
+      successMessage: (envInfo) => `Authenticated${dim(` · ${envInfo.name}`)}`,
+      failMessage: 'Authentication failed',
+    }
   );
-
-  console.log(`   ${green('✓')} Environment: ${envInfo.name} (${envInfo._id})`);
-  console.log('');
-  return envInfo;
 }
 
 async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string): Promise<DiscoveredStep[]> {
@@ -313,7 +462,7 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
         console.error('');
         console.error('Expected *.step.tsx, *.step.ts, *.step.jsx, or *.step.js files.');
         console.error('');
-        console.error("Run 'npx novu email init' first to generate step handlers.");
+        console.error(`Run 'npx novu email publish --workflow=<id> --step=<id>' to scaffold your first step handler.`);
         console.error('');
         throw new Error('No step files found');
       }
@@ -338,33 +487,16 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
 
       return discovery.steps;
     },
-    { successMessage: 'Discovered step files', failMessage: 'Discovery failed' }
-  );
-}
+    {
+      successMessage: (steps) => {
+        const workflowCount = new Set(steps.map((s) => s.workflowId)).size;
+        const stepText = steps.length === 1 ? 'step' : 'steps';
+        const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
 
-async function extractSchemasForSteps(steps: DiscoveredStep[]): Promise<DiscoveredStep[]> {
-  return withSpinner(
-    'Extracting step schemas...',
-    async () => {
-      const results = await Promise.all(
-        steps.map(async (step) => {
-          const schemas = await extractStepSchemas(step.filePath);
-
-          return { ...step, ...schemas };
-        })
-      );
-
-      const stepsWithSchemas = results.filter((s) => s.controlSchema);
-
-      if (stepsWithSchemas.length > 0) {
-        for (const step of stepsWithSchemas) {
-          console.log(`   ${green('✓')} ${step.stepId} (workflow: ${step.workflowId}) — control schema extracted`);
-        }
-      }
-
-      return results;
-    },
-    { successMessage: 'Schemas extracted', failMessage: 'Schema extraction failed' }
+        return `Discovered ${steps.length} ${stepText} in ${workflowCount} ${workflowText}`;
+      },
+      failMessage: 'Discovery failed',
+    }
   );
 }
 
@@ -410,52 +542,31 @@ function normalizeRequestedWorkflows(requestedWorkflowOption?: string[] | string
   return [requestedWorkflowOption];
 }
 
-function printDiscoveredSteps(
-  steps: DiscoveredStep[],
-  totalDiscoveredSteps: number,
-  selectedWorkflowOption?: string[] | string,
-  selectedStepOption?: string[] | string
-) {
-  for (const step of steps) {
-    console.log(`   ${green('✓')} ${step.stepId} (workflow: ${step.workflowId})`);
-  }
-
-  const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
-  const isFiltered =
-    normalizeRequestedWorkflows(selectedWorkflowOption).length > 0 ||
-    normalizeRequestedWorkflows(selectedStepOption).length > 0;
-
-  console.log('');
-  if (isFiltered) {
-    console.log(
-      `   Found ${steps.length} step(s) across ${workflowCount} workflow(s) (filtered from ${totalDiscoveredSteps} total step(s))`
-    );
-  } else {
-    console.log(`   Found ${steps.length} step(s) across ${workflowCount} workflow(s)`);
-  }
-  console.log('');
-}
-
 async function buildReleaseBundle(
   selectedSteps: DiscoveredStep[],
   rootDir: string,
   minify: boolean,
   aliases?: Record<string, string>
-): Promise<StepResolverReleaseBundle> {
-  const bundle = await withSpinner(
-    'Packaging steps...',
+): Promise<{ bundle: StepResolverReleaseBundle; stepsWithSchemas: DiscoveredStep[] }> {
+  return withSpinner(
+    'Packaging...',
     async () => {
-      return bundleRelease(selectedSteps, rootDir, { minify, aliases });
-    },
-    { successMessage: 'Packaged successfully', failMessage: 'Packaging failed' }
-  );
+      const stepsWithSchemas = await Promise.all(
+        selectedSteps.map(async (step) => {
+          const schemas = await extractStepSchemas(step.filePath);
 
-  const workflowCount = new Set(selectedSteps.map((step) => step.workflowId)).size;
-  console.log(
-    `   ${green('✓')} ${selectedSteps.length} step(s), ${workflowCount} workflow(s), ${formatBundleSize(bundle.size)}`
+          return { ...step, ...schemas };
+        })
+      );
+      const bundle = await bundleRelease(stepsWithSchemas, rootDir, { minify, aliases });
+
+      return { bundle, stepsWithSchemas };
+    },
+    {
+      successMessage: ({ bundle }) => `Packaged${dim(` · ${formatBundleSize(bundle.size)}`)}`,
+      failMessage: 'Packaging failed',
+    }
   );
-  console.log('');
-  return bundle;
 }
 
 async function deployRelease(
@@ -463,17 +574,10 @@ async function deployRelease(
   releaseBundle: StepResolverReleaseBundle,
   manifestSteps: StepResolverManifestStep[]
 ): Promise<DeploymentResult> {
-  const deploySpinner = ora('Publishing...').start();
-
-  try {
-    const result = await client.deployRelease(releaseBundle, manifestSteps);
-    deploySpinner.stop();
-
-    return result;
-  } catch (error) {
-    deploySpinner.fail('Publishing failed');
-    throw error;
-  }
+  return withSpinner('Publishing...', () => client.deployRelease(releaseBundle, manifestSteps), {
+    successMessage: 'Published',
+    failMessage: 'Publishing failed',
+  });
 }
 
 function printRendererConflictError(error: RendererConflictError): void {
@@ -501,60 +605,51 @@ function printRendererConflictError(error: RendererConflictError): void {
 function printDryRunSummary(
   bundle: StepResolverReleaseBundle,
   selectedSteps: DiscoveredStep[],
-  manifestSteps: StepResolverManifestStep[]
+  startTime: number
 ): void {
   const workflowCount = new Set(selectedSteps.map((step) => step.workflowId)).size;
+  const stepText = selectedSteps.length === 1 ? 'step' : 'steps';
+  const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
+  const elapsed = formatElapsed(Date.now() - startTime);
 
-  console.log(yellow('🔍 Dry run mode - skipping deployment'));
   console.log('');
-  console.log('Package summary:');
-  console.log(`  • Size: ${formatBundleSize(bundle.size)}`);
-  console.log(`  • Steps: ${selectedSteps.length}`);
-  console.log(`  • Workflows: ${workflowCount}`);
+  console.log(yellow('Dry run — nothing was published'));
   console.log('');
-  console.log('Included steps:');
-  for (const step of manifestSteps) {
-    console.log(`  • ${step.stepId} (workflow: ${step.workflowId})`);
-  }
+  renderTable(
+    selectedSteps,
+    [
+      { header: 'Step', getValue: (s) => s.stepId },
+      { header: 'Workflow', getValue: (s) => s.workflowId },
+    ],
+    '   '
+  );
   console.log('');
-  console.log(green('✅ Ready to publish!'));
+  console.log(
+    `   ${selectedSteps.length} ${stepText} in ${workflowCount} ${workflowText}${dim(` · ${formatBundleSize(bundle.size)} · ${elapsed}`)} · remove --dry-run to publish`
+  );
   console.log('');
 }
 
-function printSuccessSummary(deployment: DeploymentResult, steps: DiscoveredStep[]): void {
-  console.log(green('✅ Published successfully!'));
-  console.log('');
-
+function printSuccessSummary(deployment: DeploymentResult, steps: DiscoveredStep[], startTime: number): void {
   const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
-  const stepText = deployment.selectedStepsCount === 1 ? 'step' : 'steps';
+  const stepText = steps.length === 1 ? 'step' : 'steps';
   const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
-  console.log(
-    `   ${deployment.selectedStepsCount} ${stepText} across ${workflowCount} ${workflowText} ${deployment.selectedStepsCount === 1 ? 'is' : 'are'} now live`
-  );
-  console.log('');
-  console.log(`   Version: ${deployment.stepResolverHash}`);
-  console.log(`   Published: ${formatDeploymentTime(deployment.deployedAt)}`);
-  console.log('');
+  const elapsed = formatElapsed(Date.now() - startTime);
 
+  console.log('');
   renderTable(
     steps,
     [
       { header: 'Step', getValue: (s) => s.stepId },
       { header: 'Workflow', getValue: (s) => s.workflowId },
-      { header: 'Status', getValue: () => green('Live') },
     ],
     '   '
   );
   console.log('');
-}
-
-function formatDeploymentTime(isoString: string): string {
-  const date = new Date(isoString);
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const day = date.getDate();
-  const year = date.getFullYear();
-  const time = date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  return `${month} ${day}, ${year} at ${time}`;
+  console.log(
+    `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash.slice(0, 8)} · ${elapsed}`)}`
+  );
+  console.log('');
 }
 
 interface ReleaseArtifactFiles {
@@ -623,6 +718,15 @@ async function writeBundleArtifacts(
     manifestPath,
     metadataPath,
   };
+}
+
+function formatElapsed(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
+  const m = Math.floor(ms / 60_000);
+  const s = Math.round((ms % 60_000) / 1000);
+
+  return `${m}m ${s}s`;
 }
 
 function resolveBundleOutputDir(bundleOutDir: PublishOptions['bundleOutDir'], rootDir: string): string | undefined {

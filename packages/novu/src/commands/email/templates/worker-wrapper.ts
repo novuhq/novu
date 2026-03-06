@@ -12,10 +12,7 @@ export function generateWorkerWrapper(steps: DiscoveredStep[], rootDir: string):
 
 function generateImports(steps: DiscoveredStep[], rootDir: string): string {
   const stepImports = steps
-    .map(
-      (s, i) =>
-        `import stepHandler${i}, { workflowId as workflowId${i} } from ${JSON.stringify(getImportPath(s.filePath, rootDir))};`
-    )
+    .map((s, i) => `import stepHandler${i} from ${JSON.stringify(getImportPath(s.filePath, rootDir))};`)
     .join('\n');
 
   return `import { validateData } from '@novu/framework/validators';\n${stepImports}`;
@@ -23,7 +20,7 @@ function generateImports(steps: DiscoveredStep[], rootDir: string): string {
 
 function generateStepHandlersMap(steps: DiscoveredStep[]): string {
   const entries = steps
-    .map((_s, i) => `  [\`\${workflowId${i}}/\${stepHandler${i}.stepId}\`, stepHandler${i}]`)
+    .map((s, i) => `  [${JSON.stringify(s.workflowId)} + '/' + stepHandler${i}.stepId, stepHandler${i}]`)
     .join(',\n');
 
   return `const stepHandlers = new Map([\n${entries}\n]);`;
@@ -115,7 +112,8 @@ function generateBodyValidation(): string {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
-      const stepOutputs = body.steps ?? {};
+      const stateArray = Array.isArray(body.state) ? body.state : [];
+      const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
 
       if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {
