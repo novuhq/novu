@@ -6,7 +6,7 @@ import { InboxBellFilled } from '../../icons/inbox-bell-filled';
 import { StackedDots } from '../../icons/stacked-dots';
 import { TargetArrow } from '../../icons/target-arrow';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
-import { FlickeringGrid } from '../charts/flickering-grid';
+import { FlickeringGridPlaceholder } from './flickering-grid-placeholder';
 
 const ROW_STAGGER = 0.32;
 const CARD_STAGGER = 0.1;
@@ -76,33 +76,7 @@ function MetricCardSkeleton({
         </div>
         {/* <div className={cn(PULSE_CLASS, 'h-3 w-8 shrink-0')} style={{ animationDelay: '0ms' }} /> */}
       </div>
-      <div className="relative flex-1 min-h-[52px] rounded-sm overflow-hidden mt-0.5">
-        <motion.div
-          className="absolute inset-0 z-0"
-          animate={{ opacity: [0.94, 1, 0.94] }}
-          transition={{
-            duration: 2.4,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        >
-          <FlickeringGrid
-            squareSize={1.5}
-            gridGap={2}
-            maxOpacity={0.14}
-            minOpacity={0.06}
-            color="hsl(var(--text-disabled))"
-          />
-        </motion.div>
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-6 z-1 bg-linear-to-b from-bg-white to-transparent"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-6 z-1 bg-linear-to-t from-bg-white to-transparent"
-          aria-hidden
-        />
-      </div>
+      <FlickeringGridPlaceholder minHeight={52} topFadeHeight={24} bottomFadeHeight={24} className="mt-0.5" />
     </div>
   );
 }
@@ -139,33 +113,12 @@ function ChartSkeletonCard({
           <div className="flex flex-col flex-1 min-h-0 rounded-sm overflow-hidden">
             <div className="relative flex-1 min-h-[100px] overflow-hidden">
               {showGrid ? (
-                <>
-                  <motion.div
-                    className="absolute inset-0 z-0"
-                    animate={{ opacity: [0.94, 1, 0.94] }}
-                    transition={{
-                      duration: 2.4,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                  >
-                    <FlickeringGrid
-                      squareSize={1.5}
-                      gridGap={2}
-                      maxOpacity={0.14}
-                      minOpacity={0.06}
-                      color="hsl(var(--text-disabled))"
-                    />
-                  </motion.div>
-                  <div
-                    className="pointer-events-none absolute inset-x-0 top-0 h-10 z-1 bg-linear-to-b from-bg-white to-transparent"
-                    aria-hidden
-                  />
-                  <div
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-8 z-1 bg-linear-to-t from-bg-white to-transparent"
-                    aria-hidden
-                  />
-                </>
+                <FlickeringGridPlaceholder
+                  className="absolute inset-0"
+                  minHeight={100}
+                  topFadeHeight={40}
+                  bottomFadeHeight={32}
+                />
               ) : (
                 <div className="absolute inset-0 rounded-sm bg-neutral-alpha-100 animate-[skeleton-pulse_1.8s_ease-in-out_infinite]" />
               )}

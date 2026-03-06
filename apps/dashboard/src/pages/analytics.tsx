@@ -1,7 +1,7 @@
 import { useOrganization } from '@clerk/clerk-react';
 import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -17,6 +17,7 @@ import {
   AnalyticsUpgradeCtaIcon,
   CHART_CONFIG,
   ChartsSection,
+  SKELETON_TO_CONTENT_TRANSITION,
   useAnalyticsDateFilter,
   useMetricData,
 } from '../components/analytics';
@@ -194,59 +195,77 @@ export function AnalyticsPage() {
             )}
           </motion.div>
 
-          {showSkeleton ? (
-            <AnalyticsPageSkeleton />
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              <motion.div variants={ANIMATION_VARIANTS.section}>
-                <AnalyticsSection
-                  messagesDeliveredData={messagesDeliveredData}
-                  activeSubscribersData={activeSubscribersData}
-                  avgMessagesPerSubscriberData={avgMessagesPerSubscriberData}
-                  totalInteractionsData={totalInteractionsData}
-                  isLoading={isMetricsLoading}
-                />
+          <AnimatePresence mode="wait" initial={false}>
+            {showSkeleton ? (
+              <motion.div
+                key="skeleton"
+                className="flex flex-col gap-1.5"
+                initial={false}
+                exit={SKELETON_TO_CONTENT_TRANSITION.skeletonExit}
+              >
+                <AnalyticsPageSkeleton />
               </motion.div>
-
-              <motion.div variants={ANIMATION_VARIANTS.section}>
-                <ChartsSection
-                  charts={chartsData}
-                  isTrendsLoading={isTrendsLoading}
-                  isWorkflowLoading={isWorkflowLoading}
-                  trendsError={trendsError}
-                  workflowError={workflowError}
-                />
-              </motion.div>
-
-              <motion.div variants={ANIMATION_VARIANTS.section}>
-                <WorkflowRunsTrendChart
-                  data={chartsData?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[]}
-                  count={(chartsData?.[ReportTypeEnum.WORKFLOW_RUNS_COUNT] as WorkflowRunsCountDataPoint | undefined)?.count}
-                  periodLabel={selectedPeriodLabel}
-                  isLoading={isWorkflowLoading}
-                  error={workflowError}
-                />
-              </motion.div>
-
-              <motion.div variants={ANIMATION_VARIANTS.section} className="grid grid-cols-1 lg:grid-cols-12 gap-1.5 items-stretch lg:h-[200px]">
-                <div className="lg:col-span-8 h-full min-h-0">
-                  <ActiveSubscribersTrendChart
-                    data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
-                    isLoading={isTrendsLoading}
-                    error={trendsError}
+            ) : (
+              <motion.div
+                key="content"
+                className="flex flex-col gap-1.5"
+                initial="hidden"
+                animate="show"
+                variants={SKELETON_TO_CONTENT_TRANSITION.contentEnter}
+              >
+                <motion.div variants={SKELETON_TO_CONTENT_TRANSITION.contentSection}>
+                  <AnalyticsSection
+                    messagesDeliveredData={messagesDeliveredData}
+                    activeSubscribersData={activeSubscribersData}
+                    avgMessagesPerSubscriberData={avgMessagesPerSubscriberData}
+                    totalInteractionsData={totalInteractionsData}
+                    isLoading={isMetricsLoading}
                   />
-                </div>
-                <div className="lg:col-span-4 h-full min-h-0">
-                  <ProvidersByVolume
-                    data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
-                    isLoading={isTrendsLoading}
-                    error={trendsError}
+                </motion.div>
+
+                <motion.div variants={SKELETON_TO_CONTENT_TRANSITION.contentSection}>
+                  <ChartsSection
+                    charts={chartsData}
+                    isTrendsLoading={isTrendsLoading}
+                    isWorkflowLoading={isWorkflowLoading}
+                    trendsError={trendsError}
+                    workflowError={workflowError}
                   />
-                </div>
+                </motion.div>
+
+                <motion.div variants={SKELETON_TO_CONTENT_TRANSITION.contentSection}>
+                  <WorkflowRunsTrendChart
+                    data={chartsData?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[]}
+                    count={(chartsData?.[ReportTypeEnum.WORKFLOW_RUNS_COUNT] as WorkflowRunsCountDataPoint | undefined)?.count}
+                    periodLabel={selectedPeriodLabel}
+                    isLoading={isWorkflowLoading}
+                    error={workflowError}
+                  />
+                </motion.div>
+
+                <motion.div
+                  variants={SKELETON_TO_CONTENT_TRANSITION.contentSection}
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-1.5 items-stretch lg:h-[200px]"
+                >
+                  <div className="lg:col-span-8 h-full min-h-0">
+                    <ActiveSubscribersTrendChart
+                      data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
+                      isLoading={isTrendsLoading}
+                      error={trendsError}
+                    />
+                  </div>
+                  <div className="lg:col-span-4 h-full min-h-0">
+                    <ProvidersByVolume
+                      data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
+                      isLoading={isTrendsLoading}
+                      error={trendsError}
+                    />
+                  </div>
+                </motion.div>
               </motion.div>
-            </div>
-          )}
-          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+            )}
+          </AnimatePresence>
+          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && !showSkeleton && (
             <InlineToast
               title="You're viewing usage for the Development environment"
               variant="tip"

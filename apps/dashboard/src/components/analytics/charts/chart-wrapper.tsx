@@ -1,4 +1,5 @@
 import { ReactNode, useMemo } from 'react';
+import { FlickeringGridPlaceholder } from '../components/flickering-grid-placeholder';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { HelpTooltipIndicator } from '../../primitives/help-tooltip-indicator';
 import { ChartEmptyState } from './chart-empty-state';
@@ -78,10 +79,11 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
         <div className="flex flex-col flex-1 min-h-0 overflow-visible" style={{ minHeight: contentMinHeight }}>
           {isLoading ? (
             loadingSkeleton ?? (
-              <div
-                className="flex-1 min-h-0 w-full rounded-sm bg-neutral-alpha-100"
-                style={{ minHeight: contentMinHeight }}
-                aria-hidden
+              <FlickeringGridPlaceholder
+                className="w-full"
+                minHeight={contentMinHeight}
+                topFadeHeight={40}
+                bottomFadeHeight={32}
               />
             )
           ) : error ? (
