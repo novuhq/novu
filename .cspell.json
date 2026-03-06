@@ -866,7 +866,7 @@
     "apps/api/src/app/analytics/usecases/hubspot-identify-form/hubspot-identify-form.usecase.ts",
     "apps/api/src/app/workflows-v2/maily-test-data.ts",
     "apps/api/src/app/workflows-v2/usecases/validate-content/validate-placeholders/validate-placeholder.usecase.ts",
-    "apps/api/src/app/workflows-v2/util/json-schema-mock.ts",
+    "libs/application-generic/src/utils/json-schema-mock.ts",
     "libs/internal-sdk/**/*",
     "apps/widget/public/iframeResizer.contentWindow.js",
     "apps/worker/README.md",
