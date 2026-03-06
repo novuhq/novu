@@ -35,39 +35,17 @@ const isStringifiedMailyJSONContentStub = sinon.stub();
 
 // Mock modules using require to ensure proper stubbing
 sinon
-  .stub(require('../../../shared/helpers/maily-utils'), 'isStringifiedMailyJSONContent')
+  .stub(require('@novu/application-generic'), 'isStringifiedMailyJSONContent')
   .callsFake(isStringifiedMailyJSONContentStub);
 
-/**
- * Sets up mocks for the enterprise translation module
- * Returns the translation stub for further customization if needed
- */
 function setupTranslationMocks(moduleRef: sinon.SinonStubbedInstance<ModuleRef>): sinon.SinonStub {
-  const eeTranslation = require('@novu/ee-translation');
-  if (!eeTranslation) {
-    throw new Error('ee-translation does not exist');
-  }
+  const manageTranslationsExecuteStub = sinon.stub().resolves();
 
-  const { ManageTranslations } = eeTranslation;
-
-  // Create translation service stub that returns original content (no translation applied)
-  const manageTranslationsStub = sinon.stub(ManageTranslations.prototype, 'execute').callsFake(async (command: any) => {
-    return command.content || '';
+  (moduleRef as any).get = sinon.stub().returns({
+    execute: manageTranslationsExecuteStub,
   });
 
-  const mockLogger = {
-    setContext: sinon.stub(),
-  };
-
-  // Mock moduleRef.get to return the ManageTranslations class when requested
-  (moduleRef as any).get = sinon.stub().callsFake((token) => {
-    if (token === ManageTranslations) {
-      return new ManageTranslations({} as any, {} as any, mockLogger as any, {} as any);
-    }
-    return null;
-  });
-
-  return manageTranslationsStub;
+  return manageTranslationsExecuteStub;
 }
 
 describe('UpsertLayoutUseCase', () => {

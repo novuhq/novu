@@ -1,11 +1,10 @@
 import { ConflictException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, GetLayoutUseCase, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { GetLayoutUseCase } from '../get-layout';
 import { DeleteLayoutCommand } from './delete-layout.command';
 import { DeleteLayoutUseCase } from './delete-layout.use-case';
 
