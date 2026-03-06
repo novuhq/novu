@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BaseIssueDto } from '@novu/application-generic';
 import { ContentIssueEnum, IntegrationIssueEnum } from '@novu/shared';
 import { IsEnum } from 'class-validator';
-import { BaseIssueDto } from './base-issue.dto';
 
 export class StepIssueDto extends BaseIssueDto<ContentIssueEnum | IntegrationIssueEnum> {
   @ApiProperty({

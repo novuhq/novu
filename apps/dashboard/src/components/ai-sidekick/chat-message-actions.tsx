@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
+import { RiCheckLine, RiCloseLine } from 'react-icons/ri';
+import { RefreshIcon } from '../icons/refresh';
 import { Button } from '../primitives/button';
 
 type ChatMessageActionsProps = {
@@ -59,7 +60,7 @@ export function ChatMessageActions({
             className="px-0 hover:bg-transparent [&:disabled:not(.loading)]:bg-transparent [&>svg]:size-3"
             onClick={() => onTryAgain(lastUserMessageId)}
             disabled={isActionPending}
-            trailingIcon={RiRefreshLine}
+            trailingIcon={RefreshIcon}
           >
             Try again
           </Button>

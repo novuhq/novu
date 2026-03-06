@@ -1,10 +1,14 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  LayoutResponseDto,
+  PinoLogger,
+} from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
-import { LayoutResponseDto } from '../../dtos';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { DeleteLayoutCommand } from './delete-layout.command';
 
 @Injectable()

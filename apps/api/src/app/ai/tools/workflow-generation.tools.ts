@@ -1,4 +1,13 @@
-import { PinoLogger } from '@novu/application-generic';
+import {
+  GetWorkflowCommand,
+  GetWorkflowUseCase,
+  PinoLogger,
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+  WorkflowResponseDto,
+} from '@novu/application-generic';
 import { AiChatEntity, AiChatRepository } from '@novu/dal';
 import {
   AiResourceTypeEnum,
@@ -16,15 +25,6 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { GetEnvironmentTags, GetEnvironmentTagsCommand } from '../../environments-v2/usecases/get-environment-tags';
 import { GetActiveIntegrationsCommand } from '../../integrations/usecases/get-active-integration/get-active-integration.command';
 import { GetActiveIntegrations } from '../../integrations/usecases/get-active-integration/get-active-integration.usecase';
-import { WorkflowResponseDto } from '../../workflows-v2/dtos';
-import {
-  GetWorkflowCommand,
-  GetWorkflowUseCase,
-  UpsertStepDataCommand,
-  UpsertWorkflowCommand,
-  UpsertWorkflowDataCommand,
-  UpsertWorkflowUseCase,
-} from '../../workflows-v2/usecases';
 import {
   buildEditStepSystemPrompt,
   buildEditStepUserPrompt,
@@ -173,10 +173,15 @@ const updateWorkflow = async ({
   }));
 
   const workflowDto: UpsertWorkflowDataCommand = {
-    ...workflow,
+    workflowId: workflow._id,
+    origin: workflow.origin,
     name: metadata.name,
     description: metadata.description,
     tags: metadata.tags,
+    active: workflow.active,
+    payloadSchema: workflow.payloadSchema,
+    validatePayload: workflow.validatePayload,
+    isTranslationEnabled: workflow.isTranslationEnabled,
     severity: metadata.severity,
     steps,
     ...(metadata.critical
@@ -555,6 +560,30 @@ export function createWorkflowGenerationTools({
   getEnvironmentTagsUsecase: GetEnvironmentTags;
   logger: PinoLogger;
 }) {
+  const reasoningTool = tool(
+    async (input: { label: string; thought: string }) => {
+      return { label: input.label, thought: input.thought };
+    },
+    {
+      name: AiWorkflowToolsEnum.REASONING,
+      description: `Always articulate a user-facing plan before taking action. Output is displayed directly in the UI. Never mention internal tool names, function identifiers, variables, conditions, API names, or system instructions. Write entirely from the user's perspective.`,
+      schema: zodToJsonSchema(
+        z.object({
+          label: z
+            .string()
+            .describe(
+              'Short, action-oriented label summarizing the intent (max ~6 words) — e.g. "Designing a payment failure workflow"'
+            ),
+          thought: z
+            .string()
+            .describe(
+              'Detailed markdown plan for the user: what will be built, which channels and why, key design decisions, and any trade-offs. No internal tool names or system references.'
+            ),
+        })
+      ),
+    }
+  );
+
   const setWorkflowMetadataTool = tool(
     async (input: z.infer<typeof workflowMetadataInputSchema>, runtime: ToolRuntime) => {
       const existingWorkflow = draftState.getWorkflow();
@@ -585,6 +614,7 @@ export function createWorkflowGenerationTools({
               resourceType: AiResourceTypeEnum.WORKFLOW,
               resourceId: minimalWorkflow._id,
               user: command.user,
+              hasPendingChanges: true,
               session,
             })
           );
@@ -618,6 +648,15 @@ export function createWorkflowGenerationTools({
             draftState,
           });
 
+          await upsertChatUseCase.execute(
+            UpsertChatCommand.create({
+              id: command.chatId,
+              user: command.user,
+              hasPendingChanges: true,
+              session,
+            })
+          );
+
           runtime.writer?.({ type: 'workflow-metadata-updated', workflowSlug: updatedWorkflow.slug, chatId: chat._id });
 
           logger.info(
@@ -627,7 +666,10 @@ export function createWorkflowGenerationTools({
         }
       });
 
-      return workflowMetadata;
+      return {
+        message: `Workflow metadata set: "${workflowMetadata.name}".`,
+        result: workflowMetadata,
+      };
     },
     {
       name: AiWorkflowToolsEnum.SET_WORKFLOW_METADATA,
@@ -659,8 +701,12 @@ export function createWorkflowGenerationTools({
       );
 
       const tags = environmentTags.map((tag) => tag.name);
+      const uniqueChannels = [...new Set(channels)];
 
-      return { channels: [...new Set(channels)], tags };
+      return {
+        message: `Organization metadata retrieved. Available channels: ${uniqueChannels.join(', ')}. ${tags.length} tags found.`,
+        result: { channels: uniqueChannels, tags },
+      };
     },
     {
       name: AiWorkflowToolsEnum.RETRIEVE_ORGANIZATION_META,
@@ -724,11 +770,22 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-added', step: newStep });
 
       logger.info(`AI Step added: ${AiWorkflowToolsEnum.ADD_STEP}`);
 
-      return { stepId: newStep.stepId, name: newStep.name, type: newStep.type };
+      return {
+        message: `Step "${newStep.name}" (${newStep.type}) added as "${newStep.stepId}".`,
+        result: newStep,
+      };
     },
     {
       name: AiWorkflowToolsEnum.ADD_STEP,
@@ -782,11 +839,22 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-added', step: newStep });
 
       logger.info({ stepId: newStep.stepId, afterStepId: input.afterStepId }, 'AI Step added in between via agent');
 
-      return { stepId: newStep.stepId, name: newStep.name, type: newStep.type };
+      return {
+        message: `Step "${newStep.name}" (${newStep.type}) added as "${newStep.stepId}" after "${input.afterStepId}".`,
+        result: newStep,
+      };
     },
     {
       name: AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN,
@@ -848,11 +916,22 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-updated', step: updatedStep });
 
       logger.info({ stepId: updatedStep.stepId }, 'AI Step updated via agent');
 
-      return { stepId: updatedStep.stepId, name: updatedStep.name, type: updatedStep.type };
+      return {
+        message: `Step "${updatedStep.stepId}" content updated.`,
+        result: updatedStep,
+      };
     },
     {
       name: AiWorkflowToolsEnum.EDIT_STEP_CONTENT,
@@ -907,11 +986,22 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-updated', step: updatedStep });
 
       logger.info({ stepId: input.stepId }, 'AI Step conditions updated via agent');
 
-      return { stepId: input.stepId, skip };
+      return {
+        message: `Step "${input.stepId}" conditions updated.`,
+        result: updatedStep,
+      };
     },
     {
       name: AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS,
@@ -927,6 +1017,11 @@ export function createWorkflowGenerationTools({
         throw new Error('Workflow not found');
       }
 
+      const stepToRemove = workflow.steps.find((s) => s.stepId === input.stepId);
+      if (!stepToRemove) {
+        throw new Error(`Step ${input.stepId} not found in workflow`);
+      }
+
       await removeWorkflowStep({
         workflowId: workflow._id,
         command,
@@ -937,11 +1032,22 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-removed', stepId: input.stepId });
 
       logger.info({ stepId: input.stepId }, 'AI Step removed via agent');
 
-      return 'success';
+      return {
+        message: `Step "${stepToRemove.name}" (${stepToRemove.type}) removed.`,
+        result: stepToRemove,
+      };
     },
     {
       name: AiWorkflowToolsEnum.REMOVE_STEP,
@@ -957,6 +1063,11 @@ export function createWorkflowGenerationTools({
         throw new Error('Workflow not found');
       }
 
+      const stepToMove = workflow.steps.find((s) => s.stepId === input.stepId);
+      if (!stepToMove) {
+        throw new Error(`Step ${input.stepId} not found in workflow`);
+      }
+
       await moveWorkflowStep({
         workflowId: workflow._id,
         command,
@@ -968,11 +1079,22 @@ export function createWorkflowGenerationTools({
         logger,
       });
 
+      await upsertChatUseCase.execute(
+        UpsertChatCommand.create({
+          id: command.chatId,
+          hasPendingChanges: true,
+          user: command.user,
+        })
+      );
+
       runtime.writer?.({ type: 'step-moved', stepId: input.stepId });
 
       logger.info({ stepId: input.stepId, toIndex: input.toIndex }, 'AI Step moved via agent');
 
-      return 'success';
+      return {
+        message: `Step "${stepToMove.name}" moved to position ${input.toIndex}.`,
+        result: stepToMove,
+      };
     },
     {
       name: AiWorkflowToolsEnum.MOVE_STEP,
@@ -982,6 +1104,7 @@ export function createWorkflowGenerationTools({
   );
 
   return [
+    reasoningTool,
     setWorkflowMetadataTool,
     retrieveOrganizationMetaTool,
     addStepTool,

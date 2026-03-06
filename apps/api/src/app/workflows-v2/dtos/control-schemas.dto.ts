@@ -1,6 +1,4 @@
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
-import { UiSchema } from './ui-schema.dto';
-
+import { JSONSchemaDto, UiSchema } from '@novu/application-generic';
 export class ControlSchemasDto {
   schema: JSONSchemaDto;
   uiSchema?: UiSchema;

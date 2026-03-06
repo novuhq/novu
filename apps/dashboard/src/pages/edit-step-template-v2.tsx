@@ -18,11 +18,8 @@ export function EditStepTemplateV2Page() {
 
   const form = useForm({
     defaultValues,
-    values: step?.controls.values,
+    values: defaultValues,
     shouldFocusError: false,
-    resetOptions: {
-      keepDirtyValues: true,
-    },
   });
 
   const { onBlur, saveForm } = useFormAutosave({
@@ -31,12 +28,8 @@ export function EditStepTemplateV2Page() {
     save: (data, { onSuccess }) => {
       if (!workflow || !step) return;
 
-      const { stepResolverHash: _stripped, ...controlValues } = data as Record<string, unknown> & {
-        stepResolverHash?: unknown;
-      };
-
       const updateStepData: Partial<StepUpdateDto> = {
-        controlValues,
+        controlValues: data,
       };
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), { onSuccess });
     },

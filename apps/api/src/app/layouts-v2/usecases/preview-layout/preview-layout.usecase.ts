@@ -1,5 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { EmailControlType, InstrumentUsecase, LayoutControlType } from '@novu/application-generic';
+import {
+  buildContextSchema,
+  buildSubscriberSchema,
+  ControlValueSanitizerService,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
+  EmailControlType,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  InstrumentUsecase,
+  LayoutControlType,
+  PayloadMergerService,
+  PreviewPayloadProcessorService,
+  PreviewStep,
+  PreviewStepCommand,
+} from '@novu/application-generic';
 import { JsonSchemaTypeEnum } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import {
@@ -8,14 +23,7 @@ import {
   LAYOUT_PREVIEW_WORKFLOW_ID,
   ResourceOriginEnum,
 } from '@novu/shared';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
-import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
-import { buildContextSchema, buildSubscriberSchema } from '../../../shared/utils/create-schema';
-import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
-import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
 import { GenerateLayoutPreviewResponseDto } from '../../dtos/generate-layout-preview-response.dto';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { PreviewLayoutCommand } from './preview-layout.command';
 import { enhanceBodyForPreview } from './preview-utils';
 

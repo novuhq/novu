@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { buildVariablesKey, CachedResponse, PinoLogger } from '@novu/application-generic';
 import { SystemVariablesWithTypes } from '@novu/shared';
+import { TRANSLATIONS_SERVICE } from '../../../shared/constants';
 import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
 
 /**
@@ -43,10 +44,10 @@ export class GetWorkflowVariables {
 
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-shared-services')?.TranslationsService) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
           throw new BadRequestException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false });
         translationVariables = await service.getTranslationVariables(_environmentId, _organizationId);
       }
     } catch (e) {

@@ -27,6 +27,10 @@ const mockFeatureFlagsService = {
   getFlag: async () => false,
 } as unknown as FeatureFlagsService;
 
+const mockOrganizationRepository = {
+  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
+} as unknown as CommunityOrganizationRepository;
+
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;
 
@@ -59,6 +63,7 @@ describe('Workflow Worker', () => {
       workflowInMemoryProviderService,
       mockSqsService,
       mockFeatureFlagsService,
+      mockOrganizationRepository,
       new PinoLogger({})
     );
     await workflowQueueService.queue.obliterate();

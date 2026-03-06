@@ -1,0 +1,4 @@
+{
+  "main": "../dist/cjs/step-resolver.cjs",
+  "types": "../dist/cjs/step-resolver.d.cts"
+}

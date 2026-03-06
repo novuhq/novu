@@ -165,7 +165,7 @@ export class ExecuteBridgeJob {
     });
 
     const rawControls = controlsEntity?.controls;
-    const stepResolverHash = rawControls?.stepResolverHash as string | undefined;
+    const stepResolverHash = command.job.step.template?.stepResolverHash ?? undefined;
 
     let sanitizedControls: Record<string, unknown> = {};
     if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && rawControls) {

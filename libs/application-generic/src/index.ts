@@ -17,6 +17,8 @@ export * from './schemas/control';
 export * from './services';
 export * from './services/resource-validator.service';
 export * from './tracing';
+export * from './types';
+export * from './types/maily.types';
 export * from './usecases';
 export * from './utils';
 export * from './value-objects';

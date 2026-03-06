@@ -10,7 +10,6 @@ import {
   RiCloseLine,
   RiLoader3Line,
   RiLoader4Fill,
-  RiLoopLeftLine,
   RiRouteFill,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +44,7 @@ import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { Badge } from './primitives/badge';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormRoot } from './primitives/form/form';
 import { showErrorToast } from './primitives/sonner-helpers';
 
@@ -117,11 +117,17 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   );
 
   const chatId = useMemo(() => generateId(), []);
-  const { sendPrompt, stop, isGenerating } = useAiChatStream({
+  const { sendPrompt, stop, isGenerating, error } = useAiChatStream({
     id: chatId,
     agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
     onData: handleData,
   });
+
+  useEffect(() => {
+    if (error) {
+      showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
+    }
+  }, [error]);
 
   useEffect(() => {
     return () => {
@@ -149,6 +155,11 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
       : undefined;
 
   async function handleGuidedSubmit({ prompt }: { prompt: string }) {
+    const clearedPrompt = prompt.trim();
+    if (!clearedPrompt) {
+      return;
+    }
+
     await createAiChat(
       { resourceType: AiResourceTypeEnum.WORKFLOW },
       {
@@ -156,7 +167,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
           showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
         },
         onSuccess: async (chat) => {
-          sendPrompt({ chatId: chat._id, prompt });
+          sendPrompt({ chatId: chat._id, prompt: clearedPrompt });
         },
       }
     );
@@ -210,7 +221,12 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
                 <div className="flex flex-col gap-2 p-3">
                   <SegmentedControl value={tab} onValueChange={(value) => setTab(value as CreateWorkflowTab)}>
                     <SegmentedControlList>
-                      <SegmentedControlTrigger value="guided">Guided</SegmentedControlTrigger>
+                      <SegmentedControlTrigger value="guided">
+                        Guided{' '}
+                        <Badge variant="lighter" color="gray" className="ml-1">
+                          BETA
+                        </Badge>
+                      </SegmentedControlTrigger>
                       <SegmentedControlTrigger value="manual">Manual</SegmentedControlTrigger>
                     </SegmentedControlList>
                   </SegmentedControl>
@@ -219,7 +235,9 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
               </>
             )}
 
-            {showGuidedContent && <GuidedModeContent onSubmit={handleGuidedSubmit} isGenerating={isGenerating} />}
+            {showGuidedContent && (
+              <GuidedModeContent onSubmit={handleGuidedSubmit} isGenerating={isGenerating} error={error} />
+            )}
 
             {showManualContent &&
               (isLoadingTemplate ? (
@@ -268,12 +286,13 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
 }
 
 const schema = z.object({
-  prompt: z.string().max(2000),
+  prompt: z.string().min(1, 'Prompt is required').max(2000),
 });
 
 type GuidedModeContentProps = {
   onSubmit: (values: z.infer<typeof schema>) => void;
   isGenerating: boolean;
+  error?: Error;
 };
 
 const STEP_DELAY_MS = 2000;
@@ -301,7 +320,7 @@ type GenerationStep = {
   status: GenerationStepStatus;
 };
 
-function GuidedModeContent({ onSubmit, isGenerating }: GuidedModeContentProps) {
+function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentProps) {
   const form = useForm<z.infer<typeof schema>>({
     defaultValues: {
       prompt: '',
@@ -327,6 +346,12 @@ function GuidedModeContent({ onSubmit, isGenerating }: GuidedModeContentProps) {
     return () => clearInterval(interval);
   }, [isGenerating]);
 
+  useEffect(() => {
+    if (error) {
+      setAnimatedStepIndex(-1);
+    }
+  }, [error]);
+
   function handleSuggestionClick(suggestion: string) {
     form.setValue('prompt', suggestion);
   }
@@ -336,7 +361,7 @@ function GuidedModeContent({ onSubmit, isGenerating }: GuidedModeContentProps) {
       <div className="flex flex-col items-start gap-2 pt-8 pb-0">
         <Sparkling className="size-8" />
         <div className="flex flex-col gap-1">
-          <span className="text-label-md text-text-strong font-medium">
+          <span className="text-label-md text-text-strong font-medium flex items-center gap-1">
             Create a workflow that works out of the box
           </span>
           <span className="text-label-xs text-text-soft">

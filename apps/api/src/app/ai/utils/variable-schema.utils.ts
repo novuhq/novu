@@ -1,10 +1,14 @@
+import {
+  buildContextSchema,
+  buildSubscriberSchema,
+  buildVariables,
+  buildWorkflowSchema,
+  computeResultSchema,
+  DIGEST_EVENTS_PAYLOAD_VARIABLE_PATTERN,
+  JSONSchemaDto,
+} from '@novu/application-generic';
 import { JsonSchemaTypeEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
-import { buildVariables } from '../../shared/utils/build-variables';
-import { buildContextSchema, buildSubscriberSchema, buildWorkflowSchema } from '../../shared/utils/create-schema';
-import { DIGEST_EVENTS_PAYLOAD_VARIABLE_PATTERN } from '../../shared/utils/template-parser/parser-utils';
-import { computeResultSchema } from '../../workflows-v2/shared';
 
 const PAYLOAD_PREFIX = 'payload.';
 const CURRENT_PAYLOAD_PREFIX = 'current.payload.';

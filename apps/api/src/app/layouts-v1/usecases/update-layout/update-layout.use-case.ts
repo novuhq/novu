@@ -1,8 +1,13 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase, layoutControlSchema } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  GetLayoutCommandV0,
+  GetLayoutUseCaseV0,
+  LayoutDtoV0,
+  layoutControlSchema,
+} from '@novu/application-generic';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ResourceOriginEnum } from '@novu/shared';
-import { LayoutDto } from '../../dtos/layout.dto';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { UpdateLayoutCommand } from './update-layout.command';
@@ -10,24 +15,24 @@ import { UpdateLayoutCommand } from './update-layout.command';
 @Injectable()
 export class UpdateLayoutUseCase {
   constructor(
-    private getLayoutUseCase: GetLayoutUseCase,
+    private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
     private layoutRepository: LayoutRepository,
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: UpdateLayoutCommand): Promise<LayoutDto> {
+  async execute(command: UpdateLayoutCommand): Promise<LayoutDtoV0> {
     const isV2Layout =
       command.origin === ResourceOriginEnum.NOVU_CLOUD || command.origin === ResourceOriginEnum.EXTERNAL;
-    const getLayoutCommand = GetLayoutCommand.create({
+    const getLayoutCommand = GetLayoutCommandV0.create({
       layoutIdOrInternalId: command.layoutId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       type: command.type,
       origin: command.origin,
     });
-    const databaseEntity = await this.getLayoutUseCase.execute(getLayoutCommand);
+    const databaseEntity = await this.getLayoutUseCaseV0.execute(getLayoutCommand);
 
     const identifierHasChanged = command.identifier && command.identifier !== databaseEntity.identifier;
     if (identifierHasChanged) {
@@ -109,7 +114,7 @@ export class UpdateLayoutUseCase {
     };
   }
 
-  private mapFromEntity(layout: LayoutEntity): LayoutDto {
+  private mapFromEntity(layout: LayoutEntity): LayoutDtoV0 {
     return {
       ...layout,
       _id: layout._id,
@@ -124,7 +129,7 @@ export class UpdateLayoutUseCase {
     };
   }
 
-  private mapToEntity(layout: LayoutDto): LayoutEntity {
+  private mapToEntity(layout: LayoutDtoV0): LayoutEntity {
     return {
       ...layout,
       _id: layout._id as string,

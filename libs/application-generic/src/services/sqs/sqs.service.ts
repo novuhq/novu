@@ -19,9 +19,13 @@ export class SqsService {
     if (hasConfiguredQueues) {
       this.initializeClient();
       this.initializeProducers();
+      Logger.log(
+        { message: 'SQS service initialized', configuredTopics: Array.from(this.producers.keys()) },
+        LOG_CONTEXT
+      );
     } else {
       this.producers = new Map();
-      Logger.log('No SQS queue URLs configured, skipping client initialization', LOG_CONTEXT);
+      Logger.log('SQS service initialized with no queues configured', LOG_CONTEXT);
     }
 
     this.validateConfiguration();
@@ -37,11 +41,9 @@ export class SqsService {
 
     if (endpoint) {
       clientConfig.endpoint = endpoint;
-      Logger.log(`Using custom SQS endpoint: ${endpoint}`, LOG_CONTEXT);
     }
 
     this.client = new SQSClient(clientConfig);
-    Logger.log(`SQS client initialized for region: ${region}`, LOG_CONTEXT);
   }
 
   private loadQueueUrls(): void {
@@ -51,8 +53,6 @@ export class SqsService {
       [JobTopicNameEnum.PROCESS_SUBSCRIBER, process.env.SQS_QUEUE_URL_PROCESS_SUBSCRIBER],
       [JobTopicNameEnum.WEB_SOCKETS, process.env.SQS_QUEUE_URL_WEB_SOCKETS],
     ]);
-
-    Logger.log('SQS queue URLs loaded from environment variables', LOG_CONTEXT);
   }
 
   private initializeProducers(): void {
@@ -67,8 +67,6 @@ export class SqsService {
         this.producers.set(topic, producer);
       }
     });
-
-    Logger.log('SQS producers initialized', LOG_CONTEXT);
   }
 
   private validateConfiguration(): void {
@@ -81,10 +79,7 @@ export class SqsService {
     });
 
     if (missingQueues.length > 0) {
-      const message = `Missing SQS queue URL configuration for topics: ${missingQueues.join(', ')}`;
-      Logger.warn(message, LOG_CONTEXT);
-    } else {
-      Logger.log('All SQS queue URLs are configured', LOG_CONTEXT);
+      Logger.warn({ message: 'Missing SQS queue URL configuration', missingTopics: missingQueues }, LOG_CONTEXT);
     }
   }
 
@@ -138,11 +133,10 @@ export class SqsService {
     // sqs-producer will automatically batch messages (default: 10 per batch)
     await producer.send(messages);
 
-    Logger.log({ topic, count: messages.length }, 'Sent bulk messages to SQS', LOG_CONTEXT);
+    Logger.debug({ message: 'Sent bulk messages to SQS', topic, count: messages.length }, LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {
-    Logger.log('Shutting down SQS service', LOG_CONTEXT);
     if (this.client) {
       this.client.destroy();
     }

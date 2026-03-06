@@ -27,10 +27,11 @@ export class StandardQueueService extends QueueBaseService {
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
       _featureFlagsService,
+      _organizationRepository,
       _logger
     );
 
-    Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Creating queue', LOG_CONTEXT);
 
     this.createQueue();
     this.logger.setContext(LOG_CONTEXT);
