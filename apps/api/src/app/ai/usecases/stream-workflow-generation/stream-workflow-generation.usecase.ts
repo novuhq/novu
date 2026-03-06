@@ -1,6 +1,13 @@
 import { toUIMessageStream } from '@ai-sdk/langchain';
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, ResourceValidatorService } from '@novu/application-generic';
+import {
+  GetWorkflowCommand,
+  GetWorkflowUseCase,
+  PinoLogger,
+  ResourceValidatorService,
+  UpsertWorkflowUseCase,
+  WorkflowResponseDto,
+} from '@novu/application-generic';
 import { AiChatRepository, AiChatSnapshotRef, SnapshotRepository } from '@novu/dal';
 import { AiResourceTypeEnum, SnapshotSourceTypeEnum } from '@novu/shared';
 import { createUIMessageStream, generateId, UIMessage } from 'ai';
@@ -14,9 +21,6 @@ import {
 } from 'langchain';
 import { GetEnvironmentTags } from '../../../environments-v2/usecases/get-environment-tags';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
-import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
-import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow';
-import { UpsertWorkflowUseCase } from '../../../workflows-v2/usecases/upsert-workflow';
 import { buildWorkflowAgentSystemPrompt } from '../../prompts';
 import { CheckpointerService } from '../../services/checkpointer.service';
 import { LlmService } from '../../services/llm.service';

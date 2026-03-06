@@ -1,4 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { WorkflowCommonsFields } from '@novu/application-generic';
 import { ResourceOriginEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, ValidateNested } from 'class-validator';
@@ -14,7 +15,6 @@ import {
   SmsStepUpsertDto,
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
-import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
   InAppStepUpsertDto,

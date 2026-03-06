@@ -19,9 +19,11 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   OAuthHandlerEnum,
+  SubscriberResponseDto,
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateSubscriberChannelCommand,
+  UpdateSubscriberChannelRequestDto,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
 import { MessageEntity } from '@novu/dal';
@@ -79,8 +81,6 @@ import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
   GetSubscriberPreferencesResponseDto,
-  SubscriberResponseDto,
-  UpdateSubscriberChannelRequestDto,
   UpdateSubscriberGlobalPreferencesRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';

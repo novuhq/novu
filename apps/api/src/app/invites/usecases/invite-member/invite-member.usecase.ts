@@ -1,9 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { Novu } from '@novu/api';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, capitalize, createGuid } from '@novu/application-generic';
 import { IAddMemberData, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
 import { InviteMemberCommand } from './invite-member.command';
 
 @Injectable({

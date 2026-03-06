@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
-import { GetLayoutCommand, GetLayoutUseCase, OtelSpan, PinoLogger } from '@novu/application-generic';
+import { GetLayoutCommandV0, GetLayoutUseCaseV0, OtelSpan, PinoLogger } from '@novu/application-generic';
 import { OrderByEnum, OrderDirectionEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -61,7 +61,7 @@ export class LayoutsControllerV1 {
     private createLayoutUseCase: CreateLayoutUseCase,
     private deleteLayoutUseCase: DeleteLayoutUseCase,
     private filterLayoutsUseCase: FilterLayoutsUseCase,
-    private getLayoutUseCase: GetLayoutUseCase,
+    private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private setDefaultLayoutUseCase: SetDefaultLayoutUseCase,
     private updateLayoutUseCase: UpdateLayoutUseCase,
     private logger: PinoLogger
@@ -164,8 +164,8 @@ export class LayoutsControllerV1 {
     @UserSession() user: UserSessionData,
     @Param('layoutId') layoutId: LayoutId
   ): Promise<GetLayoutResponseDto> {
-    return await this.getLayoutUseCase.execute(
-      GetLayoutCommand.create({
+    return await this.getLayoutUseCaseV0.execute(
+      GetLayoutCommandV0.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         layoutIdOrInternalId: layoutId,

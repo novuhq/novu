@@ -1,4 +1,13 @@
-import { PinoLogger } from '@novu/application-generic';
+import {
+  GetWorkflowCommand,
+  GetWorkflowUseCase,
+  PinoLogger,
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+  WorkflowResponseDto,
+} from '@novu/application-generic';
 import { AiChatEntity, AiChatRepository } from '@novu/dal';
 import {
   AiResourceTypeEnum,
@@ -16,15 +25,6 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { GetEnvironmentTags, GetEnvironmentTagsCommand } from '../../environments-v2/usecases/get-environment-tags';
 import { GetActiveIntegrationsCommand } from '../../integrations/usecases/get-active-integration/get-active-integration.command';
 import { GetActiveIntegrations } from '../../integrations/usecases/get-active-integration/get-active-integration.usecase';
-import { WorkflowResponseDto } from '../../workflows-v2/dtos';
-import {
-  GetWorkflowCommand,
-  GetWorkflowUseCase,
-  UpsertStepDataCommand,
-  UpsertWorkflowCommand,
-  UpsertWorkflowDataCommand,
-  UpsertWorkflowUseCase,
-} from '../../workflows-v2/usecases';
 import {
   buildEditStepSystemPrompt,
   buildEditStepUserPrompt,

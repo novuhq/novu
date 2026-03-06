@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, WorkflowDataContainer } from '@novu/application-generic';
 import {
   BaseRepository,
   ControlValuesRepository,
@@ -7,7 +7,6 @@ import {
   PreferencesRepository,
 } from '@novu/dal';
 import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { DependencyAnalyzerService, EnvironmentValidationService } from '../../services';
 import { IDiffResult, IEnvironmentDiffResult } from '../../types/sync.types';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';

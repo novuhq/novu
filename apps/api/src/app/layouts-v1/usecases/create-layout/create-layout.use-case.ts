@@ -2,13 +2,13 @@ import { BadRequestException, ConflictException, Injectable } from '@nestjs/comm
 import {
   AnalyticsService,
   ContentService,
+  LayoutDtoV0,
   layoutControlSchema,
   layoutUiSchema,
   ResourceValidatorService,
 } from '@novu/application-generic';
 import { ControlSchemas, LayoutEntity, LayoutRepository } from '@novu/dal';
-import { isReservedVariableName, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-import { LayoutDto } from '../../dtos';
+import { isReservedVariableName, ResourceOriginEnum } from '@novu/shared';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
@@ -24,7 +24,7 @@ export class CreateLayoutUseCase {
     private resourceValidatorService: ResourceValidatorService
   ) {}
 
-  async execute(command: CreateLayoutCommand): Promise<LayoutDto & { _id: string }> {
+  async execute(command: CreateLayoutCommand): Promise<LayoutDtoV0 & { _id: string }> {
     const isV2Layout =
       command.origin === ResourceOriginEnum.NOVU_CLOUD || command.origin === ResourceOriginEnum.EXTERNAL;
     await this.resourceValidatorService.validateLayoutsLimit(command.environmentId, isV2Layout);
@@ -116,7 +116,7 @@ export class CreateLayoutUseCase {
     };
   }
 
-  private mapFromEntity(layout: LayoutEntity): LayoutDto & { _id: string } {
+  private mapFromEntity(layout: LayoutEntity): LayoutDtoV0 & { _id: string } {
     return {
       ...layout,
       _id: layout._id,

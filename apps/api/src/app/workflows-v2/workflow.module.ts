@@ -1,14 +1,28 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import {
+  BuildStepDataUsecase,
+  BuildStepIssuesUsecase,
+  BuildVariableSchemaUsecase,
+  ControlValueSanitizerService,
+  CreateVariablesObject,
+  CreateWorkflowV0,
   DeletePreferencesUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  GetWorkflowUseCase,
+  GetWorkflowWithPreferencesUseCase,
+  MockDataGeneratorService,
+  PayloadMergerService,
+  PreviewErrorHandler,
+  PreviewPayloadProcessorService,
+  PreviewUsecase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
+  UpdateWorkflowV0,
   UpsertControlValuesUseCase,
   UpsertPreferences,
+  UpsertWorkflowUseCase,
 } from '@novu/application-generic';
-
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { BridgeModule } from '../bridge';
@@ -17,31 +31,12 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 import { MessageTemplateModule } from '../message-template/message-template.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
-import { ControlValueSanitizerService } from '../shared/services/control-value-sanitizer.service';
 import { SharedModule } from '../shared/shared.module';
-import { CreateVariablesObject } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { StepResolversModule } from '../step-resolvers/step-resolvers.module';
-import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
-import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
-import {
-  BuildStepDataUsecase,
-  BuildVariableSchemaUsecase,
-  BuildWorkflowTestDataUseCase,
-  GetWorkflowUseCase,
-  ListWorkflowsUseCase,
-  PreviewUsecase,
-  SyncToEnvironmentUseCase,
-  UpsertWorkflowUseCase,
-} from './usecases';
-import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
+import { BuildWorkflowTestDataUseCase, ListWorkflowsUseCase, SyncToEnvironmentUseCase } from './usecases';
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { MockDataGeneratorService } from './usecases/preview/services/mock-data-generator.service';
-import { PayloadMergerService } from './usecases/preview/services/payload-merger.service';
-import { PreviewPayloadProcessorService } from './usecases/preview/services/preview-payload-processor.service';
-import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
 import { WorkflowController } from './workflow.controller';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
@@ -63,8 +58,8 @@ const MODULES = [
   controllers: [WorkflowController],
   providers: [
     ...DAL_REPOSITORIES,
-    CreateWorkflow,
-    UpdateWorkflow,
+    CreateWorkflowV0,
+    UpdateWorkflowV0,
     UpsertWorkflowUseCase,
     ListWorkflowsUseCase,
     DeleteWorkflowUseCase,

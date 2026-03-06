@@ -1,0 +1,26 @@
+import { Injectable } from '@nestjs/common';
+import { MessageTemplateRepository } from '@novu/dal';
+import { InstrumentUsecase } from '../../instrumentation';
+import { emailControlSchema, emailUiSchema } from '../../schemas/control';
+import { DisconnectStepResolverCommand } from './disconnect-step-resolver.command';
+
+@Injectable()
+export class DisconnectStepResolverUsecase {
+  constructor(private messageTemplateRepository: MessageTemplateRepository) {}
+
+  @InstrumentUsecase()
+  async execute(command: DisconnectStepResolverCommand): Promise<void> {
+    await this.messageTemplateRepository.update(
+      { _id: command.stepInternalId, _environmentId: command.user.environmentId },
+      {
+        $unset: {
+          stepResolverHash: 1,
+        },
+        $set: {
+          'controls.schema': emailControlSchema,
+          'controls.uiSchema': emailUiSchema,
+        },
+      }
+    );
+  }
+}

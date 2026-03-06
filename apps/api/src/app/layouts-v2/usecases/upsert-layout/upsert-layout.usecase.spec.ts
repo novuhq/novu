@@ -2,8 +2,13 @@ import { BadRequestException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
+  GetLayoutUseCase,
   GetLayoutUseCase as GetLayoutUseCaseV0,
+  JSONSchemaDto,
+  LayoutCreationSourceEnum,
+  LayoutDtoV0,
   layoutControlSchema,
+  mapLayoutToResponseDto,
   PinoLogger,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
@@ -20,13 +25,8 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { LayoutDto } from '../../../layouts-v1/dtos';
 import { CreateLayoutUseCase, UpdateLayoutUseCase } from '../../../layouts-v1/usecases';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { LayoutCreationSourceEnum } from '../../types';
 import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
-import { GetLayoutUseCase } from '../get-layout';
-import { mapToResponseDto } from '../mapper';
 import { UpsertLayoutCommand } from './upsert-layout.command';
 import { UpsertLayout } from './upsert-layout.usecase';
 
@@ -102,7 +102,7 @@ describe('UpsertLayoutUseCase', () => {
     } as LayoutControlValuesDto,
   };
 
-  const mockExistingLayout: LayoutDto & { _id: string } = {
+  const mockExistingLayout: LayoutDtoV0 & { _id: string } = {
     _id: 'existing_layout_id',
     identifier: 'existing_layout_identifier',
     name: 'Existing Layout',
@@ -122,7 +122,7 @@ describe('UpsertLayoutUseCase', () => {
     },
   };
 
-  const mockCreatedLayout: LayoutDto & { _id: string } = {
+  const mockCreatedLayout: LayoutDtoV0 & { _id: string } = {
     _id: 'new_layout_id',
     identifier: 'test-layout',
     name: 'Test Layout',
@@ -213,7 +213,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -326,7 +326,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(mockExistingLayout);
         updateLayoutUseCaseMock.execute.resolves(mockExistingLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockExistingLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -421,7 +421,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -499,7 +499,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -664,7 +664,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,

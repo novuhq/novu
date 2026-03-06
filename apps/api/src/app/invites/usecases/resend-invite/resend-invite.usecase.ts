@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, Scope } from '@nestjs/common';
 import { Novu } from '@novu/api';
+import { capitalize, createGuid } from '@novu/application-generic';
 import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
-import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
 import { ResendInviteCommand } from './resend-invite.command';
 
 @Injectable({

@@ -1,5 +1,18 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  BuildStepIssuesUsecase,
+  CreateWorkflowCommandV0,
+  CreateWorkflowV0,
+  computeWorkflowStatus,
+  ExecuteBridgeRequest,
+  JSONSchema,
+  JSONSchemaDto,
+  NotificationStep,
+  StepIssuesDto,
+  UpdateWorkflowCommandV0,
+  UpdateWorkflowV0,
+} from '@novu/application-generic';
 import {
   ControlValuesEntity,
   ControlValuesRepository,
@@ -21,24 +34,16 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowPreferences,
 } from '@novu/shared';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
-import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
-import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
-import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
-import { StepIssuesDto } from '../../../workflows-v2/dtos';
-import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
-import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
 import { SyncCommand } from './sync.command';
 
 @Injectable()
 export class Sync {
   constructor(
-    private createWorkflowUsecase: CreateWorkflow,
-    private updateWorkflowUsecase: UpdateWorkflow,
+    private createWorkflowUsecase: CreateWorkflowV0,
+    private updateWorkflowUsecase: UpdateWorkflowV0,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
@@ -198,7 +203,7 @@ export class Sync {
   ): Promise<NotificationTemplateEntity> {
     if (existingFrameworkWorkflow) {
       return await this.updateWorkflowUsecase.execute(
-        UpdateWorkflowCommand.create(
+        UpdateWorkflowCommandV0.create(
           await this.mapDiscoverWorkflowToUpdateWorkflowCommand(existingFrameworkWorkflow, command, workflow)
         )
       );
@@ -223,7 +228,7 @@ export class Sync {
     const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
 
     return await this.createWorkflowUsecase.execute(
-      CreateWorkflowCommand.create({
+      CreateWorkflowCommandV0.create({
         origin: ResourceOriginEnum.EXTERNAL,
         type: ResourceTypeEnum.BRIDGE,
         notificationGroupId,
@@ -255,7 +260,7 @@ export class Sync {
     workflowExist: NotificationTemplateEntity,
     command: SyncCommand,
     workflow: DiscoverWorkflowOutput
-  ): Promise<UpdateWorkflowCommand> {
+  ): Promise<UpdateWorkflowCommandV0> {
     const steps = await this.mapSteps(command, workflow.steps, workflowExist);
     const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
 

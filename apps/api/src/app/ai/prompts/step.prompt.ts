@@ -1,5 +1,5 @@
+import { JSONSchemaDto } from '@novu/application-generic';
 import { z } from 'zod';
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { editStepInputSchema, stepInputSchema, updateStepConditionsInputSchema } from '../schemas/steps-control.schema';
 import { formatVariableSchemaForPrompt } from '../utils/variable-schema.utils';
 import { getVariableSchemaPrompt } from './general.prompt';

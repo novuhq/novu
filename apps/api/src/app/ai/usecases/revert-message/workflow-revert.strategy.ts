@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import {
+  StepResponseDto,
+  UpsertWorkflowCommand,
+  UpsertWorkflowUseCase,
+  WorkflowResponseDto,
+} from '@novu/application-generic';
 import { SnapshotEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
-import { StepResponseDto, WorkflowResponseDto } from '../../../workflows-v2/dtos';
-import { UpsertWorkflowCommand, UpsertWorkflowUseCase } from '../../../workflows-v2/usecases/upsert-workflow';
 import { RevertResourceStrategy } from './revert-resource.interface';
 
 @Injectable()

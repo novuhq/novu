@@ -1,5 +1,5 @@
+import { WorkflowResponseDto } from '@novu/application-generic';
 import { AiWorkflowToolsNameEnum } from '@novu/shared';
-import { WorkflowResponseDto } from '../../workflows-v2/dtos';
 import {
   buildFullVariableSchema,
   createInitialVariableSchemaContext,

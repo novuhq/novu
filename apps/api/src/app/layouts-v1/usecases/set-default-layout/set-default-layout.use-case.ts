@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { AnalyticsService, GetLayoutUseCase, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, GetLayoutUseCaseV0, PinoLogger } from '@novu/application-generic';
 import { ChangeRepository, LayoutRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ResourceOriginEnum } from '@novu/shared';
 
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 import { CreateDefaultLayoutChangeCommand } from '../create-default-layout-change/create-default-layout-change.command';
@@ -11,7 +11,7 @@ import { SetDefaultLayoutCommand } from './set-default-layout.command';
 @Injectable()
 export class SetDefaultLayoutUseCase {
   constructor(
-    private getLayout: GetLayoutUseCase,
+    private getLayoutV0: GetLayoutUseCaseV0,
     private createDefaultLayoutChange: CreateDefaultLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
     private changeRepository: ChangeRepository,
@@ -25,7 +25,7 @@ export class SetDefaultLayoutUseCase {
     const isV2Layout =
       command.origin === ResourceOriginEnum.NOVU_CLOUD || command.origin === ResourceOriginEnum.EXTERNAL;
 
-    const layout = await this.getLayout.execute({
+    const layout = await this.getLayoutV0.execute({
       layoutIdOrInternalId: command.layoutId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,

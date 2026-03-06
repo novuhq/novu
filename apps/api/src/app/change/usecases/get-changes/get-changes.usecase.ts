@@ -11,6 +11,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { TRANSLATIONS_SERVICE } from '../../../shared/constants';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
 
@@ -151,10 +152,10 @@ export class GetChanges {
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-shared-services')?.TranslationsService) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
           throw new BadRequestException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE);
         const { name, identifier } = await service.getTranslationGroupData(environmentId, entityId);
 
         return {
@@ -175,10 +176,10 @@ export class GetChanges {
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-shared-services')?.TranslationsService) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
           throw new BadRequestException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE);
         const { name, group } = await service.getTranslationData(environmentId, entityId);
 
         return {

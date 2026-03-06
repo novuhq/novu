@@ -3,8 +3,12 @@ import {
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
+  getStepResolverControlSchema,
   InstrumentUsecase,
   PinoLogger,
+  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
+  reconcileStepResolverControlValues,
+  STEP_RESOLVER_EMAIL_UI_SCHEMA,
 } from '@novu/application-generic';
 import { ClientSession, ControlValuesEntity, ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
@@ -12,12 +16,6 @@ import { createHash } from 'crypto';
 import { DeployStepResolverResponseDto } from '../../dtos';
 import { CloudflareStepResolverDeployService } from '../../services/cloudflare-step-resolver-deploy.service';
 import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver-worker-id';
-import {
-  getStepResolverControlSchema,
-  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
-  reconcileStepResolverControlValues,
-  STEP_RESOLVER_EMAIL_UI_SCHEMA,
-} from '../../utils/step-resolver-control-state';
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
 
 const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;

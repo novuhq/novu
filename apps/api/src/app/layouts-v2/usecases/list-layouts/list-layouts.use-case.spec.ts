@@ -1,8 +1,8 @@
+import { mapLayoutToResponseDto } from '@novu/application-generic';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, DirectionEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import * as mapperModule from '../mapper';
 import { ListLayoutsCommand } from './list-layouts.command';
 import { ListLayoutsUseCase } from './list-layouts.use-case';
 
@@ -102,7 +102,7 @@ describe('ListLayoutsUseCase', () => {
 
   beforeEach(() => {
     layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
-    mapToResponseDtoStub = sinon.stub(mapperModule, 'mapToResponseDto');
+    mapToResponseDtoStub = sinon.stub(mapLayoutToResponseDto);
 
     listLayoutsUseCase = new ListLayoutsUseCase(layoutRepositoryMock as any);
 

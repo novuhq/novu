@@ -17,6 +17,7 @@ import {
 } from '@novu/api/models/components';
 import { ErrorDto } from '@novu/api/models/errors';
 import { WorkflowResponseDto } from '@novu/api/src/models/components';
+import { buildSlug, JSONSchemaDto } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -30,8 +31,6 @@ import {
 import { UserSession } from '@novu/testing';
 import chai, { expect } from 'chai';
 import chaiSubset from 'chai-subset';
-import { JSONSchemaDto } from '../shared/dtos/json-schema.dto';
-import { buildSlug } from '../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,

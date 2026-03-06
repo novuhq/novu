@@ -1,10 +1,10 @@
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/api/models/components';
+import { LayoutCreationSourceEnum } from '@novu/application-generic';
 import { EnvironmentRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { LayoutCreationSourceEnum } from '../../layouts-v2/types';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #novu-v2', async () => {
