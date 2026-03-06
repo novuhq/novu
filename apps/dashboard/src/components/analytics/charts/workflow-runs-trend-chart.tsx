@@ -7,7 +7,6 @@ import { type WorkflowRunsTrendDataPoint } from '../../../api/activity';
 import { useFeatureFlag } from '../../../hooks/use-feature-flag';
 import { ROUTES } from '../../../utils/routes';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyWorkflowRunsData } from './chart-dummy-data';
@@ -46,37 +45,6 @@ const GRADIENT_STOPS: Record<string, [number, number, number]> = {
   processing: [0.12, 0.04, 0],
   error: [0.12, 0.04, 0],
 };
-
-function WorkflowRunsTrendChartSkeleton() {
-  return (
-    <div className="w-full relative px-4" style={{ height: CHART_HEIGHT }}>
-      <div className="absolute inset-0 flex items-end justify-between px-2">
-        {Array.from({ length: 35 }).map((_, i) => {
-          const baseHeight = 40;
-          const successHeight = baseHeight + Math.sin(i * 0.3) * 30 + Math.random() * 20;
-
-          return (
-            <div key={i} className="flex flex-col items-center flex-1 relative">
-              <div className="relative w-full flex justify-center">
-                <Skeleton
-                  className="rounded-sm"
-                  style={{
-                    height: `${Math.max(successHeight, 20)}px`,
-                    width: '15px',
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="absolute bottom-5 left-4 right-4 h-px">
-        <Skeleton className="h-full w-full" />
-      </div>
-    </div>
-  );
-}
 
 type CustomTickProps = {
   x?: number;
@@ -300,7 +268,6 @@ function WorkflowRunsTrendChartInner({
       isLoading={isLoading}
       error={error}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<WorkflowRunsTrendChartSkeleton />}
       dummyDataGenerator={dummyDataGenerator}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.WORKFLOW_RUNS_TREND}

@@ -11,7 +11,7 @@ type ChartWrapperProps<T extends ChartDataPoint = ChartDataPoint> = {
   isLoading?: boolean;
   error?: Error | null;
   hasDataChecker: (data: T[]) => boolean;
-  loadingSkeleton: ReactNode;
+  loadingSkeleton?: ReactNode;
   dummyDataGenerator: () => T[];
   children: (data: T[]) => ReactNode;
   emptyStateRenderer: (dummyData: T[]) => ReactNode;
@@ -77,7 +77,13 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
       <CardContent className="p-2.5 pt-1.5 flex flex-col gap-1.5 flex-1 min-h-0 overflow-visible">
         <div className="flex flex-col flex-1 min-h-0 overflow-visible" style={{ minHeight: contentMinHeight }}>
           {isLoading ? (
-            loadingSkeleton
+            loadingSkeleton ?? (
+              <div
+                className="flex-1 min-h-0 w-full rounded-sm bg-neutral-alpha-100"
+                style={{ minHeight: contentMinHeight }}
+                aria-hidden
+              />
+            )
           ) : error ? (
             <div className="flex-1 min-h-0 w-full flex items-center justify-center">
               <div className="text-sm text-text-soft">{errorMessage}</div>

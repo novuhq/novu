@@ -5,7 +5,6 @@ import { type ChartDataPoint } from '../../../api/activity';
 import { STEP_TYPE_TO_ICON } from '../../icons/utils';
 
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyDeliveryData } from './chart-dummy-data';
@@ -95,32 +94,6 @@ function DeliveryTooltip(props: DeliveryTooltipProps) {
   }));
 
   return <NovuTooltip active={props.active} label={props.label} rows={channels} showTotal={true} />;
-}
-
-function DeliveryTrendsChartSkeleton() {
-  return (
-    <div className="h-[160px] w-full flex items-end justify-between gap-1 px-2">
-      {Array.from({ length: 12 }).map((_, i) => {
-        const totalHeight = Math.random() * 80 + 40;
-        const segments = [
-          { height: totalHeight * 0.4 },
-          { height: totalHeight * 0.25 },
-          { height: totalHeight * 0.2 },
-          { height: totalHeight * 0.15 },
-        ];
-
-        return (
-          <div key={i} className="flex flex-col items-center gap-1 flex-1">
-            <div className="w-full max-w-[20px] flex flex-col rounded-sm overflow-hidden border-2 border-white">
-              {segments.map((segment, segmentIndex) => (
-                <Skeleton key={segmentIndex} className="w-full rounded-sm" style={{ height: `${segment.height}px` }} />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 type DeliveryTrendsChartProps = {
@@ -275,7 +248,6 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
       data={chartData}
       isLoading={isLoading}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<DeliveryTrendsChartSkeleton />}
       dummyDataGenerator={generateDummyDeliveryData}
       emptyStateRenderer={(dummyData) => <ChartContent data={dummyData} includeTooltip={false} />}
       infoTooltip={ANALYTICS_TOOLTIPS.DELIVERY_TREND}

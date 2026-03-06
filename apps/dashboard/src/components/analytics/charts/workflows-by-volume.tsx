@@ -4,7 +4,6 @@ import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
 import { type WorkflowVolumeDataPoint } from '../../../api/activity';
 
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createVolumeBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyWorkflowData } from './chart-dummy-data';
@@ -54,22 +53,6 @@ function WorkflowVolumeTooltip(props: WorkflowVolumeTooltipProps) {
 
   return (
     <NovuTooltip active={props.active} label={data.displayName || data.workflowName} rows={rows} showTotal={false} />
-  );
-}
-
-function WorkflowsByVolumeSkeleton() {
-  return (
-    <div className="h-[160px] w-full flex flex-col gap-2">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const width = Math.random() * 60 + 20; // Random width between 20-80%
-        return (
-          <div key={i} className="flex items-center gap-2">
-            <Skeleton className="h-4 w-20 shrink-0 rounded-sm" />
-            <Skeleton className="h-4 grow rounded-sm" style={{ width: `${width}%` }} />
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -170,7 +153,6 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
       data={chartData}
       isLoading={isLoading}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<WorkflowsByVolumeSkeleton />}
       dummyDataGenerator={generateDummyWorkflowData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.TOP_WORKFLOWS_BY_VOLUME}

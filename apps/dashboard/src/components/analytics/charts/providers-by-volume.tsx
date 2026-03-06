@@ -4,7 +4,6 @@ import { type ProviderVolumeDataPoint } from '../../../api/activity';
 import { ProviderIcon } from '../../integrations/components/provider-icon';
 
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createVolumeBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyProviderData } from './chart-dummy-data';
@@ -53,22 +52,6 @@ function ProviderVolumeTooltip(props: ProviderVolumeTooltipProps) {
 
   return (
     <NovuTooltip active={props.active} label={data.displayName || data.providerId} rows={rows} showTotal={false} />
-  );
-}
-
-function ProvidersByVolumeSkeleton() {
-  return (
-    <div className="h-[160px] w-full flex flex-col gap-2">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const width = Math.random() * 60 + 20; // Random width between 20-80%
-        return (
-          <div key={i} className="flex items-center gap-2">
-            <Skeleton className="h-4 w-20 shrink-0 rounded-sm" />
-            <Skeleton className="h-4 grow rounded-sm" style={{ width: `${width}%` }} />
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -180,7 +163,6 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
       data={chartData}
       isLoading={isLoading}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<ProvidersByVolumeSkeleton />}
       dummyDataGenerator={generateDummyProviderData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.PROVIDERS_BY_VOLUME}

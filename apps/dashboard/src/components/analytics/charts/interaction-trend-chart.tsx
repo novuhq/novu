@@ -3,7 +3,6 @@ import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 import { type InteractionTrendDataPoint } from '../../../api/activity';
 
 import { ChartConfig, ChartContainer, ChartTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyInteractionData } from './chart-dummy-data';
@@ -120,22 +119,6 @@ function CustomTick({ x, y, payload, index }: CustomTickProps) {
         {payload?.value}
       </text>
     </g>
-  );
-}
-
-function InteractionTrendChartSkeleton() {
-  return (
-    <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
-      {Array.from({ length: 20 }).map((_, i) => {
-        const height = Math.random() * 100 + 20;
-
-        return (
-          <div key={i} className="flex flex-col items-center gap-1 flex-1">
-            <Skeleton className="w-full rounded-sm" style={{ height: `${height}px` }} />
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -278,7 +261,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
       isLoading={isLoading}
       error={error}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<InteractionTrendChartSkeleton />}
       dummyDataGenerator={generateDummyInteractionData}
       emptyStateRenderer={(dummyData) => <InteractionTrendChartContent data={dummyData} includeTooltip={false} />}
       infoTooltip={ANALYTICS_TOOLTIPS.INTERACTION_TREND}

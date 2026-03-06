@@ -4,7 +4,6 @@ import { type ActiveSubscribersTrendDataPoint } from '../../../api/activity';
 
 import { ChartConfig, ChartContainer, ChartTooltip } from '../../primitives/chart';
 import { ActiveSubscribersTooltip } from './active-subscribers-tooltip';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyActiveSubscribersData } from './chart-dummy-data';
@@ -45,22 +44,6 @@ function CustomTick({ x, y, payload, index, visibleTicksCount }: CustomTickProps
         {payload?.value}
       </text>
     </g>
-  );
-}
-
-function ActiveSubscribersTrendChartSkeleton() {
-  return (
-    <div className="h-full min-h-0 w-full flex items-end justify-between gap-2 px-2 flex-1">
-      {Array.from({ length: 30 }).map((_, i) => {
-        const height = Math.random() * 100 + 20;
-
-        return (
-          <div key={i} className="flex flex-col items-center gap-1 flex-1">
-            <Skeleton className="w-full rounded-sm" style={{ height: `${height}px` }} />
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -178,7 +161,6 @@ export function ActiveSubscribersTrendChart({ data, isLoading, error }: ActiveSu
       isLoading={isLoading}
       error={error}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<ActiveSubscribersTrendChartSkeleton />}
       dummyDataGenerator={generateDummyActiveSubscribersData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.ACTIVE_SUBSCRIBERS_TREND}
