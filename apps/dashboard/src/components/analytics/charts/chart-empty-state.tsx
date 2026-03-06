@@ -9,7 +9,7 @@ type ChartEmptyStateProps = {
 
 export function ChartEmptyState({ title = 'Not enough data to show', children, tooltip }: ChartEmptyStateProps) {
   return (
-    <div className="relative h-[160px] w-full">
+    <div className="relative h-full w-full">
       <div className="opacity-5">{children}</div>
 
       <div className="absolute inset-0 flex items-center justify-center">

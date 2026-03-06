@@ -12,7 +12,7 @@ import { type WorkflowChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 
 // Color palette for workflow charts
-const colorPalette = ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'];
+const colorPalette = ['#818cf8', '#22d3ee', '#34d399', '#fbbf24', '#fb923c'];
 
 const chartConfig = {
   count: {
@@ -145,7 +145,7 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
               interval={0}
             />
             {includeTooltip && <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />}
-            <Bar dataKey="count" radius={6} barSize={16}>
+            <Bar dataKey="count" radius={3} barSize={12}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}

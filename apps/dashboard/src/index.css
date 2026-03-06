@@ -20,6 +20,17 @@
   }
 }
 
+.analytics-card-root {
+  container-type: inline-size;
+  container-name: analytics-card;
+}
+
+@container analytics-card (max-width: 260px) {
+  .analytics-card-trend {
+    display: none;
+  }
+}
+
 @utility hide-inbox-footer {
   &
     .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
@@ -551,5 +562,14 @@
   }
   to {
     transform: translateX(100%);
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(100%) skewX(-12deg);
   }
 }

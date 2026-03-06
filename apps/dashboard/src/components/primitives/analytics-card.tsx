@@ -90,12 +90,17 @@ export function AnalyticsCard({
 
   if (showSkeleton) {
     return (
-      <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full min-h-[108px]', className)}>
-        <div className="flex flex-col gap-1.5">
+      <div
+        className={cn(
+          'bg-bg-white rounded-xl border-none p-2.5 shadow-box-xs w-full min-h-[88px]',
+          className
+        )}
+      >
+        <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
-              <span className="text-label-sm text-text-sub">{title}</span>
+              <span className="font-code text-[12px] text-text-sub uppercase whitespace-nowrap">{title}</span>
               {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
             </div>
             <Skeleton className="h-3 w-8 rounded-full" />
@@ -112,21 +117,28 @@ export function AnalyticsCard({
   const trendColors = getTrendColor(trendDirection);
 
   return (
-    <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
-            <span className="text-label-sm text-text-sub">{title}</span>
+    <div
+      className={cn(
+        'bg-bg-white rounded-xl border-none p-2.5 shadow-box-xs w-full',
+        className
+      )}
+    >
+      <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 items-center justify-between gap-2 overflow-hidden">
+          <div className="flex min-w-0 items-center gap-1">
+            {IconComponent && <IconComponent className="size-4 shrink-0 text-icon-sub" />}
+            <span className="font-code text-[12px] text-text-sub uppercase whitespace-nowrap">{title}</span>
             {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
           </div>
 
           {percentageChange !== undefined && (
-            <div className="flex items-center gap-1 px-1">
-              <trendColors.icon className={cn('size-2', trendColors.text)} />
-              <span className={cn('text-subheading-2xs uppercase', trendColors.text)}>
-                {formatPercentage(Math.abs(percentageChange))}%
-              </span>
+            <div className="analytics-card-trend shrink-0">
+              <div className="flex items-center gap-1 px-1">
+                <trendColors.icon className={cn('size-2', trendColors.text)} />
+                <span className={cn('text-subheading-2xs uppercase', trendColors.text)}>
+                  {formatPercentage(Math.abs(percentageChange))}%
+                </span>
+              </div>
             </div>
           )}
         </div>
