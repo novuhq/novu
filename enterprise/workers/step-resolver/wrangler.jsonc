@@ -34,14 +34,10 @@
     "production": {
       "name": "step-resolver-dispatch-production",
       "workers_dev": false,
-      /**
-       * Custom route configuration prevents public exposure via workers.dev domain.
-       * Update pattern and zone_name to match your production domain configuration.
-       */
       "routes": [
         {
-          "pattern": "step-resolver.novu.co/*",
-          "zone_name": "novu.co"
+          "pattern": "step-resolver.novu.co",
+          "custom_domain": true
         }
       ],
       "dispatch_namespaces": [
