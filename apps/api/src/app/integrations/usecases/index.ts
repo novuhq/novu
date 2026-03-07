@@ -1,6 +1,7 @@
 import {
   CalculateLimitNovuIntegration,
   ConditionsFilter,
+  GetActiveIntegrations,
   GetDecryptedIntegrations,
   NormalizeVariables,
   SelectIntegration,
@@ -16,7 +17,6 @@ import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-i
 import { GenerateChatOauthUrl } from './generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GenerateMsTeamsOauthUrl } from './generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
-import { GetActiveIntegrations } from './get-active-integration/get-active-integration.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
