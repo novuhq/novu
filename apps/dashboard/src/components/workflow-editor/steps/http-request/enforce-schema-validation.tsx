@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
+import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
@@ -31,7 +32,11 @@ function inferJsonSchema(value: unknown): Record<string, unknown> {
   return { type: 'string' };
 }
 
-export function EnforceSchemaValidation() {
+type EnforceSchemaValidationProps = {
+  onSchemaGenerated?: (schema: Record<string, unknown>) => void;
+};
+
+export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaValidationProps) {
   const { control, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
   const { testResult } = useHttpRequestTest();
@@ -41,6 +46,8 @@ export function EnforceSchemaValidation() {
 
     const schema = inferJsonSchema(testResult.body);
     setValue('responseBodySchema', schema, { shouldDirty: true });
+    onSchemaGenerated?.(schema);
+    showSuccessToast('Response body schema generated from last test');
     saveForm();
   }
 

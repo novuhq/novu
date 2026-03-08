@@ -22,7 +22,7 @@ export function ResponseBodySchema() {
     [setValue, saveForm]
   );
 
-  const { control, fields, formState, addProperty, removeProperty, methods } = useSchemaForm({
+  const { control, fields, formState, addProperty, removeProperty, methods, resetToSchema } = useSchemaForm({
     initialSchema,
     onChange: handleSchemaChange,
   });
@@ -46,7 +46,7 @@ export function ResponseBodySchema() {
       <Separator className="mt-1.5 mb-2 bg-neutral-50" />
 
       <div>
-        <EnforceSchemaValidation />
+        <EnforceSchemaValidation onSchemaGenerated={resetToSchema} />
       </div>
     </div>
   );

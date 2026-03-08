@@ -118,6 +118,16 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
     return createSchemaFromPropertyList(propertyList);
   }, [getValues]);
 
+  const resetToSchema = useCallback(
+    (schema: JSONSchema7) => {
+      const propertyList = schema?.properties
+        ? convertSchemaToPropertyList(schema.properties, schema.required)
+        : defaultFormValues.propertyList;
+      methods.reset({ propertyList });
+    },
+    [methods]
+  );
+
   return {
     control,
     fields,
@@ -130,6 +140,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
       methods.setValue(name, value);
     },
     methods,
+    resetToSchema,
   };
 }
 

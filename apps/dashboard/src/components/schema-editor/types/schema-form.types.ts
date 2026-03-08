@@ -27,4 +27,5 @@ export interface UseSchemaFormReturn {
   getValues: () => SchemaEditorFormValues;
   setValue: (name: SchemaFormPath, value: any) => void;
   methods: UseFormReturn<SchemaEditorFormValues>;
+  resetToSchema: (schema: JSONSchema7) => void;
 }
