@@ -7,6 +7,7 @@ import { StepEditorUnavailable } from '../step-editor-unavailable';
 import { KeyValuePairList } from './key-value-pair-list';
 import { RequestEndpoint } from './request-endpoint';
 import { ResponseBodySchema } from './response-body-schema';
+import { useCopyPrompt } from './use-copy-prompt';
 
 type HttpRequestEditorProps = {
   uiSchema: UiSchema;
@@ -14,6 +15,7 @@ type HttpRequestEditorProps = {
 
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   const { currentEnvironment } = useEnvironment();
+  const handleCopyPrompt = useCopyPrompt();
 
   if (uiSchema.group !== UiSchemaGroupEnum.HTTP_REQUEST) {
     return null;
@@ -32,7 +34,11 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
             <strong className="text-text-strong font-medium">Tip:</strong>
             {' Use this pre-built prompt to let LLM implement this API faster.'}
           </p>
-          <button type="button" className="text-text-strong ml-auto flex-shrink-0 text-xs font-medium hover:underline">
+          <button
+            type="button"
+            className="text-text-strong ml-auto flex-shrink-0 text-xs font-medium hover:underline"
+            onClick={handleCopyPrompt}
+          >
             Copy prompt
           </button>
         </div>

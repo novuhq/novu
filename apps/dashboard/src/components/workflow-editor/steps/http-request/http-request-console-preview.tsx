@@ -7,6 +7,7 @@ import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { useStepEditor } from '../context/step-editor-context';
 import { parseJsonValue } from '../utils/preview-context.utils';
+import { useCopyPrompt } from './use-copy-prompt';
 import { useHttpRequestTest } from './use-http-request-test';
 
 type KeyValuePair = { key: string; value: string };
@@ -316,27 +317,6 @@ function buildRawCurlString(
   return parts.join(' \\\n');
 }
 
-function buildLlmPrompt(url: string, method: string, headers: KeyValuePair[], body: KeyValuePair[]): string {
-  const headerLines = headers
-    .filter((h) => h.key)
-    .map((h) => `  - ${h.key}: ${h.value}`)
-    .join('\n');
-
-  const bodyLines = body
-    .filter((b) => b.key)
-    .map((b) => `  - ${b.key}: ${b.value}`)
-    .join('\n');
-
-  return [
-    `I need to implement a ${method} HTTP request to the following endpoint: ${url || '<url not set>'}`,
-    headerLines ? `\nHeaders:\n${headerLines}` : '',
-    bodyLines ? `\nBody fields:\n${bodyLines}` : '',
-    '\nPlease help me write the code to call this API endpoint, handle the response, and manage any errors properly.',
-  ]
-    .filter(Boolean)
-    .join('');
-}
-
 function PreTestState() {
   const { controlValues, editorValue } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
@@ -367,23 +347,7 @@ function PreTestState() {
     }
   }, [curlString]);
 
-  const handleCopyPrompt = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(buildLlmPrompt(url, method, headers, body));
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>Prompt copied to clipboard</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
-    } catch {
-      showErrorToast('Failed to copy prompt');
-    }
-  }, [url, method, headers, body]);
+  const handleCopyPrompt = useCopyPrompt();
 
   const handleTestEndpoint = useCallback(async () => {
     try {
