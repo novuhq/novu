@@ -9,6 +9,7 @@ import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { NovuSignatureHeader } from './novu-signature-header';
 import { SectionHeader } from './section-header';
 
 type KeyValuePairListProps = {
@@ -57,6 +58,7 @@ export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairList
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
       <SectionHeader label={label} tooltip={tooltip} />
       <div className="flex flex-col gap-1">
+        {fieldName === 'headers' && <NovuSignatureHeader />}
         {pairs.map((pair, index) => (
           <div key={index} className="flex items-center gap-1">
             <InputRoot className="w-[200px] flex-shrink-0">
