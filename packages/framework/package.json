@@ -234,7 +234,7 @@
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
-    "@types/node": "^20.15.0",
+    "@types/node": "^22.0.0",
     "@types/pluralize": "^0.0.33",
     "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",

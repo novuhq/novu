@@ -32,7 +32,7 @@
   "devDependencies": {
     "@clerk/types": "^4.6.1",
     "@types/mocha": "^8.0.1",
-    "@types/node": "^20.15.0",
+    "@types/node": "^22.0.0",
     "@types/passport-jwt": "^3.0.3",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",

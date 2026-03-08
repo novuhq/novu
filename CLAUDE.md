@@ -138,7 +138,7 @@ pnpm typecheck      # Run TypeScript checks
 
 ## Important Notes
 
-- **Node.js 20** required (`engines.node: ">=20 <21"`)
+- **Node.js 22** required (`engines.node: ">=22 <23"`)
 - **pnpm 10+** required as package manager
 - **MongoDB & Redis** required for local development (available via Docker Compose)
 - **Environment files** are set up automatically by setup scripts

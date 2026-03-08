@@ -18,7 +18,7 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
       bundle: true,
       platform: 'node',
       format: 'cjs',
-      target: 'node20',
+      target: 'node22',
       write: false,
       jsx: 'automatic',
       jsxImportSource: 'react',

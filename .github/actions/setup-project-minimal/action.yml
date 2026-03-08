@@ -13,7 +13,7 @@ runs:
     - uses: useblacksmith/setup-node@v5
       name: ⚙️ Setup Node Version with separate cache
       with:
-        node-version: '20.19.0'
+        node-version: '22.22.1'
         cache: 'pnpm'
         # Use root package.json instead of pnpm-lock.yaml for much smaller cache
         cache-dependency-path: 'package.json'

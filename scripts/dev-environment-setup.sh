@@ -266,7 +266,7 @@ check_nvm () {
 }
 
 install_node () {
-    NODE_JS_VERSION="v20.19.0"
+    NODE_JS_VERSION="v22.22.1"
 
     SKIP="$(check_nvm)"
 

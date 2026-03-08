@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- **Node.js 20.19.0** (via nvm, see `.nvmrc`)
+- **Node.js 22.22.1** (via nvm, see `.nvmrc`)
 - **pnpm 10.16.1** (see `package.json` `packageManager` field)
 - **Docker** required for MongoDB, Redis, ClickHouse, and LocalStack
 

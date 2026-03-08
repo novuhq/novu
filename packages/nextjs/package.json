@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
-    "@types/node": "^20.14.12",
+    "@types/node": "^22.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",
     "esbuild-plugin-file-path-extensions": "^2.1.4",
