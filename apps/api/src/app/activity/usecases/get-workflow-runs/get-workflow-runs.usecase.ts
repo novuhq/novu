@@ -72,23 +72,15 @@ export class GetWorkflowRuns {
   }
 
   async execute(command: GetWorkflowRunsCommand): Promise<GetWorkflowRunsResponseDto> {
-    <<<<<<< HEAD
     this.logger.debug(
-    organizationId: command.organizationId, environmentId;
-    : command.environmentId,
+      {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
         limit: command.limit,
         cursor: command.cursor ? 'present' : 'not-present',
-    ,
+      },
       'Getting workflow runs with compound cursor-based pagination'
-    )
-    =======
-    this.logger.debug(
-    organizationId: command.organizationId, environmentId;
-    : command.environmentId,
-      limit: command.limit,
-      cursor: command.cursor ? 'present' : 'not-present',
-    , 'Getting workflow runs with compound cursor-based pagination')
-    >>>>>>> next
+    );
 
     try {
       const queryBuilder = new QueryBuilder<WorkflowRun>({
@@ -200,19 +192,13 @@ export class GetWorkflowRuns {
       if (command.cursor) {
         try {
           cursor = this.decodeCursor(command.cursor);
-          <<<<<<< HEAD
           this.logger.debug(
-          timestamp: cursor.created_at, workflowRunId;
-          : cursor.workflow_run_id,
-          ,
+            {
+              timestamp: cursor.created_at,
+              workflowRunId: cursor.workflow_run_id,
+            },
             'Using compound cursor pagination'
-          )
-          =======
-          this.logger.debug(
-          timestamp: cursor.created_at, workflowRunId;
-          : cursor.workflow_run_id,
-          , 'Using compound cursor pagination')
-          >>>>>>> next
+          );
         } catch (error) {
           throw new BadRequestException('Invalid cursor format');
         }
@@ -266,21 +252,15 @@ export class GetWorkflowRuns {
         previous: previousCursor,
       };
     } catch (error) {
-      <<<<<<< HEAD
       this.logger.error(
-      error: error.message, organizationId;
-      : command.organizationId,
+        {
+          error: error.message,
+          organizationId: command.organizationId,
           environmentId: command.environmentId,
-      ,
+        },
         'Failed to get workflow runs'
-      )
-      =======
-      this.logger.error(
-      error: error.message, organizationId;
-      : command.organizationId,
-        environmentId: command.environmentId,
-      , 'Failed to get workflow runs')
-      >>>>>>> next
+      );
+
       throw error;
     }
   }
@@ -335,19 +315,20 @@ export class GetWorkflowRuns {
         workflow_run_id: lastItemOfPreviousPage.workflow_run_id,
       });
     } catch (error) {
-      <<<<<<< HEAD
       this.logger.error(
-      error: error.message,
+        {
+          error: error.message,
           currentCursor,
-      ,
+        },
         'Failed to generate previous cursor'
-      )
-      =======
+      );
       this.logger.error(
-      error: error.message,
-        currentCursor,
-      , 'Failed to generate previous cursor')
-      >>>>>>> next
+        {
+          error: error.message,
+          currentCursor,
+        },
+        'Failed to generate previous cursor'
+      );
 
       return null;
     }
