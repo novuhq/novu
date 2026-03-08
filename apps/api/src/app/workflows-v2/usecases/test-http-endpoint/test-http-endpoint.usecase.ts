@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import {
+  buildNovuSignatureHeader,
   CompileTemplate,
+  GetDecryptedSecretKey,
+  GetDecryptedSecretKeyCommand,
   HttpClientError,
   HttpClientService,
   HttpRequestOptions,
@@ -15,7 +18,8 @@ type KeyValuePair = { key: string; value: string };
 export class TestHttpEndpointUsecase {
   constructor(
     private readonly compileTemplate: CompileTemplate,
-    private readonly httpClientService: HttpClientService
+    private readonly httpClientService: HttpClientService,
+    private readonly getDecryptedSecretKey: GetDecryptedSecretKey
   ) {}
 
   @InstrumentUsecase()
@@ -46,6 +50,11 @@ export class TestHttpEndpointUsecase {
     }
 
     const hasBody = Object.keys(resolvedBodyPairs).length > 0 && method !== 'GET' && method !== 'DELETE';
+
+    const secretKey = await this.getDecryptedSecretKey.execute(
+      GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
+    );
+    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBodyPairs : {});
 
     const startTime = performance.now();
 

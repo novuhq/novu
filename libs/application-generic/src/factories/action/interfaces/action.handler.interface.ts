@@ -13,6 +13,7 @@ export interface IActionExecuteConfig<
   controlValues: TControlValues;
   credentials: TCredentials;
   compileContext: TCompileContext;
+  signatureHeaders?: Record<string, string>;
 }
 
 export interface IActionExecuteResult {

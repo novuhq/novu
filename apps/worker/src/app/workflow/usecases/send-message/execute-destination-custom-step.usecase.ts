@@ -1,11 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   ActionHandlerFactory,
+  buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
   dashboardSanitizeControlValues,
   GetDecryptedIntegrations,
+  GetDecryptedSecretKey,
+  GetDecryptedSecretKeyCommand,
   InstrumentUsecase,
   PinoLogger,
   SelectIntegration,
@@ -35,6 +38,7 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
     private controlValuesRepository: ControlValuesRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
+    private getDecryptedSecretKey: GetDecryptedSecretKey,
     protected messageRepository: MessageRepository,
     protected createExecutionDetails: CreateExecutionDetails
   ) {
@@ -88,6 +92,25 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
     const controlValues = await this.fetchControlValues(command);
     const handler = this.actionHandlerFactory.getHandler(providerId);
 
+    const secretKey = await this.getDecryptedSecretKey.execute(
+      GetDecryptedSecretKeyCommand.create({ environmentId: command.environmentId })
+    );
+
+    const rawBody = (controlValues.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const method = (controlValues.method as string) ?? 'GET';
+    const bodyObject =
+      rawBody.length > 0
+        ? rawBody.reduce<Record<string, unknown>>((acc, { key, value }) => {
+            acc[key] = value;
+
+            return acc;
+          }, {})
+        : undefined;
+    const hasBody = !!bodyObject && method !== 'GET' && method !== 'DELETE';
+    const signatureHeaders = {
+      'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
+    };
+
     let result: Awaited<ReturnType<typeof handler.execute>>;
 
     try {
@@ -95,6 +118,7 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
         controlValues,
         credentials,
         compileContext: command.compileContext,
+        signatureHeaders,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

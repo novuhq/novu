@@ -11,6 +11,7 @@ export class HttpActionHandler implements IActionHandler {
 
   async execute({
     controlValues,
+    signatureHeaders,
   }: IActionExecuteConfig<HttpRequestControlType, HttpRequestCredentials>): Promise<IActionExecuteResult> {
     const { url, method, headers = [], body = [] } = controlValues;
 
@@ -34,12 +35,13 @@ export class HttpActionHandler implements IActionHandler {
         : undefined;
 
     const hasBody = !!bodyObject && method !== 'GET' && method !== 'DELETE';
+    const mergedHeaders = { ...headersRecord, ...signatureHeaders };
 
     try {
       const response = await this.httpClient.request({
         url,
         method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
-        headers: headersRecord,
+        headers: mergedHeaders,
         ...(hasBody ? { body: bodyObject } : {}),
       });
 

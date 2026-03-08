@@ -1,4 +1,3 @@
-import { createHmac } from 'node:crypto';
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import {
@@ -20,7 +19,7 @@ import {
   HttpClientService,
   RETRYABLE_ERROR_CODES,
 } from '../../services/http-client';
-import { BRIDGE_EXECUTION_ERROR } from '../../utils';
+import { BRIDGE_EXECUTION_ERROR, buildNovuSignatureHeader } from '../../utils';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
 
@@ -144,21 +143,7 @@ export class ExecuteFrameworkRequest {
       })
     );
 
-    const timestamp = Date.now();
-    const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacBySecretKey(
-      secretKey,
-      timestamp,
-      command.event || {}
-    )}`;
-
-    return novuSignatureHeader;
-  }
-
-  @Instrument()
-  private createHmacBySecretKey(secretKey: string, timestamp: number, payload: unknown) {
-    const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
-
-    return createHmac('sha256', secretKey).update(publicKey).digest('hex');
+    return buildNovuSignatureHeader(secretKey, command.event || {});
   }
 
   @Instrument()
