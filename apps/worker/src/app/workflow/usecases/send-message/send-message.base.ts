@@ -34,7 +34,7 @@ import {
 import { format } from 'date-fns';
 import i18next from 'i18next';
 import { merge } from 'lodash';
-import { PlatformException } from '../../../shared/utils';
+import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
@@ -189,10 +189,10 @@ export abstract class SendMessageBase extends SendMessageType {
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-shared-services')?.TranslationsService) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
           throw new PlatformException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false });
         const { namespaces, resources, defaultLocale } = await service.getTranslationsList(
           environmentId,
           organizationId

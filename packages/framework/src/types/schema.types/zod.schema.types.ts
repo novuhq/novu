@@ -34,10 +34,16 @@ export type ZodSchemaMinimal = {
  * ```
  */
 export type InferZodSchema<T, Options extends { validated: boolean }> = T extends ZodSchemaMinimal // Firstly, narrow to the minimal schema type without using the `zod` import
-  ? // Secondly, narrow to the Zod type to provide type-safety to `zod.infer` and `zod.input`
-    T extends ZodSchema
+  ? // Secondly, use structural checks on `_output`/`_input` — Zod's public phantom type
+    // properties — rather than a nominal `T extends ZodSchema` class check.
+    // This ensures inference works correctly even when the user's `zod` module instance
+    // differs from the framework's (e.g. different node_modules paths in a monorepo).
+    T extends {
+      readonly _output: infer Output extends Record<string, unknown>;
+      readonly _input: infer Input extends Record<string, unknown>;
+    }
     ? Options['validated'] extends true
-      ? zod.infer<T>
-      : zod.input<T>
+      ? Output
+      : Input
     : never
   : never;

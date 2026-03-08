@@ -6,7 +6,6 @@ import type { DiscoveredStep, StepDiscoveryResult, ValidationError } from '../ty
 
 interface StepMetadata {
   stepId?: string;
-  workflowId?: string;
   type?: string;
 }
 
@@ -15,7 +14,6 @@ interface AnalyzedStepFile {
   relativePath: string;
   metadata: StepMetadata;
   hasDefaultExport: boolean;
-  hasReactEmailImport: boolean;
   parseErrors: string[];
 }
 
@@ -32,13 +30,17 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
   const analyses = relativeStepFiles.map((relativePath) =>
     analyzeStepFile(path.resolve(stepsDir, relativePath), relativePath)
   );
-  const duplicateStepIdErrors = buildDuplicateStepIdErrors(analyses);
+  const duplicateStepIdErrors = buildDuplicateStepIdErrors(analyses, (rp) => deriveWorkflowId(rp));
 
   const steps: DiscoveredStep[] = [];
   const errors: ValidationError[] = [];
 
   for (const analysis of analyses) {
-    const fileErrors = [...buildValidationErrors(analysis), ...(duplicateStepIdErrors.get(analysis.filePath) ?? [])];
+    const workflowId = deriveWorkflowId(analysis.relativePath);
+    const fileErrors = [
+      ...buildValidationErrors(analysis, workflowId),
+      ...(duplicateStepIdErrors.get(analysis.filePath) ?? []),
+    ];
     if (fileErrors.length > 0) {
       errors.push({
         filePath: path.relative(process.cwd(), analysis.filePath),
@@ -47,7 +49,7 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
       continue;
     }
 
-    const { stepId, workflowId, type } = analysis.metadata;
+    const { stepId, type } = analysis.metadata;
     if (stepId && workflowId && type) {
       steps.push({
         stepId,
@@ -77,7 +79,6 @@ function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFi
       relativePath,
       metadata: extractStepMetadata(sourceFile),
       hasDefaultExport: hasDefaultExportInFile(sourceFile),
-      hasReactEmailImport: hasReactEmailImportInFile(sourceFile),
       parseErrors: extractParseDiagnostics(sourceFile),
     };
   } catch (error) {
@@ -87,7 +88,6 @@ function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFi
       relativePath,
       metadata: {},
       hasDefaultExport: false,
-      hasReactEmailImport: false,
       parseErrors: [`Failed to read or parse file: ${errorMessage}`],
     };
   }
@@ -97,33 +97,58 @@ function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
   const metadata: StepMetadata = {};
 
   function visit(node: ts.Node) {
-    if (ts.isVariableStatement(node) && hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword)) {
-      extractExportedStringLiterals(node, metadata);
+    if (ts.isExportAssignment(node) && !node.isExportEquals) {
+      extractStepResolverCallMetadata(node.expression, metadata);
     }
     ts.forEachChild(node, visit);
   }
 
   visit(sourceFile);
+
   return metadata;
 }
 
-function extractExportedStringLiterals(node: ts.VariableStatement, metadata: StepMetadata): void {
-  for (const declaration of node.declarationList.declarations) {
-    if (
-      !ts.isIdentifier(declaration.name) ||
-      !declaration.initializer ||
-      !ts.isStringLiteral(declaration.initializer)
-    ) {
-      continue;
-    }
-
-    const exportName = declaration.name.text;
-    const exportValue = declaration.initializer.text;
-
-    if (exportName === 'stepId') metadata.stepId = exportValue;
-    if (exportName === 'workflowId') metadata.workflowId = exportValue;
-    if (exportName === 'type') metadata.type = exportValue;
+function deriveWorkflowId(relativePath: string): string | undefined {
+  const parentDir = path.dirname(relativePath);
+  if (parentDir === '.' || parentDir === '') {
+    return undefined;
   }
+
+  return parentDir.split('/')[0];
+}
+
+// Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)), `as` casts, and `satisfies` expressions
+function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMetadata): void {
+  let unwrapped: ts.Expression = node;
+  while (
+    ts.isParenthesizedExpression(unwrapped) ||
+    ts.isAsExpression(unwrapped) ||
+    ts.isTypeAssertionExpression(unwrapped) ||
+    ts.isNonNullExpression(unwrapped) ||
+    ts.isSatisfiesExpression(unwrapped)
+  ) {
+    unwrapped = unwrapped.expression;
+  }
+
+  if (!ts.isCallExpression(unwrapped)) return;
+
+  const callee = unwrapped.expression;
+
+  if (
+    !ts.isPropertyAccessExpression(callee) ||
+    !ts.isIdentifier(callee.expression) ||
+    callee.expression.text !== 'step'
+  ) {
+    return;
+  }
+
+  const methodName = callee.name.text;
+  const firstArg = unwrapped.arguments[0];
+
+  if (!firstArg || !ts.isStringLiteral(firstArg)) return;
+
+  metadata.stepId = firstArg.text;
+  metadata.type = methodName;
 }
 
 function hasDefaultExportInFile(sourceFile: ts.SourceFile): boolean {
@@ -148,23 +173,6 @@ function hasDefaultExportInFile(sourceFile: ts.SourceFile): boolean {
   return hasExport;
 }
 
-function hasReactEmailImportInFile(sourceFile: ts.SourceFile): boolean {
-  let hasImport = false;
-
-  function visit(node: ts.Node) {
-    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      const moduleText = node.moduleSpecifier.text;
-      if (moduleText === 'react-email' || moduleText.startsWith('@react-email/')) {
-        hasImport = true;
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return hasImport;
-}
-
 function extractParseDiagnostics(sourceFile: ts.SourceFile): string[] {
   const parseDiagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics?: readonly ts.DiagnosticWithLocation[] })
     .parseDiagnostics;
@@ -172,48 +180,52 @@ function extractParseDiagnostics(sourceFile: ts.SourceFile): string[] {
   return (parseDiagnostics ?? []).map((diagnostic) => formatParseDiagnostic(sourceFile, diagnostic));
 }
 
-function buildValidationErrors(analysis: AnalyzedStepFile): string[] {
+function buildValidationErrors(analysis: AnalyzedStepFile, workflowId: string | undefined): string[] {
   const errors: string[] = [...analysis.parseErrors];
 
-  if (!analysis.metadata.stepId) {
-    errors.push("Missing required export: 'stepId' (must be a string literal)");
-  }
-
-  if (!analysis.metadata.workflowId) {
-    errors.push("Missing required export: 'workflowId' (must be a string literal)");
-  }
-
-  if (!analysis.metadata.type) {
-    errors.push("Missing required export: 'type' (must be a string literal)");
-  } else if (analysis.metadata.type !== 'email') {
-    errors.push(`Invalid type: '${analysis.metadata.type}' (must be 'email')`);
+  if (!workflowId) {
+    errors.push('Step file must be inside a workflow folder (e.g., novu/{workflowId}/step-name.step.tsx)');
   }
 
   if (!analysis.hasDefaultExport) {
-    errors.push('Missing default function export');
+    errors.push('Missing default export');
+
+    return errors;
   }
 
-  if (!analysis.hasReactEmailImport) {
-    errors.push("Missing import from '@react-email'");
+  if (!analysis.metadata.stepId) {
+    errors.push("Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'");
+  }
+
+  if (analysis.metadata.type && analysis.metadata.type !== 'email') {
+    errors.push(`Invalid step type: '${analysis.metadata.type}' (must be 'email')`);
   }
 
   return errors;
 }
 
-function buildDuplicateStepIdErrors(analyses: AnalyzedStepFile[]): Map<string, string[]> {
-  const filesByCompositeKey = groupAnalysesByCompositeKey(analyses);
+function buildDuplicateStepIdErrors(
+  analyses: AnalyzedStepFile[],
+  getWorkflowId: (relativePath: string) => string | undefined
+): Map<string, string[]> {
+  const filesByCompositeKey = groupAnalysesByCompositeKey(analyses, getWorkflowId);
+
   return buildErrorsForDuplicates(filesByCompositeKey);
 }
 
-function groupAnalysesByCompositeKey(analyses: AnalyzedStepFile[]): Map<string, AnalyzedStepFile[]> {
+function groupAnalysesByCompositeKey(
+  analyses: AnalyzedStepFile[],
+  getWorkflowId: (relativePath: string) => string | undefined
+): Map<string, AnalyzedStepFile[]> {
   const grouped = new Map<string, AnalyzedStepFile[]>();
 
   for (const analysis of analyses) {
-    if (!analysis.metadata.stepId || !analysis.metadata.workflowId) {
+    const workflowId = getWorkflowId(analysis.relativePath);
+    if (!analysis.metadata.stepId || !workflowId) {
       continue;
     }
 
-    const key = `${analysis.metadata.workflowId}:${analysis.metadata.stepId}`;
+    const key = `${workflowId}:${analysis.metadata.stepId}`;
     const files = grouped.get(key) ?? [];
     files.push(analysis);
     grouped.set(key, files);

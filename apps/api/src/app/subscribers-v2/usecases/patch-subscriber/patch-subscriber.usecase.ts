@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger, UpdateSubscriber, UpdateSubscriberCommand } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  PinoLogger,
+  SubscriberResponseDto,
+  UpdateSubscriber,
+  UpdateSubscriberCommand,
+} from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -10,7 +16,6 @@ import {
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { subscriberIdSchema } from '../../../events/utils/trigger-recipient-validation';
-import { SubscriberResponseDto } from '../../../subscribers/dtos';
 import { mapSubscriberEntityToDto } from '../list-subscribers/map-subscriber-entity-to.dto';
 import { PatchSubscriberCommand } from './patch-subscriber.command';
 

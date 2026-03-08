@@ -83,11 +83,14 @@ export class GetWorkflowRun {
   }
 
   async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
-    this.logger.debug('Getting workflow run from ClickHouse', {
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      workflowRunId: command.workflowRunId,
-    });
+    this.logger.debug(
+      {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        workflowRunId: command.workflowRunId,
+      },
+      'Getting workflow run from ClickHouse'
+    );
 
     try {
       const workflowRunQuery = new QueryBuilder<WorkflowRun>({
@@ -114,12 +117,15 @@ export class GetWorkflowRun {
 
       return workflowRunDto;
     } catch (error) {
-      this.logger.error('Failed to get workflow run', {
-        error: error.message,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        workflowRunId: command.workflowRunId,
-      });
+      this.logger.error(
+        {
+          error: error.message,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          workflowRunId: command.workflowRunId,
+        },
+        'Failed to get workflow run'
+      );
       throw error;
     }
   }
@@ -152,10 +158,13 @@ export class GetWorkflowRun {
 
       return digestDataByStepId;
     } catch (error) {
-      this.logger.warn('Failed to get job digest data', {
-        error: error.message,
-        transactionId,
-      });
+      this.logger.warn(
+        {
+          error: error.message,
+          transactionId,
+        },
+        'Failed to get job digest data'
+      );
 
       return new Map();
     }
@@ -260,10 +269,13 @@ export class GetWorkflowRun {
 
       return executionDetailsByEntityId;
     } catch (error) {
-      this.logger.warn('Failed to get execution details from traces', {
-        error: error.message,
-        entityIds,
-      });
+      this.logger.warn(
+        {
+          error: error.message,
+          entityIds,
+        },
+        'Failed to get execution details from traces'
+      );
 
       return new Map();
     }

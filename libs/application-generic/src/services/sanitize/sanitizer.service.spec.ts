@@ -69,6 +69,27 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitized).to.include('id="main"');
     });
 
+    it('should strip oncontentvisibilityautostatechange attribute', () => {
+      const maliciousHtml =
+        '<a oncontentvisibilityautostatechange="alert(window.origin)" style="display:block;content-visibility:auto">click</a>';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('oncontentvisibilityautostatechange');
+      expect(sanitized).to.not.include('alert');
+      expect(sanitized).to.include('<a');
+      expect(sanitized).to.include('style="display:block;content-visibility:auto"');
+    });
+
+    it('should strip any attribute starting with "on" as event handlers', () => {
+      const maliciousHtml = '<div onfutureevent="alert(1)" data-value="safe">Content</div>';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('onfutureevent');
+      expect(sanitized).to.not.include('alert');
+      expect(sanitized).to.include('data-value="safe"');
+      expect(sanitized).to.include('Content');
+    });
+
     it('should remove script tags', () => {
       const maliciousHtml = '<div>Safe content</div><script>alert("XSS")</script>';
       const sanitized = sanitizeHTML(maliciousHtml);

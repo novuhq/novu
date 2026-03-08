@@ -5,10 +5,22 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   EmailControlType,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  hasShow,
   InstrumentUsecase,
+  isButtonNode,
+  isImageNode,
+  isLinkNode,
+  isRepeatNode,
+  isVariableNode,
   LayoutControlType,
+  MailyAttrsEnum,
   PinoLogger,
+  removeBrandingFromHtml,
+  replaceMailyNodesByCondition,
   sanitizeHTML,
+  wrapMailyInLiquid,
 } from '@novu/application-generic';
 import {
   ControlValuesEntity,
@@ -31,21 +43,8 @@ import {
 } from '@novu/shared';
 import { decodeHTML } from 'entities';
 import { Liquid } from 'liquidjs';
-import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
-import {
-  hasShow,
-  isButtonNode,
-  isImageNode,
-  isLinkNode,
-  isRepeatNode,
-  isVariableNode,
-  replaceMailyNodesByCondition,
-  wrapMailyInLiquid,
-} from '../../../shared/helpers/maily-utils';
-import { removeBrandingFromHtml } from '../../../shared/utils/html';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { NOVU_BRANDING_HTML } from './novu-branding-html';
 import { FullPayloadForRender, RenderCommand } from './render-command';

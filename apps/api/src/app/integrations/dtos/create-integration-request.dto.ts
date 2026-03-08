@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CredentialsDto, StepFilterDto } from '@novu/application-generic';
 import {
   ActionIntegrationTypeEnum,
   ChannelTypeEnum,
@@ -17,8 +18,6 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { StepFilterDto } from '../../shared/dtos/step-filter-dto';
-import { CredentialsDto } from './credentials.dto';
 
 export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiPropertyOptional({ type: String, description: 'The name of the integration' })

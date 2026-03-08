@@ -1,5 +1,4 @@
-import { ResourceOriginEnum, Slug, StepTypeEnum } from '../../types';
-import { RuntimeIssue } from '../../utils/issues';
+import { ResourceOriginEnum, RuntimeIssue, Slug, StepTypeEnum } from '@novu/shared';
 import type { JSONSchemaDto } from './json-schema-dto';
 
 export type StepResponseDto = {
@@ -17,6 +16,7 @@ export type StepResponseDto = {
   issues?: StepIssuesDto;
   providerId?: string;
   integrationIdentifier?: string;
+  stepResolverHash?: string;
 };
 
 export type StepUpdateDto = StepCreateDto & {

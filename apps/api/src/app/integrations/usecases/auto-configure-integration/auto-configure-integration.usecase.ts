@@ -56,11 +56,11 @@ export class AutoConfigureIntegration {
           }
         );
 
-        this.logger.trace('Auto-configuration completed successfully', {
+        this.logger.trace({
           integrationId: command.integrationId,
           organizationId: command.organizationId,
           webhookUrl,
-        });
+        }, 'Auto-configuration completed successfully');
 
         return {
           success: true,
@@ -68,11 +68,11 @@ export class AutoConfigureIntegration {
           integration: { ...encryptedIntegration, configurations: updatedConfigurations },
         };
       } else {
-        this.logger.warn('Auto-configuration failed', {
+        this.logger.warn({
           integrationId: command.integrationId,
           organizationId: command.organizationId,
           message: result.message,
-        });
+        }, 'Auto-configuration failed');
 
         return {
           success: false,

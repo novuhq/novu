@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InMemoryLRUCacheService, InMemoryLRUCacheStore, Instrument } from '@novu/application-generic';
+import { buildSlug, InMemoryLRUCacheService, InMemoryLRUCacheStore, Instrument } from '@novu/application-generic';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -8,7 +8,6 @@ import {
 } from '@novu/dal';
 import { ISubscriberPreferenceResponse, ShortIsPrefixEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
-import { buildSlug } from '../../../shared/helpers/build-slug';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,

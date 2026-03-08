@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { GetWorkflowWithPreferencesCommand, GetWorkflowWithPreferencesUseCase } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
-import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { GetNotificationTemplateCommand } from './get-notification-template.command';
 
 /**

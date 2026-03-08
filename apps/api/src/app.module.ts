@@ -10,7 +10,6 @@ import { isClerkEnabled } from '@novu/shared';
 import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { ActivityModule } from './app/activity/activity.module';
-import { AiModule } from './app/ai/ai.module';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
@@ -78,6 +77,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-api')?.InboundWebhooksModule);
     }
 
+    if (require('@novu/ee-ai')?.AiModule) {
+      modules.push(require('@novu/ee-ai')?.AiModule);
+    }
+
     modules.push(SupportModule);
     modules.push(OutboundWebhooksModule.forRoot());
   }
@@ -97,7 +100,6 @@ const enterpriseQuotaThrottlerInterceptor =
     : [];
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
-  AiModule,
   AuthModule,
   InboundParseModule,
   SharedModule,

@@ -1,7 +1,6 @@
+import { ChannelCredentials, ChannelSettingsDto, SubscriberResponseDto } from '@novu/application-generic';
 import { SubscriberEntity } from '@novu/dal';
 import { IChannelCredentials, IChannelSettings } from '@novu/shared';
-import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
-import { ChannelSettingsDto, SubscriberResponseDto } from '../../subscribers/dtos';
 
 export function mapSubscriberEntityToResponseDto(entity: SubscriberEntity): SubscriberResponseDto {
   return {

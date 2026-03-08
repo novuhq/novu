@@ -106,11 +106,11 @@ export class GetActivity {
       }),
     ]);
 
-    this.logger.debug('feature flags', {
+    this.logger.debug({
       tracesEnabled,
       stepRunsEnabled,
       workflowRunsEnabled,
-    });
+    }, 'feature flags');
 
     let feedItem: NotificationFeedItemEntity | null = null;
 

@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, WorkflowDataContainer, WorkflowResponseDto } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
-import { WorkflowDataContainer } from '../../shared/containers/workflow-data.container';
-import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
 import {
   DependencyReasonEnum,
   IDiffResult,

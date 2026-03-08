@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { parseSlugId } from '@novu/application-generic';
 import { Transform, Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class DeployStepResolverManifestStepDto {
   @ApiProperty({
@@ -20,6 +20,15 @@ export class DeployStepResolverManifestStepDto {
   @IsString()
   @IsNotEmpty()
   stepId: string;
+
+  @ApiPropertyOptional({
+    description: 'JSON Schema describing the control inputs for this step',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  controlSchema?: Record<string, unknown>;
 }
 
 export class DeployStepResolverManifestDto {

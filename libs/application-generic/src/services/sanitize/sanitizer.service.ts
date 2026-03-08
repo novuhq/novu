@@ -27,73 +27,9 @@ const SAFE_IMG_ATTRIBUTES = [
   'lang',
 ];
 
-const DANGEROUS_ATTRIBUTES = [
-  'onerror',
-  'onload',
-  'onclick',
-  'onmouseover',
-  'onmouseout',
-  'onmouseenter',
-  'onmouseleave',
-  'onfocus',
-  'onblur',
-  'onsubmit',
-  'onreset',
-  'onchange',
-  'oninput',
-  'onkeydown',
-  'onkeyup',
-  'onkeypress',
-  'ondblclick',
-  'oncontextmenu',
-  'ondrag',
-  'ondragend',
-  'ondragenter',
-  'ondragleave',
-  'ondragover',
-  'ondragstart',
-  'ondrop',
-  'onscroll',
-  'onwheel',
-  'oncopy',
-  'oncut',
-  'onpaste',
-  'onabort',
-  'oncanplay',
-  'oncanplaythrough',
-  'ondurationchange',
-  'onemptied',
-  'onended',
-  'onloadeddata',
-  'onloadedmetadata',
-  'onloadstart',
-  'onpause',
-  'onplay',
-  'onplaying',
-  'onprogress',
-  'onratechange',
-  'onseeked',
-  'onseeking',
-  'onstalled',
-  'onsuspend',
-  'ontimeupdate',
-  'onvolumechange',
-  'onwaiting',
-  'onanimationstart',
-  'onanimationend',
-  'onanimationiteration',
-  'ontransitionend',
-  'onpointerdown',
-  'onpointerup',
-  'onpointermove',
-  'onpointerenter',
-  'onpointerleave',
-  'onpointercancel',
-  'ontouchstart',
-  'ontouchend',
-  'ontouchmove',
-  'ontouchcancel',
-];
+function isEventHandlerAttribute(name: string): boolean {
+  return name.toLowerCase().startsWith('on');
+}
 
 const sanitizeOptions: IOptions = {
   /**
@@ -119,7 +55,7 @@ const sanitizeOptions: IOptions = {
       const safeAttribs: Record<string, string> = {};
 
       for (const [key, value] of Object.entries(attribs)) {
-        if (!DANGEROUS_ATTRIBUTES.includes(key.toLowerCase())) {
+        if (!isEventHandlerAttribute(key)) {
           safeAttribs[key] = value;
         }
       }

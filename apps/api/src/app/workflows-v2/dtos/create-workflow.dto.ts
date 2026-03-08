@@ -1,7 +1,4 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import {
   ChatControlDto,
   CustomControlDto,
@@ -12,7 +9,11 @@ import {
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
-} from './controls';
+  WorkflowCommonsFields,
+} from '@novu/application-generic';
+import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import {
   BaseStepConfigDto,
   ChatStepUpsertDto,
@@ -26,7 +27,6 @@ import {
   ThrottleStepUpsertDto,
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
-import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 export type StepCreateDto =
   | InAppStepUpsertDto

@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Instrument, InstrumentUsecase, PinoLogger, SendWebhookMessage } from '@novu/application-generic';
+import {
+  BuildStepIssuesUsecase,
+  GetWorkflowUseCase,
+  GetWorkflowWithPreferencesUseCase,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  SendWebhookMessage,
+  stepTypeToControlSchema,
+  WorkflowResponseDto,
+  WorkflowWithPreferencesResponseDto,
+} from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { UserSessionData, WebhookEventEnum, WebhookObjectTypeEnum, WorkflowStatusEnum } from '@novu/shared';
-import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
-import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { WorkflowResponseDto } from '../../dtos';
-import { stepTypeToControlSchema } from '../../shared';
-import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
-import { GetWorkflowUseCase } from '../get-workflow';
+import { MANAGE_TRANSLATIONS } from '../../../shared/constants';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 
 @Injectable()
@@ -160,7 +166,7 @@ export class PatchWorkflowUsecase {
     }
 
     try {
-      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
+      const manageTranslations = this.moduleRef.get(MANAGE_TRANSLATIONS, {
         strict: false,
       });
 

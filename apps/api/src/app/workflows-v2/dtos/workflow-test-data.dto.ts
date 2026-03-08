@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { JSONSchemaDto } from '@novu/application-generic';
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 
 export class WorkflowTestDataResponseDto {
   @ApiProperty({

@@ -1,5 +1,5 @@
 # Use the base image for development
-FROM node:20-alpine3.20 AS dev_base
+FROM node:20-alpine3.21 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -42,7 +42,7 @@ RUN pnpm recursive exec -- rm -rf ./src
 
 # ------- PRODUCTION BUILD ----------
 # Use clean base for production (NO Python)
-FROM node:20-alpine3.20 AS prod
+FROM node:20-alpine3.21 AS prod
 ARG PACKAGE_PATH
 
 # Set environment variables for production

@@ -655,6 +655,49 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     expect(secondStepResponse.body.data.controls.subject).to.equal('Hello World again');
   });
 
+  it('should handle re-sync when a step has a null control values record', async () => {
+    const workflowId = 'null-controls-workflow';
+    const newWorkflow = workflow(workflowId, async ({ step }) => {
+      await step.email('send-email', () => ({
+        subject: 'Welcome!',
+        body: 'Hello there',
+      }));
+    });
+    await bridgeServer.start({ workflows: [newWorkflow] });
+
+    const firstSync = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+    expect(firstSync.status).to.equal(201);
+    expect(firstSync.body.data?.length).to.equal(1);
+
+    const createdWorkflow = await workflowsRepository.findById(firstSync.body.data[0]._id, session.environment._id);
+    expect(createdWorkflow).to.be.ok;
+    if (!createdWorkflow) throw new Error('Workflow not found');
+
+    await controlValuesRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      _workflowId: createdWorkflow._id,
+      _stepId: createdWorkflow.steps[0]._templateId,
+      level: 'step_controls',
+      controls: null as any,
+      priority: 0,
+    });
+
+    const secondSync = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+
+    expect(secondSync.status).to.equal(201);
+    expect(secondSync.body.data?.length).to.equal(1);
+
+    const updatedWorkflow = await workflowsRepository.findById(firstSync.body.data[0]._id, session.environment._id);
+    expect(updatedWorkflow).to.be.ok;
+    expect(updatedWorkflow?.steps.length).to.equal(1);
+    expect(updatedWorkflow?.steps[0].stepId).to.equal('send-email');
+  });
+
   it('should throw an error when trying to sync a workflow with an ID that exists in dashboard', async () => {
     const workflowId = 'dashboard-created-workflow';
 

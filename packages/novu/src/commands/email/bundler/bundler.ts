@@ -1,4 +1,6 @@
 import * as esbuild from 'esbuild';
+import * as fs from 'fs';
+import * as path from 'path';
 import { generateWorkerWrapper } from '../templates/worker-wrapper';
 import type { DiscoveredStep, StepResolverReleaseBundle } from '../types';
 import { getBundlerConfig } from './config';
@@ -67,6 +69,23 @@ function isBuildFailure(error: unknown): error is esbuild.BuildFailure {
   return typeof error === 'object' && error !== null && 'errors' in error && Array.isArray(error.errors);
 }
 
+function getCliNodeModulesPaths(): string[] {
+  const paths: string[] = [];
+  let dir = __dirname;
+
+  while (true) {
+    const nodeModules = path.join(dir, 'node_modules');
+    if (fs.existsSync(nodeModules)) {
+      paths.push(nodeModules);
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
+  return paths;
+}
+
 async function bundleSteps(
   bundleId: string,
   steps: DiscoveredStep[],
@@ -78,6 +97,7 @@ async function bundleSteps(
     rootDir,
     minify: options.minify,
     aliases: options.aliases,
+    nodePaths: getCliNodeModulesPaths(),
   });
 
   let result: esbuild.BuildResult;

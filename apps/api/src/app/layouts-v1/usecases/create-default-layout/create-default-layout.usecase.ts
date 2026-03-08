@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { GetNovuLayout } from '@novu/application-generic';
+import { GetNovuLayout, LayoutDtoV0 } from '@novu/application-generic';
 import { LayoutRepository } from '@novu/dal';
-import { LayoutDto } from '../../dtos';
 import { CreateLayoutCommand, CreateLayoutUseCase } from '../create-layout';
 import { SetDefaultLayoutUseCase } from '../set-default-layout';
 import { CreateDefaultLayoutCommand } from './create-default-layout.command';
@@ -15,7 +14,7 @@ export class CreateDefaultLayout {
     private getNovuLayout: GetNovuLayout
   ) {}
 
-  async execute(command: CreateDefaultLayoutCommand): Promise<LayoutDto> {
+  async execute(command: CreateDefaultLayoutCommand): Promise<LayoutDtoV0> {
     return await this.createLayout.execute(
       CreateLayoutCommand.create({
         userId: command.userId,

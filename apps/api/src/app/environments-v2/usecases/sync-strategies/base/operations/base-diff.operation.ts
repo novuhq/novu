@@ -1,6 +1,5 @@
-import { Instrument, PinoLogger } from '@novu/application-generic';
+import { capitalize, Instrument, PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { capitalize } from '../../../../../shared/services/helper/helper.service';
 import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../../types/sync.types';
 import { DiffResultBuilder } from '../../builders/diff-result.builder';
 import { IBaseComparator, IBaseRepositoryService } from '../interfaces';
