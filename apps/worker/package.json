@@ -45,7 +45,7 @@
     "json-logic-js": "^2.0.5",
     "svix": "^1.64.1",
     "lru-cache": "^11.2.4",
-    "axios": "^1.9.0",
+    "axios": "^1.13.5",
     "body-parser": "^2.2.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
