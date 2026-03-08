@@ -1,8 +1,10 @@
+import { AnimatePresence, motion } from 'motion/react';
 import { Highlight } from 'prism-react-renderer';
 import { useCallback } from 'react';
 import { RiFileCopyLine, RiGlobalLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { type TestHttpEndpointResponse } from '@/api/steps';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { useStepEditor } from '../context/step-editor-context';
@@ -436,31 +438,58 @@ function PreTestState() {
 
 function LoadingState() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 p-6">
-      <div className="flex flex-col gap-[6px] w-full animate-pulse">
-        <div className="h-[120px] rounded-lg bg-[#f1f2f4]" />
-        <div className="h-[80px] rounded-lg bg-[#f1f2f4]" />
-      </div>
+    <div className="flex flex-col gap-[6px] w-full">
+      <Skeleton className="h-[120px] w-full rounded-lg" />
+      <Skeleton className="h-[80px] w-full rounded-lg" />
     </div>
   );
 }
+
+const STATE_TRANSITION = { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const };
 
 export function HttpRequestConsolePreview() {
   const { testResult, isTestPending } = useHttpRequestTest();
   const { step } = useStepEditor();
 
-  if (isTestPending) {
-    return <LoadingState />;
-  }
-
-  if (!testResult) {
-    return <PreTestState />;
-  }
+  const state = isTestPending ? 'loading' : testResult ? 'post-test' : 'pre-test';
 
   return (
-    <div className="flex flex-col gap-[6px]">
-      <CurlRequest result={testResult} />
-      <ResponsePanel result={testResult} stepName={step.stepId} />
-    </div>
+    <AnimatePresence mode="wait" initial={false}>
+      {state === 'loading' && (
+        <motion.div
+          key="loading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={STATE_TRANSITION}
+        >
+          <LoadingState />
+        </motion.div>
+      )}
+      {state === 'pre-test' && (
+        <motion.div
+          key="pre-test"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={STATE_TRANSITION}
+        >
+          <PreTestState />
+        </motion.div>
+      )}
+      {state === 'post-test' && testResult && (
+        <motion.div
+          key="post-test"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={STATE_TRANSITION}
+          className="flex flex-col gap-[6px]"
+        >
+          <CurlRequest result={testResult} />
+          <ResponsePanel result={testResult} stepName={step.stepId} />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
