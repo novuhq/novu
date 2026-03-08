@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { CompileTemplate, InstrumentUsecase } from '@novu/application-generic';
+import {
+  CompileTemplate,
+  HttpClientError,
+  HttpClientService,
+  HttpRequestOptions,
+  InstrumentUsecase,
+} from '@novu/application-generic';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
 
@@ -7,7 +13,10 @@ type KeyValuePair = { key: string; value: string };
 
 @Injectable()
 export class TestHttpEndpointUsecase {
-  constructor(private readonly compileTemplate: CompileTemplate) {}
+  constructor(
+    private readonly compileTemplate: CompileTemplate,
+    private readonly httpClientService: HttpClientService
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: TestHttpEndpointCommand): Promise<TestHttpEndpointResponseDto> {
@@ -37,47 +46,51 @@ export class TestHttpEndpointUsecase {
     }
 
     const hasBody = Object.keys(resolvedBodyPairs).length > 0 && method !== 'GET' && method !== 'DELETE';
-    const bodyString = hasBody ? JSON.stringify(resolvedBodyPairs) : undefined;
-
-    const requestHeaders = { ...resolvedHeaders };
-    if (hasBody && !requestHeaders['content-type'] && !requestHeaders['Content-Type']) {
-      requestHeaders['Content-Type'] = 'application/json';
-    }
-
-    const requestInit: RequestInit = { method, headers: requestHeaders };
-    if (bodyString) {
-      requestInit.body = bodyString;
-    }
 
     const startTime = performance.now();
-    const response = await fetch(resolvedUrl, requestInit);
-    const durationMs = Math.round(performance.now() - startTime);
 
-    const responseText = await response.text();
-    let parsedBody: unknown;
     try {
-      parsedBody = JSON.parse(responseText);
-    } catch {
-      parsedBody = responseText || null;
-    }
-
-    const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      responseHeaders[key] = value;
-    });
-
-    return {
-      statusCode: response.status,
-      body: parsedBody,
-      headers: responseHeaders,
-      durationMs,
-      resolvedRequest: {
+      const response = await this.httpClientService.request({
         url: resolvedUrl,
-        method,
+        method: method as HttpRequestOptions['method'],
         headers: resolvedHeaders,
         ...(hasBody ? { body: resolvedBodyPairs } : {}),
-      },
-    };
+        timeout: 30_000,
+      });
+      const durationMs = Math.round(performance.now() - startTime);
+
+      return {
+        statusCode: response.statusCode,
+        body: response.body,
+        headers: response.headers,
+        durationMs,
+        resolvedRequest: {
+          url: resolvedUrl,
+          method,
+          headers: resolvedHeaders,
+          ...(hasBody ? { body: resolvedBodyPairs } : {}),
+        },
+      };
+    } catch (error) {
+      const durationMs = Math.round(performance.now() - startTime);
+
+      if (error instanceof HttpClientError && error.statusCode) {
+        return {
+          statusCode: error.statusCode,
+          body: error.responseBody ?? null,
+          headers: {},
+          durationMs,
+          resolvedRequest: {
+            url: resolvedUrl,
+            method,
+            headers: resolvedHeaders,
+            ...(hasBody ? { body: resolvedBodyPairs } : {}),
+          },
+        };
+      }
+
+      throw error;
+    }
   }
 
   private buildCompileContext(previewPayload?: TestHttpEndpointCommand['previewPayload']): Record<string, unknown> {
