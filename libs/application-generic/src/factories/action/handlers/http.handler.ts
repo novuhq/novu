@@ -1,11 +1,14 @@
 import { CredentialsFromConfig, httpRequestControlSchema } from '@novu/shared';
 import type { FromSchema } from 'json-schema-to-ts';
+import { HttpClientError, HttpClientErrorType, HttpClientService } from '../../../services/http-client';
 import { IActionExecuteConfig, IActionExecuteResult, IActionHandler } from '../interfaces';
 
 type HttpRequestCredentials = CredentialsFromConfig<[]>;
 type HttpRequestControlType = FromSchema<typeof httpRequestControlSchema>;
 
 export class HttpActionHandler implements IActionHandler {
+  constructor(private readonly httpClient: HttpClientService) {}
+
   async execute({
     controlValues,
   }: IActionExecuteConfig<HttpRequestControlType, HttpRequestCredentials>): Promise<IActionExecuteResult> {
@@ -21,52 +24,40 @@ export class HttpActionHandler implements IActionHandler {
       return acc;
     }, {});
 
-    const bodyString =
+    const bodyObject =
       body.length > 0
-        ? JSON.stringify(
-            body.reduce<Record<string, unknown>>((acc, { key, value }) => {
-              acc[key] = value;
+        ? body.reduce<Record<string, unknown>>((acc, { key, value }) => {
+            acc[key] = value;
 
-              return acc;
-            }, {})
-          )
+            return acc;
+          }, {})
         : undefined;
 
-    const hasBody = !!bodyString && method !== 'GET' && method !== 'DELETE';
-    const resolvedHeaders = this.buildHeaders(headersRecord);
-
-    const requestInit = {
-      method,
-      headers: resolvedHeaders,
-    } as RequestInit;
-
-    if (hasBody) {
-      requestInit.body = bodyString;
-
-      if (!resolvedHeaders['content-type'] && !resolvedHeaders['Content-Type']) {
-        (resolvedHeaders as Record<string, string>)['Content-Type'] = 'application/json';
-      }
-    }
-
-    const response = await fetch(url, requestInit);
-    const responseText = await response.text();
-
-    let parsedBody: unknown;
+    const hasBody = !!bodyObject && method !== 'GET' && method !== 'DELETE';
 
     try {
-      parsedBody = JSON.parse(responseText);
-    } catch {
-      parsedBody = responseText;
+      const response = await this.httpClient.request({
+        url,
+        method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+        headers: headersRecord,
+        ...(hasBody ? { body: bodyObject } : {}),
+      });
+
+      return {
+        statusCode: response.statusCode,
+        body: response.body,
+        headers: response.headers,
+      };
+    } catch (error) {
+      if (error instanceof HttpClientError && error.type === HttpClientErrorType.PARSE_ERROR) {
+        return {
+          statusCode: error.statusCode ?? 200,
+          body: error.responseBody,
+          headers: {},
+        };
+      }
+
+      throw error;
     }
-
-    return {
-      statusCode: response.status,
-      body: parsedBody,
-      headers: Object.fromEntries(response.headers as unknown as Iterable<[string, string]>),
-    };
-  }
-
-  private buildHeaders(stepHeaders: Record<string, string>): Record<string, string> {
-    return { ...stepHeaders };
   }
 }

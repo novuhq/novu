@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ActionProviderIdEnum } from '@novu/shared';
+import { HttpClientService } from '../../services/http-client';
 import { HttpActionHandler } from './handlers';
 import { IActionHandler } from './interfaces';
 
@@ -7,8 +8,8 @@ import { IActionHandler } from './interfaces';
 export class ActionHandlerFactory {
   private readonly handlers: Map<string, IActionHandler>;
 
-  constructor() {
-    const httpHandler = new HttpActionHandler();
+  constructor(private readonly httpClient: HttpClientService) {
+    const httpHandler = new HttpActionHandler(this.httpClient);
 
     this.handlers = new Map<string, IActionHandler>([[ActionProviderIdEnum.HttpRequest, httpHandler]]);
   }
