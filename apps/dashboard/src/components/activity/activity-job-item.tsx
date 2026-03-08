@@ -14,7 +14,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-import { ACTION_PROVIDER_ID_TO_COLOR, STEP_TYPE_TO_COLOR } from '../../utils/color';
+import { ACTION_PROVIDER_ID_TO_COLOR, type ProviderColorToken, STEP_TYPE_TO_COLOR } from '../../utils/color';
 import { formatJSONString } from '../../utils/string';
 import { ACTION_PROVIDER_ID_TO_ICON, STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Card, CardContent, CardHeader } from '../primitives/card';
@@ -52,9 +52,9 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-1.5">
-            <div className={`h-5 w-5 rounded-full border opacity-40 border-${getJobColor(job)}`}>
+            <div className={`h-5 w-5 rounded-full border opacity-40 ${getJobColorClasses(job).border}`}>
               <div
-                className={`h-full w-full rounded-full bg-neutral-50 text-${getJobColor(job)} flex items-center justify-center`}
+                className={`h-full w-full rounded-full bg-neutral-50 ${getJobColorClasses(job).text} flex items-center justify-center`}
               >
                 {getJobIcon(job)}
               </div>
@@ -250,13 +250,25 @@ function TraceTooltip({ message, raw, variant = 'error' }: { message: string; ra
   );
 }
 
-function getJobColor(job: IActivityJob): string {
-  const providerId = job.providerId as ActionProviderIdEnum | undefined;
+const JOB_COLOR_CLASSES: Record<ProviderColorToken, { border: string; text: string }> = {
+  neutral: { border: 'border-neutral', text: 'text-neutral' },
+  stable: { border: 'border-stable', text: 'text-stable' },
+  information: { border: 'border-information', text: 'text-information' },
+  feature: { border: 'border-feature', text: 'text-feature' },
+  destructive: { border: 'border-destructive', text: 'text-destructive' },
+  verified: { border: 'border-verified', text: 'text-verified' },
+  alert: { border: 'border-alert', text: 'text-alert' },
+  highlighted: { border: 'border-highlighted', text: 'text-highlighted' },
+  warning: { border: 'border-warning', text: 'text-warning' },
+};
 
-  return (
+function getJobColorClasses(job: IActivityJob): { border: string; text: string } {
+  const providerId = job.providerId as ActionProviderIdEnum | undefined;
+  const color =
     (providerId && ACTION_PROVIDER_ID_TO_COLOR[providerId]) ||
-    STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR]
-  );
+    STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR];
+
+  return JOB_COLOR_CLASSES[color];
 }
 
 function getJobIcon(job: IActivityJob) {

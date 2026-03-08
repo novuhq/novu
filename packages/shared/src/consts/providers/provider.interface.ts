@@ -51,6 +51,17 @@ export interface IProviderConfig {
   betaVersion?: boolean;
 }
 
+export type ProviderColorToken =
+  | 'neutral'
+  | 'stable'
+  | 'information'
+  | 'feature'
+  | 'destructive'
+  | 'verified'
+  | 'alert'
+  | 'highlighted'
+  | 'warning';
+
 export interface IActionProviderConfig {
   id: ActionProviderIdEnum;
   displayName: string;
@@ -63,7 +74,7 @@ export interface IActionProviderConfig {
   comingSoon?: boolean;
   betaVersion?: boolean;
   iconName?: string;
-  color?: string;
+  color?: ProviderColorToken;
   badgeLabel?: string;
 }
 
