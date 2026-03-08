@@ -33,7 +33,7 @@
     "html-to-text": "^9.0.5",
     "languagedetect": "^1.1.1",
     "lodash": "^4.17.15",
-    "mailparser": "^0.6.0",
+    "mailparser": "^3.9.3",
     "newrelic": "^13.12.0",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
