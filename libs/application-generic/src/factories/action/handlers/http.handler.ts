@@ -1,6 +1,13 @@
 import { CredentialsFromConfig, httpRequestControlSchema } from '@novu/shared';
 import type { FromSchema } from 'json-schema-to-ts';
-import { HttpClientError, HttpClientErrorType, HttpClientService } from '../../../services/http-client';
+import {
+  HttpClientError,
+  HttpClientErrorType,
+  HttpClientService,
+  shouldIncludeBody,
+  toBodyRecord,
+  toHeadersRecord,
+} from '../../../services/http-client';
 import { IActionExecuteConfig, IActionExecuteResult, IActionHandler } from '../interfaces';
 
 type HttpRequestCredentials = CredentialsFromConfig<[]>;
@@ -19,22 +26,9 @@ export class HttpActionHandler implements IActionHandler {
       throw new Error('HTTP action step is missing a URL. Please configure a URL in the step settings.');
     }
 
-    const headersRecord = headers.reduce<Record<string, string>>((acc, { key, value }) => {
-      acc[key] = value;
-
-      return acc;
-    }, {});
-
-    const bodyObject =
-      body.length > 0
-        ? body.reduce<Record<string, unknown>>((acc, { key, value }) => {
-            acc[key] = value;
-
-            return acc;
-          }, {})
-        : undefined;
-
-    const hasBody = !!bodyObject && method !== 'GET' && method !== 'DELETE';
+    const headersRecord = toHeadersRecord(headers as { key: string; value: string }[]);
+    const bodyObject = toBodyRecord(body as { key: string; value: string }[]);
+    const hasBody = shouldIncludeBody(bodyObject, method);
     const mergedHeaders = { ...headersRecord, ...signatureHeaders };
 
     try {

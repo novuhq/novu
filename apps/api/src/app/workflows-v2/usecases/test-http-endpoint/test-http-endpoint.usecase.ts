@@ -8,11 +8,11 @@ import {
   HttpClientService,
   HttpRequestOptions,
   InstrumentUsecase,
+  KeyValuePair,
+  shouldIncludeBody,
 } from '@novu/application-generic';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
-
-type KeyValuePair = { key: string; value: string };
 
 @Injectable()
 export class TestHttpEndpointUsecase {
@@ -49,7 +49,7 @@ export class TestHttpEndpointUsecase {
       }
     }
 
-    const hasBody = Object.keys(resolvedBodyPairs).length > 0 && method !== 'GET' && method !== 'DELETE';
+    const hasBody = shouldIncludeBody(resolvedBodyPairs, method);
 
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
