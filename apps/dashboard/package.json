@@ -122,6 +122,7 @@
     "next-themes": "^0.3.0",
     "npm": "^11.8.0",
     "prettier": "~3.3.3",
+    "prism-react-renderer": "^2.4.1",
     "react": "^19.2.3",
     "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",

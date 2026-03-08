@@ -1,3 +1,4 @@
+import { Highlight } from 'prism-react-renderer';
 import { useCallback } from 'react';
 import { RiFileCopyLine, RiGlobalLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { type TestHttpEndpointResponse } from '@/api/steps';
@@ -83,6 +84,15 @@ function CurlDisplay({
   );
 }
 
+const JSON_THEME = {
+  plain: { color: '#99a0ae', backgroundColor: 'transparent' },
+  styles: [
+    { types: ['punctuation', 'operator'], style: { color: '#99a0ae' } },
+    { types: ['property'], style: { color: '#fb4ba3' } },
+    { types: ['string', 'number', 'boolean', 'null', 'keyword'], style: { color: '#7d52f4' } },
+  ],
+};
+
 function JsonBody({ body }: { body: unknown }) {
   const isEmpty =
     body === null ||
@@ -90,42 +100,22 @@ function JsonBody({ body }: { body: unknown }) {
     (typeof body === 'object' && !Array.isArray(body) && Object.keys(body as object).length === 0) ||
     body === '';
 
-  if (isEmpty) {
-    return <p className="font-mono text-xs italic leading-[1.5] text-[#99a0ae]">{'{}'}</p>;
-  }
-
-  if (typeof body === 'string') {
-    return <pre className="m-0 whitespace-pre-wrap font-mono text-xs leading-[1.5] text-[#7d52f4]">{body}</pre>;
-  }
-
-  if (typeof body !== 'object' || Array.isArray(body)) {
-    return (
-      <pre className="m-0 whitespace-pre-wrap font-mono text-xs leading-[1.5] text-[#7d52f4]">
-        {JSON.stringify(body, null, 2)}
-      </pre>
-    );
-  }
-
-  const entries = Object.entries(body as Record<string, unknown>);
+  const code = isEmpty ? '{}' : JSON.stringify(body, null, 2);
 
   return (
-    <div className="font-mono text-xs">
-      <p className="mb-0 leading-[1.5] text-[#99a0ae]">{'{'}</p>
-      {entries.map(([key, val], idx) => (
-        <p key={key} className="mb-0 leading-[1.5]">
-          <span className="text-[#99a0ae]">{'  '}</span>
-          <span className="text-[#fb4ba3]">{`"${key}"`}</span>
-          <span className="text-[#99a0ae]">: </span>
-          {typeof val === 'string' ? (
-            <span className="text-[#7d52f4]">{`"${val}"`}</span>
-          ) : (
-            <span className="text-[#7d52f4]">{JSON.stringify(val)}</span>
-          )}
-          {idx < entries.length - 1 && <span className="text-[#99a0ae]">,</span>}
-        </p>
-      ))}
-      <p className="mb-0 leading-[1.5] text-[#99a0ae]">{'}'}</p>
-    </div>
+    <Highlight code={code} language="json" theme={JSON_THEME}>
+      {({ tokens, getLineProps, getTokenProps }) => (
+        <pre className="m-0 whitespace-pre-wrap font-mono text-xs leading-[1.5]">
+          {tokens.map((line, i) => (
+            <div key={i} {...getLineProps({ line })}>
+              {line.map((token, j) => (
+                <span key={j} {...getTokenProps({ token })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
   );
 }
 
