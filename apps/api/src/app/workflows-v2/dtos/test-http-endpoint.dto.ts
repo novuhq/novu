@@ -1,8 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PreviewPayloadDto } from '@novu/application-generic';
 import { Type } from 'class-transformer';
 import { IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-
-import { PreviewPayloadDto } from './preview-payload.dto';
 
 export class TestHttpEndpointRequestDto {
   @ApiPropertyOptional({

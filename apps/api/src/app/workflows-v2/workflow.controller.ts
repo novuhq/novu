@@ -27,6 +27,7 @@ import {
   RequirePermissions,
   StepResponseDto,
   UpsertStepDataCommand,
+  UpsertWorkflowCommand,
   UpsertWorkflowUseCase,
   UserSession,
   WorkflowResponseDto,
