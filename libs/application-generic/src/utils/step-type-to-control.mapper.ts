@@ -1,3 +1,6 @@
+import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
+import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
+import { ActionIntegrationTypeEnum, httpRequestControlSchema, httpRequestUiSchema } from '@novu/shared';
 import {
   chatControlSchema,
   chatUiSchema,
@@ -15,10 +18,7 @@ import {
   smsUiSchema,
   throttleControlSchema,
   throttleUiSchema,
-} from '@novu/application-generic';
-import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
-import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
-import { ActionIntegrationTypeEnum, httpRequestControlSchema, httpRequestUiSchema } from '@novu/shared';
+} from '../schemas/control';
 
 export const PERMISSIVE_EMPTY_SCHEMA = {
   type: 'object',
