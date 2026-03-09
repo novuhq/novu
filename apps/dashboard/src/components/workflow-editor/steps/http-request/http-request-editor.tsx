@@ -18,9 +18,10 @@ type HttpRequestEditorProps = {
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   const { currentEnvironment } = useEnvironment();
   const handleCopyPrompt = useCopyPrompt();
-  const { testResult } = useHttpRequestTest();
+  const { testResult, isTestPending } = useHttpRequestTest();
 
-  const hasSuccessfulResponse = testResult !== null && testResult.statusCode >= 200 && testResult.statusCode < 300;
+  const hasSuccessfulResponse =
+    isTestPending || (testResult !== null && testResult.statusCode >= 200 && testResult.statusCode < 300);
 
   if (uiSchema.group !== UiSchemaGroupEnum.HTTP_REQUEST) {
     return null;
