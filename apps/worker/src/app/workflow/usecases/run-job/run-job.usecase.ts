@@ -341,16 +341,23 @@ export class RunJob {
 
         if (shouldHaltOnStepFailure(job) || sendMessageResult.shouldHalt) {
           shouldQueueNextJob = false;
-          const cancelledJobs = await this.jobRepository.cancelPendingJobs({
-            transactionId: job.transactionId,
-            _environmentId: job._environmentId,
-            _subscriberId: job._subscriberId,
-            _templateId: job._templateId,
-          });
+          try {
+            const cancelledJobs = await this.jobRepository.cancelPendingJobs({
+              transactionId: job.transactionId,
+              _environmentId: job._environmentId,
+              _subscriberId: job._subscriberId,
+              _templateId: job._templateId,
+            });
 
-          if (cancelledJobs.length > 0) {
-            await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
-            await this.createCanceledExecutionDetails(cancelledJobs);
+            if (cancelledJobs.length > 0) {
+              await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+              await this.createCanceledExecutionDetails(cancelledJobs);
+            }
+          } catch (cancellationError: unknown) {
+            this.logger.error(
+              { err: cancellationError, nv: { jobId: job._id, transactionId: job.transactionId } },
+              'Failed to cancel pending jobs after step failure'
+            );
           }
         }
       } else if (sendMessageResult.status === SendMessageStatus.SKIPPED) {
@@ -376,16 +383,23 @@ export class RunJob {
       });
 
       if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
-        const cancelledJobs = await this.jobRepository.cancelPendingJobs({
-          transactionId: job.transactionId,
-          _environmentId: job._environmentId,
-          _subscriberId: job._subscriberId,
-          _templateId: job._templateId,
-        });
+        try {
+          const cancelledJobs = await this.jobRepository.cancelPendingJobs({
+            transactionId: job.transactionId,
+            _environmentId: job._environmentId,
+            _subscriberId: job._subscriberId,
+            _templateId: job._templateId,
+          });
 
-        if (cancelledJobs.length > 0) {
-          await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
-          await this.createCanceledExecutionDetails(cancelledJobs);
+          if (cancelledJobs.length > 0) {
+            await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+            await this.createCanceledExecutionDetails(cancelledJobs);
+          }
+        } catch (cancellationError: unknown) {
+          this.logger.error(
+            { err: cancellationError, nv: { jobId: job._id, transactionId: job.transactionId } },
+            'Failed to cancel pending jobs after step execution error'
+          );
         }
       }
 
@@ -594,16 +608,23 @@ export class RunJob {
         );
 
         if (isHaltingWorkflow) {
-          const cancelledJobs = await this.jobRepository.cancelPendingJobs({
-            transactionId: nextJob.transactionId,
-            _environmentId: nextJob._environmentId,
-            _subscriberId: nextJob._subscriberId,
-            _templateId: nextJob._templateId,
-          });
+          try {
+            const cancelledJobs = await this.jobRepository.cancelPendingJobs({
+              transactionId: nextJob.transactionId,
+              _environmentId: nextJob._environmentId,
+              _subscriberId: nextJob._subscriberId,
+              _templateId: nextJob._templateId,
+            });
 
-          if (cancelledJobs.length > 0) {
-            await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
-            await this.createCanceledExecutionDetails(cancelledJobs);
+            if (cancelledJobs.length > 0) {
+              await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+              await this.createCanceledExecutionDetails(cancelledJobs);
+            }
+          } catch (cancellationError: unknown) {
+            this.logger.error(
+              { err: cancellationError, nv: { jobId: nextJob._id, transactionId: nextJob.transactionId } },
+              'Failed to cancel pending jobs after next job failure'
+            );
           }
         }
 
