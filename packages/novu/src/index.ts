@@ -3,8 +3,8 @@
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
-import { emailPublish } from './commands/email';
 import { IInitCommandOptions, init } from './commands/init';
+import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
 import { pullTranslations, pushTranslations } from './commands/translations';
 import { NOVU_API_URL, NOVU_SECRET_KEY } from './constants';
@@ -137,18 +137,21 @@ translationsCommand
     await pushTranslations(options);
   });
 
-const emailCommand = program.command('email').description('Manage Novu email step resolvers');
+const stepCommand = program.command('step').description('Manage Novu step resolvers');
 
-emailCommand
+stepCommand
   .command('publish')
-  .description('Bundle and deploy React Email step handlers to Novu')
+  .description('Bundle and deploy step handlers to Novu')
   .option('-s, --secret-key <key>', 'Novu API secret key', NOVU_SECRET_KEY || '')
   .option('-a, --api-url <url>', 'Novu API URL')
   .option('-c, --config <path>', 'Path to config file')
   .option('--out <path>', 'Directory containing step handlers')
   .option('--workflow <id...>', 'Deploy only specific workflows')
   .option('--step <id...>', 'Deploy only specific steps (requires --workflow)')
-  .option('--template <path>', 'Path to React Email template; scaffolds the step handler file if it does not exist')
+  .option(
+    '--template <path>',
+    'Path to React Email template; scaffolds a React Email email handler if it does not exist'
+  )
   .option('--bundle-out-dir [path]', 'Write bundled workflow artifacts to a directory for debugging')
   .option('--dry-run', 'Bundle without deploying')
   .action(async (options) => {
@@ -157,9 +160,9 @@ emailCommand
         anonymousId,
       },
       data: {},
-      event: 'Email Publish Command',
+      event: 'Step Publish Command',
     });
-    await emailPublish(options);
+    await stepPublish(options);
   });
 
 program.parse(process.argv);

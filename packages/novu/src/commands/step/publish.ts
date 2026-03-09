@@ -3,14 +3,12 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { dim, green, red, yellow } from 'picocolors';
 import prompts from 'prompts';
-import type { RendererConflictStep } from './api';
-import { RendererConflictError, StepResolverClient } from './api';
+import { StepResolverClient } from './api';
 import { bundleRelease, formatBundleSize } from './bundler';
 import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
-import type { DiscoveredTemplate } from './discovery';
-import { discoverEmailTemplates, discoverStepFiles } from './discovery';
-import { generateStepFile } from './templates/step-file';
+import { discoverStepFiles } from './discovery';
+import { generateReactEmailStepFile, generateStepFileForType } from './templates/step-file';
 import type {
   DeploymentResult,
   DiscoveredStep,
@@ -44,7 +42,11 @@ const DEFAULT_API_URL = 'https://api.novu.co';
 const DEFAULT_STEPS_DIR = './novu';
 const RELEASE_ARTIFACT_BASENAME = 'step-resolver-release';
 
-export async function emailPublish(options: PublishOptions): Promise<void> {
+type ScaffoldResult = { mode: 'react-email'; templatePath: string } | { mode: 'placeholder'; stepType: string };
+
+const KNOWN_STEP_TYPES = new Set(['email', 'sms', 'push', 'chat', 'in_app']);
+
+export async function stepPublish(options: PublishOptions): Promise<void> {
   try {
     const startTime = Date.now();
     const rootDir = process.cwd();
@@ -64,12 +66,18 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
     assertTemplateRequiresWorkflowAndStep(options.template, options.workflow, options.step);
 
     const effectiveOutDir = options.out || config?.outDir;
-    const templatePath = options.template ?? (await resolveTemplateInteractively(options, rootDir, effectiveOutDir));
 
-    if (templatePath) {
+    let scaffoldResult: ScaffoldResult | undefined;
+    if (options.template) {
+      scaffoldResult = { mode: 'react-email', templatePath: options.template };
+    } else {
+      scaffoldResult = await resolveScaffoldInteractively(client, options, rootDir, effectiveOutDir);
+    }
+
+    if (scaffoldResult) {
       const workflowIds = normalizeRequestedWorkflows(options.workflow);
       const stepIds = normalizeRequestedWorkflows(options.step);
-      await scaffoldStepFileIfNeeded(templatePath, workflowIds[0], stepIds[0], rootDir, effectiveOutDir);
+      await scaffoldStepFileIfNeeded(scaffoldResult, workflowIds[0], stepIds[0], rootDir, effectiveOutDir);
     }
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
@@ -88,10 +96,11 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
       shouldMinifyBundles,
       config?.aliases
     );
-    const manifestSteps = stepsWithSchemas.map((step) => ({
-      workflowId: step.workflowId,
-      stepId: step.stepId,
-      ...(step.controlSchema && { controlSchema: step.controlSchema }),
+    const manifestSteps = stepsWithSchemas.map((s) => ({
+      workflowId: s.workflowId,
+      stepId: s.stepId,
+      stepType: s.type,
+      ...(s.controlSchema && { controlSchema: s.controlSchema }),
     }));
 
     const bundleOutputDir = resolveBundleOutputDir(options.bundleOutDir, rootDir);
@@ -104,16 +113,8 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
       return;
     }
 
-    try {
-      const deployment = await deployRelease(client, releaseBundle, manifestSteps);
-      printSuccessSummary(deployment, selectedSteps, startTime);
-    } catch (error) {
-      if (error instanceof RendererConflictError) {
-        printRendererConflictError(error);
-        return;
-      }
-      throw error;
-    }
+    const deployment = await deployRelease(client, releaseBundle, manifestSteps);
+    printSuccessSummary(deployment, selectedSteps, startTime);
   } catch (error) {
     console.error('');
     console.error(red('❌ Publish failed:'), error instanceof Error ? error.message : error);
@@ -122,11 +123,12 @@ export async function emailPublish(options: PublishOptions): Promise<void> {
   }
 }
 
-async function resolveTemplateInteractively(
+async function resolveScaffoldInteractively(
+  client: StepResolverClient,
   options: PublishOptions,
   rootDir: string,
   configOutDir?: string
-): Promise<string | undefined> {
+): Promise<ScaffoldResult | undefined> {
   const workflowIds = normalizeRequestedWorkflows(options.workflow);
   const stepIds = normalizeRequestedWorkflows(options.step);
 
@@ -137,101 +139,57 @@ async function resolveTemplateInteractively(
   const outDir = configOutDir || './novu';
   const outDirPath = path.resolve(rootDir, outDir);
   const pathResolver = new StepFilePathResolver(rootDir, outDirPath);
-  const stepFilePath = pathResolver.getStepFilePath(workflowIds[0], stepIds[0]);
 
-  if (fsSync.existsSync(stepFilePath)) {
+  if (pathResolver.findExistingStepFilePath(workflowIds[0], stepIds[0])) {
     return undefined;
+  }
+
+  const stepType = await client.getStepType(workflowIds[0], stepIds[0]);
+
+  if (stepType && KNOWN_STEP_TYPES.has(stepType)) {
+    return { mode: 'placeholder', stepType };
   }
 
   if (!process.stdout.isTTY) {
-    console.log(yellow('ℹ  No --template provided. Use --template=<path> to scaffold a step file.'));
+    console.log(yellow('ℹ  No step file found and step type could not be determined.'));
+    console.log(`   Run with --workflow and --step once the workflow exists, or create the file manually.`);
     console.log('');
 
     return undefined;
   }
 
-  const templates = await withSpinner('Discovering React Email templates...', () => discoverEmailTemplates(rootDir), {
-    successMessage: (found) => `Found ${found.length} ${found.length === 1 ? 'template' : 'templates'}`,
-    failMessage: 'Template discovery failed',
-  });
-
-  if (templates.length === 0) {
-    console.log(yellow('ℹ  No React Email templates found in this project.'));
-    console.log('');
-    console.log(
-      `   Templates must import from ${yellow('@react-email/components')}, use JSX, and have a default export.`
-    );
-    console.log('');
-    console.log(`   To specify a template path manually, re-run with:`);
-    console.log(
-      `   npx novu email publish --workflow=${workflowIds[0]} --step=${stepIds[0]} --template=<path-to-template>`
-    );
-    console.log('');
-
-    return undefined;
-  }
-
-  return promptForTemplate(templates);
+  return promptForChannelType();
 }
 
-const MANUAL_ENTRY_VALUE = '__manual__';
-
-async function promptForTemplate(templates: DiscoveredTemplate[]): Promise<string | undefined> {
-  console.log('');
-
-  const selectResponse = await prompts(
+async function promptForChannelType(): Promise<ScaffoldResult | undefined> {
+  const response = await prompts(
     {
       type: 'select',
-      name: 'template',
-      message: 'Select a React Email template for this step',
+      name: 'channelType',
+      message: 'What channel type is this step?',
       choices: [
-        ...templates.map((t) => ({ title: t.relativePath, value: t.relativePath })),
-        { title: 'Enter path manually...', value: MANUAL_ENTRY_VALUE },
+        { title: 'Email        — HTML email', value: 'email' },
+        { title: 'SMS          — text message', value: 'sms' },
+        { title: 'Push         — mobile push notification', value: 'push' },
+        { title: 'Chat         — chat message (Slack, MS Teams, etc.)', value: 'chat' },
+        { title: 'In-App       — in-app notification', value: 'in_app' },
+        { title: "Skip         — I'll create the file myself", value: 'skip' },
       ],
     },
     {
       onCancel: () => {
         console.log('');
-        console.log(yellow('ℹ  Template selection cancelled. Step file will not be scaffolded.'));
+        console.log(yellow('ℹ  Scaffolding cancelled.'));
         console.log('');
       },
     }
   );
 
-  if (!selectResponse.template) {
+  if (!response.channelType || response.channelType === 'skip') {
     return undefined;
   }
 
-  if (selectResponse.template !== MANUAL_ENTRY_VALUE) {
-    console.log('');
-
-    return selectResponse.template;
-  }
-
-  const textResponse = await prompts(
-    {
-      type: 'text',
-      name: 'template',
-      message: 'Template path (relative to project root)',
-      initial: './emails/your-template.tsx',
-    },
-    {
-      onCancel: () => {
-        console.log('');
-        console.log(yellow('ℹ  Template selection cancelled. Step file will not be scaffolded.'));
-        console.log('');
-      },
-    }
-  );
-
-  console.log('');
-
-  const manualTemplatePath = textResponse.template?.trim();
-  if (!manualTemplatePath) {
-    return undefined;
-  }
-
-  return manualTemplatePath;
+  return { mode: 'placeholder', stepType: response.channelType };
 }
 
 function assertTemplateRequiresWorkflowAndStep(
@@ -249,9 +207,7 @@ function assertTemplateRequiresWorkflowAndStep(
     console.error(red('❌ --template requires exactly one --workflow'));
     console.error('');
     console.error('Example:');
-    console.error(
-      '  npx novu email publish --workflow=onboarding --step=welcome-email --template=./emails/welcome.tsx'
-    );
+    console.error('  npx novu step publish --workflow=onboarding --step=welcome-email --template=./emails/welcome.tsx');
     console.error('');
     process.exit(1);
   }
@@ -261,9 +217,7 @@ function assertTemplateRequiresWorkflowAndStep(
     console.error(red('❌ --template requires exactly one --step'));
     console.error('');
     console.error('Example:');
-    console.error(
-      '  npx novu email publish --workflow=onboarding --step=welcome-email --template=./emails/welcome.tsx'
-    );
+    console.error('  npx novu step publish --workflow=onboarding --step=welcome-email --template=./emails/welcome.tsx');
     console.error('');
     process.exit(1);
   }
@@ -295,7 +249,7 @@ async function installFrameworkPackageIfNeeded(rootDir: string): Promise<void> {
 }
 
 async function scaffoldStepFileIfNeeded(
-  templatePath: string,
+  scaffoldResult: ScaffoldResult,
   workflowId: string,
   stepId: string,
   rootDir: string,
@@ -308,28 +262,34 @@ async function scaffoldStepFileIfNeeded(
 
   if (fsSync.existsSync(stepFilePath)) {
     const relPath = path.relative(rootDir, stepFilePath);
-    console.log(yellow(`ℹ  ${relPath} already exists — --template flag ignored`));
+    console.log(yellow(`ℹ  ${relPath} already exists — scaffold skipped`));
     console.log('');
 
     return;
   }
 
-  const templateAbsPath = path.resolve(rootDir, templatePath);
-  if (!fsSync.existsSync(templateAbsPath)) {
-    console.error('');
-    console.error(red(`❌ Template not found: ${templatePath}`));
-    console.error('');
-    console.error(`  Resolved to: ${templateAbsPath}`);
-    console.error('  Make sure the path is relative to your project root.');
-    console.error('');
-    process.exit(1);
-  }
-
   const workflowDir = pathResolver.getWorkflowDir(workflowId);
   fsSync.mkdirSync(workflowDir, { recursive: true });
 
-  const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
-  const stepFileContent = generateStepFile(stepId, templateImportPath, { template: templatePath });
+  let stepFileContent: string;
+
+  if (scaffoldResult.mode === 'react-email') {
+    const { templatePath } = scaffoldResult;
+    const templateAbsPath = path.resolve(rootDir, templatePath);
+    if (!fsSync.existsSync(templateAbsPath)) {
+      console.error('');
+      console.error(red(`❌ Template not found: ${templatePath}`));
+      console.error('');
+      console.error(`  Resolved to: ${templateAbsPath}`);
+      console.error('  Make sure the path is relative to your project root.');
+      console.error('');
+      process.exit(1);
+    }
+    const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
+    stepFileContent = generateReactEmailStepFile(stepId, templateImportPath);
+  } else {
+    stepFileContent = generateStepFileForType(stepId, scaffoldResult.stepType);
+  }
 
   fsSync.writeFileSync(stepFilePath, stepFileContent, 'utf8');
 
@@ -361,7 +321,7 @@ function assertNotProductionEnvironment(envInfo: EnvironmentInfo): void {
   console.error('     https://docs.novu.co/platform/developer/environments#publish-changes-to-other-environments');
   console.error('');
   console.error('   Switch to a non-production environment by using its secret key:');
-  console.error('     npx novu email publish --secret-key <dev-environment-secret-key>');
+  console.error('     npx novu step publish --secret-key <dev-environment-secret-key>');
   console.error('');
   process.exit(1);
 }
@@ -381,7 +341,7 @@ function assertStepRequiresWorkflow(stepOption?: string[] | string, workflowOpti
   );
   console.error('');
   console.error('Example:');
-  console.error('  npx novu email publish --workflow=onboarding --step=welcome-email');
+  console.error('  npx novu step publish --workflow=onboarding --step=welcome-email');
   console.error('');
   process.exit(1);
 }
@@ -422,7 +382,7 @@ function assertSecretKey(secretKey?: string): asserts secretKey is string {
   console.error(red('❌ Authentication required'));
   console.error('');
   console.error('Provide your API key via:');
-  console.error('  1. CLI flag: npx novu email publish --secret-key nv-xxx');
+  console.error('  1. CLI flag: npx novu step publish --secret-key nv-xxx');
   console.error('  2. Environment: export NOVU_SECRET_KEY=nv-xxx');
   console.error('  3. .env file: NOVU_SECRET_KEY=nv-xxx');
   console.error('');
@@ -462,7 +422,9 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
         console.error('');
         console.error('Expected *.step.tsx, *.step.ts, *.step.jsx, or *.step.js files.');
         console.error('');
-        console.error(`Run 'npx novu email publish --workflow=<id> --step=<id>' to scaffold your first step handler.`);
+        console.error(
+          `Run 'npx novu step publish --workflow=<id> --step=<id>' to scaffold your first email step handler.`
+        );
         console.error('');
         throw new Error('No step files found');
       }
@@ -480,7 +442,7 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
           console.error('');
         }
 
-        console.error("Fix these errors and run 'npx novu email init --force' to regenerate step files.");
+        console.error("Fix these errors and re-run 'npx novu step publish' after correcting the handler files.");
         console.error('');
         throw new Error('Step file validation failed');
       }
@@ -578,28 +540,6 @@ async function deployRelease(
     successMessage: 'Published',
     failMessage: 'Publishing failed',
   });
-}
-
-function printRendererConflictError(error: RendererConflictError): void {
-  const stepList = error.conflictingSteps
-    .map((s: RendererConflictStep) => `    • ${s.stepId} (workflow: ${s.workflowId})`)
-    .join('\n');
-
-  const isPlural = error.conflictingSteps.length > 1;
-  const stepWord = isPlural ? 'steps' : 'step';
-
-  console.error('');
-  console.error(red(`❌ ${isPlural ? 'Some steps are' : 'This step is'} not set to React Email`));
-  console.error('');
-  console.error(`   Affected ${stepWord}:`);
-  console.error(stepList);
-  console.error('');
-  console.error(`   Publishing is blocked to avoid accidentally overwriting existing email content.`);
-  console.error('');
-  console.error('   To fix this, open each affected step in the Novu dashboard,');
-  console.error('   go to the code editor, and select React Email.');
-  console.error('');
-  process.exit(1);
 }
 
 function printDryRunSummary(

@@ -62,7 +62,7 @@ describe('step-discovery', () => {
 
     const invalidError = result.errors.find((error) => error.filePath.endsWith('invalid.step.tsx'));
     expect(invalidError).toBeDefined();
-    expect(invalidError?.errors.some((error) => error.includes('stepId'))).toBe(true);
+    expect(invalidError?.errors.some((error) => error.includes('Missing step resolver'))).toBe(true);
   });
 
   it('detects missing workflow folder', async () => {
@@ -86,19 +86,36 @@ describe('step-discovery', () => {
     expect(result.valid).toBe(false);
     expect(result.steps).toHaveLength(0);
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0].errors).toContain(
-      "Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'"
+    expect(result.errors[0].errors.some((error) => error.includes('Missing step resolver'))).toBe(true);
+  });
+
+  it('accepts all supported channel step types', async () => {
+    for (const type of ['email', 'sms', 'chat', 'push']) {
+      writeStepFile(
+        `onboarding/${type}-step.step.ts`,
+        createStepFileContent({ stepId: `${type}-step`, type, useJsx: false })
+      );
+    }
+    writeStepFile(
+      'onboarding/inapp-step.step.ts',
+      createStepFileContent({ stepId: 'inapp-step', type: 'inApp', useJsx: false })
     );
+
+    const result = await discoverStepFiles(tempDir);
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+    expect(result.steps).toHaveLength(5);
   });
 
   it('detects invalid step type', async () => {
-    writeStepFile('onboarding/invalid-type.step.tsx', createStepFileContent({ type: 'sms' }));
+    writeStepFile('onboarding/invalid-type.step.tsx', createStepFileContent({ type: 'custom' }));
 
     const result = await discoverStepFiles(tempDir);
 
     expect(result.valid).toBe(false);
     expect(result.steps).toHaveLength(0);
-    expect(result.errors[0].errors.some((error) => error.includes("must be 'email'"))).toBe(true);
+    expect(result.errors[0].errors.some((error) => error.includes('Invalid step type'))).toBe(true);
   });
 
   it('detects missing default export', async () => {

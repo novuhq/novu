@@ -15,7 +15,8 @@ function generateImports(steps: DiscoveredStep[], rootDir: string): string {
     .map((s, i) => `import stepHandler${i} from ${JSON.stringify(getImportPath(s.filePath, rootDir))};`)
     .join('\n');
 
-  return `import { validateData } from '@novu/framework/validators';\n${stepImports}`;
+  return `import { validateData } from '@novu/framework/validators';
+import { channelStepSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
 }
 
 function generateStepHandlersMap(steps: DiscoveredStep[]): string {
@@ -88,8 +89,10 @@ function generateRequestHandler(): string {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
+      ${generateOutputValidation()}
+
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
         200
       );`;
 }
@@ -122,6 +125,20 @@ function generateBodyValidation(): string {
           400
         );
       }`;
+}
+
+function generateOutputValidation(): string {
+  return `const outputSchema = channelStepSchemas[step.type]?.output;
+      if (outputSchema) {
+        const outputResult = await validateData(outputSchema, result);
+        if (!outputResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_OUTPUT', message: 'Step output failed schema validation', details: outputResult.errors },
+            400
+          );
+        }
+      }
+      const sanitizedResult = result;`;
 }
 
 function generateSchemaValidation(): string {

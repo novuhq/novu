@@ -73,6 +73,23 @@ export class StepResolverClient {
     }
   }
 
+  async getStepType(workflowId: string, stepId: string): Promise<string | undefined> {
+    try {
+      const response = await axios.get(
+        `${this.apiUrl}/v2/workflows/${encodeURIComponent(workflowId)}/steps/${encodeURIComponent(stepId)}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
+
+      const type = response.data?.data?.type;
+
+      return typeof type === 'string' && type.trim().length > 0 ? type.trim() : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   async deployRelease(
     bundle: StepResolverReleaseBundle,
     manifestSteps: StepResolverManifestStep[]

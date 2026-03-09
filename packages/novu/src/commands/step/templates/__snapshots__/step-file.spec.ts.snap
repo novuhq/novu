@@ -1,0 +1,109 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateChatStepFile > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.chat('send-chat', async (controls, { payload, subscriber, context, steps }) => ({
+  body: \`Hello \${subscriber.firstName ?? 'there'}, a message for you.\`,
+}));
+"
+`;
+
+exports[`generateEmailStepFile > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.email('plain-email', async (controls, { payload, subscriber, context, steps }) => ({
+  subject: 'No Subject',
+  body: \`<html><body><p>Hello \${subscriber.firstName ?? 'there'},</p><p>Your message here.</p></body></html>\`,
+}));
+"
+`;
+
+exports[`generateInAppStepFile > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.inApp('in-app-notify', async (controls, { payload, subscriber, context, steps }) => ({
+  subject: 'New notification',
+  body: \`Hello \${subscriber.firstName ?? 'there'}, you have a new in-app notification.\`,
+}));
+"
+`;
+
+exports[`generatePushStepFile > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.push('send-push', async (controls, { payload, subscriber, context, steps }) => ({
+  subject: 'New notification',
+  body: \`Hello \${subscriber.firstName ?? 'there'}, you have a new notification.\`,
+}));
+"
+`;
+
+exports[`generateReactEmailStepFile > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { render } from '@react-email/components';
+import EmailTemplate from '../emails/welcome';
+
+export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
+  subject: 'No Subject',
+  body: await render(
+    <EmailTemplate
+      {...payload}
+      subscriber={subscriber}
+      context={context}
+      steps={steps}
+      controls={controls}
+    />
+  ),
+}));
+"
+`;
+
+exports[`generateReactEmailStepFile > should match snapshot with different import paths > nested-import 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { render } from '@react-email/components';
+import EmailTemplate from '../../src/emails/welcome';
+
+export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
+  subject: 'No Subject',
+  body: await render(
+    <EmailTemplate
+      {...payload}
+      subscriber={subscriber}
+      context={context}
+      steps={steps}
+      controls={controls}
+    />
+  ),
+}));
+"
+`;
+
+exports[`generateReactEmailStepFile > should match snapshot with different import paths > relative-import 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { render } from '@react-email/components';
+import EmailTemplate from './emails/welcome';
+
+export default step.email('welcome-email', async (controls, { payload, subscriber, context, steps }) => ({
+  subject: 'No Subject',
+  body: await render(
+    <EmailTemplate
+      {...payload}
+      subscriber={subscriber}
+      context={context}
+      steps={steps}
+      controls={controls}
+    />
+  ),
+}));
+"
+`;
+
+exports[`generateSmsStepFile > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.sms('send-sms', async (controls, { payload, subscriber, context, steps }) => ({
+  body: \`Hello \${subscriber.firstName ?? 'there'}, your message here.\`,
+}));
+"
+`;

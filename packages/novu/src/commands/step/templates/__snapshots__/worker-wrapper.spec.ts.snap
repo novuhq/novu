@@ -2,6 +2,7 @@
 
 exports[`generateWorkerWrapper > should handle empty steps array > empty-steps 1`] = `
 "import { validateData } from '@novu/framework/validators';
+import { channelStepSchemas } from '@novu/framework/step-resolver';
 
 
 const stepHandlers = new Map([
@@ -90,8 +91,20 @@ export default {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
+      const outputSchema = channelStepSchemas[step.type]?.output;
+      if (outputSchema) {
+        const outputResult = await validateData(outputSchema, result);
+        if (!outputResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_OUTPUT', message: 'Step output failed schema validation', details: outputResult.errors },
+            400
+          );
+        }
+      }
+      const sanitizedResult = result;
+
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
         200
       );
     } catch (error) {
@@ -107,6 +120,7 @@ export default {
 
 exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
 "import { validateData } from '@novu/framework/validators';
+import { channelStepSchemas } from '@novu/framework/step-resolver';
 import stepHandler0 from "./novu/welcome-email.step";
 
 const stepHandlers = new Map([
@@ -195,8 +209,20 @@ export default {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
+      const outputSchema = channelStepSchemas[step.type]?.output;
+      if (outputSchema) {
+        const outputResult = await validateData(outputSchema, result);
+        if (!outputResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_OUTPUT', message: 'Step output failed schema validation', details: outputResult.errors },
+            400
+          );
+        }
+      }
+      const sanitizedResult = result;
+
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
         200
       );
     } catch (error) {
@@ -212,6 +238,7 @@ export default {
 
 exports[`generateWorkerWrapper > should match snapshot 1`] = `
 "import { validateData } from '@novu/framework/validators';
+import { channelStepSchemas } from '@novu/framework/step-resolver';
 import stepHandler0 from "./novu/welcome-email.step";
 import stepHandler1 from "./novu/verify-email.step";
 
@@ -302,8 +329,20 @@ export default {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
+      const outputSchema = channelStepSchemas[step.type]?.output;
+      if (outputSchema) {
+        const outputResult = await validateData(outputSchema, result);
+        if (!outputResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_OUTPUT', message: 'Step output failed schema validation', details: outputResult.errors },
+            400
+          );
+        }
+      }
+      const sanitizedResult = result;
+
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
+        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
         200
       );
     } catch (error) {

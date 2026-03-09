@@ -1,4 +1,11 @@
 import type { FromSchema, Schema } from '../../types';
+import type {
+  ChatOutputUnvalidated,
+  EmailOutputUnvalidated,
+  InAppOutputUnvalidated,
+  PushOutputUnvalidated,
+  SmsOutputUnvalidated,
+} from '../../types/step.types';
 
 type StepResolverContext<TPayload extends Record<string, unknown> = Record<string, unknown>> = {
   payload: TPayload;
@@ -9,6 +16,11 @@ type StepResolverContext<TPayload extends Record<string, unknown> = Record<strin
 
 type ResolveControls<T extends Schema | undefined> = T extends Schema ? FromSchema<T> : Record<string, unknown>;
 
+type StepResolverOptions<TControlSchema extends Schema | undefined, TPayloadSchema extends Schema | undefined> = {
+  controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
+};
+
 export type EmailStepResolver<
   TControlSchema extends Schema | undefined = undefined,
   TPayloadSchema extends Schema | undefined = undefined,
@@ -18,9 +30,68 @@ export type EmailStepResolver<
   resolve: (
     controls: ResolveControls<TControlSchema>,
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
-  ) => Promise<{ subject: unknown; body: unknown }>;
+  ) => Promise<EmailOutputUnvalidated>;
   controlSchema?: TControlSchema;
 };
+
+export type SmsStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+> = {
+  type: 'sms';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<SmsOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+};
+
+export type ChatStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+> = {
+  type: 'chat';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<ChatOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+};
+
+export type PushStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+> = {
+  type: 'push';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<PushOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+};
+
+export type InAppStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+> = {
+  type: 'in_app';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<InAppOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+};
+
+export type AnyStepResolver =
+  | EmailStepResolver<Schema | undefined, Schema | undefined>
+  | SmsStepResolver<Schema | undefined, Schema | undefined>
+  | ChatStepResolver<Schema | undefined, Schema | undefined>
+  | PushStepResolver<Schema | undefined, Schema | undefined>
+  | InAppStepResolver<Schema | undefined, Schema | undefined>;
 
 function email<
   TControlSchema extends Schema | undefined = undefined,
@@ -30,11 +101,8 @@ function email<
   resolve: (
     controls: ResolveControls<TControlSchema>,
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
-  ) => Promise<{ subject: unknown; body: unknown }>,
-  options?: {
-    controlSchema?: TControlSchema;
-    payloadSchema?: TPayloadSchema;
-  }
+  ) => Promise<EmailOutputUnvalidated>,
+  options?: StepResolverOptions<TControlSchema, TPayloadSchema>
 ): EmailStepResolver<TControlSchema, TPayloadSchema> {
   return {
     type: 'email',
@@ -44,4 +112,80 @@ function email<
   };
 }
 
-export const step = { email };
+function sms<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<SmsOutputUnvalidated>,
+  options?: StepResolverOptions<TControlSchema, TPayloadSchema>
+): SmsStepResolver<TControlSchema, TPayloadSchema> {
+  return {
+    type: 'sms',
+    stepId,
+    resolve: resolve as SmsStepResolver<TControlSchema, TPayloadSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+  };
+}
+
+function chat<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<ChatOutputUnvalidated>,
+  options?: StepResolverOptions<TControlSchema, TPayloadSchema>
+): ChatStepResolver<TControlSchema, TPayloadSchema> {
+  return {
+    type: 'chat',
+    stepId,
+    resolve: resolve as ChatStepResolver<TControlSchema, TPayloadSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+  };
+}
+
+function push<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<PushOutputUnvalidated>,
+  options?: StepResolverOptions<TControlSchema, TPayloadSchema>
+): PushStepResolver<TControlSchema, TPayloadSchema> {
+  return {
+    type: 'push',
+    stepId,
+    resolve: resolve as PushStepResolver<TControlSchema, TPayloadSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+  };
+}
+
+function inApp<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
+  ) => Promise<InAppOutputUnvalidated>,
+  options?: StepResolverOptions<TControlSchema, TPayloadSchema>
+): InAppStepResolver<TControlSchema, TPayloadSchema> {
+  return {
+    type: 'in_app',
+    stepId,
+    resolve: resolve as InAppStepResolver<TControlSchema, TPayloadSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+  };
+}
+
+export const step = { email, sms, chat, push, inApp };
