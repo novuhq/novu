@@ -81,6 +81,24 @@ describe('List topics - /v2/topics (GET) #novu-v2', async () => {
     expect(response.result.data[0].name).to.equal('topic-key-3-name');
   });
 
+  it('should not throw when filtering by key with regex special characters', async () => {
+    const response = await novuClient.topics.list({
+      key: 'topic+key*2?',
+    });
+
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(0);
+  });
+
+  it('should not throw when filtering by name with regex special characters', async () => {
+    const response = await novuClient.topics.list({
+      name: 'topic+key*name?',
+    });
+
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(0);
+  });
+
   it('should order topics by specified field', async () => {
     const response = await novuClient.topics.list({
       orderBy: 'key',
