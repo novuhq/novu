@@ -21,6 +21,7 @@ type ChartWrapperProps<T extends ChartDataPoint = ChartDataPoint> = {
   emptyStateTitle?: string;
   emptyStateTooltip?: React.ReactNode;
   count?: number;
+  countLabel?: string;
   periodLabel?: string;
   headerExtra?: ReactNode;
   footer?: ReactNode;
@@ -42,6 +43,7 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
   emptyStateTitle,
   emptyStateTooltip,
   count,
+  countLabel = 'runs',
   periodLabel,
   headerExtra,
   footer,
@@ -68,7 +70,7 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
             {showCountBlock && (
               <div className="text-title-h5 font-semibold text-text-sub tabular-nums shrink-0 text-right">
                 <span>{count.toLocaleString()}</span>
-                <span className="text-label-sm text-text-soft font-normal ml-0.5">runs</span>
+                <span className="text-label-sm text-text-soft font-normal ml-0.5">{countLabel}</span>
               </div>
             )}
             {headerExtra}

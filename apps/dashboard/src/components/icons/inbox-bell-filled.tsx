@@ -1,7 +1,11 @@
 import { motion } from 'motion/react';
 
-export function InboxBellFilled(props: React.ComponentPropsWithoutRef<'svg'>) {
-  const { className, style } = props;
+type InboxBellFilledProps = {
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export function InboxBellFilled({ className, style }: InboxBellFilledProps) {
 
   return (
     <motion.div

@@ -9,7 +9,6 @@ export type AreaClipData = {
 type FlickeringGridProps = {
   squareSize?: number;
   gridGap?: number;
-  flickerChance?: number;
   color?: string;
   width?: number;
   height?: number;
@@ -58,10 +57,11 @@ function getLineYAtPixel(
   return margin.top + innerH * (1 - total / maxTotal);
 }
 
+const FLICKER_CHANCE = 0.04;
+
 export function FlickeringGrid({
   squareSize = 0.8,
   gridGap = 4,
-  flickerChance: _flickerChance = 0.04,
   color = "currentColor",
   width,
   height,
@@ -89,17 +89,22 @@ export function FlickeringGrid({
     [areaClip?.data]
   );
 
-  const getColorRgbaPrefix = useCallback(() => {
-    if (typeof window === "undefined") return "rgba(128,128,128,";
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 1;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return "rgba(128,128,128,";
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, 1, 1);
-    const [r, g, b] = Array.from(ctx.getImageData(0, 0, 1, 1).data);
-    return `rgba(${r},${g},${b},`;
-  }, [color]);
+  const getColorRgbaPrefix = useCallback(
+    (containerElement: HTMLElement | null) => {
+      if (typeof window === "undefined") return "rgba(128,128,128,";
+      const colorToResolve =
+        (containerElement && getComputedStyle(containerElement).color) || color;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "rgba(128,128,128,";
+      ctx.fillStyle = colorToResolve;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b] = Array.from(ctx.getImageData(0, 0, 1, 1).data);
+      return `rgba(${r},${g},${b},`;
+    },
+    [color]
+  );
 
   const setupCanvas = useCallback(
     (canvas: HTMLCanvasElement, w: number, h: number) => {
@@ -125,6 +130,7 @@ export function FlickeringGrid({
       if (len === 0) return;
       const range = ANIMATION_LEVEL_MAX - ANIMATION_LEVEL_MIN + 1;
       for (let k = 0; k < UPDATES_PER_FRAME; k++) {
+        if (Math.random() >= FLICKER_CHANCE) continue;
         const pick = (Math.random() * len) | 0;
         const pack = visiblePacked[pick];
         if (pack === undefined) continue;
@@ -144,7 +150,7 @@ export function FlickeringGrid({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rgbaPrefix = getColorRgbaPrefix();
+    const rgbaPrefix = getColorRgbaPrefix(containerRef.current);
     const range = Math.max(0, maxOpacity - minOpacity);
     const fillStyles: string[] = [];
     for (let l = 0; l < OPACITY_LEVELS; l++) {
@@ -255,11 +261,6 @@ export function FlickeringGrid({
     );
     intersectionObserver.observe(canvas);
 
-    if (isInView && gridParams) {
-      lastDrawTime = performance.now();
-      animationFrameId = requestAnimationFrame(animate);
-    }
-
     return () => {
       if (typeof animationFrameId === 'number') cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
@@ -281,7 +282,11 @@ export function FlickeringGrid({
   ]);
 
   return (
-    <div ref={containerRef} className={`size-full ${className}`}>
+    <div
+      ref={containerRef}
+      className={`size-full ${className}`}
+      style={{ color }}
+    >
       <canvas
         ref={canvasRef}
         className="pointer-events-none"

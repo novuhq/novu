@@ -14,8 +14,6 @@ type AnalyticsCardProps = {
   value: string | number;
   /** The title/name of the metric being displayed */
   title: string;
-  /** Short label when space is limited; full title remains in tooltip on hover */
-  titleShort?: string;
   /** Optional custom description. If not provided, will auto-generate from title and timeframe */
   description?: string;
   /** The percentage change to show in the trend badge */

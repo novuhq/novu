@@ -48,7 +48,6 @@ export function AnalyticsPage() {
   const isWorkflowFilterEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_WORKFLOW_FILTER_ENABLED);
 
   const isDevMockMode = searchParams.get('dev_mock_date') === 'true';
-  const isDevSkeletonMode = searchParams.get('dev_skeleton') === 'true';
 
   const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange, selectedPeriodLabel } =
     useAnalyticsDateFilter({
@@ -128,17 +127,7 @@ export function AnalyticsPage() {
     useMetricData(metricsCharts);
 
   const isPageLoading = isMetricsLoading || isTrendsLoading || isWorkflowLoading;
-  const delayedShowSkeleton = useDelayedLoading(isPageLoading, 400);
-  const [minSkeletonTimeElapsed, setMinSkeletonTimeElapsed] = useState(false);
-
-  useEffect(() => {
-    if (!isDevSkeletonMode) return;
-    setMinSkeletonTimeElapsed(false);
-    const t = setTimeout(() => setMinSkeletonTimeElapsed(true), 5000);
-    return () => clearTimeout(t);
-  }, [isDevSkeletonMode]);
-
-  const showSkeleton = isDevSkeletonMode ? !minSkeletonTimeElapsed || delayedShowSkeleton : delayedShowSkeleton;
+  const showSkeleton = useDelayedLoading(isPageLoading, 400);
 
   useEffect(() => {
     telemetry(TelemetryEvent.ANALYTICS_PAGE_VISIT);
@@ -151,12 +140,7 @@ export function AnalyticsPage() {
         headerStartItems={
           <h1 className="text-foreground-950 flex items-center gap-1">
             <span>Usage</span>
-            {isDevSkeletonMode && (
-              <Badge variant="filled" color="orange" className="text-xs">
-                DEV SKELETON
-              </Badge>
-            )}
-            {isDevMockMode && !isDevSkeletonMode && (
+            {isDevMockMode && (
               <Badge variant="filled" color="orange" className="text-xs">
                 DEV MOCK DATA
               </Badge>

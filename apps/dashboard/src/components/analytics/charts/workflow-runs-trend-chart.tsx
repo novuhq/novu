@@ -21,7 +21,6 @@ const WORKFLOW_RUNS_GRID_CLIP_MARGIN = { left: 2, right: 2, top: 4, bottom: 0 } 
 const FLICKERING_GRID_PROPS = {
   squareSize: 2,
   gridGap: 1,
-  flickerChance: 0.4,
   maxOpacity: 0.1,
   color: '#34d399',
 } as const;

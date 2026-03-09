@@ -29,7 +29,9 @@ type CustomTickProps = {
 function CustomTick({ x, y, payload, index, visibleTicksCount }: CustomTickProps) {
   const isFirst = index === 0;
   const isLast = visibleTicksCount !== undefined && index === visibleTicksCount - 1;
-  const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+  let anchor: 'start' | 'middle' | 'end' = 'middle';
+  if (isFirst) anchor = 'start';
+  else if (isLast) anchor = 'end';
 
   return (
     <g transform={`translate(${x},${y})`}>
@@ -83,7 +85,6 @@ export function ActiveSubscribersTrendChart({ data, isLoading, error }: ActiveSu
             <FlickeringGrid
               squareSize={2}
               gridGap={1}
-              flickerChance={0.4}
               maxOpacity={0.1}
               color="#818cf8"
               areaClip={{

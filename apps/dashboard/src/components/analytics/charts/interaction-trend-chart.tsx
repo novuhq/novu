@@ -147,6 +147,7 @@ function InteractionTrendChartContent({ data, includeTooltip }: InteractionTrend
     archived: { stroke: chartConfig.messageArchived.color, fill: `url(#${gradientArchivedId})` },
   };
 
+  // Use second point as first tick so the axis excludes the leading/padding point at data[0]
   const firstDate = data[1]?.date || '';
   const lastDate = data[data.length - 1]?.date || '';
 

@@ -96,12 +96,15 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
     []
   );
 
-  const calculateChartHeight = useCallback((data: WorkflowChartData[]) => {
-    const itemCount = data.length;
-    const barHeight = 16;
-    const gap = 10;
-    return Math.max(itemCount * (barHeight + gap) + 20, 80);
-  }, []);
+  const barSize = 12;
+  const calculateChartHeight = useCallback(
+    (data: WorkflowChartData[]) => {
+      const itemCount = data.length;
+      const gap = 10;
+      return Math.max(itemCount * (barSize + gap) + 20, 80);
+    },
+    []
+  );
 
   const renderChart = useCallback(
     (data: WorkflowChartData[], includeTooltip = true) => {
@@ -128,7 +131,7 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
               interval={0}
             />
             {includeTooltip && <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />}
-            <Bar dataKey="count" radius={3} barSize={12}>
+            <Bar dataKey="count" radius={3} barSize={barSize}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}

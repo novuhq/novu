@@ -74,7 +74,6 @@ function MetricCardSkeleton({
           <Icon className="size-4 shrink-0 text-icon-sub" />
           <span className="font-code text-[12px] text-text-sub uppercase whitespace-nowrap">{title}</span>
         </div>
-        {/* <div className={cn(PULSE_CLASS, 'h-3 w-8 shrink-0')} style={{ animationDelay: '0ms' }} /> */}
       </div>
       <FlickeringGridPlaceholder minHeight={52} topFadeHeight={24} bottomFadeHeight={24} className="mt-0.5" />
     </div>
@@ -173,8 +172,9 @@ function useShimmerSyncToXAxisStrips(
       if (!c || !s) return;
 
       const animations = s.getAnimations();
-      const sweep = animations[0];
-      const currentTime = typeof sweep?.currentTime === 'number' ? sweep.currentTime : 0;
+      const sweep = animations.length > 0 ? animations[0] : undefined;
+      const currentTime =
+        typeof sweep?.currentTime === 'number' ? sweep.currentTime : 0;
       const progress = (currentTime % SHIMMER_DURATION_MS) / SHIMMER_DURATION_MS;
 
       const containerRect = c.getBoundingClientRect();
