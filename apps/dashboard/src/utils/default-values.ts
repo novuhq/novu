@@ -37,7 +37,7 @@ export const getControlsDefaultValues = (resource: { controls: Controls }): Reco
   const dataSchemaDefaultValues = buildDefaultValuesOfDataSchema(resource.controls.dataSchema ?? {});
 
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
-    const defaults = { ...uiSchemaDefaultValues, ...dataSchemaDefaultValues };
+    const defaults = deepMergeDefaults(uiSchemaDefaultValues, dataSchemaDefaultValues);
 
     return deepMergeDefaults(defaults, controlValues);
   }
