@@ -74,7 +74,7 @@ export const httpRequestControlSchema = {
       type: 'boolean',
       default: false,
     },
-    stopOnFail: {
+    continueOnFailure: {
       type: 'boolean',
       default: false,
     },
@@ -113,8 +113,8 @@ export const httpRequestUiSchema: UiSchema = {
       component: UiComponentEnum.DESTINATION_ENFORCE_SCHEMA_VALIDATION,
       placeholder: false,
     },
-    stopOnFail: {
-      component: UiComponentEnum.DESTINATION_STOP_ON_FAIL,
+    continueOnFailure: {
+      component: UiComponentEnum.DESTINATION_CONTINUE_ON_FAILURE,
       placeholder: false,
     },
   },

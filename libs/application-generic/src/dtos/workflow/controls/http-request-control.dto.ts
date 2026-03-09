@@ -55,8 +55,8 @@ export class HttpRequestControlDto {
   @IsOptional()
   enforceSchemaValidation?: boolean;
 
-  @ApiPropertyOptional({ description: 'Whether to stop workflow execution on failure' })
+  @ApiPropertyOptional({ description: 'Whether to continue workflow execution on failure' })
   @IsBoolean()
   @IsOptional()
-  stopOnFail?: boolean;
+  continueOnFailure?: boolean;
 }

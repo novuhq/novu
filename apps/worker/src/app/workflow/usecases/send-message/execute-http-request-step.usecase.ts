@@ -75,7 +75,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       return {
         status: SendMessageStatus.FAILED,
         errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-        shouldHalt: !!controlValues.stopOnFail,
+        shouldHalt: !controlValues.continueOnFailure,
       };
     }
 
@@ -123,7 +123,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         return {
           status: SendMessageStatus.FAILED,
           errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-          shouldHalt: !!controlValues.stopOnFail,
+          shouldHalt: !controlValues.continueOnFailure,
         };
       }
     }
@@ -150,7 +150,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         return {
           status: SendMessageStatus.FAILED,
           errorMessage: DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED,
-          shouldHalt: !!controlValues.stopOnFail,
+          shouldHalt: !controlValues.continueOnFailure,
         };
       }
     }
