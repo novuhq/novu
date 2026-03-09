@@ -6,7 +6,10 @@ export type HttpRequestTestContextType = {
   testResult: TestHttpEndpointResponse | null;
   isTestPending: boolean;
   testError: Error | null;
-  triggerTest: (params: { controlValues?: Record<string, unknown>; previewPayload?: unknown }) => Promise<void>;
+  triggerTest: (params: {
+    controlValues?: Record<string, unknown>;
+    previewPayload?: unknown;
+  }) => Promise<TestHttpEndpointResponse>;
   resetTest: () => void;
 };
 
@@ -15,8 +18,11 @@ export const HttpRequestTestContext = createContext<HttpRequestTestContextType |
 export function HttpRequestTestProvider({ children }: { children: ReactNode }) {
   const { triggerTest: trigger, isTestPending, testError, testResult, resetTest } = useTestHttpEndpoint();
 
-  async function triggerTest(params: { controlValues?: Record<string, unknown>; previewPayload?: unknown }) {
-    await trigger(params as Parameters<typeof trigger>[0]);
+  async function triggerTest(params: {
+    controlValues?: Record<string, unknown>;
+    previewPayload?: unknown;
+  }): Promise<TestHttpEndpointResponse> {
+    return trigger(params as Parameters<typeof trigger>[0]);
   }
 
   return (

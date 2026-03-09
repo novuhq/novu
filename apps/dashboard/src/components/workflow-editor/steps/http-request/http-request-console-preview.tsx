@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Highlight } from 'prism-react-renderer';
 import { useCallback } from 'react';
 import { RiFileCopyLine, RiGlobalLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
+import { NovuApiError } from '@/api/api.client';
 import { type TestHttpEndpointResponse } from '@/api/steps';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -271,17 +272,17 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
 function getStatusText(statusCode: number): string {
   const STATUS_TEXTS: Record<number, string> = {
     200: 'OK',
-    201: 'Created',
-    204: 'No Content',
-    400: 'Bad Request',
-    401: 'Unauthorized',
-    403: 'Forbidden',
-    404: 'Not Found',
-    422: 'Unprocessable Entity',
-    429: 'Too Many Requests',
-    500: 'Internal Server Error',
-    502: 'Bad Gateway',
-    503: 'Service Unavailable',
+    201: 'CREATED',
+    204: 'NO CONTENT',
+    400: 'BAD REQUEST',
+    401: 'UNAUTHORIZED',
+    403: 'FORBIDDEN',
+    404: 'NOT FOUND',
+    422: 'UNPROCESSABLE ENTITY',
+    429: 'TOO MANY REQUESTS',
+    500: 'INTERNAL SERVER ERROR',
+    502: 'BAD GATEWAY',
+    503: 'SERVICE UNAVAILABLE',
   };
 
   return STATUS_TEXTS[statusCode] ?? '';
@@ -354,17 +355,21 @@ function PreTestState() {
   const handleTestEndpoint = useCallback(async () => {
     try {
       const previewPayload = parseJsonValue(editorValue);
-      await triggerTest({ controlValues: controlValues as Record<string, unknown>, previewPayload });
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>Endpoint test executed successfully</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
+      const result = await triggerTest({ controlValues: controlValues as Record<string, unknown>, previewPayload });
+      const isSuccessStatus = result && result.statusCode >= 200 && result.statusCode < 300;
+
+      if (isSuccessStatus) {
+        showToast({
+          children: ({ close }) => (
+            <>
+              <ToastIcon variant="success" />
+              <span>Endpoint test executed successfully</span>
+              <ToastClose onClick={close} />
+            </>
+          ),
+          options: { position: 'bottom-right' },
+        });
+      }
     } catch {
       showErrorToast('Failed to execute endpoint test');
     }
@@ -445,13 +450,116 @@ function LoadingState() {
   );
 }
 
+function ErrorState({ error }: { error: Error }) {
+  const { resetTest } = useHttpRequestTest();
+  const { controlValues } = useStepEditor();
+
+  const statusCode = error instanceof NovuApiError ? error.status : 500;
+  const statusText = getStatusText(statusCode) || 'INTERNAL SERVER ERROR';
+  const rawBody = error instanceof NovuApiError ? error.rawError : undefined;
+
+  const url = (controlValues?.url as string) ?? '';
+  const method = (controlValues?.method as string) ?? 'GET';
+  const headers = ((controlValues?.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
+
+  const curlString = buildRawCurlString(url, method, headers, controlValues?.body as KeyValuePair[]);
+
+  const handleCopyCurl = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(curlString);
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <span>cURL command copied to clipboard</span>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: { position: 'bottom-right' },
+      });
+    } catch {
+      showErrorToast('Failed to copy cURL command');
+    }
+  }, [curlString]);
+
+  const handleCopyResponse = useCallback(async () => {
+    try {
+      const content = rawBody ? JSON.stringify(rawBody, null, 2) : error.message;
+      await navigator.clipboard.writeText(content);
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <span>Response copied to clipboard</span>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: { position: 'bottom-right' },
+      });
+    } catch {
+      showErrorToast('Failed to copy response');
+    }
+  }, [rawBody, error.message]);
+
+  return (
+    <div className="flex flex-col gap-[6px]">
+      <BrowserShell
+        className="rounded-tl-lg rounded-tr-lg rounded-bl-[4px] rounded-br-[4px]"
+        actions={
+          <button
+            type="button"
+            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
+            onClick={handleCopyCurl}
+          >
+            <RiFileCopyLine className="size-3" />
+          </button>
+        }
+      >
+        <CurlDisplay url={url} method={method} headers={headers} />
+      </BrowserShell>
+
+      <div className="flex flex-col gap-3">
+        <div className="overflow-clip rounded-bl-lg rounded-br-lg rounded-tl-[4px] rounded-tr-[4px] border border-[#e1e4ea]">
+          <div className="flex items-center justify-between border-b border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 shadow-[0px_1px_0px_0px_#d2d2d2]">
+            <div className="flex items-center gap-1">
+              <span className="font-medium text-xs leading-4 text-[#fb3748]">
+                {statusCode} {statusText}
+              </span>
+              <div className="flex items-center rounded px-1 py-0.5 bg-[rgba(251,55,72,0.1)]">
+                <span className="font-mono font-medium text-xs leading-4 tracking-[-0.24px] text-[#fb3748]">
+                  FAILED
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs leading-[1.5] text-[#525866]">~ {statusCode}</span>
+              <button
+                type="button"
+                className="flex size-5 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
+                onClick={handleCopyResponse}
+              >
+                <RiFileCopyLine className="size-3" />
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white p-3">
+            <JsonBody body={rawBody ?? null} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const STATE_TRANSITION = { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const };
 
 export function HttpRequestConsolePreview() {
-  const { testResult, isTestPending } = useHttpRequestTest();
+  const { testResult, isTestPending, testError } = useHttpRequestTest();
   const { step } = useStepEditor();
 
-  const state = isTestPending ? 'loading' : testResult ? 'post-test' : 'pre-test';
+  const state = isTestPending ? 'loading' : testResult ? 'post-test' : testError ? 'error' : 'pre-test';
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -475,6 +583,17 @@ export function HttpRequestConsolePreview() {
           transition={STATE_TRANSITION}
         >
           <PreTestState />
+        </motion.div>
+      )}
+      {state === 'error' && testError && (
+        <motion.div
+          key="error"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={STATE_TRANSITION}
+        >
+          <ErrorState error={testError} />
         </motion.div>
       )}
       {state === 'post-test' && testResult && (
