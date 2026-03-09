@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ICredentials } from '@novu/shared';
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 import { TransformToBoolean } from '../decorators/to-boolean';
 
@@ -103,6 +104,20 @@ export class CredentialsDto implements ICredentials {
   ignoreTls?: boolean;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === null) return undefined;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+
+        return typeof parsed === 'object' && parsed !== null ? parsed : value;
+      } catch {
+        return value;
+      }
+    }
+
+    return value;
+  })
   @IsObject()
   @IsOptional()
   tlsOptions?: Record<string, unknown>;
