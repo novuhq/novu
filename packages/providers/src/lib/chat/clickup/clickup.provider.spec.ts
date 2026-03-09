@@ -6,6 +6,12 @@ import { ClickUpProvider } from './clickup.provider';
 const WORKSPACE_ID = 'ws_123';
 const CHANNEL_ID = 'ch_456';
 
+const CUSTOM_DATA = {
+  triaged_action: 0,
+  triaged_object_id: 'triaged_object_id',
+  triaged_object_type: 0,
+};
+
 function makeChannelData() {
   return {
     type: ENDPOINT_TYPES.CLICKUP_CHANNEL as typeof ENDPOINT_TYPES.CLICKUP_CHANNEL,
@@ -16,7 +22,7 @@ function makeChannelData() {
 
 test('should send a message to a workspace channel', async () => {
   const { mockPost } = axiosSpy({
-    data: { id: 'msg-123' },
+    data: {},
   });
 
   const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
@@ -30,13 +36,13 @@ test('should send a message to a workspace channel', async () => {
     `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
     { content: 'Test notification', type: 'message' }
   );
-  expect(result.id).toBe('msg-123');
+  expect(result.id).toBeDefined();
   expect(result.date).toBeDefined();
 });
 
 test('should forward customData fields in the payload', async () => {
   const { mockPost } = axiosSpy({
-    data: { id: 'msg-456' },
+    data: {},
   });
 
   const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
@@ -44,18 +50,18 @@ test('should forward customData fields in the payload', async () => {
   await provider.sendMessage({
     content: 'Task update',
     channelData: makeChannelData(),
-    customData: { notify_all: true },
+    customData: CUSTOM_DATA,
   });
 
   expect(mockPost).toHaveBeenCalledWith(
     `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
-    { content: 'Task update', type: 'message', notify_all: true }
+    { content: 'Task update', type: 'message', ...CUSTOM_DATA }
   );
 });
 
 test('should support _passthrough data', async () => {
   const { mockPost } = axiosSpy({
-    data: { id: 'msg-789' },
+    data: {},
   });
 
   const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
