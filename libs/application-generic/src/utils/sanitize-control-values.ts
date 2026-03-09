@@ -29,9 +29,13 @@ export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
     return undefined;
   }
 
+  const url = redirect.url as string;
+  const isRelativeUrl = url.startsWith('/');
+  const defaultTarget = isRelativeUrl ? '_self' : '_blank';
+
   return {
-    url: redirect.url as string,
-    target: (redirect.target ?? '_self') as '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop',
+    url,
+    target: (redirect.target ?? defaultTarget) as '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop',
   };
 }
 
