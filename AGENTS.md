@@ -20,6 +20,8 @@ Start with: `docker compose -f docker/local/docker-compose.yml up -d`
 
 
 **🏃 Running Services:**
+Before running the use computer resource to navigate to the dashboard, make sure to run pnpm build:with-ee script to ensure all your code changes are built and ready to be used. Only run those changes if you made changes to the "packages" folder or the "enterprise" folder. Direct changes to the "apps" folder should not require a build, as it will be done automatically when you run the start:dashboard script or worker, etc...
+
 ```bash
 # Core development stack
 pnpm start:api:dev    # API service with hot reload
@@ -43,10 +45,10 @@ Immediatly after creating a new user in the dashboard, you will need to create a
 
 ### Testing
 
+
 - API E2E tests: see `.cursor/skills/run-api-e2e-tests/SKILL.md`
 - Dashboard E2E: `cd apps/dashboard && pnpm test:e2e`
 - API unit tests: `cd apps/api && pnpm test`
-
 
 ## Creating Pull Requests
 Requirements:
