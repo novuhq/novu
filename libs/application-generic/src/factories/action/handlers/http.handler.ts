@@ -13,6 +13,10 @@ import { IActionExecuteConfig, IActionExecuteResult, IActionHandler } from '../i
 type HttpRequestCredentials = CredentialsFromConfig<[]>;
 type HttpRequestControlType = FromSchema<typeof httpRequestControlSchema>;
 
+/**
+ * Reference implementation for action handlers serving as a template for future destination handlers.
+ * This class establishes the architectural pattern and contract that subsequent handler implementations should follow.
+ */
 export class HttpActionHandler implements IActionHandler {
   constructor(private readonly httpClient: HttpClientService) {}
 

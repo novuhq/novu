@@ -264,11 +264,12 @@ const JOB_COLOR_CLASSES: Record<ProviderColorToken, { border: string; text: stri
 
 function getJobColorClasses(job: IActivityJob): { border: string; text: string } {
   const providerId = job.providerId as ActionProviderIdEnum | undefined;
-  const color =
+  const colorKey =
     (providerId && ACTION_PROVIDER_ID_TO_COLOR[providerId]) ||
-    STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR];
+    STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR] ||
+    'neutral';
 
-  return JOB_COLOR_CLASSES[color];
+  return JOB_COLOR_CLASSES[colorKey];
 }
 
 function getJobIcon(job: IActivityJob) {
