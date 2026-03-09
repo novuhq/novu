@@ -1,26 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
-  ActionHandlerFactory,
   buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
   dashboardSanitizeControlValues,
-  GetDecryptedIntegrations,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
+  HttpClientError,
+  HttpClientErrorType,
+  HttpClientService,
   InstrumentUsecase,
   PinoLogger,
-  SelectIntegration,
-  SelectIntegrationCommand,
+  shouldIncludeBody,
+  toBodyRecord,
+  toHeadersRecord,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IntegrationCategoryType,
-  ProvidersIdEnum,
   ResourceOriginEnum,
 } from '@novu/shared';
 import Ajv from 'ajv';
@@ -30,11 +30,10 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
-export class ExecuteDestinationCustomStep extends SendMessageType {
+export class ExecuteHttpRequestStep extends SendMessageType {
   constructor(
     private jobRepository: JobRepository,
-    private actionHandlerFactory: ActionHandlerFactory,
-    private selectIntegration: SelectIntegration,
+    private httpClientService: HttpClientService,
     private controlValuesRepository: ControlValuesRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
@@ -47,82 +46,18 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
-    const { step } = command;
-
-    const providerId = step.providerId;
-    if (!providerId) {
-      Logger.error('ExecuteDestinationCustomStep called without providerId on step', step._id);
-
-      return { status: SendMessageStatus.FAILED, errorMessage: DetailEnum.PROVIDER_MISSING };
-    }
-
-    let credentials: Record<string, string> = {};
-
-    if (step.integrationIdentifier) {
-      const integration = await this.selectIntegration.execute(
-        SelectIntegrationCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: providerId as IntegrationCategoryType,
-          providerId: providerId as ProvidersIdEnum,
-          identifier: step.integrationIdentifier,
-          filterData: {},
-          userId: command.userId,
-        })
-      );
-
-      if (!integration) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-          })
-        );
-
-        return { status: SendMessageStatus.FAILED, errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION };
-      }
-
-      credentials = GetDecryptedIntegrations.getDecryptedCredentials(integration).credentials as Record<string, string>;
-    }
-
     const controlValues = await this.fetchControlValues(command);
-    const handler = this.actionHandlerFactory.getHandler(providerId);
 
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.environmentId })
     );
 
-    const rawBody = (controlValues.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const url = controlValues.url as string | undefined;
     const method = (controlValues.method as string) ?? 'GET';
-    const bodyObject =
-      rawBody.length > 0
-        ? rawBody.reduce<Record<string, unknown>>((acc, { key, value }) => {
-            acc[key] = value;
+    const rawHeaders = (controlValues.headers as Array<{ key: string; value: string }> | undefined) ?? [];
+    const rawBody = (controlValues.body as Array<{ key: string; value: string }> | undefined) ?? [];
 
-            return acc;
-          }, {})
-        : undefined;
-    const hasBody = !!bodyObject && method !== 'GET' && method !== 'DELETE';
-    const signatureHeaders = {
-      'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
-    };
-
-    let result: Awaited<ReturnType<typeof handler.execute>>;
-
-    try {
-      result = await handler.execute({
-        controlValues,
-        credentials,
-        compileContext: command.compileContext,
-        signatureHeaders,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-
+    if (!url) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -131,7 +66,9 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ error: errorMessage }),
+          raw: JSON.stringify({
+            error: 'HTTP request step is missing a URL. Please configure a URL in the step settings.',
+          }),
         })
       );
 
@@ -140,6 +77,55 @@ export class ExecuteDestinationCustomStep extends SendMessageType {
         errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
         shouldHalt: !!controlValues.stopOnFail,
       };
+    }
+
+    const headersRecord = toHeadersRecord(rawHeaders);
+    const bodyObject = toBodyRecord(rawBody);
+    const hasBody = shouldIncludeBody(bodyObject, method);
+    const signatureHeaders = {
+      'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
+    };
+    const mergedHeaders = { ...headersRecord, ...signatureHeaders };
+
+    let result: { statusCode?: number; body: unknown; headers: Record<string, string> };
+
+    try {
+      const response = await this.httpClientService.request({
+        url,
+        method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+        headers: mergedHeaders,
+        ...(hasBody ? { body: bodyObject } : {}),
+      });
+
+      result = { statusCode: response.statusCode, body: response.body, headers: response.headers };
+    } catch (error) {
+      if (error instanceof HttpClientError && error.type === HttpClientErrorType.PARSE_ERROR) {
+        result = {
+          statusCode: error.statusCode ?? 200,
+          body: error.responseBody,
+          headers: {},
+        };
+      } else {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({ error: errorMessage }),
+          })
+        );
+
+        return {
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+          shouldHalt: !!controlValues.stopOnFail,
+        };
+      }
     }
 
     if (controlValues.enforceSchemaValidation && controlValues.responseBodySchema) {

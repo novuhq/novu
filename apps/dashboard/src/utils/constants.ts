@@ -18,6 +18,7 @@ export const TEMPLATE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.HTTP_REQUEST,
 ];
 
 export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
@@ -31,6 +32,7 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.THROTTLE]: 'Throttle',
   [StepTypeEnum.TRIGGER]: 'Trigger',
   [StepTypeEnum.CUSTOM]: 'Custom',
+  [StepTypeEnum.HTTP_REQUEST]: 'HTTP Request',
 };
 
 export const DEFAULT_CONTROL_DELAY_AMOUNT = 30;

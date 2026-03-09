@@ -42,7 +42,7 @@ import {
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
-import { ExecuteDestinationCustomStep } from './execute-destination-custom-step.usecase';
+import { ExecuteHttpRequestStep } from './execute-http-request-step.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageChat } from './send-message-chat.usecase';
@@ -69,7 +69,7 @@ export class SendMessage {
     private sendMessageDelay: SendMessageDelay,
     private throttle: Throttle,
     private executeCodeFirstCustomStep: ExecuteCodeFirstCustomStep,
-    private executeDestinationCustomStep: ExecuteDestinationCustomStep,
+    private executeHttpRequestStep: ExecuteHttpRequestStep,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
@@ -96,11 +96,9 @@ export class SendMessage {
     );
 
     const stepType = command.step?.template?.type;
-    const stepProviderId = command.step?.providerId;
-    const isDestinationCustomStep = stepType === StepTypeEnum.CUSTOM && !!stepProviderId;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (!isActionStep(stepType) && !isDestinationCustomStep) {
+    if (!isActionStep(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -205,11 +203,10 @@ export class SendMessage {
       case StepTypeEnum.THROTTLE: {
         return await this.throttle.execute(command);
       }
+      case StepTypeEnum.HTTP_REQUEST: {
+        return await this.executeHttpRequestStep.execute(sendMessageChannelCommand);
+      }
       case StepTypeEnum.CUSTOM: {
-        if (stepProviderId) {
-          return await this.executeDestinationCustomStep.execute(sendMessageChannelCommand);
-        }
-
         return await this.executeCodeFirstCustomStep.execute(sendMessageChannelCommand);
       }
       default: {
@@ -574,6 +571,7 @@ const ACTION_STEP_MAP: Record<StepTypeEnum, boolean> = {
   [StepTypeEnum.CHAT]: false,
   [StepTypeEnum.PUSH]: false,
   [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.HTTP_REQUEST]: true,
   [StepTypeEnum.DIGEST]: true,
   [StepTypeEnum.DELAY]: true,
   [StepTypeEnum.TRIGGER]: true,

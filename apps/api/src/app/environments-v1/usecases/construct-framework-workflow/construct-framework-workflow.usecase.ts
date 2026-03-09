@@ -317,12 +317,12 @@ export class ConstructFrameworkWorkflow {
           this.constructActionStepOptions(staticStep, fullPayloadForRender)
         );
       /*
-       * Custom steps (e.g. HTTP Request) are executed directly by the worker via ExecuteDestinationCustomStep,
-       * bypassing the bridge entirely. However, when a subsequent step (e.g. in-app) triggers a bridge call,
-       * the framework reconstructs the full workflow from the DB and iterates over every step — including
-       * custom ones. We must register each custom step here so the framework can build the workflow graph
-       * correctly. The resolve function is a passthrough because the actual execution already happened.
+       * Custom steps are executed by the worker, bypassing the bridge entirely. However, when a subsequent
+       * step triggers a bridge call, the framework reconstructs the full workflow from the DB and iterates
+       * over every step — including these. We must register each such step here so the framework can build
+       * the workflow graph correctly. The resolve function is a passthrough because execution already happened.
        */
+      case StepTypeEnum.HTTP_REQUEST:
       case StepTypeEnum.CUSTOM:
         return step.custom(
           stepId,

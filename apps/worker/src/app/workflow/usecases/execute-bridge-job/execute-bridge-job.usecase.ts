@@ -293,7 +293,8 @@ export class ExecuteBridgeJob {
           eventCount: events.length,
         } satisfies DigestResult;
       }
-      case 'custom': {
+      case 'custom':
+      case 'http_request': {
         return job.stepOutput || {};
       }
       case 'in_app': {

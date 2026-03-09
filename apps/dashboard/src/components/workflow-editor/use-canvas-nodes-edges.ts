@@ -1,4 +1,4 @@
-import { ACTION_PROVIDER_CONFIGS, ResourceOriginEnum, StepCreateDto, WorkflowResponseDto } from '@novu/shared';
+import { ResourceOriginEnum, StepCreateDto, WorkflowResponseDto } from '@novu/shared';
 import { Node, ReactFlowInstance, useEdgesState, useNodesState } from '@xyflow/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -138,7 +138,6 @@ export const useCanvasNodesEdges = ({
           name: step.name,
           type: step.type,
           controlValues: step.controlValues,
-          ...(step.providerId ? { providerId: step.providerId } : {}),
         })),
         insertStep,
         ...workflow.steps.slice(insertIndex).map((step) => ({
@@ -147,7 +146,6 @@ export const useCanvasNodesEdges = ({
           name: step.name,
           type: step.type,
           controlValues: step.controlValues,
-          ...(step.providerId ? { providerId: step.providerId } : {}),
         })),
       ];
 
@@ -217,38 +215,25 @@ export const useCanvasNodesEdges = ({
       const workflow = dataRef.current.workflow;
       if (!workflow) return;
 
-      const { type: selectionType, providerId } =
-        typeof selection === 'string' ? { type: NODE_TYPE_TO_STEP_TYPE[selection], providerId: undefined } : selection;
+      const selectionType = typeof selection === 'string' ? NODE_TYPE_TO_STEP_TYPE[selection] : selection.type;
 
       const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
       const addDefaultLayout = !!defaultLayout;
       const defaultLayoutId = defaultLayout?.layoutId;
 
-      const newStep = createStep(
-        selectionType,
-        addDefaultLayout ? defaultLayoutId : undefined,
-        workflow.severity,
-        providerId
-      );
-      const providerDisplayName = providerId ? ACTION_PROVIDER_CONFIGS[providerId]?.displayName : undefined;
-      const nodeName = providerDisplayName ? `${providerDisplayName} Step` : `${STEP_TYPE_LABELS[selectionType]} Step`;
+      const newStep = createStep(selectionType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity);
+      const nodeName = `${STEP_TYPE_LABELS[selectionType]} Step`;
       const newNode = createNode({
         x: 0,
         y: 0,
         name: nodeName,
-        content: mapStepToNodeContent(
-          selectionType,
-          newStep.controlValues ?? {},
-          ResourceOriginEnum.NOVU_CLOUD,
-          providerId
-        ),
+        content: mapStepToNodeContent(selectionType, newStep.controlValues ?? {}, ResourceOriginEnum.NOVU_CLOUD),
         index: insertIndex,
         stepSlug: '_st_',
         error: '',
         controlValues: newStep.controlValues ?? {},
         isPending: true,
         type: selectionType,
-        providerId,
       });
 
       insertStep(insertIndex, newNode, newStep, {
@@ -613,9 +598,8 @@ export const useCanvasNodesEdges = ({
       if (goto === 'editor') {
         const stepType = NODE_TYPE_TO_STEP_TYPE[potentialNode?.type as keyof typeof NODE_TYPE_TO_STEP_TYPE];
         const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType);
-        const isDestinationCustomStep = stepType === NODE_TYPE_TO_STEP_TYPE.custom && !!potentialNode?.data?.providerId;
 
-        if (isTemplateConfigurable || isDestinationCustomStep) {
+        if (isTemplateConfigurable) {
           navigate(
             buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
               stepSlug: potentialNode?.data?.stepSlug ?? '',

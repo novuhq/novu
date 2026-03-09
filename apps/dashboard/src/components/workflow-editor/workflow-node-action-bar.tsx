@@ -7,19 +7,19 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import TruncatedText from '@/components/truncated-text';
 import { StepTypeEnum } from '@/utils/enums';
 
-const CHANNEL_STEP_TYPES = [
+const STEP_TYPES_WITH_EDITOR = [
   StepTypeEnum.EMAIL,
   StepTypeEnum.SMS,
   StepTypeEnum.IN_APP,
   StepTypeEnum.PUSH,
   StepTypeEnum.CHAT,
+  StepTypeEnum.HTTP_REQUEST,
 ];
 
 type WorkflowNodeActionBarProps = {
   isVisible: boolean;
   stepType?: StepTypeEnum;
   stepName: string;
-  providerId?: string;
   onRemoveClick: () => void;
   onEditContentClick: () => void;
   onCopyClick: () => void;
@@ -30,7 +30,6 @@ export const WorkflowNodeActionBar = ({
   isVisible,
   stepType,
   stepName,
-  providerId,
   onRemoveClick,
   onEditContentClick,
   onCopyClick,
@@ -38,8 +37,7 @@ export const WorkflowNodeActionBar = ({
 }: WorkflowNodeActionBarProps) => {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isStepWithEditor =
-    (stepType && CHANNEL_STEP_TYPES.includes(stepType)) || (stepType === StepTypeEnum.CUSTOM && !!providerId);
+  const isStepWithEditor = stepType && STEP_TYPES_WITH_EDITOR.includes(stepType);
 
   const handleCopyConfirm = () => {
     onCopyClick();

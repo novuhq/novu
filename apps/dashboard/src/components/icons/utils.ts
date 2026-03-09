@@ -32,6 +32,7 @@ export const STEP_TYPE_TO_ICON: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.DELAY]: RiHourglassFill,
   [StepTypeEnum.DIGEST]: RiShadowLine,
   [StepTypeEnum.EMAIL]: Mail3Fill as IconType,
+  [StepTypeEnum.HTTP_REQUEST]: RiGlobalLine,
   [StepTypeEnum.IN_APP]: Notification5Fill as IconType,
   [StepTypeEnum.PUSH]: RiCellphoneFill,
   [StepTypeEnum.SMS]: Sms as IconType,

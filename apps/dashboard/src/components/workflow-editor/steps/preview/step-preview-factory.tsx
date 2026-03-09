@@ -1,4 +1,4 @@
-import { ResourceOriginEnum, StepTypeEnum, UiSchemaGroupEnum } from '@novu/shared';
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { memo } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
@@ -80,11 +80,10 @@ export function StepPreviewFactory() {
     case StepTypeEnum.CHAT:
       return <ChatPreview {...commonProps} />;
 
-    case StepTypeEnum.CUSTOM:
-      if (step.controls.uiSchema?.group === UiSchemaGroupEnum.HTTP_REQUEST) {
-        return <HttpRequestConsolePreview />;
-      }
+    case StepTypeEnum.HTTP_REQUEST:
+      return <HttpRequestConsolePreview />;
 
+    case StepTypeEnum.CUSTOM:
       return <NoPreviewAvailable stepType={step.type} />;
 
     default:

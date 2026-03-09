@@ -10,6 +10,7 @@ import {
   DelayStepUpsertDto,
   DigestStepUpsertDto,
   EmailStepUpsertDto,
+  HttpRequestStepUpsertDto,
   InAppStepUpsertDto,
   PushStepUpsertDto,
   SmsStepUpsertDto,
@@ -24,7 +25,8 @@ import { PreferencesRequestDto } from './preferences.request.dto';
   ChatStepUpsertDto,
   DelayStepUpsertDto,
   DigestStepUpsertDto,
-  CustomStepUpsertDto
+  CustomStepUpsertDto,
+  HttpRequestStepUpsertDto
 )
 export class UpdateWorkflowDto extends WorkflowCommonsFields {
   @ApiPropertyOptional({
@@ -47,6 +49,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(DelayStepUpsertDto) },
         { $ref: getSchemaPath(DigestStepUpsertDto) },
         { $ref: getSchemaPath(CustomStepUpsertDto) },
+        { $ref: getSchemaPath(HttpRequestStepUpsertDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -59,6 +62,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
           [StepTypeEnum.DELAY]: getSchemaPath(DelayStepUpsertDto),
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepUpsertDto),
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepUpsertDto),
+          [StepTypeEnum.HTTP_REQUEST]: getSchemaPath(HttpRequestStepUpsertDto),
         },
       },
     },
@@ -77,6 +81,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
         { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
         { name: StepTypeEnum.CUSTOM, value: CustomStepUpsertDto },
+        { name: StepTypeEnum.HTTP_REQUEST, value: HttpRequestStepUpsertDto },
       ],
     },
     keepDiscriminatorProperty: true,
@@ -90,6 +95,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
     | DelayStepUpsertDto
     | DigestStepUpsertDto
     | CustomStepUpsertDto
+    | HttpRequestStepUpsertDto
   )[];
 
   @ApiProperty({

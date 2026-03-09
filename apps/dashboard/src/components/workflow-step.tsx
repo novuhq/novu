@@ -14,6 +14,7 @@ const stepRenderData: Record<StepTypeEnum, { variant: ComponentProps<typeof Step
   [StepTypeEnum.DELAY]: { variant: 'warning', icon: STEP_TYPE_TO_ICON[StepTypeEnum.DELAY] },
   [StepTypeEnum.DIGEST]: { variant: 'highlighted', icon: STEP_TYPE_TO_ICON[StepTypeEnum.DIGEST] },
   [StepTypeEnum.EMAIL]: { variant: 'information', icon: STEP_TYPE_TO_ICON[StepTypeEnum.EMAIL] },
+  [StepTypeEnum.HTTP_REQUEST]: { variant: 'information', icon: STEP_TYPE_TO_ICON[StepTypeEnum.HTTP_REQUEST] },
   [StepTypeEnum.IN_APP]: { variant: 'stable', icon: STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP] },
   [StepTypeEnum.PUSH]: { variant: 'verified', icon: STEP_TYPE_TO_ICON[StepTypeEnum.PUSH] },
   [StepTypeEnum.SMS]: { variant: 'destructive', icon: STEP_TYPE_TO_ICON[StepTypeEnum.SMS] },

@@ -5,6 +5,7 @@ import {
   DelayControlDto,
   DigestControlDto,
   EmailControlDto,
+  HttpRequestControlDto,
   InAppControlDto,
   PushControlDto,
   SmsControlDto,
@@ -210,6 +211,25 @@ export class CustomStepUpsertDto extends BaseStepConfigDto {
   controlValues?: CustomControlDto | Record<string, unknown> | null;
 }
 
+export class HttpRequestStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.HTTP_REQUEST,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'http_request' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the HTTP Request step.',
+    oneOf: [{ $ref: getSchemaPath(HttpRequestControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: HttpRequestControlDto | Record<string, unknown> | null;
+}
+
 /*
  * This export allows using StepUpsertDto as a type for the discriminated union.
  * The actual DTO used will be one of the specific step DTOs at runtime.
@@ -223,4 +243,5 @@ export type StepUpsertDto =
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
-  | CustomStepUpsertDto;
+  | CustomStepUpsertDto
+  | HttpRequestStepUpsertDto;

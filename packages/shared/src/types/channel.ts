@@ -12,6 +12,7 @@ export enum ActionTypeEnum {
   DELAY = 'delay',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
+  HTTP_REQUEST = 'http_request',
 }
 
 export type StepType = ChannelTypeEnum | ActionTypeEnum;
@@ -27,6 +28,7 @@ export enum StepTypeEnum {
   DELAY = 'delay',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
+  HTTP_REQUEST = 'http_request',
 }
 
 export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelTypeEnum>([

@@ -2,6 +2,7 @@ export * from './custom-control.dto';
 export * from './delay-control.dto';
 export * from './digest-control.dto';
 export * from './email-control.dto';
+export * from './http-request-control.dto';
 export * from './in-app-control.dto';
 export * from './push-control.dto';
 export * from './sms-control.dto';

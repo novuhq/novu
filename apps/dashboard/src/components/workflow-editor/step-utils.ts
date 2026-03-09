@@ -1,5 +1,5 @@
 import type { RuntimeIssue, StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
-import { ACTION_PROVIDER_CONFIGS, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';
 import {
@@ -126,8 +126,7 @@ export const updateStepInWorkflow = (
 export const createStep = (
   type: StepTypeEnum,
   defaultLayoutId: string | undefined,
-  severity?: SeverityLevelEnum,
-  providerId?: string
+  severity?: SeverityLevelEnum
 ): StepCreateDto => {
   const controlValue: Record<string, unknown> = {};
 
@@ -167,13 +166,9 @@ export const createStep = (
     controlValue.avatar = `${window.location.origin}${path}`;
   }
 
-  const providerDisplayName = providerId ? ACTION_PROVIDER_CONFIGS[providerId]?.displayName : undefined;
-  const stepName = providerDisplayName ? `${providerDisplayName} Step` : `${STEP_TYPE_LABELS[type]} Step`;
-
   return {
-    name: stepName,
+    name: `${STEP_TYPE_LABELS[type]} Step`,
     type,
     controlValues: controlValue,
-    ...(providerId ? { providerId } : {}),
   };
 };

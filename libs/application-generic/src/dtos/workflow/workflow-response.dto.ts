@@ -19,6 +19,7 @@ import { CustomStepResponseDto } from './step-responses/custom-step.response.dto
 import { DelayStepResponseDto } from './step-responses/delay-step.response.dto';
 import { DigestStepResponseDto } from './step-responses/digest-step.response.dto';
 import { EmailStepResponseDto } from './step-responses/email-step.response.dto';
+import { HttpRequestStepResponseDto } from './step-responses/http-request-step.response.dto';
 import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto';
 import { PushStepResponseDto } from './step-responses/push-step.response.dto';
 import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
@@ -36,6 +37,7 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   DigestStepResponseDto,
   ThrottleStepResponseDto,
   CustomStepResponseDto,
+  HttpRequestStepResponseDto,
   InAppStepResponseDto,
   UserResponseDto
 )
@@ -103,6 +105,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(DigestStepResponseDto) },
         { $ref: getSchemaPath(CustomStepResponseDto) },
         { $ref: getSchemaPath(ThrottleStepResponseDto) },
+        { $ref: getSchemaPath(HttpRequestStepResponseDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -116,6 +119,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepResponseDto),
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepResponseDto),
           [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepResponseDto),
+          [StepTypeEnum.HTTP_REQUEST]: getSchemaPath(HttpRequestStepResponseDto),
         },
       },
     },
@@ -134,6 +138,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.DIGEST, value: DigestStepResponseDto },
         { name: StepTypeEnum.CUSTOM, value: CustomStepResponseDto },
         { name: StepTypeEnum.THROTTLE, value: ThrottleStepResponseDto },
+        { name: StepTypeEnum.HTTP_REQUEST, value: HttpRequestStepResponseDto },
       ],
     },
     keepDiscriminatorProperty: true,

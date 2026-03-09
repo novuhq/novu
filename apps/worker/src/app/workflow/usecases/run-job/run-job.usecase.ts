@@ -733,6 +733,7 @@ export class RunJob {
       if (step.template?.type) {
         return (
           step.template.type === StepTypeEnum.CUSTOM ||
+          step.template.type === StepTypeEnum.HTTP_REQUEST ||
           step.template.type === StepTypeEnum.DELAY ||
           step.template.type === StepTypeEnum.DIGEST ||
           step.template.type === StepTypeEnum.THROTTLE

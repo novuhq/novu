@@ -1,19 +1,18 @@
-import { ActionProviderIdEnum, actionProviders, FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { ACTION_PROVIDER_ID_TO_COLOR, STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
-import { ACTION_PROVIDER_ID_TO_ICON, STEP_TYPE_TO_ICON } from '../icons/utils';
+import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Badge } from '../primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { Node } from './base-node';
 
 export type AddStepMenuSelection = {
   type: StepTypeEnum;
-  providerId?: string;
 };
 
 const noop = () => {};
@@ -93,8 +92,8 @@ export const AddStepMenu = ({
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const isThrottleStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_THROTTLE_STEP_ENABLED);
 
-  const handleMenuItemClick = (stepType: StepTypeEnum, providerId?: string) => {
-    onMenuItemClick({ type: stepType, providerId });
+  const handleMenuItemClick = (stepType: StepTypeEnum) => {
+    onMenuItemClick({ type: stepType });
     setIsPopoverOpen(false);
   };
 
@@ -162,33 +161,12 @@ export const AddStepMenu = ({
                     Throttle
                   </MenuItem>
                 )}
-              </MenuItemsGroup>
-            </MenuGroup>
-            <MenuGroup>
-              <MenuTitle>Destinations</MenuTitle>
-              <MenuItemsGroup>
-                {actionProviders.map((provider) => {
-                  const providerId = provider.id as ActionProviderIdEnum;
-                  const ProviderIcon = ACTION_PROVIDER_ID_TO_ICON[providerId];
-                  const color = ACTION_PROVIDER_ID_TO_COLOR[providerId] ?? STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM];
-                  const iconOverride = ProviderIcon ? (
-                    <ProviderIcon
-                      className="bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40"
-                      style={{ color: `hsl(var(--${color}))` }}
-                    />
-                  ) : undefined;
-
-                  return (
-                    <MenuItem
-                      key={provider.id}
-                      stepType={StepTypeEnum.CUSTOM}
-                      onClick={() => handleMenuItemClick(StepTypeEnum.CUSTOM, provider.id)}
-                      iconOverride={iconOverride}
-                    >
-                      {provider.displayName}
-                    </MenuItem>
-                  );
-                })}
+                <MenuItem
+                  stepType={StepTypeEnum.HTTP_REQUEST}
+                  onClick={() => handleMenuItemClick(StepTypeEnum.HTTP_REQUEST)}
+                >
+                  HTTP Request
+                </MenuItem>
               </MenuItemsGroup>
             </MenuGroup>
           </div>

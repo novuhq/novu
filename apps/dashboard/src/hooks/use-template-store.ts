@@ -22,6 +22,7 @@ const typeMap: Record<string, StepTypeEnum> = {
   delay: StepTypeEnum.DELAY,
   digest: StepTypeEnum.DIGEST,
   custom: StepTypeEnum.CUSTOM,
+  http_request: StepTypeEnum.HTTP_REQUEST,
 };
 
 function normalizeStepType(input: unknown): StepTypeEnum {

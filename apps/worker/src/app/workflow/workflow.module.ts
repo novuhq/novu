@@ -71,7 +71,7 @@ import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
 import { ResolveChannelEndpoints } from './usecases/send-message/channel-endpoint-resolution/resolve-channel-endpoints.usecase';
 import { ExecuteCodeFirstCustomStep } from './usecases/send-message/execute-code-first-custom-step.usecase';
-import { ExecuteDestinationCustomStep } from './usecases/send-message/execute-destination-custom-step.usecase';
+import { ExecuteHttpRequestStep } from './usecases/send-message/execute-http-request-step.usecase';
 import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
 import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
 
@@ -178,7 +178,7 @@ const USE_CASES = [
   SendMessageSms,
   Throttle,
   ExecuteCodeFirstCustomStep,
-  ExecuteDestinationCustomStep,
+  ExecuteHttpRequestStep,
   ActionHandlerFactory,
   StoreSubscriberJobs,
   SetJobAsCompleted,

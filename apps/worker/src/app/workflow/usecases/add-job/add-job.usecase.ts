@@ -1152,6 +1152,7 @@ const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
   [StepTypeEnum.THROTTLE]: true,
   [StepTypeEnum.TRIGGER]: false,
   [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.HTTP_REQUEST]: false,
   [StepTypeEnum.IN_APP]: false,
   [StepTypeEnum.EMAIL]: false,
   [StepTypeEnum.SMS]: false,

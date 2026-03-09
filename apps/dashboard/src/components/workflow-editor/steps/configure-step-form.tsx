@@ -1,11 +1,9 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
-  ACTION_PROVIDER_CONFIGS,
   EnvironmentTypeEnum,
   IEnvironment,
   ResourceOriginEnum,
   StepResponseDto,
-  StepTypeEnum,
   StepUpdateDto,
   WorkflowResponseDto,
 } from '@novu/shared';
@@ -14,8 +12,6 @@ import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } 
 import { useForm } from 'react-hook-form';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiEdit2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -56,6 +52,7 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { getControlsDefaultValues } from '@/utils/default-values';
+import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
@@ -68,6 +65,7 @@ const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.E
   [StepTypeEnum.CHAT]: () => null,
   [StepTypeEnum.PUSH]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
+  [StepTypeEnum.HTTP_REQUEST]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
 };
 
@@ -78,6 +76,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.CHAT]: ConfigureChatStepPreview,
   [StepTypeEnum.PUSH]: ConfigurePushStepPreview,
   [StepTypeEnum.CUSTOM]: null,
+  [StepTypeEnum.HTTP_REQUEST]: null,
   [StepTypeEnum.TRIGGER]: null,
   [StepTypeEnum.DIGEST]: null,
   [StepTypeEnum.DELAY]: null,
@@ -104,11 +103,10 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
     StepTypeEnum.THROTTLE,
+    StepTypeEnum.HTTP_REQUEST,
   ];
 
-  const isDestinationCustomStep = step.type === StepTypeEnum.CUSTOM && !!step.providerId;
-  const integrationProviderConfig = step.providerId ? ACTION_PROVIDER_CONFIGS[step.providerId] : null;
-  const isSupportedStep = supportedStepTypes.includes(step.type) || isDestinationCustomStep;
+  const isSupportedStep = supportedStepTypes.includes(step.type);
   const isReadOnly =
     !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL || environment.type !== EnvironmentTypeEnum.DEV;
 
@@ -141,7 +139,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         };
       }
 
-      if (isDestinationCustomStep) {
+      if ((step.type as string) === StepTypeEnum.HTTP_REQUEST) {
         return {
           controlValues: {
             stopOnFail: (step.controls.values?.stopOnFail as boolean) ?? false,
@@ -151,7 +149,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
       return {};
     };
-  }, [isInlineConfigurableStep, isDestinationCustomStep]);
+  }, [isInlineConfigurableStep]);
 
   const defaultValues = useMemo(
     () => ({
@@ -314,32 +312,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 <Separator />
 
                 {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
-
-                {isDestinationCustomStep && (
-                  <>
-                    <SidebarContent>
-                      <StopOnFail />
-                    </SidebarContent>
-                    <Separator />
-                    <SidebarContent>
-                      <Link to="./editor" relative="path" state={{ stepType: step.type }}>
-                        <Button
-                          variant="secondary"
-                          mode="outline"
-                          className="flex w-full justify-start gap-1.5 text-xs font-medium"
-                        >
-                          <RiEdit2Line className="h-4 w-4 text-neutral-600" />
-                          Configure {integrationProviderConfig?.displayName ?? step.providerId} Step{' '}
-                          <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-                        </Button>
-                      </Link>
-
-                      {environment.type === EnvironmentTypeEnum.DEV && (
-                        <SkipConditionsButton origin={workflow.origin} step={step} />
-                      )}
-                    </SidebarContent>
-                  </>
-                )}
               </SaveFormContext.Provider>
             </FormRoot>
           </Form>
@@ -399,7 +371,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          {!isSupportedStep && !isDestinationCustomStep && (
+          {!isSupportedStep && (
             <SidebarContent>
               <SdkBanner />
             </SidebarContent>

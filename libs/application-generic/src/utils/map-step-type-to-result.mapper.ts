@@ -25,6 +25,11 @@ export function computeResultSchema({
       properties: {},
       additionalProperties: true,
     },
+    [ActionStepEnum.HTTP_REQUEST]: customResultSchema ?? {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {},
+      additionalProperties: true,
+    },
   };
 
   return mapStepTypeToResult[stepType];
