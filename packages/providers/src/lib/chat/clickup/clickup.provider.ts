@@ -53,7 +53,8 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
     const { workspaceId, channelId } = channelData.endpoint;
 
     const payload = this.transform(bridgeProviderData, {
-      message: data.content,
+      content: data.content,
+      type: "message",
       ...(data.customData || {}),
     }).body;
 

@@ -28,7 +28,7 @@ test('should send a message to a workspace channel', async () => {
 
   expect(mockPost).toHaveBeenCalledWith(
     `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
-    { message: 'Test notification' }
+    { content: 'Test notification', type: 'message' }
   );
   expect(result.id).toBe('msg-123');
   expect(result.date).toBeDefined();
@@ -49,7 +49,7 @@ test('should forward customData fields in the payload', async () => {
 
   expect(mockPost).toHaveBeenCalledWith(
     `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
-    { message: 'Task update', notify_all: true }
+    { content: 'Task update', type: 'message', notify_all: true }
   );
 });
 
@@ -77,7 +77,8 @@ test('should support _passthrough data', async () => {
   expect(mockPost).toHaveBeenCalledWith(
     `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
     {
-      message: 'Passthrough test',
+      content: 'Passthrough test',
+      type: 'message',
       attachments: [{ url: 'https://example.com/file.png' }],
     }
   );
