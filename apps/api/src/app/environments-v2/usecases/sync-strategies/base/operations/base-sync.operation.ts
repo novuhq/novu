@@ -1,7 +1,11 @@
-import { Instrument, PinoLogger } from '@novu/application-generic';
-import { LayoutEntity } from '@novu/dal';
-import { capitalize } from '../../../../../shared/services/helper/helper.service';
-import { IResourceToPublish, ISyncContext, ISyncResult, ResourceTypeEnum, SyncActionEnum } from '../../../../types/sync.types';
+import { capitalize, Instrument, PinoLogger } from '@novu/application-generic';
+import {
+  IResourceToPublish,
+  ISyncContext,
+  ISyncResult,
+  ResourceTypeEnum,
+  SyncActionEnum,
+} from '../../../../types/sync.types';
 import { SyncResultBuilder } from '../../builders/sync-result.builder';
 import { SKIP_REASONS, SYNC_ACTIONS } from '../../constants/sync.constants';
 import { IBaseComparator, IBaseDeleteService, IBaseRepositoryService, IBaseSyncService } from '../interfaces';
@@ -289,7 +293,11 @@ export abstract class BaseSyncOperation<T> {
     context: ISyncContext,
     resource: T,
     targetResource?: T
-  ): Promise<{ sync: boolean; action: SyncActionEnum.CREATED | SyncActionEnum.UPDATED | SyncActionEnum.SKIPPED; reason?: string }> {
+  ): Promise<{
+    sync: boolean;
+    action: SyncActionEnum.CREATED | SyncActionEnum.UPDATED | SyncActionEnum.SKIPPED;
+    reason?: string;
+  }> {
     if (!targetResource) {
       return { sync: true, action: SYNC_ACTIONS.CREATED };
     }

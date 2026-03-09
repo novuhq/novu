@@ -1,14 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { dashboardSanitizeControlValues, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { ContentIssueEnum, LAYOUT_CONTENT_VARIABLE, LayoutIssuesDto, ResourceOriginEnum } from '@novu/shared';
-import { merge } from 'es-toolkit/compat';
-import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
   ControlIssues,
+  dashboardSanitizeControlValues,
+  hasMailyVariable,
+  Instrument,
+  InstrumentUsecase,
+  isStringifiedMailyJSONContent,
+  LayoutVariablesSchemaCommand,
+  LayoutVariablesSchemaUseCase,
+  PinoLogger,
   processControlValuesByLiquid,
   processControlValuesBySchema,
-} from '../../../shared/utils/issues';
-import { LayoutVariablesSchemaCommand, LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
+} from '@novu/application-generic';
+import { ContentIssueEnum, LAYOUT_CONTENT_VARIABLE, LayoutIssuesDto, ResourceOriginEnum } from '@novu/shared';
+import { merge } from 'es-toolkit/compat';
 import { BuildLayoutIssuesCommand } from './build-layout-issues.command';
 
 @Injectable()

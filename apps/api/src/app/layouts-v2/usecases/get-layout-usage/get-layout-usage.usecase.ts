@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { GetLayoutCommand, GetLayoutUseCase, InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 import { GetLayoutUsageResponseDto, WorkflowInfoDto } from '../../dtos';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { GetLayoutUsageCommand } from './get-layout-usage.command';
 
 @Injectable()

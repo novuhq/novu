@@ -12,7 +12,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
+import {
+  CreateWorkflowCommandV0,
+  CreateWorkflowV0,
+  RequirePermissions,
+  UpdateWorkflowCommandV0,
+  UpdateWorkflowV0,
+} from '@novu/application-generic';
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -34,16 +40,12 @@ import { WorkflowsRequestDto } from './dtos/workflows-request.dto';
 import { CreateWorkflowQuery } from './queries';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
-import { CreateWorkflowCommand } from './usecases/create-workflow/create-workflow.command';
-import { CreateWorkflow } from './usecases/create-workflow/create-workflow.usecase';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
-import { UpdateWorkflowCommand } from './usecases/update-workflow/update-workflow.command';
-import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.usecase';
 
 /**
  * @deprecated use controller in /workflows directory
@@ -57,8 +59,8 @@ import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.useca
 @ApiTags('Notification Templates')
 export class NotificationTemplateController {
   constructor(
-    private createWorkflowUsecase: CreateWorkflow,
-    private updateWorkflowUsecase: UpdateWorkflow,
+    private createWorkflowUsecaseV0: CreateWorkflowV0,
+    private updateWorkflowUsecaseV0: UpdateWorkflowV0,
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private getNotificationTemplatesUsecase: GetNotificationTemplates,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
@@ -104,8 +106,8 @@ export class NotificationTemplateController {
     @Param('templateId') templateId: string,
     @Body() body: UpdateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
-    return await this.updateWorkflowUsecase.execute(
-      UpdateWorkflowCommand.create({
+    return await this.updateWorkflowUsecaseV0.execute(
+      UpdateWorkflowCommandV0.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -189,8 +191,8 @@ export class NotificationTemplateController {
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
-    return this.createWorkflowUsecase.execute(
-      CreateWorkflowCommand.create({
+    return this.createWorkflowUsecaseV0.execute(
+      CreateWorkflowCommandV0.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,

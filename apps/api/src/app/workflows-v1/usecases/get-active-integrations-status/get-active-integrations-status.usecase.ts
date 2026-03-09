@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
+  GetActiveIntegrations,
+  GetActiveIntegrationsCommand,
+  IntegrationResponseDto,
   NotificationStep,
 } from '@novu/application-generic';
 import {
@@ -12,9 +15,6 @@ import {
   StepTypeEnum,
   WorkflowChannelsIntegrationStatus,
 } from '@novu/shared';
-import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
-import { GetActiveIntegrationsCommand } from '../../../integrations/usecases/get-active-integration/get-active-integration.command';
-import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponse } from '../../dtos/workflow-response.dto';
 import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-status.command';
 

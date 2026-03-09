@@ -1,4 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { StepFilterDto } from '@novu/application-generic';
 import {
   DaysEnum,
   DelayTypeEnum,
@@ -19,7 +20,6 @@ import {
 import { Type } from 'class-transformer';
 import { IsBoolean, IsString, ValidateNested } from 'class-validator';
 import { MessageTemplate } from './message-template';
-import { StepFilterDto } from './step-filter-dto';
 
 class TimedConfig implements ITimedConfig {
   @ApiPropertyOptional()

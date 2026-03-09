@@ -112,7 +112,8 @@ function generateBodyValidation(): string {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
-      const stepOutputs = body.steps ?? {};
+      const stateArray = Array.isArray(body.state) ? body.state : [];
+      const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
 
       if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {

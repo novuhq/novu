@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import {
+  getStepResolverControlSchema,
+  InstrumentUsecase,
+  STEP_RESOLVER_EMAIL_UI_SCHEMA,
+  stepTypeToControlSchema,
+} from '@novu/application-generic';
 import { ClientSession, MessageTemplateRepository } from '@novu/dal';
-import { stepTypeToControlSchema } from '../../../workflows-v2/shared';
-import { getStepResolverControlSchema, STEP_RESOLVER_EMAIL_UI_SCHEMA } from '../../utils/step-resolver-control-state';
 import {
   StepResolverSourceData,
   StepResolverTargetData,

@@ -1,5 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import {
+  BuildVariableSchemaCommand,
+  buildContextSchema,
+  buildSubscriberSchema,
+  buildVariablesSchema,
+  buildWorkflowSchema,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
+  computeResultSchema,
+  emptyJsonSchema,
+  Instrument,
+  InstrumentUsecase,
+  IOptimisticStepInfo,
+  JSONSchemaDto,
+  PreviewPayloadDto,
+  parsePayloadSchema,
+} from '@novu/application-generic';
 import {
   ControlValuesEntity,
   ControlValuesRepository,
@@ -8,20 +24,6 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import {
-  buildContextSchema,
-  buildSubscriberSchema,
-  buildVariablesSchema,
-  buildWorkflowSchema,
-} from '../../../shared/utils/create-schema';
-import { PreviewPayloadDto } from '../../dtos';
-import { computeResultSchema } from '../../shared';
-import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { emptyJsonSchema } from '../../util/jsonToSchema';
-import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {

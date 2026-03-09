@@ -1,24 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import {
+  BuildStepDataUsecase,
+  ControlValueSanitizerService,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
+  GeneratePreviewResponseDto,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  isStepResolverEmailStep,
   PinoLogger,
+  PreviewCommand,
+  PreviewErrorHandler,
+  PreviewPayloadDto,
+  PreviewPayloadProcessorService,
+  PreviewStep,
+  PreviewStepCommand,
+  StepResponseDto,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
-import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { isStepResolverEmailStep } from '../../../step-resolvers/utils/step-resolver-control-state';
-import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-import { BuildStepDataUsecase } from '../build-step-data';
-import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
-import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
 export class PreviewUsecase {

@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
+import { AnalyticsService, GetLayoutCommandV0, GetLayoutUseCaseV0 } from '@novu/application-generic';
 import { LayoutRepository } from '@novu/dal';
 import { ResourceOriginEnum } from '@novu/shared';
 import { CheckLayoutIsUsedCommand, CheckLayoutIsUsedUseCase } from '../check-layout-is-used';
@@ -9,7 +9,7 @@ import { DeleteLayoutCommand } from './delete-layout.command';
 @Injectable()
 export class DeleteLayoutUseCase {
   constructor(
-    private getLayoutUseCase: GetLayoutUseCase,
+    private getLayoutUseCase: GetLayoutUseCaseV0,
     private checkLayoutIsUsed: CheckLayoutIsUsedUseCase,
     private createLayoutChange: CreateLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
@@ -17,7 +17,7 @@ export class DeleteLayoutUseCase {
   ) {}
 
   async execute(command: DeleteLayoutCommand): Promise<void> {
-    const getLayoutCommand = GetLayoutCommand.create({
+    const getLayoutCommand = GetLayoutCommandV0.create({
       layoutIdOrInternalId: command.layoutId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,

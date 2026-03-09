@@ -13,10 +13,15 @@ import {
 } from '@nestjs/common/decorators';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
+  CreateLayoutDto,
   ExternalApiAccessible,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  LayoutResponseDto,
   ParseSlugEnvironmentIdPipe,
   ParseSlugIdPipe,
   RequirePermissions,
+  UpdateLayoutDto,
   UserSession,
 } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
@@ -25,19 +30,15 @@ import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import {
-  CreateLayoutDto,
   DuplicateLayoutDto,
   GetLayoutListQueryParamsDto,
   GetLayoutUsageResponseDto,
-  LayoutResponseDto,
   ListLayoutResponseDto,
-  UpdateLayoutDto,
 } from './dtos';
 import { GenerateLayoutPreviewResponseDto } from './dtos/generate-layout-preview-response.dto';
 import { LayoutPreviewRequestDto } from './dtos/layout-preview-request.dto';
 import { DeleteLayoutCommand, DeleteLayoutUseCase } from './usecases/delete-layout';
 import { DuplicateLayoutCommand, DuplicateLayoutUseCase } from './usecases/duplicate-layout';
-import { GetLayoutCommand, GetLayoutUseCase } from './usecases/get-layout';
 import { GetLayoutUsageCommand, GetLayoutUsageUseCase } from './usecases/get-layout-usage';
 import { ListLayoutsCommand, ListLayoutsUseCase } from './usecases/list-layouts';
 import { PreviewLayoutCommand, PreviewLayoutUsecase } from './usecases/preview-layout';

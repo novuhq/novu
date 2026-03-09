@@ -5,7 +5,7 @@ export async function withSpinner<T>(
   message: string,
   fn: () => Promise<T>,
   options?: {
-    successMessage?: string;
+    successMessage?: string | ((result: T) => string);
     failMessage?: string;
     exitOnError?: boolean;
   }
@@ -14,7 +14,12 @@ export async function withSpinner<T>(
 
   try {
     const result = await fn();
-    spinner.succeed(options?.successMessage || message);
+    const successMsg =
+      typeof options?.successMessage === 'function'
+        ? options.successMessage(result)
+        : (options?.successMessage ?? message);
+    spinner.succeed(successMsg);
+
     return result;
   } catch (error) {
     spinner.fail(options?.failMessage);

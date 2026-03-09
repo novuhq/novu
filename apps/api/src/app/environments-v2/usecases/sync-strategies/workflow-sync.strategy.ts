@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, WorkflowDataContainer } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { IDiffResult, ISyncContext, ISyncResult, ResourceTypeEnum } from '../../types/sync.types';
 import { BaseSyncStrategy } from './base/base-sync.strategy';
 import { WorkflowDiffOperation } from './operations/workflow-diff.operation';

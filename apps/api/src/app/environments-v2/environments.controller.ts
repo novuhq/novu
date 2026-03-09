@@ -9,7 +9,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import {
+  GetEnvironmentTags,
+  GetEnvironmentTagsCommand,
+  GetEnvironmentTagsDto,
+  RequirePermissions,
+  SkipPermissionsCheck,
+} from '@novu/application-generic';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -22,10 +28,8 @@ import {
   PublishEnvironmentRequestDto,
   PublishEnvironmentResponseDto,
 } from './dtos';
-import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
 import { DiffEnvironmentCommand } from './usecases/diff-environment/diff-environment.command';
 import { DiffEnvironmentUseCase } from './usecases/diff-environment/diff-environment.usecase';
-import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
 import { PublishEnvironmentCommand } from './usecases/publish-environment/publish-environment.command';
 import { PublishEnvironmentUseCase } from './usecases/publish-environment/publish-environment.usecase';
 

@@ -1,6 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { FeatureFlagsService, Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  GetWorkflowCommand,
+  GetWorkflowUseCase,
+  Instrument,
+  InstrumentUsecase,
+  SendWebhookMessage,
+  StepResponseDto,
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+  WorkflowPreferencesDto,
+  WorkflowResponseDto,
+} from '@novu/application-generic';
 import {
   BaseRepository,
   ClientSession,
@@ -27,15 +41,7 @@ import {
   SyncStepResolverToEnvironmentCommand,
   SyncStepResolverToEnvironmentUsecase,
 } from '../../../step-resolvers/usecases/sync-step-resolver-to-environment';
-import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
-import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import {
-  UpsertStepDataCommand,
-  UpsertWorkflowCommand,
-  UpsertWorkflowDataCommand,
-  UpsertWorkflowUseCase,
-} from '../upsert-workflow';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];

@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import {
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  Instrument,
+  InstrumentUsecase,
+  LayoutResponseDto,
+} from '@novu/application-generic';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { ResourceOriginEnum } from '@novu/shared';
-import { LayoutResponseDto } from '../../dtos';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { UpsertLayout, UpsertLayoutCommand, UpsertLayoutDataCommand } from '../upsert-layout';
 import { LayoutSyncToEnvironmentCommand } from './layout-sync-to-environment.command';
 
