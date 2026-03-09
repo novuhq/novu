@@ -5,6 +5,7 @@ import {
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientError,
+  HttpClientErrorType,
   HttpClientService,
   HttpRequestOptions,
   InstrumentUsecase,
@@ -13,6 +14,20 @@ import {
 } from '@novu/application-generic';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
+
+const HTTP_CLIENT_ERROR_STATUS_MAP: Record<HttpClientErrorType, number> = {
+  [HttpClientErrorType.TIMEOUT]: 408,
+  [HttpClientErrorType.NETWORK_ERROR]: 502,
+  [HttpClientErrorType.CERTIFICATE_ERROR]: 502,
+  [HttpClientErrorType.UNSUPPORTED_PROTOCOL]: 400,
+  [HttpClientErrorType.MAX_REDIRECTS]: 502,
+  [HttpClientErrorType.READ_ERROR]: 502,
+  [HttpClientErrorType.UPLOAD_ERROR]: 502,
+  [HttpClientErrorType.CACHE_ERROR]: 502,
+  [HttpClientErrorType.PARSE_ERROR]: 502,
+  [HttpClientErrorType.HTTP_ERROR]: 500,
+  [HttpClientErrorType.UNKNOWN]: 500,
+};
 
 @Injectable()
 export class TestHttpEndpointUsecase {
@@ -83,10 +98,22 @@ export class TestHttpEndpointUsecase {
     } catch (error) {
       const durationMs = Math.round(performance.now() - startTime);
 
-      if (error instanceof HttpClientError && error.statusCode) {
+      if (error instanceof HttpClientError) {
+        console.error('HttpClientError');
+        console.error(JSON.stringify(error, null, 2));
+        console.error('responseBody');
+        console.error(JSON.stringify(error.responseBody, null, 2));
+        console.error('networkCode');
+        console.error(JSON.stringify(error.networkCode, null, 2));
+        const statusCode = error.statusCode ?? HTTP_CLIENT_ERROR_STATUS_MAP[error.type] ?? 500;
+
         return {
-          statusCode: error.statusCode,
-          body: error.responseBody ?? null,
+          statusCode,
+          body: error.responseBody ?? {
+            error: error.message,
+            type: error.type,
+            ...(error.networkCode ? { networkCode: error.networkCode } : {}),
+          },
           headers: {},
           durationMs,
           resolvedRequest: {
