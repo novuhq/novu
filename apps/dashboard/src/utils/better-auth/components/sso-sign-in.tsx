@@ -30,7 +30,7 @@ export function SSOSignIn() {
         throw new Error('Please enter your email address');
       }
 
-      const domain = email.split('@')[1];
+      const domain = email.split('@')[1]?.trim().toLowerCase();
       if (!domain) {
         throw new Error('Please enter a valid email address');
       }
