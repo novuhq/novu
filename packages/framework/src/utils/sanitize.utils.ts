@@ -14,6 +14,18 @@ function isEventHandlerAttribute(name: string): boolean {
   return name.toLowerCase().startsWith('on');
 }
 
+/**
+ * Normalizes malformed closing tags like </style/> to </style>.
+ *
+ * Browsers treat </tag/> and </tag/anything> as valid closing tags,
+ * but htmlparser2 (used by sanitize-html) does not. This mismatch
+ * allows XSS payloads to be hidden inside style tag content:
+ *   <style></style/><img src onerror=alert(origin)></style>
+ */
+function normalizeMalformedClosingTags(html: string): string {
+  return html.replace(/<\/([a-zA-Z][a-zA-Z0-9]*)\s*\/[^>]*>/g, '</$1>');
+}
+
 const sanitizeOptions: IOptions = {
   /**
    * Additional tags to allow.
@@ -89,10 +101,12 @@ export const sanitizeHTML = (html: string): string => {
     return html;
   }
 
+  const normalizedHtml = normalizeMalformedClosingTags(html);
+
   // Sanitize-html removes the DOCTYPE tag, so we need to add it back.
   const doctypeRegex = /^<!DOCTYPE .*?>/;
-  const doctypeTags = html.match(doctypeRegex);
-  const cleanHtml = sanitizeTypes(html, sanitizeOptions);
+  const doctypeTags = normalizedHtml.match(doctypeRegex);
+  const cleanHtml = sanitizeTypes(normalizedHtml, sanitizeOptions);
 
   const cleanHtmlWithDocType = doctypeTags ? doctypeTags[0] + cleanHtml : cleanHtml;
 
