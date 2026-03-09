@@ -99,12 +99,6 @@ export class TestHttpEndpointUsecase {
       const durationMs = Math.round(performance.now() - startTime);
 
       if (error instanceof HttpClientError) {
-        console.error('HttpClientError');
-        console.error(JSON.stringify(error, null, 2));
-        console.error('responseBody');
-        console.error(JSON.stringify(error.responseBody, null, 2));
-        console.error('networkCode');
-        console.error(JSON.stringify(error.networkCode, null, 2));
         const statusCode = error.statusCode ?? HTTP_CLIENT_ERROR_STATUS_MAP[error.type] ?? 500;
 
         return {
