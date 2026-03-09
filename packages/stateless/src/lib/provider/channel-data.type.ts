@@ -1,4 +1,5 @@
 export type ChannelData =
+  | ClickUpChannelData
   | SlackChannelData
   | SlackUserData
   | WebhookData
@@ -7,6 +8,7 @@ export type ChannelData =
   | MsTeamsUserData;
 
 export const ENDPOINT_TYPES = {
+  CLICKUP_CHANNEL: 'clickup_channel',
   SLACK_CHANNEL: 'slack_channel',
   SLACK_USER: 'slack_user',
   WEBHOOK: 'webhook',
@@ -18,12 +20,19 @@ export const ENDPOINT_TYPES = {
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
 
 export type ChannelEndpointByType = {
+  [ENDPOINT_TYPES.CLICKUP_CHANNEL]: { workspaceId: string, channelId: string };
   [ENDPOINT_TYPES.SLACK_CHANNEL]: { channelId: string };
   [ENDPOINT_TYPES.SLACK_USER]: { userId: string };
   [ENDPOINT_TYPES.WEBHOOK]: { url: string; channel?: string };
   [ENDPOINT_TYPES.PHONE]: { phoneNumber: string };
   [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: { teamId: string; channelId: string };
   [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string };
+};
+
+export type ClickUpChannelData = {
+  type: typeof ENDPOINT_TYPES.CLICKUP_CHANNEL;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.CLICKUP_CHANNEL];
+  identifier: string;
 };
 
 export type SlackChannelData = {

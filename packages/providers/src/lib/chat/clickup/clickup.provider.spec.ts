@@ -1,83 +1,111 @@
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { ClickUpProvider } from './clickup.provider';
 
-test('should create a task comment when taskId is provided', async () => {
+const WORKSPACE_ID = 'ws_123';
+const CHANNEL_ID = 'ch_456';
+
+function makeChannelData() {
+  return {
+    type: ENDPOINT_TYPES.CLICKUP_CHANNEL as typeof ENDPOINT_TYPES.CLICKUP_CHANNEL,
+    endpoint: { workspaceId: WORKSPACE_ID, channelId: CHANNEL_ID },
+    identifier: 'test-channel',
+  };
+}
+
+test('should send a message to a workspace channel', async () => {
   const { mockPost } = axiosSpy({
-    data: { id: 'comment-123' },
+    data: { id: 'msg-123' },
   });
 
   const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
 
   const result = await provider.sendMessage({
     content: 'Test notification',
-    customData: { taskId: 'task_abc' },
+    channelData: makeChannelData(),
   });
 
-  expect(mockPost).toHaveBeenCalledWith('/task/task_abc/comment', {
-    comment_text: 'Test notification',
-    notify_all: true,
-  });
-  expect(result.id).toBe('comment-123');
+  expect(mockPost).toHaveBeenCalledWith(
+    `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
+    { message: 'Test notification' }
+  );
+  expect(result.id).toBe('msg-123');
+  expect(result.date).toBeDefined();
 });
 
-test('should create a task when listId is provided', async () => {
+test('should forward customData fields in the payload', async () => {
   const { mockPost } = axiosSpy({
-    data: { id: 'task-456', date_created: '1709654400000' },
+    data: { id: 'msg-456' },
   });
 
   const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
 
-  const result = await provider.sendMessage({
-    content: 'New task notification',
-    customData: { listId: 'list_xyz' },
+  await provider.sendMessage({
+    content: 'Task update',
+    channelData: makeChannelData(),
+    customData: { notify_all: true },
   });
 
-  expect(mockPost).toHaveBeenCalledWith('/list/list_xyz/task', {
-    name: 'New task notification',
-    markdown_description: 'New task notification',
-    notify_all: true,
-  });
-  expect(result.id).toBe('task-456');
+  expect(mockPost).toHaveBeenCalledWith(
+    `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
+    { message: 'Task update', notify_all: true }
+  );
 });
 
-test('should throw error when neither taskId nor listId is provided', async () => {
-  axiosSpy({});
-  const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
-
-  await expect(
-    provider.sendMessage({
-      content: 'Test notification',
-      customData: {},
-    })
-  ).rejects.toThrow('ClickUp provider requires either taskId or listId in customData');
-});
-
-test('should support _passthrough data for task comments', async () => {
+test('should support _passthrough data', async () => {
   const { mockPost } = axiosSpy({
-    data: { id: 'comment-789' },
+    data: { id: 'msg-789' },
   });
 
   const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
 
   await provider.sendMessage(
     {
-      content: 'Test notification',
-      customData: { taskId: 'task_abc' },
+      content: 'Passthrough test',
+      channelData: makeChannelData(),
     },
     {
       _passthrough: {
         body: {
-          notify_all: false,
-          assignee: 12345,
+          attachments: [{ url: 'https://example.com/file.png' }],
         },
       },
     }
   );
 
-  expect(mockPost).toHaveBeenCalledWith('/task/task_abc/comment', {
-    comment_text: 'Test notification',
-    notify_all: false,
-    assignee: 12345,
-  });
+  expect(mockPost).toHaveBeenCalledWith(
+    `/workspaces/${WORKSPACE_ID}/chat/channels/${CHANNEL_ID}/messages`,
+    {
+      message: 'Passthrough test',
+      attachments: [{ url: 'https://example.com/file.png' }],
+    }
+  );
+});
+
+test('should throw when channelData is missing', async () => {
+  axiosSpy({});
+  const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
+
+  await expect(
+    provider.sendMessage({
+      content: 'Test notification',
+    })
+  ).rejects.toThrow('ClickUp provider requires channelData of type clickup_channel');
+});
+
+test('should throw when channelData is wrong type', async () => {
+  axiosSpy({});
+  const provider = new ClickUpProvider({ apiKey: 'pk_test_key' });
+
+  await expect(
+    provider.sendMessage({
+      content: 'Test notification',
+      channelData: {
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: { url: 'https://example.com' },
+        identifier: 'test',
+      },
+    })
+  ).rejects.toThrow('ClickUp provider requires channelData of type clickup_channel');
 });
