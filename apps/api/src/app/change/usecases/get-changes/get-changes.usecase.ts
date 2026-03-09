@@ -152,10 +152,10 @@ export class GetChanges {
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new BadRequestException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(TRANSLATIONS_SERVICE);
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false });
         const { name, identifier } = await service.getTranslationGroupData(environmentId, entityId);
 
         return {
@@ -176,10 +176,10 @@ export class GetChanges {
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new BadRequestException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(TRANSLATIONS_SERVICE);
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false });
         const { name, group } = await service.getTranslationData(environmentId, entityId);
 
         return {
