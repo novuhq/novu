@@ -14,6 +14,8 @@ type AnalyticsCardProps = {
   value: string | number;
   /** The title/name of the metric being displayed */
   title: string;
+  /** Short label when space is limited; full title remains in tooltip on hover */
+  titleShort?: string;
   /** Optional custom description. If not provided, will auto-generate from title and timeframe */
   description?: string;
   /** The percentage change to show in the trend badge */
@@ -96,10 +98,12 @@ export function AnalyticsCard({
           className
         )}
       >
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center justify-between shrink-0 gap-2 min-w-0">
           <div className="flex min-w-0 items-center gap-1">
             {IconComponent && <IconComponent className="size-4 shrink-0 text-icon-sub" />}
-            <span className="font-code text-[12px] text-text-sub uppercase whitespace-nowrap">{title}</span>
+            <span className="font-code text-[12px] text-text-sub uppercase truncate" title={title}>
+              {title}
+            </span>
             {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
           </div>
         </div>
@@ -111,17 +115,14 @@ export function AnalyticsCard({
   const trendColors = getTrendColor(trendDirection);
 
   return (
-    <div
-      className={cn(
-        'bg-bg-white rounded-xl border-none p-2.5 shadow-box-xs w-full',
-        className
-      )}
-    >
+    <div className={cn('bg-bg-white rounded-xl border-none p-2.5 shadow-box-xs w-full', className)}>
       <div className="flex flex-col gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2 overflow-hidden">
           <div className="flex min-w-0 items-center gap-1">
             {IconComponent && <IconComponent className="size-4 shrink-0 text-icon-sub" />}
-            <span className="font-code text-[12px] text-text-sub uppercase whitespace-nowrap">{title}</span>
+            <span className="font-code text-[12px] text-text-sub uppercase truncate" title={title}>
+              {title}
+            </span>
             {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
           </div>
 

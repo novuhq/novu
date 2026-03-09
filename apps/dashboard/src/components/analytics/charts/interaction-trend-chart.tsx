@@ -152,8 +152,8 @@ function InteractionTrendChartContent({ data, includeTooltip }: InteractionTrend
 
   return (
     <div className="relative w-full -mx-1 group/chart h-[160px]">
-      <div className="pointer-events-none absolute left-0 top-0 bottom-6 w-4 bg-linear-to-r from-white to-transparent z-10" />
-      <div className="pointer-events-none absolute right-0 top-0 bottom-6 w-6 bg-linear-to-l from-white to-transparent z-10" />
+      <div className="pointer-events-none absolute left-0 top-0 bottom-6 w-3 bg-linear-to-r from-white via-white/80 to-transparent z-10" />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-6 w-3 bg-linear-to-l from-white via-white/80 to-transparent z-10" />
       <ChartContainer config={chartConfig} className="h-full min-h-[100px] w-full aspect-auto">
         <AreaChart accessibilityLayer data={data} margin={{ top: 8, right: 2, left: 2, bottom: 0 }}>
           <defs>
@@ -181,7 +181,7 @@ function InteractionTrendChartContent({ data, includeTooltip }: InteractionTrend
             tick={<CustomTick />}
             ticks={[firstDate, lastDate]}
             domain={['dataMin', 'dataMax']}
-            padding={{ left: 4, right: 4 }}
+            padding={{ left: 4, right: 0 }}
           />
           <YAxis hide domain={[0, 'auto']} />
           {includeTooltip && <ChartTooltip cursor={false} content={<InteractionTrendTooltip />} />}

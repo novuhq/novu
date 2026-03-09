@@ -19,10 +19,10 @@ type WorkflowRunsChartDataWithTotal = WorkflowRunsChartData & { total: number };
 const CHART_HEIGHT = 180;
 const WORKFLOW_RUNS_GRID_CLIP_MARGIN = { left: 2, right: 2, top: 4, bottom: 0 } as const;
 const FLICKERING_GRID_PROPS = {
-  squareSize: 1.5,
-  gridGap: 2,
+  squareSize: 2,
+  gridGap: 1,
   flickerChance: 0.4,
-  maxOpacity: 0.4,
+  maxOpacity: 0.1,
   color: '#34d399',
 } as const;
 

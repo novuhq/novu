@@ -3,9 +3,9 @@ import { Area, ComposedChart, Line, XAxis } from 'recharts';
 import { type ActiveSubscribersTrendDataPoint } from '../../../api/activity';
 
 import { ChartConfig, ChartContainer, ChartTooltip } from '../../primitives/chart';
-import { ActiveSubscribersTooltip } from './active-subscribers-tooltip';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createDateBasedHasDataChecker } from '../utils/chart-validation';
+import { ActiveSubscribersTooltip } from './active-subscribers-tooltip';
 import { generateDummyActiveSubscribersData } from './chart-dummy-data';
 import { type ActiveSubscribersChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -81,10 +81,10 @@ export function ActiveSubscribersTrendChart({ data, isLoading, error }: ActiveSu
         <div className="relative w-full -mx-1 group/chart h-full min-h-0 flex flex-col overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bottom-6 z-0">
             <FlickeringGrid
-              squareSize={1.5}
-              gridGap={2}
+              squareSize={2}
+              gridGap={1}
               flickerChance={0.4}
-              maxOpacity={0.4}
+              maxOpacity={0.1}
               color="#818cf8"
               areaClip={{
                 data: areaClipData,
