@@ -10,10 +10,10 @@ import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { useStepEditor } from '../context/step-editor-context';
 import { parseJsonValue } from '../utils/preview-context.utils';
+import { CurlDisplay } from './curl-display';
+import { buildRawCurlString, type KeyValuePair } from './curl-utils';
 import { useCopyPrompt } from './use-copy-prompt';
 import { useHttpRequestTest } from './use-http-request-test';
-
-type KeyValuePair = { key: string; value: string };
 
 function TrafficLights() {
   return (
@@ -45,45 +45,6 @@ function BrowserShell({
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
       <div className="bg-white p-3">{children}</div>
-    </div>
-  );
-}
-
-function CurlDisplay({
-  url,
-  headers,
-  method,
-  body,
-}: {
-  url: string;
-  method: string;
-  headers: KeyValuePair[] | Record<string, string>;
-  body?: Record<string, unknown> | null;
-}) {
-  const headerEntries = Array.isArray(headers)
-    ? headers.filter((h) => h.key).map((h) => [h.key, h.value] as [string, string])
-    : Object.entries(headers);
-
-  return (
-    <div className="font-mono text-xs">
-      <p className="mb-0 leading-[1.5]">
-        <span className="text-[#99a0ae]">{'novu $ '}</span>
-        <span className="text-[#0e121b]">{'curl --location '}</span>
-        <span className="text-[#7d52f4]">{`'${url || 'https://api.example.com/endpoint'}' `}</span>
-      </p>
-      {headerEntries.map(([key, val]) => (
-        <p key={key} className="mb-0 leading-[1.5]">
-          <span className="text-[#0e121b]">{'--header '}</span>
-          <span className="text-[#fb4ba3]">{`'${key}`}</span>
-          <span className="text-[#7d52f4]">{`: ${val}' `}</span>
-        </p>
-      ))}
-      {method !== 'GET' && method !== 'DELETE' && body && Object.keys(body).length > 0 && (
-        <p className="mb-0 leading-[1.5]">
-          <span className="text-[#0e121b]">{'--data '}</span>
-          <span className="text-[#7d52f4]">{`'${JSON.stringify(body)}' `}</span>
-        </p>
-      )}
     </div>
   );
 }
@@ -288,38 +249,6 @@ function getStatusText(statusCode: number): string {
   return STATUS_TEXTS[statusCode] ?? '';
 }
 
-function buildRawCurlString(
-  url: string,
-  method: string,
-  headers: KeyValuePair[] | Record<string, string>,
-  body: KeyValuePair[] | Record<string, unknown> | null | undefined
-): string {
-  const headerEntries: [string, string][] = Array.isArray(headers)
-    ? headers.filter((h) => h.key).map((h) => [h.key, h.value])
-    : Object.entries(headers ?? {});
-
-  const headerArgs = headerEntries.map(([k, v]) => `--header '${k}: ${v}'`).join(' \\\n');
-
-  const canHaveBody = method !== 'GET' && method !== 'DELETE';
-  let bodyObj: Record<string, unknown> | null = null;
-
-  if (canHaveBody) {
-    if (Array.isArray(body)) {
-      const pairs = body.filter((b) => b.key);
-      if (pairs.length > 0) {
-        bodyObj = Object.fromEntries(pairs.map(({ key, value }) => [key, value]));
-      }
-    } else if (body && Object.keys(body).length > 0) {
-      bodyObj = body;
-    }
-  }
-
-  const bodyStr = bodyObj ? `--data '${JSON.stringify(bodyObj)}'` : '';
-  const parts = [`novu $ curl --location '${url}'`, headerArgs, bodyStr].filter(Boolean);
-
-  return parts.join(' \\\n');
-}
-
 function PreTestState() {
   const { controlValues, editorValue } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
@@ -411,7 +340,7 @@ function PreTestState() {
             </>
           }
         >
-          <CurlDisplay url={url} method={method} headers={activeHeaders} />
+          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} />
         </BrowserShell>
 
         <div className="flex items-center justify-between overflow-clip rounded-md border border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 shadow-[0px_1px_0px_0px_#d2d2d2]">
@@ -461,8 +390,9 @@ function ErrorState({ error }: { error: Error }) {
   const url = (controlValues?.url as string) ?? '';
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = ((controlValues?.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
+  const body = (controlValues?.body as KeyValuePair[]) ?? [];
 
-  const curlString = buildRawCurlString(url, method, headers, controlValues?.body as KeyValuePair[]);
+  const curlString = buildRawCurlString(url, method, headers, body);
 
   const handleCopyCurl = useCallback(async () => {
     try {
@@ -515,7 +445,7 @@ function ErrorState({ error }: { error: Error }) {
           </button>
         }
       >
-        <CurlDisplay url={url} method={method} headers={headers} />
+        <CurlDisplay url={url} method={method} headers={headers} body={body} />
       </BrowserShell>
 
       <div className="flex flex-col gap-3">
