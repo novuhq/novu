@@ -23,7 +23,7 @@ import { useVariables } from '../../hooks/use-variables';
 import { DEFAULT_SIDE_OFFSET } from './popover';
 
 function safeFocusEditorView(view: EditorView | null) {
-  if (!view || view.destroyed) return;
+  if (!view) return;
   try {
     view.focus();
   } catch {
