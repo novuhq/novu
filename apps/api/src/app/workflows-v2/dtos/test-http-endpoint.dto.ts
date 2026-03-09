@@ -18,6 +18,7 @@ export class TestHttpEndpointRequestDto {
     type: () => PreviewPayloadDto,
   })
   @IsOptional()
+  @ValidateNested()
   @Type(() => PreviewPayloadDto)
   previewPayload?: PreviewPayloadDto;
 }
