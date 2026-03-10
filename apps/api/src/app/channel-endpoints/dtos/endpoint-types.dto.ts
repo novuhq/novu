@@ -1,6 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
+export class ClickUpChannelEndpointDto {
+  @ApiProperty({
+    description: 'ClickUp workspace ID',
+    example: '12345',
+    type: String,
+  })
+  @IsString()
+  workspaceId: string;
+
+  @ApiProperty({
+    description: 'ClickUp chat channel ID',
+    example: '67890',
+    type: String,
+  })
+  @IsString()
+  channelId: string;
+}
+
 export class SlackChannelEndpointDto {
   @ApiProperty({
     description: 'Slack channel ID',

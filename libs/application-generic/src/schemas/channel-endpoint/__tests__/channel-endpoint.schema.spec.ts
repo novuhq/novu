@@ -24,6 +24,12 @@ describe('ChannelEndpointSchema', () => {
 
   it('should validate endpoints correctly', () => {
     // Valid cases
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.CLICKUP_CHANNEL, {
+        workspaceId: '12345',
+        channelId: '67890',
+      })
+    ).toBe(true);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_CHANNEL, { channelId: 'C123' })).toBe(true);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_USER, { userId: 'U123' })).toBe(true);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBHOOK, { url: 'https://example.com' })).toBe(true);

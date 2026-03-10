@@ -1,4 +1,5 @@
 import {
+  CreateClickUpChannelEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
@@ -8,6 +9,7 @@ import {
 } from './create-channel-endpoint-variants.dto';
 
 export type CreateChannelEndpointRequest =
+  | CreateClickUpChannelEndpointDto
   | CreateSlackChannelEndpointDto
   | CreateSlackUserEndpointDto
   | CreateWebhookEndpointDto

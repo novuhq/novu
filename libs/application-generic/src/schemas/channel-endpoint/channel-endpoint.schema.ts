@@ -3,6 +3,18 @@ import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 
 // Centralized schema definition
 export const CHANNEL_ENDPOINT_SCHEMAS = {
+  [ENDPOINT_TYPES.CLICKUP_CHANNEL]: {
+    description: 'ClickUp Channel Endpoint',
+    properties: {
+      workspaceId: { type: 'string' as const },
+      channelId: { type: 'string' as const },
+    },
+    required: ['workspaceId', 'channelId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.workspaceId === 'string' &&
+      typeof endpoint.channelId === 'string' &&
+      Object.keys(endpoint).length === 2,
+  },
   [ENDPOINT_TYPES.SLACK_CHANNEL]: {
     description: 'Slack Channel Endpoint',
     properties: { channelId: { type: 'string' as const } },

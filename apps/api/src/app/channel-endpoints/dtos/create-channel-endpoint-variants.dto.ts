@@ -5,6 +5,7 @@ import { Type } from 'class-transformer';
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import {
+  ClickUpChannelEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
   PhoneEndpointDto,
@@ -55,6 +56,26 @@ class CreateChannelEndpointBaseDto {
   @IsOptional()
   @IsString()
   connectionIdentifier?: string;
+}
+
+export class CreateClickUpChannelEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.CLICKUP_CHANNEL],
+    example: ENDPOINT_TYPES.CLICKUP_CHANNEL,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.CLICKUP_CHANNEL])
+  type: typeof ENDPOINT_TYPES.CLICKUP_CHANNEL;
+
+  @ApiProperty({
+    description: 'ClickUp channel endpoint data',
+    type: ClickUpChannelEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => ClickUpChannelEndpointDto)
+  endpoint: ClickUpChannelEndpointDto;
 }
 
 export class CreateSlackChannelEndpointDto extends CreateChannelEndpointBaseDto {

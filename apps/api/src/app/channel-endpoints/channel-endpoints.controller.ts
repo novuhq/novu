@@ -30,6 +30,7 @@ import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.dec
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
 import {
+  CreateClickUpChannelEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
@@ -39,6 +40,7 @@ import {
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
 import {
+  ClickUpChannelEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
   PhoneEndpointDto,
@@ -65,12 +67,14 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
 @Controller({ path: '/channel-endpoints', version: '1' })
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiExtraModels(
+  CreateClickUpChannelEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
   CreateWebhookEndpointDto,
   CreatePhoneEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  ClickUpChannelEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
@@ -183,6 +187,7 @@ export class ChannelEndpointsController {
     description: 'Channel endpoint creation request. The structure varies based on the type field.',
     schema: {
       oneOf: [
+        { $ref: getSchemaPath(CreateClickUpChannelEndpointDto) },
         { $ref: getSchemaPath(CreateSlackChannelEndpointDto) },
         { $ref: getSchemaPath(CreateSlackUserEndpointDto) },
         { $ref: getSchemaPath(CreateWebhookEndpointDto) },
@@ -193,6 +198,7 @@ export class ChannelEndpointsController {
       discriminator: {
         propertyName: 'type',
         mapping: {
+          [ENDPOINT_TYPES.CLICKUP_CHANNEL]: getSchemaPath(CreateClickUpChannelEndpointDto),
           [ENDPOINT_TYPES.SLACK_CHANNEL]: getSchemaPath(CreateSlackChannelEndpointDto),
           [ENDPOINT_TYPES.SLACK_USER]: getSchemaPath(CreateSlackUserEndpointDto),
           [ENDPOINT_TYPES.WEBHOOK]: getSchemaPath(CreateWebhookEndpointDto),
