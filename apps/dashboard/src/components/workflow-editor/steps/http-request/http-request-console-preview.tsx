@@ -84,7 +84,15 @@ function JsonBody({ body }: { body: unknown }) {
   );
 }
 
-function CurlRequest({ result }: { result: TestHttpEndpointResponse }) {
+function CurlRequest({
+  result,
+  onTest,
+  isTestPending,
+}: {
+  result: TestHttpEndpointResponse;
+  onTest: () => void;
+  isTestPending: boolean;
+}) {
   const { url, method, headers = {}, body } = result.resolvedRequest;
 
   const handleCopy = useCallback(async () => {
@@ -112,9 +120,15 @@ function CurlRequest({ result }: { result: TestHttpEndpointResponse }) {
         <>
           <button
             type="button"
-            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
+            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
+            onClick={onTest}
+            disabled={isTestPending}
           >
-            <RiPlayCircleLine className="size-3" />
+            {isTestPending ? (
+              <RiLoader4Line className="size-3 animate-spin" />
+            ) : (
+              <RiPlayCircleLine className="size-3" />
+            )}
           </button>
           <button
             type="button"
@@ -187,8 +201,7 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
 
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs leading-[1.5] text-[#525866]">
-              {'~ '}
-              {result.statusCode} <span className="text-[#717784]">[{result.durationMs}ms]</span>
+              <span className="text-[#717784]">[{result.durationMs}ms]</span>
             </span>
             <button
               type="button"
@@ -249,9 +262,9 @@ function getStatusText(statusCode: number): string {
   return STATUS_TEXTS[statusCode] ?? '';
 }
 
-function PreTestState({ novuSignature }: { novuSignature?: string }) {
-  const { controlValues, editorValue } = useStepEditor();
-  const { triggerTest, isTestPending } = useHttpRequestTest();
+function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTest: () => void }) {
+  const { controlValues } = useStepEditor();
+  const { isTestPending } = useHttpRequestTest();
 
   const url = (controlValues?.url as string) ?? '';
   const method = (controlValues?.method as string) ?? 'GET';
@@ -281,33 +294,6 @@ function PreTestState({ novuSignature }: { novuSignature?: string }) {
 
   const handleCopyPrompt = useCopyPrompt();
 
-  const handleTestEndpoint = useCallback(async () => {
-    try {
-      const parsedPayload = parseJsonValue(editorValue);
-      const previewPayload = {
-        ...parsedPayload,
-        context: Object.keys(parsedPayload.context).length > 0 ? parsedPayload.context : undefined,
-      };
-      const result = await triggerTest({ controlValues: controlValues as Record<string, unknown>, previewPayload });
-      const isSuccessStatus = result && result.statusCode >= 200 && result.statusCode < 300;
-
-      if (isSuccessStatus) {
-        showToast({
-          children: ({ close }) => (
-            <>
-              <ToastIcon variant="success" />
-              <span>Endpoint test executed successfully</span>
-              <ToastClose onClick={close} />
-            </>
-          ),
-          options: { position: 'bottom-right' },
-        });
-      }
-    } catch {
-      showErrorToast('Failed to execute endpoint test');
-    }
-  }, [controlValues, editorValue, triggerTest]);
-
   return (
     <div className="flex flex-col gap-3">
       <InlineToast
@@ -325,7 +311,7 @@ function PreTestState({ novuSignature }: { novuSignature?: string }) {
               <button
                 type="button"
                 className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
-                onClick={handleTestEndpoint}
+                onClick={onTest}
                 disabled={isTestPending}
               >
                 {isTestPending ? (
@@ -351,7 +337,7 @@ function PreTestState({ novuSignature }: { novuSignature?: string }) {
           <button
             type="button"
             className="flex cursor-pointer items-center gap-1 text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
-            onClick={handleTestEndpoint}
+            onClick={onTest}
             disabled={isTestPending}
           >
             {isTestPending ? (
@@ -383,7 +369,17 @@ function LoadingState() {
   );
 }
 
-function ErrorState({ error, novuSignature }: { error: Error; novuSignature?: string }) {
+function ErrorState({
+  error,
+  novuSignature,
+  onTest,
+  isTestPending,
+}: {
+  error: Error;
+  novuSignature?: string;
+  onTest: () => void;
+  isTestPending: boolean;
+}) {
   const { controlValues } = useStepEditor();
 
   const statusCode = error instanceof NovuApiError ? error.status : 500;
@@ -439,13 +435,27 @@ function ErrorState({ error, novuSignature }: { error: Error; novuSignature?: st
       <BrowserShell
         className="rounded-tl-lg rounded-tr-lg rounded-bl-[4px] rounded-br-[4px]"
         actions={
-          <button
-            type="button"
-            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-            onClick={handleCopyCurl}
-          >
-            <RiFileCopyLine className="size-3" />
-          </button>
+          <>
+            <button
+              type="button"
+              className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
+              onClick={onTest}
+              disabled={isTestPending}
+            >
+              {isTestPending ? (
+                <RiLoader4Line className="size-3 animate-spin" />
+              ) : (
+                <RiPlayCircleLine className="size-3" />
+              )}
+            </button>
+            <button
+              type="button"
+              className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
+              onClick={handleCopyCurl}
+            >
+              <RiFileCopyLine className="size-3" />
+            </button>
+          </>
         }
       >
         <CurlDisplay url={url} method={method} headers={headers} body={body} novuSignature={novuSignature} />
@@ -489,11 +499,38 @@ function ErrorState({ error, novuSignature }: { error: Error; novuSignature?: st
 const STATE_TRANSITION = { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const };
 
 export function HttpRequestConsolePreview() {
-  const { testResult, isTestPending, testError } = useHttpRequestTest();
-  const { step, previewData } = useStepEditor();
+  const { testResult, isTestPending, testError, triggerTest } = useHttpRequestTest();
+  const { step, previewData, controlValues, editorValue } = useStepEditor();
   const novuSignature = previewData?.novuSignature;
 
   const state = isTestPending ? 'loading' : testResult ? 'post-test' : testError ? 'error' : 'pre-test';
+
+  const handleTestEndpoint = useCallback(async () => {
+    try {
+      const parsedPayload = parseJsonValue(editorValue);
+      const previewPayload = {
+        ...parsedPayload,
+        context: Object.keys(parsedPayload.context).length > 0 ? parsedPayload.context : undefined,
+      };
+      const result = await triggerTest({ controlValues: controlValues as Record<string, unknown>, previewPayload });
+      const isSuccessStatus = result && result.statusCode >= 200 && result.statusCode < 300;
+
+      if (isSuccessStatus) {
+        showToast({
+          children: ({ close }) => (
+            <>
+              <ToastIcon variant="success" />
+              <span>Endpoint test executed successfully</span>
+              <ToastClose onClick={close} />
+            </>
+          ),
+          options: { position: 'bottom-right' },
+        });
+      }
+    } catch {
+      showErrorToast('Failed to execute endpoint test');
+    }
+  }, [controlValues, editorValue, triggerTest]);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -516,7 +553,7 @@ export function HttpRequestConsolePreview() {
           exit={{ opacity: 0 }}
           transition={STATE_TRANSITION}
         >
-          <PreTestState novuSignature={novuSignature} />
+          <PreTestState novuSignature={novuSignature} onTest={handleTestEndpoint} />
         </motion.div>
       )}
       {state === 'error' && testError && (
@@ -527,7 +564,12 @@ export function HttpRequestConsolePreview() {
           exit={{ opacity: 0 }}
           transition={STATE_TRANSITION}
         >
-          <ErrorState error={testError} novuSignature={novuSignature} />
+          <ErrorState
+            error={testError}
+            novuSignature={novuSignature}
+            onTest={handleTestEndpoint}
+            isTestPending={isTestPending}
+          />
         </motion.div>
       )}
       {state === 'post-test' && testResult && (
@@ -539,7 +581,7 @@ export function HttpRequestConsolePreview() {
           transition={STATE_TRANSITION}
           className="flex flex-col gap-[6px]"
         >
-          <CurlRequest result={testResult} />
+          <CurlRequest result={testResult} onTest={handleTestEndpoint} isTestPending={isTestPending} />
           <ResponsePanel result={testResult} stepName={step.stepId} />
         </motion.div>
       )}
