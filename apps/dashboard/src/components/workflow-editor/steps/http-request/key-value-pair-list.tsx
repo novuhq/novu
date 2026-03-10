@@ -1,10 +1,9 @@
-import { HttpRequestKeyValuePair } from '@novu/shared';
-import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { RiAddLine, RiDeleteBin2Line } from 'react-icons/ri';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
+import { RiAddLine, RiDeleteBin2Line, RiErrorWarningLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormField } from '@/components/primitives/form/form';
 import { InputRoot } from '@/components/primitives/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -19,39 +18,24 @@ type KeyValuePairListProps = {
 };
 
 export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairListProps) {
-  const { control, getValues, setValue } = useFormContext();
+  const { control } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
-  const getPairs = (): HttpRequestKeyValuePair[] => getValues(fieldName) ?? [];
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: fieldName,
+  });
 
-  const [pairs, setPairs] = useState<HttpRequestKeyValuePair[]>(() => getPairs());
-
-  const syncToForm = (updated: HttpRequestKeyValuePair[]) => {
-    setValue(fieldName, updated, { shouldDirty: true });
+  const handleAdd = () => {
+    append({ key: '', value: '' });
     saveForm();
   };
 
-  const handleAdd = () => {
-    const updated = [...pairs, { key: '', value: '' }];
-    setPairs(updated);
-    syncToForm(updated);
-  };
-
-  const handleUpdate = (index: number, field: 'key' | 'value', newValue: string) => {
-    const updated = pairs.map((pair, i) => (i === index ? { ...pair, [field]: newValue } : pair));
-    setPairs(updated);
-  };
-
-  const handleBlur = () => {
-    syncToForm(pairs);
-  };
-
   const handleRemove = (index: number) => {
-    const updated = pairs.filter((_, i) => i !== index);
-    setPairs(updated);
-    syncToForm(updated);
+    remove(index);
+    saveForm();
   };
 
   return (
@@ -59,34 +43,80 @@ export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairList
       <SectionHeader label={label} tooltip={tooltip} />
       <div className="flex flex-col gap-1">
         {fieldName === 'headers' && <NovuSignatureHeader />}
-        {pairs.map((pair, index) => (
-          <div key={index} className="flex items-center gap-1">
-            <InputRoot className="w-[200px] flex-shrink-0">
-              <ControlInput
-                size="2xs"
-                multiline={false}
-                indentWithTab={false}
-                placeholder="key..."
-                value={pair.key}
-                isAllowedVariable={isAllowedVariable}
-                variables={variables}
-                onChange={(val) => handleUpdate(index, 'key', typeof val === 'string' ? val : '')}
-                onBlur={handleBlur}
-              />
-            </InputRoot>
-            <InputRoot className="min-w-0 flex-1">
-              <ControlInput
-                size="2xs"
-                multiline={false}
-                indentWithTab={false}
-                placeholder="Insert value..."
-                value={pair.value}
-                isAllowedVariable={isAllowedVariable}
-                variables={variables}
-                onChange={(val) => handleUpdate(index, 'value', typeof val === 'string' ? val : '')}
-                onBlur={handleBlur}
-              />
-            </InputRoot>
+        {fields.map((field, index) => (
+          <div key={field.id} className="flex items-center gap-1">
+            <Controller
+              control={control}
+              name={`${fieldName}.${index}.key`}
+              render={({ field: keyField, fieldState: keyFieldState }) => (
+                <InputRoot className="w-[200px] flex-shrink-0" hasError={!!keyFieldState.error}>
+                  <ControlInput
+                    size="2xs"
+                    multiline={false}
+                    indentWithTab={false}
+                    placeholder="key..."
+                    value={keyField.value}
+                    isAllowedVariable={isAllowedVariable}
+                    variables={variables}
+                    onChange={(val) => keyField.onChange(typeof val === 'string' ? val : '')}
+                    onBlur={() => {
+                      keyField.onBlur();
+                      saveForm();
+                    }}
+                  />
+                  {keyFieldState.error && (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex cursor-default items-center justify-center pl-1 pr-1">
+                            <RiErrorWarningLine className="text-destructive h-4 w-4 shrink-0" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={5}>
+                          <p>{keyFieldState.error.message}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </InputRoot>
+              )}
+            />
+            <Controller
+              control={control}
+              name={`${fieldName}.${index}.value`}
+              render={({ field: valueField, fieldState: valueFieldState }) => (
+                <InputRoot className="min-w-0 flex-1" hasError={!!valueFieldState.error}>
+                  <ControlInput
+                    size="2xs"
+                    multiline={false}
+                    indentWithTab={false}
+                    placeholder="Insert value..."
+                    value={valueField.value}
+                    isAllowedVariable={isAllowedVariable}
+                    variables={variables}
+                    onChange={(val) => valueField.onChange(typeof val === 'string' ? val : '')}
+                    onBlur={() => {
+                      valueField.onBlur();
+                      saveForm();
+                    }}
+                  />
+                  {valueFieldState.error && (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex cursor-default items-center justify-center pl-1 pr-1">
+                            <RiErrorWarningLine className="text-destructive h-4 w-4 shrink-0" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={5}>
+                          <p>{valueFieldState.error.message}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </InputRoot>
+              )}
+            />
             <Button
               type="button"
               variant="error"
