@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiCornerDownRightLine, RiFileCopyLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
-import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
+import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
@@ -75,89 +75,117 @@ export function RequestEndpoint() {
         }
       />
 
-      <div className="flex items-center gap-1">
-        <RiCornerDownRightLine className="size-4 shrink-0 text-text-sub" />
-        <div className="flex-shrink-0">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-1">
+          <RiCornerDownRightLine className="size-4 shrink-0 text-text-sub" />
+          <div className="flex-shrink-0">
+            <FormField
+              control={control}
+              name="method"
+              render={({ field }) => (
+                <FormItem className="m-0 space-y-0">
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        saveForm();
+                      }}
+                    >
+                      <SelectTrigger
+                        size="2xs"
+                        className="w-auto min-w-[72px] gap-1 border-stroke-soft bg-bg-white font-mono text-xs font-medium shadow-xs"
+                      >
+                        <SelectValue>
+                          <span className={METHOD_COLORS[field.value as HttpMethodEnum] ?? 'text-text-strong'}>
+                            {/* {field.value ?? HttpMethodEnum.POST} */}
+                            {field.value}
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HTTP_METHODS.map((method) => (
+                          <SelectItem key={method} value={method} className="font-mono text-xs">
+                            <span className={METHOD_COLORS[method]}>{method}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
           <FormField
             control={control}
-            name="method"
+            name="url"
             render={({ field }) => (
-              <FormItem className="m-0 space-y-0">
+              <FormItem className="m-0 min-w-0 flex-1">
                 <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      saveForm();
-                    }}
-                  >
-                    <SelectTrigger
+                  <InputRoot className="h-7 flex-1 border-stroke-soft shadow-xs">
+                    <ControlInput
                       size="2xs"
-                      className="w-auto min-w-[72px] gap-1 border-stroke-soft bg-bg-white font-mono text-xs font-medium shadow-xs"
-                    >
-                      <SelectValue>
-                        <span className={METHOD_COLORS[field.value as HttpMethodEnum] ?? 'text-text-strong'}>
-                          {field.value ?? HttpMethodEnum.POST}
-                        </span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {HTTP_METHODS.map((method) => (
-                        <SelectItem key={method} value={method} className="font-mono text-xs">
-                          <span className={METHOD_COLORS[method]}>{method}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      multiline={false}
+                      indentWithTab={false}
+                      placeholder="https://api.example.com/endpoint"
+                      value={field.value ?? ''}
+                      isAllowedVariable={isAllowedVariable}
+                      variables={variables}
+                      onChange={(val) => field.onChange(val)}
+                      onBlur={() => {
+                        field.onBlur();
+                        saveForm();
+                      }}
+                    />
+                  </InputRoot>
                 </FormControl>
               </FormItem>
             )}
           />
+
+          <FormField
+            control={control}
+            name="url"
+            render={({ field }) => (
+              <Button
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="h-7 w-7 flex-shrink-0 p-0"
+                onClick={() => handleCopyUrl(field.value ?? '')}
+              >
+                <RiFileCopyLine className="size-3" />
+              </Button>
+            )}
+          />
         </div>
 
-        <FormField
-          control={control}
-          name="url"
-          render={({ field }) => (
-            <FormItem className="m-0 min-w-0 flex-1">
-              <FormControl>
-                <InputRoot className="h-7 flex-1 border-stroke-soft shadow-xs">
-                  <ControlInput
-                    size="2xs"
-                    multiline={false}
-                    indentWithTab={false}
-                    placeholder="https://api.example.com/endpoint"
-                    value={field.value ?? ''}
-                    isAllowedVariable={isAllowedVariable}
-                    variables={variables}
-                    onChange={(val) => field.onChange(val)}
-                    onBlur={() => {
-                      field.onBlur();
-                      saveForm();
-                    }}
-                  />
-                </InputRoot>
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="url"
-          render={({ field }) => (
-            <Button
-              type="button"
-              variant="secondary"
-              mode="ghost"
-              size="2xs"
-              className="h-7 w-7 flex-shrink-0 p-0"
-              onClick={() => handleCopyUrl(field.value ?? '')}
-            >
-              <RiFileCopyLine className="size-3" />
-            </Button>
-          )}
-        />
+        <div className="flex gap-1 pl-5">
+          <FormField
+            control={control}
+            name="method"
+            render={({ fieldState }) => (
+              <FormItem className="m-0 w-[72px] flex-shrink-0 space-y-0 overflow-hidden">
+                <FormMessage suppressError>
+                  {fieldState.error?.message && <span className="truncate">{fieldState.error.message}</span>}
+                </FormMessage>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="url"
+            render={({ fieldState }) => (
+              <FormItem className="m-0 min-w-0 flex-1 space-y-0 overflow-hidden">
+                <FormMessage suppressError>
+                  {fieldState.error?.message && <span className="truncate">{fieldState.error.message}</span>}
+                </FormMessage>
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
     </div>
   );

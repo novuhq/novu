@@ -91,7 +91,7 @@ export const processControlValuesBySchema = ({
     return issues;
   }
 
-  const ajv = new Ajv({ allErrors: true });
+  const ajv = new Ajv({ allErrors: true, useDefaults: true });
   addFormats(ajv);
   const validate = ajv.compile(controlSchema);
   const isValid = validate(controlValues);

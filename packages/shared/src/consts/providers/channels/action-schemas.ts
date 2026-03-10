@@ -20,7 +20,7 @@ const keyValuePairSchema = {
   type: 'object',
   properties: {
     key: { type: 'string', minLength: 1 },
-    value: { type: 'string' },
+    value: { type: 'string', minLength: 1 },
   },
   required: ['key', 'value'],
   additionalProperties: false,
@@ -44,7 +44,6 @@ export const httpRequestControlSchema = {
         HttpMethodEnum.HEAD,
         HttpMethodEnum.OPTIONS,
       ],
-      default: HttpMethodEnum.POST,
     },
     url: {
       type: 'string',
@@ -56,13 +55,11 @@ export const httpRequestControlSchema = {
       type: 'array',
       items: keyValuePairSchema,
       maxItems: 50,
-      default: [],
     },
     body: {
       type: 'array',
       items: keyValuePairSchema,
       maxItems: 100,
-      default: [],
     },
     responseBodySchema: {
       type: 'object',
@@ -71,22 +68,18 @@ export const httpRequestControlSchema = {
         properties: { type: 'object', additionalProperties: true },
         required: { type: 'array', items: { type: 'string' } },
       },
-      default: { type: 'object', properties: {} },
       additionalProperties: true,
     },
     enforceSchemaValidation: {
       type: 'boolean',
-      default: false,
     },
     continueOnFailure: {
       type: 'boolean',
-      default: false,
     },
     timeout: {
       type: 'number',
       minimum: 100,
       maximum: 30000,
-      default: 5000,
     },
   },
   required: ['method', 'url'],
