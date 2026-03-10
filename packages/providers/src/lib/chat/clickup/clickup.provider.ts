@@ -77,6 +77,6 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
       payload
     );
 
-    return response
+    return response;
   }
 }
