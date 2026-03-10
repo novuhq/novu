@@ -130,7 +130,10 @@ export const ChatBody = ({
             </div>
           </div>
         ) : (
-          <ConversationContent className={chatConversationContentClassName}>
+          <ConversationContent
+            className={chatConversationContentClassName}
+            scrollClassName="overflow-y-auto ![scrollbar-gutter:initial]"
+          >
             {messages.map((chatMessage) => {
               const isLastAssistantMessage =
                 chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;
