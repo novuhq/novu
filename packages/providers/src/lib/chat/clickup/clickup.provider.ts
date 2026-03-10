@@ -73,7 +73,7 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
     }).body;
 
     const response = await this.axiosInstance.post(
-      `/workspaces/${workspaceId}/chat/channels/${channelId}/messages`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/chat/channels/${encodeURIComponent(channelId)}/messages`,
       payload
     );
 
