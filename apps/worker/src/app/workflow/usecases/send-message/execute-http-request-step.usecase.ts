@@ -26,8 +26,15 @@ import {
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import * as dns from 'dns';
+import { LRUCache } from 'lru-cache';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
+
+const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
+  max: 500,
+  ttl: 1000 * 60 * 5, // 5 minutes
+});
+
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
@@ -297,12 +304,15 @@ async function validateUrlSsrf(url: string): Promise<string | null> {
     return `Requests to "${hostname}" are not allowed.`;
   }
 
-  let addresses: dns.LookupAddress[];
+  let addresses = DNS_CACHE.get(hostname);
 
-  try {
-    addresses = await dns.promises.lookup(hostname, { all: true });
-  } catch {
-    return `Unable to resolve hostname "${hostname}".`;
+  if (!addresses) {
+    try {
+      addresses = await dns.promises.lookup(hostname, { all: true });
+      DNS_CACHE.set(hostname, addresses);
+    } catch {
+      return `Unable to resolve hostname "${hostname}".`;
+    }
   }
 
   for (const { address } of addresses) {
