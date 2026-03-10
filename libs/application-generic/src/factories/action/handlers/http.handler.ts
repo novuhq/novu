@@ -24,7 +24,7 @@ export class HttpActionHandler implements IActionHandler {
     controlValues,
     signatureHeaders,
   }: IActionExecuteConfig<HttpRequestControlType, HttpRequestCredentials>): Promise<IActionExecuteResult> {
-    const { url, method, headers = [], body = [] } = controlValues;
+    const { url, method, headers = [], body = [], timeout = 5000 } = controlValues;
 
     if (!url) {
       throw new Error('HTTP action step is missing a URL. Please configure a URL in the step settings.');
@@ -40,6 +40,7 @@ export class HttpActionHandler implements IActionHandler {
         url,
         method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
         headers: mergedHeaders,
+        timeout: timeout as number,
         ...(hasBody ? { body: bodyObject } : {}),
       });
 

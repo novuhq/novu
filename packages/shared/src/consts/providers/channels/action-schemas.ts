@@ -19,7 +19,7 @@ export type HttpRequestKeyValuePair = {
 const keyValuePairSchema = {
   type: 'object',
   properties: {
-    key: { type: 'string' },
+    key: { type: 'string', minLength: 1 },
     value: { type: 'string' },
   },
   required: ['key', 'value'],
@@ -50,15 +50,18 @@ export const httpRequestControlSchema = {
       type: 'string',
       format: 'uri',
       minLength: 1,
+      maxLength: 2048,
     },
     headers: {
       type: 'array',
       items: keyValuePairSchema,
+      maxItems: 50,
       default: [],
     },
     body: {
       type: 'array',
       items: keyValuePairSchema,
+      maxItems: 100,
       default: [],
     },
     responseBodySchema: {
@@ -78,6 +81,12 @@ export const httpRequestControlSchema = {
     continueOnFailure: {
       type: 'boolean',
       default: false,
+    },
+    timeout: {
+      type: 'number',
+      minimum: 100,
+      maximum: 30000,
+      default: 5000,
     },
   },
   required: ['method', 'url'],
@@ -117,6 +126,10 @@ export const httpRequestUiSchema: UiSchema = {
     continueOnFailure: {
       component: UiComponentEnum.DESTINATION_CONTINUE_ON_FAILURE,
       placeholder: false,
+    },
+    timeout: {
+      component: UiComponentEnum.DESTINATION_TIMEOUT,
+      placeholder: 5000,
     },
   },
 };

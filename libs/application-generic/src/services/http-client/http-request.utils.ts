@@ -19,5 +19,7 @@ export function toBodyRecord(pairs: KeyValuePair[]): Record<string, unknown> | u
 }
 
 export function shouldIncludeBody(body: Record<string, unknown> | undefined, method: string): boolean {
-  return !!body && method !== 'GET' && method !== 'DELETE';
+  const methodsWithoutBody = ['GET', 'DELETE', 'HEAD', 'OPTIONS'];
+
+  return !!body && !methodsWithoutBody.includes(method);
 }

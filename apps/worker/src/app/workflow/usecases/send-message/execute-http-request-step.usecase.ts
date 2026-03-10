@@ -57,6 +57,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const method = (controlValues.method as string) ?? 'GET';
     const rawHeaders = (controlValues.headers as Array<{ key: string; value: string }> | undefined) ?? [];
     const rawBody = (controlValues.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const timeout = (controlValues.timeout as number | undefined) ?? 5000;
 
     if (!url) {
       await this.createExecutionDetails.execute(
@@ -117,6 +118,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         url,
         method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
         headers: mergedHeaders,
+        timeout,
         ...(hasBody ? { body: bodyObject } : {}),
       });
 
