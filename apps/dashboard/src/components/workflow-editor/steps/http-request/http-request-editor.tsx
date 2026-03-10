@@ -77,10 +77,7 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
 
         <p className="text-text-sub px-1 text-xs">
           <span>💡 Tip: </span>
-          <span className="text-text-sub font-normal">
-            Supports variables, type {'{{'}
-            {'{'} for more.
-          </span>
+          <span className="text-text-sub font-normal">Supports variables, type {'{{'} for more.</span>
         </p>
       </TabsSection>
 

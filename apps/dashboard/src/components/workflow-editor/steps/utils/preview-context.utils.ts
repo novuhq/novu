@@ -5,6 +5,7 @@ import { ParsedData, PreviewSubscriberData } from '../types/preview-context.type
 export function parseJsonValue(value: string): ParsedData {
   try {
     const parsed = JSON.parse(value || '{}');
+
     return {
       payload: parsed.payload || {},
       subscriber: parsed.subscriber || {},

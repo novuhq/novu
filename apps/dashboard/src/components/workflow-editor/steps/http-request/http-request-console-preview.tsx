@@ -283,7 +283,11 @@ function PreTestState() {
 
   const handleTestEndpoint = useCallback(async () => {
     try {
-      const previewPayload = parseJsonValue(editorValue);
+      const parsedPayload = parseJsonValue(editorValue);
+      const previewPayload = {
+        ...parsedPayload,
+        context: Object.keys(parsedPayload.context).length > 0 ? parsedPayload.context : undefined,
+      };
       const result = await triggerTest({ controlValues: controlValues as Record<string, unknown>, previewPayload });
       const isSuccessStatus = result && result.statusCode >= 200 && result.statusCode < 300;
 

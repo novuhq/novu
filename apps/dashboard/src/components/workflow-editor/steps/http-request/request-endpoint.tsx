@@ -41,7 +41,11 @@ export function RequestEndpoint() {
 
   const handleTestEndpoint = useCallback(async () => {
     const controlValues = getValues() as Record<string, unknown>;
-    const previewPayload = parseJsonValue(editorValue);
+    const parsedPayload = parseJsonValue(editorValue);
+    const previewPayload = {
+      ...parsedPayload,
+      context: Object.keys(parsedPayload.context).length > 0 ? parsedPayload.context : undefined,
+    };
 
     await triggerTest({ controlValues, previewPayload });
   }, [getValues, editorValue, triggerTest]);
