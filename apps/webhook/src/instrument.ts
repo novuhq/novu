@@ -11,7 +11,8 @@ import { name, version } from '../package.json';
 
 startOtel(name, version);
 
-import { init } from '@sentry/nestjs';
+// biome-ignore lint: lazy require so @sentry/nestjs loads after OTEL instrumentations are installed
+const { init } = require('@sentry/nestjs');
 
 if (process.env.SENTRY_DSN) {
   init({
