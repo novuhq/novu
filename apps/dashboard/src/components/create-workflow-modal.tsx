@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { AiAgentTypeEnum, AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
 import { ChatOnDataCallback, generateId, UIMessage } from 'ai';
 import { motion } from 'motion/react';
@@ -322,8 +322,8 @@ type GenerationStep = {
 };
 
 function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentProps) {
-  const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
+  const form = useForm({
+    resolver: standardSchemaResolver(schema),
     defaultValues: {
       prompt: '',
     },
