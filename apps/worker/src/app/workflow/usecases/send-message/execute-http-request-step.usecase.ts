@@ -25,6 +25,7 @@ import {
 } from '@novu/shared';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import * as dns from 'dns';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
@@ -69,6 +70,28 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           raw: JSON.stringify({
             error: 'HTTP request step is missing a URL. Please configure a URL in the step settings.',
           }),
+        })
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+        shouldHalt: !controlValues.continueOnFailure,
+      };
+    }
+
+    const ssrfValidationError = await validateUrlSsrf(url);
+
+    if (ssrfValidationError) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: ssrfValidationError }),
         })
       );
 
@@ -234,4 +257,57 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     return rawControls;
   }
+}
+
+function isPrivateIp(ip: string): boolean {
+  const privateRanges = [
+    /^127\./,
+    /^10\./,
+    /^172\.(1[6-9]|2[0-9]|3[01])\./,
+    /^192\.168\./,
+    /^169\.254\./,
+    /^::1$/,
+    /^fc00:/i,
+    /^fe80:/i,
+  ];
+
+  return privateRanges.some((range) => range.test(ip));
+}
+
+async function validateUrlSsrf(url: string): Promise<string | null> {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(url);
+  } catch {
+    return 'Invalid URL format.';
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return `URL scheme "${parsed.protocol}" is not allowed. Only http and https are permitted.`;
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  const blockedHostnames = ['localhost', 'metadata.google.internal'];
+
+  if (blockedHostnames.includes(hostname)) {
+    return `Requests to "${hostname}" are not allowed.`;
+  }
+
+  let addresses: dns.LookupAddress[];
+
+  try {
+    addresses = await dns.promises.lookup(hostname, { all: true });
+  } catch {
+    return `Unable to resolve hostname "${hostname}".`;
+  }
+
+  for (const { address } of addresses) {
+    if (isPrivateIp(address)) {
+      return `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`;
+    }
+  }
+
+  return null;
 }

@@ -48,6 +48,7 @@ export const httpRequestControlSchema = {
     },
     url: {
       type: 'string',
+      format: 'uri',
       minLength: 1,
     },
     headers: {
