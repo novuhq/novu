@@ -16,13 +16,14 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { AiChatProvider, AiSidekickPanel, useAiChat } from '../ai-sidekick';
+import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
 import { Button } from '../primitives/button';
@@ -31,7 +32,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { ResizableLayout } from './steps/layout/resizable-layout';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
+import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
@@ -44,7 +47,9 @@ export const WorkflowTabs = () => {
   const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
+  const [isTriggerDrawerOpen, setIsTriggerDrawerOpen] = useState(false);
   const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
+  const { testData } = useFetchWorkflowTestData({ workflowSlug });
   const isNewWorkflowSlug = workflowSlug === 'new';
 
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
@@ -326,6 +331,7 @@ export const WorkflowTabs = () => {
           data.type === 'data-workflow-completed' ||
           data.type === 'data-step-updated' ||
           data.type === 'data-step-removed' ||
+          data.type === 'data-step-moved' ||
           data.type === 'data-workflow-metadata-updated'
         ) {
           refetchWorkflow({ cancelRefetch: true });
@@ -420,14 +426,7 @@ export const WorkflowTabs = () => {
                     size="xs"
                     mode="gradient"
                     className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
-                    onClick={() => {
-                      navigate(
-                        buildRoute(ROUTES.TRIGGER_WORKFLOW, {
-                          environmentSlug: currentEnvironment?.slug ?? '',
-                          workflowSlug: workflow?.slug ?? '',
-                        })
-                      );
-                    }}
+                    onClick={() => setIsTriggerDrawerOpen(true)}
                   >
                     Test Workflow
                   </Button>
@@ -464,11 +463,24 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-          {isAiWorkflowGenerationEnabled && isDevEnvironment && <AiSidekickPanel />}
-          <div className="relative flex-1">
-            <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
-            {isAiWorkflowGenerationEnabled && isDevEnvironment && <WorkflowCanvasToast />}
-          </div>
+          {isAiWorkflowGenerationEnabled && isDevEnvironment ? (
+            <ResizableLayout autoSaveId="workflow-editor-ai-sidekick-layout" className="flex-1 min-w-0">
+              <ResizableLayout.ContextPanel defaultSize={26} minSize={20} maxSize={80}>
+                <NovuCopilotPanel />
+              </ResizableLayout.ContextPanel>
+              <ResizableLayout.Handle />
+              <ResizableLayout.MainContentPanel>
+                <div className="relative flex-1">
+                  <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+                  <WorkflowCanvasToast />
+                </div>
+              </ResizableLayout.MainContentPanel>
+            </ResizableLayout>
+          ) : (
+            <div className="relative flex-1">
+              <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />
@@ -481,6 +493,11 @@ export const WorkflowTabs = () => {
         workflow={workflow}
         to={subscriberData}
         payload={JSON.stringify(integrationPayload, null, 2)}
+      />
+      <TestWorkflowDrawer
+        isOpen={isTriggerDrawerOpen}
+        onOpenChange={setIsTriggerDrawerOpen}
+        testData={testData}
       />
     </div>
   );

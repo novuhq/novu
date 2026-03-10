@@ -5,7 +5,7 @@ import { merge } from 'es-toolkit/compat';
 import { readFile } from 'fs/promises';
 import { VerifyPayloadService } from '../../services';
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
-import { GetLayoutCommand, GetLayoutUseCase, LayoutDto } from '../get-layout';
+import { GetLayoutCommandV0, GetLayoutUseCaseV0, LayoutDtoV0 } from '../get-layout-v0';
 import { GetNovuLayout } from '../get-novu-layout';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 
@@ -14,7 +14,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
     protected communityOrganizationRepository: CommunityOrganizationRepository,
-    private getLayoutUsecase: GetLayoutUseCase,
+    private getLayoutUsecase: GetLayoutUseCaseV0,
     private getNovuLayoutUsecase: GetNovuLayout,
     protected moduleRef: ModuleRef
   ) {
@@ -31,12 +31,12 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
     const isEditorMode = command.contentType === 'editor';
 
-    let layout: LayoutDto | null = null;
+    let layout: LayoutDtoV0 | null = null;
     let layoutContent: string | null = null;
 
     if (command.layoutId) {
       layout = await this.getLayoutUsecase.execute(
-        GetLayoutCommand.create({
+        GetLayoutCommandV0.create({
           layoutIdOrInternalId: command.layoutId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,

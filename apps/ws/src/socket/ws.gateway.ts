@@ -25,7 +25,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   server: Server;
 
   async handleDisconnect(connection: Socket) {
-    Logger.log(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
+    Logger.debug(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
 
     const _this = this;
 
@@ -49,7 +49,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   }
 
   async handleConnection(connection: Socket) {
-    Logger.log(`New connection received from ${connection.id}`, LOG_CONTEXT);
+    Logger.debug(`New connection received from ${connection.id}`, LOG_CONTEXT);
 
     const _this = this;
 
@@ -118,7 +118,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
     const activeConnections = await this.getActiveConnections(connection, subscriber._id);
 
-    Logger.log(
+    Logger.debug(
       `Disconnect request received from ${subscriber._id}. Active connections: ${activeConnections}`,
       LOG_CONTEXT
     );
@@ -147,19 +147,19 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return this.disconnect(connection);
     }
 
-    Logger.log(
+    Logger.debug(
       `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId} organization id: ${subscriber.organizationId}`,
       LOG_CONTEXT
     );
 
-    // Store contexts in socket metadata for filtering
-    connection.data.contextKeys = subscriber.contextKeys;
+    const contextKeys = subscriber.contextKeys ?? [];
 
-    // Join single user room (no per-context rooms needed)
+    connection.data.contextKeys = contextKeys;
+
     await connection.join(subscriber._id);
 
-    const contextDisplay = subscriber.contextKeys.length === 0 ? 'no context' : subscriber.contextKeys.join(', ');
-    Logger.log(
+    const contextDisplay = contextKeys.length === 0 ? 'no context' : contextKeys.join(', ');
+    Logger.debug(
       `Connection ${connection.id} accepted for ${subscriber._id} with contexts: ${contextDisplay}`,
       LOG_CONTEXT
     );
@@ -174,25 +174,26 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return;
     }
 
+    const safeContextKeys = contextKeys ?? [];
     const sockets = await this.server.in(userId).fetchSockets();
 
     Logger.log(
-      `Sending event ${event} to ${userId} with message contexts: ${contextKeys.length === 0 ? 'none' : contextKeys.join(', ')} (${sockets.length} socket(s))`,
+      `Sending event ${event} to ${userId} with message contexts: ${safeContextKeys.length === 0 ? 'none' : safeContextKeys.join(', ')} (${sockets.length} socket(s))`,
       LOG_CONTEXT
     );
 
     for (const socket of sockets) {
-      const inboxContextKeys = socket.data.contextKeys;
+      const inboxContextKeys = socket.data.contextKeys ?? [];
 
-      if (this.isExactMatch(contextKeys, inboxContextKeys)) {
+      if (this.isExactMatch(safeContextKeys, inboxContextKeys)) {
         socket.emit(event, data);
-        Logger.log(
+        Logger.debug(
           `Delivered to socket ${socket.id} with inbox contexts: ${inboxContextKeys.length === 0 ? 'none' : inboxContextKeys.join(', ')}`,
           LOG_CONTEXT
         );
       } else {
         Logger.log(
-          `Skipped socket ${socket.id} - contexts mismatch. Message: [${contextKeys.join(', ') || 'none'}], Inbox: [${inboxContextKeys.join(', ') || 'none'}]`,
+          `Skipped socket ${socket.id} - contexts mismatch. Message: [${safeContextKeys.join(', ') || 'none'}], Inbox: [${inboxContextKeys.join(', ') || 'none'}]`,
           LOG_CONTEXT
         );
       }
@@ -224,7 +225,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     Logger.log(`Sending individualized unread counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
 
     for (const socket of sockets) {
-      const contextKeys = socket.data.contextKeys;
+      const contextKeys = socket.data.contextKeys ?? [];
 
       try {
         const [unreadCount, severityCounts] = await Promise.all([
@@ -297,7 +298,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     Logger.log(`Sending individualized unseen counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
 
     for (const socket of sockets) {
-      const contextKeys = socket.data.contextKeys;
+      const contextKeys = socket.data.contextKeys ?? [];
 
       try {
         const unseenCount = await messageRepository.getCount(

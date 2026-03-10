@@ -6,6 +6,7 @@ import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import type http from 'http';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from '../auth.service';
+import { addNewRelicTraceAttributes } from './newrelic.util';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -46,6 +47,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         throw new UnauthorizedException('Cannot find environment', JSON.stringify({ session }));
       }
     }
+
+    addNewRelicTraceAttributes(session);
 
     return session;
   }

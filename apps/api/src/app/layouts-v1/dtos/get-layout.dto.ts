@@ -1,3 +1,3 @@
-import { LayoutDto } from './layout.dto';
+import { LayoutDtoV0 } from '@novu/application-generic';
 
-export class GetLayoutResponseDto extends LayoutDto {}
+export class GetLayoutResponseDto extends LayoutDtoV0 {}

@@ -18,10 +18,7 @@ describe('step-discovery', () => {
   });
 
   it('discovers and validates a correct tsx step file', async () => {
-    writeStepFile(
-      'welcome-email.step.tsx',
-      createStepFileContent({ stepId: 'welcome-email', workflowId: 'onboarding' })
-    );
+    writeStepFile('onboarding/welcome-email.step.tsx', createStepFileContent({ stepId: 'welcome-email' }));
 
     const result = await discoverStepFiles(tempDir);
 
@@ -33,18 +30,15 @@ describe('step-discovery', () => {
       stepId: 'welcome-email',
       workflowId: 'onboarding',
       type: 'email',
-      relativePath: 'welcome-email.step.tsx',
+      relativePath: 'onboarding/welcome-email.step.tsx',
     });
   });
 
   it('discovers valid js and jsx step files', async () => {
+    writeStepFile('workflow-js/plain-js.step.js', createStepFileContent({ stepId: 'plain-js', useJsx: false }));
     writeStepFile(
-      'plain-js.step.js',
-      createStepFileContent({ stepId: 'plain-js', workflowId: 'workflow-js', useJsx: false })
-    );
-    writeStepFile(
-      'template-jsx.step.jsx',
-      createStepFileContent({ stepId: 'template-jsx', workflowId: 'workflow-jsx', useJsx: true })
+      'workflow-jsx/template-jsx.step.jsx',
+      createStepFileContent({ stepId: 'template-jsx', useJsx: true })
     );
 
     const result = await discoverStepFiles(tempDir);
@@ -56,14 +50,8 @@ describe('step-discovery', () => {
   });
 
   it('returns valid steps and errors when files are mixed', async () => {
-    writeStepFile(
-      'valid.step.tsx',
-      createStepFileContent({ stepId: 'valid-step', workflowId: 'workflow-valid', useJsx: true })
-    );
-    writeStepFile(
-      'invalid.step.tsx',
-      createStepFileContent({ includeStepId: false, workflowId: 'workflow-valid', useJsx: true })
-    );
+    writeStepFile('workflow-valid/valid.step.tsx', createStepFileContent({ stepId: 'valid-step', useJsx: true }));
+    writeStepFile('workflow-valid/invalid.step.tsx', createStepFileContent({ includeStepId: false, useJsx: true }));
 
     const result = await discoverStepFiles(tempDir);
 
@@ -77,23 +65,34 @@ describe('step-discovery', () => {
     expect(invalidError?.errors.some((error) => error.includes('stepId'))).toBe(true);
   });
 
-  it.each([
-    ['stepId', { includeStepId: false }, "Missing required export: 'stepId' (must be a string literal)"],
-    ['workflowId', { includeWorkflowId: false }, "Missing required export: 'workflowId' (must be a string literal)"],
-    ['type', { includeType: false }, "Missing required export: 'type' (must be a string literal)"],
-  ])('detects missing %s export', async (_name, options, expectedError) => {
-    writeStepFile('missing-required.step.tsx', createStepFileContent(options));
+  it('detects missing workflow folder', async () => {
+    writeStepFile('missing-required.step.tsx', createStepFileContent({}));
 
     const result = await discoverStepFiles(tempDir);
 
     expect(result.valid).toBe(false);
     expect(result.steps).toHaveLength(0);
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0].errors).toContain(expectedError);
+    expect(result.errors[0].errors).toContain(
+      'Step file must be inside a workflow folder (e.g., novu/{workflowId}/step-name.step.tsx)'
+    );
   });
 
-  it('detects invalid type export', async () => {
-    writeStepFile('invalid-type.step.tsx', createStepFileContent({ type: 'sms' }));
+  it('detects missing stepId', async () => {
+    writeStepFile('onboarding/missing-required.step.tsx', createStepFileContent({ includeStepId: false }));
+
+    const result = await discoverStepFiles(tempDir);
+
+    expect(result.valid).toBe(false);
+    expect(result.steps).toHaveLength(0);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].errors).toContain(
+      "Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'"
+    );
+  });
+
+  it('detects invalid step type', async () => {
+    writeStepFile('onboarding/invalid-type.step.tsx', createStepFileContent({ type: 'sms' }));
 
     const result = await discoverStepFiles(tempDir);
 
@@ -103,28 +102,18 @@ describe('step-discovery', () => {
   });
 
   it('detects missing default export', async () => {
-    writeStepFile('missing-default.step.tsx', createStepFileContent({ includeDefaultExport: false }));
+    writeStepFile('onboarding/missing-default.step.tsx', createStepFileContent({ includeDefaultExport: false }));
 
     const result = await discoverStepFiles(tempDir);
 
     expect(result.valid).toBe(false);
     expect(result.steps).toHaveLength(0);
-    expect(result.errors[0].errors.some((error) => error.includes('default function'))).toBe(true);
-  });
-
-  it('detects missing react-email import', async () => {
-    writeStepFile('missing-import.step.tsx', createStepFileContent({ includeReactEmailImport: false }));
-
-    const result = await discoverStepFiles(tempDir);
-
-    expect(result.valid).toBe(false);
-    expect(result.steps).toHaveLength(0);
-    expect(result.errors[0].errors.some((error) => error.includes('@react-email'))).toBe(true);
+    expect(result.errors[0].errors.some((error) => error.includes('default export'))).toBe(true);
   });
 
   it('allows duplicate step IDs across different workflows', async () => {
-    writeStepFile('first.step.tsx', createStepFileContent({ stepId: 'confirmation', workflowId: 'signup' }));
-    writeStepFile('second.step.tsx', createStepFileContent({ stepId: 'confirmation', workflowId: 'booking' }));
+    writeStepFile('signup/confirmation.step.tsx', createStepFileContent({ stepId: 'confirmation' }));
+    writeStepFile('booking/confirmation.step.tsx', createStepFileContent({ stepId: 'confirmation' }));
 
     const result = await discoverStepFiles(tempDir);
 
@@ -135,8 +124,8 @@ describe('step-discovery', () => {
   });
 
   it('detects duplicate step IDs within same workflow', async () => {
-    writeStepFile('first.step.tsx', createStepFileContent({ stepId: 'duplicate-step', workflowId: 'onboarding' }));
-    writeStepFile('second.step.tsx', createStepFileContent({ stepId: 'duplicate-step', workflowId: 'onboarding' }));
+    writeStepFile('onboarding/first.step.tsx', createStepFileContent({ stepId: 'duplicate-step' }));
+    writeStepFile('onboarding/second.step.tsx', createStepFileContent({ stepId: 'duplicate-step' }));
 
     const result = await discoverStepFiles(tempDir);
 
@@ -161,21 +150,18 @@ describe('step-discovery', () => {
   });
 
   it('returns discovered steps in deterministic path order', async () => {
-    writeStepFile('z-last.step.ts', createStepFileContent({ stepId: 'z-last', workflowId: 'wf-z', useJsx: false }));
-    writeStepFile(
-      'nested/m-middle.step.ts',
-      createStepFileContent({ stepId: 'm-middle', workflowId: 'wf-m', useJsx: false })
-    );
-    writeStepFile('a-first.step.ts', createStepFileContent({ stepId: 'a-first', workflowId: 'wf-a', useJsx: false }));
+    writeStepFile('wf-z/z-last.step.ts', createStepFileContent({ stepId: 'z-last', useJsx: false }));
+    writeStepFile('wf-m/m-middle.step.ts', createStepFileContent({ stepId: 'm-middle', useJsx: false }));
+    writeStepFile('wf-a/a-first.step.ts', createStepFileContent({ stepId: 'a-first', useJsx: false }));
 
     const result = await discoverStepFiles(tempDir);
 
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
     expect(result.steps.map((step) => step.relativePath.replace(/\\/g, '/'))).toEqual([
-      'a-first.step.ts',
-      'nested/m-middle.step.ts',
-      'z-last.step.ts',
+      'wf-a/a-first.step.ts',
+      'wf-m/m-middle.step.ts',
+      'wf-z/z-last.step.ts',
     ]);
   });
 
@@ -187,30 +173,21 @@ describe('step-discovery', () => {
 
   function createStepFileContent({
     stepId = 'welcome-email',
-    workflowId = 'onboarding',
     type = 'email',
     includeStepId = true,
-    includeWorkflowId = true,
-    includeType = true,
     includeDefaultExport = true,
-    includeReactEmailImport = true,
     useJsx = true,
   }: {
     stepId?: string;
-    workflowId?: string;
     type?: string;
     includeStepId?: boolean;
-    includeWorkflowId?: boolean;
-    includeType?: boolean;
     includeDefaultExport?: boolean;
-    includeReactEmailImport?: boolean;
     useJsx?: boolean;
   } = {}): string {
     const lines: string[] = [];
 
-    if (includeReactEmailImport) {
-      lines.push("import { render } from '@react-email/components';");
-    }
+    lines.push("import { step } from '@novu/framework/step-resolver';");
+    lines.push("import { render } from '@react-email/components';");
 
     if (useJsx) {
       lines.push("import EmailTemplate from '../emails/welcome';");
@@ -218,33 +195,19 @@ describe('step-discovery', () => {
 
     lines.push('');
 
-    if (includeStepId) {
-      lines.push(`export const stepId = '${stepId}';`);
-    }
-
-    if (includeWorkflowId) {
-      lines.push(`export const workflowId = '${workflowId}';`);
-    }
-
-    if (includeType) {
-      lines.push(`export const type = '${type}';`);
-    }
-
-    lines.push('');
-
     if (includeDefaultExport) {
-      lines.push('export default async function({ payload }) {');
-      lines.push('  return {');
-      lines.push("    subject: payload?.subject || 'Welcome',");
-
-      if (useJsx) {
-        lines.push('    body: await render(<EmailTemplate {...payload} />),');
+      if (includeStepId) {
+        lines.push(`export default step.${type}('${stepId}', async (controls, { payload }) => ({`);
       } else {
-        lines.push("    body: await render('Hello'),");
+        lines.push(`export default step.${type}(async (controls, { payload }) => ({`);
       }
-
-      lines.push('  };');
-      lines.push('}');
+      lines.push("  subject: payload?.subject || 'Welcome',");
+      if (useJsx) {
+        lines.push('  body: await render(<EmailTemplate {...payload} />),');
+      } else {
+        lines.push("  body: 'Hello',");
+      }
+      lines.push('}));');
     }
 
     lines.push('');

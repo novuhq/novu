@@ -281,11 +281,11 @@ export class GetActivityFeed {
         };
       });
 
-      this.logger.debug('Successfully enhanced notifications with ClickHouse execution details', {
+      this.logger.debug({
         notificationCount: notifications.length,
         jobCount: allJobIds.length,
         executionDetailsCount: Array.from(executionDetailsByJobId.values()).flat().length,
-      });
+      }, 'Successfully enhanced notifications with ClickHouse execution details');
 
       return enhancedNotifications;
     } catch (error) {

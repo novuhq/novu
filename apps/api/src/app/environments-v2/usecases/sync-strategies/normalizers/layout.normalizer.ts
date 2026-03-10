@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LayoutResponseDto } from '../../../../layouts-v2/dtos';
+import { LayoutResponseDto } from '@novu/application-generic';
 import { INormalizedLayout } from '../types/layout-sync.types';
 
 @Injectable()

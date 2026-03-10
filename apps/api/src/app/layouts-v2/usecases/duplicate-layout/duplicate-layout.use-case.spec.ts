@@ -1,10 +1,9 @@
 import { ModuleRef } from '@nestjs/core';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, GetLayoutUseCase, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { GetLayoutUseCase } from '../get-layout';
 import { UpsertLayout } from '../upsert-layout';
 import { DuplicateLayoutCommand } from './duplicate-layout.command';
 import { DuplicateLayoutUseCase } from './duplicate-layout.use-case';

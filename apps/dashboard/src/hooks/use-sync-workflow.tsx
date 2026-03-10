@@ -157,8 +157,8 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
           title={`Sync workflow to ${targetEnvironment?.name}`}
           description={
             <>
-              Workflow <TruncatedText className="max-w-[32ch] font-bold">{workflow.name}</TruncatedText> already exists
-              in {targetEnvironment?.name}.<br />
+              Workflow <TruncatedText className="max-w-[32ch] font-semibold">{workflow.name}</TruncatedText> already
+              exists in {targetEnvironment?.name}.<br />
               <br />
               Proceeding will overwrite the existing workflow.
             </>

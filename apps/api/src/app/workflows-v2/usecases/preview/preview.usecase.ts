@@ -1,24 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import {
+  BuildStepDataUsecase,
+  ControlValueSanitizerService,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
+  GeneratePreviewResponseDto,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  isStepResolverEmailStep,
   PinoLogger,
+  PreviewCommand,
+  PreviewErrorHandler,
+  PreviewPayloadDto,
+  PreviewPayloadProcessorService,
+  PreviewStep,
+  PreviewStepCommand,
+  StepResponseDto,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-// Import new services
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
-import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-import { BuildStepDataUsecase } from '../build-step-data';
-import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
-import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
 export class PreviewUsecase {
@@ -38,12 +41,17 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const context = await this.initializePreviewContext(command);
+      const stepResolverHash =
+        typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
+      const isStepResolverEmail = isStepResolverEmailStep(context.stepData.type, stepResolverHash);
 
-      const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
-        context.controlValues,
-        context.stepData.type,
-        context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
-      );
+      const sanitizedControls = isStepResolverEmail
+        ? context.controlValues
+        : this.controlValueSanitizer.sanitizeControlsForPreview(
+            context.controlValues,
+            context.stepData.type,
+            context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
+          );
 
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
         sanitizedControls,
@@ -68,7 +76,8 @@ export class PreviewUsecase {
           command,
           context.stepData,
           payloadExample,
-          previewTemplateData.controlValues
+          previewTemplateData.controlValues,
+          stepResolverHash
         );
 
         return {
@@ -80,15 +89,19 @@ export class PreviewUsecase {
           schema: context.variableSchema,
         };
       } catch (error) {
-        this.logger.error({ err: error }, 'Error executing preview');
-
         /*
          * If preview execution fails, still return valid schema and payload example
-         * but with an empty preview result
+         * but with an empty preview result.
+         * For step resolver email steps, since its a runtime error, surface the error
+         * as HTML rendered in the preview panel.
          */
+        const previewResult = isStepResolverEmail
+          ? { subject: '', body: this.errorHandler.buildPreviewErrorHtml(error) }
+          : {};
+
         return {
           result: {
-            preview: {},
+            preview: previewResult,
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
@@ -147,14 +160,10 @@ export class PreviewUsecase {
     command: PreviewCommand,
     stepData: StepResponseDto,
     previewPayloadExample: PreviewPayloadDto,
-    controlValues: Record<string, unknown>
+    controlValues: Record<string, unknown>,
+    stepResolverHash: string | undefined
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
-
-    const stepResolverHash =
-      typeof stepData.controls.values?.stepResolverHash === 'string'
-        ? stepData.controls.values.stepResolverHash
-        : undefined;
 
     return await this.previewStepUsecase.execute(
       PreviewStepCommand.create({

@@ -133,14 +133,16 @@ export async function revertMessage({
   environment,
   chatId,
   messageId,
+  type,
 }: {
   environment: IEnvironment;
   chatId: string;
   messageId: string;
+  type: 'revert' | 'try-again';
 }): Promise<void> {
   await postV2('/ai/revert-message', {
     environment,
-    body: { chatId, messageId },
+    body: { chatId, messageId, type },
   });
 }
 

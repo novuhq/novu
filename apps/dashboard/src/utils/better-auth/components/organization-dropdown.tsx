@@ -88,7 +88,7 @@ function OrganizationListItem({ membership, onSwitch, isSwitching, switchingToId
 }
 
 export function OrganizationDropdown() {
-  const { organization: currentOrganization } = useOrganization();
+  const { organization: currentOrganization, isLoaded: isOrgLoaded } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
 
@@ -98,7 +98,7 @@ export function OrganizationDropdown() {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { userMemberships, isLoaded } = useOrganizationList({
+  const { userMemberships, isLoaded: isListLoaded } = useOrganizationList({
     userMemberships: {
       infinite: true,
       pageSize: 10,
@@ -156,7 +156,7 @@ export function OrganizationDropdown() {
     [orgId]
   );
 
-  if (!isLoaded || !currentOrganization) {
+  if (!isOrgLoaded || !currentOrganization) {
     return (
       <div className="w-full px-1.5 py-1.5">
         <div className="flex items-center gap-2 rounded-lg bg-neutral-alpha-50 px-2 py-1.5">
@@ -195,19 +195,25 @@ export function OrganizationDropdown() {
           aria-label="List of all organization memberships"
           onScroll={handleScroll}
         >
-          <AnimatePresence mode="popLayout">
-            {filteredMemberships.map((membership) => (
-              <OrganizationListItem
-                key={membership.id}
-                membership={membership}
-                onSwitch={handleOrganizationSwitch}
-                isSwitching={isSwitching}
-                switchingToId={switchingToId}
-              />
-            ))}
-          </AnimatePresence>
+          {!isListLoaded ? (
+            <div className="flex items-center justify-center py-2">
+              <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filteredMemberships.map((membership) => (
+                <OrganizationListItem
+                  key={membership.id}
+                  membership={membership}
+                  onSwitch={handleOrganizationSwitch}
+                  isSwitching={isSwitching}
+                  switchingToId={switchingToId}
+                />
+              ))}
+            </AnimatePresence>
+          )}
 
-          {userMemberships?.isFetching && (
+          {isListLoaded && userMemberships?.isFetching && (
             <div className="flex items-center justify-center py-2">
               <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
             </div>

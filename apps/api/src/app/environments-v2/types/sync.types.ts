@@ -13,6 +13,13 @@ export enum DependencyReasonEnum {
   LAYOUT_EXISTS_IN_TARGET = 'LAYOUT_EXISTS_IN_TARGET',
 }
 
+export enum SyncActionEnum {
+  CREATED = 'created',
+  UPDATED = 'updated',
+  SKIPPED = 'skipped',
+  DELETED = 'deleted',
+}
+
 export interface IResourceDependency {
   resourceType: ResourceTypeEnum;
   resourceId: string;
@@ -44,7 +51,7 @@ export interface ISyncedEntity {
   resourceType: ResourceTypeEnum;
   resourceId: string;
   resourceName: string;
-  action: 'created' | 'updated' | 'skipped' | 'deleted';
+  action: SyncActionEnum;
 }
 
 export interface IFailedEntity {

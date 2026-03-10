@@ -1,6 +1,4 @@
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { StepTypeEnum } from '@novu/shared';
-import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 import {
   ChatControlDto,
   CustomControlDto,
@@ -11,7 +9,9 @@ import {
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
-} from './controls';
+} from '@novu/application-generic';
+import { StepTypeEnum } from '@novu/shared';
+import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 // Base DTO for common properties
 export class BaseStepConfigDto {

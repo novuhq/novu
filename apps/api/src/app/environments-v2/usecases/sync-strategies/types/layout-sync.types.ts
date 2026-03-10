@@ -1,4 +1,4 @@
-import { LayoutResponseDto } from '../../../../layouts-v2/dtos';
+import { LayoutResponseDto } from '@novu/application-generic';
 
 export type INormalizedLayout = Omit<
   LayoutResponseDto,

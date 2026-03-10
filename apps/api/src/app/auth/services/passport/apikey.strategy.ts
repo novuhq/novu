@@ -10,6 +10,7 @@ import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/
 import { createHash } from 'crypto';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { AuthService } from '../auth.service';
+import { addNewRelicTraceAttributes } from './newrelic.util';
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
@@ -28,6 +29,8 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
           if (!user) {
             return verified(null, false);
           }
+
+          addNewRelicTraceAttributes(user);
 
           return verified(null, user);
         } catch (err) {

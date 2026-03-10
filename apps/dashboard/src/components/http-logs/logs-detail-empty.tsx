@@ -11,7 +11,7 @@ export function RequestLogDetailEmptyState2() {
           <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
             Nothing to show,
             <br />
-            Select an log on the left to view detailed info here
+            Select a log on the left to view detailed info here
           </p>
         </div>
       </div>
@@ -26,7 +26,7 @@ export function RequestLogDetailEmptyState() {
       <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
         Nothing to show,
         <br />
-        Select an log on the left to view detailed info here
+        Select a log on the left to view detailed info here
       </p>
     </div>
   );

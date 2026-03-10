@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { LayoutDtoV0 } from '@novu/application-generic';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { LayoutDto } from '../../dtos/layout.dto';
 import { FilterLayoutsCommand } from './filter-layouts.command';
 
 const DEFAULT_LAYOUT_LIMIT = 10;
@@ -48,7 +48,7 @@ export class FilterLayoutsUseCase {
     } as Pick<LayoutEntity, '_environmentId' | '_organizationId'>;
   }
 
-  private mapFromEntityToDto(layout: LayoutEntity): LayoutDto {
+  private mapFromEntityToDto(layout: LayoutEntity): LayoutDtoV0 {
     return {
       ...layout,
       _id: layout._id,

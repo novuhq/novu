@@ -2,6 +2,21 @@ import axios from 'axios';
 import FormData from 'form-data';
 import type { DeploymentResult, EnvironmentInfo, StepResolverManifestStep, StepResolverReleaseBundle } from '../types';
 
+export interface RendererConflictStep {
+  workflowId: string;
+  stepId: string;
+}
+
+export class RendererConflictError extends Error {
+  constructor(
+    message: string,
+    public readonly conflictingSteps: RendererConflictStep[]
+  ) {
+    super(message);
+    this.name = 'RendererConflictError';
+  }
+}
+
 export class StepResolverClient {
   constructor(
     private apiUrl: string,
@@ -42,6 +57,7 @@ export class StepResolverClient {
         _id: envData._id,
         name: envData.name,
         _organizationId: envData._organizationId,
+        type: normalizeEnvironmentType(envData.type),
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -102,6 +118,26 @@ export class StepResolverClient {
         }
         if (error.response?.status === 400) {
           throw new Error(`Bad request: ${apiMessage}`);
+        }
+        if (error.response?.status === 409) {
+          const data = asRecord(error.response.data);
+          const payload = asRecord(data?.data) ?? data;
+          if (this.readString(payload?.errorCode) === 'STEP_RENDERER_CONFLICT') {
+            const rawSteps = Array.isArray(payload?.conflictingSteps) ? payload.conflictingSteps : [];
+            const conflictingSteps: RendererConflictStep[] = rawSteps.flatMap((s) => {
+              const step = asRecord(s);
+              if (!step) return [];
+              const workflowId = this.readString(step.workflowId);
+              const stepId = this.readString(step.stepId);
+              if (!workflowId || !stepId) return [];
+              return [{ workflowId, stepId }];
+            });
+            throw new RendererConflictError(
+              this.readString(payload?.message) ?? 'Step is managed by the block editor',
+              conflictingSteps
+            );
+          }
+          throw new Error(`Conflict: ${apiMessage}`);
         }
         if (error.response?.status === 404) {
           const stepContext = this.extractStepContext(error.response.data);
@@ -209,6 +245,18 @@ export class StepResolverClient {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }
+}
+
+function normalizeEnvironmentType(raw: unknown): 'prod' | 'dev' {
+  const normalized = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+
+  if (normalized === 'dev' || normalized === 'development') {
+    return 'dev';
+  }
+
+  // Default to 'prod' for 'prod', 'production', unknown, or missing values
+  // so that unexpected API strings cannot bypass the production guard.
+  return 'prod';
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {

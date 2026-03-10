@@ -42,6 +42,8 @@ jobs:
     if: needs.check-contributor.outputs.is_community == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NX_NO_CLOUD: "true"
     steps:
       - name: Checkout code
         uses: actions/checkout@v5

@@ -1,4 +1,4 @@
-import type { Context, DefaultSchedule, Subscriber, UnreadCount } from '@novu/js';
+import type { Context, DefaultSchedule, NovuSocketOptions, Subscriber, UnreadCount } from '@novu/js';
 import type {
   AllIconKey,
   AllTheme,
@@ -87,6 +87,7 @@ type StandardBaseProps = {
   contextHash?: string;
   backendUrl?: string;
   socketUrl?: string;
+  socketOptions?: NovuSocketOptions;
   appearance?: ReactInboxAppearance;
   localization?: InboxLocalization;
   tabs?: Array<Tab>;

@@ -16,6 +16,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
   RequirePermissions,
+  SubscriberResponseDto,
   UserSession,
 } from '@novu/application-generic';
 import {
@@ -32,7 +33,6 @@ import { BulkUpdatePreferences } from '../inbox/usecases/bulk-update-preferences
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { SubscriberResponseDto } from '../subscribers/dtos';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,

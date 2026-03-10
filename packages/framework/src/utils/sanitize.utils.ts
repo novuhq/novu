@@ -10,6 +10,10 @@ import sanitizeTypes, { IOptions } from 'sanitize-html';
  */
 const SAFE_IMG_ATTRIBUTES = ['src', 'alt', 'width', 'height', 'loading', 'srcset', 'sizes', 'crossorigin', 'usemap', 'ismap', 'class', 'id', 'style', 'title', 'dir', 'lang'];
 
+function isEventHandlerAttribute(name: string): boolean {
+  return name.toLowerCase().startsWith('on');
+}
+
 const sanitizeOptions: IOptions = {
   /**
    * Additional tags to allow.
@@ -30,6 +34,20 @@ const sanitizeOptions: IOptions = {
    * while keeping all other attributes permissive for other tags.
    */
   transformTags: {
+    '*': (tagName, attribs) => {
+      const safeAttribs: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(attribs)) {
+        if (!isEventHandlerAttribute(key)) {
+          safeAttribs[key] = value;
+        }
+      }
+
+      return {
+        tagName,
+        attribs: safeAttribs,
+      };
+    },
     img: (tagName, attribs) => {
       const safeAttribs: Record<string, string> = {};
 

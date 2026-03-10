@@ -17,8 +17,10 @@ export * from './cache';
 export * from './calculate-delay';
 export * from './cloudflare-scheduler';
 export * from './content.service';
+export * from './control-value-sanitizer.service';
 export * from './cron';
 export * from './feature-flags';
+export * from './helper-service';
 export * from './in-memory-lru-cache';
 export * from './in-memory-provider';
 export {
@@ -27,6 +29,7 @@ export {
   MessageInteractionTrace,
 } from './message-interaction.service';
 export * from './metrics';
+export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';
 export * from './sanitize/sanitizer.service';
@@ -38,4 +41,5 @@ export { SupportService } from './support.service';
 export * from './throttle';
 export { VerifyPayloadService } from './verify-payload.service';
 export * from './workers';
+export * from './workflow-data.container';
 export * from './workflow-run.service';

@@ -4,6 +4,7 @@ export interface DiscoveredStep {
   type: string;
   filePath: string;
   relativePath: string;
+  controlSchema?: Record<string, unknown>;
 }
 
 export interface ValidationError {
@@ -26,6 +27,7 @@ export interface StepResolverReleaseBundle {
 export interface StepResolverManifestStep {
   workflowId: string;
   stepId: string;
+  controlSchema?: Record<string, unknown>;
 }
 
 export interface DeploymentResult {
@@ -39,4 +41,5 @@ export interface EnvironmentInfo {
   _id: string;
   name: string;
   _organizationId: string;
+  type: 'prod' | 'dev';
 }

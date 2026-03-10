@@ -1,7 +1,9 @@
 import { Controls } from '@novu/shared';
 import { buildDefaultValues, buildDefaultValuesOfDataSchema } from '@/utils/schema';
 
-// Use the UI Schema to build the default values if it exists else use the data schema (code-first approach) values
+// When uiSchema is non-empty, merges both schemas with dataSchema taking precedence over uiSchema for
+// overlapping keys; controlValues take precedence over both. When uiSchema is empty, only dataSchema
+// and controlValues are used.
 export const getControlsDefaultValues = (resource: { controls: Controls }): Record<string, unknown> => {
   const controlValues = resource.controls.values;
 
@@ -11,6 +13,7 @@ export const getControlsDefaultValues = (resource: { controls: Controls }): Reco
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
     return {
       ...uiSchemaDefaultValues,
+      ...dataSchemaDefaultValues,
       ...controlValues,
     };
   }
@@ -21,7 +24,9 @@ export const getControlsDefaultValues = (resource: { controls: Controls }): Reco
   };
 };
 
-// Use the UI Schema to build the default values if it exists else use the data schema (code-first approach) values
+// When uiSchema is non-empty, merges both schemas with uiSchema taking precedence over dataSchema for
+// overlapping keys; controlValues take precedence over both. When uiSchema is empty, only dataSchema
+// and controlValues are used.
 export const getLayoutControlsDefaultValues = (resource: { controls: Controls }): Record<string, unknown> => {
   const controlValues = (resource.controls.values.email ?? {}) as Record<string, unknown>;
 
@@ -30,6 +35,7 @@ export const getLayoutControlsDefaultValues = (resource: { controls: Controls })
 
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
     return {
+      ...dataSchemaDefaultValues,
       ...uiSchemaDefaultValues,
       ...controlValues,
     };
