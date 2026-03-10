@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Highlight } from 'prism-react-renderer';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { RiFileCopyLine, RiGlobalLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { NovuApiError } from '@/api/api.client';
 import { type TestHttpEndpointResponse } from '@/api/steps';
@@ -499,11 +499,27 @@ function ErrorState({
 const STATE_TRANSITION = { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const };
 
 export function HttpRequestConsolePreview() {
-  const { testResult, isTestPending, testError, triggerTest } = useHttpRequestTest();
+  const { testResult, isTestPending, testError, triggerTest, resetTest } = useHttpRequestTest();
   const { step, previewData, controlValues, editorValue } = useStepEditor();
   const novuSignature = previewData?.novuSignature;
 
   const state = isTestPending ? 'loading' : testResult ? 'post-test' : testError ? 'error' : 'pre-test';
+
+  const controlsKey = JSON.stringify({
+    url: controlValues?.url,
+    method: controlValues?.method,
+    headers: controlValues?.headers,
+    body: controlValues?.body,
+  });
+  const prevControlsKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (prevControlsKeyRef.current !== null && prevControlsKeyRef.current !== controlsKey) {
+      resetTest();
+    }
+
+    prevControlsKeyRef.current = controlsKey;
+  }, [controlsKey, resetTest]);
 
   const handleTestEndpoint = useCallback(async () => {
     try {
