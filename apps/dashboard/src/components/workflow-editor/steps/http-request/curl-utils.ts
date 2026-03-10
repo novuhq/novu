@@ -1,14 +1,23 @@
 export type KeyValuePair = { key: string; value: string };
 
+export const NOVU_SIGNATURE_HEADER_KEY = 'novu-signature';
+
 export function buildRawCurlString(
   url: string,
   method: string,
   headers: KeyValuePair[] | Record<string, string>,
-  body: KeyValuePair[] | Record<string, unknown> | null | undefined
+  body: KeyValuePair[] | Record<string, unknown> | null | undefined,
+  novuSignature?: string
 ): string {
   const headerEntries: [string, string][] = Array.isArray(headers)
     ? headers.filter((h) => h.key).map((h) => [h.key, h.value])
     : Object.entries(headers ?? {});
+
+  const hasNovuSignature = headerEntries.some(([k]) => k.toLowerCase() === NOVU_SIGNATURE_HEADER_KEY);
+
+  if (novuSignature && !hasNovuSignature) {
+    headerEntries.unshift([NOVU_SIGNATURE_HEADER_KEY, novuSignature]);
+  }
 
   const headerArgs = headerEntries.map(([k, v]) => `--header '${k}: ${v}'`).join(' \\\n');
 

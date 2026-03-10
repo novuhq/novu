@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { type KeyValuePair } from './curl-utils';
+import { type KeyValuePair, NOVU_SIGNATURE_HEADER_KEY } from './curl-utils';
 
 type CurlDisplayProps = {
   url: string;
@@ -7,12 +7,15 @@ type CurlDisplayProps = {
   headers: KeyValuePair[] | Record<string, string>;
   body?: KeyValuePair[] | Record<string, unknown> | null;
   className?: string;
+  novuSignature?: string;
 };
 
-export function CurlDisplay({ url, method, headers, body, className }: CurlDisplayProps) {
+export function CurlDisplay({ url, method, headers, body, className, novuSignature }: CurlDisplayProps) {
   const headerEntries: [string, string][] = Array.isArray(headers)
     ? headers.filter((h) => h.key).map((h) => [h.key, h.value])
     : Object.entries(headers);
+
+  const hasNovuSignature = headerEntries.some(([k]) => k.toLowerCase() === NOVU_SIGNATURE_HEADER_KEY);
 
   const canHaveBody = method !== 'GET' && method !== 'DELETE';
   let bodyObj: Record<string, unknown> | null = null;
@@ -36,6 +39,13 @@ export function CurlDisplay({ url, method, headers, body, className }: CurlDispl
         <span className="text-[#0e121b]">{'curl --location '}</span>
         <span className="text-[#7d52f4]">{`'${url || 'https://api.example.com/endpoint'}' `}</span>
       </p>
+      {novuSignature && !hasNovuSignature && (
+        <p className="my-0 leading-[1.5] opacity-60">
+          <span className="text-[#0e121b]">{'--header '}</span>
+          <span className="text-[#fb4ba3]">{`'${NOVU_SIGNATURE_HEADER_KEY}`}</span>
+          <span className="text-[#7d52f4]">{`: ${novuSignature}' `}</span>
+        </p>
+      )}
       {headerEntries.map(([key, val]) => (
         <p key={key} className="my-0 leading-[1.5]">
           <span className="text-[#0e121b]">{'--header '}</span>

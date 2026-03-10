@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { ContextResolved } from '@novu/framework/internal';
-import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { GeneratePreviewResponseDto } from '../../dtos/workflow/generate-preview-response.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
+import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { isStepResolverEmailStep } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
+import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { PreviewStep, PreviewStepCommand } from '../preview-step';
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { PreviewCommand } from './preview.command';
@@ -27,7 +29,8 @@ export class PreviewUsecase {
     private readonly controlValueSanitizer: ControlValueSanitizerService,
     private readonly payloadMerger: PayloadMergerService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
-    private readonly errorHandler: PreviewErrorHandler
+    private readonly errorHandler: PreviewErrorHandler,
+    private readonly getDecryptedSecretKey: GetDecryptedSecretKey
   ) {}
 
   @InstrumentUsecase()
@@ -64,6 +67,11 @@ export class PreviewUsecase {
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
+      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
+      const novuSignature = isHttpRequestStep
+        ? await this.buildNovuSignatureSample(command.user.environmentId)
+        : undefined;
+
       try {
         const executeOutput = await this.executePreviewUsecase(
           command,
@@ -80,6 +88,7 @@ export class PreviewUsecase {
           },
           previewPayloadExample: cleanedPayloadExample,
           schema: context.variableSchema,
+          novuSignature,
         };
       } catch (error) {
         /*
@@ -99,6 +108,7 @@ export class PreviewUsecase {
           },
           previewPayloadExample: cleanedPayloadExample,
           schema: context.variableSchema,
+          novuSignature,
         };
       }
     } catch {
@@ -146,6 +156,18 @@ export class PreviewUsecase {
       user: command.user,
       previewPayload: command.generatePreviewRequestDto.previewPayload,
     });
+  }
+
+  private async buildNovuSignatureSample(environmentId: string): Promise<string | undefined> {
+    try {
+      const secretKey = await this.getDecryptedSecretKey.execute(
+        GetDecryptedSecretKeyCommand.create({ environmentId })
+      );
+
+      return buildNovuSignatureHeader(secretKey, {});
+    } catch {
+      return undefined;
+    }
   }
 
   @Instrument()

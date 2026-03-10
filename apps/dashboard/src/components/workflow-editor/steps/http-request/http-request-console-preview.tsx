@@ -249,7 +249,7 @@ function getStatusText(statusCode: number): string {
   return STATUS_TEXTS[statusCode] ?? '';
 }
 
-function PreTestState() {
+function PreTestState({ novuSignature }: { novuSignature?: string }) {
   const { controlValues, editorValue } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
 
@@ -258,7 +258,7 @@ function PreTestState() {
   const headers = (controlValues?.headers as KeyValuePair[]) ?? [];
   const body = (controlValues?.body as KeyValuePair[]) ?? [];
 
-  const curlString = buildRawCurlString(url, method, headers, body);
+  const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
   const activeHeaders = headers.filter((h) => h.key);
 
   const handleCopyCurl = useCallback(async () => {
@@ -344,7 +344,7 @@ function PreTestState() {
             </>
           }
         >
-          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} />
+          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} novuSignature={novuSignature} />
         </BrowserShell>
 
         <div className="flex items-center justify-between overflow-clip rounded-md border border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 shadow-[0px_1px_0px_0px_#d2d2d2]">
@@ -383,8 +383,7 @@ function LoadingState() {
   );
 }
 
-function ErrorState({ error }: { error: Error }) {
-  const { resetTest } = useHttpRequestTest();
+function ErrorState({ error, novuSignature }: { error: Error; novuSignature?: string }) {
   const { controlValues } = useStepEditor();
 
   const statusCode = error instanceof NovuApiError ? error.status : 500;
@@ -396,7 +395,7 @@ function ErrorState({ error }: { error: Error }) {
   const headers = ((controlValues?.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
   const body = (controlValues?.body as KeyValuePair[]) ?? [];
 
-  const curlString = buildRawCurlString(url, method, headers, body);
+  const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
 
   const handleCopyCurl = useCallback(async () => {
     try {
@@ -449,7 +448,7 @@ function ErrorState({ error }: { error: Error }) {
           </button>
         }
       >
-        <CurlDisplay url={url} method={method} headers={headers} body={body} />
+        <CurlDisplay url={url} method={method} headers={headers} body={body} novuSignature={novuSignature} />
       </BrowserShell>
 
       <div className="flex flex-col gap-3">
@@ -491,7 +490,8 @@ const STATE_TRANSITION = { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const };
 
 export function HttpRequestConsolePreview() {
   const { testResult, isTestPending, testError } = useHttpRequestTest();
-  const { step } = useStepEditor();
+  const { step, previewData } = useStepEditor();
+  const novuSignature = previewData?.novuSignature;
 
   const state = isTestPending ? 'loading' : testResult ? 'post-test' : testError ? 'error' : 'pre-test';
 
@@ -516,7 +516,7 @@ export function HttpRequestConsolePreview() {
           exit={{ opacity: 0 }}
           transition={STATE_TRANSITION}
         >
-          <PreTestState />
+          <PreTestState novuSignature={novuSignature} />
         </motion.div>
       )}
       {state === 'error' && testError && (
@@ -527,7 +527,7 @@ export function HttpRequestConsolePreview() {
           exit={{ opacity: 0 }}
           transition={STATE_TRANSITION}
         >
-          <ErrorState error={testError} />
+          <ErrorState error={testError} novuSignature={novuSignature} />
         </motion.div>
       )}
       {state === 'post-test' && testResult && (
