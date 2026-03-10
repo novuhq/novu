@@ -46,14 +46,23 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
       throw new Error('ClickUp provider requires channelData of type clickup_channel');
     }
 
-    return this.sendChannelMessage(data, data.channelData, bridgeProviderData);
+    const response = await this.sendChannelMessage(data, data.channelData, bridgeProviderData);
+
+    if (!response.data.ok) {
+      throw new Error(`ClickUp API Error: ${response.data.error}`);
+    }
+
+    return {
+      id: response.data.id,
+      date: new Date().toISOString(),
+    };
   }
 
   private async sendChannelMessage(
     data: IChatOptions,
     channelData: ClickUpChannelData,
     bridgeProviderData: WithPassthrough<Record<string, unknown>>
-  ): Promise<ISendMessageSuccessResponse> {
+  ) {
     const { workspaceId, channelId } = channelData.endpoint;
 
     const payload = this.transform(bridgeProviderData, {
@@ -68,9 +77,6 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
       payload
     );
 
-    return {
-      id: String(response.data.id),
-      date: new Date().toISOString(),
-    };
+    return response
   }
 }
