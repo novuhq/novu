@@ -6,6 +6,7 @@ import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
+import { shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { isStepResolverEmailStep } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
@@ -68,9 +69,6 @@ export class PreviewUsecase {
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
       const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
-      const novuSignature = isHttpRequestStep
-        ? await this.buildNovuSignatureSample(command.user.environmentId)
-        : undefined;
 
       try {
         const executeOutput = await this.executePreviewUsecase(
@@ -80,6 +78,10 @@ export class PreviewUsecase {
           previewTemplateData.controlValues,
           stepResolverHash
         );
+
+        const novuSignature = isHttpRequestStep
+          ? await this.buildNovuSignatureSample(command.user.environmentId, executeOutput.outputs)
+          : undefined;
 
         return {
           result: {
@@ -100,6 +102,10 @@ export class PreviewUsecase {
         const previewResult = isStepResolverEmail
           ? { subject: '', body: this.errorHandler.buildPreviewErrorHtml(error) }
           : {};
+
+        const novuSignature = isHttpRequestStep
+          ? await this.buildNovuSignatureSample(command.user.environmentId)
+          : undefined;
 
         return {
           result: {
@@ -158,13 +164,21 @@ export class PreviewUsecase {
     });
   }
 
-  private async buildNovuSignatureSample(environmentId: string): Promise<string | undefined> {
+  private async buildNovuSignatureSample(
+    environmentId: string,
+    resolvedOutputs?: Record<string, unknown>
+  ): Promise<string | undefined> {
     try {
       const secretKey = await this.getDecryptedSecretKey.execute(
         GetDecryptedSecretKeyCommand.create({ environmentId })
       );
 
-      return buildNovuSignatureHeader(secretKey, {});
+      const rawBody = resolvedOutputs?.body as Array<{ key: string; value: string }> | undefined;
+      const method = (resolvedOutputs?.method as string) ?? 'GET';
+      const bodyRecord = rawBody ? toBodyRecord(rawBody) : undefined;
+      const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
+
+      return buildNovuSignatureHeader(secretKey, payload);
     } catch {
       return undefined;
     }
