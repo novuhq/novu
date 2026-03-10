@@ -20,6 +20,8 @@ export async function bootstrap(): Promise<INestApplication> {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   });
 
+  app.enableShutdownHooks();
+
   await app.listen(process.env.PORT);
 
   return app;

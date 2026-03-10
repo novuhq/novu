@@ -258,11 +258,6 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
 
   sdk.start();
 
-  process.on('SIGTERM', async () => {
-    await shutdownOtel();
-    process.exit(0);
-  });
-
   return sdk;
 }
 
