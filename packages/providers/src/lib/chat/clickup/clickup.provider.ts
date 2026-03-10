@@ -30,6 +30,7 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
     super();
     this.axiosInstance = axios.create({
       baseURL: ClickUpProvider.BASE_URL,
+      timeout: 10_000,
       headers: {
         Authorization: this.config.apiKey,
         'Content-Type': 'application/json',
