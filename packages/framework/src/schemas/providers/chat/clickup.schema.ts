@@ -1,42 +1,29 @@
 import type { JsonSchema } from '../../../types/schema.types';
 
 /**
- * ClickUp chat provider output schema
+ * ClickUp message payload schema
  *
- * Supports two operations based on customData:
- * - Create a comment on a task (requires taskId)
- * - Create a new task in a list (requires listId)
- *
- * @see https://developer.clickup.com/docs/Getting%20Started
+ * @see https://developer.clickup.com/reference/createchatmessage
  */
 const clickupOutputSchema = {
   type: 'object',
   properties: {
-    taskId: {
+    type: {
       type: 'string',
-      description: 'The ID of the task to add a comment to',
+      enum: ['message', 'post'],
+      description: 'The type of the message',
     },
-    listId: {
+    content: {
       type: 'string',
-      description: 'The ID of the list to create a task in',
+      description: 'The message content to send',
     },
-    comment_text: {
+    content_format: {
       type: 'string',
-      description: 'The text content of the comment (used when taskId is provided)',
-    },
-    name: {
-      type: 'string',
-      description: 'The name of the new task (used when listId is provided)',
-    },
-    markdown_description: {
-      type: 'string',
-      description: 'Markdown description of the new task (used when listId is provided)',
-    },
-    notify_all: {
-      type: 'boolean',
-      description: 'Whether to notify all members',
-    },
+      enum: ['text/md', 'text/plain'],
+      description: 'The format of the message content',
+    }
   },
+  required: ['content'],
   additionalProperties: true,
 } as const satisfies JsonSchema;
 

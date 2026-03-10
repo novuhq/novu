@@ -12,6 +12,9 @@ import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
+const DEFAULT_CHANNEL_MESSAGE_PAYLOAD_TYPE = 'message';
+const DEFAULT_CHANNEL_MESSAGE_PAYLOAD_CONTENT_FORMAT = 'text/md';
+
 interface IClickUpConfig {
   apiKey: string;
 }
@@ -53,8 +56,9 @@ export class ClickUpProvider extends BaseProvider implements IChatProvider {
     const { workspaceId, channelId } = channelData.endpoint;
 
     const payload = this.transform(bridgeProviderData, {
+      type: DEFAULT_CHANNEL_MESSAGE_PAYLOAD_TYPE,
       content: data.content,
-      type: "message",
+      content_format: DEFAULT_CHANNEL_MESSAGE_PAYLOAD_CONTENT_FORMAT,
       ...(data.customData || {}),
     }).body;
 
