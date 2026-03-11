@@ -778,23 +778,29 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                           <Column style={{ width: '175px', padding: '3px 0' }}>
                             <Section>
                               <Row>
-                                <Column style={{ paddingRight: '4px', width: '28px' }}>
-                                  <Section>
-                                    {channel.icon && (
-                                      <Img
-                                        src={channel.icon}
-                                        alt=""
-                                        style={{
-                                          display: 'block',
-                                          maxWidth: '16px',
-                                          maxHeight: '16px',
-                                          padding: '3.5px',
-                                        }}
-                                      />
-                                    )}
-                                  </Section>
+                                <Column
+                                  style={{
+                                    paddingRight: '4px',
+                                    width: '28px',
+                                    textAlign: 'center' as const,
+                                    verticalAlign: 'middle' as const,
+                                  }}
+                                >
+                                  {channel.icon && (
+                                    <Img
+                                      src={channel.icon}
+                                      alt=""
+                                      style={{
+                                        display: 'inline-block',
+                                        maxWidth: '16px',
+                                        maxHeight: '16px',
+                                        margin: '0 auto',
+                                        verticalAlign: 'middle',
+                                      }}
+                                    />
+                                  )}
                                 </Column>
-                                <Column>
+                                <Column style={{ verticalAlign: 'middle' as const }}>
                                   <Text
                                     style={{
                                       fontSize: '12px',
@@ -1110,44 +1116,44 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
   );
 }
 
-// export default function UsageReportEmailPreview() {
-//   return (
-//     <UsageReportEmail
-//       props={{
-//         dateRangeFrom: '2025-02-01',
-//         dateRangeTo: '2025-02-28',
-//         messagesSent: 4512212321121332,
-//         messagesSentChange: 12,
-//         messagesSentUp: true,
-//         usersReached: 12345,
-//         usersReachedChange: 8,
-//         usersReachedUp: true,
-//         workflowRuns: 3456,
-//         userInteractions: 8910,
-//         interactionRate: 95.5,
-//         topProviders: [
-//           { name: 'sendgrid', count: 15234 },
-//           { name: 'twilio', count: 8456 },
-//           { name: 'slack', count: 5678 },
-//         ],
-//         topWorkflows: [
-//           { name: 'Welcome Email', count: 5678 },
-//           { name: 'Order Confirmation sadqw2e1e1221e12e1e12e12e1e1e12e12e12e12e12e12e1e21e21e12e1', count: 2345 },
-//         ],
-//         channels: [
-//           // { name: 'in_app', value: 2300 },
-//           // { name: 'email', value: 1762 },
-//           // { name: 'chat', value: 562 },
-//           { name: 'push', value: 22362 },
-//           { name: 'sms', value: 62 },
-//         ],
-//         dashboardUrl: 'https://dashboard.novu.co',
-//         previewText: 'Your monthly Novu usage report',
-//       }}
-//     />
-//   );
-// }
-
 export default async function renderEmail(payload: PayloadSchemaType, controls: ControlValueSchema) {
-  return await render(<UsageReportEmail props={{ ...payload, ...controls }} />);
+  return render(
+    <UsageReportEmail
+      props={{
+        dateRangeFrom: '2025-02-01',
+        dateRangeTo: '2025-02-28',
+        messagesSent: 4512212321121332,
+        messagesSentChange: 12,
+        messagesSentUp: true,
+        usersReached: 12345,
+        usersReachedChange: 8,
+        usersReachedUp: true,
+        workflowRuns: 3456,
+        userInteractions: 8910,
+        interactionRate: 95.5,
+        topProviders: [
+          { name: 'sendgrid', count: 15234 },
+          { name: 'twilio', count: 8456 },
+          { name: 'slack', count: 5678 },
+        ],
+        topWorkflows: [
+          { name: 'Welcome Email', count: 5678 },
+          { name: 'Order Confirmation sadqw2e1e1221e12e1e12e12e1e1e12e12e12e12e12e12e1e21e21e12e1', count: 2345 },
+        ],
+        channels: [
+          // { name: 'in_app', value: 2300 },
+          { name: 'email', value: 1762 },
+          { name: 'chat', value: 562 },
+          { name: 'push', value: 2 },
+          { name: 'sms', value: 62 },
+        ],
+        dashboardUrl: 'https://dashboard.novu.co',
+        previewText: 'Your monthly Novu usage report',
+      }}
+    />
+  );
 }
+
+// export default async function renderEmail(payload: PayloadSchemaType, controls: ControlValueSchema) {
+//   return await render(<UsageReportEmail props={{ ...payload, ...controls }} />);
+// }
