@@ -19,7 +19,7 @@ type KeyValuePairListProps = {
 
 export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairListProps) {
   const { control } = useFormContext();
-  const { saveForm } = useSaveForm();
+  const { saveForm, saveFormDebounced } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
@@ -30,12 +30,12 @@ export function KeyValuePairList({ fieldName, label, tooltip }: KeyValuePairList
 
   const handleAdd = () => {
     append({ key: '', value: '' });
-    saveForm();
+    saveFormDebounced();
   };
 
   const handleRemove = (index: number) => {
     remove(index);
-    saveForm();
+    saveFormDebounced();
   };
 
   return (
