@@ -248,6 +248,57 @@ describe('keysToObject', () => {
   });
 });
 
+describe('prototype pollution guard', () => {
+  it('should not allow __proto__ pollution via digest payload properties', () => {
+    const paths = [
+      'steps.digest-step.events.payload',
+      'steps.digest-step.events.payload.__proto__.polluted',
+    ];
+
+    const before = ({} as any).polluted;
+    keysToObject(paths);
+    const after = ({} as any).polluted;
+
+    expect(before).to.equal(undefined);
+    expect(after).to.equal(undefined);
+  });
+
+  it('should not allow constructor pollution via digest payload properties', () => {
+    const paths = [
+      'steps.digest-step.events.payload',
+      'steps.digest-step.events.payload.constructor.prototype.polluted',
+    ];
+
+    const before = ({} as any).polluted;
+    keysToObject(paths);
+    const after = ({} as any).polluted;
+
+    expect(before).to.equal(undefined);
+    expect(after).to.equal(undefined);
+  });
+
+  it('should still set safe nested properties within digest payload', () => {
+    const paths = [
+      'steps.digest-step.events.payload',
+      'steps.digest-step.events.payload.user.name',
+    ];
+
+    const result = keysToObject(paths);
+
+    expect(result).to.deep.equal({
+      steps: {
+        'digest-step': {
+          events: {
+            payload: {
+              user: { name: 'name' },
+            },
+          },
+        },
+      },
+    });
+  });
+});
+
 describe('mockSchemaDefaults', () => {
   it('should preserve falsy default values (0, false, null, empty string)', () => {
     const schema: JSONSchemaDto = {
