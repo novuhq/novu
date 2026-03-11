@@ -31,3 +31,29 @@ export function configurationToCredential(config: ConfigConfiguration): IConfigC
     },
   } as IConfigCredential;
 }
+
+const OBJECT_CREDENTIAL_KEYS = new Set<string>([CredentialsKeyEnum.TlsOptions]);
+
+export function cleanCredentials(credentials: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(credentials)) {
+    if (value === '' || value === undefined || value === null) continue;
+
+    if (OBJECT_CREDENTIAL_KEYS.has(key) && typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (typeof parsed === 'object' && parsed !== null) {
+          cleaned[key] = parsed;
+          continue;
+        }
+      } catch {
+        // leave as string, API validation will catch it
+      }
+    }
+
+    cleaned[key] = value;
+  }
+
+  return cleaned;
+}

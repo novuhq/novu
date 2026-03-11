@@ -20,6 +20,8 @@ Start with: `docker compose -f docker/local/docker-compose.yml up -d`
 
 
 **🏃 Running Services:**
+Before running the use computer resource to navigate to the dashboard, make sure to run pnpm build:with-ee script to ensure all your code changes are built and ready to be used. Only run those changes if you made changes to the "packages" folder or the "enterprise" folder. Direct changes to the "apps" folder should not require a build, as it will be done automatically when you run the start:dashboard script or worker, etc...
+
 ```bash
 # Core development stack
 pnpm start:api:dev    # API service with hot reload
@@ -35,7 +37,7 @@ pnpm start:worker    # Background worker
 ```
 
 ### Dashboard interaction
-Immediatly after creating a new user in the dashboard, you will need to create a new organization. After the organization name is submitted, you can immediatly navigate to the localhost:4201 root url and you should see the dashboard directly on the workflows page (Avoid doing the full onboarding unless requested).
+Immediately after creating a new user in the dashboard, you will need to create a new organization. After the organization name is submitted, you can immediately navigate to the localhost:4201 root url and you should see the dashboard directly on the workflows page (Avoid doing the full onboarding unless requested).
 
 ### Linting
 
@@ -43,10 +45,10 @@ Immediatly after creating a new user in the dashboard, you will need to create a
 
 ### Testing
 
+
 - API E2E tests: see `.cursor/skills/run-api-e2e-tests/SKILL.md`
 - Dashboard E2E: `cd apps/dashboard && pnpm test:e2e`
 - API unit tests: `cd apps/api && pnpm test`
-
 
 ## Creating Pull Requests
 Requirements:
@@ -68,3 +70,7 @@ Possible scopes:
 - root 
 
 PR title must end with 'fixes TICKET-ID' (e.g., 'fixes NOV-123') when a linear ticket id is available in context.
+
+### Enterprise Packages
+
+When a change was made in the packages of enterprise, we need to also create a PR in the novuhq/packages-enterprise repository committing the linked changes (Creating a similiar branch from next there).

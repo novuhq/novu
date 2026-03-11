@@ -45,4 +45,9 @@ describe('@TransformToBoolean() transformer', () => {
     const result = transform({ isSomething: null });
     expect(typeof result.isSomething).not.equal('boolean');
   });
+
+  it('should transform empty string to undefined', () => {
+    const result = transform({ isSomething: '' });
+    expect(result.isSomething).to.equal(undefined);
+  });
 });

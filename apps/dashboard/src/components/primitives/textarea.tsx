@@ -140,7 +140,7 @@ const TextareaRoot = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       >
         <div className="grid">
           <div className="pointer-events-none relative z-10 flex flex-col gap-2 [grid-area:1/1]">
-            <Textarea ref={forwardedRef} hasError={hasError} {...rest} />
+            <Textarea ref={forwardedRef} hasError={hasError} maxLength={maxLength} {...rest} />
             <div className="pointer-events-none flex items-center justify-end gap-1.5 pl-3 pr-2.5">
               {showCounter && <CharCounter current={(rest.value as string)?.length ?? 0} max={maxLength} />}
               {resize && <ResizeHandle />}
