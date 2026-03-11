@@ -36,9 +36,13 @@ const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
-// Custom rule processor to handle relative date operators
+const CONTAINS_ANY_OPERATORS = ['containsAny', 'doesNotContainAny'] as const;
+
+function isContainsAnyOperator(operator: string): boolean {
+  return (CONTAINS_ANY_OPERATORS as readonly string[]).includes(operator);
+}
+
 const customRuleProcessor = (rule: RuleType, options: any) => {
-  // Handle relative date operators
   if (isRelativeDateOperator(rule.operator)) {
     try {
       const parsedValue = JSON.parse(rule.value as string);
@@ -48,18 +52,35 @@ const customRuleProcessor = (rule: RuleType, options: any) => {
         (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
         parsedValue.unit
       ) {
-        const result = {
+        return {
           [rule.operator]: [{ var: rule.field }, parsedValue],
         };
-
-        return result;
       }
     } catch (error) {
       console.warn('Failed to parse relative date value:', rule.value, error);
     }
   }
 
-  // Fall back to the default rule processor for all other operators
+  if (isContainsAnyOperator(rule.operator)) {
+    const trimmedValue = (rule.value as string).trim();
+    const variableMatch = trimmedValue.match(/^\{\{(.+?)\}\}$/);
+
+    if (variableMatch) {
+      return {
+        [rule.operator]: [{ var: rule.field }, { var: variableMatch[1].trim() }],
+      };
+    }
+
+    const values = trimmedValue
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    return {
+      [rule.operator]: [{ var: rule.field }, values],
+    };
+  }
+
   return defaultRuleProcessorJsonLogic(rule, options);
 };
 

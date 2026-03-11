@@ -9,6 +9,7 @@ import { useAuth } from '../context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '../context/environment/hooks';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
+import { sendGTMEvent } from '../utils/tracking';
 
 interface RequiredData {
   appId: string;
@@ -156,8 +157,9 @@ export function InboxUsecasePage() {
   const requiredData = getRequiredData(environment, currentUser?._id, currentOrganization?._id);
 
   useEffect(() => {
+    sendGTMEvent('sign_up');
+
     setTimeout(() => {
-      // this is a little workaround to prevent race conditions during initial sync flow of new organizations
       telemetry(TelemetryEvent.INBOX_USECASE_PAGE_VIEWED);
     }, 2000);
   }, [telemetry]);

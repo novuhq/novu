@@ -22,6 +22,12 @@ jobs:
           author="${{ github.event.pull_request.user.login }}"
           echo "Checking if $author is a team member..."
 
+          if [[ "$author" == *"[bot]" ]]; then
+            echo "is_community=false" >> $GITHUB_OUTPUT
+            echo "$author is a bot account - skipping contributor checks"
+            exit 0
+          fi
+
           response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/collaborators/$author/permission")
 
