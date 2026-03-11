@@ -16,6 +16,18 @@ const str32 = makeValidator((variable) => {
   return variable;
 });
 
+function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<unknown> {
+  if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
+    return num({ default: undefined });
+  }
+
+  if (key.startsWith('IS_')) {
+    return bool({ default: false });
+  }
+
+  return str({ default: undefined });
+}
+
 /**
  * Declare your ENV variables here.
  *
@@ -75,15 +87,9 @@ export const envValidators = {
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   // Feature Flags
-  ...Object.keys(FeatureFlagsKeysEnum).reduce(
-    (acc, key) => {
-      return {
-        ...acc,
-        [key as FeatureFlagsKeysEnum]: bool({ default: false }),
-      };
-    },
-    {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>
-  ),
+  ...(Object.fromEntries(
+    Object.values(FeatureFlagsKeysEnum).map((key) => [key, getFeatureFlagValidator(key)])
+  ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<unknown>>),
 
   // Azure validators
   ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
