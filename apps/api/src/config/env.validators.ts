@@ -8,7 +8,9 @@ export function validateEnv() {
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 const processEnv = process.env as Record<string, string>; // Hold the initial process.env to avoid circular reference
 
-function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<unknown> {
+function getFeatureFlagValidator(
+  key: FeatureFlagsKeysEnum
+): ValidatorSpec<string | number | boolean | undefined> {
   if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
     return num({ default: undefined });
   }
@@ -100,7 +102,7 @@ export const envValidators = {
   // Feature Flags
   ...(Object.fromEntries(
     Object.values(FeatureFlagsKeysEnum).map((key) => [key, getFeatureFlagValidator(key)])
-  ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<unknown>>),
+  ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
   ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
