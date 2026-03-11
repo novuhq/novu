@@ -74,4 +74,12 @@ describe('HTML Sanitizer', () => {
 
     expect(result[0].content).to.equal('<img src="https://example.com/image.jpg" alt="Example Image" />');
   });
+
+  it('should prevent XSS via malformed style closing tag </style/>', () => {
+    const maliciousHtml = '<style></style/><img src onerror=alert(origin)></style>';
+    const sanitized = sanitizeHTML(maliciousHtml);
+
+    expect(sanitized).to.not.include('onerror');
+    expect(sanitized).to.not.include('alert');
+  });
 });

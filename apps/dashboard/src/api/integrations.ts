@@ -4,7 +4,7 @@ import { del, get, post, put } from './api.client';
 export type CreateIntegrationData = {
   providerId: string;
   channel: ChannelTypeEnum;
-  credentials: Record<string, string>;
+  credentials: Record<string, unknown>;
   configurations: Record<string, string>;
   name: string;
   identifier: string;
@@ -25,7 +25,7 @@ export type UpdateIntegrationData = {
   identifier: string;
   active: boolean;
   primary: boolean;
-  credentials: Record<string, string>;
+  credentials: Record<string, unknown>;
   configurations: Record<string, string>;
   check: boolean;
 };

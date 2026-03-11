@@ -21,7 +21,7 @@ export const ContextsPage = () => {
         headerStartItems={
           <h1 className="text-foreground-950 flex items-center gap-1">
             Contexts{' '}
-            <Badge color="gray" size="sm">
+            <Badge color="gray" size="sm" variant="lighter">
               BETA
             </Badge>
           </h1>

@@ -1,8 +1,10 @@
 import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { IChannelSettings } from '@novu/shared';
+import { FeatureFlagsKeysEnum, IChannelSettings } from '@novu/shared';
 import { isEqual } from 'lodash';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../../services';
+import { FeatureFlagsService } from '../../../services/feature-flags';
+import { SYSTEM_LIMITS } from '../../../services/resource-validator.service';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 
 @Injectable()
@@ -13,7 +15,8 @@ export class UpdateSubscriberChannel {
     private subscriberRepository: SubscriberRepository,
     private integrationRepository: IntegrationRepository,
     @Inject(forwardRef(() => AnalyticsService))
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: UpdateSubscriberChannelCommand) {
@@ -56,7 +59,8 @@ export class UpdateSubscriberChannel {
         existingChannel,
         updatePayload,
         foundSubscriber,
-        command.isIdempotentOperation
+        command.isIdempotentOperation,
+        command.organizationId
       );
     } else {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
@@ -84,6 +88,14 @@ export class UpdateSubscriberChannel {
     updatePayload._integrationId = foundIntegration._id;
     updatePayload.providerId = command.providerId;
 
+    if (updatePayload.credentials?.deviceTokens?.length) {
+      await this.validateDeviceTokensLimit(
+        updatePayload.credentials.deviceTokens,
+        command.environmentId,
+        command.organizationId
+      );
+    }
+
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
         subscriberId: command.subscriberId,
@@ -106,7 +118,8 @@ export class UpdateSubscriberChannel {
     existingChannel: IChannelSettings,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber: SubscriberEntity,
-    isIdempotentOperation: boolean
+    isIdempotentOperation: boolean,
+    organizationId: string
   ) {
     const equal = isEqual(existingChannel.credentials, updatePayload.credentials);
 
@@ -125,6 +138,8 @@ export class UpdateSubscriberChannel {
           updatePayload.credentials.deviceTokens
         );
       }
+
+      await this.validateDeviceTokensLimit(deviceTokens, environmentId, organizationId);
     }
 
     await this.invalidateCache.invalidateByKey({
@@ -163,10 +178,30 @@ export class UpdateSubscriberChannel {
   }
 
   private unionDeviceTokens(existingDeviceTokens: string[], updateDeviceTokens: string[]): string[] {
-    // in order to not have breaking change we will support [] update
     if (updateDeviceTokens?.length === 0) return [];
 
     return [...new Set([...existingDeviceTokens, ...updateDeviceTokens])];
+  }
+
+  private async validateDeviceTokensLimit(
+    deviceTokens: string[],
+    environmentId: string,
+    organizationId: string
+  ): Promise<void> {
+    const maxTokens = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_SUBSCRIBER_DEVICE_TOKENS_NUMBER,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      defaultValue: SYSTEM_LIMITS.SUBSCRIBER_DEVICE_TOKENS,
+    });
+
+    if (deviceTokens.length > maxTokens) {
+      throw new BadRequestException({
+        message: `Device tokens limit exceeded. Maximum allowed tokens per subscriber channel is ${maxTokens}, but got ${deviceTokens.length} tokens.`,
+        currentCount: deviceTokens.length,
+        limit: maxTokens,
+      });
+    }
   }
 
   private createUpdatePayload(command: UpdateSubscriberChannelCommand) {
