@@ -91,6 +91,7 @@ export const AddStepMenu = ({
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const isThrottleStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_THROTTLE_STEP_ENABLED);
+  const isHttpRequestStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_REQUEST_STEP_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
     onMenuItemClick({ type: stepType });
@@ -161,12 +162,14 @@ export const AddStepMenu = ({
                     Throttle
                   </MenuItem>
                 )}
-                <MenuItem
-                  stepType={StepTypeEnum.HTTP_REQUEST}
-                  onClick={() => handleMenuItemClick(StepTypeEnum.HTTP_REQUEST)}
-                >
-                  HTTP Request
-                </MenuItem>
+                {isHttpRequestStepEnabled && (
+                  <MenuItem
+                    stepType={StepTypeEnum.HTTP_REQUEST}
+                    onClick={() => handleMenuItemClick(StepTypeEnum.HTTP_REQUEST)}
+                  >
+                    HTTP Request
+                  </MenuItem>
+                )}
               </MenuItemsGroup>
             </MenuGroup>
           </div>
