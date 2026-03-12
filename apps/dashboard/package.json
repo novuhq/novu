@@ -109,7 +109,7 @@
     "json-schema": "^0.4.0",
     "json5": "^2.2.3",
     "launchdarkly-react-client-sdk": "^3.9.0",
-    "liquidjs": "^10.20.0",
+    "liquidjs": "^10.25.0",
     "lodash.debounce": "^4.0.8",
     "lodash.isequal": "^4.5.0",
     "lodash.merge": "^4.6.2",

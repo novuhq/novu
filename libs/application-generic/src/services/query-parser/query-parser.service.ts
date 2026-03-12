@@ -217,6 +217,18 @@ const initializeCustomOperators = (): void => {
     createStringOperator((input, value) => !input.endsWith(value))
   );
 
+  jsonLogic.add_operation('containsAny', (dataInput: unknown, ruleValue: unknown): boolean => {
+    if (!Array.isArray(dataInput) || !Array.isArray(ruleValue)) return false;
+
+    return dataInput.some((item) => ruleValue.includes(item));
+  });
+
+  jsonLogic.add_operation('doesNotContainAny', (dataInput: unknown, ruleValue: unknown): boolean => {
+    if (!Array.isArray(dataInput) || !Array.isArray(ruleValue)) return false;
+
+    return !dataInput.some((item) => ruleValue.includes(item));
+  });
+
   jsonLogic.add_operation('null', (dataInput: unknown): boolean => dataInput === null);
 
   jsonLogic.add_operation('notNull', (dataInput: unknown): boolean => dataInput !== null);

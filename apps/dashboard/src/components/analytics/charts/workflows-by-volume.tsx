@@ -4,7 +4,6 @@ import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
 import { type WorkflowVolumeDataPoint } from '../../../api/activity';
 
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createVolumeBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyWorkflowData } from './chart-dummy-data';
@@ -12,7 +11,7 @@ import { type WorkflowChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 
 // Color palette for workflow charts
-const colorPalette = ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'];
+const colorPalette = ['#818cf8', '#22d3ee', '#34d399', '#fbbf24', '#fb923c'];
 
 const chartConfig = {
   count: {
@@ -57,22 +56,6 @@ function WorkflowVolumeTooltip(props: WorkflowVolumeTooltipProps) {
   );
 }
 
-function WorkflowsByVolumeSkeleton() {
-  return (
-    <div className="h-[160px] w-full flex flex-col gap-2">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const width = Math.random() * 60 + 20; // Random width between 20-80%
-        return (
-          <div key={i} className="flex items-center gap-2">
-            <Skeleton className="h-4 w-20 shrink-0 rounded-sm" />
-            <Skeleton className="h-4 grow rounded-sm" style={{ width: `${width}%` }} />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value: string } }) {
   const maxLength = 20;
   const text = payload.value.length > maxLength ? `${payload.value.slice(0, maxLength)}...` : payload.value;
@@ -113,12 +96,15 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
     []
   );
 
-  const calculateChartHeight = useCallback((data: WorkflowChartData[]) => {
-    const itemCount = data.length;
-    const barHeight = 16;
-    const gap = 10;
-    return Math.max(itemCount * (barHeight + gap) + 20, 80);
-  }, []);
+  const barSize = 12;
+  const calculateChartHeight = useCallback(
+    (data: WorkflowChartData[]) => {
+      const itemCount = data.length;
+      const gap = 10;
+      return Math.max(itemCount * (barSize + gap) + 20, 80);
+    },
+    []
+  );
 
   const renderChart = useCallback(
     (data: WorkflowChartData[], includeTooltip = true) => {
@@ -145,7 +131,7 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
               interval={0}
             />
             {includeTooltip && <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />}
-            <Bar dataKey="count" radius={6} barSize={16}>
+            <Bar dataKey="count" radius={3} barSize={barSize}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
@@ -170,7 +156,6 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
       data={chartData}
       isLoading={isLoading}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<WorkflowsByVolumeSkeleton />}
       dummyDataGenerator={generateDummyWorkflowData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.TOP_WORKFLOWS_BY_VOLUME}

@@ -38,16 +38,18 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed left-[50%]! top-[50%]! z-50 grid w-auto min-w-[320px] translate-x-[-50%]! translate-y-[-50%]! gap-5 border p-5 shadow duration-200 sm:rounded-xl',
+        'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed left-[50%]! top-[50%]! z-50 grid w-auto min-w-[320px] max-w-[calc(100vw-2rem)] translate-x-[-50%]! translate-y-[-50%]! gap-3 border p-4 shadow duration-200 sm:rounded-xl',
         className
       )}
       {...props}
     >
       {children}
       {!hideCloseButton && (
-        <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none">
+        <DialogPrimitive.Close
+          className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-md text-foreground-alpha-600 transition-colors hover:bg-neutral-alpha-100 hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none"
+          aria-label="Close"
+        >
           <Cross2Icon className="h-4 w-4" />
-          <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       )}
     </DialogPrimitive.Content>
@@ -56,16 +58,16 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
+  <div className={cn('flex flex-col space-y-1 text-center sm:text-left', className)} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
 
 const footerVariants = cva(
-  `-mx-5 flex flex-col-reverse p-4 pb-0 sm:flex-row sm:space-x-2 border-t border-neutral-alpha-200 `,
+  `-mx-4 -mb-4 mt-3 flex flex-col-reverse rounded-b-xl bg-bg-weak p-3 sm:flex-row sm:space-x-2 sm:justify-end border-t border-neutral-alpha-200`,
   {
     variants: {
       variant: {
-        default: 'sm:justify-end',
+        default: '',
         between: 'sm:justify-between',
       },
     },
@@ -88,7 +90,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight', className)}
+    className={cn('text-base font-semibold leading-tight tracking-tight', className)}
     {...props}
   />
 ));
@@ -98,7 +100,7 @@ const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn('text-foreground text-sm', className)} {...props} />
+  <DialogPrimitive.Description ref={ref} className={cn('text-foreground text-sm leading-snug', className)} {...props} />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 

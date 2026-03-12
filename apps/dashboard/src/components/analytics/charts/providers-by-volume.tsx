@@ -4,20 +4,18 @@ import { type ProviderVolumeDataPoint } from '../../../api/activity';
 import { ProviderIcon } from '../../integrations/components/provider-icon';
 
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
-import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { createVolumeBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyProviderData } from './chart-dummy-data';
 import { type ProviderChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 
-// Color palette for provider charts
-const colorPalette = ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'];
+const colorPalette = ['#818cf8', '#22d3ee', '#34d399', '#fbbf24', '#fb923c'];
 
 const chartConfig = {
   count: {
     label: 'Messages sent',
-    color: '#8b5cf6',
+    color: '#818cf8',
   },
 } satisfies ChartConfig;
 
@@ -48,28 +46,12 @@ function ProviderVolumeTooltip(props: ProviderVolumeTooltipProps) {
       key: 'count',
       label: 'Messages sent',
       value: data.count || 0,
-      color: data.fill || '#8b5cf6',
+      color: data.fill || '#818cf8',
     },
   ];
 
   return (
     <NovuTooltip active={props.active} label={data.displayName || data.providerId} rows={rows} showTotal={false} />
-  );
-}
-
-function ProvidersByVolumeSkeleton() {
-  return (
-    <div className="h-[160px] w-full flex flex-col gap-2">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const width = Math.random() * 60 + 20; // Random width between 20-80%
-        return (
-          <div key={i} className="flex items-center gap-2">
-            <Skeleton className="h-4 w-20 shrink-0 rounded-sm" />
-            <Skeleton className="h-4 grow rounded-sm" style={{ width: `${width}%` }} />
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -156,7 +138,7 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
               interval={0}
             />
             {includeTooltip && <ChartTooltip cursor={false} content={<ProviderVolumeTooltip />} />}
-            <Bar dataKey="count" radius={6} barSize={16}>
+            <Bar dataKey="count" radius={3} barSize={12}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
@@ -181,7 +163,6 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
       data={chartData}
       isLoading={isLoading}
       hasDataChecker={hasDataChecker}
-      loadingSkeleton={<ProvidersByVolumeSkeleton />}
       dummyDataGenerator={generateDummyProviderData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.PROVIDERS_BY_VOLUME}

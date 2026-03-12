@@ -1,4 +1,3 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
@@ -6,6 +5,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Badge } from '../primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';

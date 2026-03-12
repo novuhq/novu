@@ -143,6 +143,11 @@ export class QueryValidatorService {
         continue;
       }
 
+      if (key === 'containsAny' || key === 'doesNotContainAny') {
+        this.validateContainsAnyOperation({ operator: key, value, issues, path });
+        continue;
+      }
+
       const isBetween =
         key === JsonComparisonOperatorEnum.LESS_THAN_OR_EQUAL && Array.isArray(value) && value.length === 3;
       if (isBetween) {
@@ -280,6 +285,48 @@ export class QueryValidatorService {
       if (secondOperandEmpty) {
         issues.push(this.getValueIssue(path));
       }
+    }
+  }
+
+  private validateContainsAnyOperation({
+    operator,
+    value,
+    issues,
+    path,
+  }: {
+    operator: string;
+    value: unknown;
+    issues: QueryIssue[];
+    path: number[];
+  }) {
+    if (!Array.isArray(value) || value.length !== 2) {
+      issues.push(this.getOperationIssue(operator, path));
+
+      return;
+    }
+
+    const [field, comparisonValue] = value;
+
+    this.validateFieldReference(field, issues, path);
+
+    const isVarReference =
+      comparisonValue &&
+      typeof comparisonValue === 'object' &&
+      !Array.isArray(comparisonValue) &&
+      'var' in comparisonValue;
+
+    if (isVarReference) {
+      this.validateFieldReference(comparisonValue, issues, path);
+
+      return;
+    }
+
+    const isEmpty =
+      comparisonValue === undefined ||
+      comparisonValue === null ||
+      (Array.isArray(comparisonValue) && comparisonValue.length === 0);
+    if (isEmpty) {
+      issues.push(this.getValueIssue(path));
     }
   }
 

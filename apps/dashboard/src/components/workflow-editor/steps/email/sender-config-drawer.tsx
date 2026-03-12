@@ -57,6 +57,10 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
       return true;
     }
 
+    if (/\{\{.*?\}\}/.test(email)) {
+      return true;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     return emailRegex.test(email);

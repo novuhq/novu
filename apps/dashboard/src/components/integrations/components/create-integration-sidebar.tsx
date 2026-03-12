@@ -17,6 +17,7 @@ import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
+import { cleanCredentials } from './utils/helpers';
 
 export type CreateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -73,7 +74,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       const integration = await createIntegration({
         providerId: provider.id,
         channel: provider.channel,
-        credentials: data.credentials,
+        credentials: cleanCredentials(data.credentials),
         configurations: data.configurations,
         name: data.name,
         identifier: data.identifier,

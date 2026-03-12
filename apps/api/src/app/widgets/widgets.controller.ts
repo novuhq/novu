@@ -17,7 +17,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService } from '@novu/application-generic';
-import { MessageEntity } from '@novu/dal';
+import { MessageEntity, BaseRepository } from '@novu/dal';
 import {
   ButtonTypeEnum,
   IPreferenceChannels,
@@ -150,14 +150,11 @@ export class WidgetsController {
   async getUnseenCount(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean,
+    @Query('seen') seen: boolean | string,
     @Query('limit', new DefaultValuePipe(100), new LimitPipe(1, 100, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
-
-    if (seen === undefined) {
-      seen = false;
-    }
+    const parsedSeen = seen === undefined ? false : seen === 'true' || seen === true;
 
     return await this.getFeedCountUsecase.execute(
       GetFeedCountCommand.create({
@@ -165,7 +162,7 @@ export class WidgetsController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         feedId: feedsQuery,
-        seen,
+        seen: parsedSeen,
         limit,
       })
     );
@@ -176,14 +173,11 @@ export class WidgetsController {
   async getUnreadCount(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('read') read: boolean,
+    @Query('read') read: boolean | string,
     @Query('limit', new DefaultValuePipe(100), new LimitPipe(1, 100, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
-
-    if (read === undefined) {
-      read = false;
-    }
+    const parsedRead = read === undefined ? false : read === 'true' || read === true;
 
     return await this.getFeedCountUsecase.execute(
       GetFeedCountCommand.create({
@@ -191,7 +185,7 @@ export class WidgetsController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         feedId: feedsQuery,
-        read,
+        read: parsedRead,
         limit,
       })
     );
@@ -282,7 +276,9 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('messageId') messageId: string
   ): Promise<void> {
-    if (!messageId) throw new BadRequestException('messageId is required');
+    if (!messageId || !BaseRepository.isInternalId(messageId)) {
+      throw new BadRequestException('messageId must be a valid MongoDB ObjectId');
+    }
 
     const command = RemoveMessageCommand.create({
       organizationId: subscriberSession._organizationId,

@@ -1,15 +1,13 @@
-import { MetricsService, NewRelicMetricsService } from './metrics.service';
+import { MetricsService, NewRelicMetricsService, OtelMetricsService } from './metrics.service';
 
 export const metricsServiceList = {
   provide: 'MetricsServices',
-  useFactory: (newRelicMetricsService: NewRelicMetricsService) => {
-    const allMetricsServices = [newRelicMetricsService];
+  useFactory: (newRelicMetricsService: NewRelicMetricsService, otelMetricsService: OtelMetricsService) => {
+    const allMetricsServices = [newRelicMetricsService, otelMetricsService];
 
-    const activeMetricsServices = allMetricsServices.filter((service) => service.isActive(process.env));
-
-    return activeMetricsServices;
+    return allMetricsServices.filter((service) => service.isActive(process.env));
   },
-  inject: [NewRelicMetricsService],
+  inject: [NewRelicMetricsService, OtelMetricsService],
 };
 
-export { MetricsService };
+export { MetricsService, OtelMetricsService };

@@ -64,18 +64,35 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   public async getGroupsJobsCount() {
-    return await (this.bullMqService.queue as any).getGroupsJobsCount();
+    const queue = this.bullMqService.queue as any;
+
+    if (!queue) return 0;
+
+    /*
+     * getGroupsJobsCount is only available in BullMQ Pro Edition, so we fallback to getWaitingCount if it's not available.
+     */
+    if (typeof queue.getGroupsJobsCount !== 'function') {
+      return await this.bullMqService.queue.getWaitingCount();
+    }
+
+    return await queue.getGroupsJobsCount();
   }
 
   public async getWaitingCount() {
+    if (!this.bullMqService.queue) return 0;
+
     return await this.bullMqService.queue.getWaitingCount();
   }
 
   public async getDelayedCount() {
+    if (!this.bullMqService.queue) return 0;
+
     return await this.bullMqService.queue.getDelayedCount();
   }
 
   public async getActiveCount() {
+    if (!this.bullMqService.queue) return 0;
+
     return await this.bullMqService.queue.getActiveCount();
   }
 
