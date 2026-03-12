@@ -207,38 +207,134 @@ const FRAMEWORK_DOCS: Record<string, string> = {
   JavaScript: 'https://docs.novu.co/platform/quickstart/js',
 };
 
+function getFrameworkCodeSnippet(
+  frameworkName: string,
+  applicationIdentifier: string,
+  subscriberId: string
+): string {
+  switch (frameworkName) {
+    case 'Next.js':
+      return `'use client';
+import { Inbox } from '@novu/nextjs';
+
+export default function NotificationInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="${applicationIdentifier}"
+      subscriberId="${subscriberId}"
+    />
+  );
+}`;
+    case 'React':
+      return `import { Inbox } from '@novu/react';
+import { useNavigate } from 'react-router-dom';
+
+export default function NotificationInbox() {
+  const navigate = useNavigate();
+
+  return (
+    <Inbox
+      applicationIdentifier="${applicationIdentifier}"
+      subscriberId="${subscriberId}"
+      routerPush={(path) => navigate(path)}
+    />
+  );
+}`;
+    default:
+      return `import { Inbox } from '${FRAMEWORK_PACKAGES[frameworkName] ?? '@novu/js'}';
+
+// applicationIdentifier: "${applicationIdentifier}"
+// subscriberId: "${subscriberId}"`;
+  }
+}
+
 function buildCondensedPrompt(frameworkName: string, applicationIdentifier: string, subscriberId: string): string {
   const pkg = FRAMEWORK_PACKAGES[frameworkName] ?? '@novu/js';
   const docs = FRAMEWORK_DOCS[frameworkName] ?? 'https://docs.novu.co';
+  const snippet = getFrameworkCodeSnippet(frameworkName, applicationIdentifier, subscriberId);
 
-  return `Integrate the Novu Inbox notification component into my ${frameworkName} app.
+  return `# Add Novu Inbox to ${frameworkName} App
 
-Install ${pkg} and add the <Inbox /> component to my header or navbar.
+Install \`${pkg}\`. Add the \`<Inbox />\` component to your header, navbar, or sidebar.
 
-Configuration:
-- applicationIdentifier: "${applicationIdentifier}"
-- subscriberId: "${subscriberId}"
+Latest docs: ${docs}
 
-Requirements:
-- Detect my project's package manager, auth system, and UI framework
-- Extract design tokens from my app and apply via the appearance prop (variables and elements)
-- Place <Inbox /> inline in existing UI — no wrappers or new pages
+## Install
+
+\`\`\`bash
+npm install ${pkg}
+\`\`\`
+
+## Component
+
+\`\`\`tsx
+${snippet}
+\`\`\`
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use the provided subscriberId "${subscriberId}".
+
+## Appearance
+
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply via the appearance prop:
+
+\`\`\`tsx
+<Inbox
+  appearance={{
+    variables: {
+      colorPrimary: '',
+      colorForeground: '',
+      colorBackground: '',
+    },
+  }}
+/>
+\`\`\`
+
+Only set values extracted from the host app's design system. Do not add empty or placeholder values.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Extract design tokens and apply via the appearance prop
+- Place <Inbox /> inline in existing UI - no new pages or wrappers
 - Use TypeScript, no comments, no empty props
-- Follow ${frameworkName} best practices
+- Follow ${frameworkName} conventions
+- Use the existing auth system to source subscriberId when available
 
-Docs: ${docs}`;
+NEVER:
+
+- Add empty appearance values or placeholder props
+- Create wrapper components or new pages just for the inbox
+- Add code comments
+- Introduce styles not in the host app
+- Add unused props or imports
+
+## Verify Before Responding
+
+1. Is \`${pkg}\` installed with the project's package manager?
+2. Is <Inbox /> placed inline in existing UI?
+3. Are design tokens extracted and applied?
+4. Are all props non-empty and properly typed?
+5. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.`;
+}
+
+function safeCursorEncode(text: string): string {
+  return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
 function buildCursorDeepLink(frameworkName: string, applicationIdentifier: string, subscriberId: string): string {
   const prompt = buildCondensedPrompt(frameworkName, applicationIdentifier, subscriberId);
-  const url = new URL('cursor://anysphere.cursor-deeplink/prompt');
-  url.searchParams.set('text', prompt);
 
-  return url.toString();
+  return `https://cursor.com/link/prompt?text=${safeCursorEncode(prompt)}`;
 }
 
 function extractConfigFromPrompt(copyText: string): { applicationIdentifier: string; subscriberId: string } {
-  const appIdMatch = copyText.match(/NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER=(\S+)/);
+  const appIdMatch = copyText.match(/NOVU_APPLICATION_IDENTIFIER=(\S+)/);
   const subIdMatch = copyText.match(/subscriberId="([^"]+)"/);
 
   return {
@@ -315,6 +411,8 @@ function StepButton({
           </button>
           <a
             href={cursorDeepLink}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={() => track(TelemetryEvent.AI_PROMPT_COPIED, { framework: frameworkName, method: 'cursor-deeplink' })}
             className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 h-7 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-300"
           >
