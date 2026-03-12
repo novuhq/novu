@@ -143,39 +143,57 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
 
       {/* Action Buttons - Show with optimized interaction states */}
       <div className="bg-muted">
-        <div className="flex justify-center gap-2 p-3">
+        <div className="flex items-center justify-center gap-2 p-3">
           {!hasNotificationBeenSent ? (
-            <Button
-              variant="secondary"
-              size="xs"
-              trailingIcon={Notification5Fill}
-              isLoading={isPending}
-              onClick={handleSendNotification}
-              disabled={isPending}
-              className="px-2"
-            >
-              Send notification
-            </Button>
+            <>
+              <button
+                type="button"
+                onClick={handleNextStepClick}
+                className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
+              >
+                Skip
+              </button>
+              <Button
+                variant="secondary"
+                size="xs"
+                trailingIcon={Notification5Fill}
+                isLoading={isPending}
+                onClick={handleSendNotification}
+                disabled={isPending}
+                className="px-2"
+              >
+                Send notification
+              </Button>
+            </>
           ) : (
-            <Button
-              onClick={handleNextStepClick}
-              disabled={!appId}
-              size="xs"
-              trailingIcon={RiArrowRightSLine}
-              className="px-2.5 text-white disabled:opacity-50"
-              style={{
-                background:
-                  'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #DD2450',
-                boxShadow: '0px 1px 2px rgba(14, 18, 27, 0.24), 0px 0px 0px 1px #DD2450',
-                fontFamily: 'Inter',
-                fontSize: '12px',
-                lineHeight: '16px',
-                fontWeight: 500,
-                fontFeatureSettings: '"cv09" on, "ss11" on, "calt" off, "liga" off',
-              }}
-            >
-              Next Step
-            </Button>
+            <>
+              <button
+                type="button"
+                onClick={handleNextStepClick}
+                className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
+              >
+                Skip
+              </button>
+              <Button
+                onClick={handleNextStepClick}
+                disabled={!appId}
+                size="xs"
+                trailingIcon={RiArrowRightSLine}
+                className="px-2.5 text-white disabled:opacity-50"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #DD2450',
+                  boxShadow: '0px 1px 2px rgba(14, 18, 27, 0.24), 0px 0px 0px 1px #DD2450',
+                  fontFamily: 'Inter',
+                  fontSize: '12px',
+                  lineHeight: '16px',
+                  fontWeight: 500,
+                  fontFeatureSettings: '"cv09" on, "ss11" on, "calt" off, "liga" off',
+                }}
+              >
+                Next Step
+              </Button>
+            </>
           )}
         </div>
       </div>

@@ -1,9 +1,12 @@
 import { useOrganization, useUser } from '@clerk/clerk-react';
 import type { IEnvironment } from '@novu/shared';
+import { motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { AuthCard } from '../components/auth/auth-card';
 import { InboxPlayground } from '../components/auth/inbox-playground';
+import { LogoCircle } from '../components/icons/logo-circle';
 import { PageMeta } from '../components/page-meta';
 import { useAuth } from '../context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '../context/environment/hooks';
@@ -18,76 +21,97 @@ interface RequiredData {
 
 type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
 
-const InboxLoadingSkeleton = () => {
+const STEP_DELAY_MS = 1500;
+
+const ONBOARDING_STEPS = [
+  { id: 'org', text: 'Preparing your organization' },
+  { id: 'env', text: 'Setting up your environment' },
+  { id: 'channels', text: 'Configuring notification channels' },
+  { id: 'inbox', text: 'Getting your inbox ready' },
+  { id: 'final', text: 'Almost there...' },
+] as const;
+
+const ITEM_HEIGHT = 20;
+const GAP = 12;
+const CONTAINER_HEIGHT = 140;
+
+function OnboardingLoader() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => {
+        if (prev >= ONBOARDING_STEPS.length - 1) return prev;
+
+        return prev + 1;
+      });
+    }, STEP_DELAY_MS);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = ONBOARDING_STEPS.map((step, index) => {
+    const status = index < activeIndex ? 'success' : index === activeIndex ? 'progress' : 'pending';
+
+    return { ...step, status };
+  });
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden pb-3">
-      {/* Header skeleton - matches UsecasePlaygroundHeader */}
-      <div className="px-8 pb-6 pt-8">
-        <div className="space-y-4">
-          {/* Title skeleton */}
-          <div className="h-8 w-80 animate-pulse rounded bg-neutral-200"></div>
-
-          {/* Description skeleton */}
-          <div className="h-4 w-96 animate-pulse rounded bg-neutral-200"></div>
-        </div>
-      </div>
-
-      {/* Main content area with background */}
-      <div
-        className="flex flex-1 flex-col"
-        style={{
-          backgroundImage: 'url(/images/auth/Content.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
+    <div className="flex flex-1 flex-col items-center justify-center gap-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="flex flex-col items-center gap-4"
       >
-        <div className="flex flex-1">
-          {/* Left side - App name skeleton */}
-          <div className="flex flex-1 items-start justify-start">
-            <div className="ml-10 mt-9">
-              <div className="h-6 w-32 animate-pulse rounded bg-neutral-200"></div>
-            </div>
-          </div>
+        <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
+          <LogoCircle className="size-10" />
+        </motion.div>
+        <motion.span
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="text-label-md text-text-strong font-medium"
+        >
+          Setting up your workspace
+        </motion.span>
+      </motion.div>
 
-          {/* Right side - Inbox skeleton */}
-          <div className="flex flex-1 flex-col">
-            <div className="flex items-start justify-end">
-              <div className="mr-20 mt-16 h-[470px] w-[375px] overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-                {/* Inbox header skeleton */}
-                <div className="border-b border-neutral-100 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="h-5 w-16 animate-pulse rounded bg-neutral-200"></div>
-                    <div className="h-6 w-6 animate-pulse rounded bg-neutral-200"></div>
-                  </div>
-                </div>
-
-                {/* Tabs skeleton */}
-                <div className="border-b border-neutral-100 px-4 pb-2 pt-3">
-                  <div className="flex space-x-6">
-                    <div className="h-4 w-8 animate-pulse rounded bg-neutral-200"></div>
-                    <div className="h-4 w-20 animate-pulse rounded bg-neutral-200"></div>
-                    <div className="h-4 w-24 animate-pulse rounded bg-neutral-200"></div>
-                  </div>
-                </div>
-
-                {/* Content area skeleton */}
-                <div className="space-y-3 p-4">
-                  {/* Empty state or notification items */}
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 h-12 w-12 animate-pulse rounded-full bg-neutral-200"></div>
-                    <div className="mb-2 h-4 w-48 animate-pulse rounded bg-neutral-200"></div>
-                    <div className="h-3 w-32 animate-pulse rounded bg-neutral-200"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="relative w-full max-w-xs overflow-hidden" style={{ height: CONTAINER_HEIGHT }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%, black 65%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%, black 65%, transparent 100%)',
+          }}
+        >
+          <motion.div
+            className="absolute left-0 right-0 flex flex-col items-center"
+            style={{ gap: GAP }}
+            initial={false}
+            animate={{ y: CONTAINER_HEIGHT / 2 - ITEM_HEIGHT / 2 - activeIndex * (ITEM_HEIGHT + GAP) }}
+            transition={{ type: 'tween', ease: 'easeInOut', duration: 0.4 }}
+          >
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.id}
+                className="flex shrink-0 items-center gap-2"
+                style={{ height: ITEM_HEIGHT }}
+                animate={{ opacity: index === activeIndex ? 1 : 0.35 }}
+                transition={{ duration: 0.3 }}
+              >
+                {step.status === 'success' && <RiCheckboxCircleFill className="size-4 shrink-0 text-success" />}
+                {step.status === 'progress' && <RiLoader4Fill className="size-4 shrink-0 animate-spin text-text-sub" />}
+                {step.status === 'pending' && <RiLoader3Line className="size-4 shrink-0 text-text-sub" />}
+                <span className="text-label-sm text-text-sub">{step.text}</span>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 const useInboxLoading = (organizationId?: string) => {
   const [phase, setPhase] = useState<LoadingPhase>('initializing');
@@ -179,7 +203,7 @@ export function InboxUsecasePage() {
       <AnimatedPage>
         <PageMeta title="Integrate with the Inbox component" />
         <AuthCard>
-          <InboxLoadingSkeleton />
+          <OnboardingLoader />
         </AuthCard>
       </AnimatedPage>
     );
