@@ -35,6 +35,8 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
   ttl: 1000 * 60 * 5, // 5 minutes
 });
 
+const MAX_RAW_SIZE = 10_240;
+
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
@@ -175,7 +177,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
             status: ExecutionDetailsStatusEnum.FAILED,
             isTest: false,
             isRetry: false,
-            raw: JSON.stringify({ errors: validationResult.errors, responseBody: result.body }),
+            raw: truncateRaw({ errors: validationResult.errors, responseBody: result.body }),
           })
         );
 
@@ -200,7 +202,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(result),
+        raw: truncateRaw(result),
       })
     );
 
@@ -266,6 +268,17 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     return rawControls;
   }
+}
+
+function truncateRaw(obj: unknown, maxSize: number = MAX_RAW_SIZE): string {
+  const serialized = JSON.stringify(obj);
+  if (serialized.length <= maxSize) {
+    return serialized;
+  }
+
+  const suffix = '... [truncated]';
+
+  return serialized.slice(0, maxSize - suffix.length) + suffix;
 }
 
 function isPrivateIp(ip: string): boolean {
