@@ -5,6 +5,19 @@ exports[`generateWorkerWrapper > should handle empty steps array > empty-steps 1
 import { channelStepSchemas } from '@novu/framework/step-resolver';
 
 
+// Pre-compile all JSON Schema validators during the startup phase.
+// Cloudflare Workers allow new Function() (used by AJV) during startup but not during request handling.
+// JsonSchemaValidator caches compiled validators by schema object reference, so these pre-compiled
+// validators are reused on every request without triggering new Function() again.
+await Promise.all([
+  ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {}).catch(() => {})
+  ),
+  ...[].flatMap(handler =>
+    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+  ),
+]);
+
 const stepHandlers = new Map([
 
 ]);
@@ -122,6 +135,19 @@ exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
 "import { validateData } from '@novu/framework/validators';
 import { channelStepSchemas } from '@novu/framework/step-resolver';
 import stepHandler0 from "./novu/welcome-email.step";
+
+// Pre-compile all JSON Schema validators during the startup phase.
+// Cloudflare Workers allow new Function() (used by AJV) during startup but not during request handling.
+// JsonSchemaValidator caches compiled validators by schema object reference, so these pre-compiled
+// validators are reused on every request without triggering new Function() again.
+await Promise.all([
+  ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {}).catch(() => {})
+  ),
+  ...[stepHandler0].flatMap(handler =>
+    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+  ),
+]);
 
 const stepHandlers = new Map([
   ["onboarding" + '/' + stepHandler0.stepId, stepHandler0]
@@ -241,6 +267,19 @@ exports[`generateWorkerWrapper > should match snapshot 1`] = `
 import { channelStepSchemas } from '@novu/framework/step-resolver';
 import stepHandler0 from "./novu/welcome-email.step";
 import stepHandler1 from "./novu/verify-email.step";
+
+// Pre-compile all JSON Schema validators during the startup phase.
+// Cloudflare Workers allow new Function() (used by AJV) during startup but not during request handling.
+// JsonSchemaValidator caches compiled validators by schema object reference, so these pre-compiled
+// validators are reused on every request without triggering new Function() again.
+await Promise.all([
+  ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {}).catch(() => {})
+  ),
+  ...[stepHandler0, stepHandler1].flatMap(handler =>
+    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+  ),
+]);
 
 const stepHandlers = new Map([
   ["onboarding" + '/' + stepHandler0.stepId, stepHandler0],
