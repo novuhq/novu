@@ -65,7 +65,7 @@ export class DeployStepResolverManifestDto {
 export class DeployStepResolverRequestDto {
   @ApiProperty({
     description: 'JSON-serialized step resolver manifest',
-    example: '{"steps":[{"workflowId":"welcome-email","stepId":"welcome"}]}',
+    example: '{"steps":[{"workflowId":"welcome-email","stepId":"welcome","stepType":"email"}]}',
   })
   @IsString()
   @IsNotEmpty()

@@ -69,15 +69,38 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
 
     let scaffoldResult: ScaffoldResult | undefined;
     if (options.template) {
+      const workflowIds = normalizeRequestedWorkflows(options.workflow);
+      const stepIds = normalizeRequestedWorkflows(options.step);
+      const remoteStepType =
+        workflowIds[0] && stepIds[0] ? await client.getStepType(workflowIds[0], stepIds[0]) : undefined;
+
+      if (remoteStepType && remoteStepType !== 'email') {
+        console.error('');
+        console.error(
+          red(
+            `❌ The --template flag is only supported for email steps, but step '${stepIds[0]}' is of type '${remoteStepType}'.`
+          )
+        );
+        console.error('');
+        process.exit(1);
+      }
+
       scaffoldResult = { mode: 'react-email', templatePath: options.template };
     } else {
       scaffoldResult = await resolveScaffoldInteractively(client, options, rootDir, effectiveOutDir);
     }
 
+    let isFirstTimeScaffold = false;
     if (scaffoldResult) {
       const workflowIds = normalizeRequestedWorkflows(options.workflow);
       const stepIds = normalizeRequestedWorkflows(options.step);
-      await scaffoldStepFileIfNeeded(scaffoldResult, workflowIds[0], stepIds[0], rootDir, effectiveOutDir);
+      isFirstTimeScaffold = await scaffoldStepFileIfNeeded(
+        scaffoldResult,
+        workflowIds[0],
+        stepIds[0],
+        rootDir,
+        effectiveOutDir
+      );
     }
 
     const discoveredSteps = await discoverAndValidateSteps(stepsDir, stepsDirLabel);
@@ -114,7 +137,7 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
     }
 
     if (process.stdout.isTTY) {
-      const confirmed = await confirmDeploy(selectedSteps.length);
+      const confirmed = await confirmDeploy(selectedSteps.length, isFirstTimeScaffold);
       if (!confirmed) {
         console.log('');
         console.log(yellow('ℹ  Publish cancelled.'));
@@ -210,7 +233,7 @@ async function promptForChannelType(rootDir: string): Promise<ScaffoldResult | u
   return { mode: 'placeholder', stepType: response.channelType };
 }
 
-async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> {
+async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult | undefined> {
   const templates = await withSpinner('Scanning for React Email templates...', () => discoverEmailTemplates(rootDir), {
     successMessage: (tmpl) =>
       tmpl.length > 0
@@ -226,6 +249,7 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> 
     templates.length > 0 ? templates.map((t) => ({ title: t.relativePath, value: t.relativePath })) : [];
   const hasTemplates = templateChoices.length > 0;
 
+  let selectCancelled = false;
   const selectResponse = await prompts(
     {
       type: 'select',
@@ -241,6 +265,7 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> 
     },
     {
       onCancel: () => {
+        selectCancelled = true;
         console.log('');
         console.log(yellow('ℹ  Scaffolding cancelled.'));
         console.log('');
@@ -248,11 +273,16 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> 
     }
   );
 
-  if (!selectResponse.template || selectResponse.template === GENERIC_EMAIL) {
+  if (selectCancelled) {
+    return undefined;
+  }
+
+  if (selectResponse.template === GENERIC_EMAIL) {
     return { mode: 'placeholder', stepType: 'email' };
   }
 
   if (selectResponse.template === MANUAL_ENTRY) {
+    let pathCancelled = false;
     const pathResponse = await prompts(
       {
         type: 'text',
@@ -262,6 +292,7 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> 
       },
       {
         onCancel: () => {
+          pathCancelled = true;
           console.log('');
           console.log(yellow('ℹ  Scaffolding cancelled.'));
           console.log('');
@@ -269,8 +300,8 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> 
       }
     );
 
-    if (!pathResponse.templatePath) {
-      return { mode: 'placeholder', stepType: 'email' };
+    if (pathCancelled || !pathResponse.templatePath) {
+      return undefined;
     }
 
     return { mode: 'react-email', templatePath: pathResponse.templatePath };
@@ -279,11 +310,14 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> 
   return { mode: 'react-email', templatePath: selectResponse.template };
 }
 
-async function confirmDeploy(stepCount: number): Promise<boolean> {
+async function confirmDeploy(stepCount: number, isFirstTimeScaffold: boolean): Promise<boolean> {
   const stepText = stepCount === 1 ? '1 step' : `${stepCount} steps`;
   console.log('');
-  console.log(yellow(`⚠  Publishing will override any existing Novu editor content for ${stepText}.`));
-  console.log('');
+
+  if (isFirstTimeScaffold) {
+    console.log(yellow(`⚠  Publishing will override any existing editor content for ${stepText}.`));
+    console.log('');
+  }
 
   const response = await prompts({
     type: 'confirm',
@@ -357,7 +391,7 @@ async function scaffoldStepFileIfNeeded(
   stepId: string,
   rootDir: string,
   configOutDir?: string
-): Promise<void> {
+): Promise<boolean> {
   const outDir = configOutDir || './novu';
   const outDirPath = path.resolve(rootDir, outDir);
   const pathResolver = new StepFilePathResolver(rootDir, outDirPath);
@@ -368,7 +402,7 @@ async function scaffoldStepFileIfNeeded(
     console.log(yellow(`ℹ  ${relPath} already exists — scaffold skipped`));
     console.log('');
 
-    return;
+    return false;
   }
 
   const workflowDir = pathResolver.getWorkflowDir(workflowId);
@@ -403,6 +437,8 @@ async function scaffoldStepFileIfNeeded(
   console.log('');
 
   await installFrameworkPackageIfNeeded(rootDir);
+
+  return true;
 }
 
 function assertNotProductionEnvironment(envInfo: EnvironmentInfo): void {
@@ -525,9 +561,7 @@ async function discoverAndValidateSteps(stepsDir: string, stepsDirLabel: string)
         console.error('');
         console.error('Expected *.step.tsx, *.step.ts, *.step.jsx, or *.step.js files.');
         console.error('');
-        console.error(
-          `Run 'npx novu step publish --workflow=<id> --step=<id>' to scaffold your first email step handler.`
-        );
+        console.error(`Run 'npx novu step publish --workflow=<id> --step=<id>' to scaffold your first step handler.`);
         console.error('');
         throw new Error('No step files found');
       }

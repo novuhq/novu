@@ -105,6 +105,7 @@ export default {
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       const outputSchema = channelStepSchemas[step.type]?.output;
+      let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
         if (!outputResult.success) {
@@ -113,11 +114,11 @@ export default {
             400
           );
         }
+        validatedResult = outputResult.data ?? result;
       }
-      const sanitizedResult = result;
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
+        { stepId: step.stepId, workflowId: workflowId, ...validatedResult },
         200
       );
     } catch (error) {
@@ -236,6 +237,7 @@ export default {
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       const outputSchema = channelStepSchemas[step.type]?.output;
+      let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
         if (!outputResult.success) {
@@ -244,11 +246,11 @@ export default {
             400
           );
         }
+        validatedResult = outputResult.data ?? result;
       }
-      const sanitizedResult = result;
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
+        { stepId: step.stepId, workflowId: workflowId, ...validatedResult },
         200
       );
     } catch (error) {
@@ -369,6 +371,7 @@ export default {
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
       const outputSchema = channelStepSchemas[step.type]?.output;
+      let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
         if (!outputResult.success) {
@@ -377,11 +380,11 @@ export default {
             400
           );
         }
+        validatedResult = outputResult.data ?? result;
       }
-      const sanitizedResult = result;
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
+        { stepId: step.stepId, workflowId: workflowId, ...validatedResult },
         200
       );
     } catch (error) {

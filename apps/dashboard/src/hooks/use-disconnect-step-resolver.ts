@@ -13,12 +13,19 @@ export const useDisconnectStepResolver = (
   const { currentEnvironment } = useEnvironment();
 
   const { mutateAsync, ...rest } = useMutation({
-    mutationFn: (args: DisconnectStepResolverParameters) =>
-      disconnectStepResolver({ environment: currentEnvironment!, ...args }),
+    mutationFn: (args: DisconnectStepResolverParameters) => {
+      if (!currentEnvironment) {
+        return Promise.reject(new Error('No environment loaded'));
+      }
+
+      return disconnectStepResolver({ environment: currentEnvironment, ...args });
+    },
     ...options,
     onSuccess: async (data, variables, ctx) => {
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] }),
+        queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] }),
+      ]);
       options?.onSuccess?.(data, variables, ctx);
     },
   });

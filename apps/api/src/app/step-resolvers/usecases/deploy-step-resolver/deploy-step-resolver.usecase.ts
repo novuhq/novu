@@ -248,7 +248,7 @@ export class DeployStepResolverUsecase {
     for (const step of resolvedSteps) {
       await this.messageTemplateRepository.update(
         { _id: step.stepInternalId, _environmentId: command.user.environmentId },
-        { $set: { 'controls.schema': step.controlSchema } },
+        { $set: { 'controls.schema': step.controlSchema }, $unset: { 'controls.uiSchema': 1 } },
         { session }
       );
     }

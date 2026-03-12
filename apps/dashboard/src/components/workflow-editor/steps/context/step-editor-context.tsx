@@ -50,6 +50,10 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     setIsPendingResolverActivationState(value);
   }, []);
 
+  useEffect(() => {
+    setIsPendingResolverActivationState(false);
+  }, [workflow.workflowId, step.stepId]);
+
   // Update locale when organization settings first load
   useEffect(() => {
     if (!isOrgSettingsLoading && organizationSettings?.data?.defaultLocale) {

@@ -46,9 +46,14 @@ export function StepEditorModeToggle() {
         open={isDisconnectModalOpen}
         onOpenChange={setIsDisconnectModalOpen}
         onConfirm={async () => {
-          await disconnectStepResolver({ stepInternalId: step._id, stepType: step.type });
-          setIsPendingResolverActivation(false);
-          setIsDisconnectModalOpen(false);
+          try {
+            await disconnectStepResolver({ stepInternalId: step._id, stepType: step.type });
+          } catch (error) {
+            console.error('Failed to disconnect step resolver', error);
+          } finally {
+            setIsPendingResolverActivation(false);
+            setIsDisconnectModalOpen(false);
+          }
         }}
         title="Switch back to Novu editor?"
         description="This will remove the link to your deployed step resolver and restore native editing for this step."

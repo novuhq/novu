@@ -197,6 +197,22 @@ export class ExecuteStepResolverRequest {
     if (error instanceof HTTPError) {
       const statusCode = error.response.statusCode;
 
+      if (statusCode === 400) {
+        const parsedBody = this.tryParseBody(error.response.body);
+
+        if (parsedBody?.error === 'INVALID_CONTROLS') {
+          return {
+            url,
+            code: 'STEP_RESOLVER_INVALID_CONTROLS',
+            message:
+              typeof parsedBody.message === 'string' ? parsedBody.message : 'Step controls failed schema validation',
+            statusCode,
+            data: parsedBody.details ?? error.response.body,
+            cause: error,
+          };
+        }
+      }
+
       if (statusCode === 500) {
         const parsedBody = this.tryParseBody(error.response.body);
 
@@ -204,7 +220,8 @@ export class ExecuteStepResolverRequest {
           return {
             url,
             code: 'STEP_HANDLER_ERROR',
-            message: parsedBody.message ?? 'An error occurred in your template code',
+            message:
+              typeof parsedBody.message === 'string' ? parsedBody.message : 'An error occurred in your template code',
             statusCode,
             cause: error,
           };
@@ -242,12 +259,12 @@ export class ExecuteStepResolverRequest {
     };
   }
 
-  private tryParseBody(body: unknown): Record<string, string> | null {
+  private tryParseBody(body: unknown): Record<string, unknown> | null {
     try {
       const parsed = typeof body === 'string' ? JSON.parse(body) : body;
 
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        return parsed as Record<string, string>;
+        return parsed as Record<string, unknown>;
       }
 
       return null;

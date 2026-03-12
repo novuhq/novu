@@ -24,8 +24,13 @@ export function TextWidget(props: WidgetProps) {
       name={extractedName}
       defaultValue={rjsfValue ?? ''}
       render={({ field, fieldState }) => {
-        const stringValue =
-          typeof field.value === 'string' ? field.value : typeof rjsfValue === 'string' ? rjsfValue : '';
+        let stringValue = '';
+
+        if (typeof field.value === 'string') {
+          stringValue = field.value;
+        } else if (typeof rjsfValue === 'string') {
+          stringValue = rjsfValue;
+        }
 
         return (
           <FormItem className="w-full py-1">

@@ -95,7 +95,12 @@ export class PreviewUsecase {
          * but with an empty preview result.
          * For step resolver email steps, since its a runtime error, surface the error
          * as HTML rendered in the preview panel.
+         * For all other resolver step types, log the error so it's visible in server logs.
          */
+        if (isStepResolver) {
+          this.logger.error({ error, stepType: context.stepData.type }, 'Step resolver preview execution failed');
+        }
+
         const previewResult = isStepResolverEmail
           ? { subject: '', body: this.errorHandler.buildPreviewErrorHtml(error) }
           : {};

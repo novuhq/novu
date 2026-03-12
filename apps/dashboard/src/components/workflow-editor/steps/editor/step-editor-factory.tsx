@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, ResourceOriginEnum, StepTypeEnum, UpdateWorkflowDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
@@ -21,15 +21,13 @@ function NoEditorAvailable({ message }: { message: string }) {
 
 export function StepEditorFactory() {
   const { workflow, step, isStepEditable, isPendingResolverActivation } = useStepEditor();
-  const { workflow: fullWorkflow, update } = useWorkflow();
+  const { refetch } = useWorkflow();
   const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
   const { dataSchema, uiSchema } = step.controls || {};
 
   const onHashChange = useCallback(() => {
-    if (fullWorkflow) {
-      update(fullWorkflow as unknown as UpdateWorkflowDto);
-    }
-  }, [fullWorkflow, update]);
+    refetch();
+  }, [refetch]);
 
   useStepResolverPolling({
     enabled: isStepResolverEnabled && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type),

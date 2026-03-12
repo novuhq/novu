@@ -85,8 +85,12 @@ export class StepResolverClient {
       const type = response.data?.data?.type;
 
       return typeof type === 'string' && type.trim().length > 0 ? type.trim() : undefined;
-    } catch {
-      return undefined;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return undefined;
+      }
+
+      throw error;
     }
   }
 

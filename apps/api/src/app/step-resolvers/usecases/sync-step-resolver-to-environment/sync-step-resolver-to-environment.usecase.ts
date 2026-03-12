@@ -68,6 +68,7 @@ export class SyncStepResolverToEnvironmentUsecase {
           stepResolverHash: sourceStep.stepResolverHash,
           'controls.schema': getStepResolverControlSchema(sourceStep.controlSchema),
         },
+        $unset: { 'controls.uiSchema': 1 },
       },
       { session }
     );

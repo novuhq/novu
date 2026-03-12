@@ -65,7 +65,7 @@ export const EmailEditorSelect = ({
             <ConfirmationModal
               open={isSwitchingToHtml}
               onOpenChange={setIsSwitchingToHtml}
-              onConfirm={async () => {
+              onConfirm={() => {
                 field.onChange('html');
                 saveForm?.({ editorType: 'html', onSuccess: () => setIsSwitchingToHtml(false) });
               }}

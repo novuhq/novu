@@ -204,7 +204,7 @@ function buildValidationErrors(analysis: AnalyzedStepFile, workflowId: string | 
   }
 
   if (!analysis.metadata.stepId) {
-    const validMethods = ['step.email()', 'step.sms()', 'step.chat()', 'step.push()', 'step.inApp()'];
+    const validMethods = Object.keys(METHOD_NAME_TO_TYPE).map((k) => `step.${k}()`);
     errors.push(`Missing step resolver: default export must call one of ${validMethods.join(', ')}`);
   }
 

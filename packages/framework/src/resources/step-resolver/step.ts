@@ -32,6 +32,7 @@ export type EmailStepResolver<
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
   ) => Promise<EmailOutputUnvalidated>;
   controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
 };
 
 export type SmsStepResolver<
@@ -45,6 +46,7 @@ export type SmsStepResolver<
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
   ) => Promise<SmsOutputUnvalidated>;
   controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
 };
 
 export type ChatStepResolver<
@@ -58,6 +60,7 @@ export type ChatStepResolver<
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
   ) => Promise<ChatOutputUnvalidated>;
   controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
 };
 
 export type PushStepResolver<
@@ -71,6 +74,7 @@ export type PushStepResolver<
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
   ) => Promise<PushOutputUnvalidated>;
   controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
 };
 
 export type InAppStepResolver<
@@ -84,6 +88,7 @@ export type InAppStepResolver<
     ctx: StepResolverContext<ResolveControls<TPayloadSchema>>
   ) => Promise<InAppOutputUnvalidated>;
   controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
 };
 
 export type AnyStepResolver =
@@ -109,6 +114,7 @@ function email<
     stepId,
     resolve: resolve as EmailStepResolver<TControlSchema, TPayloadSchema>['resolve'],
     controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
   };
 }
 
@@ -128,6 +134,7 @@ function sms<
     stepId,
     resolve: resolve as SmsStepResolver<TControlSchema, TPayloadSchema>['resolve'],
     controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
   };
 }
 
@@ -147,6 +154,7 @@ function chat<
     stepId,
     resolve: resolve as ChatStepResolver<TControlSchema, TPayloadSchema>['resolve'],
     controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
   };
 }
 
@@ -166,6 +174,7 @@ function push<
     stepId,
     resolve: resolve as PushStepResolver<TControlSchema, TPayloadSchema>['resolve'],
     controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
   };
 }
 
@@ -185,6 +194,7 @@ function inApp<
     stepId,
     resolve: resolve as InAppStepResolver<TControlSchema, TPayloadSchema>['resolve'],
     controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
   };
 }
 

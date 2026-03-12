@@ -110,7 +110,7 @@ function generateRequestHandler(): string {
       ${generateOutputValidation()}
 
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, ...sanitizedResult },
+        { stepId: step.stepId, workflowId: workflowId, ...validatedResult },
         200
       );`;
 }
@@ -147,6 +147,7 @@ function generateBodyValidation(): string {
 
 function generateOutputValidation(): string {
   return `const outputSchema = channelStepSchemas[step.type]?.output;
+      let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
         if (!outputResult.success) {
@@ -155,8 +156,8 @@ function generateOutputValidation(): string {
             400
           );
         }
-      }
-      const sanitizedResult = result;`;
+        validatedResult = outputResult.data ?? result;
+      }`;
 }
 
 function generateSchemaValidation(): string {
