@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { RiCursorLine, RiSparklingLine } from 'react-icons/ri';
+import { RiSparklingLine } from 'react-icons/ri';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { CodeBlock, Language } from '../primitives/code-block';
@@ -416,7 +416,7 @@ function StepButton({
             onClick={() => track(TelemetryEvent.AI_PROMPT_COPIED, { framework: frameworkName, method: 'cursor-deeplink' })}
             className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 h-7 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-300"
           >
-            <RiCursorLine className="size-3.5" />
+            <img src="/images/cursor-icon.svg" alt="Cursor" className="size-3.5" />
             Open in Cursor
           </a>
         </div>
