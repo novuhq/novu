@@ -41,7 +41,7 @@ const EMAIL_RESET_MARGIN_STYLES = `
 function CodeView() {
   return (
     <div className="-mx-2 rounded-md border p-[2px]">
-      <pre className="mly-text-black font-code my-0 rounded-md border border-dashed border-gray-300 bg-white p-2 text-xs leading-[18px]">
+      <pre className="text-black font-code my-0 rounded-md border border-dashed border-gray-300 bg-white p-2 text-xs leading-[18px]">
         <NodeViewContent as="code" className={'is-editable language-html'} />
       </pre>
     </div>

@@ -6,6 +6,7 @@ export const TransformToBoolean = () =>
   Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
+    if (value === '') return undefined;
 
     return value; // @IsBoolean validator should reject non-boolean value.
   });

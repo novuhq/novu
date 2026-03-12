@@ -4,6 +4,7 @@ const octokit = new Octokit();
 
 const isCommunityContributor = async (owner, repo, username) => {
   if (!username) return false;
+  if (username.endsWith('[bot]')) return false;
 
   const {
     data: { permission },

@@ -17,11 +17,13 @@ import { AssistantMessage } from './assistant-message';
 import { hasKnownMessageParts } from './message-utils';
 import { UserMessage } from './user-message';
 
+const chatConversationContentClassName = 'gap-4 py-4 px-4';
+
 export const ChatBodySkeleton = () => {
   return (
     <>
       <Conversation className="min-h-0">
-        <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
+        <ConversationContent className={chatConversationContentClassName}>
           <div className="group flex w-full flex-col gap-2 is-user ml-auto justify-end">
             <div className="flex justify-end gap-1 -mb-1">
               <Skeleton className="w-5 h-5" />
@@ -128,7 +130,10 @@ export const ChatBody = ({
             </div>
           </div>
         ) : (
-          <ConversationContent className="gap-4 py-4 px-4 -ml-4 -mr-3.5">
+          <ConversationContent
+            className={chatConversationContentClassName}
+            scrollClassName="overflow-y-auto ![scrollbar-gutter:initial]"
+          >
             {messages.map((chatMessage) => {
               const isLastAssistantMessage =
                 chatMessage.role === 'assistant' && chatMessage.id === messages[messages.length - 1].id;

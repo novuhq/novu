@@ -1,10 +1,18 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { PaginationRequestDto } from '../../shared/dtos/pagination-request';
 
 const LIMIT = {
   DEFAULT: 10,
   MAX: 100,
 };
+
+function transformOptionalBoolean({ value }: { value: unknown }): boolean | undefined {
+  if (typeof value === 'string') return value === 'true';
+  if (typeof value === 'boolean') return value;
+
+  return undefined;
+}
 
 export class GetInAppNotificationsFeedForSubscriberDto extends PaginationRequestDto(LIMIT.DEFAULT, LIMIT.MAX) {
   @ApiPropertyOptional({
@@ -22,9 +30,11 @@ export class GetInAppNotificationsFeedForSubscriberDto extends PaginationRequest
   feedIdentifier: string | string[];
 
   @ApiPropertyOptional({ required: false, type: Boolean })
+  @Transform(transformOptionalBoolean)
   read: boolean;
 
   @ApiPropertyOptional({ required: false, type: Boolean })
+  @Transform(transformOptionalBoolean)
   seen: boolean;
 
   @ApiPropertyOptional({

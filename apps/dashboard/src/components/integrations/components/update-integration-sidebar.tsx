@@ -17,7 +17,7 @@ import { IntegrationSheet } from './integration-sheet';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
-import { isDemoIntegration } from './utils/helpers';
+import { cleanCredentials, isDemoIntegration } from './utils/helpers';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -88,7 +88,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           identifier: data.identifier,
           active: data.active,
           primary: data.primary,
-          credentials: data.credentials,
+          credentials: cleanCredentials(data.credentials),
           check: data.check,
           configurations: data.configurations,
         },

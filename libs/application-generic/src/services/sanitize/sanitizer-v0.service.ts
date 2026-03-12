@@ -37,13 +37,25 @@ const sanitizeOptions: IOptions = {
 };
 
 /**
+ * Normalizes malformed closing tags like </style/> to </style>.
+ *
+ * Browsers treat </tag/> and </tag/anything> as valid closing tags,
+ * but htmlparser2 (used by sanitize-html) does not. This mismatch
+ * allows XSS payloads to be hidden inside style tag content:
+ *   <style></style/><img src onerror=alert(origin)></style>
+ */
+function normalizeMalformedClosingTags(html: string): string {
+  return html.replace(/<\/([a-zA-Z][a-zA-Z0-9]*)\s*\/[^>]*>/g, '</$1>');
+}
+
+/**
  * @deprecated Use sanitizeHTML from sanitizer.service.ts instead
  */
 // cspell:disable-next-line
 export function sanitizeHTMLV0(html: string) {
   if (!html) return html;
 
-  return sanitizeTypes(html, sanitizeOptions);
+  return sanitizeTypes(normalizeMalformedClosingTags(html), sanitizeOptions);
 }
 
 /**

@@ -37,7 +37,7 @@ pnpm start:worker    # Background worker
 ```
 
 ### Dashboard interaction
-Immediatly after creating a new user in the dashboard, you will need to create a new organization. After the organization name is submitted, you can immediatly navigate to the localhost:4201 root url and you should see the dashboard directly on the workflows page (Avoid doing the full onboarding unless requested).
+Immediately after creating a new user in the dashboard, you will need to create a new organization. After the organization name is submitted, you can immediately navigate to the localhost:4201 root url and you should see the dashboard directly on the workflows page (Avoid doing the full onboarding unless requested).
 
 ### Linting
 
@@ -70,3 +70,7 @@ Possible scopes:
 - root 
 
 PR title must end with 'fixes TICKET-ID' (e.g., 'fixes NOV-123') when a linear ticket id is available in context.
+
+### Enterprise Packages
+
+When a change was made in the packages of enterprise, we need to also create a PR in the novuhq/packages-enterprise repository committing the linked changes (Creating a similiar branch from next there).
