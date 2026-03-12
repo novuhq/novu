@@ -65,5 +65,5 @@ export enum SystemAvatarIconEnum {
   QUESTION = 'question',
 }
 
-export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS] satisfies ChannelTypeEnum[];
+export const CHANNELS_WITH_PRIMARY: readonly ChannelTypeEnum[] = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];
 export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];
