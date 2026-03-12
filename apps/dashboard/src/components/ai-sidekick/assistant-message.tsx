@@ -1,10 +1,10 @@
-import { UIMessage } from 'ai';
+import { DynamicToolUIPart, UIMessage } from 'ai';
 import { useMemo } from 'react';
 import { Message } from '../ai-elements/message';
 import { ChatChainOfThought } from './chat-chain-of-thought';
 import { ChatMessageActions } from './chat-message-actions';
 import { StyledMessageResponse } from './chat-message-response';
-import { hasKnownMessageParts } from './message-utils';
+import { hasKnownMessageParts, isCancelledToolCall } from './message-utils';
 
 export const AssistantMessage = ({
   message,
@@ -29,7 +29,7 @@ export const AssistantMessage = ({
 }) => {
   const isAssistantMessageWithKnownParts = useMemo(() => hasKnownMessageParts(message), [message]);
   const hasDynamicToolParts = useMemo(
-    () => message.parts.filter((p) => p.type.startsWith('dynamic-tool')).length > 0,
+    () => message.parts.some((p) => p.type.startsWith('dynamic-tool') && !isCancelledToolCall(p as DynamicToolUIPart)),
     [message]
   );
   const textParts = useMemo(() => {
@@ -48,7 +48,7 @@ export const AssistantMessage = ({
   }
 
   return (
-    <Message from={message.role} key={message.id}>
+    <Message from={message.role}>
       {hasDynamicToolParts && <ChatChainOfThought message={message} />}
       {textParts.map((text, i) => (
         <StyledMessageResponse key={`text-${message.id}-${i}`}>{text}</StyledMessageResponse>

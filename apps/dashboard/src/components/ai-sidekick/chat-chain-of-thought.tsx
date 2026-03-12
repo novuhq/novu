@@ -1,11 +1,12 @@
 import { AiWorkflowToolsEnum } from '@novu/shared';
 import { DynamicToolUIPart, UIMessage } from 'ai';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   RiAddBoxLine,
   RiArrowRightSLine,
   RiCheckLine,
+  RiCloseCircleLine,
   RiDeleteBin2Line,
   RiEdit2Line,
   RiLoader3Line,
@@ -22,7 +23,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../primitiv
 import { Skeleton } from '../primitives/skeleton';
 import { Tag } from '../primitives/tag';
 import { StyledMessageResponse } from './chat-message-response';
-import { unwrapToolResult } from './message-utils';
+import { isCancelledToolCall, unwrapToolResult } from './message-utils';
 
 const toolNameToAction: Record<string, 'add' | 'edit' | 'remove'> = {
   [AiWorkflowToolsEnum.ADD_STEP]: 'add',
@@ -46,6 +47,10 @@ const CheckCircleIcon = (props: React.ComponentPropsWithoutRef<typeof RiCheckLin
 
 const BroomIcon = (props: React.ComponentPropsWithoutRef<typeof Broom>) => {
   return <Broom {...props} className={cn('p-0.5', props.className)} />;
+};
+
+const ErrorCircleIcon = (props: React.ComponentPropsWithoutRef<typeof RiCloseCircleLine>) => {
+  return <RiCloseCircleLine {...props} className={cn('p-0.5 rounded-full text-destructive', props.className)} />;
 };
 
 type WorkflowMetadataOutput = {
@@ -231,36 +236,53 @@ function WorkflowStepItem({
 
 function StepTool({
   stepOutput,
+  error,
   isStreaming,
   labelStreaming,
   labelComplete,
+  labelError,
   action,
 }: {
   stepOutput?: { stepId: string; name: string; type: string };
+  error?: string | null;
   isStreaming: boolean;
   labelStreaming: string;
   labelComplete: string;
+  labelError: string;
   action: 'add' | 'edit' | 'remove';
 }) {
+  const hasError = !!error;
+  const status = hasError ? 'error' : isStreaming ? 'active' : 'complete';
+  const icon = hasError ? ErrorCircleIcon : isStreaming ? BroomIcon : CheckCircleIcon;
+
+  const label = isStreaming ? (
+    <Shimmer className={cn('text-label-xs font-medium')}>{labelStreaming}</Shimmer>
+  ) : hasError ? (
+    <span className="text-label-xs font-medium">{labelError}</span>
+  ) : (
+    <span className={cn('flex items-center justify-between gap-1')}>
+      <span className="text-label-xs font-medium text-text-soft">{labelComplete}</span>
+    </span>
+  );
+
   return (
     <ChainOfThoughtStep
-      label={
-        isStreaming ? (
-          <Shimmer className={cn('text-label-xs font-medium')}>{labelStreaming}</Shimmer>
-        ) : (
-          <span className={cn('flex items-center justify-between gap-1')}>
-            <span className="text-label-xs font-medium text-text-soft">{labelComplete}</span>
-          </span>
-        )
-      }
-      status={isStreaming ? 'active' : 'complete'}
-      icon={isStreaming ? BroomIcon : CheckCircleIcon}
+      label={label}
+      status={status}
+      icon={icon}
       collapsible
-      defaultOpen={true}
+      defaultOpen={!hasError}
+      autoCollapse={hasError}
     >
-      <div className="flex flex-col gap-2 p-2 pl-0 pr-0">
-        <WorkflowStepItem output={stepOutput} isStreaming={isStreaming} action={action} />
-      </div>
+      {hasError ? (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 my-2 px-2 py-1">
+          <span className="text-label-xs text-destructive">{error}</span>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 p-2 pl-0 pr-0">
+          <WorkflowStepItem output={stepOutput} isStreaming={isStreaming} action={action} />
+        </div>
+      )}
     </ChainOfThoughtStep>
   );
 }
@@ -281,6 +303,15 @@ const toolNameToCompleteLabel = {
   [AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS]: 'Modified Workflow Step Conditions',
   [AiWorkflowToolsEnum.REMOVE_STEP]: 'Removed Workflow Step',
   [AiWorkflowToolsEnum.MOVE_STEP]: 'Moved Workflow Step',
+};
+
+const toolNameToErrorLabel = {
+  [AiWorkflowToolsEnum.ADD_STEP]: 'Failed to Add Workflow Step',
+  [AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN]: 'Failed to Add Workflow Step In Between',
+  [AiWorkflowToolsEnum.EDIT_STEP_CONTENT]: 'Failed to Update Workflow Step Content',
+  [AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS]: 'Failed to Update Workflow Step Conditions',
+  [AiWorkflowToolsEnum.REMOVE_STEP]: 'Failed to Remove Workflow Step',
+  [AiWorkflowToolsEnum.MOVE_STEP]: 'Failed to Move Workflow Step',
 };
 
 const STREAMING_MAX_LINES = 4;
@@ -331,74 +362,81 @@ type ChatChainOfThoughtReasoningProps = {
 };
 
 export function ChatChainOfThought({ message }: ChatChainOfThoughtReasoningProps) {
-  const parts = message.parts ?? [];
+  const toolParts = useMemo(
+    () =>
+      (message.parts ?? []).filter(
+        (p) => p.type.startsWith('dynamic-tool') && !isCancelledToolCall(p as DynamicToolUIPart)
+      ) as DynamicToolUIPart[],
+    [message.parts]
+  );
 
   return (
     <ChainOfThought open className="text-text-soft">
       <ChainOfThoughtContent className="mb-2">
         <div className="flex flex-col gap-3">
-          {parts.map((item) => {
-            if (item.type.startsWith('dynamic-tool')) {
-              const tool = item as DynamicToolUIPart;
+          {toolParts.map((tool) => {
+            if (tool.toolName === AiWorkflowToolsEnum.REASONING) {
+              const input = tool.input as { label?: string; thought?: string } | undefined;
+              const label = input?.label ?? 'Reasoning...';
+              const body = input?.thought ?? '';
+              const isStreaming = tool.state !== 'output-available';
 
-              if (tool.toolName === AiWorkflowToolsEnum.REASONING) {
-                const input = tool.input as { label?: string; thought?: string } | undefined;
-                const label = input?.label ?? 'Reasoning...';
-                const body = input?.thought ?? '';
-                const isStreaming = tool.state !== 'output-available';
+              return (
+                <ChainOfThoughtStep
+                  key={`${tool.toolCallId}-${tool.toolName}`}
+                  icon={isStreaming ? BroomIcon : CheckCircleIcon}
+                  label={
+                    isStreaming ? (
+                      <Shimmer className={cn('text-label-xs font-medium')}>{label}</Shimmer>
+                    ) : (
+                      <span className="text-label-xs font-medium text-text-soft">{label}</span>
+                    )
+                  }
+                  collapsible
+                  autoCollapse
+                  status={isStreaming ? 'active' : 'complete'}
+                  defaultOpen={isStreaming}
+                >
+                  <ScrollableReasoningBody body={body} isStreaming={isStreaming} />
+                </ChainOfThoughtStep>
+              );
+            }
 
-                return (
-                  <ChainOfThoughtStep
-                    key={`${tool.toolCallId}-${tool.toolName}`}
-                    icon={isStreaming ? BroomIcon : CheckCircleIcon}
-                    label={
-                      isStreaming ? (
-                        <Shimmer className={cn('text-label-xs font-medium')}>{label}</Shimmer>
-                      ) : (
-                        <span className="text-label-xs font-medium text-text-soft">{label}</span>
-                      )
-                    }
-                    collapsible
-                    autoCollapse
-                    status={isStreaming ? 'active' : 'complete'}
-                    defaultOpen={isStreaming}
-                  >
-                    <ScrollableReasoningBody body={body} isStreaming={isStreaming} />
-                  </ChainOfThoughtStep>
-                );
-              }
+            if (tool.toolName === AiWorkflowToolsEnum.SET_WORKFLOW_METADATA) {
+              return (
+                <WorkflowInitializedSection
+                  key={`${tool.toolCallId}-${tool.toolName}`}
+                  output={unwrapToolResult<WorkflowMetadataOutput>(tool.output)}
+                  isStreaming={tool.state !== 'output-available'}
+                />
+              );
+            }
 
-              if (tool.toolName === AiWorkflowToolsEnum.SET_WORKFLOW_METADATA) {
-                return (
-                  <WorkflowInitializedSection
-                    key={`${tool.toolCallId}-${tool.toolName}`}
-                    output={unwrapToolResult<WorkflowMetadataOutput>(tool.output)}
-                    isStreaming={tool.state !== 'output-available'}
-                  />
-                );
-              } else if (
-                tool.toolName === AiWorkflowToolsEnum.ADD_STEP ||
-                tool.toolName === AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN ||
-                tool.toolName === AiWorkflowToolsEnum.EDIT_STEP_CONTENT ||
-                tool.toolName === AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS ||
-                tool.toolName === AiWorkflowToolsEnum.REMOVE_STEP ||
-                tool.toolName === AiWorkflowToolsEnum.MOVE_STEP
-              ) {
-                const streamingLabel = toolNameToStreamingLabel[tool.toolName];
-                const completeLabel = toolNameToCompleteLabel[tool.toolName];
-                const action = toolNameToAction[tool.toolName];
+            if (
+              tool.toolName === AiWorkflowToolsEnum.ADD_STEP ||
+              tool.toolName === AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN ||
+              tool.toolName === AiWorkflowToolsEnum.EDIT_STEP_CONTENT ||
+              tool.toolName === AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS ||
+              tool.toolName === AiWorkflowToolsEnum.REMOVE_STEP ||
+              tool.toolName === AiWorkflowToolsEnum.MOVE_STEP
+            ) {
+              const streamingLabel = toolNameToStreamingLabel[tool.toolName];
+              const completeLabel = toolNameToCompleteLabel[tool.toolName];
+              const errorLabel = toolNameToErrorLabel[tool.toolName];
+              const action = toolNameToAction[tool.toolName];
 
-                return (
-                  <StepTool
-                    key={`${tool.toolCallId}-${tool.toolName}`}
-                    stepOutput={unwrapToolResult<{ stepId: string; name: string; type: string }>(tool.output)}
-                    isStreaming={tool.state !== 'output-available'}
-                    labelStreaming={streamingLabel}
-                    labelComplete={completeLabel}
-                    action={action}
-                  />
-                );
-              }
+              return (
+                <StepTool
+                  key={`${tool.toolCallId}-${tool.toolName}`}
+                  stepOutput={unwrapToolResult<{ stepId: string; name: string; type: string }>(tool.output)}
+                  isStreaming={tool.state !== 'output-available' && tool.state !== 'output-error'}
+                  labelStreaming={streamingLabel}
+                  labelComplete={completeLabel}
+                  labelError={errorLabel}
+                  action={action}
+                  error={tool.state === 'output-error' ? tool.errorText : undefined}
+                />
+              );
             }
 
             return null;
