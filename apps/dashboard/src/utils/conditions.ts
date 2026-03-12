@@ -80,7 +80,9 @@ function recursiveGetUniqueFields(query: RuleGroupType): string[] {
     if ('rules' in rule) {
       // recursively get fields from nested rule groups
       const nestedFields = recursiveGetUniqueFields(rule);
-      nestedFields.forEach((field) => fields.add(field));
+      for (const field of nestedFields) {
+        fields.add(field);
+      }
     } else {
       // add field from individual rule
       const field = rule.field.split('.').shift();
@@ -109,7 +111,9 @@ function recursiveGetUniqueOperators(query: RuleGroupType): string[] {
     if ('rules' in rule) {
       // recursively get operators from nested rule groups
       const nestedOperators = recursiveGetUniqueOperators(rule);
-      nestedOperators.forEach((operator) => operators.add(operator));
+      for (const operator of nestedOperators) {
+        operators.add(operator);
+      }
     } else {
       // add operator from individual rule
       operators.add(rule.operator);

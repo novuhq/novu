@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
@@ -8,6 +8,8 @@ import { authClient } from '../client';
 
 export function SignIn() {
   const navigate = useNavigate();
+  const emailId = useId();
+  const passwordId = useId();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -82,12 +84,12 @@ export function SignIn() {
       <h2 className="mb-6 text-center text-xl font-semibold">Sign In</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground-700">
+          <label htmlFor={emailId} className="mb-1 block text-sm font-medium text-foreground-700">
             Email
           </label>
           <Input
             type="email"
-            id="email"
+            id={emailId}
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -97,7 +99,7 @@ export function SignIn() {
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-medium text-foreground-700">
+            <label htmlFor={passwordId} className="block text-sm font-medium text-foreground-700">
               Password
             </label>
             <span
@@ -114,7 +116,7 @@ export function SignIn() {
           </div>
           <Input
             type="password"
-            id="password"
+            id={passwordId}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="Password"
