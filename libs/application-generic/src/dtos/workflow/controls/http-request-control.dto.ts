@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { HttpMethodEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+
+export enum HttpMethodEnum {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  DELETE = 'DELETE',
+  PATCH = 'PATCH',
+}
 
 export class HttpRequestKeyValuePairDto {
   @ApiProperty({ description: 'Key of the key-value pair' })

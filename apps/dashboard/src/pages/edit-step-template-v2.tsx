@@ -60,14 +60,16 @@ export function EditStepTemplateV2Page() {
     // Clear errors that are not in stepIssues
     Object.keys(currentErrors).forEach((key) => {
       if (!stepIssues[key]) {
-        form.clearErrors(key);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        form.clearErrors(key as any);
       }
     });
 
     // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
     if (!step.isNew) {
       Object.entries(stepIssues).forEach(([key, value]) => {
-        form.setError(key as string, { message: value });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        form.setError(key as any, { message: value });
       });
     }
   }, [form, step]);

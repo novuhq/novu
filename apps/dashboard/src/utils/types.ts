@@ -20,10 +20,7 @@ export type RuntimeIssue = {
   message: string;
 };
 
-export type Step = Pick<
-  StepResponseDto,
-  'name' | 'type' | '_id' | 'stepId' | 'issues' | 'slug' | 'controls' | 'providerId' | 'integrationIdentifier'
->;
+export type Step = Pick<StepResponseDto, 'name' | 'type' | '_id' | 'stepId' | 'issues' | 'slug' | 'controls'>;
 
 /**
  * Omit the `environment` field from the parameters of a function.

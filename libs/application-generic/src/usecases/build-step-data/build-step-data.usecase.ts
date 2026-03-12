@@ -77,8 +77,6 @@ export class BuildStepDataUsecase {
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
       stepResolverHash: currentStep.template?.stepResolverHash,
-      ...(currentStep.providerId ? { providerId: currentStep.providerId } : {}),
-      ...(currentStep.integrationIdentifier ? { integrationIdentifier: currentStep.integrationIdentifier } : {}),
     } as StepResponseDto;
   }
 

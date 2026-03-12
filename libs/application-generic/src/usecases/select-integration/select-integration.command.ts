@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IntegrationCategoryType, ITenantDefine, ProvidersIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ITenantDefine, ProvidersIdEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands/project.command';
@@ -12,7 +12,7 @@ export class SelectIntegrationCommand extends EnvironmentCommand {
   identifier?: string;
 
   @IsDefined()
-  channelType: IntegrationCategoryType;
+  channelType: ChannelTypeEnum;
 
   @IsOptional()
   providerId?: ProvidersIdEnum;

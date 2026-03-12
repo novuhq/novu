@@ -1,4 +1,4 @@
-import { ICredentials, IntegrationCategoryType } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { IsDefined, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
@@ -8,7 +8,7 @@ export class CheckIntegrationCommand extends EnvironmentCommand {
   providerId: string;
 
   @IsDefined()
-  channel: IntegrationCategoryType;
+  channel: ChannelTypeEnum;
 
   @IsDefined()
   credentials?: ICredentials;

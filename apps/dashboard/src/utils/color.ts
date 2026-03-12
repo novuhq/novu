@@ -6,7 +6,7 @@ export type { ProviderColorToken };
 export const ACTION_PROVIDER_ID_TO_COLOR: Partial<Record<ActionProviderIdEnum, ProviderColorToken>> =
   Object.fromEntries(
     Object.values(ACTION_PROVIDER_CONFIGS)
-      .filter((c) => c.color)
+      .filter((c): c is typeof c & { color: ProviderColorToken } => Boolean(c.color))
       .map((c) => [c.id, c.color])
   );
 

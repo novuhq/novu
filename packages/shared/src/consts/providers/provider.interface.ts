@@ -1,10 +1,8 @@
 import {
-  ActionIntegrationTypeEnum,
   ActionProviderIdEnum,
   ChannelTypeEnum,
   ConfigurationKey,
   CredentialsKeyEnum,
-  IntegrationCategoryType,
   ProvidersIdEnum,
 } from '../../types';
 
@@ -66,7 +64,7 @@ export interface IActionProviderConfig {
   id: ActionProviderIdEnum;
   displayName: string;
   description?: string;
-  category: ActionIntegrationTypeEnum;
+  category: string;
   credentials: IConfigCredential[];
   configurations?: ConfigConfigurationGroup[];
   logoFileName: ILogoFileName;

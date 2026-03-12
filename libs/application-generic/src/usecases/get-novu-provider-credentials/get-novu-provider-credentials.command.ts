@@ -1,11 +1,11 @@
-import { ActionIntegrationTypeEnum, ChannelTypeEnum, IntegrationCategoryType } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
 
 export class GetNovuProviderCredentialsCommand extends EnvironmentWithUserCommand {
-  @IsEnum({ ...ChannelTypeEnum, ...ActionIntegrationTypeEnum })
-  channelType: IntegrationCategoryType;
+  @IsEnum(ChannelTypeEnum)
+  channelType: ChannelTypeEnum;
 
   @IsString()
   providerId: string;

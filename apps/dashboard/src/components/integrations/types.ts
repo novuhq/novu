@@ -1,11 +1,11 @@
-import { IntegrationCategoryType } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export type TableIntegration = {
   integrationId: string;
   name: string;
   identifier: string;
   provider: string;
-  channel: IntegrationCategoryType;
+  channel: ChannelTypeEnum;
   environment: string;
   active: boolean;
   conditions?: string[];

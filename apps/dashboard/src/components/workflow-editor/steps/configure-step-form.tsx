@@ -168,7 +168,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     resolver: standardSchemaResolver(stepSchema),
   });
 
-  const { onBlur, saveForm } = useFormAutosave({
+  const { onBlur, saveForm, saveFormDebounced } = useFormAutosave({
     previousData: defaultValues,
     form,
     isReadOnly,
@@ -225,7 +225,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const httpRequestControlValues =
     step.type === StepTypeEnum.HTTP_REQUEST ? (step.controls.values as Record<string, unknown>) : null;
 
-  const value = useMemo(() => ({ saveForm }), [saveForm]);
+  const value = useMemo(() => ({ saveForm, saveFormDebounced }), [saveForm, saveFormDebounced]);
 
   return (
     <>

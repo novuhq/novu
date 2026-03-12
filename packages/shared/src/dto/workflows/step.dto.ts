@@ -14,8 +14,6 @@ export type StepResponseDto = {
   workflowId: string;
   workflowDatabaseId: string;
   issues?: StepIssuesDto;
-  providerId?: string;
-  integrationIdentifier?: string;
   stepResolverHash?: string;
 };
 
@@ -32,8 +30,6 @@ export type StepCreateDto = StepDto & {
 export type StepDto = {
   name: string;
   type: StepTypeEnum;
-  providerId?: string;
-  integrationIdentifier?: string;
 };
 
 export class StepIssuesDto {

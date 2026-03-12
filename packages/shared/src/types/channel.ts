@@ -39,12 +39,6 @@ export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelT
   [StepTypeEnum.PUSH, ChannelTypeEnum.PUSH],
 ]);
 
-export enum ActionIntegrationTypeEnum {
-  HTTP = 'http',
-}
-
-export type IntegrationCategoryType = ChannelTypeEnum | ActionIntegrationTypeEnum;
-
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
 }
@@ -71,5 +65,5 @@ export enum SystemAvatarIconEnum {
   QUESTION = 'question',
 }
 
-export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS] as IntegrationCategoryType[];
+export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS] as ChannelTypeEnum[];
 export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];

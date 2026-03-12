@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IConfigurations, ICredentials, IntegrationCategoryType } from '@novu/shared';
+import { ChannelTypeEnum, IConfigurations, ICredentials } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { StepFilter } from '../notification-template';
@@ -17,7 +17,7 @@ export class IntegrationEntity {
 
   providerId: string;
 
-  channel: IntegrationCategoryType;
+  channel: ChannelTypeEnum;
 
   credentials: ICredentialsEntity;
 

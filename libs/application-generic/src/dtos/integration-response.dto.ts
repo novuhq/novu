@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ActionIntegrationTypeEnum, ChannelTypeEnum, IntegrationCategoryType } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { ConfigurationsDto } from './configurations.dto';
 import { CredentialsDto } from './credentials.dto';
 import { StepFilterDto } from './step-filter-dto';
@@ -44,11 +44,10 @@ export class IntegrationResponseDto {
   providerId: string;
 
   @ApiProperty({
-    description:
-      'The channel or action category type for the integration, which defines how it communicates (e.g., email, SMS, http, analytics).',
-    enum: { ...ChannelTypeEnum, ...ActionIntegrationTypeEnum },
+    description: 'The channel type for the integration, which defines how it communicates (e.g., email, SMS).',
+    enum: ChannelTypeEnum,
   })
-  channel: IntegrationCategoryType;
+  channel: ChannelTypeEnum;
 
   @ApiProperty({
     description:

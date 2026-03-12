@@ -1,11 +1,8 @@
 import {
-  ActionIntegrationTypeEnum,
-  ActionProviderIdEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
-  IntegrationCategoryType,
   ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '../../types';
@@ -19,14 +16,7 @@ import {
 } from './channels';
 import { IActionProviderConfig, IProviderConfig } from './provider.interface';
 
-export {
-  actionProviders,
-  chatProviders,
-  emailProviders,
-  inAppProviders,
-  pushProviders,
-  smsProviders,
-} from './channels';
+export { chatProviders, emailProviders, inAppProviders, pushProviders, smsProviders } from './channels';
 
 export const providers: IProviderConfig[] = [
   ...emailProviders,
@@ -47,12 +37,6 @@ export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.No
 
 export const PROVIDER_ID_TO_CHANNEL_MAP: Record<string, ChannelTypeEnum> = Object.fromEntries(
   providers.map((p) => [p.id, p.channel])
-);
-
-export const ACTION_PROVIDER_IDS: ActionProviderIdEnum[] = actionProviders.map((p) => p.id);
-
-export const ACTION_PROVIDER_ID_TO_CATEGORY_MAP: Record<string, ActionIntegrationTypeEnum> = Object.fromEntries(
-  actionProviders.map((p) => [p.id, p.category])
 );
 
 export const ACTION_PROVIDER_CONFIGS: Record<string, IActionProviderConfig> = Object.fromEntries(
