@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { RiSparklingLine } from 'react-icons/ri';
+import { RiCursorLine, RiSparklingLine } from 'react-icons/ri';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { CodeBlock, Language } from '../primitives/code-block';
@@ -189,6 +189,64 @@ function StepCodeBlock({
   );
 }
 
+const FRAMEWORK_PACKAGES: Record<string, string> = {
+  'Next.js': '@novu/nextjs',
+  React: '@novu/react',
+  Remix: '@novu/react',
+  Native: '@novu/react-native',
+  Angular: '@novu/js',
+  JavaScript: '@novu/js',
+};
+
+const FRAMEWORK_DOCS: Record<string, string> = {
+  'Next.js': 'https://docs.novu.co/platform/quickstart/nextjs',
+  React: 'https://docs.novu.co/platform/quickstart/react',
+  Remix: 'https://docs.novu.co/platform/quickstart/remix',
+  Native: 'https://docs.novu.co/platform/quickstart/react-native',
+  Angular: 'https://docs.novu.co/platform/quickstart/angular',
+  JavaScript: 'https://docs.novu.co/platform/quickstart/js',
+};
+
+function buildCondensedPrompt(frameworkName: string, applicationIdentifier: string, subscriberId: string): string {
+  const pkg = FRAMEWORK_PACKAGES[frameworkName] ?? '@novu/js';
+  const docs = FRAMEWORK_DOCS[frameworkName] ?? 'https://docs.novu.co';
+
+  return `Integrate the Novu Inbox notification component into my ${frameworkName} app.
+
+Install ${pkg} and add the <Inbox /> component to my header or navbar.
+
+Configuration:
+- applicationIdentifier: "${applicationIdentifier}"
+- subscriberId: "${subscriberId}"
+
+Requirements:
+- Detect my project's package manager, auth system, and UI framework
+- Extract design tokens from my app and apply via the appearance prop (variables and elements)
+- Place <Inbox /> inline in existing UI — no wrappers or new pages
+- Use TypeScript, no comments, no empty props
+- Follow ${frameworkName} best practices
+
+Docs: ${docs}`;
+}
+
+function buildCursorDeepLink(frameworkName: string, applicationIdentifier: string, subscriberId: string): string {
+  const prompt = buildCondensedPrompt(frameworkName, applicationIdentifier, subscriberId);
+  const url = new URL('cursor://anysphere.cursor-deeplink/prompt');
+  url.searchParams.set('text', prompt);
+
+  return url.toString();
+}
+
+function extractConfigFromPrompt(copyText: string): { applicationIdentifier: string; subscriberId: string } {
+  const appIdMatch = copyText.match(/NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER=(\S+)/);
+  const subIdMatch = copyText.match(/subscriberId="([^"]+)"/);
+
+  return {
+    applicationIdentifier: appIdMatch?.[1] ?? 'YOUR_APPLICATION_IDENTIFIER',
+    subscriberId: subIdMatch?.[1] ?? 'YOUR_SUBSCRIBER_ID',
+  };
+}
+
 function StepButton({
   buttonText,
   copyText,
@@ -214,43 +272,56 @@ function StepButton({
     }
   };
 
+  const { applicationIdentifier, subscriberId } = extractConfigFromPrompt(copyText);
+  const cursorDeepLink = buildCursorDeepLink(frameworkName ?? 'Next.js', applicationIdentifier, subscriberId);
+
   return (
     <motion.div {...codeBlockAnimation(index)} className="w-full max-w-[500px]">
       <div className="flex flex-col gap-3">
-        <button
-          onClick={handleCopy}
-          className="relative flex flex-row justify-center items-center gap-1 w-[126px] h-7 text-white font-medium text-xs leading-4"
-          style={{
-            boxSizing: 'border-box',
-            padding: '6px 4px 6px 6px',
-            background: copied
-              ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.12) 100%), #151A22'
-              : 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #0E121B',
-            boxShadow: '0px 1px 2px rgba(27, 28, 29, 0.48), 0px 0px 0px 1px #242628',
-            borderRadius: '8px',
-            fontFamily: 'Inter',
-            fontWeight: 500,
-            fontSize: '12px',
-            lineHeight: '16px',
-            fontFeatureSettings: "'cv09' on, 'ss11' on, 'calt' off, 'liga' off",
-            transition: 'background 150ms ease, box-shadow 150ms ease',
-          }}
-        >
-          <div
-            className={`${copied ? 'opacity-0' : 'opacity-100'} flex flex-row items-center gap-1 transition-opacity`}
-            aria-hidden={copied}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className="relative flex flex-row justify-center items-center gap-1 w-[126px] h-7 text-white font-medium text-xs leading-4"
+            style={{
+              boxSizing: 'border-box',
+              padding: '6px 4px 6px 6px',
+              background: copied
+                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.12) 100%), #151A22'
+                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #0E121B',
+              boxShadow: '0px 1px 2px rgba(27, 28, 29, 0.48), 0px 0px 0px 1px #242628',
+              borderRadius: '8px',
+              fontFamily: 'Inter',
+              fontWeight: 500,
+              fontSize: '12px',
+              lineHeight: '16px',
+              fontFeatureSettings: "'cv09' on, 'ss11' on, 'calt' off, 'liga' off",
+              transition: 'background 150ms ease, box-shadow 150ms ease',
+            }}
           >
-            <RiSparklingLine className="w-3.5 h-3.5 flex-none order-0" />
-            <span className="px-1 w-[98px] h-4 flex flex-row justify-center items-center flex-none order-1">
-              <span className="w-[90px] h-4 flex items-center flex-none order-0">{buttonText}</span>
-            </span>
-          </div>
-          <div
-            className={`absolute inset-0 flex items-center justify-center transition-opacity ${copied ? 'opacity-100' : 'opacity-0'}`}
+            <div
+              className={`${copied ? 'opacity-0' : 'opacity-100'} flex flex-row items-center gap-1 transition-opacity`}
+              aria-hidden={copied}
+            >
+              <RiSparklingLine className="w-3.5 h-3.5 flex-none order-0" />
+              <span className="px-1 w-[98px] h-4 flex flex-row justify-center items-center flex-none order-1">
+                <span className="w-[90px] h-4 flex items-center flex-none order-0">{buttonText}</span>
+              </span>
+            </div>
+            <div
+              className={`absolute inset-0 flex items-center justify-center transition-opacity ${copied ? 'opacity-100' : 'opacity-0'}`}
+            >
+              Copied!
+            </div>
+          </button>
+          <a
+            href={cursorDeepLink}
+            onClick={() => track(TelemetryEvent.AI_PROMPT_COPIED, { framework: frameworkName, method: 'cursor-deeplink' })}
+            className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 h-7 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-300"
           >
-            Copied!
-          </div>
-        </button>
+            <RiCursorLine className="size-3.5" />
+            Open in Cursor
+          </a>
+        </div>
         <p className="text-foreground-400 text-xs">(No terminal, no docs — just let your pair programmer handle it.)</p>
       </div>
     </motion.div>
