@@ -57,7 +57,7 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
   const groupedIntegrations = useMemo(() => {
     return integrations?.reduce(
       (acc, integration) => {
-        const channel = integration.channel as ChannelTypeEnum;
+        const channel = integration.channel;
 
         if (!acc[channel]) {
           acc[channel] = [];
@@ -71,14 +71,6 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
     );
   }, [integrations]);
 
-  const channelIntegrationEntries = useMemo(
-    () =>
-      Object.entries(groupedIntegrations || {}).filter(([channel]) =>
-        Object.values(ChannelTypeEnum).includes(channel as ChannelTypeEnum)
-      ),
-    [groupedIntegrations]
-  );
-
   if (isLoading || !currentEnvironment) {
     return (
       <div className="space-y-6">
@@ -89,22 +81,17 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
   }
 
   return (
-    <div className="space-y-10">
-      {channelIntegrationEntries.length > 0 && (
-        <section className="space-y-6">
-          <h2 className="text-foreground-950 text-lg font-semibold">Channels</h2>
-          {channelIntegrationEntries.map(([channel, channelIntegrations]) => (
-            <IntegrationChannelGroup
-              key={channel}
-              channel={channel as ChannelTypeEnum}
-              integrations={channelIntegrations}
-              providers={availableIntegrations}
-              environments={environments}
-              onItemClick={onItemClick}
-            />
-          ))}
-        </section>
-      )}
+    <div className="space-y-6">
+      {Object.entries(groupedIntegrations || {}).map(([channel, channelIntegrations]) => (
+        <IntegrationChannelGroup
+          key={channel}
+          channel={channel as ChannelTypeEnum}
+          integrations={channelIntegrations}
+          providers={availableIntegrations}
+          environments={environments}
+          onItemClick={onItemClick}
+        />
+      ))}
     </div>
   );
 }

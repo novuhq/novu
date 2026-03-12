@@ -1,14 +1,7 @@
-import { ACTION_PROVIDER_CONFIGS, ActionProviderIdEnum, type ProviderColorToken } from '@novu/shared';
+import { type ProviderColorToken } from '@novu/shared';
 import { StepTypeEnum } from './enums';
 
 export type { ProviderColorToken };
-
-export const ACTION_PROVIDER_ID_TO_COLOR: Partial<Record<ActionProviderIdEnum, ProviderColorToken>> =
-  Object.fromEntries(
-    Object.values(ACTION_PROVIDER_CONFIGS)
-      .filter((c): c is typeof c & { color: ProviderColorToken } => Boolean(c.color))
-      .map((c) => [c.id, c.color])
-  );
 
 export const STEP_TYPE_TO_COLOR: Record<StepTypeEnum, ProviderColorToken> = {
   [StepTypeEnum.TRIGGER]: 'neutral',

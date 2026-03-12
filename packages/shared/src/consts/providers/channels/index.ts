@@ -1,4 +1,3 @@
-export * from './action';
 export * from './chat';
 export * from './email';
 export * from './http-request';

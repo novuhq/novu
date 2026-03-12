@@ -185,7 +185,7 @@ export class CreateNotificationJobs {
 
   private buildJobFromStep(step, command: CreateNotificationJobsCommand, notification): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
-    const providerId = command.templateProviderIds[channel] || step.providerId;
+    const providerId = command.templateProviderIds[channel];
 
     return {
       identifier: command.identifier,

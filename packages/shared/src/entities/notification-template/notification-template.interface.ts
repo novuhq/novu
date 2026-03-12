@@ -85,8 +85,6 @@ export interface IStepVariant {
    */
   controlVariables?: Record<string, unknown>;
   bridgeUrl?: string;
-  providerId?: string;
-  integrationIdentifier?: string;
 }
 
 export interface INotificationTemplateStep extends IStepVariant {

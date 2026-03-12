@@ -34,7 +34,7 @@ export function useIntegrationPrimaryModal({
   const currentChannel = integration?.channel ?? channel ?? ChannelTypeEnum.EMAIL;
   const currentEnvironmentId = integration?._environmentId;
 
-  const isChannelSupportPrimary = (CHANNELS_WITH_PRIMARY as string[]).includes(currentChannel);
+  const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(currentChannel);
   const filteredIntegrations = integrations.filter(
     (el) =>
       el.channel === currentChannel &&

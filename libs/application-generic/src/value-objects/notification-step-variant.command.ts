@@ -56,12 +56,4 @@ export class NotificationStepVariantCommand implements IStepVariant {
   @ValidateNested({ each: true })
   @Type(() => StepIssues)
   issues?: StepIssues;
-
-  @IsOptional()
-  @IsString()
-  providerId?: string;
-
-  @IsOptional()
-  @IsString()
-  integrationIdentifier?: string;
 }

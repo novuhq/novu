@@ -323,6 +323,13 @@ export class ConstructFrameworkWorkflow {
        * the workflow graph correctly. The resolve function is a passthrough because execution already happened.
        */
       case StepTypeEnum.HTTP_REQUEST:
+        return step.custom(
+          stepId,
+          async (controlValues) => {
+            return controlValues;
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
       case StepTypeEnum.CUSTOM:
         return step.custom(
           stepId,

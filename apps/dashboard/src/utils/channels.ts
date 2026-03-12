@@ -7,7 +7,3 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
 };
-
-export const INTEGRATION_CATEGORY_TO_STRING: Record<ChannelTypeEnum, string> = {
-  ...CHANNEL_TYPE_TO_STRING,
-};

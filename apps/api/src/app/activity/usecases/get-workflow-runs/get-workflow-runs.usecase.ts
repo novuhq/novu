@@ -322,13 +322,6 @@ export class GetWorkflowRuns {
         },
         'Failed to generate previous cursor'
       );
-      this.logger.error(
-        {
-          error: error.message,
-          currentCursor,
-        },
-        'Failed to generate previous cursor'
-      );
 
       return null;
     }

@@ -83,9 +83,6 @@ export function StepPreviewFactory() {
     case StepTypeEnum.HTTP_REQUEST:
       return <HttpRequestConsolePreview />;
 
-    case StepTypeEnum.CUSTOM:
-      return <NoPreviewAvailable stepType={step.type} />;
-
     default:
       return <NoPreviewAvailable stepType={step.type} />;
   }

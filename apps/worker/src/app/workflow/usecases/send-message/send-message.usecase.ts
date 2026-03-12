@@ -98,13 +98,14 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (!isActionStep(stepType)) {
+    if (isChannelStep(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
         workflow: command.workflow,
       });
     }
+
     const isBridgeSkipped = bridgeResponse?.options?.skip;
     if (isBridgeSkipped) {
       await this.createExecutionDetails.execute(
@@ -331,7 +332,7 @@ export class SendMessage {
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
-    if (this.isActionStep(job)) {
+    if (!this.isChannelStep(job)) {
       return { result: true };
     }
 
@@ -503,10 +504,10 @@ export class SendMessage {
     return workflowPreferred && channelPreferred;
   }
 
-  private isActionStep(job: JobEntity) {
+  private isChannelStep(job: JobEntity) {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
-    return !channels.find((channel) => channel === job.type);
+    return !!channels.find((channel) => channel === job.type);
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
@@ -564,22 +565,22 @@ export class SendMessage {
   }
 }
 
-const ACTION_STEP_MAP: Record<StepTypeEnum, boolean> = {
-  [StepTypeEnum.IN_APP]: false,
-  [StepTypeEnum.EMAIL]: false,
-  [StepTypeEnum.SMS]: false,
-  [StepTypeEnum.CHAT]: false,
-  [StepTypeEnum.PUSH]: false,
+const CHANNEL_STEP_MAP: Record<StepTypeEnum, boolean> = {
+  [StepTypeEnum.IN_APP]: true,
+  [StepTypeEnum.EMAIL]: true,
+  [StepTypeEnum.SMS]: true,
+  [StepTypeEnum.CHAT]: true,
+  [StepTypeEnum.PUSH]: true,
   [StepTypeEnum.CUSTOM]: false,
-  [StepTypeEnum.HTTP_REQUEST]: true,
-  [StepTypeEnum.DIGEST]: true,
-  [StepTypeEnum.DELAY]: true,
-  [StepTypeEnum.TRIGGER]: true,
-  [StepTypeEnum.THROTTLE]: true,
+  [StepTypeEnum.HTTP_REQUEST]: false,
+  [StepTypeEnum.DIGEST]: false,
+  [StepTypeEnum.DELAY]: false,
+  [StepTypeEnum.TRIGGER]: false,
+  [StepTypeEnum.THROTTLE]: false,
 };
 
-function isActionStep(stepType: StepTypeEnum | undefined): boolean {
+function isChannelStep(stepType: StepTypeEnum | undefined): boolean {
   if (!stepType) return false;
 
-  return ACTION_STEP_MAP[stepType];
+  return CHANNEL_STEP_MAP[stepType];
 }

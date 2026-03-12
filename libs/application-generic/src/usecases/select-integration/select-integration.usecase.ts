@@ -81,7 +81,7 @@ export class SelectIntegration {
 
   @Instrument()
   private async getPrimaryIntegration(command: SelectIntegrationCommand): Promise<IntegrationEntity | null> {
-    const isChannelSupportsPrimary = (CHANNELS_WITH_PRIMARY as string[]).includes(command.channelType);
+    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(command.channelType);
 
     const query: Partial<IntegrationEntity> & { _organizationId: string } = command.identifier
       ? {

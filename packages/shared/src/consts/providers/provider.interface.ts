@@ -1,10 +1,4 @@
-import {
-  ActionProviderIdEnum,
-  ChannelTypeEnum,
-  ConfigurationKey,
-  CredentialsKeyEnum,
-  ProvidersIdEnum,
-} from '../../types';
+import { ChannelTypeEnum, ConfigurationKey, CredentialsKeyEnum, ProvidersIdEnum } from '../../types';
 
 export type ConfigConfiguration = {
   key: ConfigurationKey;
@@ -59,28 +53,6 @@ export type ProviderColorToken =
   | 'alert'
   | 'highlighted'
   | 'warning';
-
-export interface IActionProviderConfig {
-  id: ActionProviderIdEnum;
-  displayName: string;
-  description?: string;
-  category: string;
-  credentials: IConfigCredential[];
-  configurations?: ConfigConfigurationGroup[];
-  logoFileName: ILogoFileName;
-  docReference: string;
-  comingSoon?: boolean;
-  betaVersion?: boolean;
-  iconName?: string;
-  color?: ProviderColorToken;
-  badgeLabel?: string;
-}
-
-export type IAnyProviderConfig = IProviderConfig | IActionProviderConfig;
-
-export function isActionProviderConfig(config: IAnyProviderConfig): config is IActionProviderConfig {
-  return 'category' in config;
-}
 
 type CredentialsType =
   | 'string'

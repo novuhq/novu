@@ -281,8 +281,6 @@ export class UpsertWorkflowUseCase {
           stepId: stepIds[index],
           name: step.name,
           issues,
-          ...(step.providerId ? { providerId: step.providerId } : {}),
-          ...(step.integrationIdentifier ? { integrationIdentifier: step.integrationIdentifier } : {}),
         };
 
         if (existingStep) {

@@ -81,15 +81,6 @@ export class StepResponseDto<T = Record<string, unknown>> {
   @Type(() => StepIssuesDto)
   issues?: StepIssuesDto;
 
-  @ApiPropertyOptional({ description: 'Provider identifier for action steps' })
-  @IsOptional()
-  @IsString()
-  providerId?: string;
-
-  @ApiPropertyOptional({ description: 'Integration identifier for action steps' })
-  @IsOptional()
-  @IsString()
-  integrationIdentifier?: string;
   @ApiPropertyOptional({
     description: 'Hash identifying the deployed Cloudflare Worker for this step',
     type: 'string',

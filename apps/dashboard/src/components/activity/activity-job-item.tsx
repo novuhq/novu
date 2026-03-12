@@ -1,6 +1,4 @@
 import {
-  ACTION_PROVIDER_CONFIGS,
-  ActionProviderIdEnum,
   type IActivityJob,
   type IDelayRegularMetadata,
   type IDigestRegularMetadata,
@@ -14,9 +12,9 @@ import { useState } from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-import { ACTION_PROVIDER_ID_TO_COLOR, type ProviderColorToken, STEP_TYPE_TO_COLOR } from '../../utils/color';
+import { type ProviderColorToken, STEP_TYPE_TO_COLOR } from '../../utils/color';
 import { formatJSONString } from '../../utils/string';
-import { ACTION_PROVIDER_ID_TO_ICON, STEP_TYPE_TO_ICON } from '../icons/utils';
+import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Card, CardContent, CardHeader } from '../primitives/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
@@ -99,10 +97,6 @@ function formatJobType(type?: StepTypeEnum): string {
 }
 
 function getJobDisplayLabel(job: IActivityJob): string {
-  if (job.providerId && ACTION_PROVIDER_CONFIGS[job.providerId]) {
-    return ACTION_PROVIDER_CONFIGS[job.providerId].displayName;
-  }
-
   return job?.step?.name || formatJobType(job.type);
 }
 
@@ -263,21 +257,13 @@ const JOB_COLOR_CLASSES: Record<ProviderColorToken, { border: string; text: stri
 };
 
 function getJobColorClasses(job: IActivityJob): { border: string; text: string } {
-  const providerId = job.providerId as ActionProviderIdEnum | undefined;
-  const colorKey =
-    (providerId && ACTION_PROVIDER_ID_TO_COLOR[providerId]) ||
-    STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR] ||
-    'neutral';
+  const colorKey = STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR] || 'neutral';
 
   return JOB_COLOR_CLASSES[colorKey];
 }
 
 function getJobIcon(job: IActivityJob) {
-  const providerId = job.providerId as ActionProviderIdEnum | undefined;
-  const Icon =
-    (providerId && ACTION_PROVIDER_ID_TO_ICON[providerId]) ||
-    STEP_TYPE_TO_ICON[job.type?.toLowerCase() as keyof typeof STEP_TYPE_TO_ICON] ||
-    Route;
+  const Icon = STEP_TYPE_TO_ICON[job.type?.toLowerCase() as keyof typeof STEP_TYPE_TO_ICON] || Route;
 
   return <Icon className="h-3.5 w-3.5" />;
 }

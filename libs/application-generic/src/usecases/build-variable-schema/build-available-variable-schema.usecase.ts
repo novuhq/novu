@@ -212,7 +212,7 @@ function buildPreviousStepsProperties({
     (acc, step) => {
       let stepId: string | undefined;
       let stepType: StepTypeEnum | undefined;
-      let customResultSchema: JSONSchemaDto | undefined;
+      let responseBodySchema: JSONSchemaDto | undefined;
 
       if ('template' in step && step.template?.type) {
         stepId = step.stepId;
@@ -221,7 +221,7 @@ function buildPreviousStepsProperties({
         if (stepType === StepTypeEnum.HTTP_REQUEST && step._id && controlValuesMap) {
           const stepControls = controlValuesMap[step._id];
           if (stepControls?.responseBodySchema) {
-            customResultSchema = stepControls.responseBodySchema as JSONSchemaDto;
+            responseBodySchema = stepControls.responseBodySchema as JSONSchemaDto;
           }
         }
       } else if ('type' in step) {
@@ -233,7 +233,7 @@ function buildPreviousStepsProperties({
         acc[stepId] = computeResultSchema({
           stepType,
           payloadSchema,
-          customResultSchema,
+          responseBodySchema,
         });
       }
 

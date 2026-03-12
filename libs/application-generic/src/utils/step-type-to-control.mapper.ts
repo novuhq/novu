@@ -27,7 +27,7 @@ export const PERMISSIVE_EMPTY_SCHEMA = {
   additionalProperties: true,
 } as JSONSchemaEntity;
 
-const stepTypeToControlSchemaMap: Record<string, ControlSchemas> = {
+const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, ControlSchemas> = {
   [ChannelStepEnum.IN_APP]: {
     schema: inAppControlSchema,
     uiSchema: inAppUiSchema,
@@ -63,13 +63,13 @@ const stepTypeToControlSchemaMap: Record<string, ControlSchemas> = {
   [ActionStepEnum.CUSTOM]: {
     schema: PERMISSIVE_EMPTY_SCHEMA,
   },
-  http_request: {
+  [ActionStepEnum.HTTP_REQUEST]: {
     schema: httpRequestControlSchema as unknown as JSONSchemaEntity,
     uiSchema: httpRequestUiSchema,
   },
 };
 
 export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<
-  ChannelStepEnum | ActionStepEnum | 'http_request',
+  ChannelStepEnum | ActionStepEnum,
   ControlSchemas
 >;

@@ -1,3 +1,4 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
@@ -5,7 +6,6 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Badge } from '../primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
@@ -90,7 +90,6 @@ export const AddStepMenu = ({
   onMenuItemClick: (selection: AddStepMenuSelection) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const isThrottleStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_THROTTLE_STEP_ENABLED);
   const isHttpRequestStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_REQUEST_STEP_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
@@ -157,11 +156,9 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.DIGEST} onClick={() => handleMenuItemClick(StepTypeEnum.DIGEST)}>
                   Digest
                 </MenuItem>
-                {isThrottleStepEnabled && (
-                  <MenuItem stepType={StepTypeEnum.THROTTLE} onClick={() => handleMenuItemClick(StepTypeEnum.THROTTLE)}>
-                    Throttle
-                  </MenuItem>
-                )}
+                <MenuItem stepType={StepTypeEnum.THROTTLE} onClick={() => handleMenuItemClick(StepTypeEnum.THROTTLE)}>
+                  Throttle
+                </MenuItem>
                 {isHttpRequestStepEnabled && (
                   <MenuItem
                     stepType={StepTypeEnum.HTTP_REQUEST}

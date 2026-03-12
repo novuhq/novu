@@ -1,6 +1,6 @@
 import { IProviderConfig } from '@novu/shared';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { INTEGRATION_CATEGORY_TO_STRING } from '@/utils/channels';
+import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
 import { INTEGRATION_CHANNELS } from '../utils/channels';
 import { IntegrationListItem } from './integration-list-item';
 
@@ -16,7 +16,7 @@ export function ChannelTabs({ integrationsByChannel, searchQuery, onIntegrationS
       <TabsList variant="regular" className="bg-background sticky top-0 z-10 gap-6 border-t-0 px-3!">
         {INTEGRATION_CHANNELS.map((channel) => (
           <TabsTrigger key={channel} value={channel} variant="regular" className="px-0! py-3!" size="lg">
-            {INTEGRATION_CATEGORY_TO_STRING[channel]}
+            {CHANNEL_TYPE_TO_STRING[channel]}
           </TabsTrigger>
         ))}
       </TabsList>

@@ -320,7 +320,7 @@ export class WorkflowController {
   })
   @ApiResponse(TestHttpEndpointResponseDto, 201)
   @ApiExcludeEndpoint()
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async testHttpEndpoint(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() body: TestHttpEndpointRequestDto

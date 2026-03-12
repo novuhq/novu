@@ -56,6 +56,7 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       }
 
       const values = { ...previousData, ...data };
+      // form.reset(values, { keepErrors: true });
       lastSavedDataRef.current = serializedData;
       save(values, { onSuccess: options?.onSuccess });
     },
