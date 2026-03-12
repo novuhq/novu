@@ -63,10 +63,7 @@ class StepResolverRequestError extends HttpException {
   }
 }
 
-interface StepResolverResponse {
-  subject: string;
-  body: string;
-}
+type StepResolverResponse = Record<string, unknown>;
 
 @Injectable()
 export class ExecuteStepResolverRequest {
@@ -142,10 +139,7 @@ export class ExecuteStepResolverRequest {
 
   private transformToExecuteOutput(response: StepResolverResponse, duration: number): ExecuteOutput {
     return {
-      outputs: {
-        subject: response.subject,
-        body: response.body,
-      },
+      outputs: { ...response },
       options: {
         skip: false,
       },

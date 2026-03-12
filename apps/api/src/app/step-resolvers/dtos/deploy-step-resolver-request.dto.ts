@@ -1,7 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { parseSlugId } from '@novu/application-generic';
+import { StepTypeEnum } from '@novu/shared';
 import { Transform, Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class DeployStepResolverManifestStepDto {
   @ApiProperty({
@@ -20,6 +30,15 @@ export class DeployStepResolverManifestStepDto {
   @IsString()
   @IsNotEmpty()
   stepId: string;
+
+  @ApiProperty({
+    description: 'Channel step type',
+    enum: StepTypeEnum,
+    example: StepTypeEnum.EMAIL,
+  })
+  @IsEnum(StepTypeEnum)
+  @IsNotEmpty()
+  stepType: StepTypeEnum;
 
   @ApiPropertyOptional({
     description: 'JSON Schema describing the control inputs for this step',

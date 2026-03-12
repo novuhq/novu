@@ -9,7 +9,7 @@ import {
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
-  isStepResolverEmailStep,
+  isStepResolverActive,
   PinoLogger,
   PreviewCommand,
   PreviewErrorHandler,
@@ -20,7 +20,7 @@ import {
   StepResponseDto,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
-import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { PayloadMergerService } from './services/payload-merger.service';
 
 @Injectable()
@@ -43,9 +43,10 @@ export class PreviewUsecase {
       const context = await this.initializePreviewContext(command);
       const stepResolverHash =
         typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
-      const isStepResolverEmail = isStepResolverEmailStep(context.stepData.type, stepResolverHash);
+      const isStepResolver = isStepResolverActive(stepResolverHash);
+      const isStepResolverEmail = isStepResolver && context.stepData.type === StepTypeEnum.EMAIL;
 
-      const sanitizedControls = isStepResolverEmail
+      const sanitizedControls = isStepResolver
         ? context.controlValues
         : this.controlValueSanitizer.sanitizeControlsForPreview(
             context.controlValues,

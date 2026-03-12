@@ -4,6 +4,7 @@ import type { DiscoveredStep } from '../types';
 export function generateWorkerWrapper(steps: DiscoveredStep[], rootDir: string): string {
   return [
     generateImports(steps, rootDir),
+    generateValidatorPrecompilation(steps),
     generateStepHandlersMap(steps),
     generateWorkerUtilities(),
     generateFetchHandler(),
@@ -17,6 +18,23 @@ function generateImports(steps: DiscoveredStep[], rootDir: string): string {
 
   return `import { validateData } from '@novu/framework/validators';
 import { channelStepSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
+}
+
+function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
+  const handlerRefs = steps.map((_, i) => `stepHandler${i}`).join(', ');
+
+  return `// Pre-compile all JSON Schema validators during the startup phase.
+// Cloudflare Workers allow new Function() (used by AJV) during startup but not during request handling.
+// JsonSchemaValidator caches compiled validators by schema object reference, so these pre-compiled
+// validators are reused on every request without triggering new Function() again.
+await Promise.all([
+  ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {}).catch(() => {})
+  ),
+  ...[${handlerRefs}].flatMap(handler =>
+    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+  ),
+]);`;
 }
 
 function generateStepHandlersMap(steps: DiscoveredStep[]): string {

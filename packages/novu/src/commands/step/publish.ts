@@ -7,7 +7,7 @@ import { StepResolverClient } from './api';
 import { bundleRelease, formatBundleSize } from './bundler';
 import { extractStepSchemas } from './bundler/schema-extractor';
 import { loadConfig } from './config/loader';
-import { discoverStepFiles } from './discovery';
+import { discoverEmailTemplates, discoverStepFiles } from './discovery';
 import { generateReactEmailStepFile, generateStepFileForType } from './templates/step-file';
 import type {
   DeploymentResult,
@@ -113,6 +113,16 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
       return;
     }
 
+    if (process.stdout.isTTY) {
+      const confirmed = await confirmDeploy(selectedSteps.length);
+      if (!confirmed) {
+        console.log('');
+        console.log(yellow('ℹ  Publish cancelled.'));
+        console.log('');
+        return;
+      }
+    }
+
     const deployment = await deployRelease(client, releaseBundle, manifestSteps);
     printSuccessSummary(deployment, selectedSteps, startTime);
   } catch (error) {
@@ -147,6 +157,10 @@ async function resolveScaffoldInteractively(
   const stepType = await client.getStepType(workflowIds[0], stepIds[0]);
 
   if (stepType && KNOWN_STEP_TYPES.has(stepType)) {
+    if (stepType === 'email' && process.stdout.isTTY) {
+      return promptForEmailTemplate(rootDir);
+    }
+
     return { mode: 'placeholder', stepType };
   }
 
@@ -158,10 +172,10 @@ async function resolveScaffoldInteractively(
     return undefined;
   }
 
-  return promptForChannelType();
+  return promptForChannelType(rootDir);
 }
 
-async function promptForChannelType(): Promise<ScaffoldResult | undefined> {
+async function promptForChannelType(rootDir: string): Promise<ScaffoldResult | undefined> {
   const response = await prompts(
     {
       type: 'select',
@@ -189,7 +203,96 @@ async function promptForChannelType(): Promise<ScaffoldResult | undefined> {
     return undefined;
   }
 
+  if (response.channelType === 'email') {
+    return promptForEmailTemplate(rootDir);
+  }
+
   return { mode: 'placeholder', stepType: response.channelType };
+}
+
+async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult> {
+  const templates = await withSpinner('Scanning for React Email templates...', () => discoverEmailTemplates(rootDir), {
+    successMessage: (tmpl) =>
+      tmpl.length > 0
+        ? `Found ${tmpl.length} React Email template${tmpl.length === 1 ? '' : 's'}`
+        : 'No React Email templates found — you can enter a path manually or scaffold a generic step',
+    failMessage: 'Template scan failed',
+  });
+
+  const MANUAL_ENTRY = '__manual__';
+  const GENERIC_EMAIL = '__generic__';
+
+  const templateChoices =
+    templates.length > 0 ? templates.map((t) => ({ title: t.relativePath, value: t.relativePath })) : [];
+  const hasTemplates = templateChoices.length > 0;
+
+  const selectResponse = await prompts(
+    {
+      type: 'select',
+      name: 'template',
+      message: hasTemplates
+        ? 'Select a React Email template:'
+        : 'No React Email templates detected. How would you like to scaffold this step?',
+      choices: [
+        ...templateChoices,
+        { title: 'Enter path manually  — provide a React Email template path', value: MANUAL_ENTRY },
+        { title: 'Generic email step   — scaffold a starter with plain HTML body', value: GENERIC_EMAIL },
+      ],
+    },
+    {
+      onCancel: () => {
+        console.log('');
+        console.log(yellow('ℹ  Scaffolding cancelled.'));
+        console.log('');
+      },
+    }
+  );
+
+  if (!selectResponse.template || selectResponse.template === GENERIC_EMAIL) {
+    return { mode: 'placeholder', stepType: 'email' };
+  }
+
+  if (selectResponse.template === MANUAL_ENTRY) {
+    const pathResponse = await prompts(
+      {
+        type: 'text',
+        name: 'templatePath',
+        message: 'Path to your React Email template (relative to project root):',
+        initial: './emails/welcome.tsx',
+      },
+      {
+        onCancel: () => {
+          console.log('');
+          console.log(yellow('ℹ  Scaffolding cancelled.'));
+          console.log('');
+        },
+      }
+    );
+
+    if (!pathResponse.templatePath) {
+      return { mode: 'placeholder', stepType: 'email' };
+    }
+
+    return { mode: 'react-email', templatePath: pathResponse.templatePath };
+  }
+
+  return { mode: 'react-email', templatePath: selectResponse.template };
+}
+
+async function confirmDeploy(stepCount: number): Promise<boolean> {
+  const stepText = stepCount === 1 ? '1 step' : `${stepCount} steps`;
+  console.log('');
+  console.log(yellow(`⚠  Publishing will override any existing Novu editor content for ${stepText}.`));
+  console.log('');
+
+  const response = await prompts({
+    type: 'confirm',
+    name: 'confirmed',
+    message: 'Continue?',
+    initial: true,
+  });
+
+  return Boolean(response.confirmed);
 }
 
 function assertTemplateRequiresWorkflowAndStep(
