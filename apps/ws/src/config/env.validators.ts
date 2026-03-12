@@ -27,6 +27,7 @@ export const envValidators = {
   TZ: str({ default: 'UTC' }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
+  WEB_SOCKET_WORKER_CONCURRENCY: num({ default: undefined }),
   SQS_DEFAULT_CONCURRENCY: num({ default: undefined }),
   SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
   SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),

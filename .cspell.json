@@ -786,7 +786,10 @@
     "checkpointer",
     "langchain",
     "langgraph",
-    "Vitest"
+    "Vitest",
+    "signoz",
+    "sanitised",
+    "serialises"
   ],
   "flagWords": [],
   "patterns": [

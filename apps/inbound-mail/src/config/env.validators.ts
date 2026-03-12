@@ -15,4 +15,5 @@ export const envValidators = {
   REDIS_TLS: json({ default: undefined }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
+  INBOUND_PARSE_MAIL_WORKER_CONCURRENCY: num({ default: undefined }),
 } satisfies Record<string, ValidatorSpec<unknown>>;

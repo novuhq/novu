@@ -216,6 +216,7 @@ export const shadows = {
   xs: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)',
   sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
   md: '0px 16px 32px -12px rgba(14, 18, 27, 0.10)',
+  popover: '0 1px 3px rgba(0, 0, 0, 0.04)',
   'box-xs': '0 0 0 1px rgba(25, 28, 33, 0.04), 0 1px 2px 0 rgba(25, 28, 33, 0.06)',
   DEFAULT: '0px 16px 32px -12px #0E121B1A',
   'button-primary-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--primary-alpha-10))'],

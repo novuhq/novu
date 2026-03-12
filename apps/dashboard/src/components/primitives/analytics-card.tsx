@@ -1,11 +1,11 @@
 import { ComponentType } from 'react';
 import { cn } from '@/utils/ui';
+import { FlickeringGridPlaceholder } from '../../components/analytics/components/flickering-grid-placeholder';
 import { useDelayedLoading } from '../../hooks/use-delayed-loading';
 import { TrendLineDown } from '../icons/trend-line-down';
 import { TrendLineUp } from '../icons/trend-line-up';
 import { AnimatedNumber } from './animated-number';
 import { HelpTooltipIndicator } from './help-tooltip-indicator';
-import { Skeleton } from './skeleton';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
 
@@ -90,21 +90,22 @@ export function AnalyticsCard({
 
   if (showSkeleton) {
     return (
-      <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full min-h-[108px]', className)}>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
-              <span className="text-label-sm text-text-sub">{title}</span>
-              {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
-            </div>
-            <Skeleton className="h-3 w-8 rounded-full" />
+      <div
+        className={cn(
+          'bg-bg-white rounded-xl border-none p-2.5 shadow-box-xs w-full min-h-[88px] flex flex-col gap-1',
+          className
+        )}
+      >
+        <div className="flex items-center justify-between shrink-0 gap-2 min-w-0">
+          <div className="flex min-w-0 items-center gap-1">
+            {IconComponent && <IconComponent className="size-4 shrink-0 text-icon-sub" />}
+            <span className="font-code text-[12px] text-text-sub uppercase truncate" title={title}>
+              {title}
+            </span>
+            {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
           </div>
-
-          <Skeleton className="h-8 w-16 mt-1" />
-
-          <Skeleton className="h-3 w-32 mt-2" />
         </div>
+        <FlickeringGridPlaceholder minHeight={52} topFadeHeight={24} bottomFadeHeight={24} className="mt-0.5" />
       </div>
     );
   }
@@ -112,21 +113,25 @@ export function AnalyticsCard({
   const trendColors = getTrendColor(trendDirection);
 
   return (
-    <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
-            <span className="text-label-sm text-text-sub">{title}</span>
+    <div className={cn('bg-bg-white rounded-xl border-none p-2.5 shadow-box-xs w-full', className)}>
+      <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 items-center justify-between gap-2 overflow-hidden">
+          <div className="flex min-w-0 items-center gap-1">
+            {IconComponent && <IconComponent className="size-4 shrink-0 text-icon-sub" />}
+            <span className="font-code text-[12px] text-text-sub uppercase truncate" title={title}>
+              {title}
+            </span>
             {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
           </div>
 
           {percentageChange !== undefined && (
-            <div className="flex items-center gap-1 px-1">
-              <trendColors.icon className={cn('size-2', trendColors.text)} />
-              <span className={cn('text-subheading-2xs uppercase', trendColors.text)}>
-                {formatPercentage(Math.abs(percentageChange))}%
-              </span>
+            <div className="analytics-card-trend shrink-0">
+              <div className="flex items-center gap-1 px-1">
+                <trendColors.icon className={cn('size-2', trendColors.text)} />
+                <span className={cn('text-subheading-2xs uppercase', trendColors.text)}>
+                  {formatPercentage(Math.abs(percentageChange))}%
+                </span>
+              </div>
             </div>
           )}
         </div>

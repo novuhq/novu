@@ -197,4 +197,25 @@ describe('sanitize util', () => {
       expect(result).toStrictEqual({ input: expected });
     });
   });
+
+  it('should prevent XSS via malformed style closing tag </style/>', () => {
+    const myTestObject = {
+      input: '<style></style/><img src onerror=alert(origin)></style>',
+    };
+    const result = sanitizeHtmlInObject(myTestObject);
+
+    expect(result.input).not.toContain('onerror');
+    expect(result.input).not.toContain('alert');
+  });
+
+  it('should preserve legitimate style tags after normalization', () => {
+    const myTestObject = {
+      input: '<style>body { color: red; }</style>',
+    };
+    const result = sanitizeHtmlInObject(myTestObject);
+
+    expect(result.input).toContain('<style>');
+    expect(result.input).toContain('body { color: red; }');
+    expect(result.input).toContain('</style>');
+  });
 });

@@ -509,7 +509,7 @@ export class AddJob {
 
     if (tierValidationErrors && tierValidationErrors.length > 0) {
       const errorMessage = tierValidationErrors[0].message;
-      this.logger.error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
+      this.logger.debug(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -535,7 +535,7 @@ export class AddJob {
     detail: DetailEnum
   ): Promise<AddJobResult> {
     const stepTypeName = stepType.toLowerCase();
-    this.logger.error(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
+    this.logger.debug(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({

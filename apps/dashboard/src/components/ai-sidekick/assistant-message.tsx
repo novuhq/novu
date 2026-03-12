@@ -28,6 +28,10 @@ export const AssistantMessage = ({
   onTryAgain: (messageId: string) => void;
 }) => {
   const isAssistantMessageWithKnownParts = useMemo(() => hasKnownMessageParts(message), [message]);
+  const hasDynamicToolParts = useMemo(
+    () => message.parts.filter((p) => p.type.startsWith('dynamic-tool')).length > 0,
+    [message]
+  );
   const textParts = useMemo(() => {
     return (message.parts ?? [])
       .filter(
@@ -45,7 +49,7 @@ export const AssistantMessage = ({
 
   return (
     <Message from={message.role} key={message.id}>
-      <ChatChainOfThought message={message} />
+      {hasDynamicToolParts && <ChatChainOfThought message={message} />}
       {textParts.map((text, i) => (
         <StyledMessageResponse key={`text-${message.id}-${i}`}>{text}</StyledMessageResponse>
       ))}

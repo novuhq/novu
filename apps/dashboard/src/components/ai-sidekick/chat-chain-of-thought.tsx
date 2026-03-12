@@ -258,7 +258,7 @@ function StepTool({
       collapsible
       defaultOpen={true}
     >
-      <div className="flex flex-col gap-2 p-2 pl-0">
+      <div className="flex flex-col gap-2 p-2 pl-0 pr-0">
         <WorkflowStepItem output={stepOutput} isStreaming={isStreaming} action={action} />
       </div>
     </ChainOfThoughtStep>

@@ -1,30 +1,14 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { initializeOtelSdk } from './tracing';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { shutdownOtel } from './otel-init';
 
+/**
+ * Handles graceful OTEL SDK shutdown when the NestJS module is destroyed.
+ * The SDK itself is started early in otel-init.ts (before NestJS bootstrap)
+ * so that auto-instrumentations can patch modules at require() time.
+ */
 @Injectable()
-export class TracingService implements OnModuleInit, OnModuleDestroy {
-  private otelSDKInstance: NodeSDK;
-
-  constructor(
-    @Inject('TRACING_SERVICE_NAME') private readonly serviceName: string,
-    @Inject('TRACING_SERVICE_VERSION') private readonly version: string,
-    @Inject('TRACING_ENABLE_OTEL') private readonly otelEnabled: boolean
-  ) {}
-
+export class TracingService implements OnModuleDestroy {
   async onModuleDestroy() {
-    if (this.otelSDKInstance) {
-      await this.otelSDKInstance.shutdown();
-    }
-  }
-  onModuleInit() {
-    if (!this.hasValidParameters()) return;
-
-    this.otelSDKInstance = initializeOtelSdk(this.serviceName, this.version);
-    this.otelSDKInstance.start();
-  }
-
-  private hasValidParameters() {
-    return this.serviceName && this.otelEnabled;
+    await shutdownOtel();
   }
 }

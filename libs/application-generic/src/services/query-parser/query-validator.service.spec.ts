@@ -171,6 +171,124 @@ describe('QueryValidatorService', () => {
       });
     });
 
+    describe('containsAny operation', () => {
+      it('should validate valid containsAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.foo' }, ['value1', 'value2']],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.be.empty;
+      });
+
+      it('should detect invalid containsAny structure', () => {
+        const rule: any = {
+          containsAny: [],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Invalid operation structure');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_STRUCTURE);
+      });
+
+      it('should detect invalid field reference in containsAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{}, ['value1', 'value2']],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Invalid field reference in comparison');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_STRUCTURE);
+      });
+
+      it('should detect empty array in containsAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.foo' }, []],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Value is required');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.MISSING_VALUE);
+      });
+
+      it('should detect null value in containsAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.foo' }, null],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Value is required');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.MISSING_VALUE);
+      });
+
+      it('should validate containsAny with a var reference as second operand', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.foo' }, { var: 'subscriber.data.tags' }],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.be.empty;
+      });
+
+      it('should detect invalid var reference in containsAny second operand', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.foo' }, { var: 'invalid.field' }],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Value is not valid');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+      });
+    });
+
+    describe('doesNotContainAny operation', () => {
+      it('should validate valid doesNotContainAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          doesNotContainAny: [{ var: 'payload.foo' }, ['value1', 'value2']],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.be.empty;
+      });
+
+      it('should detect invalid field reference in doesNotContainAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          doesNotContainAny: [{}, ['value1']],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Invalid field reference in comparison');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_STRUCTURE);
+      });
+
+      it('should detect empty array in doesNotContainAny operation', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          doesNotContainAny: [{ var: 'payload.foo' }, []],
+        };
+
+        const issues = queryValidatorService.validateQueryRules(rule);
+
+        expect(issues).to.have.lengthOf(1);
+        expect(issues[0].message).to.include('Value is required');
+        expect(issues[0].type).to.equal(QueryIssueTypeEnum.MISSING_VALUE);
+      });
+    });
+
     describe('between operation', () => {
       it('should validate valid between operation', () => {
         const rule: RulesLogic<AdditionalOperation> = {

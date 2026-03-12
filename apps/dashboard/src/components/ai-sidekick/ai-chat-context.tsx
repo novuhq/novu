@@ -129,10 +129,12 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   const isActionPending = isKeepPending || isRevertPending;
 
   useEffect(() => {
-    if (latestChat) {
-      setMessages(latestChat.messages as typeof messages);
+    if (!latestChat || isGenerating) {
+      return;
     }
-  }, [latestChat, setMessages]);
+
+    setMessages(latestChat.messages as typeof messages);
+  }, [latestChat, isGenerating, setMessages]);
 
   useEffect(() => {
     if (latestChat && !hasHandledInitialResumeRef.current) {
@@ -181,7 +183,6 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       if (!latestChat) {
         const newChat = await createAiChat({ resourceType, resourceId });
-        await refetchLatestChat();
         sendPrompt({ chatId: newChat._id, prompt: messageToSend });
       } else if (isLastUserMessage || isAborted) {
         const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
@@ -191,7 +192,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       }
       setInputText('');
     },
-    [dataRef, createAiChat, refetchLatestChat, sendPrompt]
+    [dataRef, createAiChat, sendPrompt]
   );
 
   const handleKeepAll = useCallback(async () => {

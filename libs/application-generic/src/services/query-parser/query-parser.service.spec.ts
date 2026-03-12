@@ -265,6 +265,126 @@ describe('QueryParserService', () => {
       });
     });
 
+    describe('containsAny operator', () => {
+      it('should return true when array contains at least one of the given values', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, ['a', 'b', 'c']] };
+        const data = { tags: ['a', 'x', 'y'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.true;
+      });
+
+      it('should return true when array contains all of the given values', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, ['a', 'b']] };
+        const data = { tags: ['a', 'b', 'c'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.true;
+      });
+
+      it('should return false when array contains none of the given values', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, ['x', 'y', 'z']] };
+        const data = { tags: ['a', 'b', 'c'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return false when data input is not an array', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, ['a', 'b']] };
+        const data = { tags: 'not an array' };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return false when rule value is not an array', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, 'not an array'] };
+        const data = { tags: ['a', 'b'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return false when data array is empty', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, ['a', 'b']] };
+        const data = { tags: [] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return false when rule array is empty', () => {
+        const rule: RulesLogic<AdditionalOperation> = { containsAny: [{ var: 'tags' }, []] };
+        const data = { tags: ['a', 'b'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should resolve var references and compare two array variables', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.items' }, { var: 'payload.tags' }],
+        };
+        const data = { payload: { items: ['dima'], tags: ['dima'] } };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.true;
+      });
+
+      it('should return false when var-referenced arrays have no overlap', () => {
+        const rule: RulesLogic<AdditionalOperation> = {
+          containsAny: [{ var: 'payload.items' }, { var: 'subscriber.data.tags' }],
+        };
+        const data = { payload: { items: ['a', 'b'] }, subscriber: { data: { tags: ['x', 'y'] } } };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+    });
+
+    describe('doesNotContainAny operator', () => {
+      it('should return true when array contains none of the given values', () => {
+        const rule: RulesLogic<AdditionalOperation> = { doesNotContainAny: [{ var: 'tags' }, ['x', 'y', 'z']] };
+        const data = { tags: ['a', 'b', 'c'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.true;
+      });
+
+      it('should return false when array contains at least one of the given values', () => {
+        const rule: RulesLogic<AdditionalOperation> = { doesNotContainAny: [{ var: 'tags' }, ['a', 'x']] };
+        const data = { tags: ['a', 'b', 'c'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return false when data input is not an array', () => {
+        const rule: RulesLogic<AdditionalOperation> = { doesNotContainAny: [{ var: 'tags' }, ['a']] };
+        const data = { tags: 'not an array' };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return false when rule value is not an array', () => {
+        const rule: RulesLogic<AdditionalOperation> = { doesNotContainAny: [{ var: 'tags' }, 'not an array'] };
+        const data = { tags: ['a', 'b'] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.false;
+      });
+
+      it('should return true when data array is empty', () => {
+        const rule: RulesLogic<AdditionalOperation> = { doesNotContainAny: [{ var: 'tags' }, ['a']] };
+        const data = { tags: [] };
+        const { result, error } = evaluateRules(rule, data);
+        expect(error).to.be.undefined;
+        expect(result).to.be.true;
+      });
+    });
+
     describe('between operator', () => {
       it('should return true when number is between min and max', () => {
         const rule: RulesLogic<AdditionalOperation> = { between: [{ var: 'value' }, [5, 10]] };

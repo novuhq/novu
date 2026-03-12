@@ -330,7 +330,7 @@ export class UpdateWorkflowV0 {
         (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
         notificationTemplateWithStepTemplate.origin === ResourceOriginEnum.NOVU_CLOUD_V1
       ) {
-        if (!this.moduleRef.get(TRANSLATIONS_SERVICE)) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new PlatformException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false });

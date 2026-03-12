@@ -387,16 +387,24 @@ export async function getWorkflowRun(workflowRunId: string, environment: IEnviro
   return mapWorkflowRunToActivity(data.data);
 }
 
+export type WorkflowRunsCountPeriod = {
+  start: string;
+  end: string;
+};
+
 export async function getWorkflowRunsCount({
   environment,
   filters,
+  period,
   signal,
 }: {
   environment: IEnvironment;
   filters?: ActivityFilters;
+  period?: WorkflowRunsCountPeriod;
   signal?: AbortSignal;
 }): Promise<number> {
   let createdAtGte: string | undefined;
+  let createdAtLte: string | undefined;
   let workflowIds: string[] | undefined;
   let subscriberIds: string[] | undefined;
   let transactionIds: string[] | undefined;
@@ -420,14 +428,16 @@ export async function getWorkflowRunsCount({
   }
 
   if (filters?.transactionId) {
-    // Parse comma-delimited string into array for backend
     transactionIds = filters.transactionId
       .split(',')
       .map((id) => id.trim())
       .filter(Boolean);
   }
 
-  if (filters?.dateRange) {
+  if (period) {
+    createdAtGte = period.start;
+    createdAtLte = period.end;
+  } else if (filters?.dateRange) {
     const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
     createdAtGte = after.toISOString();
   }
@@ -435,6 +445,7 @@ export async function getWorkflowRunsCount({
   const response = await getCharts({
     environment,
     createdAtGte,
+    createdAtLte,
     reportType: [ReportTypeEnum.WORKFLOW_RUNS_COUNT],
     workflowIds,
     subscriberIds,
