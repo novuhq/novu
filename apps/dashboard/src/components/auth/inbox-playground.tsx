@@ -25,7 +25,11 @@ const PLAYGROUND_CONFIG = {
   totalSteps: 4,
 } as const;
 
-function showCustomToast(message: string, variant: 'success' | 'error') {
+function showCustomToast(
+  message: string,
+  variant: 'success' | 'error',
+  position: 'bottom-center' | 'top-center' | 'bottom-right' = 'bottom-center'
+) {
   showToast({
     children: () => (
       <>
@@ -34,7 +38,7 @@ function showCustomToast(message: string, variant: 'success' | 'error') {
       </>
     ),
     options: {
-      position: 'bottom-center',
+      position,
       style: {
         left: '50%',
         transform: 'translateX(-50%)',
@@ -76,7 +80,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
 
       telemetry(TelemetryEvent.INBOX_NOTIFICATION_SENT);
       setHasNotificationBeenSent(true);
-      showCustomToast('Notification sent successfully!', 'success');
+      showCustomToast('Notification sent successfully!', 'success', 'bottom-right');
     } catch (error) {
       console.error('Failed to send notification:', error);
       showCustomToast('Failed to send notification. Please try again later.', 'error');
