@@ -147,7 +147,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
 
           <div className="flex flex-1 flex-col items-center md:items-end">
             <div className="flex items-start justify-center px-4 py-6 md:justify-end md:px-0">
-              <div className="nv-no-scrollbar h-[380px] w-full max-w-[375px] rounded-lg border border-gray-200 bg-white shadow-[0_8px_25px_-8px_rgba(0,0,0,0.15)] md:mr-20 md:mt-16 md:h-[470px] md:w-[375px]">
+              <div className="nv-no-scrollbar h-[380px] w-full max-w-[375px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-[0_8px_25px_-8px_rgba(0,0,0,0.15)] md:mr-20 md:mt-16 md:h-[470px] md:w-[375px]">
                 <InboxPreviewContent />
               </div>
             </div>

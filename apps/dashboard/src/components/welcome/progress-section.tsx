@@ -29,13 +29,13 @@ export function ProgressSection({ isNewHomePageEnabled }: { isNewHomePageEnabled
       <Card
         className={cn(
           'relative flex items-stretch gap-2 rounded-xl border-neutral-100 shadow-none w-full',
-          isNewHomePageEnabled ? 'flex-col bg-transparent' : ''
+          isNewHomePageEnabled ? 'flex-col bg-transparent' : 'flex-col md:flex-row'
         )}
       >
         {isNewHomePageEnabled ? <HomePageHeader /> : <WelcomeHeader />}
 
         <motion.div
-          className={cn('flex flex-1 flex-col gap-3', isNewHomePageEnabled ? 'p-3 pt-0' : 'p-6')}
+          className={cn('flex flex-1 flex-col gap-3', isNewHomePageEnabled ? 'p-3 pt-0' : 'p-4 md:p-6')}
           variants={stepsList}
         >
           {steps.map((step, index) => (
@@ -44,7 +44,7 @@ export function ProgressSection({ isNewHomePageEnabled }: { isNewHomePageEnabled
         </motion.div>
 
         {!isNewHomePageEnabled && (
-          <motion.div variants={logo} className="absolute bottom-0 right-0">
+          <motion.div variants={logo} className="absolute bottom-0 right-0 hidden md:block">
             <NovuLogo />
           </motion.div>
         )}
@@ -74,7 +74,7 @@ function StepItem({ step, environmentSlug }: StepItemProps) {
   };
 
   return (
-    <motion.div className="flex max-w-[370px] items-center gap-1.5" variants={stepItem}>
+    <motion.div className="flex w-full items-center gap-1.5 md:max-w-[370px]" variants={stepItem}>
       <div
         className={`${step.status === 'completed' ? 'bg-success' : 'shadow-xs'} flex h-6 w-6 min-w-6 items-center justify-center rounded-full`}
       >
@@ -115,22 +115,22 @@ function WelcomeHeader() {
   return (
     <motion.div
       variants={leftSection}
-      className="flex w-full max-w-[380px] grow flex-col items-start justify-between gap-2 rounded-l-xl bg-[#FBFBFB] p-6"
+      className="flex w-full grow flex-col items-start justify-between gap-2 rounded-t-xl bg-[#FBFBFB] p-4 md:max-w-[380px] md:rounded-l-xl md:rounded-tr-none md:p-6"
     >
       <div className="flex w-full flex-col gap-2">
         <motion.h2 variants={textItem} className="font-label-medium text-base font-medium">
           You're doing great work! 💪
         </motion.h2>
 
-        <div className="text-foreground-400 flex flex-col gap-6 text-sm">
+        <div className="text-foreground-400 flex flex-col gap-4 text-sm md:gap-6">
           <motion.p variants={textItem}>Set up Novu to send notifications your users will love.</motion.p>
-          <motion.p variants={textItem}>
+          <motion.p variants={textItem} className="hidden md:block">
             Streamline all your customer messaging in one tool and delight them at every touchpoint.
           </motion.p>
         </div>
       </div>
 
-      <motion.div variants={textItem} className="space-between flex items-center gap-0">
+      <motion.div variants={textItem} className="hidden items-center gap-0 md:flex">
         <p className="text-foreground-400 text-sm">Get started with our setup guide.</p>
         <PointingArrow className="relative left-[15px] top-[-10px]" />
       </motion.div>
