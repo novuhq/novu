@@ -136,8 +136,8 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
       return;
     }
 
-    if (process.stdout.isTTY) {
-      const confirmed = await confirmDeploy(selectedSteps.length, isFirstTimeScaffold);
+    if (process.stdout.isTTY && isFirstTimeScaffold) {
+      const confirmed = await confirmDeploy(selectedSteps.length);
       if (!confirmed) {
         console.log('');
         console.log(yellow('ℹ  Publish cancelled.'));
@@ -310,14 +310,11 @@ async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult |
   return { mode: 'react-email', templatePath: selectResponse.template };
 }
 
-async function confirmDeploy(stepCount: number, isFirstTimeScaffold: boolean): Promise<boolean> {
+async function confirmDeploy(stepCount: number): Promise<boolean> {
   const stepText = stepCount === 1 ? '1 step' : `${stepCount} steps`;
   console.log('');
-
-  if (isFirstTimeScaffold) {
-    console.log(yellow(`⚠  Publishing will override any existing editor content for ${stepText}.`));
-    console.log('');
-  }
+  console.log(yellow(`⚠  Publishing will override any existing editor content for ${stepText}.`));
+  console.log('');
 
   const response = await prompts({
     type: 'confirm',
@@ -724,7 +721,7 @@ function printSuccessSummary(deployment: DeploymentResult, steps: DiscoveredStep
   );
   console.log('');
   console.log(
-    `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash.slice(0, 8)} · ${elapsed}`)}`
+    `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
   );
   console.log('');
 }
