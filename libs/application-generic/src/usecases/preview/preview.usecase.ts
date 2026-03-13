@@ -8,7 +8,7 @@ import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
 import { shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
-import { isStepResolverActive, isStepResolverEmailStep } from '../../utils/step-resolver-control-state';
+import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
