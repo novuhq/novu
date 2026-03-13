@@ -783,6 +783,7 @@
     "jsonlogic",
     "flexbox",
     "Checkpointer",
+    "supabase",
     "checkpointer",
     "langchain",
     "langgraph",
