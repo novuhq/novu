@@ -34,6 +34,7 @@
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-liquid": "^6.2.3",
     "@codemirror/language": "^6.11.1",
+    "@customerio/cdp-analytics-browser": "^0.3.18",
     "@hookform/resolvers": "^5.2.2",
     "@inkeep/cxkit-react": "^0.5.107",
     "@langchain/langgraph-sdk": "^1.5.5",
