@@ -2,7 +2,7 @@ import { Controls } from '@novu/shared';
 import { buildDefaultValues, buildDefaultValuesOfDataSchema } from '@/utils/schema';
 
 // Strips out null/undefined/empty-string entries so that unset saved values
-// don't shadow schema-defined defaults during form initialisation.
+// don't shadow schema-defined defaults during form initialization.
 const stripEmptyValues = (values: Record<string, unknown>): Record<string, unknown> => {
   return Object.fromEntries(Object.entries(values).filter(([, v]) => v !== null && v !== undefined && v !== ''));
 };

@@ -169,6 +169,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       );
 
       if (!validationResult.isValid) {
+        const { errors } = validationResult;
         await this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
             ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -177,7 +178,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
             status: ExecutionDetailsStatusEnum.FAILED,
             isTest: false,
             isRetry: false,
-            raw: truncateRaw({ errors: validationResult.errors, responseBody: result.body }),
+            raw: truncateRaw({ errors, responseBody: result.body }),
           })
         );
 
