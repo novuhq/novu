@@ -7,5 +7,6 @@ export * from './list-workflow.dto';
 export * from './patch-step-data.dto';
 export * from './patch-workflow.dto';
 export * from './sync-workflow.dto';
+export * from './test-http-endpoint.dto';
 export * from './update-workflow.dto';
 export * from './workflow-test-data.dto';

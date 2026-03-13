@@ -51,6 +51,7 @@ const STEP_TYPE_TO_SKELETON_CONTENT: Record<StepTypeEnum | string, () => React.J
   [StepTypeEnum.THROTTLE]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
+  [StepTypeEnum.HTTP_REQUEST]: () => null,
 };
 
 export const StepSkeleton = ({

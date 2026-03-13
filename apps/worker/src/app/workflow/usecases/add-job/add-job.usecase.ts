@@ -1146,10 +1146,24 @@ export class AddJob {
   }
 }
 
-function isJobDeferredType(jobType: StepTypeEnum | undefined) {
+const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
+  [StepTypeEnum.DELAY]: true,
+  [StepTypeEnum.DIGEST]: true,
+  [StepTypeEnum.THROTTLE]: true,
+  [StepTypeEnum.TRIGGER]: false,
+  [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.HTTP_REQUEST]: false,
+  [StepTypeEnum.IN_APP]: false,
+  [StepTypeEnum.EMAIL]: false,
+  [StepTypeEnum.SMS]: false,
+  [StepTypeEnum.CHAT]: false,
+  [StepTypeEnum.PUSH]: false,
+};
+
+function isJobDeferredType(jobType: StepTypeEnum | undefined): boolean {
   if (!jobType) return false;
 
-  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE].includes(jobType);
+  return DEFERRED_JOB_TYPE_MAP[jobType];
 }
 
 function isShouldHaltJobExecution(digestCreationResult: DigestCreationResultEnum) {

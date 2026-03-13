@@ -27,6 +27,7 @@ export type SendMessageResultFailed = {
   errorMessage: DetailEnum;
   extraData?: string;
   job?: JobEntity;
+  shouldHalt?: boolean;
 };
 
 export type SendMessageResultThrottled = {

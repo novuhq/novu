@@ -884,6 +884,9 @@ importers:
       prettier:
         specifier: ~3.3.3
         version: 3.3.3
+      prism-react-renderer:
+        specifier: ^2.4.1
+        version: 2.4.1(react@19.2.3)
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -1415,6 +1418,12 @@ importers:
       '@types/newrelic':
         specifier: ^9.14.8
         version: 9.14.8
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
+      ajv-formats:
+        specifier: ^2.1.1
+        version: 2.1.1(ajv@8.17.1)
       axios:
         specifier: ^1.13.5
         version: 1.13.6
@@ -2447,6 +2456,9 @@ importers:
       json-schema-faker:
         specifier: ^0.5.6
         version: 0.5.9
+      json-schema-to-ts:
+        specifier: ^3.0.0
+        version: 3.1.1
       jsonwebtoken:
         specifier: 9.0.3
         version: 9.0.3

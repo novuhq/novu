@@ -10,7 +10,7 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
@@ -82,6 +82,54 @@ export class GetWorkflowRun {
     this.logger.setContext(this.constructor.name);
   }
 
+  async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
+    this.logger.debug(
+      {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        workflowRunId: command.workflowRunId,
+      },
+      'Getting workflow run from ClickHouse'
+    );
+
+    try {
+      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
+        environmentId: command.environmentId,
+      })
+        .whereEquals('workflow_run_id', command.workflowRunId)
+        .build();
+
+      const workflowRunResult = await this.workflowRunRepository.findOne({
+        where: workflowRunQuery,
+        useFinal: true,
+        select: workflowRunSelectColumns,
+      });
+
+      if (!workflowRunResult.data) {
+        throw new NotFoundException('Workflow run not found', {
+          cause: `Workflow run with id ${command.workflowRunId} not found`,
+        });
+      }
+
+      const workflowRun = workflowRunResult.data;
+      const stepRuns = await this.getStepRunsForWorkflowRun(command, workflowRun);
+      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns);
+
+      return workflowRunDto;
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error.message,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          workflowRunId: command.workflowRunId,
+        },
+        'Failed to get workflow run'
+      );
+      throw error;
+    }
+  }
+
   /**
    * BACKWARD COMPATIBILITY: This method fetches digest data from Job entities at runtime
    * for step runs that don't have digest data stored in ClickHouse.
@@ -110,54 +158,15 @@ export class GetWorkflowRun {
 
       return digestDataByStepId;
     } catch (error) {
-      this.logger.warn({
-        error: error.message,
-        transactionId,
-      }, 'Failed to get job digest data');
+      this.logger.warn(
+        {
+          error: error.message,
+          transactionId,
+        },
+        'Failed to get job digest data'
+      );
 
       return new Map();
-    }
-  }
-
-  async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
-    this.logger.debug({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      workflowRunId: command.workflowRunId,
-    }, 'Getting workflow run from ClickHouse');
-
-    try {
-      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
-        environmentId: command.environmentId,
-      })
-        .whereEquals('workflow_run_id', command.workflowRunId)
-        .build();
-
-      const workflowRunResult = await this.workflowRunRepository.findOne({
-        where: workflowRunQuery,
-        useFinal: true,
-        select: workflowRunSelectColumns,
-      });
-
-      if (!workflowRunResult.data) {
-        throw new NotFoundException('Workflow run not found', {
-          cause: `Workflow run with id ${command.workflowRunId} not found`,
-        });
-      }
-
-      const workflowRun = workflowRunResult.data;
-      const stepRuns = await this.getStepRunsForWorkflowRun(command, workflowRun);
-      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns);
-
-      return workflowRunDto;
-    } catch (error) {
-      this.logger.error({
-        error: error.message,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        workflowRunId: command.workflowRunId,
-      }, 'Failed to get workflow run');
-      throw error;
     }
   }
 
@@ -260,10 +269,13 @@ export class GetWorkflowRun {
 
       return executionDetailsByEntityId;
     } catch (error) {
-      this.logger.warn({
-        error: error.message,
-        entityIds,
-      }, 'Failed to get execution details from traces');
+      this.logger.warn(
+        {
+          error: error.message,
+          entityIds,
+        },
+        'Failed to get execution details from traces'
+      );
 
       return new Map();
     }

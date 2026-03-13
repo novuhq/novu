@@ -44,8 +44,7 @@ export class IntegrationResponseDto {
   providerId: string;
 
   @ApiProperty({
-    description:
-      'The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).',
+    description: 'The channel type for the integration, which defines how it communicates (e.g., email, SMS).',
     enum: ChannelTypeEnum,
   })
   channel: ChannelTypeEnum;

@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { AddStepMenuSelection } from './add-step-menu';
 import { NODE_TYPE_TO_STEP_TYPE } from './node-utils';
 
 interface CanvasContextType {
@@ -13,7 +14,7 @@ interface CanvasContextType {
   updateEdges: () => void;
   removeEdges: () => void;
   copyNode: (copyIndex: number) => void;
-  addNode: (insertIndex: number, type: keyof typeof NODE_TYPE_TO_STEP_TYPE) => void;
+  addNode: (insertIndex: number, selection: AddStepMenuSelection | keyof typeof NODE_TYPE_TO_STEP_TYPE) => void;
   removeNode: (removeIndex: number, options?: { onSuccess?: () => void; onError?: () => void }) => void;
   selectNode: (id: string, goto: 'editor' | 'view') => void;
   unselectNode: () => void;

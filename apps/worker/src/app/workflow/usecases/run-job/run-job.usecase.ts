@@ -339,14 +339,26 @@ export class RunJob {
         // Update workflow run delivery lifecycle after step failure
         await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow, notification);
 
-        if (shouldHaltOnStepFailure(job)) {
+        if (shouldHaltOnStepFailure(job) || sendMessageResult.shouldHalt) {
           shouldQueueNextJob = false;
-          await this.jobRepository.cancelPendingJobs({
-            transactionId: job.transactionId,
-            _environmentId: job._environmentId,
-            _subscriberId: job._subscriberId,
-            _templateId: job._templateId,
-          });
+          try {
+            const cancelledJobs = await this.jobRepository.cancelPendingJobs({
+              transactionId: job.transactionId,
+              _environmentId: job._environmentId,
+              _subscriberId: job._subscriberId,
+              _templateId: job._templateId,
+            });
+
+            if (cancelledJobs.length > 0) {
+              await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+              await this.createCanceledExecutionDetails(cancelledJobs);
+            }
+          } catch (cancellationError: unknown) {
+            this.logger.error(
+              { err: cancellationError, nv: { jobId: job._id, transactionId: job.transactionId } },
+              'Failed to cancel pending jobs after step failure'
+            );
+          }
         }
       } else if (sendMessageResult.status === SendMessageStatus.SKIPPED) {
         await this.jobRepository.updateStatus(
@@ -371,12 +383,24 @@ export class RunJob {
       });
 
       if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
-        await this.jobRepository.cancelPendingJobs({
-          transactionId: job.transactionId,
-          _environmentId: job._environmentId,
-          _subscriberId: job._subscriberId,
-          _templateId: job._templateId,
-        });
+        try {
+          const cancelledJobs = await this.jobRepository.cancelPendingJobs({
+            transactionId: job.transactionId,
+            _environmentId: job._environmentId,
+            _subscriberId: job._subscriberId,
+            _templateId: job._templateId,
+          });
+
+          if (cancelledJobs.length > 0) {
+            await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+            await this.createCanceledExecutionDetails(cancelledJobs);
+          }
+        } catch (cancellationError: unknown) {
+          this.logger.error(
+            { err: cancellationError, nv: { jobId: job._id, transactionId: job.transactionId } },
+            'Failed to cancel pending jobs after step execution error'
+          );
+        }
       }
 
       if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
@@ -584,12 +608,24 @@ export class RunJob {
         );
 
         if (isHaltingWorkflow) {
-          await this.jobRepository.cancelPendingJobs({
-            transactionId: nextJob.transactionId,
-            _environmentId: nextJob._environmentId,
-            _subscriberId: nextJob._subscriberId,
-            _templateId: nextJob._templateId,
-          });
+          try {
+            const cancelledJobs = await this.jobRepository.cancelPendingJobs({
+              transactionId: nextJob.transactionId,
+              _environmentId: nextJob._environmentId,
+              _subscriberId: nextJob._subscriberId,
+              _templateId: nextJob._templateId,
+            });
+
+            if (cancelledJobs.length > 0) {
+              await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+              await this.createCanceledExecutionDetails(cancelledJobs);
+            }
+          } catch (cancellationError: unknown) {
+            this.logger.error(
+              { err: cancellationError, nv: { jobId: nextJob._id, transactionId: nextJob.transactionId } },
+              'Failed to cancel pending jobs after next job failure'
+            );
+          }
         }
 
         if (shouldHaltOnStepFailure(nextJob) || this.shouldBackoff(error as Error)) {
@@ -602,6 +638,21 @@ export class RunJob {
           await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
         }
       }
+    }
+  }
+
+  private async createCanceledExecutionDetails(cancelledJobs: JobEntity[]): Promise<void> {
+    for (const cancelledJob of cancelledJobs) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(cancelledJob),
+          detail: DetailEnum.STEP_CANCELED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
     }
   }
 
@@ -703,6 +754,7 @@ export class RunJob {
       if (step.template?.type) {
         return (
           step.template.type === StepTypeEnum.CUSTOM ||
+          step.template.type === StepTypeEnum.HTTP_REQUEST ||
           step.template.type === StepTypeEnum.DELAY ||
           step.template.type === StepTypeEnum.DIGEST ||
           step.template.type === StepTypeEnum.THROTTLE

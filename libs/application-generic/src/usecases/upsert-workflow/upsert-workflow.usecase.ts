@@ -255,7 +255,9 @@ export class UpsertWorkflowUseCase {
         const existingStep: NotificationStepEntity | null | undefined =
           '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
-        const controlSchemas: ControlSchemas = existingStep?.template?.controls || stepTypeToControlSchema[step.type];
+        const controlSchemaKey = step.type;
+        const controlSchemas: ControlSchemas =
+          existingStep?.template?.controls || stepTypeToControlSchema[controlSchemaKey];
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
           workflowOrigin,
           user,

@@ -6,9 +6,11 @@ import { JSONSchema } from '../value-objects/json-schema';
 export function computeResultSchema({
   stepType,
   payloadSchema,
+  responseBodySchema,
 }: {
   stepType: StepTypeEnum;
   payloadSchema?: JSONSchema;
+  responseBodySchema?: JSONSchema;
 }) {
   const mapStepTypeToResult: Record<ChannelStepEnum & ActionStepEnum, JSONSchema> = {
     [ChannelStepEnum.SMS]: channelStepSchemas[ChannelStepEnum.SMS].result,
@@ -18,6 +20,11 @@ export function computeResultSchema({
     [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].result,
     [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].result,
     [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema }),
+    [ActionStepEnum.HTTP_REQUEST]: responseBodySchema ?? {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {},
+      additionalProperties: true,
+    },
   };
 
   return mapStepTypeToResult[stepType];

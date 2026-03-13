@@ -9,4 +9,5 @@ export type StepType =
   | 'delay'
   | 'custom'
   | 'throttle'
+  | 'http_request'
   | '';
