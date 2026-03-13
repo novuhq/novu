@@ -5,6 +5,7 @@ import got, { HTTPError } from 'got';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { RETRYABLE_ERROR_CODES } from '../../services/http-client';
+import { sanitizeHtmlInObject } from '../../services/sanitize/sanitizer.service';
 import {
   BridgeError,
   ExecuteBridgeRequestCommand,
@@ -63,7 +64,18 @@ class StepResolverRequestError extends HttpException {
   }
 }
 
-type StepResolverResponse = Record<string, unknown>;
+type StepResolverResponse = {
+  outputs: Record<string, unknown>;
+  providers?: Record<string, unknown>;
+  options: { skip: boolean };
+  metadata: {
+    status: string;
+    error: boolean;
+    duration: number;
+    stepType?: string;
+    disableOutputSanitization?: boolean;
+  };
+};
 
 @Injectable()
 export class ExecuteStepResolverRequest {
@@ -131,17 +143,44 @@ export class ExecuteStepResolverRequest {
 
       const duration = Math.round(performance.now() - startTime);
 
-      return this.transformToExecuteOutput(response, duration);
+      const executeOutput = this.transformToExecuteOutput(response, duration);
+
+      return this.sanitizeOutputsIfNeeded(
+        executeOutput,
+        response.metadata.stepType,
+        response.metadata.disableOutputSanitization
+      );
     } catch (error) {
       await this.handleResponseError(error, url, command.stepResolverHash, command.processError);
     }
   }
 
+  private sanitizeOutputsIfNeeded(
+    result: ExecuteOutput,
+    stepType?: string,
+    disableOutputSanitization?: boolean
+  ): ExecuteOutput {
+    if (disableOutputSanitization) {
+      return result;
+    }
+
+    const sanitizableTypes = ['email', 'in_app'];
+    if (stepType && sanitizableTypes.includes(stepType)) {
+      return {
+        ...result,
+        outputs: sanitizeHtmlInObject(result.outputs as Record<string, unknown>),
+      };
+    }
+
+    return result;
+  }
+
   private transformToExecuteOutput(response: StepResolverResponse, duration: number): ExecuteOutput {
     return {
-      outputs: { ...response },
+      outputs: response.outputs,
+      providers: (response.providers ?? {}) as ExecuteOutput['providers'],
       options: {
-        skip: false,
+        skip: response.options?.skip === true,
       },
       metadata: {
         status: 'success',
