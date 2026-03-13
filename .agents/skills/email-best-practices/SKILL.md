@@ -1,11 +1,11 @@
 ---
 name: email-best-practices
-description: Use when building email features, emails going to spam, high bounce rates, setting up SPF/DKIM/DMARC authentication, implementing email capture, ensuring compliance (CAN-SPAM, GDPR, CASL), handling webhooks, retry logic, or deciding transactional vs marketing.
+description: Configures email authentication (SPF/DKIM/DMARC), diagnoses deliverability issues, implements compliance requirements (CAN-SPAM, GDPR, CASL), and designs reliable sending infrastructure with retry logic and suppression lists. Use when building email features, emails going to spam, high bounce rates, setting up DNS authentication, implementing email capture, handling webhooks, or deciding transactional vs marketing.
 ---
 
 # Email Best Practices
 
-Guidance for building deliverable, compliant, user-friendly emails.
+Diagnose deliverability issues, configure authentication, and build compliant, reliable email infrastructure.
 
 ## Architecture Overview
 
@@ -57,3 +57,26 @@ Follow this path: [Email Capture](./resources/email-capture.md) (collect consent
 
 **Production-ready sending?**
 Add reliability: [Sending Reliability](./resources/sending-reliability.md) (retry + idempotency) → [Webhooks & Events](./resources/webhooks-events.md) (track delivery) → [List Management](./resources/list-management.md) (handle bounces).
+
+## Core Pattern: Idempotent Send with Suppression Check
+
+```typescript
+async function sendEmail(to: string, idempotencyKey: string, payload: EmailPayload) {
+  // 1. Check suppression list before sending
+  if (await isOnSuppressionList(to)) {
+    return { status: "suppressed", reason: "recipient on suppression list" };
+  }
+
+  // 2. Deduplicate with idempotency key
+  if (await alreadySent(idempotencyKey)) {
+    return { status: "duplicate", idempotencyKey };
+  }
+
+  // 3. Send with retry
+  const result = await sendWithRetry(payload, { maxRetries: 3, backoff: "exponential" });
+
+  // 4. Record for idempotency
+  await recordSent(idempotencyKey, result);
+  return result;
+}
+```

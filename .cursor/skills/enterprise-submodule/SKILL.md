@@ -1,6 +1,11 @@
+---
+name: enterprise-submodule
+description: Initializes, updates, and troubleshoots the Novu enterprise git submodule at `.source/` and its symlinked packages. Use when making changes to enterprise packages, setting up the enterprise submodule, resolving submodule errors, or working with `enterprise/packages/*`.
+---
+
 # Enterprise Submodule Setup
 
-Use this skill when making changes to the enterprise submodule (`.source/`) or enterprise packages (`enterprise/packages/*`), or when the enterprise submodule needs to be initialized/updated.
+Manages the Novu enterprise git submodule (`.source/`) and its symlinked packages in `enterprise/packages/*`.
 
 ## Overview
 

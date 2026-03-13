@@ -1,6 +1,6 @@
 ---
 name: better-auth-best-practices
-description: Skill for integrating Better Auth - the comprehensive TypeScript authentication framework.
+description: Configures Better Auth authentication — sets up email/password login, OAuth social providers, session management, plugins (2FA, passkeys, magic links), and database adapters. Use when integrating Better Auth, implementing login/signup flows, configuring auth sessions, setting up social auth, or when the user mentions Better Auth by name.
 ---
 
 # Better Auth Integration Guide
@@ -8,6 +8,51 @@ description: Skill for integrating Better Auth - the comprehensive TypeScript au
 **Always consult [better-auth.com/docs](https://better-auth.com/docs) for code examples and latest API.**
 
 Better Auth is a TypeScript-first, framework-agnostic auth framework supporting email/password, OAuth, magic links, passkeys, and more via plugins.
+
+## Getting Started
+
+1. Install: `npm install better-auth`
+2. Create `auth.ts` (in `./`, `./lib`, `./utils`, or `./src`)
+3. Set env vars: `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`
+4. Run migration: `npx @better-auth/cli@latest migrate`
+5. Add route handler (see below)
+6. Verify: call `GET /api/auth/ok`
+
+```typescript
+// auth.ts — server config
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  database: { provider: "pg", url: process.env.DATABASE_URL },
+  emailAndPassword: { enabled: true },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+});
+
+// Route handler (Next.js App Router example)
+// app/api/auth/[...all]/route.ts
+import { auth } from "@/lib/auth";
+import { toNextJsHandler } from "better-auth/next-js";
+export const { GET, POST } = toNextJsHandler(auth);
+```
+
+```typescript
+// Client usage
+import { createAuthClient } from "better-auth/react";
+
+const authClient = createAuthClient();
+
+// Sign up
+await authClient.signUp.email({ email, password, name });
+// Sign in
+await authClient.signIn.email({ email, password });
+// Get session
+const { data: session } = authClient.useSession();
+```
 
 ---
 

@@ -1,11 +1,11 @@
 ---
 name: run-api-e2e-tests
-description: Run e2e tests for the API service. Use when the user wants to run API E2E tests.
+description: Runs Novu API end-to-end tests using mocha — executes full test suites or targets specific test files in `apps/api`. Use when running API e2e tests, end-to-end tests, integration tests, debugging test failures, or executing the novu-v2 test suite.
 ---
 
 # Run API E2E Tests
 
-Run novu-v2 e2e tests for the API service. Tests are located in `apps/api`.
+Run novu-v2 end-to-end tests for the API service. Tests are located in `apps/api`.
 
 ## Running All Tests
 
@@ -50,6 +50,13 @@ pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTION
 # Found: apps/api/e2e/enterprise/billing/billing.e2e.ts
 pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts 'e2e/enterprise/**/billing.e2e.ts'
 ```
+
+## Interpreting Results
+
+- **Passing**: All assertions green — report the pass count to the user
+- **Assertion failures**: Check the expected vs actual values in the error output — these indicate real bugs in the code under test
+- **Setup/timeout failures**: Usually infrastructure issues (MongoDB/Redis not running, missing env vars) — check that Docker services are up and `.env` files are configured
+- **Retries exhausted**: Flaky test — re-run the specific test in isolation before investigating further
 
 ## Important Notes
 

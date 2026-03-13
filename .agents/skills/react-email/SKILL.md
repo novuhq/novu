@@ -1,6 +1,6 @@
 ---
 name: react-email
-description: Use when creating HTML email templates with React components - welcome emails, password resets, notifications, order confirmations, newsletters, or transactional emails.
+description: Creates responsive HTML email templates using React components with cross-client compatibility. Handles styling, layout, rendering, and sending. Use when creating email templates with React — welcome emails, password resets, notifications, order confirmations, newsletters, or transactional emails.
 license: MIT
 metadata:
   author: Resend
@@ -9,91 +9,23 @@ metadata:
 
 # React Email
 
-Build and send HTML emails using React components - a modern, component-based approach to email development that works across all major email clients.
+Build and send HTML emails using React components — a modern, component-based approach to email development that works across all major email clients.
 
 ## Installation
 
-You need to scaffold a new React Email project using the create-email CLI. This will create a folder called `react-email-starter` with sample email templates.
+Scaffold a new React Email project, install dependencies, and start the dev server:
 
-Using npm:
-```sh
-npx create-email@latest
-```
-
-Using yarn:
-```sh
-yarn create email
-```
-
-Using pnpm:
-```sh
-pnpm create email
-```
-
-Using bun:
-```sh
-bun create email
-```
-
-## Navigate to Project Directory
-
-You must change into the newly created project folder:
+| Step | npm | yarn | pnpm | bun |
+|------|-----|------|------|-----|
+| Create project | `npx create-email@latest` | `yarn create email` | `pnpm create email` | `bun create email` |
+| Install deps | `npm install` | `yarn` | `pnpm install` | `bun install` |
+| Start dev server | `npm run dev` | `yarn dev` | `pnpm dev` | `bun dev` |
 
 ```sh
-cd react-email-starter
+cd react-email-starter  # Navigate into project after creation
 ```
 
-## Install Dependencies
-
-You need to install all project dependencies before running the development server.
-
-Using npm:
-```sh
-npm install
-```
-
-Using yarn:
-```sh
-yarn
-```
-
-Using pnpm:
-```sh
-pnpm install
-```
-
-Using bun:
-```sh
-bun install
-```
-
-## Start the Development Server
-
-Your task is to start the local preview server to view and edit email templates.
-
-Using npm:
-```sh
-npm run dev
-```
-
-Using yarn:
-```sh
-yarn dev
-```
-
-Using pnpm:
-```sh
-pnpm dev
-```
-
-Using bun:
-```sh
-bun dev
-```
-
-## Verify Installation
-
-Confirm the development server is running by checking that localhost:3000 is accessible. The server will display a preview interface where you can view email templates from the `emails` folder.
+Confirm the dev server is running at localhost:3000. The preview interface displays email templates from the `emails` folder.
 
 ### Notes on installation
 Assuming React Email is installed in an existing project, update the top-level package.json file with a script to run the React Email preview server.
