@@ -196,6 +196,7 @@ const FRAMEWORK_PACKAGES: Record<string, string> = {
   Native: '@novu/react-native',
   Angular: '@novu/js',
   JavaScript: '@novu/js',
+  Vue: '@novu/js',
 };
 
 const FRAMEWORK_DOCS: Record<string, string> = {
@@ -205,13 +206,10 @@ const FRAMEWORK_DOCS: Record<string, string> = {
   Native: 'https://docs.novu.co/platform/quickstart/react-native',
   Angular: 'https://docs.novu.co/platform/quickstart/angular',
   JavaScript: 'https://docs.novu.co/platform/quickstart/js',
+  Vue: 'https://docs.novu.co/platform/quickstart/vue',
 };
 
-function getFrameworkCodeSnippet(
-  frameworkName: string,
-  applicationIdentifier: string,
-  subscriberId: string
-): string {
+function getFrameworkCodeSnippet(frameworkName: string, applicationIdentifier: string, subscriberId: string): string {
   switch (frameworkName) {
     case 'Next.js':
       return `'use client';
@@ -333,26 +331,20 @@ function buildCursorDeepLink(frameworkName: string, applicationIdentifier: strin
   return `https://cursor.com/link/prompt?text=${safeCursorEncode(prompt)}`;
 }
 
-function extractConfigFromPrompt(copyText: string): { applicationIdentifier: string; subscriberId: string } {
-  const appIdMatch = copyText.match(/NOVU_APPLICATION_IDENTIFIER=(\S+)/);
-  const subIdMatch = copyText.match(/subscriberId="([^"]+)"/);
-
-  return {
-    applicationIdentifier: appIdMatch?.[1] ?? 'YOUR_APPLICATION_IDENTIFIER',
-    subscriberId: subIdMatch?.[1] ?? 'YOUR_SUBSCRIBER_ID',
-  };
-}
-
 function StepButton({
   buttonText,
   copyText,
   index,
   frameworkName,
+  applicationIdentifier,
+  subscriberId,
 }: {
   buttonText: string;
   copyText: string;
   index: number;
   frameworkName?: string;
+  applicationIdentifier?: string;
+  subscriberId?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const track = useTelemetry();
@@ -368,8 +360,11 @@ function StepButton({
     }
   };
 
-  const { applicationIdentifier, subscriberId } = extractConfigFromPrompt(copyText);
-  const cursorDeepLink = buildCursorDeepLink(frameworkName ?? 'Next.js', applicationIdentifier, subscriberId);
+  const cursorDeepLink = buildCursorDeepLink(
+    frameworkName ?? 'Next.js',
+    applicationIdentifier ?? 'YOUR_APPLICATION_IDENTIFIER',
+    subscriberId ?? 'YOUR_SUBSCRIBER_ID'
+  );
 
   return (
     <motion.div {...codeBlockAnimation(index)} className="w-full max-w-[500px]">
@@ -413,7 +408,9 @@ function StepButton({
             href={cursorDeepLink}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => track(TelemetryEvent.AI_PROMPT_COPIED, { framework: frameworkName, method: 'cursor-deeplink' })}
+            onClick={() =>
+              track(TelemetryEvent.AI_PROMPT_COPIED, { framework: frameworkName, method: 'cursor-deeplink' })
+            }
             className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 h-7 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-300"
           >
             <img src="/images/cursor-icon.svg" alt="Cursor" className="size-3.5" />
@@ -480,6 +477,8 @@ function InstallationStepRow({
             copyText={step.copyText}
             index={index}
             frameworkName={frameworkName}
+            applicationIdentifier={step.applicationIdentifier}
+            subscriberId={step.subscriberId}
           />
           {rightExtra}
         </div>

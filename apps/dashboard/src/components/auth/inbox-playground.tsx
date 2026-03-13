@@ -99,6 +99,18 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
     navigate(qs ? `${ROUTES.INBOX_EMBED}?${qs}` : ROUTES.INBOX_EMBED);
   };
 
+  const handleSkipClick = () => {
+    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED);
+    const queryParams = new URLSearchParams();
+
+    if (environment?._id) {
+      queryParams.set('environmentId', environment._id);
+    }
+
+    const qs = queryParams.toString();
+    navigate(qs ? `${ROUTES.INBOX_EMBED}?${qs}` : ROUTES.INBOX_EMBED);
+  };
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden pb-3">
       <UsecasePlaygroundHeader
@@ -148,7 +160,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
             <>
               <button
                 type="button"
-                onClick={handleNextStepClick}
+                onClick={handleSkipClick}
                 className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
               >
                 Skip
@@ -169,7 +181,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
             <>
               <button
                 type="button"
-                onClick={handleNextStepClick}
+                onClick={handleSkipClick}
                 className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
               >
                 Skip

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTelemetry } from '../../hooks/use-telemetry';
-import { ROUTES } from '../../utils/routes';
+import { buildRoute, ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Framework, getFrameworks } from './framework-guides.instructions';
 import { FrameworkGrid } from './inbox-framework-guide/framework-grid';
@@ -122,7 +122,7 @@ export function InboxFrameworkGuide({
                 type="button"
                 onClick={() => {
                   track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { skippedFrom: 'inbox-embed-setup-later' });
-                  navigate(ROUTES.WELCOME);
+                  navigate(buildRoute(ROUTES.WELCOME, { environmentSlug: currentEnvironment?.slug ?? '' }));
                 }}
                 className="text-foreground-400 hover:text-foreground-600 cursor-pointer text-sm transition-colors"
               >
