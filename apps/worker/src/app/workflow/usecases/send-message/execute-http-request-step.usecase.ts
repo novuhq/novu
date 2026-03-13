@@ -213,7 +213,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   private validateResponseSchema(
     responseBody: unknown,
     schema: Record<string, unknown>
-  ): { isValid: true } | { isValid: false; errors: { path: string; message: string }[] } {
+  ): { isValid: true; errors?: undefined } | { isValid: false; errors: { path: string; message: string }[] } {
     try {
       const ajv = new Ajv({ strict: false });
       addFormats(ajv);
