@@ -139,10 +139,9 @@ export class ExecuteStepResolverRequest {
 
   private transformToExecuteOutput(response: StepResolverResponse, duration: number): ExecuteOutput {
     return {
-      outputs: { ...response },
-      options: {
-        skip: false,
-      },
+      outputs: response.outputs as Record<string, unknown>,
+      providers: response.providers as ExecuteOutput['providers'],
+      options: response.options as ExecuteOutput['options'],
       metadata: {
         status: 'success',
         error: false,
