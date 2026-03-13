@@ -1,5 +1,6 @@
-import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { PatchWorkflowDto, StepCreateDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { Cross2Icon } from '@radix-ui/react-icons';
+import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 import { CheckCircleIcon } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
@@ -26,6 +27,10 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { showErrorToast } from './toasts';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
+export type DraftStep = StepCreateDto & {
+  stepId: string;
+};
+
 export type UpdateWorkflowFn = (
   data: UpdateWorkflowDto,
   options?: {
@@ -39,6 +44,7 @@ export type WorkflowContextType = {
   isUpdatePatchPending: boolean;
   workflow?: WorkflowResponseDto;
   step?: StepResponseDto;
+  refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<WorkflowResponseDto, Error>>;
   update: UpdateWorkflowFn;
   patch: (data: PatchWorkflowDto) => void;
   digestStepBeforeCurrent?: StepResponseDto;
@@ -53,8 +59,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const [lastSaveError, setLastSaveError] = useState<unknown | null>(null);
 
-  const { workflow, isPending, error } = useFetchWorkflow({
-    workflowSlug,
+  const { workflow, isPending, error, refetch } = useFetchWorkflow({
+    workflowSlug: workflowSlug !== 'new' ? workflowSlug : undefined,
   });
   const workflowRef = useDataRef<WorkflowResponseDto | undefined>(workflow);
 
@@ -218,6 +224,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(
     () => ({
+      refetch,
       update,
       patch,
       isPending,
@@ -227,7 +234,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       isUpdatePatchPending,
       lastSaveError,
     }),
-    [update, patch, isPending, workflow, getStep, digestStepBeforeCurrent, isUpdatePatchPending, lastSaveError]
+    [refetch, update, patch, isPending, workflow, getStep, digestStepBeforeCurrent, isUpdatePatchPending, lastSaveError]
   );
 
   return (

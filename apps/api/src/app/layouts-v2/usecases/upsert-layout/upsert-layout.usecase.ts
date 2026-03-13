@@ -2,9 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
-  GetLayoutCommand as GetLayoutCommandV0,
-  GetLayoutUseCase as GetLayoutUseCaseV0,
+  GetLayoutCommand,
+  GetLayoutCommandV0,
+  GetLayoutUseCase,
+  GetLayoutUseCaseV0,
   InstrumentUsecase,
+  isStringifiedMailyJSONContent,
+  LayoutDtoV0,
+  LayoutResponseDto,
   layoutControlSchema,
   PinoLogger,
   UpsertControlValuesCommand,
@@ -18,19 +23,15 @@ import {
   ResourceTypeEnum,
   slugify,
 } from '@novu/shared';
-import { LayoutDto } from '../../../layouts-v1/dtos';
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
   UpdateLayoutCommand,
   UpdateLayoutUseCase,
 } from '../../../layouts-v1/usecases';
-import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
-import { LayoutResponseDto } from '../../dtos';
+import { MANAGE_TRANSLATIONS } from '../../../shared/constants';
 import { BuildLayoutIssuesCommand } from '../build-layout-issues/build-layout-issues.command';
 import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
-import { GetLayoutCommand } from '../get-layout';
-import { GetLayoutUseCase } from '../get-layout/get-layout.use-case';
 import { UpsertLayoutCommand } from './upsert-layout.command';
 
 @Injectable()
@@ -70,7 +71,7 @@ export class UpsertLayout {
         )
       : null;
 
-    let upsertedLayout: LayoutDto;
+    let upsertedLayout: LayoutDtoV0;
     if (existingLayout) {
       this.mixpanelTrack(command, 'Layout Update - [Layouts]');
 
@@ -213,7 +214,7 @@ export class UpsertLayout {
     });
   }
 
-  private async toggleTranslationsForLayout(command: UpsertLayoutCommand, layoutDto: LayoutDto) {
+  private async toggleTranslationsForLayout(command: UpsertLayoutCommand, layoutDto: LayoutDtoV0) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
@@ -222,7 +223,7 @@ export class UpsertLayout {
     }
 
     try {
-      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
+      const manageTranslations = this.moduleRef.get(MANAGE_TRANSLATIONS, {
         strict: false,
       });
 

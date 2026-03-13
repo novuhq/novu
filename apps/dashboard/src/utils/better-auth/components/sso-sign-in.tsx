@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useId, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
@@ -7,9 +7,19 @@ import { authClient } from '../client';
 
 export function SSOSignIn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const ssoEmailId = useId();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+    if (errorParam) {
+      setError(errorDescription || errorParam);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -21,19 +31,20 @@ export function SSOSignIn() {
         throw new Error('Please enter your email address');
       }
 
-      const domain = email.split('@')[1];
+      const domain = email.split('@')[1]?.trim().toLowerCase();
       if (!domain) {
         throw new Error('Please enter a valid email address');
       }
 
       await authClient.signIn.sso(
         {
-          providerId: 'enterprise-sso',
-          callbackURL: window.location.origin + ROUTES.INBOX_USECASE,
+          domain,
+          callbackURL: window.location.origin + ROUTES.SIGNUP_ORGANIZATION_LIST,
+          errorCallbackURL: window.location.origin + ROUTES.SSO_SIGN_IN,
         },
         {
           onSuccess: () => {
-            window.location.href = ROUTES.INBOX_USECASE;
+            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
           },
           onError: (ctx: any) => {
             throw new Error(ctx.error.message || 'SSO sign in failed');
@@ -52,12 +63,12 @@ export function SSOSignIn() {
       <h2 className="mb-6 text-center text-xl font-semibold">Sign In with SSO</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="sso-email" className="mb-1 block text-sm font-medium text-foreground-700">
+          <label htmlFor={ssoEmailId} className="mb-1 block text-sm font-medium text-foreground-700">
             Work Email
           </label>
           <Input
             type="email"
-            id="sso-email"
+            id={ssoEmailId}
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="you@company.com"

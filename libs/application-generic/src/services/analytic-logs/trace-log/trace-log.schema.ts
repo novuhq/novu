@@ -85,6 +85,11 @@ const clickhouseSchemaOptions = {
 
 export const traceLogSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
+export type WorkflowRunStatusType =
+  | 'workflow_run_status_processing'
+  | 'workflow_run_status_completed'
+  | 'workflow_run_status_error';
+
 export type EventType =
   | 'message_seen'
   | 'message_unseen'
@@ -126,6 +131,7 @@ export type EventType =
   | 'subscriber_context_channel_missing'
   | 'subscriber_validation_failed'
   | 'topic_not_found'
+  | 'provider_missing'
   | 'provider_error'
   | 'provider_limit_exceeded'
   | 'digest_merged'
@@ -140,6 +146,8 @@ export type EventType =
   | 'throttle_window_in_past'
   | 'bridge_response_received'
   | 'bridge_execution_failed'
+  | 'step_resolver_execution_failed'
+  | 'step_resolver_execution_timeout'
   | 'bridge_execution_skipped'
   | 'webhook_filter_retrying'
   | 'webhook_filter_failed'
@@ -171,6 +179,7 @@ export type EventType =
   | 'notification_error'
   | 'execution_detail'
   | 'step_completed'
+  | 'step_processed'
   | 'step_canceled'
   | 'request_received'
   | 'request_queued'
@@ -200,9 +209,8 @@ export type EventType =
   | 'step_skipped_max_extensions_reached'
   | 'push_invalid_token_removed'
   | 'topic_subscription_preference_evaluation'
-  | 'workflow_run_status_processing'
-  | 'workflow_run_status_completed'
-  | 'workflow_run_status_error'
+  | 'action_step_execution_failed'
+  | WorkflowRunStatusType
   | DeliveryLifecycleEventType;
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';

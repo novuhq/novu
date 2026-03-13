@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { StepResponseDto } from '../../../../workflows-v2/dtos/step.response.dto';
-import { WorkflowResponseDto } from '../../../../workflows-v2/dtos/workflow-response.dto';
+import { StepResponseDto, WorkflowResponseDto } from '@novu/application-generic';
 import { INormalizedStep, INormalizedWorkflow } from '../types/workflow-sync.types';
 
 @Injectable()

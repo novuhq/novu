@@ -11,6 +11,7 @@ import { EEAuthProvider as ClerkProvider } from '@/context/ee-auth-provider';
 import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-key-manager';
 import { IdentityProvider } from '@/context/identity-provider';
 import { RegionProvider } from '@/context/region';
+import { CustomerIoProvider } from '@/context/customer-io';
 import { SegmentProvider } from '@/context/segment';
 
 const queryClient = new QueryClient({
@@ -66,19 +67,21 @@ const RootRouteInternal = () => {
       <QueryClientProvider client={queryClient}>
         <ClerkProvider>
           <SegmentProvider>
-            <AuthProvider>
-              <RegionProvider>
-                <IdentityProvider>
-                  <HelmetProvider>
-                    <TooltipProvider delayDuration={100}>
-                      <EscapeKeyManagerProvider>
-                        <Outlet />
-                      </EscapeKeyManagerProvider>
-                    </TooltipProvider>
-                  </HelmetProvider>
-                </IdentityProvider>
-              </RegionProvider>
-            </AuthProvider>
+            <CustomerIoProvider>
+              <AuthProvider>
+                <RegionProvider>
+                  <IdentityProvider>
+                    <HelmetProvider>
+                      <TooltipProvider delayDuration={100}>
+                        <EscapeKeyManagerProvider>
+                          <Outlet />
+                        </EscapeKeyManagerProvider>
+                      </TooltipProvider>
+                    </HelmetProvider>
+                  </IdentityProvider>
+                </RegionProvider>
+              </AuthProvider>
+            </CustomerIoProvider>
           </SegmentProvider>
         </ClerkProvider>
       </QueryClientProvider>

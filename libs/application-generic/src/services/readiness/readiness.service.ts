@@ -3,14 +3,14 @@ import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { setTimeout } from 'timers/promises';
 import { IHealthIndicator } from '../../health';
 import { IDestroy } from '../../modules';
-import { Worker } from '../bull-mq';
 
 export interface INovuWorker extends IDestroy {
   readonly DEFAULT_ATTEMPTS: number;
   readonly topic: string;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
-  worker: Worker;
+  isRunning: () => Promise<boolean>;
+  isPaused: () => Promise<boolean>;
 }
 
 const LOG_CONTEXT = 'ReadinessService';

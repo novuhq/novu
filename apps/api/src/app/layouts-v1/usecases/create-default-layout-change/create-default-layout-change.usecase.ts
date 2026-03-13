@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
+import { CreateChange, CreateChangeCommand, LayoutDtoV0 } from '@novu/application-generic';
 import { ChangeRepository, LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { LayoutDto } from '../../dtos';
 import { FindDeletedLayoutCommand, FindDeletedLayoutUseCase } from '../find-deleted-layout';
 import { CreateDefaultLayoutChangeCommand } from './create-default-layout-change.command';
 
@@ -21,7 +20,7 @@ export class CreateDefaultLayoutChangeUseCase {
   ) {}
 
   async execute(command: CreateDefaultLayoutChangeCommand): Promise<void> {
-    let item: LayoutEntity | LayoutDto | null = await this.layoutRepository.findOne({
+    let item: LayoutEntity | LayoutDtoV0 | null = await this.layoutRepository.findOne({
       _id: command.layoutId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,

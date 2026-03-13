@@ -6,6 +6,7 @@ import {
   IStandardDataDto,
   Job,
   PinoLogger,
+  SqsService,
   StandardWorkerService,
   Store,
   storage,
@@ -40,19 +41,31 @@ export class StandardWorker extends StandardWorkerService {
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
     private jobRepository: JobRepository,
+    sqsService: SqsService,
+    logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
-    this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
+    this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions(), true);
 
-    this.worker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
+    this.bullMqWorker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
 
-    this.worker.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
+    this.bullMqWorker.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
       await this.jobHasCompleted(job);
     });
+
+    this.setSqsCompletedHandler(async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
+      await this.jobHasCompleted(job);
+    });
+
+    this.setSqsFailedHandler(async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> => {
+      return await this.jobHasFailed(job, error);
+    });
+
+    this.startSqsConsumer();
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -120,7 +133,6 @@ export class StandardWorker extends StandardWorkerService {
 
         return;
       }
-
       const minimalJobData = this.extractMinimalJobData(data);
       const organizationExists = await this.organizationExist(data);
 
@@ -195,7 +207,7 @@ export class StandardWorker extends StandardWorkerService {
     }
   }
 
-  private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> {
+  private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> {
     let jobId;
 
     nr.noticeError(error);
@@ -243,8 +255,12 @@ export class StandardWorker extends StandardWorkerService {
           })
         );
       }
+
+      return hasToBackoff && !hasReachedMaxAttempts;
     } catch (anotherError) {
       Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
+
+      return true;
     }
   }
 
@@ -263,7 +279,6 @@ export class StandardWorker extends StandardWorkerService {
 
   private async organizationExist(data: IStandardDataDto): Promise<boolean> {
     const { _organizationId } = data;
-
     const organization = await this.organizationRepository.findOne({ _id: _organizationId });
 
     return !!organization;

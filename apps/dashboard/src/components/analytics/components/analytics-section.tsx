@@ -22,7 +22,7 @@ export function AnalyticsSection({
   isLoading,
 }: AnalyticsSectionProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5 items-start">
       <AnalyticsCard
         icon={InboxBellFilled}
         value={messagesDeliveredData.value}

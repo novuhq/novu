@@ -63,6 +63,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'delay';
       case StepTypeEnum.CUSTOM:
         return 'custom';
+      case StepTypeEnum.HTTP_REQUEST:
+        return 'http_request';
       default:
         return null;
     }

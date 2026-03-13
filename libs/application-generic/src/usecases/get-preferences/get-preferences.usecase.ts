@@ -256,30 +256,35 @@ export class GetPreferences {
       organizationId: command.organizationId,
     };
 
-    const workflowPreferences = await this.inMemoryLRUCacheService.get(
-      InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
-      `${command.environmentId}:${command.templateId}`,
-      async (): Promise<[PreferencesEntity | null, PreferencesEntity | null]> => {
-        const preferences = await this.preferencesRepository.find(
-          {
-            ...baseQuery,
-            _templateId: command.templateId,
-            type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
-          },
-          undefined,
-          queryOptions
-        );
+    let workflowResourcePreference: PreferencesEntity | null = null;
+    let workflowUserPreference: PreferencesEntity | null = null;
 
-        const workflowResourcePreference =
-          preferences.find((p) => p.type === PreferencesTypeEnum.WORKFLOW_RESOURCE) ?? null;
-        const workflowUserPreference = preferences.find((p) => p.type === PreferencesTypeEnum.USER_WORKFLOW) ?? null;
+    if (command.templateId) {
+      const workflowPreferences = await this.inMemoryLRUCacheService.get(
+        InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+        `${command.environmentId}:${command.templateId}`,
+        async (): Promise<[PreferencesEntity | null, PreferencesEntity | null]> => {
+          const preferences = await this.preferencesRepository.find(
+            {
+              ...baseQuery,
+              _templateId: command.templateId,
+              type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+            },
+            undefined,
+            queryOptions
+          );
 
-        return [workflowResourcePreference, workflowUserPreference];
-      },
-      cacheOptions
-    );
+          const workflowResourcePref =
+            preferences.find((p) => p.type === PreferencesTypeEnum.WORKFLOW_RESOURCE) ?? null;
+          const workflowUserPref = preferences.find((p) => p.type === PreferencesTypeEnum.USER_WORKFLOW) ?? null;
 
-    const [workflowResourcePreference, workflowUserPreference] = workflowPreferences;
+          return [workflowResourcePref, workflowUserPref];
+        },
+        cacheOptions
+      );
+
+      [workflowResourcePreference, workflowUserPreference] = workflowPreferences;
+    }
 
     let subscriberWorkflowPreference: PreferencesEntity | null = null;
     let subscriberGlobalPreference: PreferencesEntity | null = null;
@@ -295,18 +300,20 @@ export class GetPreferences {
         enabled: useContextFiltering,
       });
 
-      [subscriberWorkflowPreference, subscriberGlobalPreference] = await Promise.all([
-        this.preferencesRepository.findOne(
-          {
-            ...baseQuery,
-            _subscriberId: command.subscriberId,
-            _templateId: command.templateId,
-            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-            ...contextQuery,
-          },
-          undefined,
-          queryOptions
-        ),
+      const [workflowPref, globalPref] = await Promise.all([
+        command.templateId
+          ? this.preferencesRepository.findOne(
+              {
+                ...baseQuery,
+                _subscriberId: command.subscriberId,
+                _templateId: command.templateId,
+                type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+                ...contextQuery,
+              },
+              undefined,
+              queryOptions
+            )
+          : Promise.resolve(null),
         this.preferencesRepository.findOne(
           {
             ...baseQuery,
@@ -318,6 +325,9 @@ export class GetPreferences {
           queryOptions
         ),
       ]);
+
+      subscriberWorkflowPreference = workflowPref;
+      subscriberGlobalPreference = globalPref;
     }
 
     const result: PreferenceSet = {};

@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CompileEmailTemplate,
@@ -7,8 +7,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   FeatureFlagsService,
-  GetLayoutCommand,
-  GetLayoutUseCase as GetLayoutUseCaseV1,
+  GetLayoutCommandV0,
+  GetLayoutUseCaseV0,
   GetNovuProviderCredentials,
   Instrument,
   InstrumentUsecase,
@@ -68,7 +68,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
-    private getLayoutUseCaseV1: GetLayoutUseCaseV1,
+    private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
@@ -625,8 +625,8 @@ export class SendMessageEmail extends SendMessageBase {
 
     // Look up layout by identifier or MongoDB ObjectId
     try {
-      const layout = await this.getLayoutUseCaseV1.execute(
-        GetLayoutCommand.create({
+      const layout = await this.getLayoutUseCaseV0.execute(
+        GetLayoutCommandV0.create({
           layoutIdOrInternalId: layoutId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,

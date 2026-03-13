@@ -25,7 +25,7 @@ export function PreviewContextSection({ error, context, schema, onUpdate, onClea
                   Context provides additional data that can be used in your workflow, such as tenant or
                   application-specific information.{' '}
                   <ExternalLink
-                    href="https://docs.novu.co/platform/workflow/contexts#contexts-in-workflows"
+                    href="https://docs.novu.co/platform/workflow/advanced-features/contexts/contexts-in-workflows"
                     target="_blank"
                   >
                     Learn more

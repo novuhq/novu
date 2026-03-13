@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-import { STEP_TYPE_TO_COLOR } from '../../utils/color';
+import { type ProviderColorToken, STEP_TYPE_TO_COLOR } from '../../utils/color';
 import { formatJSONString } from '../../utils/string';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Card, CardContent, CardHeader } from '../primitives/card';
@@ -50,16 +50,14 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-1.5">
-            <div
-              className={`h-5 w-5 rounded-full border opacity-40 border-${STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR]}`}
-            >
+            <div className={`h-5 w-5 rounded-full border opacity-40 ${getJobColorClasses(job).border}`}>
               <div
-                className={`h-full w-full rounded-full bg-neutral-50 text-${STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR]} flex items-center justify-center`}
+                className={`h-full w-full rounded-full bg-neutral-50 ${getJobColorClasses(job).text} flex items-center justify-center`}
               >
-                {getJobIcon(job.type)}
+                {getJobIcon(job)}
               </div>
             </div>
-            <span className="text-foreground-950 text-xs capitalize">{job?.step?.name || formatJobType(job.type)}</span>
+            <span className="text-foreground-950 text-xs capitalize">{getJobDisplayLabel(job)}</span>
           </div>
 
           <Button
@@ -98,6 +96,10 @@ function formatJobType(type?: StepTypeEnum): string {
   return type?.replace(/_/g, ' ') || '';
 }
 
+function getJobDisplayLabel(job: IActivityJob): string {
+  return job?.step?.name || formatJobType(job.type);
+}
+
 function getStatusMessage(job: IActivityJob): string | React.ReactNode {
   if (job.status === JobStatusEnum.MERGED) {
     return 'Step merged with another execution';
@@ -109,6 +111,10 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
 
   if (job.status === JobStatusEnum.SKIPPED) {
     return 'Step was skipped';
+  }
+
+  if (job.status === JobStatusEnum.CANCELED && (!job.executionDetails || job.executionDetails.length === 0)) {
+    return 'Step was canceled';
   }
 
   if (
@@ -238,8 +244,26 @@ function TraceTooltip({ message, raw, variant = 'error' }: { message: string; ra
   );
 }
 
-function getJobIcon(type?: StepTypeEnum) {
-  const Icon = STEP_TYPE_TO_ICON[type?.toLowerCase() as keyof typeof STEP_TYPE_TO_ICON] ?? Route;
+const JOB_COLOR_CLASSES: Record<ProviderColorToken, { border: string; text: string }> = {
+  neutral: { border: 'border-neutral', text: 'text-neutral' },
+  stable: { border: 'border-stable', text: 'text-stable' },
+  information: { border: 'border-information', text: 'text-information' },
+  feature: { border: 'border-feature', text: 'text-feature' },
+  destructive: { border: 'border-destructive', text: 'text-destructive' },
+  verified: { border: 'border-verified', text: 'text-verified' },
+  alert: { border: 'border-alert', text: 'text-alert' },
+  highlighted: { border: 'border-highlighted', text: 'text-highlighted' },
+  warning: { border: 'border-warning', text: 'text-warning' },
+};
+
+function getJobColorClasses(job: IActivityJob): { border: string; text: string } {
+  const colorKey = STEP_TYPE_TO_COLOR[job.type as keyof typeof STEP_TYPE_TO_COLOR] || 'neutral';
+
+  return JOB_COLOR_CLASSES[colorKey];
+}
+
+function getJobIcon(job: IActivityJob) {
+  const Icon = STEP_TYPE_TO_ICON[job.type?.toLowerCase() as keyof typeof STEP_TYPE_TO_ICON] || Route;
 
   return <Icon className="h-3.5 w-3.5" />;
 }

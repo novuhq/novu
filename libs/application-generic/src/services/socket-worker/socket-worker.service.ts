@@ -148,7 +148,7 @@ export class SocketWorkerService {
         contextKeys,
       };
 
-      Logger.log(`Dispatching event ${event} to socket worker for user ${userId}`, LOG_CONTEXT);
+      Logger.debug(`Dispatching event ${event} to socket worker for user ${userId}`, LOG_CONTEXT);
 
       await got.post(`${this.socketWorkerUrl}/send`, {
         json: payload,

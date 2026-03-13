@@ -26,6 +26,7 @@
     "@react-email/render": "^1.2.1",
     "@novu/framework": "workspace:*",
     "@novu/shared": "workspace:*",
+    "millify": "^6.1.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "zod": "^3.23.8"

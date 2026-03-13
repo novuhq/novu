@@ -3,6 +3,7 @@ import { PinoLogger } from '../../logging';
 import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { SqsService } from '../sqs';
 import { StandardQueueService } from './standard-queue.service';
 
 let standardQueueService: StandardQueueService;
@@ -18,6 +19,12 @@ const mockFeatureFlagsService = {
 const mockOrganizationRepository = {
   findOne: jest.fn(),
 } as unknown as CommunityOrganizationRepository;
+
+const mockSqsService = {
+  getQueueUrl: jest.fn(),
+  getProducer: jest.fn(),
+  getClient: jest.fn(),
+} as unknown as SqsService;
 
 const mockLogger = {
   setContext: jest.fn(),
@@ -35,6 +42,7 @@ describe('Standard Queue service', () => {
         mockCloudflareSchedulerService,
         mockFeatureFlagsService,
         mockOrganizationRepository,
+        mockSqsService,
         mockLogger
       );
       await standardQueueService.queue.obliterate();
@@ -162,6 +170,7 @@ describe('Standard Queue service', () => {
         mockCloudflareSchedulerService,
         mockFeatureFlagsService,
         mockOrganizationRepository,
+        mockSqsService,
         mockLogger
       );
       await standardQueueService.queue.obliterate();

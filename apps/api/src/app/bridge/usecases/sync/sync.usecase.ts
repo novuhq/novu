@@ -1,6 +1,21 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
 import {
+  AnalyticsService,
+  BuildStepIssuesUsecase,
+  CreateWorkflowCommandV0,
+  CreateWorkflowV0,
+  computeWorkflowStatus,
+  ExecuteBridgeRequest,
+  JSONSchema,
+  JSONSchemaDto,
+  NotificationStep,
+  StepIssuesDto,
+  UpdateWorkflowCommandV0,
+  UpdateWorkflowV0,
+} from '@novu/application-generic';
+import {
+  ControlValuesEntity,
+  ControlValuesRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   NotificationGroupRepository,
@@ -10,6 +25,7 @@ import {
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
+  ControlValuesLevelEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
@@ -18,31 +34,24 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowPreferences,
 } from '@novu/shared';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
-import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
-import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
-import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
-import { StepIssuesDto } from '../../../workflows-v2/dtos';
-import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
-import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
 import { SyncCommand } from './sync.command';
 
 @Injectable()
 export class Sync {
   constructor(
-    private createWorkflowUsecase: CreateWorkflow,
-    private updateWorkflowUsecase: UpdateWorkflow,
+    private createWorkflowUsecase: CreateWorkflowV0,
+    private updateWorkflowUsecase: UpdateWorkflowV0,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private controlValuesRepository: ControlValuesRepository
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
     const environment = await this.findEnvironment(command);
@@ -160,10 +169,13 @@ export class Sync {
     command: SyncCommand,
     workflowsFromBridge: DiscoverWorkflowOutput[]
   ): Promise<NotificationTemplateEntity[]> {
-    const existingFrameworkWorkflows = await Promise.all(
-      workflowsFromBridge.map((workflow) =>
-        this.notificationTemplateRepository.findByTriggerIdentifier(command.environmentId, workflow.workflowId)
-      )
+    const identifiers = workflowsFromBridge.map((w) => w.workflowId);
+    const bulkResults = await this.notificationTemplateRepository.findByTriggerIdentifierBulk(
+      command.environmentId,
+      identifiers
+    );
+    const existingFrameworkWorkflows = workflowsFromBridge.map(
+      (workflow) => bulkResults.find((r) => r.triggers.some((t) => t.identifier === workflow.workflowId)) ?? null
     );
 
     existingFrameworkWorkflows.forEach((workflow, index) => {
@@ -191,7 +203,7 @@ export class Sync {
   ): Promise<NotificationTemplateEntity> {
     if (existingFrameworkWorkflow) {
       return await this.updateWorkflowUsecase.execute(
-        UpdateWorkflowCommand.create(
+        UpdateWorkflowCommandV0.create(
           await this.mapDiscoverWorkflowToUpdateWorkflowCommand(existingFrameworkWorkflow, command, workflow)
         )
       );
@@ -216,7 +228,7 @@ export class Sync {
     const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
 
     return await this.createWorkflowUsecase.execute(
-      CreateWorkflowCommand.create({
+      CreateWorkflowCommandV0.create({
         origin: ResourceOriginEnum.EXTERNAL,
         type: ResourceTypeEnum.BRIDGE,
         notificationGroupId,
@@ -248,12 +260,13 @@ export class Sync {
     workflowExist: NotificationTemplateEntity,
     command: SyncCommand,
     workflow: DiscoverWorkflowOutput
-  ): Promise<UpdateWorkflowCommand> {
+  ): Promise<UpdateWorkflowCommandV0> {
     const steps = await this.mapSteps(command, workflow.steps, workflowExist);
     const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
 
     return {
       id: workflowExist._id,
+      existingWorkflow: workflowExist,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       userId: command.userId,
@@ -279,6 +292,17 @@ export class Sync {
     commandWorkflowSteps: DiscoverStepOutput[],
     workflow?: NotificationTemplateEntity | undefined
   ): Promise<NotificationStep[]> {
+    let preloadedControlValues: ControlValuesEntity[] | undefined;
+
+    if (workflow?._id) {
+      preloadedControlValues = await this.controlValuesRepository.find({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _workflowId: workflow._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+    }
+
     return Promise.all(
       commandWorkflowSteps.map(async (step: DiscoverStepOutput) => {
         const foundStep = workflow?.steps?.find((workflowStep) => workflowStep.stepId === step.stepId);
@@ -294,6 +318,7 @@ export class Sync {
           workflow,
           stepType: step.type as StepTypeEnum,
           controlSchema: step.controls?.schema as unknown as JSONSchemaDto,
+          ...(preloadedControlValues ? { preloadedControlValues } : {}),
         });
 
         const template = {

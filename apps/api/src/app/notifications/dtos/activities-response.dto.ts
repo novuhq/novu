@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { StepFilterDto } from '@novu/application-generic';
 import {
   DaysEnum,
   DigestTypeEnum,
@@ -17,7 +18,6 @@ import {
   TriggerTypeEnum,
 } from '@novu/shared';
 import { IsArray, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
-import { StepFilterDto } from '../../shared/dtos/step-filter-dto';
 
 export class DigestTimedConfigDto {
   @ApiPropertyOptional({ description: 'Time at which the digest is triggered' })

@@ -1,7 +1,6 @@
+import { replaceMailyNodesByCondition } from '@novu/application-generic';
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import { LAYOUT_CONTENT_VARIABLE, LAYOUT_PREVIEW_CONTENT_PLACEHOLDER } from '@novu/shared';
-
-import { replaceMailyNodesByCondition } from '../../../shared/helpers/maily-utils';
 
 export const enhanceBodyForPreview = (editorType: string, body: string) => {
   if (editorType === 'html') {

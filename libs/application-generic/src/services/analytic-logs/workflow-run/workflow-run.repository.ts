@@ -121,65 +121,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     }
   }
 
-  async createWorkflowRunBatch(
-    notifications: Array<{
-      notification: NotificationEntity;
-      workflow: NotificationTemplateEntity;
-      options?: IWorkflowRunOptions;
-    }>
-  ): Promise<void> {
-    if (notifications.length === 0) return;
-
-    try {
-      const firstNotification = notifications[0].notification;
-
-      const isEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: firstNotification._organizationId },
-        environment: { _id: firstNotification._environmentId },
-        user: { _id: notifications[0].options?.userId },
-        defaultValue: false,
-      });
-
-      if (!isEnabled) {
-        return;
-      }
-
-      const workflowRunsData = notifications.map(({ notification, workflow: template, options = {} }) =>
-        this.mapNotificationToWorkflowRun(notification, template, options)
-      );
-
-      await this.insertMany(
-        workflowRunsData,
-        {
-          organizationId: firstNotification._organizationId,
-          environmentId: firstNotification._environmentId,
-          userId: notifications[0].options?.userId,
-        },
-        WORKFLOW_RUN_INSERT_OPTIONS
-      );
-
-      this.logger.debug(
-        {
-          batchSize: notifications.length,
-          organizationId: firstNotification._organizationId,
-          environmentId: firstNotification._environmentId,
-        },
-        'Workflow run batch created for observability'
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          batchSize: notifications.length,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        },
-        'Failed to create workflow run batch'
-      );
-      // Don't rethrow to avoid breaking the main flow
-    }
-  }
-
   /**
    * Updates the status of a workflow run in ClickHouse.
    *

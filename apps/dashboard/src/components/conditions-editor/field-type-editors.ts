@@ -61,7 +61,10 @@ export function getPlaceholderForField(
     case 'datetime':
       return '2024-01-01T00:00:00Z';
     case 'array':
-      return operator === 'contains' ? 'item' : 'item1, item2';
+      if (operator === 'contains') return 'item';
+      if (operator === 'containsAny' || operator === 'doesNotContainAny') return 'item1, item2, item3';
+
+      return 'item1, item2';
     case 'object':
       return '{"key": "value"}';
     default:
@@ -254,6 +257,24 @@ export function getHelpTextForField(operator: string, { fieldData }: { fieldData
           description:
             'Check if the array contains the specified item. You can also use dynamic values from the payload.',
           examples: ['item1', '{{payload.requiredTag}}'],
+        };
+      }
+
+      if (operator === 'containsAny') {
+        return {
+          title: 'Array contains any of',
+          description:
+            'Check if the array contains at least one of the specified items. Separate multiple values with commas. You can also use dynamic values from the payload.',
+          examples: ['tag1, tag2, tag3', '{{subscriber.data.tags}}'],
+        };
+      }
+
+      if (operator === 'doesNotContainAny') {
+        return {
+          title: 'Array does not contain any of',
+          description:
+            'Check if the array does not contain any of the specified items. Separate multiple values with commas. You can also use dynamic values from the payload.',
+          examples: ['tag1, tag2, tag3', '{{subscriber.data.tags}}'],
         };
       }
 

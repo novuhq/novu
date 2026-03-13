@@ -49,6 +49,7 @@ import {
 const ajv = new Ajv({
   allErrors: true,
   useDefaults: true,
+  strict: false,
 });
 addFormats(ajv);
 

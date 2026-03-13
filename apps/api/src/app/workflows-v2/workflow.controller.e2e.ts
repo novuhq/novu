@@ -17,6 +17,7 @@ import {
 } from '@novu/api/models/components';
 import { ErrorDto } from '@novu/api/models/errors';
 import { WorkflowResponseDto } from '@novu/api/src/models/components';
+import { buildSlug, JSONSchemaDto } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -30,8 +31,6 @@ import {
 import { UserSession } from '@novu/testing';
 import chai, { expect } from 'chai';
 import chaiSubset from 'chai-subset';
-import { JSONSchemaDto } from '../shared/dtos/json-schema.dto';
-import { buildSlug } from '../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
@@ -246,6 +245,67 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       expect(workflowCreated).to.be.ok;
       expect(workflowCreated.validatePayload).to.be.false;
+    });
+
+    it('should create workflow with skip condition on a step using payload variable', async () => {
+      const skipCondition = {
+        '!=': [{ var: 'payload.skipStep' }, 'true'],
+      };
+
+      const steps = [
+        buildEmailStep({
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+            disableOutputSanitization: false,
+            skip: skipCondition,
+          },
+        }),
+        buildInAppStep({
+          controlValues: {
+            body: 'In-App Body',
+          },
+        }),
+      ];
+
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          skipStep: { type: 'string' },
+        },
+        required: ['skipStep'],
+        additionalProperties: false,
+      };
+
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        name: `Skip Logic Workflow ${new Date().toISOString()}`,
+        steps: steps as any,
+        payloadSchema,
+      });
+
+      const workflow = await createWorkflow(apiClient, createWorkflowDto);
+
+      expect(workflow).to.be.ok;
+      expect(workflow.steps).to.have.lengthOf(2);
+      expect(Object.keys(workflow.issues || {}).length).to.equal(0);
+
+      const emailStep = workflow.steps[0] as EmailStepResponseDto;
+      expect(emailStep.type).to.equal('email');
+      expect(emailStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(emailStep.controls.values.subject).to.equal('Test Email Subject');
+
+      const inAppStep = workflow.steps[1] as InAppStepResponseDto;
+      expect(inAppStep.type).to.equal('in_app');
+      expect(inAppStep.controls.values.skip).to.be.undefined;
+
+      const retrievedWorkflow = await getWorkflow(workflow.id);
+      const retrievedEmailStep = retrievedWorkflow.steps[0] as EmailStepResponseDto;
+      expect(retrievedEmailStep.controls.values.skip).to.deep.equal(skipCondition);
+
+      const retrievedInAppStep = retrievedWorkflow.steps[1] as InAppStepResponseDto;
+      expect(retrievedInAppStep.controls.values.skip).to.be.undefined;
+
+      expect(retrievedWorkflow.payloadSchema).to.deep.equal(payloadSchema);
     });
 
     it('should reject workflow creation with invalid JSON schema', async () => {
@@ -623,6 +683,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
                 editorType: 'html',
                 subject: 'Example subject',
                 disableOutputSanitization: false,
+                rendererType: 'html',
               },
             }),
             id: devWorkflow.steps[0].id,
@@ -668,6 +729,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         subject: 'Example subject',
         disableOutputSanitization: false,
         editorType: 'html',
+        rendererType: 'html',
       });
 
       // Verify new created step
@@ -696,9 +758,22 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(error?.message).to.equal('Cannot sync workflow to the same environment');
     });
 
-    it('should throw an error if the workflow to promote is not found', async () => {
+    it('should throw an error if the target environment is not found', async () => {
       const { error } = await expectSdkExceptionGeneric(() =>
         apiClient.workflows.sync({ targetEnvironmentId: '123' }, '123')
+      );
+
+      expect(error?.statusCode).to.equal(404);
+      expect(error?.message).to.equal('Environment 123 not found');
+    });
+
+    it('should throw an error if the workflow to promote is not found', async () => {
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const { error } = await expectSdkExceptionGeneric(() =>
+        apiClient.workflows.sync({ targetEnvironmentId: prodEnvironmentId }, '123')
       );
 
       expect(error?.statusCode).to.equal(404);

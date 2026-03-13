@@ -54,6 +54,7 @@ const mapDetailToEventType = {
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
   // Provider events
+  [DetailEnum.PROVIDER_MISSING]: 'provider_missing',
   [DetailEnum.PROVIDER_ERROR]: 'provider_error',
   [DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION]: 'provider_limit_exceeded',
 
@@ -75,10 +76,19 @@ const mapDetailToEventType = {
 
   // Workflow events
   [DetailEnum.STEP_COMPLETED]: 'step_completed',
+  [DetailEnum.STEP_PROCESSED]: 'step_processed',
+
+  // Action step events
+  [DetailEnum.ACTION_STEP_EXECUTION_FAILED]: 'action_step_execution_failed',
+  [DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED]: 'action_step_execution_failed',
 
   // Bridge events
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
   [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
+
+  // Step resolver events
+  [DetailEnum.FAILED_STEP_RESOLVER_EXECUTION]: 'step_resolver_execution_failed',
+  [DetailEnum.STEP_RESOLVER_EXECUTION_TIMEOUT]: 'step_resolver_execution_timeout',
 
   // Webhook events
   [DetailEnum.WEBHOOK_FILTER_FAILED_RETRY]: 'webhook_filter_retrying',
@@ -133,6 +143,7 @@ const mapDetailToEventType = {
   [DetailEnum.PUSH_INVALID_TOKEN_REMOVED]: 'push_invalid_token_removed',
 
   [DetailEnum.TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION]: 'topic_subscription_preference_evaluation',
+  [DetailEnum.STEP_CANCELED]: 'step_canceled',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()

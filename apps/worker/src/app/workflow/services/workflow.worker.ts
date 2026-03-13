@@ -5,6 +5,7 @@ import {
   getWorkflowWorkerOptions,
   IWorkflowDataDto,
   PinoLogger,
+  SqsService,
   Store,
   storage,
   TriggerEvent,
@@ -24,11 +25,13 @@ export class WorkflowWorker extends WorkflowWorkerService {
     private triggerEventUsecase: TriggerEvent,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
-    private logger: PinoLogger,
+    sqsService: SqsService,
+    protected logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
     this.logger.setContext(this.constructor.name);
+
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
@@ -95,7 +98,6 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private async organizationExist(data: IWorkflowDataDto): Promise<boolean> {
     const { organizationId } = data;
-
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
 
     return !!organization;

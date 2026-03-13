@@ -198,6 +198,35 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     expect(command.payload.settings).to.deep.equal({ theme: 'dark', notifications: false }); // Nested defaults should be applied
   });
 
+  it('should tolerate non-standard JSON schema keywords like isRequired', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const templateWithCustomKeyword = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', isRequired: true },
+          age: { type: 'number' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithCustomKeyword.triggers[0].identifier
+    );
+
+    command.payload = { name: 'John Doe', age: 25 };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+  });
+
   it('should not override provided values with defaults', async () => {
     const transactionId = uuid();
     const subscriber = await subscribersService.createSubscriber();

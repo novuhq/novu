@@ -8,6 +8,8 @@ import { LocaleSelect } from '@/components/primitives/locale-select';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
+import { useReactEmailStepHint } from '@/components/workflow-editor/steps/email/use-react-email-step-hint';
+import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http-request/http-request-test-context';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
@@ -30,13 +32,15 @@ type StepEditorLayoutProps = {
 
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale } = useStepEditor();
+  const emailStepHint = useReactEmailStepHint();
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
-  const isTranslationsEnabled = useIsTranslationEnabled({
-    isTranslationEnabledOnResource: workflow?.isTranslationEnabled ?? false,
-  });
+  const isTranslationsEnabled =
+    useIsTranslationEnabled({
+      isTranslationEnabledOnResource: workflow?.isTranslationEnabled ?? false,
+    }) && !step.stepResolverHash;
 
   // Fetch translation group to get outdated locales status
   const { data: translationGroup } = useFetchTranslationGroup({
@@ -87,7 +91,7 @@ function StepEditorContent() {
                 <TranslationStatus
                   resourceId={workflow.workflowId}
                   resourceType={LocalizationResourceEnum.WORKFLOW}
-                  isTranslationEnabledOnResource={!!workflow.isTranslationEnabled}
+                  isTranslationEnabled={isTranslationsEnabled}
                   className="h-7 text-xs"
                 />
               </PanelHeader>
@@ -127,7 +131,11 @@ function StepEditorContent() {
           </ResizableLayout>
         </div>
 
-        <IssuesPanel issues={step.issues} isTranslationEnabled={workflow.isTranslationEnabled} />
+        <IssuesPanel
+          issues={step.issues}
+          isTranslationEnabled={workflow.isTranslationEnabled}
+          hintMessage={emailStepHint}
+        />
       </ResizableLayout.MainContentPanel>
 
       <TestWorkflowDrawer
@@ -144,7 +152,9 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   return (
     <div className={cn('h-full w-full', className)}>
       <StepEditorProvider workflow={workflow} step={step}>
-        <StepEditorContent />
+        <HttpRequestTestProvider>
+          <StepEditorContent />
+        </HttpRequestTestProvider>
       </StepEditorProvider>
     </div>
   );

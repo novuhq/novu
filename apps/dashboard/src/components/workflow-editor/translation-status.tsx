@@ -4,34 +4,30 @@ import { Dot, StatusBadge } from '@/components/primitives/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
-import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 import { LocalizationResourceEnum } from '@/types/translations';
 
 type WorkflowTranslationStatusProps = {
   resourceId: string;
   resourceType: LocalizationResourceEnum;
-  isTranslationEnabledOnResource: boolean;
+  isTranslationEnabled: boolean;
   className?: string;
 };
 
 export function TranslationStatus({
   resourceId,
   resourceType,
-  isTranslationEnabledOnResource,
+  isTranslationEnabled,
   className,
 }: WorkflowTranslationStatusProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const isTranslationsEnabled = useIsTranslationEnabled({
-    isTranslationEnabledOnResource,
-  });
 
   const { data: translationGroup } = useFetchTranslationGroup({
     resourceId,
     resourceType,
-    enabled: isTranslationsEnabled,
+    enabled: isTranslationEnabled,
   });
 
-  if (!isTranslationsEnabled || !translationGroup) {
+  if (!isTranslationEnabled || !translationGroup) {
     return null;
   }
 

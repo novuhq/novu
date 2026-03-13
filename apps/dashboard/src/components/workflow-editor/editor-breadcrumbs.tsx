@@ -37,7 +37,8 @@ export function EditorBreadcrumbs() {
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const location = useLocation();
-  const { workflow } = useFetchWorkflow({ workflowSlug });
+  const isNewWorkflowSlug = workflowSlug === 'new';
+  const { workflow } = useFetchWorkflow({ workflowSlug: !isNewWorkflowSlug ? workflowSlug : undefined });
   const { step } = useWorkflow();
 
   const workflowsRoute = buildRoute(ROUTES.WORKFLOWS, {

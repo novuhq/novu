@@ -13,10 +13,25 @@ type PhoneInputProps = Omit<React.ComponentProps<'input'>, 'onChange' | 'value' 
     onChange?: (value: RPNInput.Value) => void;
   };
 
+const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+
+function sanitizePhoneValue(value: RPNInput.Value | string | undefined): RPNInput.Value | undefined {
+  if (!value) return undefined;
+
+  const stripped = String(value).replace(/[\s\-()]/g, '');
+  const candidate = stripped.startsWith('+') ? stripped : `+${stripped}`;
+
+  if (E164_REGEX.test(candidate)) return candidate as RPNInput.Value;
+
+  return undefined;
+}
+
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwardRef<
   React.ElementRef<typeof RPNInput.default>,
   PhoneInputProps
->(({ className, onChange, ...props }, ref) => {
+>(({ className, onChange, value, ...props }, ref) => {
+  const sanitizedValue = sanitizePhoneValue(value);
+
   return (
     <RPNInput.default
       ref={ref}
@@ -25,16 +40,8 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwa
       countrySelectComponent={CountrySelect}
       inputComponent={InputComponent}
       smartCaret={false}
-      /**
-       * Handles the onChange event.
-       *
-       * react-phone-number-input might trigger the onChange event as undefined
-       * when a valid phone number is not entered. To prevent this,
-       * the value is coerced to an empty string.
-       *
-       * @param {E164Number | undefined} value - The entered value
-       */
-      onChange={(value) => onChange?.(value || ('' as RPNInput.Value))}
+      value={sanitizedValue}
+      onChange={(v) => onChange?.(v || ('' as RPNInput.Value))}
       international
       {...props}
     />
