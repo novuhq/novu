@@ -21,10 +21,15 @@ type StepResolverContext<TPayload extends Record<string, unknown> = Record<strin
 
 type ResolveControls<T extends Schema | undefined> = T extends Schema ? FromSchema<T> : Record<string, unknown>;
 
-type StepResolverProviders<T_StepType extends keyof typeof providerSchemas, T_Controls, T_Output> = {
+type StepResolverProviders<
+  T_StepType extends keyof typeof providerSchemas,
+  T_Controls,
+  T_Output,
+  T_Payload extends Record<string, unknown> = Record<string, unknown>,
+> = {
   [K in keyof (typeof providerSchemas)[T_StepType]]?: (
     step: { controls: T_Controls; outputs: T_Output },
-    ctx: StepResolverContext
+    ctx: StepResolverContext<T_Payload>
   ) => Awaitable<WithPassthrough<Record<string, unknown>>>;
 };
 
@@ -43,7 +48,12 @@ type ChannelStepResolverOptions<
   TPayloadSchema extends Schema | undefined,
   T_Output extends Record<string, unknown>,
 > = BaseStepResolverOptions<TControlSchema, TPayloadSchema> & {
-  providers?: StepResolverProviders<T_StepType, ResolveControls<TControlSchema>, T_Output>;
+  providers?: StepResolverProviders<
+    T_StepType,
+    ResolveControls<TControlSchema>,
+    T_Output,
+    ResolveControls<TPayloadSchema>
+  >;
   disableOutputSanitization?: boolean;
 };
 
@@ -60,7 +70,12 @@ export type EmailStepResolver<
   controlSchema?: TControlSchema;
   payloadSchema?: TPayloadSchema;
   skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema>['skip'];
-  providers?: StepResolverProviders<'email', ResolveControls<TControlSchema>, EmailOutputUnvalidated>;
+  providers?: StepResolverProviders<
+    'email',
+    ResolveControls<TControlSchema>,
+    EmailOutputUnvalidated,
+    ResolveControls<TPayloadSchema>
+  >;
   disableOutputSanitization?: boolean;
 };
 
@@ -77,7 +92,12 @@ export type SmsStepResolver<
   controlSchema?: TControlSchema;
   payloadSchema?: TPayloadSchema;
   skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema>['skip'];
-  providers?: StepResolverProviders<'sms', ResolveControls<TControlSchema>, SmsOutputUnvalidated>;
+  providers?: StepResolverProviders<
+    'sms',
+    ResolveControls<TControlSchema>,
+    SmsOutputUnvalidated,
+    ResolveControls<TPayloadSchema>
+  >;
   disableOutputSanitization?: boolean;
 };
 
@@ -94,7 +114,12 @@ export type ChatStepResolver<
   controlSchema?: TControlSchema;
   payloadSchema?: TPayloadSchema;
   skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema>['skip'];
-  providers?: StepResolverProviders<'chat', ResolveControls<TControlSchema>, ChatOutputUnvalidated>;
+  providers?: StepResolverProviders<
+    'chat',
+    ResolveControls<TControlSchema>,
+    ChatOutputUnvalidated,
+    ResolveControls<TPayloadSchema>
+  >;
   disableOutputSanitization?: boolean;
 };
 
@@ -111,7 +136,12 @@ export type PushStepResolver<
   controlSchema?: TControlSchema;
   payloadSchema?: TPayloadSchema;
   skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema>['skip'];
-  providers?: StepResolverProviders<'push', ResolveControls<TControlSchema>, PushOutputUnvalidated>;
+  providers?: StepResolverProviders<
+    'push',
+    ResolveControls<TControlSchema>,
+    PushOutputUnvalidated,
+    ResolveControls<TPayloadSchema>
+  >;
   disableOutputSanitization?: boolean;
 };
 
@@ -128,7 +158,12 @@ export type InAppStepResolver<
   controlSchema?: TControlSchema;
   payloadSchema?: TPayloadSchema;
   skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema>['skip'];
-  providers?: StepResolverProviders<'in_app', ResolveControls<TControlSchema>, InAppOutputUnvalidated>;
+  providers?: StepResolverProviders<
+    'in_app',
+    ResolveControls<TControlSchema>,
+    InAppOutputUnvalidated,
+    ResolveControls<TPayloadSchema>
+  >;
   disableOutputSanitization?: boolean;
 };
 

@@ -238,7 +238,10 @@ function generateProviderExecution(): string {
                 400
               );
             }
-            providers[providerKey] = providerValidation.data ?? providerResult;
+            const validated = providerValidation.data ?? providerResult;
+            providers[providerKey] = providerResult._passthrough !== undefined
+              ? { ...validated, _passthrough: providerResult._passthrough }
+              : validated;
           } else {
             providers[providerKey] = providerResult;
           }

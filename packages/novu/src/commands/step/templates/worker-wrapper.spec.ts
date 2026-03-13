@@ -96,6 +96,13 @@ describe('generateWorkerWrapper', () => {
     expect(result).toContain("error: 'INVALID_PROVIDER_OUTPUT'");
   });
 
+  it('should preserve _passthrough metadata from provider result after schema validation', () => {
+    const result = generateWorkerWrapper(mockSteps, '/root');
+
+    expect(result).toContain('providerResult._passthrough !== undefined');
+    expect(result).toContain('_passthrough: providerResult._passthrough');
+  });
+
   it('should return ExecuteOutput-shaped response with outputs, providers, options, and metadata', () => {
     const result = generateWorkerWrapper(mockSteps, '/root');
 
