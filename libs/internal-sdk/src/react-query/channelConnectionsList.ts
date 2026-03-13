@@ -5,50 +5,31 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import * as components from '../models/components/index.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import * as components from "../models/components/index.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildChannelConnectionsListQuery,
   ChannelConnectionsListQueryData,
   prefetchChannelConnectionsList,
   queryKeyChannelConnectionsList,
-} from './channelConnectionsList.core.js';
+} from "./channelConnectionsList.core.js";
 export {
   buildChannelConnectionsListQuery,
   type ChannelConnectionsListQueryData,
   prefetchChannelConnectionsList,
   queryKeyChannelConnectionsList,
 };
-
-export type ChannelConnectionsListQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
 
 /**
  * List all channel connections
@@ -58,11 +39,15 @@ export type ChannelConnectionsListQueryError =
  */
 export function useChannelConnectionsList(
   request: operations.ChannelConnectionsControllerListChannelConnectionsRequest,
-  options?: QueryHookOptions<ChannelConnectionsListQueryData, ChannelConnectionsListQueryError>
-): UseQueryResult<ChannelConnectionsListQueryData, ChannelConnectionsListQueryError> {
+  options?: QueryHookOptions<ChannelConnectionsListQueryData>,
+): UseQueryResult<ChannelConnectionsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildChannelConnectionsListQuery(client, request, options),
+    ...buildChannelConnectionsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -75,11 +60,15 @@ export function useChannelConnectionsList(
  */
 export function useChannelConnectionsListSuspense(
   request: operations.ChannelConnectionsControllerListChannelConnectionsRequest,
-  options?: SuspenseQueryHookOptions<ChannelConnectionsListQueryData, ChannelConnectionsListQueryError>
-): UseSuspenseQueryResult<ChannelConnectionsListQueryData, ChannelConnectionsListQueryError> {
+  options?: SuspenseQueryHookOptions<ChannelConnectionsListQueryData>,
+): UseSuspenseQueryResult<ChannelConnectionsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildChannelConnectionsListQuery(client, request, options),
+    ...buildChannelConnectionsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -104,7 +93,7 @@ export function setChannelConnectionsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ChannelConnectionsListQueryData
+  data: ChannelConnectionsListQueryData,
 ): ChannelConnectionsListQueryData | undefined {
   const key = queryKeyChannelConnectionsList(...queryKeyBase);
 
@@ -114,39 +103,37 @@ export function setChannelConnectionsListData(
 export function invalidateChannelConnectionsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        after?: string | undefined;
-        before?: string | undefined;
-        limit?: number | undefined;
-        orderDirection?:
-          | operations.ChannelConnectionsControllerListChannelConnectionsQueryParamOrderDirection
-          | undefined;
-        orderBy?: string | undefined;
-        includeCursor?: boolean | undefined;
-        subscriberId?: string | undefined;
-        channel?: operations.Channel | undefined;
-        providerId?: components.ProvidersIdEnum | undefined;
-        integrationIdentifier?: string | undefined;
-        contextKeys?: Array<string> | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      after?: string | undefined;
+      before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?:
+        | operations.ChannelConnectionsControllerListChannelConnectionsQueryParamOrderDirection
+        | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
+      subscriberId?: string | undefined;
+      channel?: operations.Channel | undefined;
+      providerId?: components.ProvidersIdEnum | undefined;
+      integrationIdentifier?: string | undefined;
+      contextKeys?: Array<string> | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Connections', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Channel Connections", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllChannelConnectionsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Connections', 'list'],
+    queryKey: ["@novu/api", "Channel Connections", "list"],
   });
 }

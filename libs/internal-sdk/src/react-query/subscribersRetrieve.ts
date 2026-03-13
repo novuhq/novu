@@ -5,48 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildSubscribersRetrieveQuery,
   prefetchSubscribersRetrieve,
   queryKeySubscribersRetrieve,
   SubscribersRetrieveQueryData,
-} from './subscribersRetrieve.core.js';
+} from "./subscribersRetrieve.core.js";
 export {
   buildSubscribersRetrieveQuery,
   prefetchSubscribersRetrieve,
   queryKeySubscribersRetrieve,
   type SubscribersRetrieveQueryData,
 };
-
-export type SubscribersRetrieveQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
 
 /**
  * Retrieve a subscriber
@@ -58,11 +39,16 @@ export type SubscribersRetrieveQueryError =
 export function useSubscribersRetrieve(
   subscriberId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<SubscribersRetrieveQueryData, SubscribersRetrieveQueryError>
-): UseQueryResult<SubscribersRetrieveQueryData, SubscribersRetrieveQueryError> {
+  options?: QueryHookOptions<SubscribersRetrieveQueryData>,
+): UseQueryResult<SubscribersRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersRetrieveQuery(client, subscriberId, idempotencyKey, options),
+    ...buildSubscribersRetrieveQuery(
+      client,
+      subscriberId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -77,19 +63,27 @@ export function useSubscribersRetrieve(
 export function useSubscribersRetrieveSuspense(
   subscriberId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<SubscribersRetrieveQueryData, SubscribersRetrieveQueryError>
-): UseSuspenseQueryResult<SubscribersRetrieveQueryData, SubscribersRetrieveQueryError> {
+  options?: SuspenseQueryHookOptions<SubscribersRetrieveQueryData>,
+): UseSuspenseQueryResult<SubscribersRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersRetrieveQuery(client, subscriberId, idempotencyKey, options),
+    ...buildSubscribersRetrieveQuery(
+      client,
+      subscriberId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setSubscribersRetrieveData(
   client: QueryClient,
-  queryKeyBase: [subscriberId: string, parameters: { idempotencyKey?: string | undefined }],
-  data: SubscribersRetrieveQueryData
+  queryKeyBase: [
+    subscriberId: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: SubscribersRetrieveQueryData,
 ): SubscribersRetrieveQueryData | undefined {
   const key = queryKeySubscribersRetrieve(...queryKeyBase);
 
@@ -98,21 +92,23 @@ export function setSubscribersRetrieveData(
 
 export function invalidateSubscribersRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[subscriberId: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [subscriberId: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Subscribers', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Subscribers", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Subscribers', 'retrieve'],
+    queryKey: ["@novu/api", "Subscribers", "retrieve"],
   });
 }

@@ -10,17 +10,6 @@ import {
   useQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
-import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
 import * as operations from '../models/operations/index.js';
 import { useNovuContext } from './_context.js';
 import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
@@ -37,18 +26,6 @@ export {
   type TopicsSubscriptionsListQueryData,
 };
 
-export type TopicsSubscriptionsListQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
-
 /**
  * List topic subscriptions
  *
@@ -58,8 +35,8 @@ export type TopicsSubscriptionsListQueryError =
  */
 export function useTopicsSubscriptionsList(
   request: operations.TopicsControllerListTopicSubscriptionsRequest,
-  options?: QueryHookOptions<TopicsSubscriptionsListQueryData, TopicsSubscriptionsListQueryError>
-): UseQueryResult<TopicsSubscriptionsListQueryData, TopicsSubscriptionsListQueryError> {
+  options?: QueryHookOptions<TopicsSubscriptionsListQueryData>
+): UseQueryResult<TopicsSubscriptionsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
     ...buildTopicsSubscriptionsListQuery(client, request, options),
@@ -76,8 +53,8 @@ export function useTopicsSubscriptionsList(
  */
 export function useTopicsSubscriptionsListSuspense(
   request: operations.TopicsControllerListTopicSubscriptionsRequest,
-  options?: SuspenseQueryHookOptions<TopicsSubscriptionsListQueryData, TopicsSubscriptionsListQueryError>
-): UseSuspenseQueryResult<TopicsSubscriptionsListQueryData, TopicsSubscriptionsListQueryError> {
+  options?: SuspenseQueryHookOptions<TopicsSubscriptionsListQueryData>
+): UseSuspenseQueryResult<TopicsSubscriptionsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildTopicsSubscriptionsListQuery(client, request, options),

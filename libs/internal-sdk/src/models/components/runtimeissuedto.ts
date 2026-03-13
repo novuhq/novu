@@ -4,13 +4,34 @@
 
 import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
+import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
-export type RuntimeIssueDto = {};
+export const IssueType = {
+  MissingValue: 'MISSING_VALUE',
+  MaxLengthAccessed: 'MAX_LENGTH_ACCESSED',
+  WorkflowIdAlreadyExists: 'WORKFLOW_ID_ALREADY_EXISTS',
+  DuplicatedValue: 'DUPLICATED_VALUE',
+  LimitReached: 'LIMIT_REACHED',
+} as const;
+export type IssueType = ClosedEnum<typeof IssueType>;
+
+export type RuntimeIssueDto = {
+  issueType: IssueType;
+  variableName?: string | undefined;
+  message: string;
+};
 
 /** @internal */
-export const RuntimeIssueDto$inboundSchema: z.ZodType<RuntimeIssueDto, z.ZodTypeDef, unknown> = z.object({});
+export const IssueType$inboundSchema: z.ZodNativeEnum<typeof IssueType> = z.nativeEnum(IssueType);
+
+/** @internal */
+export const RuntimeIssueDto$inboundSchema: z.ZodType<RuntimeIssueDto, z.ZodTypeDef, unknown> = z.object({
+  issueType: IssueType$inboundSchema,
+  variableName: z.string().optional(),
+  message: z.string(),
+});
 
 export function runtimeIssueDtoFromJSON(jsonString: string): SafeParseResult<RuntimeIssueDto, SDKValidationError> {
   return safeParse(

@@ -5,46 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   ActivityRequestsListQueryData,
   buildActivityRequestsListQuery,
   prefetchActivityRequestsList,
   queryKeyActivityRequestsList,
-} from './activityRequestsList.core.js';
+} from "./activityRequestsList.core.js";
 export {
   type ActivityRequestsListQueryData,
   buildActivityRequestsListQuery,
   prefetchActivityRequestsList,
   queryKeyActivityRequestsList,
 };
-
-export type ActivityRequestsListQueryError =
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
 
 /**
  * List activity requests
@@ -54,11 +38,15 @@ export type ActivityRequestsListQueryError =
  */
 export function useActivityRequestsList(
   request: operations.ActivityControllerGetLogsRequest,
-  options?: QueryHookOptions<ActivityRequestsListQueryData, ActivityRequestsListQueryError>
-): UseQueryResult<ActivityRequestsListQueryData, ActivityRequestsListQueryError> {
+  options?: QueryHookOptions<ActivityRequestsListQueryData>,
+): UseQueryResult<ActivityRequestsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildActivityRequestsListQuery(client, request, options),
+    ...buildActivityRequestsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -71,11 +59,15 @@ export function useActivityRequestsList(
  */
 export function useActivityRequestsListSuspense(
   request: operations.ActivityControllerGetLogsRequest,
-  options?: SuspenseQueryHookOptions<ActivityRequestsListQueryData, ActivityRequestsListQueryError>
-): UseSuspenseQueryResult<ActivityRequestsListQueryData, ActivityRequestsListQueryError> {
+  options?: SuspenseQueryHookOptions<ActivityRequestsListQueryData>,
+): UseSuspenseQueryResult<ActivityRequestsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildActivityRequestsListQuery(client, request, options),
+    ...buildActivityRequestsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -93,7 +85,7 @@ export function setActivityRequestsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ActivityRequestsListQueryData
+  data: ActivityRequestsListQueryData,
 ): ActivityRequestsListQueryData | undefined {
   const key = queryKeyActivityRequestsList(...queryKeyBase);
 
@@ -103,32 +95,30 @@ export function setActivityRequestsListData(
 export function invalidateActivityRequestsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        page?: number | undefined;
-        limit?: number | undefined;
-        statusCodes?: Array<number> | undefined;
-        urlPattern?: string | undefined;
-        transactionId?: string | undefined;
-        createdGte?: number | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      page?: number | undefined;
+      limit?: number | undefined;
+      statusCodes?: Array<number> | undefined;
+      urlPattern?: string | undefined;
+      transactionId?: string | undefined;
+      createdGte?: number | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Requests', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Requests", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllActivityRequestsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Requests', 'list'],
+    queryKey: ["@novu/api", "Requests", "list"],
   });
 }

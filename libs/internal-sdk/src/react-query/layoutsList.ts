@@ -5,45 +5,31 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import * as components from '../models/components/index.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import * as components from "../models/components/index.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildLayoutsListQuery,
   LayoutsListQueryData,
   prefetchLayoutsList,
   queryKeyLayoutsList,
-} from './layoutsList.core.js';
-export { buildLayoutsListQuery, type LayoutsListQueryData, prefetchLayoutsList, queryKeyLayoutsList };
-
-export type LayoutsListQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
+} from "./layoutsList.core.js";
+export {
+  buildLayoutsListQuery,
+  type LayoutsListQueryData,
+  prefetchLayoutsList,
+  queryKeyLayoutsList,
+};
 
 /**
  * List all layouts
@@ -53,11 +39,15 @@ export type LayoutsListQueryError =
  */
 export function useLayoutsList(
   request: operations.LayoutsControllerListRequest,
-  options?: QueryHookOptions<LayoutsListQueryData, LayoutsListQueryError>
-): UseQueryResult<LayoutsListQueryData, LayoutsListQueryError> {
+  options?: QueryHookOptions<LayoutsListQueryData>,
+): UseQueryResult<LayoutsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildLayoutsListQuery(client, request, options),
+    ...buildLayoutsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -70,11 +60,15 @@ export function useLayoutsList(
  */
 export function useLayoutsListSuspense(
   request: operations.LayoutsControllerListRequest,
-  options?: SuspenseQueryHookOptions<LayoutsListQueryData, LayoutsListQueryError>
-): UseSuspenseQueryResult<LayoutsListQueryData, LayoutsListQueryError> {
+  options?: SuspenseQueryHookOptions<LayoutsListQueryData>,
+): UseSuspenseQueryResult<LayoutsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildLayoutsListQuery(client, request, options),
+    ...buildLayoutsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -91,7 +85,7 @@ export function setLayoutsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: LayoutsListQueryData
+  data: LayoutsListQueryData,
 ): LayoutsListQueryData | undefined {
   const key = queryKeyLayoutsList(...queryKeyBase);
 
@@ -101,31 +95,29 @@ export function setLayoutsListData(
 export function invalidateLayoutsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        limit?: number | undefined;
-        offset?: number | undefined;
-        orderDirection?: components.DirectionEnum | undefined;
-        orderBy?: components.LayoutResponseDtoSortField | undefined;
-        query?: string | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      limit?: number | undefined;
+      offset?: number | undefined;
+      orderDirection?: components.DirectionEnum | undefined;
+      orderBy?: components.LayoutResponseDtoSortField | undefined;
+      query?: string | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Layouts', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Layouts", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllLayoutsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Layouts', 'list'],
+    queryKey: ["@novu/api", "Layouts", "list"],
   });
 }

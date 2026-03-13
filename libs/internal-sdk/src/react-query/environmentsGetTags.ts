@@ -10,17 +10,6 @@ import {
   useQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
-import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
 import { useNovuContext } from './_context.js';
 import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
@@ -36,18 +25,6 @@ export {
   queryKeyEnvironmentsGetTags,
 };
 
-export type EnvironmentsGetTagsQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
-
 /**
  * List environment tags
  *
@@ -57,8 +34,8 @@ export type EnvironmentsGetTagsQueryError =
 export function useEnvironmentsGetTags(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError>
-): UseQueryResult<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError> {
+  options?: QueryHookOptions<EnvironmentsGetTagsQueryData>
+): UseQueryResult<EnvironmentsGetTagsQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
     ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
@@ -75,8 +52,8 @@ export function useEnvironmentsGetTags(
 export function useEnvironmentsGetTagsSuspense(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError>
-): UseSuspenseQueryResult<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError> {
+  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData>
+): UseSuspenseQueryResult<EnvironmentsGetTagsQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),

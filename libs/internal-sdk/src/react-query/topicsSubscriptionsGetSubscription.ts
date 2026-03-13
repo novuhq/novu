@@ -10,17 +10,6 @@ import {
   useQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
-import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
 import { useNovuContext } from './_context.js';
 import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
@@ -36,18 +25,6 @@ export {
   type TopicsSubscriptionsGetSubscriptionQueryData,
 };
 
-export type TopicsSubscriptionsGetSubscriptionQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
-
 /**
  * Retrieve a topic subscription
  *
@@ -58,8 +35,8 @@ export function useTopicsSubscriptionsGetSubscription(
   topicKey: string,
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData, TopicsSubscriptionsGetSubscriptionQueryError>
-): UseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, TopicsSubscriptionsGetSubscriptionQueryError> {
+  options?: QueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>
+): UseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
     ...buildTopicsSubscriptionsGetSubscriptionQuery(client, topicKey, identifier, idempotencyKey, options),
@@ -77,11 +54,8 @@ export function useTopicsSubscriptionsGetSubscriptionSuspense(
   topicKey: string,
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<
-    TopicsSubscriptionsGetSubscriptionQueryData,
-    TopicsSubscriptionsGetSubscriptionQueryError
-  >
-): UseSuspenseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, TopicsSubscriptionsGetSubscriptionQueryError> {
+  options?: SuspenseQueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>
+): UseSuspenseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildTopicsSubscriptionsGetSubscriptionQuery(client, topicKey, identifier, idempotencyKey, options),

@@ -5,43 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildLayoutsRetrieveQuery,
   LayoutsRetrieveQueryData,
   prefetchLayoutsRetrieve,
   queryKeyLayoutsRetrieve,
-} from './layoutsRetrieve.core.js';
-export { buildLayoutsRetrieveQuery, type LayoutsRetrieveQueryData, prefetchLayoutsRetrieve, queryKeyLayoutsRetrieve };
-
-export type LayoutsRetrieveQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
+} from "./layoutsRetrieve.core.js";
+export {
+  buildLayoutsRetrieveQuery,
+  type LayoutsRetrieveQueryData,
+  prefetchLayoutsRetrieve,
+  queryKeyLayoutsRetrieve,
+};
 
 /**
  * Retrieve a layout
@@ -52,11 +38,16 @@ export type LayoutsRetrieveQueryError =
 export function useLayoutsRetrieve(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<LayoutsRetrieveQueryData, LayoutsRetrieveQueryError>
-): UseQueryResult<LayoutsRetrieveQueryData, LayoutsRetrieveQueryError> {
+  options?: QueryHookOptions<LayoutsRetrieveQueryData>,
+): UseQueryResult<LayoutsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildLayoutsRetrieveQuery(client, layoutId, idempotencyKey, options),
+    ...buildLayoutsRetrieveQuery(
+      client,
+      layoutId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -70,19 +61,27 @@ export function useLayoutsRetrieve(
 export function useLayoutsRetrieveSuspense(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<LayoutsRetrieveQueryData, LayoutsRetrieveQueryError>
-): UseSuspenseQueryResult<LayoutsRetrieveQueryData, LayoutsRetrieveQueryError> {
+  options?: SuspenseQueryHookOptions<LayoutsRetrieveQueryData>,
+): UseSuspenseQueryResult<LayoutsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildLayoutsRetrieveQuery(client, layoutId, idempotencyKey, options),
+    ...buildLayoutsRetrieveQuery(
+      client,
+      layoutId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setLayoutsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [layoutId: string, parameters: { idempotencyKey?: string | undefined }],
-  data: LayoutsRetrieveQueryData
+  queryKeyBase: [
+    layoutId: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: LayoutsRetrieveQueryData,
 ): LayoutsRetrieveQueryData | undefined {
   const key = queryKeyLayoutsRetrieve(...queryKeyBase);
 
@@ -91,21 +90,23 @@ export function setLayoutsRetrieveData(
 
 export function invalidateLayoutsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[layoutId: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [layoutId: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Layouts', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Layouts", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllLayoutsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Layouts', 'retrieve'],
+    queryKey: ["@novu/api", "Layouts", "retrieve"],
   });
 }

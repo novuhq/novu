@@ -5,38 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
-import { buildTopicsGetQuery, prefetchTopicsGet, queryKeyTopicsGet, TopicsGetQueryData } from './topicsGet.core.js';
-export { buildTopicsGetQuery, prefetchTopicsGet, queryKeyTopicsGet, type TopicsGetQueryData };
-
-export type TopicsGetQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
+import {
+  buildTopicsGetQuery,
+  prefetchTopicsGet,
+  queryKeyTopicsGet,
+  TopicsGetQueryData,
+} from "./topicsGet.core.js";
+export {
+  buildTopicsGetQuery,
+  prefetchTopicsGet,
+  queryKeyTopicsGet,
+  type TopicsGetQueryData,
+};
 
 /**
  * Retrieve a topic
@@ -47,11 +38,16 @@ export type TopicsGetQueryError =
 export function useTopicsGet(
   topicKey: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TopicsGetQueryData, TopicsGetQueryError>
-): UseQueryResult<TopicsGetQueryData, TopicsGetQueryError> {
+  options?: QueryHookOptions<TopicsGetQueryData>,
+): UseQueryResult<TopicsGetQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTopicsGetQuery(client, topicKey, idempotencyKey, options),
+    ...buildTopicsGetQuery(
+      client,
+      topicKey,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -65,19 +61,27 @@ export function useTopicsGet(
 export function useTopicsGetSuspense(
   topicKey: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TopicsGetQueryData, TopicsGetQueryError>
-): UseSuspenseQueryResult<TopicsGetQueryData, TopicsGetQueryError> {
+  options?: SuspenseQueryHookOptions<TopicsGetQueryData>,
+): UseSuspenseQueryResult<TopicsGetQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTopicsGetQuery(client, topicKey, idempotencyKey, options),
+    ...buildTopicsGetQuery(
+      client,
+      topicKey,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setTopicsGetData(
   client: QueryClient,
-  queryKeyBase: [topicKey: string, parameters: { idempotencyKey?: string | undefined }],
-  data: TopicsGetQueryData
+  queryKeyBase: [
+    topicKey: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: TopicsGetQueryData,
 ): TopicsGetQueryData | undefined {
   const key = queryKeyTopicsGet(...queryKeyBase);
 
@@ -86,21 +90,23 @@ export function setTopicsGetData(
 
 export function invalidateTopicsGet(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[topicKey: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [topicKey: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Topics', 'get', ...queryKeyBase],
+    queryKey: ["@novu/api", "Topics", "get", ...queryKeyBase],
   });
 }
 
 export function invalidateAllTopicsGet(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Topics', 'get'],
+    queryKey: ["@novu/api", "Topics", "get"],
   });
 }

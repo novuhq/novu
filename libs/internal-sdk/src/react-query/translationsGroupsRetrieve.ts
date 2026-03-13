@@ -5,46 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildTranslationsGroupsRetrieveQuery,
   prefetchTranslationsGroupsRetrieve,
   queryKeyTranslationsGroupsRetrieve,
   TranslationsGroupsRetrieveQueryData,
-} from './translationsGroupsRetrieve.core.js';
+} from "./translationsGroupsRetrieve.core.js";
 export {
   buildTranslationsGroupsRetrieveQuery,
   prefetchTranslationsGroupsRetrieve,
   queryKeyTranslationsGroupsRetrieve,
   type TranslationsGroupsRetrieveQueryData,
 };
-
-export type TranslationsGroupsRetrieveQueryError =
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
 
 /**
  * Retrieve a translation group
@@ -53,14 +37,21 @@ export type TranslationsGroupsRetrieveQueryError =
  * Retrieves a single translation group by resource type (workflow, layout) and resource ID (workflowId, layoutId)
  */
 export function useTranslationsGroupsRetrieve(
-  resourceType: operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
+  resourceType:
+    operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
   resourceId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TranslationsGroupsRetrieveQueryData, TranslationsGroupsRetrieveQueryError>
-): UseQueryResult<TranslationsGroupsRetrieveQueryData, TranslationsGroupsRetrieveQueryError> {
+  options?: QueryHookOptions<TranslationsGroupsRetrieveQueryData>,
+): UseQueryResult<TranslationsGroupsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTranslationsGroupsRetrieveQuery(client, resourceType, resourceId, idempotencyKey, options),
+    ...buildTranslationsGroupsRetrieveQuery(
+      client,
+      resourceType,
+      resourceId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -72,14 +63,21 @@ export function useTranslationsGroupsRetrieve(
  * Retrieves a single translation group by resource type (workflow, layout) and resource ID (workflowId, layoutId)
  */
 export function useTranslationsGroupsRetrieveSuspense(
-  resourceType: operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
+  resourceType:
+    operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
   resourceId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TranslationsGroupsRetrieveQueryData, TranslationsGroupsRetrieveQueryError>
-): UseSuspenseQueryResult<TranslationsGroupsRetrieveQueryData, TranslationsGroupsRetrieveQueryError> {
+  options?: SuspenseQueryHookOptions<TranslationsGroupsRetrieveQueryData>,
+): UseSuspenseQueryResult<TranslationsGroupsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTranslationsGroupsRetrieveQuery(client, resourceType, resourceId, idempotencyKey, options),
+    ...buildTranslationsGroupsRetrieveQuery(
+      client,
+      resourceType,
+      resourceId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -87,11 +85,12 @@ export function useTranslationsGroupsRetrieveSuspense(
 export function setTranslationsGroupsRetrieveData(
   client: QueryClient,
   queryKeyBase: [
-    resourceType: operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
+    resourceType:
+      operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
     resourceId: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
-  data: TranslationsGroupsRetrieveQueryData
+  data: TranslationsGroupsRetrieveQueryData,
 ): TranslationsGroupsRetrieveQueryData | undefined {
   const key = queryKeyTranslationsGroupsRetrieve(...queryKeyBase);
 
@@ -102,25 +101,26 @@ export function invalidateTranslationsGroupsRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [
-      resourceType: operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
+      resourceType:
+        operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
       resourceId: string,
       parameters: { idempotencyKey?: string | undefined },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Groups', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Groups", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllTranslationsGroupsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Groups', 'retrieve'],
+    queryKey: ["@novu/api", "Groups", "retrieve"],
   });
 }

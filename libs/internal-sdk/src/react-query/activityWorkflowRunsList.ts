@@ -10,16 +10,6 @@ import {
   useQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
-import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
 import * as operations from '../models/operations/index.js';
 import { useNovuContext } from './_context.js';
 import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
@@ -36,16 +26,6 @@ export {
   queryKeyActivityWorkflowRunsList,
 };
 
-export type ActivityWorkflowRunsListQueryError =
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
-
 /**
  * List workflow runs
  *
@@ -54,8 +34,8 @@ export type ActivityWorkflowRunsListQueryError =
  */
 export function useActivityWorkflowRunsList(
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: QueryHookOptions<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError>
-): UseQueryResult<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError> {
+  options?: QueryHookOptions<ActivityWorkflowRunsListQueryData>
+): UseQueryResult<ActivityWorkflowRunsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
     ...buildActivityWorkflowRunsListQuery(client, request, options),
@@ -71,8 +51,8 @@ export function useActivityWorkflowRunsList(
  */
 export function useActivityWorkflowRunsListSuspense(
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: SuspenseQueryHookOptions<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError>
-): UseSuspenseQueryResult<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError> {
+  options?: SuspenseQueryHookOptions<ActivityWorkflowRunsListQueryData>
+): UseSuspenseQueryResult<ActivityWorkflowRunsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildActivityWorkflowRunsListQuery(client, request, options),

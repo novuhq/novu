@@ -5,43 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { useNovuContext } from "./_context.js";
 import {
-  ConnectionError,
-  InvalidRequestError,
-  RequestAbortedError,
-  RequestTimeoutError,
-  UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildLayoutsUsageQuery,
   LayoutsUsageQueryData,
   prefetchLayoutsUsage,
   queryKeyLayoutsUsage,
-} from './layoutsUsage.core.js';
-export { buildLayoutsUsageQuery, type LayoutsUsageQueryData, prefetchLayoutsUsage, queryKeyLayoutsUsage };
-
-export type LayoutsUsageQueryError =
-  | errors.ErrorDto
-  | errors.ValidationErrorDto
-  | NovuError
-  | ResponseValidationError
-  | ConnectionError
-  | RequestAbortedError
-  | RequestTimeoutError
-  | InvalidRequestError
-  | UnexpectedClientError
-  | SDKValidationError;
+} from "./layoutsUsage.core.js";
+export {
+  buildLayoutsUsageQuery,
+  type LayoutsUsageQueryData,
+  prefetchLayoutsUsage,
+  queryKeyLayoutsUsage,
+};
 
 /**
  * Get layout usage
@@ -52,11 +38,16 @@ export type LayoutsUsageQueryError =
 export function useLayoutsUsage(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<LayoutsUsageQueryData, LayoutsUsageQueryError>
-): UseQueryResult<LayoutsUsageQueryData, LayoutsUsageQueryError> {
+  options?: QueryHookOptions<LayoutsUsageQueryData>,
+): UseQueryResult<LayoutsUsageQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildLayoutsUsageQuery(client, layoutId, idempotencyKey, options),
+    ...buildLayoutsUsageQuery(
+      client,
+      layoutId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -70,19 +61,27 @@ export function useLayoutsUsage(
 export function useLayoutsUsageSuspense(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<LayoutsUsageQueryData, LayoutsUsageQueryError>
-): UseSuspenseQueryResult<LayoutsUsageQueryData, LayoutsUsageQueryError> {
+  options?: SuspenseQueryHookOptions<LayoutsUsageQueryData>,
+): UseSuspenseQueryResult<LayoutsUsageQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildLayoutsUsageQuery(client, layoutId, idempotencyKey, options),
+    ...buildLayoutsUsageQuery(
+      client,
+      layoutId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setLayoutsUsageData(
   client: QueryClient,
-  queryKeyBase: [layoutId: string, parameters: { idempotencyKey?: string | undefined }],
-  data: LayoutsUsageQueryData
+  queryKeyBase: [
+    layoutId: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: LayoutsUsageQueryData,
 ): LayoutsUsageQueryData | undefined {
   const key = queryKeyLayoutsUsage(...queryKeyBase);
 
@@ -91,21 +90,23 @@ export function setLayoutsUsageData(
 
 export function invalidateLayoutsUsage(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[layoutId: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [layoutId: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Layouts', 'usage', ...queryKeyBase],
+    queryKey: ["@novu/api", "Layouts", "usage", ...queryKeyBase],
   });
 }
 
 export function invalidateAllLayoutsUsage(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Layouts', 'usage'],
+    queryKey: ["@novu/api", "Layouts", "usage"],
   });
 }

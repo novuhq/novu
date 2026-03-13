@@ -12,6 +12,7 @@ import { OpenEnum } from '../../types/enums.js';
 export const UiComponentEnum = {
   EmailEditorSelect: 'EMAIL_EDITOR_SELECT',
   LayoutSelect: 'LAYOUT_SELECT',
+  EmailRendererSelect: 'EMAIL_RENDERER_SELECT',
   BlockEditor: 'BLOCK_EDITOR',
   EmailBody: 'EMAIL_BODY',
   TextFullLine: 'TEXT_FULL_LINE',
