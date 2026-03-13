@@ -48,6 +48,7 @@ overrides:
   axios@>=1.0.0 <1.13.5: ^1.13.5
   seroval@<1.4.1: ^1.4.1
   h3@<=1.15.4: ^1.15.5
+  jws@>=4.0.0 <4.0.1: ^4.0.1
 
 importers:
 
@@ -20942,9 +20943,6 @@ packages:
   jwa@1.4.1:
     resolution: {integrity: sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==}
 
-  jwa@2.0.0:
-    resolution: {integrity: sha512-jrZ2Qx916EA+fq9cEAeCROWPTfCwi1IVHqT2tapuqLEVVDKFDENFw1oL+MwrTvH6msKxsd1YTDVw6uKEcsrLEA==}
-
   jwa@2.0.1:
     resolution: {integrity: sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==}
 
@@ -20954,9 +20952,6 @@ packages:
 
   jws@3.2.2:
     resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
-
-  jws@4.0.0:
-    resolution: {integrity: sha512-KDncfTmOZoOMTFG4mBlG0qUIOlc03fmzH+ru6RgYVZhPkyiy/92Owlt/8UEN+a4TXR1FQetfIpJE8ApdvdVxTg==}
 
   jws@4.0.1:
     resolution: {integrity: sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==}
@@ -49200,7 +49195,7 @@ snapshots:
       gaxios: 4.3.3(encoding@0.1.13)
       gcp-metadata: 4.3.1(encoding@0.1.13)
       gtoken: 5.3.2(encoding@0.1.13)
-      jws: 4.0.0
+      jws: 4.0.1
       lru-cache: 6.0.0
     transitivePeerDependencies:
       - encoding
@@ -49215,7 +49210,7 @@ snapshots:
       gaxios: 5.1.3(encoding@0.1.13)
       gcp-metadata: 5.3.0(encoding@0.1.13)
       gtoken: 6.1.2(encoding@0.1.13)
-      jws: 4.0.0
+      jws: 4.0.1
       lru-cache: 6.0.0
     transitivePeerDependencies:
       - encoding
@@ -49228,7 +49223,7 @@ snapshots:
       gaxios: 6.1.1(encoding@0.1.13)
       gcp-metadata: 6.1.0(encoding@0.1.13)
       gtoken: 7.1.0(encoding@0.1.13)
-      jws: 4.0.0
+      jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -49332,7 +49327,7 @@ snapshots:
     dependencies:
       gaxios: 4.3.3(encoding@0.1.13)
       google-p12-pem: 3.1.4
-      jws: 4.0.0
+      jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -49341,7 +49336,7 @@ snapshots:
     dependencies:
       gaxios: 5.1.3(encoding@0.1.13)
       google-p12-pem: 4.0.1
-      jws: 4.0.0
+      jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -49349,7 +49344,7 @@ snapshots:
   gtoken@7.1.0(encoding@0.1.13):
     dependencies:
       gaxios: 6.1.1(encoding@0.1.13)
-      jws: 4.0.0
+      jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -51822,12 +51817,6 @@ snapshots:
       ecdsa-sig-formatter: 1.0.11
       safe-buffer: 5.2.1
 
-  jwa@2.0.0:
-    dependencies:
-      buffer-equal-constant-time: 1.0.1
-      ecdsa-sig-formatter: 1.0.11
-      safe-buffer: 5.2.1
-
   jwa@2.0.1:
     dependencies:
       buffer-equal-constant-time: 1.0.1
@@ -51848,11 +51837,6 @@ snapshots:
   jws@3.2.2:
     dependencies:
       jwa: 1.4.1
-      safe-buffer: 5.2.1
-
-  jws@4.0.0:
-    dependencies:
-      jwa: 2.0.0
       safe-buffer: 5.2.1
 
   jws@4.0.1:
