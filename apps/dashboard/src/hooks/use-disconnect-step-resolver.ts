@@ -25,6 +25,7 @@ export const useDisconnectStepResolver = (
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] }),
         queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] }),
+        queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] }),
       ]);
       options?.onSuccess?.(data, variables, ctx);
     },

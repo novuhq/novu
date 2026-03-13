@@ -32,12 +32,12 @@ const ERROR_CONTENT_MAPPINGS: Record<string, ErrorContent> = {
   },
   STEP_RESOLVER_UNAVAILABLE: {
     title: 'Preview unavailable',
-    getMessage: () => 'Your email template code is unavailable. Try running "npx novu step publish" to redeploy.',
+    getMessage: () => 'Your step template code is unavailable. Try running "npx novu step publish" to redeploy.',
     hint: 'This is not a problem with your template code.',
   },
   STEP_RESOLVER_NOT_FOUND: {
     title: 'Preview unavailable',
-    getMessage: () => 'No published email template code found. Run "npx novu step publish" to deploy your templates.',
+    getMessage: () => 'No published step template code found. Run "npx novu step publish" to deploy your templates.',
     hint: 'This is not a problem with your template code.',
   },
   STEP_RESOLVER_AUTHENTICATION_FAILED: {
@@ -52,18 +52,18 @@ const ERROR_CONTENT_MAPPINGS: Record<string, ErrorContent> = {
   },
   STEP_RESOLVER_TIMEOUT: {
     title: 'Preview unavailable',
-    getMessage: () => 'Your email template took too long to render. Check for slow operations in your template code.',
+    getMessage: () => 'Your step template took too long to render. Check for slow operations in your template code.',
     hint: 'This is not a problem with your template code.',
   },
   STEP_RESOLVER_ERROR: {
     title: 'Preview unavailable',
-    getMessage: () => 'Failed to reach your email template code. Try running "npx novu step publish" to redeploy.',
+    getMessage: () => 'Failed to reach your step template code. Try running "npx novu step publish" to redeploy.',
     hint: 'This is not a problem with your template code.',
   },
   STEP_RESOLVER_HTTP_ERROR: {
     title: 'Preview unavailable',
     getMessage: () =>
-      'An unexpected error occurred while rendering your email template. Please contact support if this persists.',
+      'An unexpected error occurred while rendering your step template. Please contact support if this persists.',
     hint: 'This is not a problem with your template code.',
   },
 };

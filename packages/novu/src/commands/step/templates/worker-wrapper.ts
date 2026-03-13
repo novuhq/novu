@@ -29,10 +29,10 @@ function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
-    validateData(output, {}).catch(() => {})
+    validateData(output, {})
   ),
   ...[${handlerRefs}].flatMap(handler =>
-    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+    handler.controlSchema ? [validateData(handler.controlSchema, {})] : []
   ),
 ]);`;
 }

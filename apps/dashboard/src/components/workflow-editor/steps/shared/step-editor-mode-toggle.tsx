@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useState } from 'react';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
@@ -6,8 +6,7 @@ import { useStepEditor } from '@/components/workflow-editor/steps/context/step-e
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-
-const RESOLVER_UNSUPPORTED_TYPES = new Set([StepTypeEnum.THROTTLE]);
+import { TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 
 export function StepEditorModeToggle() {
   const { step, isPendingResolverActivation, setIsPendingResolverActivation } = useStepEditor();
@@ -18,7 +17,7 @@ export function StepEditorModeToggle() {
 
   if (
     !isStepResolverEnabled ||
-    RESOLVER_UNSUPPORTED_TYPES.has(step.type) ||
+    !TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type) ||
     currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
     readOnly
   ) {

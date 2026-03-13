@@ -63,7 +63,7 @@ export type IntegrationResponseDto = {
   /**
    * The configurations required for enabling the additional configurations of the integration.
    */
-  configurations?: ConfigurationsDto | undefined;
+  configurations: ConfigurationsDto;
   /**
    * Indicates whether the integration is currently active. An active integration will process events and messages.
    */
@@ -105,7 +105,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<IntegrationResponse
     providerId: z.string(),
     channel: IntegrationResponseDtoChannel$inboundSchema,
     credentials: CredentialsDto$inboundSchema,
-    configurations: ConfigurationsDto$inboundSchema.optional(),
+    configurations: ConfigurationsDto$inboundSchema,
     active: z.boolean(),
     deleted: z.boolean(),
     deletedAt: z.string().optional(),

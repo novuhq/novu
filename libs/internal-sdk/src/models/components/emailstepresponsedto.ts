@@ -28,18 +28,6 @@ export const EmailStepResponseDtoEditorType = {
 export type EmailStepResponseDtoEditorType = ClosedEnum<typeof EmailStepResponseDtoEditorType>;
 
 /**
- * Type of renderer to use (raw HTML or React Email step resolver)
- */
-export const EmailStepResponseDtoRendererType = {
-  Html: 'html',
-  ReactEmail: 'react-email',
-} as const;
-/**
- * Type of renderer to use (raw HTML or React Email step resolver)
- */
-export type EmailStepResponseDtoRendererType = ClosedEnum<typeof EmailStepResponseDtoRendererType>;
-
-/**
  * Control values for the email step
  */
 export type EmailStepResponseDtoControlValues = {
@@ -59,10 +47,6 @@ export type EmailStepResponseDtoControlValues = {
    * Type of editor to use for the body.
    */
   editorType: EmailStepResponseDtoEditorType;
-  /**
-   * Type of renderer to use (raw HTML or React Email step resolver)
-   */
-  rendererType: EmailStepResponseDtoRendererType;
   /**
    * Disable sanitization of the output.
    */
@@ -123,15 +107,15 @@ export type EmailStepResponseDto = {
    * Issues associated with the step
    */
   issues?: StepIssuesDto | undefined;
+  /**
+   * Hash identifying the deployed Cloudflare Worker for this step
+   */
+  stepResolverHash?: string | undefined;
 };
 
 /** @internal */
 export const EmailStepResponseDtoEditorType$inboundSchema: z.ZodNativeEnum<typeof EmailStepResponseDtoEditorType> =
   z.nativeEnum(EmailStepResponseDtoEditorType);
-
-/** @internal */
-export const EmailStepResponseDtoRendererType$inboundSchema: z.ZodNativeEnum<typeof EmailStepResponseDtoRendererType> =
-  z.nativeEnum(EmailStepResponseDtoRendererType);
 
 /** @internal */
 export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
@@ -145,7 +129,6 @@ export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
       subject: z.string(),
       body: z.string().default(''),
       editorType: EmailStepResponseDtoEditorType$inboundSchema.default('block'),
-      rendererType: EmailStepResponseDtoRendererType$inboundSchema.default('html'),
       disableOutputSanitization: z.boolean().default(false),
       layoutId: z.nullable(z.string()).optional(),
     })
@@ -179,6 +162,7 @@ export const EmailStepResponseDto$inboundSchema: z.ZodType<EmailStepResponseDto,
     workflowId: z.string(),
     workflowDatabaseId: z.string(),
     issues: StepIssuesDto$inboundSchema.optional(),
+    stepResolverHash: z.string().optional(),
   })
   .transform((v) => {
     return remap$(v, {
