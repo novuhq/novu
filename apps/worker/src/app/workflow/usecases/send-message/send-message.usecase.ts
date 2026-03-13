@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildSubscriberKey,
-  CachedResponse,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
@@ -23,7 +21,6 @@ import {
   ContextRepository,
   JobEntity,
   NotificationTemplateRepository,
-  SubscriberEntity,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
@@ -44,7 +41,8 @@ import {
 } from '@novu/shared';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
-import { ExecuteStepCustom } from './execute-step-custom.usecase';
+import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
+import { ExecuteHttpRequestStep } from './execute-http-request-step.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageChat } from './send-message-chat.usecase';
@@ -70,7 +68,8 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private sendMessageDelay: SendMessageDelay,
     private throttle: Throttle,
-    private executeStepCustom: ExecuteStepCustom,
+    private executeCodeFirstCustomStep: ExecuteCodeFirstCustomStep,
+    private executeHttpRequestStep: ExecuteHttpRequestStep,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
@@ -106,6 +105,7 @@ export class SendMessage {
         workflow: command.workflow,
       });
     }
+
     const isBridgeSkipped = bridgeResponse?.options?.skip;
     if (isBridgeSkipped) {
       await this.createExecutionDetails.execute(
@@ -204,8 +204,11 @@ export class SendMessage {
       case StepTypeEnum.THROTTLE: {
         return await this.throttle.execute(command);
       }
+      case StepTypeEnum.HTTP_REQUEST: {
+        return await this.executeHttpRequestStep.execute(sendMessageChannelCommand);
+      }
       case StepTypeEnum.CUSTOM: {
-        return await this.executeStepCustom.execute(sendMessageChannelCommand);
+        return await this.executeCodeFirstCustomStep.execute(sendMessageChannelCommand);
       }
       default: {
         throw new Error(`Unsupported step type: ${stepType}`);
@@ -329,7 +332,7 @@ export class SendMessage {
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
-    if (this.isActionStep(job)) {
+    if (!this.isChannelStep(job)) {
       return { result: true };
     }
 
@@ -501,10 +504,10 @@ export class SendMessage {
     return workflowPreferred && channelPreferred;
   }
 
-  private isActionStep(job: JobEntity) {
+  private isChannelStep(job: JobEntity) {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
-    return !channels.find((channel) => channel === job.type);
+    return !!channels.find((channel) => channel === job.type);
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
@@ -562,6 +565,22 @@ export class SendMessage {
   }
 }
 
-function isChannelStep(stepType: StepTypeEnum | undefined) {
-  return ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum);
+const CHANNEL_STEP_MAP: Record<StepTypeEnum, boolean> = {
+  [StepTypeEnum.IN_APP]: true,
+  [StepTypeEnum.EMAIL]: true,
+  [StepTypeEnum.SMS]: true,
+  [StepTypeEnum.CHAT]: true,
+  [StepTypeEnum.PUSH]: true,
+  [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.HTTP_REQUEST]: false,
+  [StepTypeEnum.DIGEST]: false,
+  [StepTypeEnum.DELAY]: false,
+  [StepTypeEnum.TRIGGER]: false,
+  [StepTypeEnum.THROTTLE]: false,
+};
+
+function isChannelStep(stepType: StepTypeEnum | undefined): boolean {
+  if (!stepType) return false;
+
+  return CHANNEL_STEP_MAP[stepType];
 }

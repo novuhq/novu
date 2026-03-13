@@ -316,6 +316,28 @@ export class ConstructFrameworkWorkflow {
           },
           this.constructActionStepOptions(staticStep, fullPayloadForRender)
         );
+      /*
+       * Custom steps are executed by the worker, bypassing the bridge entirely. However, when a subsequent
+       * step triggers a bridge call, the framework reconstructs the full workflow from the DB and iterates
+       * over every step — including these. We must register each such step here so the framework can build
+       * the workflow graph correctly. The resolve function is a passthrough because execution already happened.
+       */
+      case StepTypeEnum.HTTP_REQUEST:
+        return step.custom(
+          stepId,
+          async (controlValues) => {
+            return controlValues;
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
+      case StepTypeEnum.CUSTOM:
+        return step.custom(
+          stepId,
+          async (controlValues) => {
+            return controlValues;
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
       default:
         throw new InternalServerErrorException(`Step type ${stepType} is not supported`);
     }

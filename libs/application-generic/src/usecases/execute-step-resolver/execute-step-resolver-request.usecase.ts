@@ -4,12 +4,12 @@ import { ExecuteOutput, HttpQueryKeysEnum } from '@novu/framework/internal';
 import got, { HTTPError } from 'got';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
+import { RETRYABLE_ERROR_CODES } from '../../services/http-client';
 import {
   BridgeError,
   ExecuteBridgeRequestCommand,
   ProcessError,
 } from '../execute-bridge-request/execute-bridge-request.command';
-import { RETRYABLE_ERROR_CODES } from '../execute-bridge-request/execute-framework-request.usecase';
 
 export const DEFAULT_TIMEOUT = 30_000; // 30 seconds
 export const DEFAULT_RETRIES_LIMIT = 2;

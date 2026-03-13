@@ -47,6 +47,8 @@ export enum DetailEnum {
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel with the given context',
   MESSAGE_SENT = 'Message sent',
+  STEP_PROCESSED = 'Step processed',
+  PROVIDER_MISSING = 'Provider is missing or not configured',
   PROVIDER_ERROR = 'Unexpected provider error',
   START_DIGESTING = 'Start digesting',
   STEP_COMPLETED = 'Step completed',
@@ -84,6 +86,9 @@ export enum DetailEnum {
   MSTEAMS_TENANT_NOT_CONSENTED = 'Tenant admin consent not granted for MS Teams',
   MSTEAMS_INVALID_CREDENTIALS = 'Invalid MS Teams bot credentials',
   TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION = 'Topic subscription preference evaluated',
+  ACTION_STEP_EXECUTION_FAILED = 'Action step execution failed',
+  RESPONSE_SCHEMA_VALIDATION_FAILED = 'Response body schema validation failed',
+  STEP_CANCELED = 'Step was canceled because a previous step failed',
 }
 
 export function createProviderSelectedMessage(providerId: string): string {

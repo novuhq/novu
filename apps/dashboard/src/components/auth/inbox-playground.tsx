@@ -25,7 +25,11 @@ const PLAYGROUND_CONFIG = {
   totalSteps: 4,
 } as const;
 
-function showCustomToast(message: string, variant: 'success' | 'error') {
+function showCustomToast(
+  message: string,
+  variant: 'success' | 'error',
+  position: 'bottom-center' | 'top-center' | 'bottom-right' = 'bottom-center'
+) {
   showToast({
     children: () => (
       <>
@@ -34,7 +38,7 @@ function showCustomToast(message: string, variant: 'success' | 'error') {
       </>
     ),
     options: {
-      position: 'bottom-center',
+      position,
       style: {
         left: '50%',
         transform: 'translateX(-50%)',
@@ -76,7 +80,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
 
       telemetry(TelemetryEvent.INBOX_NOTIFICATION_SENT);
       setHasNotificationBeenSent(true);
-      showCustomToast('Notification sent successfully!', 'success');
+      showCustomToast('Notification sent successfully!', 'success', 'bottom-right');
     } catch (error) {
       console.error('Failed to send notification:', error);
       showCustomToast('Failed to send notification. Please try again later.', 'error');
@@ -89,6 +93,18 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
     }
 
     telemetry(TelemetryEvent.INBOX_NEXT_STEP_CLICKED);
+    const queryParams = new URLSearchParams();
+
+    if (environment?._id) {
+      queryParams.set('environmentId', environment._id);
+    }
+
+    const qs = queryParams.toString();
+    navigate(qs ? `${ROUTES.INBOX_EMBED}?${qs}` : ROUTES.INBOX_EMBED);
+  };
+
+  const handleSkipClick = () => {
+    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED);
     const queryParams = new URLSearchParams();
 
     if (environment?._id) {
@@ -143,39 +159,57 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
 
       {/* Action Buttons - Show with optimized interaction states */}
       <div className="bg-muted">
-        <div className="flex justify-center gap-2 p-3">
+        <div className="flex items-center justify-center gap-2 p-3">
           {!hasNotificationBeenSent ? (
-            <Button
-              variant="secondary"
-              size="xs"
-              trailingIcon={Notification5Fill}
-              isLoading={isPending}
-              onClick={handleSendNotification}
-              disabled={isPending}
-              className="px-2"
-            >
-              Send notification
-            </Button>
+            <>
+              <button
+                type="button"
+                onClick={handleSkipClick}
+                className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
+              >
+                Skip
+              </button>
+              <Button
+                variant="secondary"
+                size="xs"
+                trailingIcon={Notification5Fill}
+                isLoading={isPending}
+                onClick={handleSendNotification}
+                disabled={isPending}
+                className="px-2"
+              >
+                Send notification
+              </Button>
+            </>
           ) : (
-            <Button
-              onClick={handleNextStepClick}
-              disabled={!appId}
-              size="xs"
-              trailingIcon={RiArrowRightSLine}
-              className="px-2.5 text-white disabled:opacity-50"
-              style={{
-                background:
-                  'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #DD2450',
-                boxShadow: '0px 1px 2px rgba(14, 18, 27, 0.24), 0px 0px 0px 1px #DD2450',
-                fontFamily: 'Inter',
-                fontSize: '12px',
-                lineHeight: '16px',
-                fontWeight: 500,
-                fontFeatureSettings: '"cv09" on, "ss11" on, "calt" off, "liga" off',
-              }}
-            >
-              Next Step
-            </Button>
+            <>
+              <button
+                type="button"
+                onClick={handleSkipClick}
+                className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
+              >
+                Skip
+              </button>
+              <Button
+                onClick={handleNextStepClick}
+                disabled={!appId}
+                size="xs"
+                trailingIcon={RiArrowRightSLine}
+                className="px-2.5 text-white disabled:opacity-50"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #DD2450',
+                  boxShadow: '0px 1px 2px rgba(14, 18, 27, 0.24), 0px 0px 0px 1px #DD2450',
+                  fontFamily: 'Inter',
+                  fontSize: '12px',
+                  lineHeight: '16px',
+                  fontWeight: 500,
+                  fontFeatureSettings: '"cv09" on, "ss11" on, "calt" off, "liga" off',
+                }}
+              >
+                Next Step
+              </Button>
+            </>
           )}
         </div>
       </div>

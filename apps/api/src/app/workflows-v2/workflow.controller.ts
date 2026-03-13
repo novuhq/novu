@@ -53,6 +53,8 @@ import {
   PatchWorkflowDto,
   StepUpsertDto,
   SyncWorkflowDto,
+  TestHttpEndpointRequestDto,
+  TestHttpEndpointResponseDto,
   UpdateWorkflowDto,
   WorkflowTestDataResponseDto,
 } from './dtos';
@@ -64,6 +66,8 @@ import {
   ListWorkflowsUseCase,
   SyncToEnvironmentCommand,
   SyncToEnvironmentUseCase,
+  TestHttpEndpointCommand,
+  TestHttpEndpointUsecase,
   WorkflowTestDataCommand,
 } from './usecases';
 import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-workflow';
@@ -85,7 +89,8 @@ export class WorkflowController {
     private buildWorkflowTestDataUseCase: BuildWorkflowTestDataUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
     private patchWorkflowUsecase: PatchWorkflowUsecase,
-    private duplicateWorkflowUseCase: DuplicateWorkflowUseCase
+    private duplicateWorkflowUseCase: DuplicateWorkflowUseCase,
+    private testHttpEndpointUsecase: TestHttpEndpointUsecase
   ) {}
 
   @Post('')
@@ -299,6 +304,32 @@ export class WorkflowController {
         workflowIdOrInternalId,
         stepIdOrInternalId,
         generatePreviewRequestDto,
+      })
+    );
+  }
+
+  @Post('/steps/test-http-request')
+  @ApiOperation({
+    summary: 'Test HTTP request step',
+    description:
+      'Executes the configured HTTP request for a step, resolving template variables using the provided preview payload',
+  })
+  @ApiBody({
+    type: TestHttpEndpointRequestDto,
+    description: 'Control values and preview payload for variable resolution',
+  })
+  @ApiResponse(TestHttpEndpointResponseDto, 201)
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  async testHttpEndpoint(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Body() body: TestHttpEndpointRequestDto
+  ): Promise<TestHttpEndpointResponseDto> {
+    return this.testHttpEndpointUsecase.execute(
+      TestHttpEndpointCommand.create({
+        user,
+        controlValues: body.controlValues,
+        previewPayload: body.previewPayload,
       })
     );
   }

@@ -16,6 +16,7 @@ import {
   ExecuteStepResolverRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
+  HttpClientService,
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
@@ -150,6 +151,7 @@ const PROVIDERS = [
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
+  HttpClientService,
   ...ANALYTICS_PROVIDERS,
 ];
 

@@ -452,15 +452,43 @@ export const ThrottleNode = (props: NodeProps<NodeType>) => {
   );
 };
 
+export const HttpRequestNode = (props: NodeProps<NodeType>) => {
+  const { id, data } = props;
+  const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.HTTP_REQUEST];
+  const color = STEP_TYPE_TO_COLOR[StepTypeEnum.HTTP_REQUEST];
+
+  return (
+    <NodeWrapper id={id} type={StepTypeEnum.HTTP_REQUEST}>
+      <StepNode id={id} data={data} type={StepTypeEnum.HTTP_REQUEST}>
+        <NodeHeader type={StepTypeEnum.HTTP_REQUEST} badgeLabel="API" badgeColor={color}>
+          <NodeIcon variant={color}>
+            <Icon />
+          </NodeIcon>
+          <NodeName>{data.name || 'HTTP Request Step'}</NodeName>
+        </NodeHeader>
+        <NodeBody type={StepTypeEnum.HTTP_REQUEST} controlValues={data.controlValues ?? {}}>
+          {data.content}
+        </NodeBody>
+        {data.error && <NodeError>{data.error}</NodeError>}
+        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+        <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
+        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+        <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
+      </StepNode>
+    </NodeWrapper>
+  );
+};
+
 export const CustomNode = (props: NodeProps<NodeType>) => {
   const { id, data } = props;
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.CUSTOM];
+  const color = STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM];
 
   return (
     <NodeWrapper id={id} type={StepTypeEnum.CUSTOM}>
       <StepNode id={id} data={data} type={StepTypeEnum.CUSTOM}>
-        <NodeHeader type={StepTypeEnum.CUSTOM}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM]}>
+        <NodeHeader type={StepTypeEnum.CUSTOM} badgeColor={color}>
+          <NodeIcon variant={color}>
             <Icon />
           </NodeIcon>
           <NodeName>{data.name || 'Custom Step'}</NodeName>
@@ -516,7 +544,7 @@ export const AddNode = (props: NodeProps<NodeType>) => {
             disabled={isReadOnly}
             visible
             className="-mt-1"
-            onMenuItemClick={(stepType) => addNode(data.index, stepType)}
+            onMenuItemClick={(selection) => addNode(data.index, selection)}
           />
         )}
       </motion.div>

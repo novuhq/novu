@@ -230,6 +230,14 @@ export class GeneratePreviewResponseDto {
   @IsOptional()
   schema?: any | null;
 
+  @ApiPropertyOptional({
+    description: 'Sample novu-signature header value for HTTP request steps',
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  novuSignature?: string;
+
   @ApiProperty({
     description: 'Preview result',
     type: 'object',

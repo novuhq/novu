@@ -235,9 +235,17 @@ function buildObjectFromPaths(
   return result;
 }
 
-// Helper function to set nested properties in an object
+const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function isPrototypePollutionKey(key: string): boolean {
+  return PROTOTYPE_POLLUTION_KEYS.has(key);
+}
+
 function setNestedProperty(obj: Record<string, unknown>, path: string, value: string) {
   const keys = path.split('.');
+
+  if (keys.some(isPrototypePollutionKey)) return;
+
   let current = obj;
 
   for (let i = 0; i < keys.length - 1; i += 1) {

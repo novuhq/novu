@@ -54,6 +54,8 @@ export const envValidators = {
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
   ENABLE_OTEL: bool({ default: false }),
+  ENABLE_OTEL_LOGS: bool({ default: false }),
+  OTEL_PROMETHEUS_PORT: num({ default: 9464 }),
   NOTIFICATION_RETENTION_DAYS: num({ default: DEFAULT_NOTIFICATION_RETENTION_DAYS }),
   API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),

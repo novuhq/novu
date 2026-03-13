@@ -1,5 +1,6 @@
 import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
 import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
+import { httpRequestControlSchema, httpRequestUiSchema } from '@novu/shared';
 import {
   chatControlSchema,
   chatUiSchema,
@@ -26,7 +27,7 @@ export const PERMISSIVE_EMPTY_SCHEMA = {
   additionalProperties: true,
 } as JSONSchemaEntity;
 
-export const stepTypeToControlSchema: Record<ChannelStepEnum | ActionStepEnum, ControlSchemas> = {
+const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, ControlSchemas> = {
   [ChannelStepEnum.IN_APP]: {
     schema: inAppControlSchema,
     uiSchema: inAppUiSchema,
@@ -62,4 +63,13 @@ export const stepTypeToControlSchema: Record<ChannelStepEnum | ActionStepEnum, C
   [ActionStepEnum.CUSTOM]: {
     schema: PERMISSIVE_EMPTY_SCHEMA,
   },
+  [ActionStepEnum.HTTP_REQUEST]: {
+    schema: httpRequestControlSchema as unknown as JSONSchemaEntity,
+    uiSchema: httpRequestUiSchema,
+  },
 };
+
+export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<
+  ChannelStepEnum | ActionStepEnum,
+  ControlSchemas
+>;

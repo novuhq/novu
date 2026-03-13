@@ -17,7 +17,7 @@ export class BuildStepDataUsecase {
   constructor(
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
-    private buildAvailableVariableSchemaUsecase: BuildVariableSchemaUsecase
+    private buildVariableSchemaUsecase: BuildVariableSchemaUsecase
   ) {}
 
   @InstrumentUsecase()
@@ -86,7 +86,7 @@ export class BuildStepDataUsecase {
     workflow: NotificationTemplateEntity,
     previewData?: PreviewPayloadDto
   ) {
-    return await this.buildAvailableVariableSchemaUsecase.execute({
+    return await this.buildVariableSchemaUsecase.execute({
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
       userId: command.user._id,

@@ -15,6 +15,7 @@ import {
   DelayNode,
   DigestNode,
   EmailNode,
+  HttpRequestNode,
   InAppNode,
   NodeData,
   PushNode,
@@ -38,6 +39,7 @@ export const nodeTypes = {
   digest: DigestNode,
   throttle: ThrottleNode,
   custom: CustomNode,
+  http_request: HttpRequestNode,
   add: AddNode,
 };
 
@@ -52,6 +54,7 @@ export const NODE_TYPE_TO_STEP_TYPE: Omit<Record<keyof typeof nodeTypes, StepTyp
   digest: StepTypeEnum.DIGEST,
   throttle: StepTypeEnum.THROTTLE,
   custom: StepTypeEnum.CUSTOM,
+  http_request: StepTypeEnum.HTTP_REQUEST,
 };
 
 export const edgeTypes = {
@@ -93,6 +96,8 @@ export const mapStepToNodeContent = (
       return 'Batches events into one coherent message before delivery to the subscriber.';
     case StepTypeEnum.THROTTLE:
       return 'Limits the number of workflow executions within a specified time window.';
+    case StepTypeEnum.HTTP_REQUEST:
+      return 'Send or receive data by calling an external API';
     case StepTypeEnum.CUSTOM:
       return 'Executes the business logic in your bridge application';
     default:
