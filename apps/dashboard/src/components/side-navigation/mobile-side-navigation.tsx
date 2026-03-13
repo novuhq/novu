@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useEffect, useState } from 'react';
 import { RiMenuLine } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
 import { SideNavigation } from './side-navigation';
-import { useEffect } from 'react';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 export function MobileSideNavigation() {
   const [isOpen, setIsOpen] = useState(false);
