@@ -22,7 +22,7 @@ function buildLlmPrompt(
         '\n  novu-signature: t=<timestamp>,v1=<hmac-sha256>'
       : '  novu-signature: t=<timestamp>,v1=<hmac-sha256>';
 
-  const canHaveBody = method !== 'GET' && method !== 'DELETE';
+  const canHaveBody = method !== 'GET' && method !== 'DELETE' && method !== 'HEAD' && method !== 'OPTIONS';
   const bodyObject =
     canHaveBody && activeBody.length > 0 ? Object.fromEntries(activeBody.map(({ key, value }) => [key, value])) : null;
 

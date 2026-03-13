@@ -21,7 +21,7 @@ export function buildRawCurlString(
 
   const headerArgs = headerEntries.map(([k, v]) => `--header '${k}: ${v}'`).join(' \\\n');
 
-  const canHaveBody = method !== 'GET' && method !== 'DELETE';
+  const canHaveBody = method !== 'GET' && method !== 'DELETE' && method !== 'HEAD' && method !== 'OPTIONS';
   let bodyObj: Record<string, unknown> | null = null;
 
   if (canHaveBody) {
