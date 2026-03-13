@@ -11,10 +11,10 @@ import { channelStepSchemas } from '@novu/framework/step-resolver';
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
-    validateData(output, {}).catch(() => {})
+    validateData(output, {})
   ),
   ...[].flatMap(handler =>
-    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+    handler.controlSchema ? [validateData(handler.controlSchema, {})] : []
   ),
 ]);
 
@@ -143,10 +143,10 @@ import stepHandler0 from "./novu/welcome-email.step";
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
-    validateData(output, {}).catch(() => {})
+    validateData(output, {})
   ),
   ...[stepHandler0].flatMap(handler =>
-    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+    handler.controlSchema ? [validateData(handler.controlSchema, {})] : []
   ),
 ]);
 
@@ -276,10 +276,10 @@ import stepHandler1 from "./novu/verify-email.step";
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
-    validateData(output, {}).catch(() => {})
+    validateData(output, {})
   ),
   ...[stepHandler0, stepHandler1].flatMap(handler =>
-    handler.controlSchema ? [validateData(handler.controlSchema, {}).catch(() => {})] : []
+    handler.controlSchema ? [validateData(handler.controlSchema, {})] : []
   ),
 ]);
 
