@@ -203,8 +203,8 @@ export const WorkflowsPage = () => {
       <PageMeta title="Workflows" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>}>
         <div className="flex h-full w-full flex-col">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 py-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2 py-2.5">
               <FacetedFormFilter
                 type="text"
                 size="small"
