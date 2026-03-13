@@ -15,9 +15,9 @@ const helpfulResources: Resource[] = [
     url: 'https://docs.novu.co/',
   },
   {
-    title: 'Join our community on Discord',
-    image: 'discord.svg',
-    url: 'https://discord.gg/novu',
+    title: 'Install Novu MCP',
+    image: 'mcp.svg',
+    url: 'https://docs.novu.co/platform/additional-resources/mcp',
   },
   {
     title: 'See our code on GitHub',

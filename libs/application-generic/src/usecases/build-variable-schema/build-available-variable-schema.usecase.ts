@@ -22,6 +22,14 @@ import { parsePayloadSchema } from '../../utils/parse-payload-schema';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../create-variables-object';
 import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
 
+type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
+
+const SELECTED_CONTROL_VALUES_PROJECTION: Record<keyof SelectedControlValuesFields, 1> & { _id: 0 } = {
+  controls: 1,
+  _stepId: 1,
+  _id: 0,
+} as const;
+
 @Injectable()
 export class BuildVariableSchemaUsecase {
   constructor(
@@ -35,10 +43,10 @@ export class BuildVariableSchemaUsecase {
       command;
 
     let workflowControlValues: unknown[] = [];
+    let controls: SelectedControlValuesFields[] = [];
     if (workflow) {
-      let controls: ControlValuesEntity[];
       if (preloadedControlValues) {
-        controls = preloadedControlValues;
+        controls = preloadedControlValues as SelectedControlValuesFields[];
       } else {
         controls = await this.controlValuesRepository.find(
           {
@@ -48,10 +56,7 @@ export class BuildVariableSchemaUsecase {
             level: ControlValuesLevelEnum.STEP_CONTROLS,
             controls: { $ne: null },
           },
-          {
-            controls: 1,
-            _id: 0,
-          }
+          SELECTED_CONTROL_VALUES_PROJECTION
         );
       }
 
@@ -70,7 +75,6 @@ export class BuildVariableSchemaUsecase {
       })
     );
 
-    // Merge preview data with extracted variables if available
     const {
       payload: finalPayload,
       subscriber: finalSubscriber,
@@ -79,12 +83,18 @@ export class BuildVariableSchemaUsecase {
       ? this.mergePreviewData({ payload, subscriber, context }, previewData)
       : { payload: payload || {}, subscriber: subscriber || {}, context: context || {} };
 
-    // Build effective steps by combining persisted steps with optimistic steps
     const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
 
     const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
     const effectivePayloadSchema = optimisticPayloadSchema ?? workflow?.payloadSchema;
+
+    const controlValuesMap: Record<string, Record<string, unknown>> = {};
+    for (const cv of controls) {
+      if (cv._stepId) {
+        controlValuesMap[cv._stepId] = cv.controls;
+      }
+    }
 
     return {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -94,6 +104,7 @@ export class BuildVariableSchemaUsecase {
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: effectivePayloadSchema,
+          controlValuesMap,
         }),
         payload: await this.resolvePayloadSchema(workflow, finalPayload, optimisticPayloadSchema),
         context: buildContextSchema(finalContext),
@@ -191,22 +202,29 @@ export class BuildVariableSchemaUsecase {
 function buildPreviousStepsProperties({
   previousSteps,
   payloadSchema,
+  controlValuesMap,
 }: {
   previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
+  controlValuesMap?: Record<string, Record<string, unknown>>;
 }) {
   return (previousSteps || []).reduce(
     (acc, step) => {
-      // Handle both persisted steps and optimistic steps
       let stepId: string | undefined;
       let stepType: StepTypeEnum | undefined;
+      let responseBodySchema: JSONSchemaDto | undefined;
 
       if ('template' in step && step.template?.type) {
-        // Persisted step
         stepId = step.stepId;
         stepType = step.template.type;
+
+        if (stepType === StepTypeEnum.HTTP_REQUEST && step._id && controlValuesMap) {
+          const stepControls = controlValuesMap[step._id];
+          if (stepControls?.responseBodySchema) {
+            responseBodySchema = stepControls.responseBodySchema as JSONSchemaDto;
+          }
+        }
       } else if ('type' in step) {
-        // Optimistic step
         stepId = step.stepId;
         stepType = step.type;
       }
@@ -215,6 +233,7 @@ function buildPreviousStepsProperties({
         acc[stepId] = computeResultSchema({
           stepType,
           payloadSchema,
+          responseBodySchema,
         });
       }
 
@@ -227,15 +246,18 @@ function buildPreviousStepsProperties({
 function buildPreviousStepsSchema({
   previousSteps,
   payloadSchema,
+  controlValuesMap,
 }: {
   previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
+  controlValuesMap?: Record<string, Record<string, unknown>>;
 }): JSONSchemaDto {
   return {
     type: JsonSchemaTypeEnum.OBJECT,
     properties: buildPreviousStepsProperties({
       previousSteps,
       payloadSchema,
+      controlValuesMap,
     }),
     required: [],
     additionalProperties: false,

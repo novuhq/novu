@@ -12,6 +12,7 @@ export enum ActionTypeEnum {
   DELAY = 'delay',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
+  HTTP_REQUEST = 'http_request',
 }
 
 export type StepType = ChannelTypeEnum | ActionTypeEnum;
@@ -27,6 +28,7 @@ export enum StepTypeEnum {
   DELAY = 'delay',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
+  HTTP_REQUEST = 'http_request',
 }
 
 export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelTypeEnum>([
@@ -63,5 +65,5 @@ export enum SystemAvatarIconEnum {
   QUESTION = 'question',
 }
 
-export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];
+export const CHANNELS_WITH_PRIMARY: readonly ChannelTypeEnum[] = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];
 export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];

@@ -1,6 +1,12 @@
 import { Controls } from '@novu/shared';
 import { buildDefaultValues, buildDefaultValuesOfDataSchema } from '@/utils/schema';
 
+// Strips out null/undefined/empty-string entries so that unset saved values
+// don't shadow schema-defined defaults during form initialization.
+const stripEmptyValues = (values: Record<string, unknown>): Record<string, unknown> => {
+  return Object.fromEntries(Object.entries(values).filter(([, v]) => v !== null && v !== undefined && v !== ''));
+};
+
 function deepMergeDefaults(
   defaults: Record<string, unknown>,
   overrides: Record<string, unknown>
@@ -32,6 +38,7 @@ function deepMergeDefaults(
 // and controlValues are used.
 export const getControlsDefaultValues = (resource: { controls: Controls }): Record<string, unknown> => {
   const controlValues = resource.controls.values;
+  const strippedControlValues = stripEmptyValues(controlValues as Record<string, unknown>);
 
   const uiSchemaDefaultValues = buildDefaultValues(resource.controls.uiSchema ?? {});
   const dataSchemaDefaultValues = buildDefaultValuesOfDataSchema(resource.controls.dataSchema ?? {});
@@ -39,10 +46,10 @@ export const getControlsDefaultValues = (resource: { controls: Controls }): Reco
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
     const defaults = deepMergeDefaults(uiSchemaDefaultValues, dataSchemaDefaultValues);
 
-    return deepMergeDefaults(defaults, controlValues);
+    return deepMergeDefaults(defaults, strippedControlValues);
   }
 
-  return deepMergeDefaults(dataSchemaDefaultValues, controlValues);
+  return deepMergeDefaults(dataSchemaDefaultValues, strippedControlValues);
 };
 
 // When uiSchema is non-empty, merges both schemas with uiSchema taking precedence over dataSchema for

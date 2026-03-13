@@ -6,7 +6,7 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
-export class ExecuteStepCustom extends SendMessageType {
+export class ExecuteCodeFirstCustomStep extends SendMessageType {
   constructor(
     private jobRepository: JobRepository,
     protected messageRepository: MessageRepository,

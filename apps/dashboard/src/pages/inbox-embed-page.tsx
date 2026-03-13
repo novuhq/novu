@@ -52,7 +52,9 @@ export function InboxEmbedPage() {
             <UsecasePlaygroundHeader
               title={isConnected ? 'Confirm Your Integration' : 'Minutes to a fully functional <Inbox/>'}
               description={
-                isConnected ? 'Send a test notification to verify your connection.' : "Let's connect your inbox to Novu"
+                isConnected
+                  ? 'Send a test notification to verify your connection.'
+                  : "Let's add the Inbox component to your app"
               }
               skipPath={ROUTES.WELCOME}
               onSkip={() =>

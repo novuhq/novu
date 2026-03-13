@@ -50,17 +50,30 @@ export const NodeName = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const NodeHeader = ({ children, type }: { children: ReactNode; type: StepTypeEnum }) => {
+export const NodeHeader = ({
+  children,
+  type,
+  badgeLabel,
+  badgeColor,
+}: {
+  children: ReactNode;
+  type: StepTypeEnum;
+  badgeLabel?: string;
+  badgeColor?: string;
+}) => {
+  const label = badgeLabel ?? type.replace('_', '-');
+  const colorVariant = badgeColor ?? STEP_TYPE_TO_COLOR[type];
+
   return (
     <div className="flex w-full items-center gap-1.5 px-1 py-2">
       {children}
       <div
         className={cn(
-          nodeBadgeVariants({ variant: STEP_TYPE_TO_COLOR[type] as any }),
+          nodeBadgeVariants({ variant: colorVariant as any }),
           'ml-auto min-w-max px-2 uppercase opacity-40'
         )}
       >
-        {type.replace('_', '-')}
+        {label}
       </div>
     </div>
   );

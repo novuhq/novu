@@ -783,13 +783,15 @@
     "jsonlogic",
     "flexbox",
     "Checkpointer",
+    "supabase",
     "checkpointer",
     "langchain",
     "langgraph",
     "Vitest",
     "signoz",
     "sanitised",
-    "serialises"
+    "serialises",
+    "customerio"
   ],
   "flagWords": [],
   "patterns": [

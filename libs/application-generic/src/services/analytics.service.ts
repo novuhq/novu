@@ -31,9 +31,13 @@ export class AnalyticsService {
     }
 
     if (process.env.MIXPANEL_TOKEN) {
-      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN, {
-        host: process.env.MIXPANEL_HOST,
-      });
+      const options: Mixpanel.InitConfig = {};
+
+      if (process.env.MIXPANEL_HOST) {
+        options.host = process.env.MIXPANEL_HOST;
+      }
+
+      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN, options);
     }
   }
 
