@@ -37,32 +37,7 @@ const messageSchema = new Schema<MessageDBModel>(
     stepId: Schema.Types.String,
     email: Schema.Types.String,
     subject: Schema.Types.String,
-    cta: {
-      type: {
-        type: Schema.Types.String,
-      },
-      data: Schema.Types.Mixed,
-      action: {
-        status: Schema.Types.String,
-        buttons: [
-          {
-            type: {
-              type: Schema.Types.String,
-            },
-            content: Schema.Types.String,
-            resultContent: Schema.Types.String,
-            url: Schema.Types.String,
-            target: Schema.Types.String,
-          },
-        ],
-        result: {
-          payload: Schema.Types.Mixed,
-          type: {
-            type: Schema.Types.String,
-          },
-        },
-      },
-    },
+    cta: Schema.Types.Mixed,
     _feedId: {
       type: Schema.Types.ObjectId,
       ref: 'Feed',
