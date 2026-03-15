@@ -9,7 +9,6 @@ export const emailControlZodSchema = z
     skip: skipZodSchema,
     body: z.string().optional().default(''),
     editorType: z.enum(['block', 'html']).optional().default('block'),
-    rendererType: z.enum(['html', 'react-email']).optional().default('html'),
     subject: z.string().min(1),
     disableOutputSanitization: z.boolean().optional(),
     layoutId: z.string().nullish(),
@@ -19,7 +18,6 @@ export const emailControlZodSchema = z
         name: z.string().optional(),
       })
       .optional(),
-    stepResolverHash: z.string().nullish(),
   })
   .strict();
 
@@ -46,10 +44,6 @@ export const emailUiSchema: UiSchema = {
     disableOutputSanitization: {
       component: UiComponentEnum.DISABLE_SANITIZATION_SWITCH,
       placeholder: false,
-    },
-    rendererType: {
-      component: UiComponentEnum.EMAIL_RENDERER_SELECT,
-      placeholder: 'html',
     },
     layoutId: {
       component: UiComponentEnum.LAYOUT_SELECT,

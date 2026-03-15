@@ -6,8 +6,16 @@ export function useRevertMessage() {
   const { currentEnvironment } = useEnvironment();
 
   const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: async ({ chatId, messageId }: { chatId: string; messageId: string }) => {
-      return revertMessage({ environment: currentEnvironment!, chatId, messageId });
+    mutationFn: async ({
+      chatId,
+      messageId,
+      type,
+    }: {
+      chatId: string;
+      messageId: string;
+      type: 'revert' | 'try-again';
+    }) => {
+      return revertMessage({ environment: currentEnvironment!, chatId, messageId, type });
     },
   });
 

@@ -889,9 +889,7 @@ export class WorkflowRunService {
     const allStepsFinished = channelJobs.every((job) => finishedStatuses.includes(job.status));
     const skippedJobs = channelJobs.filter(
       (job) =>
-        job.deliveryLifecycleState?.status &&
-        job.deliveryLifecycleState.status === 'skipped' &&
-        !job._mergedDigestId
+        job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped' && !job._mergedDigestId
     );
 
     if (allStepsFinished && skippedJobs.length > 0) {
@@ -947,9 +945,7 @@ export class WorkflowRunService {
 
     // Priority 7: MERGED - If all steps are merged or skipped with _mergedDigestId
     const allStepsMerged = channelJobs.every(
-      (job) =>
-        job.status === JobStatusEnum.MERGED ||
-        (job.status === JobStatusEnum.SKIPPED && !!job._mergedDigestId)
+      (job) => job.status === JobStatusEnum.MERGED || (job.status === JobStatusEnum.SKIPPED && !!job._mergedDigestId)
     );
     if (allStepsMerged) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED };

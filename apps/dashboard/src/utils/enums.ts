@@ -9,6 +9,7 @@ export enum StepTypeEnum {
   DELAY = 'delay',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
+  HTTP_REQUEST = 'http_request',
 }
 
 export enum ResourceTypeEnum {

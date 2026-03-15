@@ -113,8 +113,6 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   ): Promise<{
     totalCreated: number;
     totalRuns: number;
-    successRate: number;
-    failureRate: number;
   }> {
     if (environmentIds.length === 0) {
       this.logger.info(
@@ -122,7 +120,7 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         'Skipping workflow run count query: environmentIds is empty (prevents invalid IN clause)'
       );
 
-      return { totalCreated: 0, totalRuns: 0, successRate: 0, failureRate: 0 };
+      return { totalCreated: 0, totalRuns: 0 };
     }
 
     const query = `
@@ -168,14 +166,9 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     const failed = parseInt(stats.failed, 10);
     const totalRuns = succeeded + failed;
 
-    const successRate = totalRuns > 0 ? Math.round((succeeded / totalRuns) * 100) : 0;
-    const failureRate = totalRuns > 0 ? Math.max(0, 100 - successRate) : 0;
-
     return {
       totalCreated,
       totalRuns,
-      successRate,
-      failureRate,
     };
   }
 

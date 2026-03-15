@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { LayoutDtoV0 } from '@novu/application-generic';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { LayoutDto } from '../../dtos';
 import { IEmailBlock, ITemplateVariable } from '../../types';
 import { FindDeletedLayoutCommand } from './find-deleted-layout.command';
 
@@ -8,7 +8,7 @@ import { FindDeletedLayoutCommand } from './find-deleted-layout.command';
 export class FindDeletedLayoutUseCase {
   constructor(private layoutRepository: LayoutRepository) {}
 
-  async execute(command: FindDeletedLayoutCommand): Promise<LayoutDto> {
+  async execute(command: FindDeletedLayoutCommand): Promise<LayoutDtoV0> {
     const layout = await this.layoutRepository.findDeleted(command.layoutId, command.environmentId);
 
     if (!layout) {
@@ -20,7 +20,7 @@ export class FindDeletedLayoutUseCase {
     return this.mapFromEntity(layout);
   }
 
-  private mapFromEntity(layout: LayoutEntity): LayoutDto {
+  private mapFromEntity(layout: LayoutEntity): LayoutDtoV0 {
     return {
       ...layout,
       _id: layout._id,

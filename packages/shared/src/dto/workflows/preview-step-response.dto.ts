@@ -132,6 +132,7 @@ export class PreviewPayload {
 export class GeneratePreviewResponseDto {
   previewPayloadExample: PreviewPayload;
   schema?: JSONSchemaDto | null;
+  novuSignature?: string;
   result:
     | {
         type: ChannelTypeEnum.EMAIL;

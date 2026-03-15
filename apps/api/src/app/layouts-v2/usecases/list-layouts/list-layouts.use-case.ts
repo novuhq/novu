@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, LayoutDtoV0, LayoutResponseDto, mapLayoutToResponseDto } from '@novu/application-generic';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { LayoutDto } from '../../../layouts-v1/dtos/layout.dto';
-import { LayoutResponseDto, ListLayoutResponseDto } from '../../dtos';
-import { mapToResponseDto } from '../mapper';
+import { ListLayoutResponseDto } from '../../dtos';
 import { ListLayoutsCommand } from './list-layouts.command';
 
 @Injectable()
@@ -37,14 +35,14 @@ export class ListLayoutsUseCase {
   private mapLayoutToResponseDto(layout: LayoutEntity): LayoutResponseDto {
     const layoutDto = this.mapFromEntity(layout);
 
-    return mapToResponseDto({
+    return mapLayoutToResponseDto({
       layout: layoutDto,
       controlValues: null,
       variables: {},
     });
   }
 
-  private mapFromEntity(layout: LayoutEntity): LayoutDto {
+  private mapFromEntity(layout: LayoutEntity): LayoutDtoV0 {
     return {
       ...layout,
       _id: layout._id,

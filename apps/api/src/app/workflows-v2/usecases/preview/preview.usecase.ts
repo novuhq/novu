@@ -1,24 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import {
+  BuildStepDataUsecase,
+  ControlValueSanitizerService,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
+  GeneratePreviewResponseDto,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  isStepResolverActive,
   PinoLogger,
+  PreviewCommand,
+  PreviewErrorHandler,
+  PreviewPayloadDto,
+  PreviewPayloadProcessorService,
+  PreviewStep,
+  PreviewStepCommand,
+  StepResponseDto,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-// Import new services
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
-import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-import { BuildStepDataUsecase } from '../build-step-data';
-import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
-import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
 export class PreviewUsecase {
@@ -38,12 +41,18 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const context = await this.initializePreviewContext(command);
+      const stepResolverHash =
+        typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
+      const isStepResolver = isStepResolverActive(stepResolverHash);
+      const isStepResolverEmail = isStepResolver && context.stepData.type === StepTypeEnum.EMAIL;
 
-      const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
-        context.controlValues,
-        context.stepData.type,
-        context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
-      );
+      const sanitizedControls = isStepResolver
+        ? context.controlValues
+        : this.controlValueSanitizer.sanitizeControlsForPreview(
+            context.controlValues,
+            context.stepData.type,
+            context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
+          );
 
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
         sanitizedControls,
@@ -63,11 +72,6 @@ export class PreviewUsecase {
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
-      const stepResolverHash =
-        typeof context.stepData.controls.values?.stepResolverHash === 'string'
-          ? context.stepData.controls.values.stepResolverHash
-          : undefined;
-
       try {
         const executeOutput = await this.executePreviewUsecase(
           command,
@@ -86,14 +90,17 @@ export class PreviewUsecase {
           schema: context.variableSchema,
         };
       } catch (error) {
-        const isStepResolverEmail = context.stepData.type === StepTypeEnum.EMAIL && stepResolverHash !== undefined;
-
         /*
          * If preview execution fails, still return valid schema and payload example
          * but with an empty preview result.
          * For step resolver email steps, since its a runtime error, surface the error
          * as HTML rendered in the preview panel.
+         * For all other resolver step types, log the error so it's visible in server logs.
          */
+        if (isStepResolver) {
+          this.logger.error({ error, stepType: context.stepData.type }, 'Step resolver preview execution failed');
+        }
+
         const previewResult = isStepResolverEmail
           ? { subject: '', body: this.errorHandler.buildPreviewErrorHtml(error) }
           : {};

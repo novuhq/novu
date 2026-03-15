@@ -1,13 +1,13 @@
 import { IntegrationEntity } from '@novu/dal';
 import {
   APNSHandler,
+  AppIOHandler,
   ExpoHandler,
   FCMHandler,
   OneSignalHandler,
   PusherBeamsHandler,
   PushpadHandler,
   PushWebhookHandler,
-  AppIOHandler,
 } from './handlers';
 import { IPushFactory, IPushHandler } from './interfaces';
 

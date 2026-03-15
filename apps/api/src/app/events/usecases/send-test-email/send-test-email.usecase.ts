@@ -6,13 +6,14 @@ import {
   GetNovuProviderCredentials,
   InstrumentUsecase,
   MailFactory,
+  PreviewStep,
+  PreviewStepCommand,
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { IntegrationEntity, OrganizationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions, ResourceOriginEnum } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { SendTestEmailCommand } from './send-test-email.command';
 
 @Injectable()

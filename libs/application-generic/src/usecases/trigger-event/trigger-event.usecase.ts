@@ -209,6 +209,8 @@ export class TriggerEvent {
       }
     } catch (e) {
       const error = e as Error;
+      const isBadRequest = e instanceof BadRequestException;
+
       await this.createWorkflowTrace({
         command,
         eventType: 'workflow_execution_failed',
@@ -218,16 +220,19 @@ export class TriggerEvent {
         workflowId: storedWorkflow?._id,
       });
 
-      Logger.error(
-        {
-          transactionId: command.transactionId,
-          organization: command.organizationId,
-          triggerIdentifier: command.identifier,
-          userId: command.userId,
-          error: e,
-        },
-        'Unexpected error has occurred when triggering event'
-      );
+      const logPayload = {
+        transactionId: command.transactionId,
+        organization: command.organizationId,
+        triggerIdentifier: command.identifier,
+        userId: command.userId,
+        error: e,
+      };
+
+      if (isBadRequest) {
+        Logger.debug(logPayload, 'Bad request when triggering event');
+      } else {
+        Logger.error(logPayload, 'Unexpected error has occurred when triggering event');
+      }
 
       throw e;
     }

@@ -22,6 +22,15 @@ import { cn } from '@/utils/ui';
 import { useVariables } from '../../hooks/use-variables';
 import { DEFAULT_SIDE_OFFSET } from './popover';
 
+function safeFocusEditorView(view: EditorView | null) {
+  if (!view) return;
+  try {
+    view.focus();
+  } catch {
+    // CodeMirror can throw if its internal DOM state is inconsistent during focus
+  }
+}
+
 export type CompletionRange = {
   from: number;
   to: number;
@@ -306,7 +315,7 @@ export function VariableEditor({
     (open: boolean) => {
       if (!open) {
         setTimeout(() => setSelectedVariable(null), 0);
-        viewRef.current?.focus();
+        safeFocusEditorView(viewRef.current);
       }
     },
     [setSelectedVariable, viewRef]
@@ -335,9 +344,7 @@ export function VariableEditor({
       }
 
       // Only programmatically focus if clicking directly on the container
-      if (viewRef.current) {
-        viewRef.current.focus();
-      }
+      safeFocusEditorView(viewRef.current);
     },
     [isVariablePopoverOpen, skipContainerClick, viewRef]
   );
@@ -391,14 +398,12 @@ export function VariableEditor({
           isAllowedVariable={isAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
-            // Focus back to the editor after updating the variable
-            setTimeout(() => viewRef.current?.focus(), 0);
+            setTimeout(() => safeFocusEditorView(viewRef.current), 0);
           }}
           onDeleteClick={() => {
             handleVariableUpdate('');
             setSelectedVariable(null);
-            // Focus back to the editor after updating the variable
-            setTimeout(() => viewRef.current?.focus(), 0);
+            setTimeout(() => safeFocusEditorView(viewRef.current), 0);
           }}
           getSchemaPropertyByKey={getSchemaPropertyByKey}
           onManageSchemaClick={onManageSchemaClick}

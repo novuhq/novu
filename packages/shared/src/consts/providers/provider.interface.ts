@@ -43,6 +43,17 @@ export interface IProviderConfig {
   betaVersion?: boolean;
 }
 
+export type ProviderColorToken =
+  | 'neutral'
+  | 'stable'
+  | 'information'
+  | 'feature'
+  | 'destructive'
+  | 'verified'
+  | 'alert'
+  | 'highlighted'
+  | 'warning';
+
 type CredentialsType =
   | 'string'
   | 'dropdown'
@@ -55,6 +66,18 @@ type CredentialsType =
   | 'pushResources'
   | 'crossChannelConfigs'
   | 'inboxCount';
+
+type CredentialTypeToTS = {
+  string: string;
+  number: number;
+  boolean: boolean;
+  switch: boolean;
+};
+
+export type CredentialsFromConfig<T extends readonly IConfigCredential[]> = {
+  // biome-ignore lint/suspicious/noExplicitAny: unmapped credential types intentionally fall back to any
+  [K in T[number] as K['key']]: K['type'] extends keyof CredentialTypeToTS ? CredentialTypeToTS[K['type']] : any;
+};
 
 export interface IConfigCredential {
   key: CredentialsKeyEnum;

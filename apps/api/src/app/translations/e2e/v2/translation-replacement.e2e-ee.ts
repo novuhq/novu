@@ -1,9 +1,9 @@
 import { Novu } from '@novu/api';
+import { LayoutCreationSourceEnum } from '@novu/application-generic';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { LayoutCreationSourceEnum } from '../../../layouts-v2/types';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 /**

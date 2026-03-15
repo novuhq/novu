@@ -4,6 +4,7 @@ import {
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesCommand,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
@@ -18,7 +19,6 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
-import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 
 @Injectable()

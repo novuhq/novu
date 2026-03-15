@@ -18,7 +18,10 @@ import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
   FeatureFlagsService,
+  GetActiveIntegrations,
+  GetActiveIntegrationsCommand,
   GetDecryptedIntegrations,
+  IntegrationResponseDto,
   OtelSpan,
   RequirePermissions,
 } from '@novu/application-generic';
@@ -48,7 +51,6 @@ import { CreateIntegrationRequestDto } from './dtos/create-integration-request.d
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
 import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-response.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
-import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
@@ -59,8 +61,6 @@ import { CreateIntegrationCommand } from './usecases/create-integration/create-i
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { GenerateChatOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
 import { GenerateChatOauthUrl } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
-import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
-import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
 import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';

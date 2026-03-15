@@ -129,7 +129,6 @@ export interface IEmailProps {
   usersReachedChange: number;
   usersReachedUp: boolean;
   workflowRuns: number;
-  successRate: number;
   userInteractions: number;
   interactionRate: number;
   topProviders: ITopProviderInput[];
@@ -425,7 +424,7 @@ function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
               whiteSpace: 'nowrap',
             }}
           >
-            {value}%
+            {humanizeNumber(value)}%
           </td>
         </tr>
       </tbody>
@@ -510,7 +509,7 @@ function CardWithDetail({
   label: string;
   value: number;
   unit: string;
-  detail: IDetailConfig;
+  detail?: IDetailConfig;
 }) {
   return (
     <Card>
@@ -532,12 +531,16 @@ function CardWithDetail({
           </tr>
         </tbody>
       </table>
-      <DetailTextWithValue
-        value={detail.value}
-        prefix={detail.prefix}
-        suffix={detail.suffix}
-        valueStyle={detail.valueStyle}
-      />
+      {detail ? (
+        <DetailTextWithValue
+          value={detail.value}
+          prefix={detail.prefix}
+          suffix={detail.suffix}
+          valueStyle={detail.valueStyle}
+        />
+      ) : (
+        <span style={{ ...detailTextStyle, visibility: 'hidden' }}>&nbsp;</span>
+      )}
     </Card>
   );
 }
@@ -652,6 +655,7 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
       <Section>
         <Row>
           <Column
+            className="col-half"
             style={{
               width: otherChannels.length > 0 ? '50%' : '100%',
               padding: '0 12px 0 0',
@@ -736,6 +740,7 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
 
           {otherChannels.length > 0 && (
             <Column
+              className="col-half"
               style={{
                 width: '50%',
                 padding: '0 0 0 12px',
@@ -773,23 +778,29 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                           <Column style={{ width: '175px', padding: '3px 0' }}>
                             <Section>
                               <Row>
-                                <Column style={{ paddingRight: '4px', width: '28px' }}>
-                                  <Section>
-                                    {channel.icon && (
-                                      <Img
-                                        src={channel.icon}
-                                        alt=""
-                                        style={{
-                                          display: 'block',
-                                          maxWidth: '16px',
-                                          maxHeight: '16px',
-                                          padding: '3.5px',
-                                        }}
-                                      />
-                                    )}
-                                  </Section>
+                                <Column
+                                  style={{
+                                    paddingRight: '4px',
+                                    width: '28px',
+                                    textAlign: 'center' as const,
+                                    verticalAlign: 'middle' as const,
+                                  }}
+                                >
+                                  {channel.icon && (
+                                    <Img
+                                      src={channel.icon}
+                                      alt=""
+                                      style={{
+                                        display: 'inline-block',
+                                        maxWidth: '16px',
+                                        maxHeight: '16px',
+                                        margin: '0 auto',
+                                        verticalAlign: 'middle',
+                                      }}
+                                    />
+                                  )}
                                 </Column>
-                                <Column>
+                                <Column style={{ verticalAlign: 'middle' as const }}>
                                   <Text
                                     style={{
                                       fontSize: '12px',
@@ -895,7 +906,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
       <Row style={{ marginTop: '20px' }}>
         <Column>
           <Button
-            href={dashboardUrl}
+            href={dashboardUrl || 'https://dashboard.novu.co'}
             style={{
               background: '#DF2E5B',
               color: COLORS.white,
@@ -983,7 +994,6 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
     usersReachedUp,
     workflowRuns,
     userInteractions,
-    successRate,
     interactionRate,
     topProviders: topProvidersInput,
     topWorkflows,
@@ -1000,17 +1010,36 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
     <Html lang="en">
       <Head>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');`}</style>
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+          @media (max-width: 600px) {
+            .email-container {
+              padding-left: 12px !important;
+              padding-right: 12px !important;
+            }
+            .row-section {
+              margin-bottom: 0 !important;
+            }
+            .col-half {
+              display: block !important;
+              width: 100% !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              margin-bottom: 12px !important;
+            }
+          }`}</style>
       </Head>
       <Preview>{previewText}</Preview>
       <Body style={{ backgroundColor: COLORS.bg }}>
-        <Container style={{ maxWidth: '600px', margin: '0 auto', backgroundColor: COLORS.bg }}>
+        <Container
+          className="email-container"
+          style={{ maxWidth: '600px', margin: '0 auto', backgroundColor: COLORS.bg }}
+        >
           <NovuLogo />
           <RecapHeader dateRange={dateRange} />
 
-          <Section style={{ marginBottom: '12px' }}>
+          <Section className="row-section" style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
                 <CardWithChange
                   label="Messages Sent"
                   value={messagesSent}
@@ -1018,7 +1047,7 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
                   isUp={messagesSentUp}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                 <CardWithChange
                   label="Users Reached"
                   value={usersReached}
@@ -1029,28 +1058,20 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
             </Row>
           </Section>
 
-          <Section style={{ marginBottom: '12px' }}>
+          <Section className="row-section" style={{ marginBottom: '12px' }}>
             <Row>
               <Column
+                className="col-half"
                 style={{
                   width: userInteractions > 0 ? '50%' : '100%',
                   paddingRight: userInteractions > 0 ? '6px' : '0',
                   verticalAlign: 'top',
                 }}
               >
-                <CardWithDetail
-                  label="Workflow Runs Triggered"
-                  value={workflowRuns}
-                  unit="workflow runs"
-                  detail={{
-                    value: `${successRate}%`,
-                    prefix: 'with ',
-                    suffix: ' success rate.',
-                  }}
-                />
+                <CardWithDetail label="Workflow Runs Triggered" value={workflowRuns} unit="workflow runs" />
               </Column>
               {userInteractions > 0 && (
-                <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+                <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                   <CardWithDetail
                     label="User Interactions"
                     value={userInteractions}
@@ -1065,16 +1086,16 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
             </Row>
           </Section>
 
-          <Section style={{ marginBottom: '12px' }}>
+          <Section className="row-section" style={{ marginBottom: '12px' }}>
             <Row>
-              <Column style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingRight: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
                   title="Top Delivery Providers"
                   items={topProviders}
                   minRows={Math.max(topProviders.length, topWorkflows.length)}
                 />
               </Column>
-              <Column style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
+              <Column className="col-half" style={{ width: '50%', paddingLeft: '6px', verticalAlign: 'top' }}>
                 <RankedListCard
                   title="Top Workflows"
                   items={topWorkflows as IRankedItem[]}
@@ -1095,8 +1116,8 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
   );
 }
 
-// export default function UsageReportEmailPreview() {
-//   return (
+// export default async function renderEmail(payload: PayloadSchemaType, controls: ControlValueSchema) {
+//   return render(
 //     <UsageReportEmail
 //       props={{
 //         dateRangeFrom: '2025-02-01',
@@ -1108,7 +1129,6 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 //         usersReachedChange: 8,
 //         usersReachedUp: true,
 //         workflowRuns: 3456,
-//         successRate: 97.7,
 //         userInteractions: 8910,
 //         interactionRate: 95.5,
 //         topProviders: [
@@ -1122,9 +1142,9 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 //         ],
 //         channels: [
 //           // { name: 'in_app', value: 2300 },
-//           // { name: 'email', value: 1762 },
-//           // { name: 'chat', value: 562 },
-//           { name: 'push', value: 22362 },
+//           { name: 'email', value: 1762 },
+//           { name: 'chat', value: 562 },
+//           { name: 'push', value: 2 },
 //           { name: 'sms', value: 62 },
 //         ],
 //         dashboardUrl: 'https://dashboard.novu.co',

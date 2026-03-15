@@ -38,8 +38,6 @@ export class UpsertControlValuesUseCase {
     command: UpsertControlValuesCommand,
     controlValues: Record<string, unknown>
   ) {
-    const mergedControlValues = this.preserveExternallySetFields(found.controls, controlValues);
-
     await this.controlValuesRepository.update(
       {
         _id: found._id,
@@ -47,7 +45,7 @@ export class UpsertControlValuesUseCase {
       },
       {
         priority: 0,
-        controls: mergedControlValues,
+        controls: controlValues,
       }
     );
 
@@ -56,27 +54,5 @@ export class UpsertControlValuesUseCase {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
-  }
-
-  /*
-   * stepResolverHash is set externally by the deploy endpoint (novu email publish).
-   * The dashboard never includes this key in its saves (it is stripped before submission).
-   * Rules:
-   *   - Key absent in incoming → preserve the existing hash (normal dashboard save).
-   *   - Key present in incoming (even as null) → use the incoming value, allowing callers
-   *     to explicitly clear the hash (e.g. email block sets it to null when switching away
-   *     from react-email renderer).
-   */
-  private preserveExternallySetFields(
-    existingControls: Record<string, unknown> | null | undefined,
-    incomingControls: Record<string, unknown>
-  ): Record<string, unknown> {
-    const existingHash = existingControls?.stepResolverHash;
-
-    if (existingHash && !('stepResolverHash' in incomingControls)) {
-      return { ...incomingControls, stepResolverHash: existingHash };
-    }
-
-    return incomingControls;
   }
 }

@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { GetWorkflowCommand, GetWorkflowUseCase, PinoLogger, WorkflowDataContainer } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
-import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
-import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
 import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowComparatorAdapter, WorkflowRepositoryAdapter } from '../adapters';
 import { BaseDiffOperation } from '../base/operations/base-diff.operation';

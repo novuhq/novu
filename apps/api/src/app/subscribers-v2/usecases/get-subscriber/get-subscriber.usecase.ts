@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { SubscriberResponseDto } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { SubscriberResponseDto } from '../../../subscribers/dtos';
 import { mapSubscriberEntityToDto } from '../list-subscribers/map-subscriber-entity-to.dto';
 import { GetSubscriberCommand } from './get-subscriber.command';
 

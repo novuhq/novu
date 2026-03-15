@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { UpsertWorkflowCommand } from '../usecases/upsert-workflow/upsert-workflow.command';
+import { UpsertWorkflowCommand } from '@novu/application-generic';
 
 export class WorkflowAlreadyExistException extends BadRequestException {
   constructor(command: UpsertWorkflowCommand) {

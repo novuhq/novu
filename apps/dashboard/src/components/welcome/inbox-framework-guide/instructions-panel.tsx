@@ -27,12 +27,9 @@ function InstallationMethodSelector({ installationMethod, onMethodChange }: Inst
       <div className="inline-flex items-center gap-64 border border-gray-100 rounded-lg p-4">
         <span className="text-base font-medium text-[#222]">Installation method</span>
         <Tabs defaultValue="ai-assist" value={installationMethod} onValueChange={handleMethodChange}>
-          <TabsList className="h-7 w-[240px] gap-1 rounded-md bg-[#FBFBFB] p-1 shadow-none">
+          <TabsList className="h-7 gap-1 rounded-md bg-[#FBFBFB] p-1 shadow-none">
             <TabsTrigger value="ai-assist" className={TABS_TRIGGER_CLASSES}>
               AI Assist
-            </TabsTrigger>
-            <TabsTrigger value="cli" className={TABS_TRIGGER_CLASSES}>
-              CLI Installation
             </TabsTrigger>
             <TabsTrigger value="manual" className={TABS_TRIGGER_CLASSES}>
               Manual
@@ -49,6 +46,7 @@ type InstructionsPanelProps = {
   installationMethod: InstallationMethod;
   showInstallationTabs: boolean;
   onMethodChange: (method: InstallationMethod) => void;
+  footer?: React.ReactNode;
 };
 
 export function InstructionsPanel({
@@ -56,16 +54,17 @@ export function InstructionsPanel({
   installationMethod,
   showInstallationTabs,
   onMethodChange,
+  footer,
 }: InstructionsPanelProps) {
   const isCliMethod = showInstallationTabs && installationMethod === 'cli';
 
   return (
-    <div className="relative flex h-[520px] flex-col overflow-hidden pl-0">
+    <div className="relative flex flex-col overflow-hidden pl-0">
       {showInstallationTabs ? (
         <InstallationMethodSelector installationMethod={installationMethod} onMethodChange={onMethodChange} />
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="overflow-y-auto">
         <AnimatePresence>
           <motion.div
             key={`${selectedFramework.name}-${installationMethod}-${showInstallationTabs ? 'tabs' : 'manual-only'}`}
@@ -83,6 +82,8 @@ export function InstructionsPanel({
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {footer && <div className="border-t border-neutral-100 bg-white py-3 pl-8">{footer}</div>}
     </div>
   );
 }

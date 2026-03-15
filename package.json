@@ -47,6 +47,7 @@
     "release": "node scripts/release.mjs",
     "release:version:apps": "nx release version --projects=tag:type:app",
     "setup:project": "npx --yes pnpm@10.16.1 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:agent": "git submodule update --init --recursive && git config --global submodule.recurse true && pnpm install:with-ee && pnpm build:with-ee && cp apps/api/src/.env.agent apps/api/src/.env && cp apps/dashboard/.env.agent apps/dashboard/.env && cp apps/worker/src/.env.agent apps/worker/src/.env",
     "start:api:dev": "cross-env nx run @novu/api-service:start:dev",
     "start:api:test": "cross-env nx run-many --target=start:test --projects=@novu/api-service",
     "start:api": "cross-env nx run @novu/api-service:start",
@@ -85,7 +86,7 @@
     "@swc/core": "1.7.26",
     "@types/inquirer": "8.2.10",
     "@types/jest": "30.0.0",
-    "@types/node": "20.19.10",
+    "@types/node": "^22.0.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
     "chalk-animation": "^1.6.0",
@@ -97,7 +98,7 @@
     "detect-port": "^1.3.0",
     "execa": "^9.3.1",
     "fs-extra": "^9.0.0",
-    "glob": "^11.0.0",
+    "glob": "^11.1.0",
     "globby": "^12.2.0",
     "gradient-string": "^2.0.1",
     "husky": "^8.0.1",
@@ -152,7 +153,7 @@
     ]
   },
   "engines": {
-    "node": ">=20 <21",
+    "node": ">=22 <23",
     "pnpm": "^10.0.0"
   },
   "dependencies": {
@@ -171,8 +172,8 @@
       "postcss@<8.4.31": "^8.4.31",
       "proxy-agent": "^6.3.0",
       "semver@>=7.0.0 <7.5.2": "^7.5.2",
-      "systeminformation@<=5.23.6": "^5.27.1",
-      "tar": "7.1.0",
+      "systeminformation@<5.31.0": "^5.31.3",
+      "tar": "7.5.11",
       "tar-fs": ">=3.0.9",
       "tough-cookie@<4.1.3": "^4.1.3",
       "trim-newlines@<3.0.1": "^3.0.1",
@@ -196,7 +197,12 @@
       "ws@>=8.0.0 <8.17.1": "^8.17.1",
       "next@>=13.0.0 <14.2.32": "^14.2.35",
       "next@>=15.0.0 <15.4.7": "^15.4.10",
-      "fast-xml-parser@>=5.0.0 <5.3.3": "5.3.3"
+      "fast-xml-parser@>=4.1.3 <4.5.4": "4.5.4",
+      "fast-xml-parser@>=5.0.0 <5.3.8": "5.3.8",
+      "basic-ftp@<5.2.0": "5.2.0",
+      "axios@>=1.0.0 <1.13.5": "^1.13.5",
+      "seroval@<1.4.1": "^1.4.1",
+      "h3@<=1.15.4": "^1.15.5"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",

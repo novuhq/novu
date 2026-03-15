@@ -7,12 +7,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import TruncatedText from '@/components/truncated-text';
 import { StepTypeEnum } from '@/utils/enums';
 
-const CHANNEL_STEP_TYPES = [
+const STEP_TYPES_WITH_EDITOR = [
   StepTypeEnum.EMAIL,
   StepTypeEnum.SMS,
   StepTypeEnum.IN_APP,
   StepTypeEnum.PUSH,
   StepTypeEnum.CHAT,
+  StepTypeEnum.HTTP_REQUEST,
 ];
 
 type WorkflowNodeActionBarProps = {
@@ -36,7 +37,7 @@ export const WorkflowNodeActionBar = ({
 }: WorkflowNodeActionBarProps) => {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isChannelStep = stepType && CHANNEL_STEP_TYPES.includes(stepType);
+  const isStepWithEditor = stepType && STEP_TYPES_WITH_EDITOR.includes(stepType);
 
   const handleCopyConfirm = () => {
     onCopyClick();
@@ -125,7 +126,7 @@ export const WorkflowNodeActionBar = ({
                 },
               }}
             >
-              {isChannelStep && (
+              {isStepWithEditor && (
                 <>
                   <Button
                     size="2xs"
@@ -171,7 +172,7 @@ export const WorkflowNodeActionBar = ({
                         variant="secondary"
                         mode="ghost"
                         className={`text-text-sub pointer-events-auto gap-1.5 px-2 py-1 text-xs ${
-                          isChannelStep ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
+                          isStepWithEditor ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
                         }`}
                         onClick={(e) => {
                           e.preventDefault();

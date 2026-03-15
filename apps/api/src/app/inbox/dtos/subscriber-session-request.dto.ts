@@ -1,9 +1,8 @@
-import { IsValidContextPayload } from '@novu/application-generic';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ScheduleDto } from '../../shared/dtos/schedule';
-import { ApiContextPayload } from '../../shared/framework/swagger';
 
 export class SubscriberSessionRequestDto {
   @IsString()

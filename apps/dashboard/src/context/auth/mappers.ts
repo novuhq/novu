@@ -14,7 +14,7 @@ export const toUserEntity = (clerkUser: UserResource): IUserEntity => {
     _id: clerkUser.externalId as string,
     firstName: clerkUser.firstName,
     lastName: clerkUser.lastName,
-    email: clerkUser.emailAddresses[0].emailAddress,
+    email: clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.emailAddresses?.[0]?.emailAddress ?? '',
     profilePicture: clerkUser.imageUrl,
     createdAt: clerkUser.createdAt?.toISOString() ?? '',
     showOnBoarding: !!clerkUser.publicMetadata.showOnBoarding,

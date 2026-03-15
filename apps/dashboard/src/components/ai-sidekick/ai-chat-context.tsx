@@ -1,8 +1,8 @@
 import { AiAgentTypeEnum, AiMessageRoleEnum, AiResourceTypeEnum } from '@novu/shared';
-import { ChatStatus, DataUIPart, generateId, UIMessage } from 'ai';
+import { ChatStatus, DataUIPart, DynamicToolUIPart, generateId, UIMessage } from 'ai';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AiChatResponseDto, cancelStream } from '@/api/ai';
+import { cancelStream } from '@/api/ai';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
@@ -12,10 +12,12 @@ import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useKeepAiChanges } from '@/hooks/use-keep-ai-changes';
 import { useRevertMessage } from '@/hooks/use-revert-message';
 import { showErrorToast } from '../primitives/sonner-helpers';
+import { isCancelledToolCall } from './message-utils';
 
 export type ReasoningDataPart = DataUIPart<{ reasoning: { toolCallId: string; text: string } }>;
 
 export type AiChatContextValue = {
+  hasNoChatHistory: boolean;
   lastUserMessageId?: string;
   messages: UIMessage[];
   dataParts: ReasoningDataPart[];
@@ -57,6 +59,57 @@ export type AiChatResourceConfig = {
 
 const AiChatContext = createContext<AiChatContextValue | null>(null);
 
+/**
+ * Strip incomplete tool-call parts and step-start markers from all assistant messages.
+ * Dangling parts are kept in the DB (so toUIMessageStream can match them to the correct
+ * assistant message via the values stream), but hidden from the user in the UI.
+ */
+const cleanupIncompleteToolCalls = <T extends UIMessage>(currentMessages: T[]): T[] => {
+  let changed = false;
+
+  const result = currentMessages.reduce<T[]>((acc, msg) => {
+    if (msg.role !== 'assistant') {
+      acc.push(msg);
+
+      return acc;
+    }
+
+    const cleanedParts = msg.parts.filter((part) => {
+      if (part.type === 'step-start') return false;
+      if (part.type.startsWith('dynamic-tool')) {
+        const tool = part as DynamicToolUIPart;
+        if (isCancelledToolCall(tool)) return false;
+
+        return tool.state === 'output-available' || tool.state === 'output-error';
+      }
+
+      return true;
+    });
+
+    if (cleanedParts.length !== msg.parts.length) {
+      changed = true;
+    }
+
+    const hasContent = cleanedParts.some(
+      (p) =>
+        p.type === 'text' ||
+        (p.type.startsWith('dynamic-tool') &&
+          !isCancelledToolCall(p as DynamicToolUIPart) &&
+          ((p as DynamicToolUIPart).state === 'output-available' || (p as DynamicToolUIPart).state === 'output-error'))
+    );
+
+    if (hasContent) {
+      acc.push(changed ? ({ ...msg, parts: cleanedParts } as T) : msg);
+    } else {
+      changed = true;
+    }
+
+    return acc;
+  }, []);
+
+  return changed ? result : currentMessages;
+};
+
 export function AiChatProvider({ children, config }: { children: React.ReactNode; config: AiChatResourceConfig }) {
   const {
     resourceType,
@@ -78,6 +131,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   } | null>(null);
   const isMountedRef = useRef(false);
   const hasHandledInitialResumeRef = useRef(false);
+  const isStoppingRef = useRef(false);
+  const skipMessageSyncRef = useRef(false);
   const location = useLocation();
   const { areEnvironmentsInitialLoading, currentEnvironment } = useEnvironment();
 
@@ -89,6 +144,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     resourceType,
     resourceId,
   });
+  const hasNoChatHistory = !latestChat;
   const { createAiChat, isPending: isCreatingAiChat } = useCreateAiChat();
 
   const chatId = useMemo(() => {
@@ -111,11 +167,14 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
           onData({ type: dataType });
         }
       },
-      onFinish: ({ isAbort, isDisconnect, isError }) => {
+      onFinish: ({ isAbort, isDisconnect, isError, messages }) => {
+        setMessages(cleanupIncompleteToolCalls(messages));
+
         if (isAbort || isDisconnect || isError) {
           return;
         }
 
+        skipMessageSyncRef.current = true;
         refetchLatestChat();
       },
     });
@@ -127,10 +186,19 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   const isActionPending = isKeepPending || isRevertPending;
 
   useEffect(() => {
-    if (latestChat) {
-      setMessages(latestChat.messages as typeof messages);
+    if (!latestChat || isGenerating || isStoppingRef.current) {
+      return;
     }
-  }, [latestChat, setMessages]);
+
+    if (skipMessageSyncRef.current) {
+      skipMessageSyncRef.current = false;
+
+      return;
+    }
+
+    const latestChatMessages = latestChat.messages as typeof messages;
+    setMessages(cleanupIncompleteToolCalls(latestChatMessages));
+  }, [latestChat, isGenerating, setMessages]);
 
   useEffect(() => {
     if (latestChat && !hasHandledInitialResumeRef.current) {
@@ -171,7 +239,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
   const handleSendMessage = useCallback(
     async (message: string) => {
-      const { resourceType, resourceId, isAborted, latestChat, messages } = dataRef.current;
+      const { resourceType, resourceId, latestChat, messages } = dataRef.current;
       const isLastUserMessage = messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
 
       const messageToSend = message.trim();
@@ -179,9 +247,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       if (!latestChat) {
         const newChat = await createAiChat({ resourceType, resourceId });
-        await refetchLatestChat();
         sendPrompt({ chatId: newChat._id, prompt: messageToSend });
-      } else if (isLastUserMessage || isAborted) {
+      } else if (isLastUserMessage) {
         const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
         sendPrompt({ messageId: lastUserMessage?.id, chatId: latestChat._id, prompt: messageToSend });
       } else if (messageToSend) {
@@ -189,15 +256,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       }
       setInputText('');
     },
-    [dataRef, createAiChat, refetchLatestChat, sendPrompt]
+    [dataRef, createAiChat, sendPrompt]
   );
-
-  const handleLastUserMessage = useCallback((chat?: AiChatResponseDto) => {
-    if (chat && chat.messages.length > 0 && chat.messages[chat.messages.length - 1].role === AiMessageRoleEnum.USER) {
-      const promptText = chat.messages[chat.messages.length - 1].parts?.find((p) => p.type === 'text')?.text ?? '';
-      setInputText(promptText);
-    }
-  }, []);
 
   const handleKeepAll = useCallback(async () => {
     if (!lastUserMessageId || !latestChat) return;
@@ -227,7 +287,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       setMessages(messages.slice(0, messageIndex + 1));
 
       await revertMessage(
-        { chatId: latestChat._id, messageId: userMessageId },
+        { chatId: latestChat._id, messageId: userMessageId, type: 'try-again' },
         {
           onSuccess: async () => {
             onRefetchResource?.();
@@ -253,15 +313,19 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex === -1) return;
 
-      const optimisticMessages = messages.slice(0, messageIndex + 1);
+      const userMessage = messages[messageIndex];
+      const userMessageText = userMessage.parts?.find((p) => p.type === 'text')?.text ?? '';
+
+      setInputText(userMessageText);
+
+      const optimisticMessages = messages.slice(0, messageIndex);
       setMessages(optimisticMessages);
 
       await revertMessage(
-        { chatId: latestChat._id, messageId },
+        { chatId: latestChat._id, messageId, type: 'revert' },
         {
           onSuccess: async () => {
-            const { data: chat } = await refetchLatestChat();
-            handleLastUserMessage(chat);
+            await refetchLatestChat();
             onRefetchResource?.();
           },
           onError: async (error) => {
@@ -271,7 +335,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
         }
       );
     },
-    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat, handleLastUserMessage]
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat]
   );
 
   const handleTryAgain = useCallback(async (userMessageId: string) => {
@@ -291,8 +355,35 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   );
 
   const handleDiscard = useCallback(
-    async (messageId: string) => executeRevertMessage(messageId),
-    [executeRevertMessage]
+    async (messageId: string) => {
+      if (!latestChat) return;
+
+      const previousMessages = [...messages];
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
+
+      const userMessage = messages[messageIndex];
+      const userMessageText = userMessage.parts?.find((p) => p.type === 'text')?.text ?? '';
+
+      setInputText(userMessageText);
+      setMessages(messages.slice(0, messageIndex));
+
+      await revertMessage(
+        { chatId: latestChat._id, messageId, type: 'revert' },
+        {
+          onSuccess: async () => {
+            await refetchLatestChat();
+            onRefetchResource?.();
+          },
+          onError: async (error) => {
+            showErrorToast(`Failed to discard changes: ${error.message}`);
+            setMessages(previousMessages);
+            setInputText('');
+          },
+        }
+      );
+    },
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat]
   );
 
   const handleRevertConfirmationConfirm = useCallback(async () => {
@@ -315,21 +406,21 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   }, [firstMessageRevert]);
 
   const handleStop = useCallback(async () => {
+    isStoppingRef.current = true;
+    await stop();
     if (latestChat && currentEnvironment && isGenerating) {
-      cancelStream({ environment: currentEnvironment, chatId: latestChat._id });
+      await cancelStream({ environment: currentEnvironment, chatId: latestChat._id });
     }
-    stop();
-    refetchLatestChat();
-    const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
-    if (lastUserMessage) {
-      setInputText(lastUserMessage.parts.find((p) => p.type === 'text')?.text ?? '');
-    }
-  }, [latestChat, currentEnvironment, isGenerating, stop, messages, refetchLatestChat]);
+
+    await refetchLatestChat();
+    isStoppingRef.current = false;
+  }, [latestChat, currentEnvironment, isGenerating, stop, refetchLatestChat]);
 
   const isLoading = isResourceLoading || isFetchingAiChat || areEnvironmentsInitialLoading;
 
   const value: AiChatContextValue = useMemo(
     () => ({
+      hasNoChatHistory,
       lastUserMessageId,
       messages,
       dataParts: dataParts as ReasoningDataPart[],
@@ -350,6 +441,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       handleDiscard,
     }),
     [
+      hasNoChatHistory,
       lastUserMessageId,
       messages,
       dataParts,

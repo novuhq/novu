@@ -120,19 +120,9 @@ export class SqsConsumerService {
       },
     });
 
-    Logger.log(
-      {
-        topic: this.topic,
-        batchSize,
-        waitTimeSeconds: waitTime,
-        visibilityTimeout,
-        maxConcurrency,
-      },
-      'SQS consumer configured with slot-based concurrency',
-      LOG_CONTEXT
-    );
-
     this.setupEventHandlers();
+
+    Logger.log({ topic: this.topic, batchSize, maxConcurrency }, 'SQS consumer initialized', LOG_CONTEXT);
   }
 
   /**
@@ -210,17 +200,17 @@ export class SqsConsumerService {
     });
 
     this.consumer.on('started', () => {
-      Logger.log(`SQS consumer for ${this.topic} started`, LOG_CONTEXT);
+      Logger.debug({ topic: this.topic }, 'SQS consumer started (event)', LOG_CONTEXT);
     });
 
     this.consumer.on('stopped', () => {
-      Logger.log(`SQS consumer for ${this.topic} stopped`, LOG_CONTEXT);
+      Logger.debug({ topic: this.topic }, 'SQS consumer stopped (event)', LOG_CONTEXT);
     });
   }
 
   public start(): void {
     if (this.isStarted) {
-      Logger.warn(`SQS consumer for ${this.topic} is already running`, LOG_CONTEXT);
+      Logger.warn({ topic: this.topic }, 'SQS consumer is already running', LOG_CONTEXT);
 
       return;
     }
@@ -238,18 +228,18 @@ export class SqsConsumerService {
     this.consumer.stop({ abort: false });
     this.isStarted = false;
     this.isPaused = true;
-    Logger.log(`Paused SQS consumer for ${this.topic}`, LOG_CONTEXT);
+    Logger.debug({ topic: this.topic }, 'SQS consumer paused', LOG_CONTEXT);
   }
 
   public async resume(): Promise<void> {
     if (!this.isPaused) {
-      Logger.warn(`Cannot resume SQS consumer for ${this.topic}: not in paused state`, LOG_CONTEXT);
+      Logger.warn({ topic: this.topic }, 'Cannot resume SQS consumer: not in paused state', LOG_CONTEXT);
 
       return;
     }
 
     this.start();
-    Logger.log(`Resumed SQS consumer for ${this.topic}`, LOG_CONTEXT);
+    Logger.debug({ topic: this.topic }, 'SQS consumer resumed', LOG_CONTEXT);
   }
 
   public async stop(): Promise<void> {
@@ -271,7 +261,7 @@ export class SqsConsumerService {
 
     await this.pool.drain();
 
-    Logger.log(`SQS consumer for ${this.topic} fully drained and stopped`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'SQS consumer fully drained and stopped', LOG_CONTEXT);
   }
 
   public getStatus(): { isRunning: boolean; isPaused: boolean; activeSlots: number; waitingSlots: number } {

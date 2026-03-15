@@ -61,6 +61,13 @@ export enum SocketType {
   PARTY_SOCKET = 'partysocket',
 }
 
+export type SocketTypeOption = 'cloud' | 'self-hosted';
+
+export type NovuSocketOptions = {
+  socketType?: SocketTypeOption;
+  [key: string]: unknown;
+};
+
 export enum SeverityLevelEnum {
   HIGH = 'high',
   MEDIUM = 'medium',
@@ -282,10 +289,11 @@ export type StandardNovuOptions = {
   socketUrl?: string;
   /**
    * Custom socket configuration options. These options will be merged with the default socket configuration.
+   * Use `socketType` to explicitly select the socket implementation: `'cloud'` for PartySocket or `'self-hosted'` for socket.io.
    * For socket.io-client connections, supports all socket.io-client options (e.g., `path`, `reconnectionDelay`, `timeout`, etc.).
    * For PartySocket connections, options are applied to the WebSocket instance.
    */
-  socketOptions?: Record<string, unknown>;
+  socketOptions?: NovuSocketOptions;
   useCache?: boolean;
   defaultSchedule?: DefaultSchedule;
   context?: Context;

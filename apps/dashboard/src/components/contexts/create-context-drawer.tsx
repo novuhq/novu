@@ -69,7 +69,9 @@ export const CreateContextDrawer = forwardRef<HTMLDivElement, CreateContextDrawe
             <SheetDescription>
               Contexts are flexible, user-defined data objects that help you organize and personalize your
               notifications.{' '}
-              <ExternalLink href="https://docs.novu.co/platform/workflow/advanced-features/contexts">Learn more</ExternalLink>
+              <ExternalLink href="https://docs.novu.co/platform/workflow/advanced-features/contexts">
+                Learn more
+              </ExternalLink>
             </SheetDescription>
           </SheetHeader>
           <Separator />

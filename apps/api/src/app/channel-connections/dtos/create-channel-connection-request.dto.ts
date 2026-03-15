@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsValidContextPayload } from '@novu/application-generic';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class CreateChannelConnectionRequestDto {

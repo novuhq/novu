@@ -101,7 +101,7 @@ export function AddNodeEdge({
             className="nodrag nopan"
           >
             {!isReadOnly && !isAnyNodeDragging && (
-              <AddStepMenu onMenuItemClick={async (stepType) => addNode(data.addStepIndex, stepType)} />
+              <AddStepMenu onMenuItemClick={(selection) => addNode(data.addStepIndex, selection)} />
             )}
           </div>
         </EdgeLabelRenderer>

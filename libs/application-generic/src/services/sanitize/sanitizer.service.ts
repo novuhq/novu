@@ -27,73 +27,21 @@ const SAFE_IMG_ATTRIBUTES = [
   'lang',
 ];
 
-const DANGEROUS_ATTRIBUTES = [
-  'onerror',
-  'onload',
-  'onclick',
-  'onmouseover',
-  'onmouseout',
-  'onmouseenter',
-  'onmouseleave',
-  'onfocus',
-  'onblur',
-  'onsubmit',
-  'onreset',
-  'onchange',
-  'oninput',
-  'onkeydown',
-  'onkeyup',
-  'onkeypress',
-  'ondblclick',
-  'oncontextmenu',
-  'ondrag',
-  'ondragend',
-  'ondragenter',
-  'ondragleave',
-  'ondragover',
-  'ondragstart',
-  'ondrop',
-  'onscroll',
-  'onwheel',
-  'oncopy',
-  'oncut',
-  'onpaste',
-  'onabort',
-  'oncanplay',
-  'oncanplaythrough',
-  'ondurationchange',
-  'onemptied',
-  'onended',
-  'onloadeddata',
-  'onloadedmetadata',
-  'onloadstart',
-  'onpause',
-  'onplay',
-  'onplaying',
-  'onprogress',
-  'onratechange',
-  'onseeked',
-  'onseeking',
-  'onstalled',
-  'onsuspend',
-  'ontimeupdate',
-  'onvolumechange',
-  'onwaiting',
-  'onanimationstart',
-  'onanimationend',
-  'onanimationiteration',
-  'ontransitionend',
-  'onpointerdown',
-  'onpointerup',
-  'onpointermove',
-  'onpointerenter',
-  'onpointerleave',
-  'onpointercancel',
-  'ontouchstart',
-  'ontouchend',
-  'ontouchmove',
-  'ontouchcancel',
-];
+function isEventHandlerAttribute(name: string): boolean {
+  return name.toLowerCase().startsWith('on');
+}
+
+/**
+ * Normalizes malformed closing tags like </style/> to </style>.
+ *
+ * Browsers treat </tag/> and </tag/anything> as valid closing tags,
+ * but htmlparser2 (used by sanitize-html) does not. This mismatch
+ * allows XSS payloads to be hidden inside style tag content:
+ *   <style></style/><img src onerror=alert(origin)></style>
+ */
+function normalizeMalformedClosingTags(html: string): string {
+  return html.replace(/<\/([a-zA-Z][a-zA-Z0-9]*)\s*\/[^>]*>/g, '</$1>');
+}
 
 const sanitizeOptions: IOptions = {
   /**
@@ -119,7 +67,7 @@ const sanitizeOptions: IOptions = {
       const safeAttribs: Record<string, string> = {};
 
       for (const [key, value] of Object.entries(attribs)) {
-        if (!DANGEROUS_ATTRIBUTES.includes(key.toLowerCase())) {
+        if (!isEventHandlerAttribute(key)) {
           safeAttribs[key] = value;
         }
       }
@@ -175,10 +123,12 @@ export const sanitizeHTML = (html: string): string => {
     return html;
   }
 
+  const normalizedHtml = normalizeMalformedClosingTags(html);
+
   // Sanitize-html removes the DOCTYPE tag, so we need to add it back.
   const doctypeRegex = /^<!DOCTYPE .*?>/;
-  const doctypeTags = html.match(doctypeRegex);
-  const cleanHtml = sanitizeTypes(html, sanitizeOptions);
+  const doctypeTags = normalizedHtml.match(doctypeRegex);
+  const cleanHtml = sanitizeTypes(normalizedHtml, sanitizeOptions);
 
   const cleanHtmlWithDocType = doctypeTags ? doctypeTags[0] + cleanHtml : cleanHtml;
 

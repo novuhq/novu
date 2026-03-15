@@ -13,11 +13,24 @@ import {
 } from '@nestjs/common/decorators';
 import { ApiBody, ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
+  BuildStepDataCommand,
+  BuildStepDataUsecase,
   ExternalApiAccessible,
+  GeneratePreviewRequestDto,
+  GeneratePreviewResponseDto,
+  GetWorkflowCommand,
+  GetWorkflowUseCase,
   ParseSlugEnvironmentIdPipe,
   ParseSlugIdPipe,
+  PreviewCommand,
+  PreviewUsecase,
   RequirePermissions,
+  StepResponseDto,
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowUseCase,
   UserSession,
+  WorkflowResponseDto,
 } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -35,35 +48,26 @@ import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/
 import {
   CreateWorkflowDto,
   DuplicateWorkflowDto,
-  GeneratePreviewRequestDto,
-  GeneratePreviewResponseDto,
   GetListQueryParamsDto,
   ListWorkflowResponse,
   PatchWorkflowDto,
-  StepResponseDto,
   StepUpsertDto,
   SyncWorkflowDto,
+  TestHttpEndpointRequestDto,
+  TestHttpEndpointResponseDto,
   UpdateWorkflowDto,
-  WorkflowResponseDto,
   WorkflowTestDataResponseDto,
 } from './dtos';
 import {
-  BuildStepDataCommand,
-  BuildStepDataUsecase,
   BuildWorkflowTestDataUseCase,
   DuplicateWorkflowCommand,
   DuplicateWorkflowUseCase,
-  GetWorkflowCommand,
-  GetWorkflowUseCase,
   ListWorkflowsCommand,
   ListWorkflowsUseCase,
-  PreviewCommand,
-  PreviewUsecase,
   SyncToEnvironmentCommand,
   SyncToEnvironmentUseCase,
-  UpsertStepDataCommand,
-  UpsertWorkflowCommand,
-  UpsertWorkflowUseCase,
+  TestHttpEndpointCommand,
+  TestHttpEndpointUsecase,
   WorkflowTestDataCommand,
 } from './usecases';
 import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-workflow';
@@ -85,7 +89,8 @@ export class WorkflowController {
     private buildWorkflowTestDataUseCase: BuildWorkflowTestDataUseCase,
     private buildStepDataUsecase: BuildStepDataUsecase,
     private patchWorkflowUsecase: PatchWorkflowUsecase,
-    private duplicateWorkflowUseCase: DuplicateWorkflowUseCase
+    private duplicateWorkflowUseCase: DuplicateWorkflowUseCase,
+    private testHttpEndpointUsecase: TestHttpEndpointUsecase
   ) {}
 
   @Post('')
@@ -299,6 +304,32 @@ export class WorkflowController {
         workflowIdOrInternalId,
         stepIdOrInternalId,
         generatePreviewRequestDto,
+      })
+    );
+  }
+
+  @Post('/steps/test-http-request')
+  @ApiOperation({
+    summary: 'Test HTTP request step',
+    description:
+      'Executes the configured HTTP request for a step, resolving template variables using the provided preview payload',
+  })
+  @ApiBody({
+    type: TestHttpEndpointRequestDto,
+    description: 'Control values and preview payload for variable resolution',
+  })
+  @ApiResponse(TestHttpEndpointResponseDto, 201)
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  async testHttpEndpoint(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Body() body: TestHttpEndpointRequestDto
+  ): Promise<TestHttpEndpointResponseDto> {
+    return this.testHttpEndpointUsecase.execute(
+      TestHttpEndpointCommand.create({
+        user,
+        controlValues: body.controlValues,
+        previewPayload: body.previewPayload,
       })
     );
   }

@@ -10,7 +10,13 @@ import {
   MessageRepository,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsStatusEnum, InboxCountTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsStatusEnum,
+  InboxCountTypeEnum,
+  PushProviderIdEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';

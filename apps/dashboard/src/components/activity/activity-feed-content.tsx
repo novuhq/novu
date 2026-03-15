@@ -38,6 +38,8 @@ export function ActivityFeedContent({
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, error } = usePullActivity(activityItemId);
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const onListStateChange = useCallback((hasActivities: boolean) => setShowDetailPanel(hasActivities), []);
 
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
@@ -147,7 +149,11 @@ export function ActivityFeedContent({
       </div>
       <div className={`relative flex ${contentHeight}`}>
         <ResizablePanelGroup direction="horizontal" className="gap-2">
-          <ResizablePanel defaultSize={50} minSize={35} className="h-full ">
+          <ResizablePanel
+            defaultSize={50}
+            minSize={35}
+            className="h-full transition-[flex-basis] duration-300 ease-out"
+          >
             <ActivityTable
               selectedActivityId={activityItemId}
               onActivitySelect={handleActivitySelect}
@@ -155,47 +161,48 @@ export function ActivityFeedContent({
               hasActiveFilters={hasActiveFilters}
               onClearFilters={handleClearFilters}
               onTriggerWorkflow={onTriggerWorkflow}
+              onListStateChange={onListStateChange}
             />
           </ResizablePanel>
 
-          <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activityItemId}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                  duration: 0.2,
-                }}
-                className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
-              >
-                {activityItemId ? (
-                  <ActivityPanel>
-                    {isPending ? (
-                      <ActivitySkeleton />
-                    ) : error || !activity ? (
-                      <ActivityError />
-                    ) : (
-                      <>
-                        <ActivityHeader activity={activity} onTransactionIdChange={handleTransactionIdChange} />
-                        <ActivityOverview activity={activity} />
-                        <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
-                      </>
-                    )}
-                  </ActivityPanel>
-                ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-6 text-center">
-                    <EmptyTopicsIllustration />
-                    <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
-                      Nothing to show,
-                      <br />
-                      Select an log on the left to view detailed info here
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </ResizablePanel>
+          {showDetailPanel && (
+            <ResizablePanel defaultSize={50} minSize={35} maxSize={50} className="overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activityItemId}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
+                >
+                  {activityItemId ? (
+                    <ActivityPanel>
+                      {isPending ? (
+                        <ActivitySkeleton />
+                      ) : error || !activity ? (
+                        <ActivityError />
+                      ) : (
+                        <>
+                          <ActivityHeader activity={activity} onTransactionIdChange={handleTransactionIdChange} />
+                          <ActivityOverview activity={activity} />
+                          <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
+                        </>
+                      )}
+                    </ActivityPanel>
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-6 text-center">
+                      <EmptyTopicsIllustration />
+                      <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+                        Nothing to show,
+                        <br />
+                        Select a log on the left to view detailed info here
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </ResizablePanel>
+          )}
         </ResizablePanelGroup>
       </div>
     </div>

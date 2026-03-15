@@ -52,6 +52,26 @@ import { SendMessageResult, SendMessageStatus } from './send-message-type.usecas
 
 const LOG_CONTEXT = 'SendMessagePush';
 
+export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
+  'NotRegistered',
+  'InvalidRegistration',
+  'MismatchSenderId',
+  'Unregistered',
+  'BadDeviceToken',
+  'DeviceTokenNotForTopic',
+  'ExpiredPushToken',
+  'InvalidProviderToken',
+  'Requested entity was not found',
+  'SenderId mismatch',
+  'Make sure you have provided a server key as directed by the Expo FCM documentation',
+  'is not a valid Expo push token',
+  'The registration token is not a valid FCM registration token',
+];
+
+export function isSubscriberError(errorMessage: string): boolean {
+  return SUBSCRIBER_ERROR_PATTERNS.some((pattern) => errorMessage.includes(pattern));
+}
+
 interface IPushProviderOverride {
   providerId: PushProviderIdEnum;
   overrides: Record<string, unknown>;
@@ -269,9 +289,11 @@ export class SendMessagePush extends SendMessageBase {
         if (result.success) {
           status = SendMessageStatus.SUCCESS;
         } else {
-          Logger.error(
+          const errorMessage = result.error.message || result.error.toString();
+          const logMethod = isSubscriberError(errorMessage) ? 'debug' : 'error';
+          Logger[logMethod](
             { jobId: command.jobId },
-            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
+            `Error sending push notification for jobId ${command.jobId} ${errorMessage}`,
             LOG_CONTEXT
           );
         }
@@ -319,9 +341,11 @@ export class SendMessagePush extends SendMessageBase {
         if (result.success) {
           status = SendMessageStatus.SUCCESS;
         } else {
-          Logger.error(
+          const errorMessage = result.error.message || result.error.toString();
+          const logMethod = isSubscriberError(errorMessage) ? 'debug' : 'error';
+          Logger[logMethod](
             { jobId: command.jobId },
-            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
+            `Error sending push notification for jobId ${command.jobId} ${errorMessage}`,
             LOG_CONTEXT
           );
         }

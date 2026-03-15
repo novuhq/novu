@@ -11,6 +11,10 @@ import { Badge } from '../primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { Node } from './base-node';
 
+export type AddStepMenuSelection = {
+  type: StepTypeEnum;
+};
+
 const noop = () => {};
 
 const MenuGroup = ({ children }: { children: ReactNode }) => {
@@ -34,11 +38,13 @@ const MenuItem = ({
   stepType,
   disabled,
   onClick,
+  iconOverride,
 }: {
   children: ReactNode;
   stepType: StepTypeEnum;
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLSpanElement>;
+  iconOverride?: React.ReactNode;
 }) => {
   const Icon = STEP_TYPE_TO_ICON[stepType];
   const color = STEP_TYPE_TO_COLOR[stepType];
@@ -54,12 +60,14 @@ const MenuItem = ({
       )}
       data-testid={`add-step-menu-item-${stepType}`}
     >
-      <Icon
-        className={`bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40`}
-        style={{
-          color: `hsl(var(--${color}))`,
-        }}
-      />
+      {iconOverride ?? (
+        <Icon
+          className={`bg-neutral-alpha-50 h-6 w-6 rounded-md p-1 opacity-40`}
+          style={{
+            color: `hsl(var(--${color}))`,
+          }}
+        />
+      )}
       <span className="text-xs">{children}</span>
       {disabled && (
         <Badge color="gray" size="md" variant="lighter">
@@ -79,13 +87,13 @@ export const AddStepMenu = ({
   disabled?: boolean;
   visible?: boolean;
   className?: string;
-  onMenuItemClick: (stepType: StepTypeEnum) => void;
+  onMenuItemClick: (selection: AddStepMenuSelection) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const isThrottleStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_THROTTLE_STEP_ENABLED);
+  const isHttpRequestStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_REQUEST_STEP_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
-    onMenuItemClick(stepType);
+    onMenuItemClick({ type: stepType });
     setIsPopoverOpen(false);
   };
 
@@ -148,9 +156,15 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.DIGEST} onClick={() => handleMenuItemClick(StepTypeEnum.DIGEST)}>
                   Digest
                 </MenuItem>
-                {isThrottleStepEnabled && (
-                  <MenuItem stepType={StepTypeEnum.THROTTLE} onClick={() => handleMenuItemClick(StepTypeEnum.THROTTLE)}>
-                    Throttle
+                <MenuItem stepType={StepTypeEnum.THROTTLE} onClick={() => handleMenuItemClick(StepTypeEnum.THROTTLE)}>
+                  Throttle
+                </MenuItem>
+                {isHttpRequestStepEnabled && (
+                  <MenuItem
+                    stepType={StepTypeEnum.HTTP_REQUEST}
+                    onClick={() => handleMenuItemClick(StepTypeEnum.HTTP_REQUEST)}
+                  >
+                    HTTP Request
                   </MenuItem>
                 )}
               </MenuItemsGroup>

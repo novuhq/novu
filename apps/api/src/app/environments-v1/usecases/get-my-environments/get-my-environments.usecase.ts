@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { decryptApiKey, PinoLogger } from '@novu/application-generic';
+import { buildSlug, decryptApiKey, PinoLogger } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentEnum, ShortIsPrefixEnum } from '@novu/shared';
-import { buildSlug } from '../../../shared/helpers/build-slug';
 import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
 import { GetMyEnvironmentsCommand } from './get-my-environments.command';
 
