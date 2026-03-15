@@ -22,7 +22,7 @@ import {
   RiTranslate2,
 } from 'react-icons/ri';
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
 import {
@@ -105,7 +105,6 @@ const WorkflowLinkTableCell = (props: WorkflowLinkTableCellProps) => {
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 relative', className)} {...rest}>
       {children}
-      <span className="sr-only">Edit workflow</span>
     </TableCell>
   );
 };
@@ -116,7 +115,6 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const { isUserLoaded } = useAuth();
   const has = useHasPermission();
-  const navigate = useNavigate();
   const { safeSync, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
@@ -227,20 +225,9 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
     onPauseWorkflow();
   };
 
-  const handleRowClick = () => {
-    if (isV0Workflow && IS_SELF_HOSTED) {
-      return;
-    }
-
-    if (isV0Workflow) {
-      document.location.href = workflowLink;
-    } else {
-      navigate(workflowLink);
-    }
-  };
+  const shouldRenderLink = !(isV0Workflow && IS_SELF_HOSTED);
 
   const stopPropagation = (e: React.MouseEvent) => {
-    // don't propagate the click event to the row
     e.stopPropagation();
   };
 
@@ -253,7 +240,6 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       <TableRow
         key={workflow._id}
         className={cn('group relative isolate cursor-pointer', isV0Workflow && IS_SELF_HOSTED && 'cursor-not-allowed')}
-        onClick={handleRowClick}
       >
         {isV0Workflow && IS_SELF_HOSTED && (
           <Tooltip delayDuration={300}>
@@ -278,7 +264,18 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </TooltipPortal>
           </Tooltip>
         )}
-        <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
+        <TableCell className="group-hover:bg-neutral-alpha-50">
+          {shouldRenderLink &&
+            (isV0Workflow ? (
+              <a href={workflowLink} className="absolute inset-0" tabIndex={-1}>
+                <span className="sr-only">Edit workflow</span>
+              </a>
+            ) : (
+              <Link to={workflowLink} className="absolute inset-0" tabIndex={-1}>
+                <span className="sr-only">Edit workflow</span>
+              </Link>
+            ))}
+          <div className="relative flex items-center gap-2 font-medium">
           {workflow.origin === ResourceOriginEnum.EXTERNAL ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
@@ -342,7 +339,8 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               />
             </div>
           </div>
-        </WorkflowLinkTableCell>
+          </div>
+        </TableCell>
         <WorkflowLinkTableCell className="min-w-[200px]">
           <WorkflowStatus status={workflow.status} steps={workflow.steps || []} />
         </WorkflowLinkTableCell>

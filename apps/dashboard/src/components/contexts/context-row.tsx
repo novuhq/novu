@@ -22,7 +22,6 @@ import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useContextsNavigate } from './hooks/use-contexts-navigate';
 
 type ContextRowProps = {
   context: GetContextResponseDto;
@@ -41,10 +40,15 @@ const ContextTableCell = (props: ContextTableCellProps) => {
 };
 
 export const ContextRow = ({ context }: ContextRowProps) => {
-  const { navigateToEditContextPage } = useContextsNavigate();
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteContext, isPending: isDeleting } = useDeleteContext();
+
+  const contextLink = buildRoute(ROUTES.CONTEXTS_EDIT, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    type: context.type,
+    id: context.id,
+  });
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,13 +70,15 @@ export const ContextRow = ({ context }: ContextRowProps) => {
     <>
       <TableRow
         className="group relative isolate cursor-pointer"
-        onClick={() => {
-          navigateToEditContextPage(context.type, context.id);
-        }}
       >
-        <ContextTableCell>
-          <span className="max-w-[300px] truncate font-medium">{context.type}</span>
-        </ContextTableCell>
+        <TableCell className="group-hover:bg-neutral-alpha-50 text-text-sub">
+          <Link to={contextLink} className="absolute inset-0" tabIndex={-1}>
+            <span className="sr-only">Edit context</span>
+          </Link>
+          <div className="relative">
+            <span className="max-w-[300px] truncate font-medium">{context.type}</span>
+          </div>
+        </TableCell>
         <ContextTableCell>
           <div className="flex items-center gap-1">
             <div className="font-code text-text-soft max-w-[300px] truncate">{context.id}</div>

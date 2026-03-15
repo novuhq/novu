@@ -2,7 +2,7 @@ import { ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
@@ -53,7 +53,6 @@ const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
       {children}
-      <span className="sr-only">Edit subscriber</span>
     </TableCell>
   );
 };
@@ -63,8 +62,14 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
   const queryClient = useQueryClient();
-  const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
+  const location = useLocation();
+  const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
   const { handleNavigationAfterDelete } = useSubscribersUrlState();
+
+  const subscriberLink = `${buildRoute(ROUTES.EDIT_SUBSCRIBER, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    subscriberId: encodeURIComponent(subscriber.subscriberId),
+  })}${location.search}`;
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -136,12 +141,12 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
       <TableRow
         key={subscriber.subscriberId}
         className="group relative isolate cursor-pointer"
-        onClick={() => {
-          navigateToEditSubscriberPage(subscriber.subscriberId);
-        }}
       >
-        <SubscriberTableCell>
-          <div className="flex items-center gap-3">
+        <TableCell className="group-hover:bg-neutral-alpha-50 text-text-sub">
+          <Link to={subscriberLink} className="absolute inset-0" tabIndex={-1}>
+            <span className="sr-only">Edit subscriber</span>
+          </Link>
+          <div className="relative flex items-center gap-3">
             <Avatar>
               <AvatarImage src={subscriber.avatar || undefined} />
               <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
@@ -160,7 +165,8 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
               </div>
             </div>
           </div>
-        </SubscriberTableCell>
+          </div>
+        </TableCell>
         <SubscriberTableCell>
           <TruncatedText className="relative z-10 max-w-[28ch]">{subscriber.email || '-'}</TruncatedText>
         </SubscriberTableCell>
