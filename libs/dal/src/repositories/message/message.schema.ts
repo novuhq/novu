@@ -44,20 +44,17 @@ const messageSchema = new Schema<MessageDBModel>(
       data: Schema.Types.Mixed,
       action: {
         status: Schema.Types.String,
-        buttons: {
-          type: [
-            {
-              type: {
-                type: Schema.Types.String,
-              },
-              content: Schema.Types.String,
-              resultContent: Schema.Types.String,
-              url: Schema.Types.String,
-              target: Schema.Types.String,
+        buttons: [
+          {
+            type: {
+              type: Schema.Types.String,
             },
-          ],
-          default: undefined,
-        },
+            content: Schema.Types.String,
+            resultContent: Schema.Types.String,
+            url: Schema.Types.String,
+            target: Schema.Types.String,
+          },
+        ],
         result: {
           payload: Schema.Types.Mixed,
           type: {
@@ -160,6 +157,18 @@ const messageSchema = new Schema<MessageDBModel>(
   },
   schemaOptions
 );
+
+messageSchema.pre('init', function sanitizeCorruptCta(doc: Record<string, unknown>) {
+  if (doc.cta !== undefined && doc.cta !== null && typeof doc.cta !== 'object') {
+    doc.cta = {};
+  }
+  if (doc.cta && typeof doc.cta === 'object') {
+    const cta = doc.cta as Record<string, unknown>;
+    if (cta.action !== undefined && cta.action !== null && typeof cta.action !== 'object') {
+      cta.action = {};
+    }
+  }
+});
 
 /**
  * todo: all the pre hooks should be removed after all the soft deletes are removed task nv-5688
