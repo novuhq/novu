@@ -2,6 +2,12 @@ export type KeyValuePair = { key: string; value: string };
 
 export const NOVU_SIGNATURE_HEADER_KEY = 'novu-signature';
 
+const METHODS_WITHOUT_BODY = new Set(['GET', 'HEAD', 'OPTIONS', 'DELETE']);
+
+export function canMethodHaveBody(method: string): boolean {
+  return !METHODS_WITHOUT_BODY.has(method);
+}
+
 export function buildRawCurlString(
   url: string,
   method: string,
@@ -21,7 +27,7 @@ export function buildRawCurlString(
 
   const headerArgs = headerEntries.map(([k, v]) => `--header '${k}: ${v}'`).join(' \\\n');
 
-  const canHaveBody = method !== 'GET' && method !== 'DELETE' && method !== 'HEAD' && method !== 'OPTIONS';
+  const canHaveBody = canMethodHaveBody(method);
   let bodyObj: Record<string, unknown> | null = null;
 
   if (canHaveBody) {
