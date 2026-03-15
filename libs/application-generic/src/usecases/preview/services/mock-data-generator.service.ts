@@ -18,7 +18,7 @@ export class MockDataGeneratorService {
    * with special handling for digest steps that include workflow payload data.
    */
   generateMockStepResult(options: MockStepResultOptions): Record<string, unknown> {
-    const { stepType, workflow } = options;
+    const { stepType, workflow, responseBodySchema } = options;
 
     if (!stepType) {
       return {};
@@ -27,6 +27,10 @@ export class MockDataGeneratorService {
     try {
       if (stepType === 'digest') {
         return this.generateDigestStepResult(workflow);
+      }
+
+      if (stepType === 'http_request') {
+        return this.generateHttpRequestStepResult(responseBodySchema);
       }
 
       let resultSchema: unknown = null;
@@ -54,6 +58,17 @@ export class MockDataGeneratorService {
 
       return {};
     }
+  }
+
+  private generateHttpRequestStepResult(responseBodySchema?: unknown): Record<string, unknown> {
+    if (responseBodySchema && typeof responseBodySchema === 'object' && 'properties' in responseBodySchema) {
+      const properties = responseBodySchema.properties as Record<string, unknown>;
+      if (Object.keys(properties).length > 0) {
+        return JsonSchemaMock.generate(responseBodySchema) as Record<string, unknown>;
+      }
+    }
+
+    return {};
   }
 
   private generateDigestStepResult(workflow?: NotificationTemplateEntity): Record<string, unknown> {
