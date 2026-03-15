@@ -3,10 +3,16 @@ import { BaseOption, isOptionGroupArray, OptionList } from 'react-querybuilder';
 import { SelectGroup, SelectItem, SelectLabel } from '@/components/primitives/select';
 import { capitalize } from '@/utils/string';
 
-const EMPTY_SELECT_VALUE = '__empty__';
+export const EMPTY_SELECT_VALUE = '__empty__';
 
-function toSafeValue(value: string | null | undefined): string {
+export function toSafeValue(value: string | null | undefined): string {
   if (!value) return EMPTY_SELECT_VALUE;
+
+  return value;
+}
+
+export function fromSafeValue(value: string): string {
+  if (value === EMPTY_SELECT_VALUE) return '';
 
   return value;
 }
