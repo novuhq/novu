@@ -2,6 +2,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { JobStatusEnum, NotificationTemplateEntity } from '@novu/dal';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
+import { StepType } from '../../services';
 
 export type PreviewContext = {
   stepData: StepResponseDto;
@@ -45,8 +46,9 @@ export type ControlValueProcessingResult = {
 };
 
 export type MockStepResultOptions = {
-  stepType: string;
+  stepType: StepType;
   workflow?: NotificationTemplateEntity;
+  responseBodySchema?: Record<string, unknown>;
 };
 
 export type FrameworkPreviousStepsOutputState = {

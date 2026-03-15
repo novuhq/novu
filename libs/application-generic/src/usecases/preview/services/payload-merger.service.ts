@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesRepository, NotificationTemplateEntity } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
-import { ContextPayload, createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
+import {
+  ContextPayload,
+  ControlValuesLevelEnum,
+  createMockObjectFromSchema,
+  ResourceOriginEnum,
+  StepTypeEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { isPlainObject, pick } from 'es-toolkit';
 import { keys, merge, mergeWith } from 'es-toolkit/compat';
 import { PreviewPayloadDto } from '../../../dtos/workflow/preview-payload.dto';
@@ -15,7 +22,8 @@ import { MockDataGeneratorService } from './mock-data-generator.service';
 export class PayloadMergerService {
   constructor(
     private readonly mockDataGenerator: MockDataGeneratorService,
-    private readonly buildStepDataUsecase: BuildStepDataUsecase
+    private readonly buildStepDataUsecase: BuildStepDataUsecase,
+    private readonly controlValuesRepository: ControlValuesRepository
   ) {}
 
   /**
@@ -273,6 +281,8 @@ export class PayloadMergerService {
     const previousSteps = workflow.steps.slice(0, currentStepIndex);
     const userStepsData = (userPayloadExample?.steps as Record<string, unknown>) || {};
 
+    const httpControlValuesMap = await this.getHttpControlValuesMap(previousSteps, workflow);
+
     for (const step of previousSteps) {
       const stepId = step.stepId || step._id;
 
@@ -281,9 +291,16 @@ export class PayloadMergerService {
           stepsObject[stepId] = userStepsData[stepId];
         } else {
           // Fall back to generating mock data
+          const stepControls = step._id ? httpControlValuesMap[step._id] : undefined;
+          const responseBodySchema =
+            step.template?.type === StepTypeEnum.HTTP_REQUEST
+              ? (stepControls?.responseBodySchema as Record<string, unknown> | undefined)
+              : undefined;
+
           const mockResult = this.mockDataGenerator.generateMockStepResult({
             stepType: step.template?.type || '',
             workflow,
+            responseBodySchema,
           });
 
           stepsObject[stepId] = mockResult;
@@ -292,6 +309,33 @@ export class PayloadMergerService {
     }
 
     return stepsObject;
+  }
+
+  private async getHttpControlValuesMap(
+    previousSteps: NotificationTemplateEntity['steps'],
+    workflow: NotificationTemplateEntity
+  ): Promise<Record<string, Record<string, unknown>>> {
+    const httpRequestStepIds = previousSteps
+      .filter((step) => step.template?.type === StepTypeEnum.HTTP_REQUEST && step._id)
+      .map((step) => step._id as string);
+
+    const httpControlValuesMap: Record<string, Record<string, unknown>> = {};
+    if (httpRequestStepIds.length > 0) {
+      const controlValues = await this.controlValuesRepository.findMany({
+        _environmentId: workflow._environmentId,
+        _organizationId: workflow._organizationId,
+        _workflowId: workflow._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+
+      for (const cv of controlValues) {
+        if (cv._stepId && httpRequestStepIds.includes(cv._stepId)) {
+          httpControlValuesMap[cv._stepId] = cv.controls as Record<string, unknown>;
+        }
+      }
+    }
+
+    return httpControlValuesMap;
   }
 
   private async getStepData({
