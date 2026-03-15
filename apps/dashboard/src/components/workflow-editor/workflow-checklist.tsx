@@ -56,11 +56,11 @@ export function WorkflowChecklist({ steps, workflow }: WorkflowChecklistProps) {
       if (allItemsCompleted) {
         setIsOpen(false);
 
-        telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_COMPLETED, {
-          workflowId: workflow?.workflowId,
-        });
+        if (user && !user.unsafeMetadata?.workflowChecklistCompleted) {
+          telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_COMPLETED, {
+            workflowId: workflow?.workflowId,
+          });
 
-        if (user) {
           user.update({
             unsafeMetadata: {
               ...user.unsafeMetadata,

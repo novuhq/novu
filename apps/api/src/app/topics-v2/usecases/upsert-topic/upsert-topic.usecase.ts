@@ -6,6 +6,8 @@ import { TopicResponseDto } from '../../dtos/topic-response.dto';
 import { mapTopicEntityToDto } from '../list-topics/map-topic-entity-to.dto';
 import { UpsertTopicCommand } from './upsert-topic.command';
 
+const DUPLICATE_KEY_ERROR_CODE = 11000;
+
 @Injectable()
 export class UpsertTopicUseCase {
   constructor(private topicRepository: TopicRepository) {}
@@ -20,12 +22,24 @@ export class UpsertTopicUseCase {
     if (!topic) {
       this.isValidTopicKey(command.key);
 
-      topic = await this.topicRepository.createTopic({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        key: command.key,
-        name: command.name,
-      });
+      try {
+        topic = await this.topicRepository.createTopic({
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          key: command.key,
+          name: command.name,
+        });
+      } catch (error: unknown) {
+        if (this.isDuplicateKeyError(error)) {
+          topic = await this.topicRepository.findTopicByKey(
+            command.key,
+            command.organizationId,
+            command.environmentId
+          );
+        } else {
+          throw error;
+        }
+      }
     } else {
       const updateBody: Record<string, unknown> = {};
 
@@ -59,5 +73,9 @@ export class UpsertTopicUseCase {
     throw new BadRequestException(
       `Invalid topic key: "${key}". Topic keys must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address.`
     );
+  }
+
+  private isDuplicateKeyError(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'code' in error && error.code === DUPLICATE_KEY_ERROR_CODE;
   }
 }
