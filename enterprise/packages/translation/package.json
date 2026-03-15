@@ -24,7 +24,7 @@
     "deep-object-diff": "^1.1.9",
     "i18next": "^23.7.11",
     "lodash": "^4.17.15",
-    "multer": "^2.0.0",
+    "multer": "^2.1.1",
     "shortid": "^2.2.16"
   },
   "devDependencies": {
