@@ -97,13 +97,26 @@ const toastOptions: ExternalToast = {
   },
 };
 
-type WorkflowLinkTableCellProps = ComponentProps<typeof TableCell>;
+type WorkflowLinkTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+  isExternal?: boolean;
+};
 
 const WorkflowLinkTableCell = (props: WorkflowLinkTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, isExternal, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 relative', className)} {...rest}>
+      {to &&
+        (isExternal ? (
+          <a href={to} className="absolute inset-0" tabIndex={-1}>
+            <span className="sr-only">Edit workflow</span>
+          </a>
+        ) : (
+          <Link to={to} className="absolute inset-0" tabIndex={-1}>
+            <span className="sr-only">Edit workflow</span>
+          </Link>
+        ))}
       {children}
     </TableCell>
   );
@@ -264,18 +277,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </TooltipPortal>
           </Tooltip>
         )}
-        <TableCell className="group-hover:bg-neutral-alpha-50">
-          {shouldRenderLink &&
-            (isV0Workflow ? (
-              <a href={workflowLink} className="absolute inset-0" tabIndex={-1}>
-                <span className="sr-only">Edit workflow</span>
-              </a>
-            ) : (
-              <Link to={workflowLink} className="absolute inset-0" tabIndex={-1}>
-                <span className="sr-only">Edit workflow</span>
-              </Link>
-            ))}
-          <div className="relative flex items-center gap-2 font-medium">
+        <WorkflowLinkTableCell
+          className="flex items-center gap-2 font-medium"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           {workflow.origin === ResourceOriginEnum.EXTERNAL ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
@@ -339,19 +345,26 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
               />
             </div>
           </div>
-          </div>
-        </TableCell>
-        <WorkflowLinkTableCell className="min-w-[200px]">
+        </WorkflowLinkTableCell>
+        <WorkflowLinkTableCell
+          className="min-w-[200px]"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           <WorkflowStatus status={workflow.status} steps={workflow.steps || []} />
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell>
+        <WorkflowLinkTableCell to={shouldRenderLink ? workflowLink : undefined} isExternal={isV0Workflow}>
           <WorkflowSteps steps={workflow.stepTypeOverviews} />
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell>
+        <WorkflowLinkTableCell to={shouldRenderLink ? workflowLink : undefined} isExternal={isV0Workflow}>
           <WorkflowTags tags={workflow.tags || []} />
         </WorkflowLinkTableCell>
 
-        <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
+        <WorkflowLinkTableCell
+          className="text-foreground-600 text-sm font-medium"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           {workflow.lastTriggeredAt ? (
             <TimeDisplayHoverCard date={new Date(workflow.lastTriggeredAt)}>
               {formatDateSimple(workflow.lastTriggeredAt)}
@@ -360,7 +373,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             <span className="text-foreground-400 text-sm font-normal">-</span>
           )}
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
+        <WorkflowLinkTableCell
+          className="text-foreground-600 text-sm font-medium"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           <TimeDisplayHoverCard date={new Date(workflow.updatedAt)}>
             {formatDateSimple(workflow.updatedAt)}
           </TimeDisplayHoverCard>

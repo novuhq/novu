@@ -30,13 +30,20 @@ type TopicRowProps = {
   topic: Topic;
 };
 
-type TopicTableCellProps = ComponentProps<typeof TableCell>;
+type TopicTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
 
 const TopicTableCell = (props: TopicTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to && (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">Edit topic</span>
+        </Link>
+      )}
       {children}
     </TableCell>
   );
@@ -80,15 +87,12 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
       <TableRow
         className="group relative isolate cursor-pointer"
       >
-        <TableCell className="group-hover:bg-neutral-alpha-50 text-text-sub">
-          <Link to={topicLink} className="absolute inset-0" tabIndex={-1}>
-            <span className="sr-only">Edit topic</span>
-          </Link>
-          <div className="relative flex items-center">
+        <TopicTableCell to={topicLink}>
+          <div className="flex items-center">
             <span className="max-w-[300px] truncate font-medium">{topic.name}</span>
           </div>
-        </TableCell>
-        <TopicTableCell>
+        </TopicTableCell>
+        <TopicTableCell to={topicLink}>
           <div className="flex items-center gap-1">
             <div className="font-code text-text-soft max-w-[300px] truncate">{topic.key}</div>
             <CopyButton
@@ -98,12 +102,12 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
             />
           </div>
         </TopicTableCell>
-        <TopicTableCell>
+        <TopicTableCell to={topicLink}>
           {topic.createdAt && (
             <TimeDisplayHoverCard date={topic.createdAt}>{formatDateSimple(topic.createdAt)}</TimeDisplayHoverCard>
           )}
         </TopicTableCell>
-        <TopicTableCell>
+        <TopicTableCell to={topicLink}>
           {topic.updatedAt && (
             <TimeDisplayHoverCard date={topic.updatedAt}>{formatDateSimple(topic.updatedAt)}</TimeDisplayHoverCard>
           )}

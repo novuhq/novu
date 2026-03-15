@@ -27,13 +27,20 @@ type ContextRowProps = {
   context: GetContextResponseDto;
 };
 
-type ContextTableCellProps = ComponentProps<typeof TableCell>;
+type ContextTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
 
 const ContextTableCell = (props: ContextTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to && (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">Edit context</span>
+        </Link>
+      )}
       {children}
     </TableCell>
   );
@@ -71,15 +78,10 @@ export const ContextRow = ({ context }: ContextRowProps) => {
       <TableRow
         className="group relative isolate cursor-pointer"
       >
-        <TableCell className="group-hover:bg-neutral-alpha-50 text-text-sub">
-          <Link to={contextLink} className="absolute inset-0" tabIndex={-1}>
-            <span className="sr-only">Edit context</span>
-          </Link>
-          <div className="relative">
-            <span className="max-w-[300px] truncate font-medium">{context.type}</span>
-          </div>
-        </TableCell>
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
+          <span className="max-w-[300px] truncate font-medium">{context.type}</span>
+        </ContextTableCell>
+        <ContextTableCell to={contextLink}>
           <div className="flex items-center gap-1">
             <div className="font-code text-text-soft max-w-[300px] truncate">{context.id}</div>
             <CopyButton
@@ -89,12 +91,12 @@ export const ContextRow = ({ context }: ContextRowProps) => {
             />
           </div>
         </ContextTableCell>
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
           {context.createdAt && (
             <TimeDisplayHoverCard date={context.createdAt}>{formatDateSimple(context.createdAt)}</TimeDisplayHoverCard>
           )}
         </ContextTableCell>
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
           {context.updatedAt && (
             <TimeDisplayHoverCard date={context.updatedAt}>{formatDateSimple(context.updatedAt)}</TimeDisplayHoverCard>
           )}

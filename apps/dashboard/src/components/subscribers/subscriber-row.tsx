@@ -45,13 +45,20 @@ type SubscriberRowProps = {
   firstTwoSubscribersInternalIds: string[];
 };
 
-type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
+type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
 
 const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to && (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">Edit subscriber</span>
+        </Link>
+      )}
       {children}
     </TableCell>
   );
@@ -142,11 +149,8 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
         key={subscriber.subscriberId}
         className="group relative isolate cursor-pointer"
       >
-        <TableCell className="group-hover:bg-neutral-alpha-50 text-text-sub">
-          <Link to={subscriberLink} className="absolute inset-0" tabIndex={-1}>
-            <span className="sr-only">Edit subscriber</span>
-          </Link>
-          <div className="relative flex items-center gap-3">
+        <SubscriberTableCell to={subscriberLink}>
+          <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src={subscriber.avatar || undefined} />
               <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
@@ -165,17 +169,17 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
               </div>
             </div>
           </div>
-        </TableCell>
-        <SubscriberTableCell>
+        </SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <TruncatedText className="relative z-10 max-w-[28ch]">{subscriber.email || '-'}</TruncatedText>
         </SubscriberTableCell>
-        <SubscriberTableCell>{subscriber.phone || '-'}</SubscriberTableCell>
-        <SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>{subscriber.phone || '-'}</SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <TimeDisplayHoverCard date={new Date(subscriber.createdAt)}>
             {formatDateSimple(subscriber.createdAt)}
           </TimeDisplayHoverCard>
         </SubscriberTableCell>
-        <SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <TimeDisplayHoverCard date={new Date(subscriber.updatedAt)}>
             {formatDateSimple(subscriber.updatedAt)}
           </TimeDisplayHoverCard>
