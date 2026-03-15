@@ -19,7 +19,7 @@ overrides:
   semver@>=7.0.0 <7.5.2: ^7.5.2
   systeminformation@<5.31.0: ^5.31.3
   tar: 7.5.11
-  tar-fs: '>=3.0.9'
+  tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
   trim-newlines@<3.0.1: ^3.0.1
   xml2js@<0.5.0: ^0.5.0
@@ -26281,8 +26281,8 @@ packages:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
     engines: {node: '>=6'}
 
-  tar-fs@3.0.9:
-    resolution: {integrity: sha512-XF4w9Xp+ZQgifKakjZYmFdkLoSWd34VGKcsTCwlNWM7QG3ZbaxnTsaBwnjFZqHRf/rROxaR8rXnbtwdvaDI+lA==}
+  tar-fs@3.1.2:
+    resolution: {integrity: sha512-QGxxTxxyleAdyM3kpFs14ymbYmNFrfY+pHj7Z8FgtbZ7w2//VAgLMac7sT6nRpIHjppXO2AwwEOg0bPFVRcmXw==}
 
   tar-stream@2.2.0:
     resolution: {integrity: sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ==}
@@ -55652,7 +55652,7 @@ snapshots:
       node-abi: 3.65.0
       npm-run-path: 3.1.0
       pump: 3.0.0
-      tar-fs: 3.0.9
+      tar-fs: 3.1.2
     transitivePeerDependencies:
       - bare-buffer
     optional: true
@@ -58386,7 +58386,7 @@ snapshots:
 
   tapable@2.2.1: {}
 
-  tar-fs@3.0.9:
+  tar-fs@3.1.2:
     dependencies:
       pump: 3.0.0
       tar-stream: 3.1.7
