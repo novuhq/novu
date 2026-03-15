@@ -157,6 +157,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
   const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const steps = workflow?.steps ?? [];
   const hasMultipleSteps = steps.length > 1;
 
@@ -167,7 +168,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
     const basePath =
       buildRoute(ROUTES.EDIT_WORKFLOW, {
         environmentSlug: currentEnvironment.slug,
-        workflowSlug: workflow.slug,
+        workflowSlug,
       }) + `/steps/${targetStep.slug}`;
 
     const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(targetStep.type);
@@ -198,7 +199,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
                 return (
                   <DropdownMenuItem
                     key={s._id}
-                    onClick={() => handleStepSwitch(s)}
+                    onSelect={() => handleStepSwitch(s)}
                     className={cn('flex cursor-pointer items-center gap-2', isCurrentStep && 'bg-neutral-alpha-50')}
                   >
                     <Step variant={STEP_TYPE_TO_COLOR[s.type]} className="size-5">
