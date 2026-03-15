@@ -1,7 +1,7 @@
 import { ResourceOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import React from 'react';
 import { FaCode } from 'react-icons/fa6';
-import { RiArrowLeftSLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowLeftSLine } from 'react-icons/ri';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { RouteFill } from '@/components/icons';
@@ -15,11 +15,18 @@ import {
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
 import { CompactButton } from '@/components/primitives/button-compact';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
-import { STEP_TYPE_LABELS } from '@/utils/constants';
+import { STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 import { SavingStatusIndicator } from './saving-status-indicator';
 import { getStepTypeIcon } from './steps/utils/preview-context.utils';
 import { useWorkflow } from './workflow-provider';
@@ -145,15 +152,68 @@ function WorkflowBreadcrumbContent({
 
 function StepBreadcrumb({ step }: { step: StepResponseDto }) {
   const Icon = getStepTypeIcon(step.type);
-  const { isUpdatePatchPending, lastSaveError } = useWorkflow();
+  const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const steps = workflow?.steps ?? [];
+  const hasMultipleSteps = steps.length > 1;
+
+  function handleStepSwitch(targetStep: StepResponseDto) {
+    if (!workflow || !currentEnvironment?.slug) return;
+    if (targetStep.slug === step.slug) return;
+
+    const basePath =
+      buildRoute(ROUTES.EDIT_WORKFLOW, {
+        environmentSlug: currentEnvironment.slug,
+        workflowSlug: workflow.slug,
+      }) + `/steps/${targetStep.slug}`;
+
+    const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(targetStep.type);
+    const finalPath = isTemplateConfigurable ? `${basePath}/editor` : basePath;
+
+    navigate(finalPath);
+  }
 
   return (
     <BreadcrumbItem>
       <BreadcrumbPage className="flex items-center gap-1">
-        <Icon className="size-3.5" />
-        <div className="flex max-w-[32ch]">
-          <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
-        </div>
+        {hasMultipleSteps ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 hover:bg-neutral-100">
+              <Icon className="size-3.5" />
+              <div className="flex max-w-[32ch]">
+                <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
+              </div>
+              <RiArrowDownSLine className="size-4 text-neutral-500" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[180px]">
+              {steps.map((s) => {
+                const StepIcon = getStepTypeIcon(s.type);
+                const isCurrentStep = s.slug === step.slug;
+
+                return (
+                  <DropdownMenuItem
+                    key={s._id}
+                    onClick={() => handleStepSwitch(s)}
+                    className={cn('flex cursor-pointer items-center gap-2', isCurrentStep && 'bg-neutral-alpha-50')}
+                  >
+                    <StepIcon className="size-3.5 shrink-0" />
+                    <span className={cn('truncate', isCurrentStep && 'font-semibold')}>
+                      {s.name || STEP_TYPE_LABELS[s.type]}
+                    </span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <>
+            <Icon className="size-3.5" />
+            <div className="flex max-w-[32ch]">
+              <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
+            </div>
+          </>
+        )}
         <SavingStatusIndicator isSaving={isUpdatePatchPending} hasError={!!lastSaveError} />
       </BreadcrumbPage>
     </BreadcrumbItem>
