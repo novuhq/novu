@@ -4,6 +4,7 @@ import type { DiscoveredStep } from '../types';
 export function generateWorkerWrapper(steps: DiscoveredStep[], rootDir: string): string {
   return [
     generateImports(steps, rootDir),
+    generateValidatorPrecompilation(steps),
     generateStepHandlersMap(steps),
     generateWorkerUtilities(),
     generateFetchHandler(),
@@ -15,7 +16,33 @@ function generateImports(steps: DiscoveredStep[], rootDir: string): string {
     .map((s, i) => `import stepHandler${i} from ${JSON.stringify(getImportPath(s.filePath, rootDir))};`)
     .join('\n');
 
-  return `import { validateData } from '@novu/framework/validators';\n${stepImports}`;
+  return `import { validateData } from '@novu/framework/validators';
+import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
+}
+
+function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
+  const handlerRefs = steps.map((_, i) => `stepHandler${i}`).join(', ');
+
+  return `// Pre-compile all JSON Schema validators during the startup phase.
+// Cloudflare Workers allow new Function() (used by AJV) during startup but not during request handling.
+// JsonSchemaValidator caches compiled validators by schema object reference, so these pre-compiled
+// validators are reused on every request without triggering new Function() again.
+await Promise.all([
+  ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {})
+  ),
+  ...[${handlerRefs}].flatMap(handler => {
+    const schemas = [];
+    if (handler.controlSchema) schemas.push(validateData(handler.controlSchema, {}));
+    if (handler.providers && providerSchemas[handler.type]) {
+      for (const key of Object.keys(handler.providers)) {
+        const providerSchema = providerSchemas[handler.type]?.[key]?.output;
+        if (providerSchema) schemas.push(validateData(providerSchema, {}));
+      }
+    }
+    return schemas;
+  }),
+]);`;
 }
 
 function generateStepHandlersMap(steps: DiscoveredStep[]): string {
@@ -86,16 +113,35 @@ function generateRequestHandler(): string {
 
       ${generateSchemaValidation()}
 
+      ${generateSkipCheck()}
+
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
 
+      ${generateOutputValidation()}
+
+      ${generateProviderExecution()}
+
       return jsonResponse(
-        { stepId: step.stepId, workflowId: workflowId, subject: result.subject, body: result.body },
+        {
+          outputs: validatedResult,
+          providers,
+          options: { skip: false },
+          metadata: {
+            status: 'success',
+            error: false,
+            duration: Date.now() - startTime,
+            stepType: step.type,
+            disableOutputSanitization: step.disableOutputSanitization === true,
+          },
+        },
         200
       );`;
 }
 
 function generateBodyValidation(): string {
-  return `let body = {};
+  return `const startTime = Date.now();
+
+      let body = {};
       const rawBody = await request.text();
       if (rawBody) {
         try {
@@ -115,6 +161,7 @@ function generateBodyValidation(): string {
       const stateArray = Array.isArray(body.state) ? body.state : [];
       const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
+      const isPreview = body.action === 'preview';
 
       if (!isObject(payload) || !isObject(subscriber) || !isObject(context) || !isObject(stepOutputs) || !isObject(controls)) {
         return jsonResponse(
@@ -135,6 +182,70 @@ function generateSchemaValidation(): string {
           );
         }
         validatedControls = controlsResult.data;
+      }`;
+}
+
+function generateSkipCheck(): string {
+  return `if (!isPreview && step.skip) {
+        const shouldSkip = await step.skip(validatedControls, { payload, subscriber, context, steps: stepOutputs });
+        if (shouldSkip) {
+          return jsonResponse(
+            {
+              outputs: {},
+              providers: {},
+              options: { skip: true },
+              metadata: {
+                status: 'success',
+                error: false,
+                duration: Date.now() - startTime,
+                stepType: step.type,
+                disableOutputSanitization: step.disableOutputSanitization === true,
+              },
+            },
+            200
+          );
+        }
+      }`;
+}
+
+function generateOutputValidation(): string {
+  return `const outputSchema = channelStepSchemas[step.type]?.output;
+      let validatedResult = result;
+      if (outputSchema) {
+        const outputResult = await validateData(outputSchema, result);
+        if (!outputResult.success) {
+          return jsonResponse(
+            { error: 'INVALID_OUTPUT', message: 'Step output failed schema validation', details: outputResult.errors },
+            400
+          );
+        }
+        validatedResult = outputResult.data ?? result;
+      }`;
+}
+
+function generateProviderExecution(): string {
+  return `const providers = {};
+      if (step.providers) {
+        const ctx = { payload, subscriber, context, steps: stepOutputs };
+        for (const [providerKey, providerResolve] of Object.entries(step.providers)) {
+          const providerResult = await providerResolve({ controls: validatedControls, outputs: validatedResult }, ctx);
+          const providerOutputSchema = providerSchemas[step.type]?.[providerKey]?.output;
+          if (providerOutputSchema) {
+            const providerValidation = await validateData(providerOutputSchema, providerResult);
+            if (!providerValidation.success) {
+              return jsonResponse(
+                { error: 'INVALID_PROVIDER_OUTPUT', provider: providerKey, message: 'Provider output failed schema validation', details: providerValidation.errors },
+                400
+              );
+            }
+            const validated = providerValidation.data ?? providerResult;
+            providers[providerKey] = providerResult._passthrough !== undefined
+              ? { ...validated, _passthrough: providerResult._passthrough }
+              : validated;
+          } else {
+            providers[providerKey] = providerResult;
+          }
+        }
       }`;
 }
 

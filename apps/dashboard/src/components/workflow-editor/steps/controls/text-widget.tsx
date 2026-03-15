@@ -10,7 +10,7 @@ import { capitalize } from '@/utils/string';
 import { getFieldName } from './template-utils';
 
 export function TextWidget(props: WidgetProps) {
-  const { label, readonly, disabled, id, required } = props;
+  const { label, readonly, disabled, id, required, value: rjsfValue, onChange: rjsfOnChange } = props;
   const { control } = useFormContext();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
@@ -22,53 +22,69 @@ export function TextWidget(props: WidgetProps) {
     <FormField
       control={control}
       name={extractedName}
-      render={({ field, fieldState }) => (
-        <FormItem className="w-full py-1">
-          <FormLabel className="text-xs">{capitalize(label)}</FormLabel>
-          <FormControl>
-            {isNumberType ? (
-              <Input
-                type="number"
-                {...field}
-                hasError={!!fieldState.error}
-                onChange={(e) => {
-                  if (e.target.value === '') {
-                    field.onChange('');
-                    return;
-                  }
+      defaultValue={rjsfValue ?? ''}
+      render={({ field, fieldState }) => {
+        let stringValue = '';
 
-                  const val = Number(e.target.value);
-                  const isNaN = Number.isNaN(val);
-                  const finalValue = isNaN ? '' : val;
-                  field.onChange(finalValue);
-                }}
-                required={required}
-                readOnly={readonly}
-                disabled={disabled}
-                placeholder={capitalize(label)}
-              />
-            ) : (
-              <InputRoot hasError={!!fieldState.error}>
-                <InputWrapper className="flex h-full items-center p-2 py-1">
-                  <ControlInput
-                    indentWithTab={false}
-                    placeholder={capitalize(label)}
-                    id={label}
-                    value={field.value}
-                    onChange={field.onChange}
-                    variables={variables}
-                    isAllowedVariable={isAllowedVariable}
-                    size="sm"
-                    readOnly={readonly}
-                    disabled={disabled}
-                  />
-                </InputWrapper>
-              </InputRoot>
-            )}
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
+        if (typeof field.value === 'string') {
+          stringValue = field.value;
+        } else if (typeof rjsfValue === 'string') {
+          stringValue = rjsfValue;
+        }
+
+        return (
+          <FormItem className="w-full py-1">
+            <FormLabel className="text-xs">{capitalize(label)}</FormLabel>
+            <FormControl>
+              {isNumberType ? (
+                <Input
+                  type="number"
+                  {...field}
+                  hasError={!!fieldState.error}
+                  onChange={(e) => {
+                    if (e.target.value === '') {
+                      field.onChange('');
+                      rjsfOnChange('');
+                      return;
+                    }
+
+                    const val = Number(e.target.value);
+                    const isNaN = Number.isNaN(val);
+                    const finalValue = isNaN ? '' : val;
+                    field.onChange(finalValue);
+                    rjsfOnChange(finalValue);
+                  }}
+                  required={required}
+                  readOnly={readonly}
+                  disabled={disabled}
+                  placeholder={capitalize(label)}
+                />
+              ) : (
+                <InputRoot hasError={!!fieldState.error}>
+                  <InputWrapper className="flex h-full items-center p-2 py-1">
+                    <ControlInput
+                      indentWithTab={false}
+                      placeholder={capitalize(label)}
+                      id={label}
+                      value={stringValue}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        rjsfOnChange(val);
+                      }}
+                      variables={variables}
+                      isAllowedVariable={isAllowedVariable}
+                      size="sm"
+                      readOnly={readonly}
+                      disabled={disabled}
+                    />
+                  </InputWrapper>
+                </InputRoot>
+              )}
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 }

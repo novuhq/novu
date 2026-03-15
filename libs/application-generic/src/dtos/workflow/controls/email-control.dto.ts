@@ -20,19 +20,10 @@ export class EmailControlDto extends SkipControlDto {
     enum: ['block', 'html'],
     default: 'block',
   })
+  @IsIn(['block', 'html'])
   @IsString()
   @IsOptional()
   editorType?: 'block' | 'html' = 'block';
-
-  @ApiPropertyOptional({
-    description: 'Type of renderer to use (raw HTML or React Email step resolver)',
-    enum: ['html', 'react-email'],
-    default: 'html',
-  })
-  @IsString()
-  @IsIn(['html', 'react-email'])
-  @IsOptional()
-  rendererType?: 'html' | 'react-email' = 'html';
 
   @ApiPropertyOptional({ description: 'Disable sanitization of the output.', default: false })
   @IsBoolean()

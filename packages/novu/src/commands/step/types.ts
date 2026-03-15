@@ -27,6 +27,7 @@ export interface StepResolverReleaseBundle {
 export interface StepResolverManifestStep {
   workflowId: string;
   stepId: string;
+  stepType: string;
   controlSchema?: Record<string, unknown>;
 }
 

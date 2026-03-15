@@ -18,7 +18,7 @@ import { QueryIssueTypeEnum, QueryValidatorService } from '../../services/query-
 import { dashboardSanitizeControlValues } from '../../utils';
 import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from '../../utils/issues';
 import { parseStepVariables } from '../../utils/parse-step-variables';
-import { isStepResolverEmailStep } from '../../utils/step-resolver-control-state';
+import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { TierRestrictionsValidateCommand, TierRestrictionsValidateUsecase } from '../tier-restrictions-validate';
 import { BuildStepIssuesCommand } from './build-step-issues.command';
@@ -131,7 +131,7 @@ export class BuildStepIssuesUsecase {
       (step) => step._id === stepInternalId || step._templateId === stepInternalId
     );
 
-    return isStepResolverEmailStep(currentStep?.template?.type, currentStep?.template?.stepResolverHash);
+    return isStepResolverActive(currentStep?.template?.stepResolverHash);
   }
 
   @Instrument()

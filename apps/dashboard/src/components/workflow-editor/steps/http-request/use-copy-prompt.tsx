@@ -2,8 +2,7 @@ import { useCallback } from 'react';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { useStepEditor } from '../context/step-editor-context';
-
-type KeyValuePair = { key: string; value: string };
+import { canMethodHaveBody, type KeyValuePair } from './curl-utils';
 
 function buildLlmPrompt(
   url: string,
@@ -22,7 +21,7 @@ function buildLlmPrompt(
         '\n  novu-signature: t=<timestamp>,v1=<hmac-sha256>'
       : '  novu-signature: t=<timestamp>,v1=<hmac-sha256>';
 
-  const canHaveBody = method !== 'GET' && method !== 'DELETE';
+  const canHaveBody = canMethodHaveBody(method);
   const bodyObject =
     canHaveBody && activeBody.length > 0 ? Object.fromEntries(activeBody.map(({ key, value }) => [key, value])) : null;
 

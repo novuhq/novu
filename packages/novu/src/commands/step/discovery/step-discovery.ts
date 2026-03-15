@@ -19,6 +19,16 @@ interface AnalyzedStepFile {
 
 const STEP_FILE_PATTERN = '**/*.step.{ts,tsx,js,jsx}';
 
+const METHOD_NAME_TO_TYPE: Record<string, string> = {
+  email: 'email',
+  sms: 'sms',
+  chat: 'chat',
+  push: 'push',
+  inApp: 'in_app',
+};
+
+const VALID_STEP_TYPES = new Set(Object.values(METHOD_NAME_TO_TYPE));
+
 export async function discoverStepFiles(stepsDir: string): Promise<StepDiscoveryResult> {
   const matchedStepFiles = await fg([STEP_FILE_PATTERN], {
     cwd: stepsDir,
@@ -148,7 +158,7 @@ function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMeta
   if (!firstArg || !ts.isStringLiteral(firstArg)) return;
 
   metadata.stepId = firstArg.text;
-  metadata.type = methodName;
+  metadata.type = METHOD_NAME_TO_TYPE[methodName] ?? methodName;
 }
 
 function hasDefaultExportInFile(sourceFile: ts.SourceFile): boolean {
@@ -194,11 +204,14 @@ function buildValidationErrors(analysis: AnalyzedStepFile, workflowId: string | 
   }
 
   if (!analysis.metadata.stepId) {
-    errors.push("Missing step resolver: default export must be 'step.email(stepId, resolver, opts)'");
+    const validMethods = Object.keys(METHOD_NAME_TO_TYPE).map((k) => `step.${k}()`);
+    errors.push(`Missing step resolver: default export must call one of ${validMethods.join(', ')}`);
   }
 
-  if (analysis.metadata.type && analysis.metadata.type !== 'email') {
-    errors.push(`Invalid step type: '${analysis.metadata.type}' (must be 'email')`);
+  if (analysis.metadata.type && !VALID_STEP_TYPES.has(analysis.metadata.type)) {
+    errors.push(
+      `Invalid step type: '${analysis.metadata.type}' (must be one of: ${Array.from(VALID_STEP_TYPES).join(', ')})`
+    );
   }
 
   return errors;

@@ -1,9 +1,11 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { StepTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
   IsDefined,
+  IsEnum,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -19,6 +21,10 @@ export class DeployStepResolverManifestStepCommand {
   @IsString()
   @IsNotEmpty()
   stepId: string;
+
+  @IsEnum(StepTypeEnum)
+  @IsNotEmpty()
+  stepType: StepTypeEnum;
 
   @IsOptional()
   @IsObject()

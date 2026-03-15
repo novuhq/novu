@@ -1,3 +1,4 @@
+import { AiResumeActionEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { AiChatDBModel } from './ai-chat.entity';
@@ -50,6 +51,12 @@ const aiChatSchema = new Schema<AiChatDBModel>(
     },
     resumeCheckpointId: {
       type: Schema.Types.String,
+      required: false,
+      default: null,
+    },
+    resumeAction: {
+      type: Schema.Types.String,
+      enum: Object.values(AiResumeActionEnum),
       required: false,
       default: null,
     },

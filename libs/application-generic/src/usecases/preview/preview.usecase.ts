@@ -8,7 +8,7 @@ import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
 import { shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
-import { isStepResolverEmailStep } from '../../utils/step-resolver-control-state';
+import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
@@ -40,9 +40,9 @@ export class PreviewUsecase {
       const context = await this.initializePreviewContext(command);
       const stepResolverHash =
         typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
-      const isStepResolverEmail = isStepResolverEmailStep(context.stepData.type, stepResolverHash);
+      const isStepResolver = isStepResolverActive(stepResolverHash);
 
-      const sanitizedControls = isStepResolverEmail
+      const sanitizedControls = isStepResolver
         ? context.controlValues
         : this.controlValueSanitizer.sanitizeControlsForPreview(
             context.controlValues,
@@ -96,10 +96,9 @@ export class PreviewUsecase {
         /*
          * If preview execution fails, still return valid schema and payload example
          * but with an empty preview result.
-         * For step resolver email steps, since its a runtime error, surface the error
-         * as HTML rendered in the preview panel.
+         * For step resolver steps, surface the error as HTML rendered in the preview panel.
          */
-        const previewResult = isStepResolverEmail
+        const previewResult = isStepResolver
           ? { subject: '', body: this.errorHandler.buildPreviewErrorHtml(error) }
           : {};
 

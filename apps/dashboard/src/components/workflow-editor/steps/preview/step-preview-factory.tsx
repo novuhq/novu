@@ -9,7 +9,6 @@ import { PushPreview } from '@/components/workflow-editor/steps/push/push-previe
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
-import { ReactEmailPreviewPlaceholder } from './previews/react-email-preview-placeholder';
 
 const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   return (
@@ -43,13 +42,6 @@ export function StepPreviewFactory() {
 
   switch (step.type) {
     case StepTypeEnum.EMAIL: {
-      const isReactEmailUnpublished =
-        controlValues?.rendererType === 'react-email' && controlValues?.editorType === 'html' && !step.stepResolverHash;
-
-      if (isReactEmailUnpublished) {
-        return <ReactEmailPreviewPlaceholder />;
-      }
-
       return (
         <EmailCorePreview
           {...commonProps}

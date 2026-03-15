@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
@@ -6,12 +6,10 @@ import {
   getStepResolverControlSchema,
   InstrumentUsecase,
   PinoLogger,
-  REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
   reconcileStepResolverControlValues,
-  STEP_RESOLVER_EMAIL_UI_SCHEMA,
 } from '@novu/application-generic';
 import { ClientSession, ControlValuesEntity, ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { createHash } from 'crypto';
 import { DeployStepResolverResponseDto } from '../../dtos';
 import { CloudflareStepResolverDeployService } from '../../services/cloudflare-step-resolver-deploy.service';
@@ -23,12 +21,22 @@ const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
 
+const SUPPORTED_STEP_RESOLVER_TYPES = new Set<StepTypeEnum>([
+  StepTypeEnum.EMAIL,
+  StepTypeEnum.SMS,
+  StepTypeEnum.CHAT,
+  StepTypeEnum.PUSH,
+  StepTypeEnum.IN_APP,
+]);
+
 interface ResolvedManifestStep {
   workflowId: string;
   workflowInternalId: string;
   stepId: string;
   stepInternalId: string;
+  stepType: StepTypeEnum;
   controlSchema: Record<string, unknown>;
+  existingStepResolverHash: string | undefined;
   existingControlValues: ControlValuesEntity | null;
 }
 
@@ -60,8 +68,6 @@ export class DeployStepResolverUsecase {
     this.assertBundleSize(command.bundleBuffer);
 
     const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
-
-    this.assertNoRendererConflicts(resolvedManifestSteps);
 
     const stepResolverHash = this.generateStepResolverHash(command.bundleBuffer);
     const workerId = generateStepResolverWorkerId(command.user.organizationId, stepResolverHash);
@@ -131,12 +137,32 @@ export class DeployStepResolverUsecase {
         });
       }
 
+      const actualStepType = step.template?.type;
+
+      if (!actualStepType || !SUPPORTED_STEP_RESOLVER_TYPES.has(actualStepType)) {
+        throw new BadRequestException({
+          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers`,
+          workflowId: manifestStep.workflowId,
+          stepId: manifestStep.stepId,
+        });
+      }
+
+      if (actualStepType !== manifestStep.stepType) {
+        throw new BadRequestException({
+          message: `Manifest stepType '${manifestStep.stepType}' does not match the actual step type '${actualStepType}'`,
+          workflowId: manifestStep.workflowId,
+          stepId: manifestStep.stepId,
+        });
+      }
+
       partialSteps.push({
         workflowId: manifestStep.workflowId,
         workflowInternalId: String(workflow._id),
         stepId: manifestStep.stepId,
         stepInternalId: String(step._templateId),
+        stepType: actualStepType,
         controlSchema: getStepResolverControlSchema(manifestStep.controlSchema),
+        existingStepResolverHash: step.template?.stepResolverHash ?? undefined,
       });
     }
 
@@ -180,11 +206,10 @@ export class DeployStepResolverUsecase {
     session: ClientSession | null
   ): Promise<void> {
     for (const step of resolvedSteps) {
-      // Keep values that still match the current resolver schema and drop stale ones from previous deploys.
-      const mergedControls = {
-        ...reconcileStepResolverControlValues(this.readControlObject(step.existingControlValues), step.controlSchema),
-        ...REACT_EMAIL_STEP_RESOLVER_DEFAULTS,
-      };
+      const mergedControls = reconcileStepResolverControlValues(
+        this.readControlObject(step.existingControlValues),
+        step.controlSchema
+      );
 
       if (step.existingControlValues) {
         await this.controlValuesRepository.update(
@@ -223,12 +248,7 @@ export class DeployStepResolverUsecase {
     for (const step of resolvedSteps) {
       await this.messageTemplateRepository.update(
         { _id: step.stepInternalId, _environmentId: command.user.environmentId },
-        {
-          $set: {
-            'controls.schema': step.controlSchema,
-            'controls.uiSchema': STEP_RESOLVER_EMAIL_UI_SCHEMA,
-          },
-        },
+        { $set: { 'controls.schema': step.controlSchema }, $unset: { 'controls.uiSchema': 1 } },
         { session }
       );
     }
@@ -269,25 +289,6 @@ export class DeployStepResolverUsecase {
     }
 
     return output;
-  }
-
-  private assertNoRendererConflicts(resolvedSteps: ResolvedManifestStep[]): void {
-    const conflictingSteps = resolvedSteps.filter((step) => {
-      if (!step.existingControlValues) return false;
-
-      const controls = step.existingControlValues.controls;
-      if (!isPlainObject(controls)) return true;
-
-      return controls.rendererType !== 'react-email';
-    });
-
-    if (conflictingSteps.length === 0) return;
-
-    throw new ConflictException({
-      message: `Publishing blocked: ${conflictingSteps.length} step(s) are not using React Email. To protect existing email content from being overwritten, switch each affected step to React Email in the Novu dashboard before publishing.`,
-      errorCode: 'STEP_RENDERER_CONFLICT',
-      conflictingSteps: conflictingSteps.map((s) => ({ workflowId: s.workflowId, stepId: s.stepId })),
-    });
   }
 
   private assertBundleSize(bundleBuffer: Buffer): void {

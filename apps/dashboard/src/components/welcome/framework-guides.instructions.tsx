@@ -1,6 +1,6 @@
+import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { API_HOSTNAME, IS_EU } from '@/config';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { Language } from '../primitives/code-block';
 import { getFrameworkPrompt } from './ai-prompts/simple-prompt-getter';
 

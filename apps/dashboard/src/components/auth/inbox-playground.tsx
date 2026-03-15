@@ -136,9 +136,8 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="flex flex-1">
-          {/* App Name Section - Show immediately */}
-          <div className="flex flex-1 items-start justify-start">
+        <div className="flex flex-1 flex-col md:flex-row">
+          <div className="hidden flex-1 items-start justify-start md:flex">
             <div className="ml-10 mt-9">
               <div className="text-1xl font-medium text-gray-500">
                 {organization?.name ? `${organization.name} App` : 'ACME App'}
@@ -146,10 +145,9 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
             </div>
           </div>
 
-          {/* Inbox Preview Section - Show with optimized loading */}
-          <div className="flex flex-1 flex-col">
-            <div className="flex items-start justify-end">
-              <div className="nv-no-scrollbar mr-20 mt-16 h-[470px] w-[375px] rounded-lg border border-gray-200 bg-white shadow-[0_8px_25px_-8px_rgba(0,0,0,0.15)]">
+          <div className="flex flex-1 flex-col items-center md:items-end">
+            <div className="flex items-start justify-center px-4 py-6 md:justify-end md:px-0">
+              <div className="nv-no-scrollbar h-[380px] w-full max-w-[375px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-[0_8px_25px_-8px_rgba(0,0,0,0.15)] md:mr-20 md:mt-16 md:h-[470px] md:w-[375px]">
                 <InboxPreviewContent />
               </div>
             </div>

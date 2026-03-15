@@ -30,12 +30,11 @@ import { EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
 import { computeWorkflowStatus, removeBrandingFromHtml, shortId, stepTypeToControlSchema } from '../../utils';
 import { isStringifiedMailyJSONContent } from '../../utils/maily-utils';
-import { isStepResolverEmailStep, REACT_EMAIL_STEP_RESOLVER_DEFAULTS } from '../../utils/step-resolver-control-state';
+import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { NotificationStep } from '../../value-objects';
 import { SendWebhookMessage } from '../../webhooks';
 import { BuildStepIssuesUsecase } from '../build-step-issues';
 import { CreateWorkflowCommandV0, CreateWorkflowV0 } from '../create-workflow-v0';
-import { DisconnectStepResolverCommand, DisconnectStepResolverUsecase } from '../disconnect-step-resolver';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout-v2';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { PreviewCommand, PreviewUsecase } from '../preview';
@@ -57,7 +56,6 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
     private getLayoutUseCase: GetLayoutUseCase,
-    private disconnectStepResolverUsecase: DisconnectStepResolverUsecase,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
@@ -391,19 +389,15 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      const resetControlValues = isStepResolverEmailStep(step.template?.type, step.template?.stepResolverHash)
-        ? REACT_EMAIL_STEP_RESOLVER_DEFAULTS
-        : {};
-
-      return this.upsertControlValuesUseCase.execute(
-        UpsertControlValuesCommand.create({
-          organizationId: command.user.organizationId,
-          environmentId: command.user.environmentId,
-          stepId: step._templateId,
-          workflowId,
+      return this.controlValuesRepository.delete(
+        {
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          _workflowId: workflowId,
+          _stepId: step._templateId,
           level: ControlValuesLevelEnum.STEP_CONTROLS,
-          newControlValues: resetControlValues,
-        })
+        },
+        { session: command.session }
       );
     }
 
@@ -419,23 +413,7 @@ export class UpsertWorkflowUseCase {
         command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
     ) {
       const emailControlValues = newControlValues as EmailControlType;
-      const isStepResolver = isStepResolverEmailStep(step.template?.type, step.template?.stepResolverHash);
-      let shouldApplyStandardEmailProcessing = true;
-      const shouldDisconnectResolver =
-        isStepResolver &&
-        emailControlValues.rendererType !== undefined &&
-        emailControlValues.rendererType !== 'react-email';
-
-      if (shouldDisconnectResolver) {
-        await this.disconnectStepResolverUsecase.execute(
-          DisconnectStepResolverCommand.create({
-            stepInternalId: step._templateId,
-            user: command.user,
-          })
-        );
-      } else if (isStepResolver) {
-        shouldApplyStandardEmailProcessing = false;
-      }
+      const shouldApplyStandardEmailProcessing = !isStepResolverActive(step.template?.stepResolverHash);
 
       if (shouldApplyStandardEmailProcessing && typeof emailControlValues.layoutId === 'string') {
         const layout = await this.getLayoutUseCase.execute(

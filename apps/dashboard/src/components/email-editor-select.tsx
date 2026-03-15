@@ -19,11 +19,10 @@ export const EmailEditorSelect = ({
   }) => Promise<void>;
   disabled?: boolean;
 }) => {
-  const { control, setValue } = useFormContext();
+  const { control } = useFormContext();
   const [isSwitchingToHtml, setIsSwitchingToHtml] = useState(false);
   const [isSwitchingToBlock, setIsSwitchingToBlock] = useState(false);
   const body = useWatch({ name: 'body', control });
-  const rendererType = useWatch({ name: 'rendererType', control });
 
   return (
     <FormField
@@ -36,20 +35,15 @@ export const EmailEditorSelect = ({
               defaultValue="editor"
               value={field.value ?? 'block'}
               onValueChange={(value) => {
-                if (value === 'block' && rendererType === 'react-email') {
-                  // react-email has no "body" field to check
-                  setIsSwitchingToBlock(true);
-                  return;
-                }
-
-                // allow freely switching if the body is empty string or maily json
                 if (!body || body === '' || isEmptyMailyJson(body)) {
                   field.onChange(value);
+
                   return;
                 }
 
                 if (value === 'html') {
                   setIsSwitchingToHtml(true);
+
                   return;
                 }
 
@@ -71,7 +65,7 @@ export const EmailEditorSelect = ({
             <ConfirmationModal
               open={isSwitchingToHtml}
               onOpenChange={setIsSwitchingToHtml}
-              onConfirm={async () => {
+              onConfirm={() => {
                 field.onChange('html');
                 saveForm?.({ editorType: 'html', onSuccess: () => setIsSwitchingToHtml(false) });
               }}
@@ -84,20 +78,12 @@ export const EmailEditorSelect = ({
               open={isSwitchingToBlock}
               onOpenChange={setIsSwitchingToBlock}
               onConfirm={() => {
-                if (rendererType === 'react-email') {
-                  setValue('rendererType', 'html', { shouldDirty: true });
-                }
-
                 field.onChange('block');
                 saveForm?.({ editorType: 'block', onSuccess: () => setIsSwitchingToBlock(false) });
               }}
-              title={rendererType === 'react-email' ? 'Disconnect React Email template?' : 'Are you sure?'}
-              description={
-                rendererType === 'react-email'
-                  ? "Switching away will remove the connection to your deployed React Email template. You'll need to run novu email publish again to reconnect."
-                  : "Switching to visual mode will reset your code. You'll start fresh with blocks. Sure you want to do that?"
-              }
-              confirmButtonText={rendererType === 'react-email' ? 'Disconnect' : 'Proceed'}
+              title="Are you sure?"
+              description="Switching to visual mode will reset your code. You'll start fresh with blocks. Sure you want to do that?"
+              confirmButtonText="Proceed"
               isLoading={isLoading}
             />
           </>
