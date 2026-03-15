@@ -2,10 +2,10 @@ export type KeyValuePair = { key: string; value: string };
 
 export const NOVU_SIGNATURE_HEADER_KEY = 'novu-signature';
 
-const METHODS_WITHOUT_BODY = new Set(['GET', 'HEAD', 'OPTIONS', 'DELETE']);
+const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH']);
 
 export function canMethodHaveBody(method: string): boolean {
-  return !METHODS_WITHOUT_BODY.has(method);
+  return METHODS_WITH_BODY.has(method.toUpperCase());
 }
 
 export function buildRawCurlString(
