@@ -5,7 +5,7 @@ import {
   StepResponseDto,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
@@ -22,6 +22,8 @@ type StepEditorContextType = {
   isSubsequentLoad: boolean;
   isNovuCloud: boolean;
   isStepEditable: boolean;
+  isPendingResolverActivation: boolean;
+  setIsPendingResolverActivation: (value: boolean) => void;
   selectedLocale: string;
   setSelectedLocale: (locale: string) => void;
 };
@@ -42,6 +44,15 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
   // Only initialize selectedLocale when organization settings are loaded
   const organizationDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
   const [selectedLocale, setSelectedLocale] = useState<string>(organizationDefaultLocale);
+  const [isPendingResolverActivation, setIsPendingResolverActivationState] = useState(false);
+
+  const setIsPendingResolverActivation = useCallback((value: boolean) => {
+    setIsPendingResolverActivationState(value);
+  }, []);
+
+  useEffect(() => {
+    setIsPendingResolverActivationState(false);
+  }, [workflow.workflowId, step.stepId]);
 
   // Update locale when organization settings first load
   useEffect(() => {
@@ -59,7 +70,8 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
   const { uiSchema } = step.controls;
   const isNovuCloud = workflow.origin === ResourceOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
   const isExternal = workflow.origin === ResourceOriginEnum.EXTERNAL;
-  const isStepEditable = isExternal || (isNovuCloud && Boolean(uiSchema));
+  const isStepEditable =
+    isExternal || (isNovuCloud && Boolean(uiSchema)) || Boolean(step.stepResolverHash) || isPendingResolverActivation;
 
   const isInitialLoad = isPreviewPending;
   const isSubsequentLoad = isFetching && !isPreviewPending;
@@ -77,6 +89,8 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
       isSubsequentLoad,
       isNovuCloud,
       isStepEditable,
+      isPendingResolverActivation,
+      setIsPendingResolverActivation,
       selectedLocale,
       setSelectedLocale,
     }),
@@ -92,6 +106,8 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
       isSubsequentLoad,
       isNovuCloud,
       isStepEditable,
+      isPendingResolverActivation,
+      setIsPendingResolverActivation,
       selectedLocale,
       setSelectedLocale,
     ]

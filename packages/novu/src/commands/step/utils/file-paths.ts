@@ -1,4 +1,7 @@
+import * as fs from 'fs';
 import * as path from 'path';
+
+const STEP_FILE_EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js'];
 
 export class StepFilePathResolver {
   constructor(
@@ -12,6 +15,19 @@ export class StepFilePathResolver {
 
   getStepFilePath(workflowId: string, stepId: string): string {
     return path.join(this.getWorkflowDir(workflowId), `${stepId}.step.tsx`);
+  }
+
+  findExistingStepFilePath(workflowId: string, stepId: string): string | undefined {
+    const workflowDir = this.getWorkflowDir(workflowId);
+
+    for (const ext of STEP_FILE_EXTENSIONS) {
+      const candidate = path.join(workflowDir, `${stepId}.step${ext}`);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    return undefined;
   }
 
   getRelativeStepPath(workflowId: string, stepId: string): string {

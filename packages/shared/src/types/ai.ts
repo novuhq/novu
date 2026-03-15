@@ -45,3 +45,8 @@ export enum AiWorkflowToolsNameEnum {
   REMOVE_STEP = 'tool-removeStep',
   MOVE_STEP = 'tool-moveStep',
 }
+
+export enum AiResumeActionEnum {
+  TRY_AGAIN = 'tryAgain',
+  REVERT = 'revert',
+}

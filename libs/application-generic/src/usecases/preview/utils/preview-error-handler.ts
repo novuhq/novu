@@ -5,19 +5,67 @@ import { GeneratePreviewResponseDto } from '../../../dtos/workflow/generate-prev
 import { LOG_CONTEXT } from '../preview.constants';
 import { FrameworkError, GeneratePreviewError } from '../preview.types';
 
-const PLATFORM_ERROR_MESSAGES: Record<string, string> = {
-  STEP_RESOLVER_UNAVAILABLE:
-    'Your email template code is unavailable. Try running "npx novu email publish" to redeploy.',
-  STEP_RESOLVER_NOT_FOUND:
-    'No published email template code found. Run "npx novu email publish" to deploy your templates.',
-  STEP_RESOLVER_AUTHENTICATION_FAILED:
-    'Preview failed due to an authentication error. Please contact support if this persists.',
-  STEP_RESOLVER_PAYLOAD_TOO_LARGE: 'The preview payload is too large to process.',
-  STEP_RESOLVER_TIMEOUT:
-    'Your email template took too long to render. Check for slow operations in your template code.',
-  STEP_RESOLVER_ERROR: 'Failed to reach your email template code. Try running "npx novu email publish" to redeploy.',
-  STEP_RESOLVER_HTTP_ERROR:
-    'An unexpected error occurred while rendering your email template. Please contact support if this persists.',
+type ErrorContent = {
+  title: string;
+  getMessage: (response: Record<string, unknown>, fallback: string) => string;
+  hint: string;
+};
+
+const ERROR_CONTENT_MAPPINGS: Record<string, ErrorContent> = {
+  STEP_RESOLVER_INVALID_CONTROLS: {
+    title: 'Controls validation failed',
+    getMessage: (response, fallback) => {
+      const details = response.data;
+
+      if (Array.isArray(details) && details.length > 0) {
+        return details.map((d: Record<string, unknown>) => `• ${d.message ?? JSON.stringify(d)}`).join('\n');
+      }
+
+      return fallback;
+    },
+    hint: 'The control values sent to your step handler did not pass schema validation. Update the controls in the dashboard to match your controlSchema.',
+  },
+  STEP_HANDLER_ERROR: {
+    title: 'Template error',
+    getMessage: (_response, fallback) => fallback,
+    hint: 'Fix the error in your template code and run "npx novu step publish" to redeploy.',
+  },
+  STEP_RESOLVER_UNAVAILABLE: {
+    title: 'Preview unavailable',
+    getMessage: () => 'Your step template code is unavailable. Try running "npx novu step publish" to redeploy.',
+    hint: 'This is not a problem with your template code.',
+  },
+  STEP_RESOLVER_NOT_FOUND: {
+    title: 'Preview unavailable',
+    getMessage: () => 'No published step template code found. Run "npx novu step publish" to deploy your templates.',
+    hint: 'This is not a problem with your template code.',
+  },
+  STEP_RESOLVER_AUTHENTICATION_FAILED: {
+    title: 'Preview unavailable',
+    getMessage: () => 'Preview failed due to an authentication error. Please contact support if this persists.',
+    hint: 'This is not a problem with your template code.',
+  },
+  STEP_RESOLVER_PAYLOAD_TOO_LARGE: {
+    title: 'Preview unavailable',
+    getMessage: () => 'The preview payload is too large to process.',
+    hint: 'This is not a problem with your template code.',
+  },
+  STEP_RESOLVER_TIMEOUT: {
+    title: 'Preview unavailable',
+    getMessage: () => 'Your step template took too long to render. Check for slow operations in your template code.',
+    hint: 'This is not a problem with your template code.',
+  },
+  STEP_RESOLVER_ERROR: {
+    title: 'Preview unavailable',
+    getMessage: () => 'Failed to reach your step template code. Try running "npx novu step publish" to redeploy.',
+    hint: 'This is not a problem with your template code.',
+  },
+  STEP_RESOLVER_HTTP_ERROR: {
+    title: 'Preview unavailable',
+    getMessage: () =>
+      'An unexpected error occurred while rendering your step template. Please contact support if this persists.',
+    hint: 'This is not a problem with your template code.',
+  },
 };
 
 @Injectable()
@@ -99,23 +147,14 @@ export class PreviewErrorHandler {
     if (error instanceof HttpException) {
       const response = error.getResponse() as Record<string, unknown>;
       const code = typeof response?.code === 'string' ? response.code : '';
-      const message = typeof response?.message === 'string' ? response.message : error.message;
+      const fallbackMessage = typeof response?.message === 'string' ? response.message : error.message;
+      const mapping = ERROR_CONTENT_MAPPINGS[code];
 
-      if (code === 'STEP_HANDLER_ERROR') {
+      if (mapping) {
         return {
-          title: 'Template error',
-          message,
-          hint: 'Fix the error in your template code and run "npx novu email publish" to redeploy.',
-        };
-      }
-
-      const platformMessage = PLATFORM_ERROR_MESSAGES[code];
-
-      if (platformMessage) {
-        return {
-          title: 'Preview unavailable',
-          message: platformMessage,
-          hint: 'This is not a problem with your template code.',
+          title: mapping.title,
+          message: mapping.getMessage(response, fallbackMessage),
+          hint: mapping.hint,
         };
       }
     }

@@ -5,19 +5,23 @@ import { QueryKeys } from '@/utils/query-keys';
 
 const POLL_INTERVAL_MS = 3_000;
 
-export function useReactEmailPolling({
+export function useStepResolverPolling({
+  enabled,
   stepResolverHash,
-  isReactEmailMode,
+  onHashChange,
 }: {
+  enabled: boolean;
   stepResolverHash?: string | null;
-  isReactEmailMode: boolean;
+  onHashChange?: () => void;
 }) {
   const queryClient = useQueryClient();
   const { formState } = useFormContext();
   const prevHashRef = useRef(stepResolverHash);
+  const onHashChangeRef = useRef(onHashChange);
+  onHashChangeRef.current = onHashChange;
 
   useEffect(() => {
-    if (!isReactEmailMode) return;
+    if (!enabled) return;
 
     const interval = setInterval(() => {
       if (formState.isDirty) return;
@@ -25,7 +29,7 @@ export function useReactEmailPolling({
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [isReactEmailMode, queryClient, formState.isDirty]);
+  }, [enabled, queryClient, formState.isDirty]);
 
   useEffect(() => {
     if (stepResolverHash && stepResolverHash !== prevHashRef.current) {
@@ -33,6 +37,7 @@ export function useReactEmailPolling({
         queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
         queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
         prevHashRef.current = stepResolverHash;
+        onHashChangeRef.current?.();
       }
     } else {
       prevHashRef.current = stepResolverHash;

@@ -11,7 +11,7 @@
     "test": "echo 'skip test in the ci'",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts",
+    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts",
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/chai": "^4.2.11",
     "@types/mocha": "^8.0.1",
-    "@types/node": "^20.15.0",
+    "@types/node": "^22.0.0",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",
