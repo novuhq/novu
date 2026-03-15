@@ -183,9 +183,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
         {hasMultipleSteps ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="border-neutral-alpha-200 flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 shadow-xs hover:bg-neutral-50">
-              <Step variant={STEP_TYPE_TO_COLOR[step.type]} className="size-5">
-                <Icon />
-              </Step>
+              <Icon className="text-foreground-950 size-4" />
               <span className="text-foreground-950 max-w-[32ch] truncate text-sm font-medium">
                 {step.name || STEP_TYPE_LABELS[step.type]}
               </span>
@@ -200,7 +198,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
                   <DropdownMenuItem
                     key={s._id}
                     onSelect={() => handleStepSwitch(s)}
-                    className={cn('flex cursor-pointer items-center gap-2', isCurrentStep && 'bg-neutral-alpha-50')}
+                    className={cn('flex cursor-pointer items-center gap-2 text-xs', isCurrentStep && 'bg-neutral-alpha-50')}
                   >
                     <Step variant={STEP_TYPE_TO_COLOR[s.type]} className="size-5">
                       <StepIcon />
@@ -213,9 +211,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
           </DropdownMenu>
         ) : (
           <>
-            <Step variant={STEP_TYPE_TO_COLOR[step.type]} className="size-5">
-              <Icon />
-            </Step>
+            <Icon className="text-foreground-950 size-4" />
             <div className="flex max-w-[32ch]">
               <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
             </div>
