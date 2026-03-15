@@ -1,10 +1,11 @@
 import { ResourceOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import React from 'react';
 import { FaCode } from 'react-icons/fa6';
-import { RiArrowDownSLine, RiArrowLeftSLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { RouteFill } from '@/components/icons';
+import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Badge } from '@/components/primitives/badge';
 import {
   Breadcrumb,
@@ -21,14 +22,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { Step } from '@/components/primitives/step';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { SavingStatusIndicator } from './saving-status-indicator';
-import { getStepTypeIcon } from './steps/utils/preview-context.utils';
 import { useWorkflow } from './workflow-provider';
 
 type BreadcrumbData = {
@@ -151,7 +153,7 @@ function WorkflowBreadcrumbContent({
 }
 
 function StepBreadcrumb({ step }: { step: StepResponseDto }) {
-  const Icon = getStepTypeIcon(step.type);
+  const Icon = STEP_TYPE_TO_ICON[step.type];
   const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
@@ -179,16 +181,18 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
       <BreadcrumbPage className="flex items-center gap-1">
         {hasMultipleSteps ? (
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 hover:bg-neutral-100">
-              <Icon className="size-3.5" />
-              <div className="flex max-w-[32ch]">
-                <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
-              </div>
-              <RiArrowDownSLine className="size-4 text-neutral-500" />
+            <DropdownMenuTrigger className="border-neutral-alpha-200 flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 shadow-xs hover:bg-neutral-50">
+              <Step variant={STEP_TYPE_TO_COLOR[step.type]} className="size-5">
+                <Icon />
+              </Step>
+              <span className="text-foreground-950 max-w-[32ch] truncate text-sm font-medium">
+                {step.name || STEP_TYPE_LABELS[step.type]}
+              </span>
+              <RiExpandUpDownLine className="text-foreground-400 size-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[180px]">
+            <DropdownMenuContent align="start" className="min-w-[200px]">
               {steps.map((s) => {
-                const StepIcon = getStepTypeIcon(s.type);
+                const StepIcon = STEP_TYPE_TO_ICON[s.type];
                 const isCurrentStep = s.slug === step.slug;
 
                 return (
@@ -197,10 +201,10 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
                     onClick={() => handleStepSwitch(s)}
                     className={cn('flex cursor-pointer items-center gap-2', isCurrentStep && 'bg-neutral-alpha-50')}
                   >
-                    <StepIcon className="size-3.5 shrink-0" />
-                    <span className={cn('truncate', isCurrentStep && 'font-semibold')}>
-                      {s.name || STEP_TYPE_LABELS[s.type]}
-                    </span>
+                    <Step variant={STEP_TYPE_TO_COLOR[s.type]} className="size-5">
+                      <StepIcon />
+                    </Step>
+                    <span className="truncate">{s.name || STEP_TYPE_LABELS[s.type]}</span>
                   </DropdownMenuItem>
                 );
               })}
@@ -208,7 +212,9 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
           </DropdownMenu>
         ) : (
           <>
-            <Icon className="size-3.5" />
+            <Step variant={STEP_TYPE_TO_COLOR[step.type]} className="size-5">
+              <Icon />
+            </Step>
             <div className="flex max-w-[32ch]">
               <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
             </div>
