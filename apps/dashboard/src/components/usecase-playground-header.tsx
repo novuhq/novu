@@ -48,8 +48,8 @@ export function UsecasePlaygroundHeader({
   const skipButtonText = getSkipButtonText();
 
   return (
-    <div className="flex items-center justify-between gap-4 border-b pr-6">
-      <div className="flex pl-3">
+    <div className="flex flex-col gap-2 border-b px-3 py-2 md:flex-row md:items-center md:justify-between md:gap-4 md:py-0 md:pl-0 md:pr-6">
+      <div className="flex pl-0 md:pl-3">
         {showBackButton && (
           <CompactButton
             icon={RiArrowLeftSLine}
@@ -59,9 +59,9 @@ export function UsecasePlaygroundHeader({
           />
         )}
 
-        <div className="flex-1 py-3 pr-3 pt-3">
-          <h2 className="text-lg font-medium">{title}</h2>
-          <p className="text-foreground-400 pb-1.5 text-sm">{description}</p>
+        <div className="flex-1 py-2 pr-3 md:py-3 md:pt-3">
+          <h2 className="text-base font-medium md:text-lg">{title}</h2>
+          <p className="text-foreground-400 pb-1.5 text-xs md:text-sm">{description}</p>
         </div>
       </div>
 

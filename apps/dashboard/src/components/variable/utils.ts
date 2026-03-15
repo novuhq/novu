@@ -2,7 +2,7 @@ import { getFilters } from './constants';
 import { FilterWithParam } from './types';
 
 function escapeString(str: string): string {
-  return str.replace(/'/g, "\\'");
+  return String(str).replace(/'/g, "\\'");
 }
 
 export function formatParamValue(param: string, type?: string) {

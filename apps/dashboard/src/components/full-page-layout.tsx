@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
+import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 
 export const FullPageLayout = ({
   children,
@@ -15,6 +16,7 @@ export const FullPageLayout = ({
 
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
       </div>
+      <MobileDesktopPrompt />
     </div>
   );
 };
