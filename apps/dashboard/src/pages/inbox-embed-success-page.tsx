@@ -20,8 +20,8 @@ export function InboxEmbedSuccessPage() {
   }
 
   return (
-    <AnimatedPage className="flex flex-col items-center justify-center">
-      <AuthCard className="relative mt-10 block max-h-[366px] min-h-[380px] w-full max-w-[366px] border-none bg-transparent bg-[linear-gradient(180deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.15)_39.37%)]">
+    <AnimatedPage className="flex flex-col items-center justify-center px-4 md:px-0">
+      <AuthCard className="relative mt-4 block max-h-[366px] min-h-[380px] w-full max-w-[366px] border-none bg-transparent bg-[linear-gradient(180deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0.15)_39.37%)] md:mt-10">
         <div className="flex w-full flex-col justify-center p-0">
           <div className="relative mb-[50px] flex w-full flex-row items-end justify-end p-2">
             <img src="/images/auth/success-usecase-hint.svg" alt="Onboarding succcess hint to look for inbox" />

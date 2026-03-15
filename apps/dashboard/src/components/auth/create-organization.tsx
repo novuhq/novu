@@ -54,8 +54,8 @@ interface IllustrationProps {
 // Small Components
 function FormContainer({ children }: FormContainerProps) {
   return (
-    <div className="flex min-w-[564px] max-w-[564px] items-center p-[60px]">
-      <div className="flex flex-col gap-[4px]">{children}</div>
+    <div className="flex w-full items-center p-6 md:min-w-[564px] md:max-w-[564px] md:p-[60px]">
+      <div className="flex w-full flex-col gap-[4px]">{children}</div>
     </div>
   );
 }
@@ -118,7 +118,7 @@ function Illustration({ src, alt, className }: IllustrationProps) {
 
 function IllustrationSection() {
   return (
-    <div className="flex flex-1 items-center justify-center">
+    <div className="hidden flex-1 items-center justify-center md:flex">
       <Illustration {...ILLUSTRATION_CONFIG} />
     </div>
   );
@@ -126,7 +126,7 @@ function IllustrationSection() {
 
 function MainContent() {
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 flex-col md:flex-row">
       <OrganizationFormSection />
       <IllustrationSection />
     </div>

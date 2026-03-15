@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { type KeyValuePair, NOVU_SIGNATURE_HEADER_KEY } from './curl-utils';
+import { canMethodHaveBody, type KeyValuePair, NOVU_SIGNATURE_HEADER_KEY } from './curl-utils';
 
 type CurlDisplayProps = {
   url: string;
@@ -17,7 +17,7 @@ export function CurlDisplay({ url, method, headers, body, className, novuSignatu
 
   const hasNovuSignature = headerEntries.some(([k]) => k.toLowerCase() === NOVU_SIGNATURE_HEADER_KEY);
 
-  const canHaveBody = method !== 'GET' && method !== 'DELETE';
+  const canHaveBody = canMethodHaveBody(method);
   let bodyObj: Record<string, unknown> | null = null;
 
   if (canHaveBody && body) {

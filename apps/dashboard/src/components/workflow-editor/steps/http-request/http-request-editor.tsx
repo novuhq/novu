@@ -1,8 +1,10 @@
 import { EnvironmentTypeEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { useFormContext } from 'react-hook-form';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
+import { canMethodHaveBody } from './curl-utils';
 import { KeyValuePairList } from './key-value-pair-list';
 import { RequestEndpoint } from './request-endpoint';
 import { ResponseBodySchema } from './response-body-schema';
@@ -13,6 +15,9 @@ type HttpRequestEditorProps = {
 
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   const { currentEnvironment } = useEnvironment();
+  const { watch } = useFormContext();
+  const method = watch('method');
+  const hasBody = canMethodHaveBody(method);
 
   if (uiSchema.group !== UiSchemaGroupEnum.HTTP_REQUEST) {
     return null;
@@ -33,11 +38,13 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
           tooltip="Custom HTTP headers to include with the request"
         />
 
-        <KeyValuePairList
-          fieldName="body"
-          label="Request body"
-          tooltip="Key-value pairs to include in the request body"
-        />
+        {hasBody && (
+          <KeyValuePairList
+            fieldName="body"
+            label="Request body"
+            tooltip="Key-value pairs to include in the request body"
+          />
+        )}
 
         <p className="text-text-sub px-1 text-xs">
           <span>💡 Tip: </span>
