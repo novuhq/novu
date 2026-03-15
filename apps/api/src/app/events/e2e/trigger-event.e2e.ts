@@ -3998,18 +3998,13 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   });
 
   describe('Subscriber Schedule Logic', () => {
-    const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
     const isContextPreferencesEnabled = (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
 
     beforeEach(async () => {
-      // Enable the feature flags for schedule tests
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
     });
 
     afterEach(() => {
-      // Restore the original feature flag states
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = isContextPreferencesEnabled;
     });
 
