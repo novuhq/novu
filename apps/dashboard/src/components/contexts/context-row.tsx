@@ -22,29 +22,40 @@ import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useContextsNavigate } from './hooks/use-contexts-navigate';
 
 type ContextRowProps = {
   context: GetContextResponseDto;
 };
 
-type ContextTableCellProps = ComponentProps<typeof TableCell>;
+type ContextTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
 
 const ContextTableCell = (props: ContextTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to && (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">Edit context</span>
+        </Link>
+      )}
       {children}
     </TableCell>
   );
 };
 
 export const ContextRow = ({ context }: ContextRowProps) => {
-  const { navigateToEditContextPage } = useContextsNavigate();
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteContext, isPending: isDeleting } = useDeleteContext();
+
+  const contextLink = buildRoute(ROUTES.CONTEXTS_EDIT, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    type: context.type,
+    id: context.id,
+  });
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,14 +77,11 @@ export const ContextRow = ({ context }: ContextRowProps) => {
     <>
       <TableRow
         className="group relative isolate cursor-pointer"
-        onClick={() => {
-          navigateToEditContextPage(context.type, context.id);
-        }}
       >
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
           <span className="max-w-[300px] truncate font-medium">{context.type}</span>
         </ContextTableCell>
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
           <div className="flex items-center gap-1">
             <div className="font-code text-text-soft max-w-[300px] truncate">{context.id}</div>
             <CopyButton
@@ -83,12 +91,12 @@ export const ContextRow = ({ context }: ContextRowProps) => {
             />
           </div>
         </ContextTableCell>
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
           {context.createdAt && (
             <TimeDisplayHoverCard date={context.createdAt}>{formatDateSimple(context.createdAt)}</TimeDisplayHoverCard>
           )}
         </ContextTableCell>
-        <ContextTableCell>
+        <ContextTableCell to={contextLink}>
           {context.updatedAt && (
             <TimeDisplayHoverCard date={context.updatedAt}>{formatDateSimple(context.updatedAt)}</TimeDisplayHoverCard>
           )}
