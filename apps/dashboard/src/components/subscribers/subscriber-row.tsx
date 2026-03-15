@@ -165,7 +165,6 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
               </div>
             </div>
           </div>
-          </div>
         </TableCell>
         <SubscriberTableCell>
           <TruncatedText className="relative z-10 max-w-[28ch]">{subscriber.email || '-'}</TruncatedText>
