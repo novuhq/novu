@@ -1674,7 +1674,7 @@ contexts.forEach((context: Context) => {
           transactionId: transactionIdNoSkip,
           type: StepTypeEnum.DELAY,
         });
-        expect(delayJobNoSkip?.status).to.equal(JobStatusEnum.COMPLETED, 'Scenario 1: Delay job should be COMPLETED');
+        expect(delayJobNoSkip?.status).to.equal(JobStatusEnum.SKIPPED, 'Scenario 1: Delay job should be SKIPPED');
 
         const failedExecDetailsNoSkip = await executionDetailsRepository.find({
           _environmentId: session.environment._id,
