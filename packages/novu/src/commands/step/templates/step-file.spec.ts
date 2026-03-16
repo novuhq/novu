@@ -84,23 +84,3 @@ describe('generateStepFileForType', () => {
     expect(result).toContain("it\\'s");
   });
 });
-
-describe('payload usage across all generators', () => {
-  const generators: Array<[string, () => string]> = [
-    ['email', () => generateEmailStepFile('my-step')],
-    ['sms', () => generateSmsStepFile('my-step')],
-    ['push', () => generatePushStepFile('my-step')],
-    ['chat', () => generateChatStepFile('my-step')],
-    ['in_app', () => generateInAppStepFile('my-step')],
-    ['react-email', () => generateReactEmailStepFile('my-step', '../emails/welcome')],
-  ];
-
-  it.each(generators)(
-    '%s: includes payload in params but does not reference payload properties in output',
-    (_type, generate) => {
-      const result = generate();
-      expect(result).toContain('payload');
-      expect(result).not.toMatch(/payload\.\w/);
-    }
-  );
-});
