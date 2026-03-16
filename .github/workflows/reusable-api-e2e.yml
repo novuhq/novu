@@ -15,7 +15,11 @@ on:
 
 jobs:
   e2e_api:
-    name: Test E2E
+    name: Test E2E (Shard ${{ matrix.shard }}/${{ matrix.total }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(inputs.ee && '[{"shard":1,"total":4},{"shard":2,"total":4},{"shard":3,"total":4},{"shard":4,"total":4}]' || '[{"shard":1,"total":1}]') }}
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     permissions:
@@ -71,6 +75,9 @@ jobs:
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
+        env:
+          NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
+          NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
         run: |
           set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2
