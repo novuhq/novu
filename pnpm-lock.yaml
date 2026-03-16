@@ -3184,9 +3184,6 @@ importers:
       zod:
         specifier: ^4.0.0
         version: 4.3.5
-      zod-to-json-schema:
-        specifier: ^3.25.1
-        version: 3.25.1(zod@4.3.5)
     devDependencies:
       '@langchain/core':
         specifier: ^0.3.0
@@ -61261,10 +61258,6 @@ snapshots:
   zod-to-json-schema@3.25.1(zod@3.25.76):
     dependencies:
       zod: 3.25.76
-
-  zod-to-json-schema@3.25.1(zod@4.3.5):
-    dependencies:
-      zod: 4.3.5
 
   zod-validation-error@3.3.0(zod@3.25.20):
     dependencies:
