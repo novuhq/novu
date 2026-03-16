@@ -126,7 +126,11 @@ export function EditorBreadcrumbs() {
 
 function isOnStepEditingRoute(stepSlug: string | undefined, pathname: string): boolean {
   return Boolean(
-    stepSlug && (pathname.includes('/edit') || pathname.includes('/editor') || pathname.includes('/conditions'))
+    stepSlug &&
+      (pathname.includes('/edit') ||
+        pathname.includes('/editor') ||
+        pathname.includes('/conditions') ||
+        pathname.endsWith(`/steps/${stepSlug}`))
   );
 }
 
