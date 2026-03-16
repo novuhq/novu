@@ -21,7 +21,7 @@ export class FCMHandler extends BasePushHandler {
       throw new Error('Config is not valid for fcm');
     }
 
-    let config: { project_id?: string; client_email?: string; private_key?: string };
+    let config: Record<string, unknown>;
     try {
       config = JSON.parse(updatedCredentials);
     } catch {
@@ -30,16 +30,10 @@ export class FCMHandler extends BasePushHandler {
       );
     }
 
-    if (!config.project_id || !config.client_email || !config.private_key) {
-      throw new Error(
-        'FCM service account JSON is missing required fields: project_id, client_email, or private_key'
-      );
-    }
-
     this.provider = new FcmPushProvider({
-      projectId: config.project_id,
-      email: config.client_email,
-      secretKey: config.private_key,
+      projectId: config.project_id as string,
+      email: config.client_email as string,
+      secretKey: config.private_key as string,
     });
   }
 
