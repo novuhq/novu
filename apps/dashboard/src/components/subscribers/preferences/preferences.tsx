@@ -41,7 +41,6 @@ export const Preferences = (props: PreferencesProps) => {
     },
   });
 
-  const isSubscribersScheduleEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED);
   const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
 
   const { workflows, globalChannelsKeys, hasZeroPreferences } = useMemo(() => {
@@ -109,24 +108,20 @@ export const Preferences = (props: PreferencesProps) => {
         </SidebarContent>
       </motion.div>
 
-      {isSubscribersScheduleEnabled && (
-        <>
-          <motion.div variants={itemVariants}>
-            <SidebarContent size="md" className="pb-0">
-              <div className="w-full border-t border-neutral-100" />
-            </SidebarContent>
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <SidebarContent size="md">
-              <SubscribersSchedule
-                globalPreference={subscriberPreferences.global}
-                subscriberId={subscriberId}
-                contextKeys={contextKeys}
-              />
-            </SidebarContent>
-          </motion.div>
-        </>
-      )}
+      <motion.div variants={itemVariants}>
+        <SidebarContent size="md" className="pb-0">
+          <div className="w-full border-t border-neutral-100" />
+        </SidebarContent>
+      </motion.div>
+      <motion.div variants={itemVariants}>
+        <SidebarContent size="md">
+          <SubscribersSchedule
+            globalPreference={subscriberPreferences.global}
+            subscriberId={subscriberId}
+            contextKeys={contextKeys}
+          />
+        </SidebarContent>
+      </motion.div>
 
       <motion.div variants={itemVariants}>
         <div className="flex items-center gap-2 bg-neutral-50 px-4 py-2">

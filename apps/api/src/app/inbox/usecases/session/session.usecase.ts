@@ -300,17 +300,6 @@ export class Session {
     subscriber: SubscriberEntity;
     contextKeys: string[];
   }): Promise<Schedule | undefined> {
-    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
-      defaultValue: false,
-      environment: { _id: environment._id },
-      organization: { _id: environment._organizationId },
-    });
-
-    if (!isSubscribersScheduleEnabled) {
-      return undefined;
-    }
-
     const schedule = await this.getSubscriberSchedule.execute(
       GetSubscriberScheduleCommand.create({
         organizationId: environment._organizationId,

@@ -98,17 +98,10 @@ export class GetPreferences {
       };
     }
 
-    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
-    });
-
     return {
       enabled: true,
       channels: GetPreferences.mapWorkflowPreferencesToChannelPreferences(result.preferences),
-      schedule: isSubscribersScheduleEnabled ? result.schedule : undefined,
+      schedule: result.schedule,
     };
   }
 
