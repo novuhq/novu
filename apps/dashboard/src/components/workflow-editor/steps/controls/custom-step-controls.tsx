@@ -34,7 +34,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const [isRestoreDefaultModalOpen, setIsRestoreDefaultModalOpen] = useState(false);
   const { step, workflow, update } = useWorkflow();
   const { saveForm } = useSaveForm();
-  const { control } = useFormContext();
+  const { control, reset } = useFormContext();
   const watchedValues = useWatch({ control });
 
   const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
@@ -117,6 +117,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
           if (!workflow || !step) return;
 
           update(updateStepInWorkflow(workflow, step.stepId, { controlValues: null }));
+          reset(dataSchemaDefaults, { keepErrors: true });
           setIsRestoreDefaultModalOpen(false);
           setIsOverridden(false);
         }}
@@ -171,7 +172,12 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
                 !isOverridden && 'opacity-60 pointer-events-none'
               )}
             >
-              <JsonForm schema={(dataSchema as RJSFSchema) || {}} formData={watchedValues} disabled={!isOverridden} />
+              <JsonForm
+                key={String(isOverridden)}
+                schema={(dataSchema as RJSFSchema) || {}}
+                formData={isOverridden ? watchedValues : dataSchemaDefaults}
+                disabled={!isOverridden}
+              />
             </div>
           </AccordionContent>
         </AccordionItem>
