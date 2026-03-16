@@ -570,7 +570,6 @@ const NON_BRIDGE_STEPS: StepTypeEnum[] = [
   StepTypeEnum.DELAY,
   StepTypeEnum.TRIGGER,
   StepTypeEnum.HTTP_REQUEST,
-  StepTypeEnum.CUSTOM,
 ];
 
 function isBridgeStep(stepType: StepTypeEnum | undefined): boolean {
