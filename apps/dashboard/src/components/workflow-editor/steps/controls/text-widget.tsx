@@ -26,7 +26,9 @@ export function TextWidget(props: WidgetProps) {
       render={({ field, fieldState }) => {
         let stringValue = '';
 
-        if (typeof field.value === 'string') {
+        if (disabled) {
+          stringValue = typeof rjsfValue === 'string' ? rjsfValue : '';
+        } else if (typeof field.value === 'string') {
           stringValue = field.value;
         } else if (typeof rjsfValue === 'string') {
           stringValue = rjsfValue;

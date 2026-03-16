@@ -232,6 +232,11 @@ export class WidgetsController {
     const messageIds = this.toArray(body.messageId);
     if (!messageIds) throw new BadRequestException('messageId is required');
 
+    const invalidIds = messageIds.filter((id) => !BaseRepository.isInternalId(id));
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(`Invalid messageId format: ${invalidIds.join(', ')}`);
+    }
+
     return await this.markMessageAsUsecase.execute(
       MarkMessageAsCommand.create({
         organizationId: subscriberSession._organizationId,

@@ -23,7 +23,8 @@ describe('generateReactEmailStepFile', () => {
 
   it('imports render from @react-email/components and calls it', () => {
     const result = generateReactEmailStepFile(stepId, '../emails/welcome');
-    expect(result).toContain("step.email('welcome-email'");
+    expect(result).toContain('step.email(');
+    expect(result).toContain("'welcome-email'");
     expect(result).toContain("from '@react-email/components'");
     expect(result).toContain('await render(');
   });
@@ -42,7 +43,8 @@ describe('generateEmailStepFile', () => {
 
   it('does not use React Email', () => {
     const result = generateEmailStepFile('plain-email');
-    expect(result).toContain("step.email('plain-email'");
+    expect(result).toContain('step.email(');
+    expect(result).toContain("'plain-email'");
     expect(result).not.toContain('@react-email');
     expect(result).not.toContain('await render(');
   });

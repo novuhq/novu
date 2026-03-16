@@ -57,6 +57,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     }) || {};
 
     const payload = this.cleanPayload(options.payload);
+    const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
     const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
 
     const commonProps: Partial<MulticastMessage & TopicMessage> = {
@@ -75,7 +76,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           title: options.title,
           body: options.content,
         },
-        data,
+        data: { ...novuData, ...data },
         ...commonProps,
       }).body;
 
@@ -100,7 +101,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           body: options.content,
           ...overridesData,
         };
-        multicastConfig.data = data;
+        multicastConfig.data = { ...novuData, ...data };
       }
 
       const multicastMessage = this.transform<MulticastMessage>(

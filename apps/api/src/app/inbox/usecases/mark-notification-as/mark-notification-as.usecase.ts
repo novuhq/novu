@@ -61,11 +61,16 @@ export class MarkNotificationAs {
       snoozedUntil: command.snoozedUntil,
     });
 
-    return mapToDto(
-      (await this.messageRepository.findOneForInbox({
-        _environmentId: command.environmentId,
-        _id: command.notificationId,
-      })) as MessageEntity
-    );
+    const updatedMessage = await this.messageRepository.findOneForInbox({
+      _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      _id: command.notificationId,
+      contextKeys: command.contextKeys,
+    });
+    if (!updatedMessage) {
+      throw new NotFoundException(`Notification with id: ${command.notificationId} could not be found after update.`);
+    }
+
+    return mapToDto(updatedMessage);
   }
 }
