@@ -3,6 +3,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Producer } from 'sqs-producer';
 
+import { ISqsMessage } from './types';
+
 const LOG_CONTEXT = 'SqsService';
 
 @Injectable()
@@ -108,7 +110,7 @@ export class SqsService {
   /**
    * Send a single message to SQS
    */
-  public async send(topic: JobTopicNameEnum, message: { id: string; body: string; groupId: string }): Promise<void> {
+  public async send(topic: JobTopicNameEnum, message: ISqsMessage): Promise<void> {
     const producer = this.getProducer(topic);
     if (!producer) {
       throw new Error(`No SQS producer configured for topic: ${topic}`);
@@ -121,10 +123,7 @@ export class SqsService {
    * Send multiple messages to SQS in bulk
    * The sqs-producer will automatically batch them in groups of 10
    */
-  public async sendBulk(
-    topic: JobTopicNameEnum,
-    messages: Array<{ id: string; body: string; groupId: string }>
-  ): Promise<void> {
+  public async sendBulk(topic: JobTopicNameEnum, messages: ISqsMessage[]): Promise<void> {
     const producer = this.getProducer(topic);
     if (!producer) {
       throw new Error(`No SQS producer configured for topic: ${topic}`);
