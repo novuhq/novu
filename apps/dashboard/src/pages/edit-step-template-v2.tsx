@@ -24,10 +24,15 @@ export function EditStepTemplateV2Page() {
   // on every render where `values` has a new reference — which regenerates all
   // useFieldArray field IDs and causes visible row flicker on every save round-trip.
   const hasInitializedRef = useRef(false);
+  const prevHashRef = useRef(step?.stepResolverHash);
   useEffect(() => {
-    if (hasInitializedRef.current || !step) return;
-    hasInitializedRef.current = true;
-    form.reset(getControlsDefaultValues(step), { keepErrors: true });
+    if (!step) return;
+    const hashChanged = step.stepResolverHash !== prevHashRef.current;
+    prevHashRef.current = step.stepResolverHash;
+    if (!hasInitializedRef.current || hashChanged) {
+      hasInitializedRef.current = true;
+      form.reset(getControlsDefaultValues(step), { keepErrors: true });
+    }
   }, [form, step]);
 
   const { onBlur, saveForm, saveFormDebounced } = useFormAutosave({

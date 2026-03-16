@@ -56,9 +56,15 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       }
 
       const values = { ...previousData, ...data };
-      // form.reset(values, { keepErrors: true });
       lastSavedDataRef.current = serializedData;
-      save(values, { onSuccess: options?.onSuccess });
+      save(values, {
+        onSuccess: () => {
+          // Reset dirty state after successful save so that polling hooks (e.g. useStepResolverPolling)
+          // are not permanently blocked. keepValues: true avoids regenerating useFieldArray field IDs.
+          formRef.current.reset(values, { keepErrors: true, keepValues: true });
+          options?.onSuccess?.();
+        },
+      });
     },
     [formRef, savePropsRef]
   );
