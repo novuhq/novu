@@ -98,7 +98,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (isBridgeStep(stepType)) {
+    if (requiresBridgeExecution(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -565,15 +565,8 @@ export class SendMessage {
   }
 }
 
-const NON_BRIDGE_STEPS: StepTypeEnum[] = [
-  StepTypeEnum.DIGEST,
-  StepTypeEnum.DELAY,
-  StepTypeEnum.TRIGGER,
-  StepTypeEnum.HTTP_REQUEST,
-];
-
-function isBridgeStep(stepType: StepTypeEnum | undefined): boolean {
+function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {
   if (!stepType) return false;
 
-  return !NON_BRIDGE_STEPS.includes(stepType);
+  return ![StepTypeEnum.TRIGGER, StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.HTTP_REQUEST].includes(stepType);
 }

@@ -139,6 +139,7 @@ export const createNode = ({
   controlValues,
   isPending,
   type,
+  stepResolverHash,
 }: {
   x: number;
   y: number;
@@ -150,6 +151,7 @@ export const createNode = ({
   controlValues: Record<string, unknown>;
   isPending?: boolean;
   type: StepTypeEnum;
+  stepResolverHash?: string;
 }): Node<NodeData, keyof typeof nodeTypes> => {
   return {
     // the random id is used to identify the node and to be able to re-render the nodes and edges
@@ -163,6 +165,7 @@ export const createNode = ({
       error,
       controlValues,
       isPending,
+      stepResolverHash,
     },
     type,
   };
@@ -195,6 +198,7 @@ export const mapStepToNode = ({
     error: error?.message ?? '',
     controlValues: step.controls.values,
     type: step.type,
+    stepResolverHash: step.stepResolverHash,
   });
 };
 
