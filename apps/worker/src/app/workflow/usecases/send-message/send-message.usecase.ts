@@ -565,7 +565,12 @@ export class SendMessage {
   }
 }
 
-const NON_BRIDGE_STEPS: StepTypeEnum[] = [StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER];
+const NON_BRIDGE_STEPS: StepTypeEnum[] = [
+  StepTypeEnum.DIGEST,
+  StepTypeEnum.DELAY,
+  StepTypeEnum.TRIGGER,
+  StepTypeEnum.HTTP_REQUEST,
+];
 
 function isBridgeStep(stepType: StepTypeEnum | undefined): boolean {
   if (!stepType) return false;
