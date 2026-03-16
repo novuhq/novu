@@ -1,6 +1,54 @@
 import { TranslationResponseDto } from '@novu/api/models/components';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+function escapeControlCharsInJsonStrings(jsonString: string): string {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString[i];
+
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\' && inString) {
+      escaped = true;
+      result += char;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+
+    if (inString) {
+      const code = char.charCodeAt(0);
+      if (code < 0x20) {
+        if (char === '\n') {
+          result += '\\n';
+        } else if (char === '\r') {
+          result += '\\r';
+        } else if (char === '\t') {
+          result += '\\t';
+        } else {
+          result += `\\u${code.toString(16).padStart(4, '0')}`;
+        }
+        continue;
+      }
+    }
+
+    result += char;
+  }
+
+  return result;
+}
+
 export function useTranslationEditor(selectedTranslation: TranslationResponseDto | undefined) {
   const [modifiedContentString, setModifiedContentString] = useState<string | null>(null);
   const [modifiedContent, setModifiedContent] = useState<Record<string, any> | null>(null);
@@ -17,16 +65,20 @@ export function useTranslationEditor(selectedTranslation: TranslationResponseDto
   }, [selectedTranslation?.locale]);
 
   const handleContentChange = useCallback((newContentString: string) => {
-    // Store the raw string content without any reformatting
     setModifiedContentString(newContentString);
 
     try {
-      // Only parse for validation, don't modify the content
       setModifiedContent(JSON.parse(newContentString));
       setJsonError(null);
     } catch (error) {
-      setModifiedContent(null);
-      setJsonError(error instanceof Error ? error.message : 'Invalid JSON format');
+      try {
+        const sanitized = escapeControlCharsInJsonStrings(newContentString);
+        setModifiedContent(JSON.parse(sanitized));
+        setJsonError(null);
+      } catch {
+        setModifiedContent(null);
+        setJsonError(error instanceof Error ? error.message : 'Invalid JSON format');
+      }
     }
   }, []);
 
