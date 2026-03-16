@@ -67,6 +67,7 @@ export function EditorBreadcrumbs() {
   });
 
   const isOnStepRoute = isOnStepEditingRoute(stepSlug, location.pathname) && step;
+  const isOnStepEditorRoute = Boolean(stepSlug && location.pathname.includes('/editor')) && step;
 
   const breadcrumbs: BreadcrumbData[] = [
     {
@@ -116,7 +117,7 @@ export function EditorBreadcrumbs() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItems breadcrumbs={breadcrumbs} workflow={workflow} isOnStepRoute={!!isOnStepRoute} />
-            {isOnStepRoute && step && <StepBreadcrumb step={step} />}
+            {isOnStepRoute && step && <StepBreadcrumb step={step} showSwitcher={!!isOnStepEditorRoute} />}
           </BreadcrumbList>
         </Breadcrumb>
       )}
@@ -168,14 +169,14 @@ function WorkflowBreadcrumbContent({
   );
 }
 
-function StepBreadcrumb({ step }: { step: StepResponseDto }) {
+function StepBreadcrumb({ step, showSwitcher }: { step: StepResponseDto; showSwitcher: boolean }) {
   const Icon = STEP_TYPE_TO_ICON[step.type];
   const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const steps = workflow?.steps ?? [];
-  const hasMultipleSteps = steps.length > 1;
+  const canSwitchSteps = showSwitcher && steps.length > 1;
 
   function handleStepSwitch(targetStep: StepResponseDto) {
     if (!workflow || !currentEnvironment?.slug) return;
@@ -196,9 +197,9 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
   return (
     <BreadcrumbItem>
       <BreadcrumbPage className="flex items-center gap-1">
-        {hasMultipleSteps ? (
+        {canSwitchSteps ? (
           <DropdownMenu>
-            <DropdownMenuTrigger className="border-neutral-alpha-200 flex cursor-pointer items-center gap-1 rounded-lg border px-1 py-[1px] hover:bg-neutral-50">
+            <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 rounded-md border border-transparent px-1 py-[1px] hover:border-neutral-alpha-200 hover:bg-neutral-50">
               <Icon className="text-foreground-950 size-3" />
               <span className="text-foreground-950 max-w-[32ch] truncate text-sm font-medium">
                 {step.name || STEP_TYPE_LABELS[step.type]}
