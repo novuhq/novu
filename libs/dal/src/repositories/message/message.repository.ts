@@ -1088,10 +1088,15 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return this.normalizeDeviceTokens(entities);
   }
 
+  /**
+   * Legacy Mongoose schema defined deviceTokens as [Schema.Types.Array] instead of [Schema.Types.String],
+   * causing tokens to be stored as nested arrays (e.g. [["token1"]] instead of ["token1"]).
+   * This normalizes existing corrupted data so the API returns a flat string array matching the Zod schema.
+   */
   private normalizeDeviceTokens(messages: MessageEntity[]): MessageEntity[] {
     for (const message of messages) {
-      if (message.deviceTokens) {
-        message.deviceTokens = (message.deviceTokens as unknown[]).flat(Infinity).filter(
+      if (Array.isArray(message.deviceTokens)) {
+        message.deviceTokens = message.deviceTokens.flat(Infinity).filter(
           (token): token is string => typeof token === 'string'
         );
       }
