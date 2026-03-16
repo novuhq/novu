@@ -3176,8 +3176,8 @@ importers:
   packages/agent-toolkit:
     dependencies:
       '@novu/api':
-        specifier: workspace:*
-        version: link:../../libs/internal-sdk
+        specifier: ^3.14.1
+        version: 3.14.1
       json-schema-to-zod:
         specifier: ^2.7.0
         version: 2.7.0
@@ -8797,6 +8797,9 @@ packages:
 
   '@nothing-but/utils@0.12.1':
     resolution: {integrity: sha512-1qZU1Q5El0IjE7JT/ucvJNzdr2hL3W8Rm27xNf1p6gb3Nw8pGnZmxp6/GEW9h+I1k1cICxXNq25hBwknTQ7yhg==}
+
+  '@novu/api@3.14.1':
+    resolution: {integrity: sha512-TqCIlayGdFELzZRgAzsqA2HjfX5k5Sd3LcWgNtIWVHtl0wXtmUAXq5FsXKl1HAZe3uWkN+jisWrINW1vJ5KdPQ==}
 
   '@novu/ntfr-client@0.0.4':
     resolution: {integrity: sha512-/9q+qGFHHFwMsuqoLwTADMjSx2JPagpJpm7jOZRzQZgSEDg9kwNAhADneRzVYhMyjdEXIQyjTmX/oP8ABAavFw==}
@@ -35288,6 +35291,10 @@ snapshots:
       fastq: 1.15.0
 
   '@nothing-but/utils@0.12.1': {}
+
+  '@novu/api@3.14.1':
+    dependencies:
+      zod: 3.25.76
 
   '@novu/ntfr-client@0.0.4':
     dependencies:
