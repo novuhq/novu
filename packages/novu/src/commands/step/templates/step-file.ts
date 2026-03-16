@@ -21,7 +21,6 @@ export default step.email(
     body: await render(
       <EmailTemplate
         controls={controls}
-        payload={payload}
         subscriber={subscriber}
         steps={steps}
       />
@@ -49,8 +48,8 @@ export default step.email(
         <body>
           <h1>\${controls.heading}</h1>
           <p>Hi \${subscriber.firstName ?? 'there'},</p>
-          <p>\${payload.actorName} made a change to <strong>\${payload.resourceName}</strong>.</p>
-          <p><a href="\${payload.ctaUrl}">View details</a></p>
+          <p>\${controls.body}</p>
+          <p><a href="\${controls.ctaUrl}">View details</a></p>
         </body>
       </html>
     \`,
@@ -61,8 +60,10 @@ export default step.email(
     controlSchema: z.object({
       subject: z.string().default('You have a new notification'),
       heading: z.string().default('New activity'),
+      body: z.string().default('You have a new message.'),
+      ctaUrl: z.string().default('/'),
     }),
-    // skip: (_controls, { payload }) => !payload.ctaUrl,
+    // skip: (_controls, { subscriber }) => !subscriber.email,
   }
 );
 `;
@@ -75,11 +76,13 @@ import { z } from 'zod';
 export default step.sms(
   '${escapeString(stepId)}',
   async (controls, { payload, subscriber }) => ({
-    body: \`Hi \${subscriber.firstName ?? 'there'}, \${payload.actorName} updated \${payload.resourceName}. Reply STOP to unsubscribe.\`,
+    body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
   }),
   {
-    controlSchema: z.object({}),
-    // skip: (_controls, { payload }) => !payload.actorName,
+    controlSchema: z.object({
+      message: z.string().default('You have a new notification. Reply STOP to unsubscribe.'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.phone,
   }
 );
 `;
@@ -91,15 +94,16 @@ import { z } from 'zod';
 
 export default step.push(
   '${escapeString(stepId)}',
-  async (controls, { payload }) => ({
+  async (controls, { payload, subscriber }) => ({
     subject: controls.title,
-    body: \`\${payload.actorName} made an update to \${payload.resourceName}\`,
+    body: controls.body,
   }),
   {
     controlSchema: z.object({
       title: z.string().default('New activity'),
+      body: z.string().default('You have a new notification.'),
     }),
-    // skip: (_controls, { payload }) => !payload.actorName,
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.push,
   }
 );
 `;
@@ -112,11 +116,13 @@ import { z } from 'zod';
 export default step.chat(
   '${escapeString(stepId)}',
   async (controls, { payload, subscriber }) => ({
-    body: \`\${payload.actorName} mentioned \${subscriber.firstName ?? 'you'} in \${payload.resourceName}\`,
+    body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
   }),
   {
-    controlSchema: z.object({}),
-    // skip: (_controls, { payload }) => !payload.actorName,
+    controlSchema: z.object({
+      message: z.string().default('You have a new message.'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.chat,
   }
 );
 `;
@@ -130,22 +136,22 @@ export default step.inApp(
   '${escapeString(stepId)}',
   async (controls, { payload, subscriber }) => ({
     subject: controls.subject,
-    body: \`\${payload.actorName} made a change to \${payload.resourceName}\`,
+    body: controls.body,
     // avatar: subscriber.avatar,
     primaryAction: {
       label: controls.ctaLabel,
       redirect: { url: controls.ctaUrl, target: '_blank' },
     },
     // secondaryAction: { label: 'Dismiss' },
-    // data: { resourceName: payload.resourceName },
   }),
   {
     controlSchema: z.object({
       subject: z.string().default('New activity'),
+      body: z.string().default('You have a new notification.'),
       ctaLabel: z.string().default('View details'),
       ctaUrl: z.string().default('/'),
     }),
-    // skip: (_controls, { payload }) => !payload.actorName,
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.in_app,
   }
 );
 `;

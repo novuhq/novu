@@ -23,7 +23,8 @@ describe('generateReactEmailStepFile', () => {
 
   it('imports render from @react-email/components and calls it', () => {
     const result = generateReactEmailStepFile(stepId, '../emails/welcome');
-    expect(result).toContain("step.email('welcome-email'");
+    expect(result).toContain('step.email(');
+    expect(result).toContain("'welcome-email'");
     expect(result).toContain("from '@react-email/components'");
     expect(result).toContain('await render(');
   });
@@ -42,7 +43,8 @@ describe('generateEmailStepFile', () => {
 
   it('does not use React Email', () => {
     const result = generateEmailStepFile('plain-email');
-    expect(result).toContain("step.email('plain-email'");
+    expect(result).toContain('step.email(');
+    expect(result).toContain("'plain-email'");
     expect(result).not.toContain('@react-email');
     expect(result).not.toContain('await render(');
   });
@@ -81,4 +83,24 @@ describe('generateStepFileForType', () => {
     const result = generateStepFileForType("it's", 'sms');
     expect(result).toContain("it\\'s");
   });
+});
+
+describe('payload usage across all generators', () => {
+  const generators: Array<[string, () => string]> = [
+    ['email', () => generateEmailStepFile('my-step')],
+    ['sms', () => generateSmsStepFile('my-step')],
+    ['push', () => generatePushStepFile('my-step')],
+    ['chat', () => generateChatStepFile('my-step')],
+    ['in_app', () => generateInAppStepFile('my-step')],
+    ['react-email', () => generateReactEmailStepFile('my-step', '../emails/welcome')],
+  ];
+
+  it.each(generators)(
+    '%s: includes payload in params but does not reference payload properties in output',
+    (_type, generate) => {
+      const result = generate();
+      expect(result).toContain('payload');
+      expect(result).not.toMatch(/payload\.\w/);
+    }
+  );
 });
