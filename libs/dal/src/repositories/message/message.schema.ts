@@ -72,7 +72,7 @@ const messageSchema = new Schema<MessageDBModel>(
     phone: Schema.Types.String,
     directWebhookUrl: Schema.Types.String,
     providerId: Schema.Types.String,
-    deviceTokens: [Schema.Types.Array],
+    deviceTokens: [Schema.Types.String],
     title: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,

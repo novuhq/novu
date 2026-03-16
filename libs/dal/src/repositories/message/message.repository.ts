@@ -1083,7 +1083,21 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         '_id firstName lastName avatar subscriberId createdAt updatedAt _organizationId _environmentId deleted'
       );
 
-    return this.mapEntities(data);
+    const entities = this.mapEntities(data);
+
+    return this.normalizeDeviceTokens(entities);
+  }
+
+  private normalizeDeviceTokens(messages: MessageEntity[]): MessageEntity[] {
+    for (const message of messages) {
+      if (message.deviceTokens) {
+        message.deviceTokens = (message.deviceTokens as unknown[]).flat(Infinity).filter(
+          (token): token is string => typeof token === 'string'
+        );
+      }
+    }
+
+    return messages;
   }
 
   async deleteMessagesByIds({
