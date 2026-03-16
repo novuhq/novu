@@ -67,7 +67,6 @@ export function EditorBreadcrumbs() {
   });
 
   const isOnStepRoute = isOnStepEditingRoute(stepSlug, location.pathname) && step;
-  const isOnStepEditorRoute = Boolean(stepSlug && location.pathname.includes('/editor')) && step;
 
   const breadcrumbs: BreadcrumbData[] = [
     {
@@ -117,7 +116,7 @@ export function EditorBreadcrumbs() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItems breadcrumbs={breadcrumbs} workflow={workflow} isOnStepRoute={!!isOnStepRoute} />
-            {isOnStepRoute && step && <StepBreadcrumb step={step} showSwitcher={!!isOnStepEditorRoute} />}
+            {isOnStepRoute && step && <StepBreadcrumb step={step} />}
           </BreadcrumbList>
         </Breadcrumb>
       )}
@@ -127,11 +126,7 @@ export function EditorBreadcrumbs() {
 
 function isOnStepEditingRoute(stepSlug: string | undefined, pathname: string): boolean {
   return Boolean(
-    stepSlug &&
-      (pathname.includes('/edit') ||
-        pathname.includes('/editor') ||
-        pathname.includes('/conditions') ||
-        pathname.endsWith(`/steps/${stepSlug}`))
+    stepSlug && (pathname.includes('/edit') || pathname.includes('/editor') || pathname.includes('/conditions'))
   );
 }
 
@@ -169,14 +164,14 @@ function WorkflowBreadcrumbContent({
   );
 }
 
-function StepBreadcrumb({ step, showSwitcher }: { step: StepResponseDto; showSwitcher: boolean }) {
+function StepBreadcrumb({ step }: { step: StepResponseDto }) {
   const Icon = STEP_TYPE_TO_ICON[step.type];
   const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const steps = workflow?.steps ?? [];
-  const canSwitchSteps = showSwitcher && steps.length > 1;
+  const hasMultipleSteps = steps.length > 1;
 
   function handleStepSwitch(targetStep: StepResponseDto) {
     if (!workflow || !currentEnvironment?.slug) return;
@@ -197,7 +192,7 @@ function StepBreadcrumb({ step, showSwitcher }: { step: StepResponseDto; showSwi
   return (
     <BreadcrumbItem>
       <BreadcrumbPage className="flex items-center gap-1">
-        {canSwitchSteps ? (
+        {hasMultipleSteps ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 rounded-md border border-transparent px-1 py-[1px] hover:border-neutral-alpha-200 hover:bg-neutral-50">
               <Icon className="text-foreground-950 size-3" />
