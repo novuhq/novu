@@ -112,8 +112,10 @@ function Testimonial() {
 
 function RightPanel() {
   return (
-    <div className="flex flex-1 flex-col bg-white lg:w-1/2">
-      <div className="flex flex-1 items-center justify-center px-6 py-10 lg:px-16">
+    <div className="relative flex flex-1 flex-col overflow-hidden bg-[#0e0e1a] lg:w-1/2">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(100,50,200,0.15),_transparent_60%)]" />
+
+      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10 lg:px-16">
         <div className="flex w-full max-w-[420px] flex-col items-center gap-5">
           <SignUpForm
             path={ROUTES.LANDING_1_SIGN_UP}
@@ -125,20 +127,27 @@ function RightPanel() {
         </div>
       </div>
 
-      <TrustedBySection />
+      <div className="relative z-10">
+        <TrustedBySection />
+      </div>
     </div>
   );
 }
 
 function TrustedBySection() {
   return (
-    <div className="flex flex-col items-center gap-4 border-t border-neutral-100 px-6 py-6">
-      <span className="text-[10px] font-medium uppercase tracking-widest text-neutral-400">
+    <div className="flex flex-col items-center gap-4 border-t border-white/10 px-6 py-6">
+      <span className="text-[10px] font-medium uppercase tracking-widest text-neutral-500">
         Trusted by top industry leaders
       </span>
       <div className="flex flex-wrap items-center justify-center gap-6">
         {TRUSTED_COMPANIES.map((name) => (
-          <img key={name} src={`/images/auth/${name}-customer.svg`} alt={name} className="h-5 opacity-60" />
+          <img
+            key={name}
+            src={`/images/auth/${name}-customer.svg`}
+            alt={name}
+            className="h-5 brightness-0 invert opacity-40"
+          />
         ))}
       </div>
     </div>
