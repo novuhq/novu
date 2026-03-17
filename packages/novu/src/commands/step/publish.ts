@@ -19,6 +19,7 @@ import type {
 import {
   detectPackageManager,
   getInstallCommand,
+  hasZodV3,
   installPackageSync,
   isPackageInstalled,
   renderTable,
@@ -99,7 +100,8 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
         workflowIds[0],
         stepIds[0],
         rootDir,
-        effectiveOutDir
+        effectiveOutDir,
+        hasZodV3(rootDir)
       );
     }
 
@@ -387,7 +389,8 @@ async function scaffoldStepFileIfNeeded(
   workflowId: string,
   stepId: string,
   rootDir: string,
-  configOutDir?: string
+  configOutDir?: string,
+  useZod = false
 ): Promise<boolean> {
   const outDir = configOutDir || './novu';
   const outDirPath = path.resolve(rootDir, outDir);
@@ -420,9 +423,9 @@ async function scaffoldStepFileIfNeeded(
       process.exit(1);
     }
     const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
-    stepFileContent = generateReactEmailStepFile(stepId, templateImportPath);
+    stepFileContent = generateReactEmailStepFile(stepId, templateImportPath, useZod);
   } else {
-    stepFileContent = generateStepFileForType(stepId, scaffoldResult.stepType);
+    stepFileContent = generateStepFileForType(stepId, scaffoldResult.stepType, useZod);
   }
 
   fsSync.writeFileSync(stepFilePath, stepFileContent, 'utf8');

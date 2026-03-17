@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { getCliNodeModulesPaths } from './node-paths';
 
 export interface ExtractedSchemas {
   controlSchema?: Record<string, unknown>;
@@ -22,6 +23,7 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
       write: false,
       jsx: 'automatic',
       jsxImportSource: 'react',
+      nodePaths: getCliNodeModulesPaths(),
       loader: {
         '.ts': 'ts',
         '.tsx': 'tsx',

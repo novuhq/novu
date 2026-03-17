@@ -1,9 +1,9 @@
 import * as esbuild from 'esbuild';
-import * as fs from 'fs';
 import * as path from 'path';
 import { generateWorkerWrapper } from '../templates/worker-wrapper';
 import type { DiscoveredStep, StepResolverReleaseBundle } from '../types';
 import { getBundlerConfig } from './config';
+import { getCliNodeModulesPaths } from './node-paths';
 
 const MAX_BUNDLE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 const BUNDLE_LABEL = 'step-resolver-release';
@@ -67,23 +67,6 @@ function formatBundlingError(bundleLabel: string, error: unknown): Error {
 
 function isBuildFailure(error: unknown): error is esbuild.BuildFailure {
   return typeof error === 'object' && error !== null && 'errors' in error && Array.isArray(error.errors);
-}
-
-function getCliNodeModulesPaths(): string[] {
-  const paths: string[] = [];
-  let dir = __dirname;
-
-  while (true) {
-    const nodeModules = path.join(dir, 'node_modules');
-    if (fs.existsSync(nodeModules)) {
-      paths.push(nodeModules);
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-
-  return paths;
 }
 
 async function bundleSteps(
