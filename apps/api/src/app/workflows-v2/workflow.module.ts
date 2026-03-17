@@ -3,7 +3,6 @@ import {
   BuildStepDataUsecase,
   BuildStepIssuesUsecase,
   BuildVariableSchemaUsecase,
-  CompileTemplate,
   ControlValueSanitizerService,
   CreateVariablesObject,
   CreateWorkflowV0,
@@ -95,7 +94,6 @@ const MODULES = [
     MockDataGeneratorService,
     PreviewErrorHandler,
     TestHttpEndpointUsecase,
-    CompileTemplate,
   ],
   exports: [UpsertWorkflowUseCase, SyncToEnvironmentUseCase, GetWorkflowUseCase, DeleteWorkflowUseCase],
 })

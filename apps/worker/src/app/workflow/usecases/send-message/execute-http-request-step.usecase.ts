@@ -8,6 +8,7 @@ import {
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientService,
+  ICompileContext,
   InstrumentUsecase,
   PinoLogger,
   shouldIncludeBody,
@@ -15,6 +16,7 @@ import {
   toHeadersRecord,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
+import { createLiquidEngine } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
@@ -27,6 +29,7 @@ import * as dns from 'dns';
 import { LRUCache } from 'lru-cache';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
   max: 500,
@@ -35,10 +38,10 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
 
 const MAX_RAW_SIZE = 10_240;
 
-import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
-
 @Injectable()
 export class ExecuteHttpRequestStep extends SendMessageType {
+  private readonly liquidEngine: ReturnType<typeof createLiquidEngine>;
+
   constructor(
     private jobRepository: JobRepository,
     private httpClientService: HttpClientService,
@@ -50,6 +53,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     protected createExecutionDetails: CreateExecutionDetails
   ) {
     super(messageRepository, createExecutionDetails);
+    this.liquidEngine = createLiquidEngine();
   }
 
   @InstrumentUsecase()
@@ -60,11 +64,14 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       GetDecryptedSecretKeyCommand.create({ environmentId: command.environmentId })
     );
 
-    const url = controlValues.url as string | undefined;
-    const method = (controlValues.method as string) ?? 'GET';
-    const rawHeaders = (controlValues.headers as Array<{ key: string; value: string }> | undefined) ?? [];
-    const rawBody = (controlValues.body as Array<{ key: string; value: string }> | undefined) ?? [];
-    const timeout = (controlValues.timeout as number | undefined) ?? 5000;
+    const compileContext = this.buildCompileContect(command.compileContext);
+    const compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+
+    const url = compiled.url as string | undefined;
+    const method = (compiled.method as string) ?? 'POST';
+    const rawHeaders = (compiled.headers as Array<{ key: string; value: string }> | undefined) ?? [];
+    const rawBody = (compiled.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const timeout = (compiled.timeout as number | undefined) ?? 5000;
 
     if (!url) {
       await this.createExecutionDetails.execute(
@@ -228,6 +235,25 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         errors: [{ path: '', message: error instanceof Error ? error.message : 'Schema compilation error' }],
       };
     }
+  }
+
+  private async compileControlValues(
+    values: Record<string, unknown>,
+    context: Record<string, unknown>
+  ): Promise<unknown> {
+    const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
+
+    return JSON.parse(compiled);
+  }
+
+  private buildCompileContect(compileContext: ICompileContext): Record<string, unknown> {
+    return {
+      subscriber: compileContext.subscriber ?? {},
+      payload: compileContext.payload ?? {},
+      actor: compileContext.actor ?? {},
+      tenant: compileContext.tenant ?? {},
+      context: compileContext.context ?? {},
+    };
   }
 
   private async fetchControlValues(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {
