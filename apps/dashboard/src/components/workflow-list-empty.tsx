@@ -43,7 +43,7 @@ const WorkflowListEmptyProd = ({ switchToDev }: { switchToDev: () => void }) => 
     <div className="flex flex-col items-center gap-2 text-center">
       <span className="text-foreground-900 block font-medium">No workflows in production</span>
       <p className="text-foreground-400 max-w-[60ch] text-sm">
-        To publish workflows to production, switch to Development environment and click 'Publish changes' in the
+        To publish workflows to production, switch to Development and click 'Publish changes'
         , or use the Novu CLI for code-first workflows.
       </p>
     </div>
