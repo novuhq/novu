@@ -7,8 +7,6 @@ import {
   dashboardSanitizeControlValues,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
-  HttpClientError,
-  HttpClientErrorType,
   HttpClientService,
   InstrumentUsecase,
   PinoLogger,
@@ -123,43 +121,36 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     let result: { statusCode?: number; body: unknown; headers: Record<string, string> };
 
     try {
-      const response = await this.httpClientService.request({
+      const response = await this.httpClientService.request<string>({
         url,
         method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
         headers: mergedHeaders,
         timeout,
+        responseType: 'text',
         ...(hasBody ? { body: bodyObject } : {}),
       });
 
-      result = { statusCode: response.statusCode, body: response.body, headers: response.headers };
+      result = { statusCode: response.statusCode, body: tryParseJson(response.body), headers: response.headers };
     } catch (error) {
-      if (error instanceof HttpClientError && error.type === HttpClientErrorType.PARSE_ERROR) {
-        result = {
-          statusCode: error.statusCode ?? 200,
-          body: error.responseBody,
-          headers: {},
-        };
-      } else {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
 
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({ error: errorMessage }),
-          })
-        );
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: errorMessage }),
+        })
+      );
 
-        return {
-          status: SendMessageStatus.FAILED,
-          errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-          shouldHalt: !controlValues.continueOnFailure,
-        };
-      }
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+        shouldHalt: !controlValues.continueOnFailure,
+      };
     }
 
     if (controlValues.enforceSchemaValidation && controlValues.responseBodySchema) {
@@ -268,6 +259,14 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     }
 
     return rawControls;
+  }
+}
+
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
   }
 }
 

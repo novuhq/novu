@@ -74,18 +74,19 @@ export class TestHttpEndpointUsecase {
     const startTime = performance.now();
 
     try {
-      const response = await this.httpClientService.request({
+      const response = await this.httpClientService.request<string>({
         url: resolvedUrl,
         method: method as HttpRequestOptions['method'],
         headers: resolvedHeaders,
         ...(hasBody ? { body: resolvedBodyPairs } : {}),
         timeout: 30_000,
+        responseType: 'text',
       });
       const durationMs = Math.round(performance.now() - startTime);
 
       return {
         statusCode: response.statusCode,
-        body: response.body,
+        body: tryParseJson(response.body),
         headers: response.headers,
         durationMs,
         resolvedRequest: {
@@ -142,5 +143,13 @@ export class TestHttpEndpointUsecase {
     }
 
     return this.compileTemplate.execute({ template, data });
+  }
+}
+
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
   }
 }
