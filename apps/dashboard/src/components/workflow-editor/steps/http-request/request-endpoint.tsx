@@ -98,7 +98,6 @@ export function RequestEndpoint() {
                       >
                         <SelectValue>
                           <span className={METHOD_COLORS[field.value as HttpMethodEnum] ?? 'text-text-strong'}>
-                            {/* {field.value ?? HttpMethodEnum.POST} */}
                             {field.value}
                           </span>
                         </SelectValue>
