@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
-import type { NovuToolkitConfig, NovuToolDefinition } from './types.js';
 import { builtInTools, createWorkflowTools } from '../tools/index.js';
+import type { NovuToolDefinition, NovuToolkitConfig } from './types.js';
 
 export class NovuToolkit {
   private readonly client: Novu;
@@ -11,7 +11,7 @@ export class NovuToolkit {
   constructor(config: NovuToolkitConfig) {
     this.config = config;
     this.client = new Novu({
-      security: { secretKey: config.secretKey },
+      secretKey: config.secretKey,
       serverURL: config.backendUrl,
     });
   }

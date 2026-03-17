@@ -892,10 +892,8 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
 
       <Row style={{ marginTop: '20px' }}>
         <Column>
-          <a
+          <Link
             href={dashboardUrl || 'https://dashboard.novu.co'}
-            target="_blank"
-            rel="noopener noreferrer"
             style={{
               background: '#DF2E5B',
               color: COLORS.white,
@@ -911,7 +909,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
             }}
           >
             View dashboard
-          </a>
+          </Link>
         </Column>
       </Row>
     </Card>

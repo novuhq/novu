@@ -48,7 +48,7 @@
     "svix": "^1.64.1",
     "lru-cache": "^11.2.4",
     "axios": "^1.9.0",
-    "body-parser": "^2.2.0",
+    "body-parser": "^2.2.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "cron-parser": "^4.9.0",

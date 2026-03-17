@@ -561,6 +561,42 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       return { workflowV2Id, workflowId, name: listWorkflowResponse.workflows[0].name };
     }
 
+    it('should filter workflows by a single tag', async () => {
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Tagged Workflow 1', tags: ['ai'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Tagged Workflow 2', tags: ['ai', 'ml'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Untagged Workflow', tags: ['other'] }));
+
+      const res = await apiClient.workflows.list({ tags: ['ai'] });
+      expect(res.result.totalCount).to.equal(2);
+      expect(res.result.workflows).to.have.lengthOf(2);
+      const names = res.result.workflows.map((w) => w.name);
+      expect(names).to.include('Tagged Workflow 1');
+      expect(names).to.include('Tagged Workflow 2');
+    });
+
+    it('should filter workflows by multiple tags', async () => {
+      await createWorkflow(apiClient, buildWorkflow({ name: 'AI Workflow', tags: ['ai'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'ML Workflow', tags: ['ml'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Both Tags Workflow', tags: ['ai', 'ml'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'No Match Workflow', tags: ['other'] }));
+
+      const res = await apiClient.workflows.list({ tags: ['ai', 'ml'] });
+      expect(res.result.totalCount).to.equal(3);
+      expect(res.result.workflows).to.have.lengthOf(3);
+      const names = res.result.workflows.map((w) => w.name);
+      expect(names).to.include('AI Workflow');
+      expect(names).to.include('ML Workflow');
+      expect(names).to.include('Both Tags Workflow');
+    });
+
+    it('should return empty results when filtering by non-existent tag', async () => {
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Some Workflow', tags: ['existing'] }));
+
+      const res = await apiClient.workflows.list({ tags: ['non-existent'] });
+      expect(res.result.totalCount).to.equal(0);
+      expect(res.result.workflows).to.have.lengthOf(0);
+    });
+
     it('old list endpoint should not retrieve the new workflow', async () => {
       const { workflowV2Id, name } = await getV2WorkflowIdAndExternalId('Test Workflow');
       const [, , workflowV0Created] = await Promise.all([

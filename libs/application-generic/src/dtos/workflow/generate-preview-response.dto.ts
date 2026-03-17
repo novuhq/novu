@@ -21,6 +21,20 @@ export enum RedirectTargetEnum {
   UNFENCED_TOP = '_unfencedTop',
 }
 
+export class PreviewErrorDto {
+  @ApiProperty({ description: 'Short error title' })
+  @IsString()
+  title: string;
+
+  @ApiProperty({ description: 'Detailed error message' })
+  @IsString()
+  message: string;
+
+  @ApiProperty({ description: 'Actionable hint for the user' })
+  @IsString()
+  hint: string;
+}
+
 export class RenderOutput {}
 
 export class RedirectDto {
@@ -210,7 +224,8 @@ export class InAppRenderOutput extends RenderOutput {
   ChatRenderOutput,
   DigestRegularOutput,
   DigestTimedOutput,
-  DelayRenderOutput
+  DelayRenderOutput,
+  PreviewErrorDto
 )
 export class GeneratePreviewResponseDto {
   @ApiProperty({
@@ -250,36 +265,42 @@ export class GeneratePreviewResponseDto {
         properties: {
           type: { enum: [ChannelTypeEnum.EMAIL] },
           preview: { $ref: getSchemaPath(EmailRenderOutput) },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
         },
       },
       {
         properties: {
           type: { enum: [ChannelTypeEnum.EMAIL] },
           preview: { $ref: getSchemaPath(EmailRenderOutput) },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
         },
       },
       {
         properties: {
           type: { enum: [ChannelTypeEnum.IN_APP] },
           preview: { $ref: getSchemaPath(InAppRenderOutput) },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
         },
       },
       {
         properties: {
           type: { enum: [ChannelTypeEnum.SMS] },
           preview: { $ref: getSchemaPath(SmsRenderOutput) },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
         },
       },
       {
         properties: {
           type: { enum: [ChannelTypeEnum.PUSH] },
           preview: { $ref: getSchemaPath(PushRenderOutput) },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
         },
       },
       {
         properties: {
           type: { enum: [ChannelTypeEnum.CHAT] },
           preview: { $ref: getSchemaPath(ChatRenderOutput) },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
         },
       },
       {
@@ -300,22 +321,27 @@ export class GeneratePreviewResponseDto {
     | {
         type: ChannelTypeEnum.EMAIL;
         preview: EmailRenderOutput;
+        error?: PreviewErrorDto;
       }
     | {
         type: ChannelTypeEnum.IN_APP;
         preview: InAppRenderOutput;
+        error?: PreviewErrorDto;
       }
     | {
         type: ChannelTypeEnum.SMS;
         preview: SmsRenderOutput;
+        error?: PreviewErrorDto;
       }
     | {
         type: ChannelTypeEnum.PUSH;
         preview: PushRenderOutput;
+        error?: PreviewErrorDto;
       }
     | {
         type: ChannelTypeEnum.CHAT;
         preview: ChatRenderOutput;
+        error?: PreviewErrorDto;
       }
     | {
         type: ActionTypeEnum.DELAY;
@@ -334,7 +360,8 @@ export class GeneratePreviewResponseDto {
           | ChannelTypeEnum.CHAT
           | ActionTypeEnum.DELAY
           | ActionTypeEnum.DIGEST;
-        preview: Record<string, unknown>; // Allow empty object
+        preview: Record<string, unknown>;
+        error?: PreviewErrorDto;
       };
 }
 

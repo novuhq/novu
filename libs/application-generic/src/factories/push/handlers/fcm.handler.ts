@@ -21,11 +21,19 @@ export class FCMHandler extends BasePushHandler {
       throw new Error('Config is not valid for fcm');
     }
 
-    const config = JSON.parse(updatedCredentials);
+    let config: Record<string, unknown>;
+    try {
+      config = JSON.parse(updatedCredentials);
+    } catch {
+      throw new Error(
+        'FCM credentials must be a valid JSON service account configuration. Received a non-JSON string instead.'
+      );
+    }
+
     this.provider = new FcmPushProvider({
-      projectId: config.project_id,
-      email: config.client_email,
-      secretKey: config.private_key,
+      projectId: config.project_id as string,
+      email: config.client_email as string,
+      secretKey: config.private_key as string,
     });
   }
 
