@@ -1,4 +1,4 @@
-import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { type PreviewError, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { memo } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
@@ -9,6 +9,7 @@ import { PushPreview } from '@/components/workflow-editor/steps/push/push-previe
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
+import { StepResolverPreviewError } from './step-resolver-preview-error';
 
 const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   return (
@@ -36,6 +37,14 @@ export function StepPreviewFactory() {
   };
 
   const isStepResolver = typeof step.stepResolverHash === 'string';
+
+  const resolverError = isStepResolver
+    ? (previewData?.result as { error?: PreviewError } | undefined)?.error
+    : undefined;
+
+  if (resolverError) {
+    return <StepResolverPreviewError error={resolverError} />;
+  }
 
   const mobilePreviewDescription =
     'This preview shows how your message will appear on mobile. Actual rendering may vary by device.';

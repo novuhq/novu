@@ -158,6 +158,18 @@ const messageSchema = new Schema<MessageDBModel>(
   schemaOptions
 );
 
+messageSchema.pre('init', function sanitizeCorruptCta(doc: Record<string, unknown>) {
+  if (doc.cta !== undefined && doc.cta !== null && typeof doc.cta !== 'object') {
+    doc.cta = {};
+  }
+  if (doc.cta && typeof doc.cta === 'object') {
+    const cta = doc.cta as Record<string, unknown>;
+    if (cta.action !== undefined && cta.action !== null && typeof cta.action !== 'object') {
+      cta.action = {};
+    }
+  }
+});
+
 /**
  * todo: all the pre hooks should be removed after all the soft deletes are removed task nv-5688
  */

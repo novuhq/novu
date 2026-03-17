@@ -122,6 +122,12 @@ export class InAppRenderOutput extends RenderOutput {
   };
 }
 
+export type PreviewError = {
+  title: string;
+  message: string;
+  hint: string;
+};
+
 export class PreviewPayload {
   subscriber?: Partial<SubscriberDto>;
   payload?: Record<string, unknown>;
@@ -137,22 +143,27 @@ export class GeneratePreviewResponseDto {
     | {
         type: ChannelTypeEnum.EMAIL;
         preview: EmailRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.IN_APP;
         preview: InAppRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.SMS;
         preview: SmsRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.PUSH;
         preview: PushRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.CHAT;
         preview: ChatRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ActionTypeEnum.DELAY;
