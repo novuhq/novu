@@ -1,4 +1,4 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
   FeatureFlagsService,
@@ -69,7 +69,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
                 .execute(data)
                 .then(resolve)
                 .catch((e) => {
-                  if (e instanceof HttpException) {
+                  if (e instanceof BadRequestException) {
                     Logger.debug(e, e.message, 'SubscriberProcessWorkerService - getWorkerProcessor');
                   } else {
                     Logger.error(e, 'unexpected error', 'SubscriberProcessWorkerService - getWorkerProcessor');
