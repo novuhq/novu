@@ -16,7 +16,7 @@ overrides:
   minimatch@>=7.0.0 <7.4.8: ^7.4.8
   minimatch@>=8.0.0 <8.0.6: ^8.0.6
   minimatch@>=9.0.0 <9.0.7: ^9.0.7
-  nanoid@<3.3.8: ^3.3.8
+  nanoid@>=3.0.0 <3.3.8: ^3.3.8
   nth-check: ^2.1.1
   postcss@<8.4.31: ^8.4.31
   proxy-agent: ^6.3.0
@@ -22389,6 +22389,9 @@ packages:
 
   nanoclone@0.2.1:
     resolution: {integrity: sha512-wynEP02LmIbLpcYw8uBKpcfF6dmg2vcpKqxeH5UcoKEYdExslsdUA4ugFauuaeYdTB76ez6gJW8XAZ6CgkXYxA==}
+
+  nanoid@2.1.11:
+    resolution: {integrity: sha512-s/snB+WGm6uwi0WjsZdaVcuf3KJXlfGl2LcxgwkEwJF0D/BWzVWAZW/XY4bFaiR7s0Jk3FPvlnepg1H1b1UwlA==}
 
   nanoid@3.3.8:
     resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
@@ -54197,6 +54200,8 @@ snapshots:
 
   nanoclone@0.2.1: {}
 
+  nanoid@2.1.11: {}
+
   nanoid@3.3.8: {}
 
   nanoid@5.1.6: {}
@@ -57865,7 +57870,7 @@ snapshots:
 
   shortid@2.2.16:
     dependencies:
-      nanoid: 3.3.8
+      nanoid: 2.1.11
 
   side-channel-list@1.0.0:
     dependencies:
