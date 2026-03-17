@@ -8,9 +8,7 @@ export function validateEnv() {
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 const processEnv = process.env as Record<string, string>; // Hold the initial process.env to avoid circular reference
 
-function getFeatureFlagValidator(
-  key: FeatureFlagsKeysEnum
-): ValidatorSpec<string | number | boolean | undefined> {
+function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<string | number | boolean | undefined> {
   if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
     return num({ default: undefined });
   }
@@ -28,6 +26,7 @@ export const envValidators = {
   LOG_LEVEL: str({ choices: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'none'] }),
   PORT: port(),
   FRONT_BASE_URL: str(),
+  DASHBOARD_URL: str({ default: 'https://dashboard.novu.co' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),

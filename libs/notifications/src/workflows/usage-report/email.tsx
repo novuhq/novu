@@ -893,7 +893,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
       <Row style={{ marginTop: '20px' }}>
         <Column>
           <Link
-            href={dashboardUrl || 'https://dashboard.novu.co'}
+            href={dashboardUrl}
             style={{
               background: '#DF2E5B',
               color: COLORS.white,
