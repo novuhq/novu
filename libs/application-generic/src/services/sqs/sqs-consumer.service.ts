@@ -18,55 +18,94 @@ const LOG_CONTEXT = 'SqsConsumerService';
 export type SqsMessageProcessor<T = unknown> = (data: T, meta: ISqsMessageMeta) => Promise<void>;
 
 /**
- * In-memory concurrency pool that mirrors BullMQ's concurrency model.
- * Each slot represents one in-flight message being processed on the event loop.
+ * In-memory concurrency pool that mirrors BullMQ's Worker.close() lifecycle.
  *
- * - acquire() returns immediately if a slot is free, otherwise queues the caller
+ * - acquire() returns immediately if a slot is free, otherwise queues the caller.
+ *   Rejects when the pool is in closing state so no new work is accepted.
  * - release() frees a slot and wakes the next waiting caller
- * - drain() resolves when all active slots are released (for graceful shutdown)
+ * - close() enters the closing state: rejects all pending waiters, blocks new acquire()
+ * - drain(timeoutMs?) resolves when all active slots are released, or after the
+ *   optional timeout (returns false on timeout so callers can log/force-close)
  */
 class ConcurrencyPool {
   private active = 0;
-  private waitQueue: Array<{ resolve: () => void }> = [];
+  private closing = false;
+  private waitQueue: Array<{ resolve: () => void; reject: (err: Error) => void }> = [];
   private drainResolvers: Array<() => void> = [];
 
   constructor(private readonly max: number) {}
 
   async acquire(): Promise<void> {
+    if (this.closing) {
+      throw new Error('Pool is closing, no new work accepted');
+    }
+
     if (this.active < this.max) {
       this.active++;
 
       return;
     }
 
-    return new Promise<void>((resolve) => {
-      this.waitQueue.push({ resolve });
+    return new Promise<void>((resolve, reject) => {
+      this.waitQueue.push({ resolve, reject });
     });
   }
 
   release(): void {
     this.active--;
 
+    if (this.closing) {
+      this.resolveDrainIfEmpty();
+
+      return;
+    }
+
     const next = this.waitQueue.shift();
     if (next) {
       this.active++;
       next.resolve();
-    } else if (this.active === 0 && this.drainResolvers.length > 0) {
-      for (const resolve of this.drainResolvers) {
-        resolve();
-      }
-      this.drainResolvers = [];
+    } else {
+      this.resolveDrainIfEmpty();
     }
   }
 
-  async drain(): Promise<void> {
+  close(): void {
+    this.closing = true;
+
+    for (const waiter of this.waitQueue) {
+      waiter.reject(new Error('Pool is closing'));
+    }
+    this.waitQueue = [];
+  }
+
+  /**
+   * Wait for all active slots to be released.
+   * Returns true if drained cleanly, false if the timeout fired first.
+   */
+  async drain(timeoutMs?: number): Promise<boolean> {
     if (this.active === 0) {
-      return;
+      return true;
     }
 
-    return new Promise<void>((resolve) => {
-      this.drainResolvers.push(resolve);
+    const drainPromise = new Promise<boolean>((resolve) => {
+      this.drainResolvers.push(() => resolve(true));
     });
+
+    if (!timeoutMs) {
+      return drainPromise;
+    }
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(false), timeoutMs);
+    });
+
+    const result = await Promise.race([drainPromise, timeoutPromise]);
+    if (timer) {
+      clearTimeout(timer);
+    }
+
+    return result;
   }
 
   get activeCount(): number {
@@ -75,6 +114,19 @@ class ConcurrencyPool {
 
   get waitingCount(): number {
     return this.waitQueue.length;
+  }
+
+  get isClosing(): boolean {
+    return this.closing;
+  }
+
+  private resolveDrainIfEmpty(): void {
+    if (this.active === 0 && this.drainResolvers.length > 0) {
+      for (const resolve of this.drainResolvers) {
+        resolve();
+      }
+      this.drainResolvers = [];
+    }
   }
 }
 
@@ -113,7 +165,11 @@ export class SqsConsumerService {
       shouldDeleteMessages: false,
       messageSystemAttributeNames: ['ApproximateReceiveCount'],
       handleMessage: async (message: Message): Promise<Message> => {
-        await this.pool.acquire();
+        try {
+          await this.pool.acquire();
+        } catch {
+          return message;
+        }
         this.processAndDelete(message);
 
         return message;
@@ -242,9 +298,12 @@ export class SqsConsumerService {
     Logger.debug({ topic: this.topic }, 'SQS consumer resumed', LOG_CONTEXT);
   }
 
-  public async stop(): Promise<void> {
+  public async stop(options?: { drainTimeoutMs?: number }): Promise<void> {
+    const drainTimeoutMs = options?.drainTimeoutMs;
+
     if (!this.isStarted) {
-      await this.pool.drain();
+      this.pool.close();
+      await this.pool.drain(drainTimeoutMs);
 
       return;
     }
@@ -252,16 +311,25 @@ export class SqsConsumerService {
     this.consumer.stop({ abort: false });
     this.isStarted = false;
     this.isPaused = false;
+    this.pool.close();
 
     Logger.log(
-      { topic: this.topic, activeSlots: this.pool.activeCount },
+      { topic: this.topic, activeSlots: this.pool.activeCount, drainTimeoutMs },
       'SQS consumer stopped, draining in-flight messages',
       LOG_CONTEXT
     );
 
-    await this.pool.drain();
+    const drained = await this.pool.drain(drainTimeoutMs);
 
-    Logger.log({ topic: this.topic }, 'SQS consumer fully drained and stopped', LOG_CONTEXT);
+    if (drained) {
+      Logger.log({ topic: this.topic }, 'SQS consumer fully drained and stopped', LOG_CONTEXT);
+    } else {
+      Logger.warn(
+        { topic: this.topic, activeSlots: this.pool.activeCount },
+        'SQS drain timed out, some messages may be reprocessed after visibility timeout',
+        LOG_CONTEXT
+      );
+    }
   }
 
   public getStatus(): { isRunning: boolean; isPaused: boolean; activeSlots: number; waitingSlots: number } {
