@@ -122,7 +122,7 @@ export function RequestEndpoint() {
             render={({ field }) => (
               <FormItem className="m-0 min-w-0 flex-1">
                 <FormControl>
-                  <InputRoot className="h-7 flex-1 border-stroke-soft shadow-xs">
+                  <InputRoot className="h-7 flex-1 items-center border-stroke-soft shadow-xs">
                     <ControlInput
                       size="2xs"
                       multiline={false}
@@ -136,6 +136,7 @@ export function RequestEndpoint() {
                         field.onBlur();
                         saveForm();
                       }}
+                      className="py-0"
                     />
                   </InputRoot>
                 </FormControl>
