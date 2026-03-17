@@ -95,10 +95,10 @@ export class HttpClientService {
 
     try {
       if (responseType === 'text') {
-        return this.requestText<T>({ url, method, headers, timeout, body, retryOptions, httpsOptions });
+        return await this.requestText<T>({ url, method, headers, timeout, body, retryOptions, httpsOptions });
       }
 
-      return this.requestJson<T>({ url, method, headers, timeout, body, retryOptions, httpsOptions });
+      return await this.requestJson<T>({ url, method, headers, timeout, body, retryOptions, httpsOptions });
     } catch (error) {
       throw this.normalizeError(error);
     }

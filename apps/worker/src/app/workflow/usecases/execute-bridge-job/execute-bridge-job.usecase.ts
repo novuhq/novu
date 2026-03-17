@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  BridgeError,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -245,14 +246,7 @@ export class ExecuteBridgeJob {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({
-            url: response.url,
-            statusCode: response.statusCode,
-            message: response.message,
-            code: response.code,
-            data: response.data,
-            cause: response.cause,
-          }),
+          raw: JSON.stringify(buildBridgeErrorRaw(response)),
         });
       },
     }) as Promise<ExecuteOutput>;
@@ -377,4 +371,17 @@ export class ExecuteBridgeJob {
       }
     );
   }
+}
+
+function buildBridgeErrorRaw(response: BridgeError): Record<string, unknown> {
+  const raw: Record<string, unknown> = {
+    message: response.message,
+    code: response.code,
+  };
+
+  if (response.data !== undefined) {
+    raw.data = response.data;
+  }
+
+  return raw;
 }

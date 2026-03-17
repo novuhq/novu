@@ -137,7 +137,28 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         ...(hasBody ? { body: bodyObject } : {}),
       });
 
-      result = { statusCode: response.statusCode, body: tryParseJson(response.body), headers: response.headers };
+      const parsedBody = tryParseJson(response.body);
+      const isObjectBody = parsedBody !== null && typeof parsedBody === 'object' && !Array.isArray(parsedBody);
+
+      if (!isObjectBody) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.ACTION_STEP_NON_OBJECT_RESPONSE,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.WARNING,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              message: `The endpoint at "${url}" returned a non-object response (type: ${Array.isArray(parsedBody) ? 'array' : typeof parsedBody}). Subsequent steps that reference this step's output may fail because the framework expects a JSON object. Configure the endpoint to return a JSON object to avoid this issue.`,
+              url,
+              receivedType: Array.isArray(parsedBody) ? 'array' : typeof parsedBody,
+            }),
+          })
+        );
+      }
+
+      result = { statusCode: response.statusCode, body: parsedBody, headers: response.headers };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
