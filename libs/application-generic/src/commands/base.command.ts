@@ -87,6 +87,15 @@ export class CommandValidationException extends BadRequestException {
     public className: string,
     public constraintsViolated: Record<string, ConstraintValidation>
   ) {
-    super({ message: 'Validation failed', className, constraintsViolated });
+    const message = formatValidationMessage(className, constraintsViolated);
+    super({ message, className, constraintsViolated });
   }
+}
+
+function formatValidationMessage(className: string, constraints: Record<string, ConstraintValidation>): string {
+  const details = Object.entries(constraints)
+    .map(([field, constraint]) => `${field}: ${constraint.messages.join(', ')}`)
+    .join('; ');
+
+  return `Validation failed for ${className}: ${details}`;
 }
