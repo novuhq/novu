@@ -385,8 +385,13 @@ export class Sync {
     const rawData = { ...workflow } as Record<string, unknown>;
 
     if (rawData.payload && typeof rawData.payload === 'object') {
-      const { unknownSchema, ...payloadRest } = rawData.payload as Record<string, unknown>;
+      const { unknownSchema: _payloadUnknownSchema, ...payloadRest } = rawData.payload as Record<string, unknown>;
       rawData.payload = payloadRest;
+    }
+
+    if (rawData.controls && typeof rawData.controls === 'object') {
+      const { unknownSchema: _controlsUnknownSchema, ...controlsRest } = rawData.controls as Record<string, unknown>;
+      rawData.controls = controlsRest;
     }
 
     return rawData;
