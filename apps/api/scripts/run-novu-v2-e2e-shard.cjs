@@ -186,7 +186,9 @@ function run() {
   printShardSummary(shardIndex, totalShards, shard);
 
   if (listOnly) {
-    shard.files.forEach((file) => console.log(file));
+    for (const file of shard.files) {
+      console.log(file);
+    }
 
     return;
   }
