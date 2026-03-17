@@ -188,7 +188,7 @@ export class TriggerMulticast extends TriggerBase {
         error: e,
       };
 
-      if (e instanceof BadRequestException) {
+      if (isSubscriberIdValidationError(e)) {
         this.logger.debug(logData, error.message);
       } else {
         this.logger.error(logData, 'Unexpected error has occurred when processing multicast');
@@ -329,6 +329,12 @@ export const buildSubscriberDefine = (recipient: TriggerRecipientSubscriber): IS
     return recipient;
   }
 };
+
+const SUBSCRIBER_ID_VALIDATION_PREFIX = 'subscriberId under property to';
+
+function isSubscriberIdValidationError(e: unknown): boolean {
+  return e instanceof BadRequestException && typeof e.message === 'string' && e.message.startsWith(SUBSCRIBER_ID_VALIDATION_PREFIX);
+}
 
 export const validateSubscriberDefine = (recipient: ISubscribersDefine) => {
   if (!recipient) {
