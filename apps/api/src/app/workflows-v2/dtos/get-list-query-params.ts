@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { WorkflowResponseDto } from '@novu/application-generic';
 import { WorkflowStatusEnum } from '@novu/shared';
+import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { LimitOffsetPaginationQueryDto } from '../../shared/dtos/limit-offset-pagination.dto';
 
@@ -25,6 +26,7 @@ export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(Workflo
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === undefined ? undefined : Array.isArray(value) ? value : [value]))
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
@@ -37,6 +39,7 @@ export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(Workflo
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === undefined ? undefined : Array.isArray(value) ? value : [value]))
   @IsArray()
   @IsEnum(WorkflowStatusEnum, { each: true })
   status?: WorkflowStatusEnum[];

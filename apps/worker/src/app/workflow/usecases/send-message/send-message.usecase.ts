@@ -98,7 +98,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (isChannelStep(stepType)) {
+    if (requiresBridgeExecution(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -565,22 +565,8 @@ export class SendMessage {
   }
 }
 
-const CHANNEL_STEP_MAP: Record<StepTypeEnum, boolean> = {
-  [StepTypeEnum.IN_APP]: true,
-  [StepTypeEnum.EMAIL]: true,
-  [StepTypeEnum.SMS]: true,
-  [StepTypeEnum.CHAT]: true,
-  [StepTypeEnum.PUSH]: true,
-  [StepTypeEnum.CUSTOM]: false,
-  [StepTypeEnum.HTTP_REQUEST]: false,
-  [StepTypeEnum.DIGEST]: false,
-  [StepTypeEnum.DELAY]: false,
-  [StepTypeEnum.TRIGGER]: false,
-  [StepTypeEnum.THROTTLE]: false,
-};
-
-function isChannelStep(stepType: StepTypeEnum | undefined): boolean {
+function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {
   if (!stepType) return false;
 
-  return CHANNEL_STEP_MAP[stepType];
+  return ![StepTypeEnum.TRIGGER, StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.HTTP_REQUEST].includes(stepType);
 }

@@ -1,7 +1,8 @@
 import { Slug } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
+import { FileCode2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ComponentProps, KeyboardEventHandler, useCallback, useState } from 'react';
+import { ComponentProps, ComponentType, KeyboardEventHandler, useCallback, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
@@ -26,6 +27,7 @@ export type NodeData = {
   controlValues?: Record<string, unknown>;
   isPending?: boolean;
   triggerLink?: string;
+  stepResolverHash?: string;
 };
 
 export type NodeType = FlowNode<NodeData>;
@@ -33,6 +35,44 @@ export type NodeType = FlowNode<NodeData>;
 const topHandleClasses = `data-[handlepos=top]:w-2! data-[handlepos=top]:h-2! data-[handlepos=top]:bg-transparent! data-[handlepos=top]:rounded-none! data-[handlepos=top]:before:absolute! data-[handlepos=top]:before:top-0! data-[handlepos=top]:before:left-0! data-[handlepos=top]:before:w-full! data-[handlepos=top]:before:h-full! data-[handlepos=top]:before:bg-neutral-alpha-200! data-[handlepos=top]:before:rotate-45!`;
 const bottomHandleClasses = `data-[handlepos=bottom]:w-2! data-[handlepos=bottom]:h-2! data-[handlepos=bottom]:bg-transparent! data-[handlepos=bottom]:rounded-none! data-[handlepos=bottom]:before:absolute! data-[handlepos=bottom]:before:bottom-0! data-[handlepos=bottom]:before:left-0! data-[handlepos=bottom]:before:w-full! data-[handlepos=bottom]:before:h-full! data-[handlepos=bottom]:before:bg-neutral-alpha-200! data-[handlepos=bottom]:before:rotate-45!`;
 const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
+
+const VARIANT_TO_TEXT_CLASS: Record<string, string> = {
+  neutral: 'text-neutral-500',
+  feature: 'text-feature',
+  information: 'text-information',
+  highlighted: 'text-highlighted',
+  stable: 'text-stable',
+  verified: 'text-verified',
+  destructive: 'text-destructive',
+  success: 'text-success',
+  warning: 'text-warning',
+  alert: 'text-alert',
+};
+
+const StepNodeIcon = ({
+  stepResolverHash,
+  color,
+  Icon,
+}: {
+  stepResolverHash?: string;
+  color: string;
+  Icon: ComponentType;
+}) => {
+  if (stepResolverHash) {
+    return (
+      <FileCode2
+        className={cn('size-4 shrink-0 opacity-40', VARIANT_TO_TEXT_CLASS[color] ?? 'text-neutral-500')}
+        strokeWidth={1.5}
+      />
+    );
+  }
+
+  return (
+    <NodeIcon variant={color as any}>
+      <Icon />
+    </NodeIcon>
+  );
+};
 
 export const TriggerNode = ({ data }: NodeProps<FlowNode<{ triggerLink?: string }>>) => {
   const { isReadOnly, showStepPreview } = useCanvasContext();
@@ -246,9 +286,11 @@ export const EmailNode = ({ id, data }: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.EMAIL}>
       <StepNode id={id} data={data} type={StepTypeEnum.EMAIL}>
         <NodeHeader type={StepTypeEnum.EMAIL}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.EMAIL]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.EMAIL]}
+            Icon={Icon}
+          />
 
           <NodeName>{data.name || 'Email Step'}</NodeName>
         </NodeHeader>
@@ -275,9 +317,11 @@ export const SmsNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.SMS}>
       <StepNode id={id} data={data} type={StepTypeEnum.SMS}>
         <NodeHeader type={StepTypeEnum.SMS}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.SMS]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.SMS]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'SMS Step'}</NodeName>
         </NodeHeader>
         <NodeBody showPreview={showStepPreview} type={StepTypeEnum.SMS} controlValues={data.controlValues ?? {}}>
@@ -302,9 +346,11 @@ export const InAppNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.IN_APP}>
       <StepNode id={id} data={data} type={StepTypeEnum.IN_APP}>
         <NodeHeader type={StepTypeEnum.IN_APP}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'In-App Step'}</NodeName>
         </NodeHeader>
         <NodeBody showPreview={showStepPreview} type={StepTypeEnum.IN_APP} controlValues={data.controlValues ?? {}}>
@@ -329,9 +375,11 @@ export const PushNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.PUSH}>
       <StepNode id={id} data={data} type={StepTypeEnum.PUSH}>
         <NodeHeader type={StepTypeEnum.PUSH}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.PUSH]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.PUSH]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'Push Step'}</NodeName>
         </NodeHeader>
         <NodeBody showPreview={showStepPreview} type={StepTypeEnum.PUSH} controlValues={data.controlValues ?? {}}>
@@ -356,9 +404,11 @@ export const ChatNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.CHAT}>
       <StepNode id={id} data={data} type={StepTypeEnum.CHAT}>
         <NodeHeader type={StepTypeEnum.CHAT}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CHAT]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.CHAT]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'Chat Step'}</NodeName>
         </NodeHeader>
         <NodeBody showPreview={showStepPreview} type={StepTypeEnum.CHAT} controlValues={data.controlValues ?? {}}>
@@ -382,9 +432,11 @@ export const DelayNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.DELAY}>
       <StepNode id={id} data={data} type={StepTypeEnum.DELAY}>
         <NodeHeader type={StepTypeEnum.DELAY}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DELAY]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.DELAY]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'Delay Step'}</NodeName>
         </NodeHeader>
         <NodeBody type={StepTypeEnum.DELAY} controlValues={data.controlValues ?? {}}>
@@ -408,9 +460,11 @@ export const DigestNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.DIGEST}>
       <StepNode id={id} data={data} type={StepTypeEnum.DIGEST}>
         <NodeHeader type={StepTypeEnum.DIGEST}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DIGEST]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.DIGEST]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'Digest Step'}</NodeName>
         </NodeHeader>
         <NodeBody type={StepTypeEnum.DIGEST} controlValues={data.controlValues ?? {}}>
@@ -434,9 +488,11 @@ export const ThrottleNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.THROTTLE}>
       <StepNode id={id} data={data} type={StepTypeEnum.THROTTLE}>
         <NodeHeader type={StepTypeEnum.THROTTLE}>
-          <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.THROTTLE]}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.THROTTLE]}
+            Icon={Icon}
+          />
           <NodeName>{data.name || 'Throttle Step'}</NodeName>
         </NodeHeader>
         <NodeBody type={StepTypeEnum.THROTTLE} controlValues={data.controlValues ?? {}}>
@@ -461,9 +517,7 @@ export const HttpRequestNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.HTTP_REQUEST}>
       <StepNode id={id} data={data} type={StepTypeEnum.HTTP_REQUEST}>
         <NodeHeader type={StepTypeEnum.HTTP_REQUEST} badgeLabel="API" badgeColor={color}>
-          <NodeIcon variant={color}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon stepResolverHash={data.stepResolverHash} color={color} Icon={Icon} />
           <NodeName>{data.name || 'HTTP Request Step'}</NodeName>
         </NodeHeader>
         <NodeBody type={StepTypeEnum.HTTP_REQUEST} controlValues={data.controlValues ?? {}}>
@@ -488,9 +542,7 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
     <NodeWrapper id={id} type={StepTypeEnum.CUSTOM}>
       <StepNode id={id} data={data} type={StepTypeEnum.CUSTOM}>
         <NodeHeader type={StepTypeEnum.CUSTOM} badgeColor={color}>
-          <NodeIcon variant={color}>
-            <Icon />
-          </NodeIcon>
+          <StepNodeIcon stepResolverHash={data.stepResolverHash} color={color} Icon={Icon} />
           <NodeName>{data.name || 'Custom Step'}</NodeName>
         </NodeHeader>
         <NodeBody type={StepTypeEnum.CUSTOM} controlValues={data.controlValues ?? {}}>

@@ -38,8 +38,8 @@ const nodeBadgeVariants = cva(
 
 export interface NodeIconProps extends React.HTMLAttributes<HTMLSpanElement>, VariantProps<typeof nodeBadgeVariants> {}
 
-export const NodeIcon = ({ children, variant }: NodeIconProps) => {
-  return <span className={nodeBadgeVariants({ variant })}>{children}</span>;
+export const NodeIcon = ({ children, variant, className }: NodeIconProps) => {
+  return <span className={cn(nodeBadgeVariants({ variant }), className)}>{children}</span>;
 };
 
 export const NodeName = ({ children }: { children: ReactNode }) => {
