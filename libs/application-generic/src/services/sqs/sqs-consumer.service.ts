@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
 import { PinoLogger } from '../../logging';
+import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import { SqsService } from './sqs.service';
 import {
   ISqsConsumerOptions,
@@ -134,6 +135,7 @@ export class SqsConsumerService {
   private consumer: Consumer;
   private pool: ConcurrencyPool;
   private queueUrl: string;
+  private payloadOffload?: SqsPayloadOffloadService;
   private isStarted = false;
   private isPaused = false;
 
@@ -145,6 +147,7 @@ export class SqsConsumerService {
     private readonly options: ISqsConsumerOptions = {}
   ) {
     this.queueUrl = this.sqsService.getQueueUrl(this.topic);
+    this.payloadOffload = this.sqsService.getPayloadOffloadService();
     if (!this.queueUrl) {
       throw new Error(`No queue URL configured for topic: ${this.topic}`);
     }
@@ -230,7 +233,12 @@ export class SqsConsumerService {
   }
 
   private async processMessage(message: Message): Promise<void> {
-    const data = JSON.parse(message.Body || '{}');
+    const rawBody = message.Body || '{}';
+    const resolvedBody = this.payloadOffload
+      ? await this.payloadOffload.maybeResolve(rawBody)
+      : rawBody;
+
+    const data = JSON.parse(resolvedBody);
     const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || '1', 10);
     const meta: ISqsMessageMeta = {
       messageId: message.MessageId || 'unknown',
