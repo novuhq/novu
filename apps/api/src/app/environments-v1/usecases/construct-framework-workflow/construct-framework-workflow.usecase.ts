@@ -205,9 +205,9 @@ export class ConstructFrameworkWorkflow {
     }
 
     const stepType = stepTemplate.type;
-    const { stepId } = staticStep;
+    const stepId = staticStep.stepId || staticStep._templateId;
     if (!stepId) {
-      throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
+      throw new InternalServerErrorException(`Step id not found for step ${staticStep._id}`);
     }
     const stepControls = stepTemplate.controls;
 
