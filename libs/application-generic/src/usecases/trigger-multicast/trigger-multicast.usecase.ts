@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
@@ -180,16 +180,19 @@ export class TriggerMulticast extends TriggerBase {
         }
       );
 
-      this.logger.error(
-        {
-          transactionId: command.transactionId,
-          organization: command.organizationId,
-          triggerIdentifier: command.identifier,
-          userId: command.userId,
-          error: e,
-        },
-        'Unexpected error has occurred when processing multicast'
-      );
+      const logData = {
+        transactionId: command.transactionId,
+        organization: command.organizationId,
+        triggerIdentifier: command.identifier,
+        userId: command.userId,
+        error: e,
+      };
+
+      if (e instanceof HttpException) {
+        this.logger.debug(logData, error.message);
+      } else {
+        this.logger.error(logData, 'Unexpected error has occurred when processing multicast');
+      }
 
       throw e;
     }
