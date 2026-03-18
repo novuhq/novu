@@ -227,7 +227,10 @@
       "js-yaml@>=4.0.0 <4.1.1": "^4.1.1",
       "smol-toml@<1.3.1": "^1.3.1",
       "@babel/runtime@<7.26.10": "^7.26.10",
-      "altcha-lib@<1.4.1": "^1.4.1"
+      "altcha-lib@<1.4.1": "^1.4.1",
+      "lodash-es@<=4.17.22": "^4.17.23",
+      "dompurify@>=3.1.3 <=3.3.1": "^3.3.2",
+      "@octokit/endpoint@>=9.0.5 <9.0.6": "^9.0.6"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
