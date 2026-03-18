@@ -1,5 +1,5 @@
-import { PermissionsEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
-import { useState } from 'react';
+import { ContentIssueEnum, PermissionsEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
+import { useMemo, useState } from 'react';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiPlayCircleLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
 import { IssuesPanel } from '@/components/issues-panel';
@@ -33,7 +33,8 @@ type StepEditorLayoutProps = {
 };
 
 function StepEditorContent() {
-  const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale } = useStepEditor();
+  const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
+    useStepEditor();
   const stepResolverHint = useStepResolverHint();
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
@@ -57,6 +58,29 @@ function StepEditorContent() {
   const handleTestWorkflowClick = () => {
     setIsTestDrawerOpen(true);
   };
+
+  const filteredIssues = useMemo(() => {
+    if (!step.issues?.controls) return step.issues;
+
+    const flatValues = (controlValues ?? {}) as Record<string, unknown>;
+    const nestedValues = (flatValues.controlValues ?? {}) as Record<string, unknown>;
+
+    const filteredControls = Object.fromEntries(
+      Object.entries(step.issues.controls).filter(([key, issues]) => {
+        const val = flatValues[key] ?? nestedValues[key];
+        const hasValue = val !== undefined && val !== null && val !== '';
+
+        if (!hasValue) return true;
+
+        return !issues.every((issue) => issue.issueType === ContentIssueEnum.MISSING_VALUE);
+      })
+    );
+
+    return {
+      ...step.issues,
+      controls: Object.keys(filteredControls).length > 0 ? filteredControls : undefined,
+    };
+  }, [step.issues, controlValues]);
 
   const currentPayload = parseJsonValue(editorValue).payload;
 
@@ -143,7 +167,7 @@ function StepEditorContent() {
         </div>
 
         <IssuesPanel
-          issues={step.issues}
+          issues={filteredIssues}
           isTranslationEnabled={workflow.isTranslationEnabled}
           hintMessage={stepResolverHint}
         />
