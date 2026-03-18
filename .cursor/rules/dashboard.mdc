@@ -30,3 +30,49 @@ alwaysApply: false
 
 **Routing**
 - Use React Router v6 `<Link>` and `useNavigate` — do not use `window.location` for in-app navigation.
+
+**Example: feature component with mutation**
+
+```tsx
+type EditEnvironmentSheetProps = {
+  environment?: IEnvironment;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: EditEnvironmentSheetProps) => {
+  const { mutateAsync: updateEnvironment, isPending } = useUpdateEnvironment();
+
+  const form = useForm<EnvironmentFormData>({
+    resolver: standardSchemaResolver(environmentFormSchema),
+    defaultValues: { name: environment?.name ?? '', color: environment?.color },
+  });
+
+  const onSubmit = async (values: EnvironmentFormData) => {
+    if (!environment) return;
+
+    try {
+      await updateEnvironment({ environment, ...values });
+      showSuccessToast('Environment updated');
+      onOpenChange(false);
+    } catch {
+      showErrorToast('Failed to update environment');
+    }
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent>
+        <Form {...form}>
+          <FormRoot onSubmit={form.handleSubmit(onSubmit)}>
+            <EnvironmentFormFields />
+            <SheetFooter>
+              <Button type="submit" isLoading={isPending}>Save</Button>
+            </SheetFooter>
+          </FormRoot>
+        </Form>
+      </SheetContent>
+    </Sheet>
+  );
+};
+```

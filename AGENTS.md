@@ -25,7 +25,7 @@ Before running services, run `pnpm build:with-ee` to ensure all code changes are
 
 ## App-Specific Instructions
 
-Each application has its own `AGENTS.md` with stack details, run commands, testing, and conventions:
+Each application has its own `AGENTS.md` with stack details, run commands, and testing:
 
 - **API**: [`apps/api/AGENTS.md`](apps/api/AGENTS.md)
 - **Dashboard**: [`apps/dashboard/AGENTS.md`](apps/dashboard/AGENTS.md)
@@ -49,22 +49,10 @@ Each application has its own `AGENTS.md` with stack details, run commands, testi
 ### Never
 - Read, modify, or reference any code inside `apps/web` — this project no longer exists; `apps/dashboard` is the active UI
 - Read, modify, or reference `libs/embed` — this library has been removed
-- Read, modify, or reference `apps/inbound-mail` or `apps/webhook` — these apps are inactive and no longer under active development
+- Read, modify, or reference `apps/inbound-mail` or `apps/webhook` — these apps are inactive
 - Read, modify, or reference `libs/internal-sdk` — this library is auto-generated; never edit it manually
 - Modify files in `.idea/`, `playground/`, `.github/`, `scripts/`, or `docker/`
 - Invent custom UI primitives; reuse Radix/shadcn components already in the dashboard's component library
 - Copy patterns from `playground/` into production code
 
-## Creating Pull Requests
-
-Follow the Conventional Commits specification. As a team member, include the Linear ticket ID at the end.
-
-Expected format: `feat(scope): Add fancy new feature fixes NOV-123`
-
-Possible scopes: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`
-
-PR title must end with `fixes TICKET-ID` (e.g., `fixes NOV-123`) when a linear ticket id is available in context.
-
-### Enterprise Packages
-
-When a change was made in the packages of enterprise, we need to also create a PR in the novuhq/packages-enterprise repository committing the linked changes (creating a similar branch from next there).
+<!-- PR format and conventions: see .cursor/rules/pullrequest.mdc -->

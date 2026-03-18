@@ -48,17 +48,5 @@ apps/dashboard/src/api/          # API client and query definitions
 apps/dashboard/src/ee/           # Enterprise-only features
 ```
 
-## Boundaries
-
-### Never
-- Reference `apps/web` — that was the legacy dashboard and no longer exists in this repo; `apps/dashboard` is the active UI
-- Use `useEffect` + `fetch` for server state — use TanStack Query (`useQuery`, `useMutation`) instead
-- Use `window.location` for in-app navigation — use React Router `<Link>` or `useNavigate`
-- Import from `"framer-motion"` or `"motion-react"` — import animations from `"motion/react"`
-- Add new third-party UI libraries without discussion — reuse Radix/shadcn components in `src/components/ui/`
-
-### Ask First
-- Before adding any new shadcn/ui or Radix primitive not already in `src/components/ui/`
-- Before touching anything in `apps/dashboard/src/ee/`
-
-See [root AGENTS.md](../../AGENTS.md) for monorepo-wide boundaries.
+<!-- Coding conventions: see .cursor/rules/dashboard.mdc -->
+<!-- Monorepo-wide boundaries: see root AGENTS.md -->

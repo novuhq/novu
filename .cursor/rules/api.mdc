@@ -30,3 +30,43 @@ alwaysApply: false
 - Place migration scripts in `apps/api/migrations/<change-description>/<change-action>.ts`.
 - Run via `npm run migration -- ./migrations/<path>.ts`.
 - Never rename existing migration scripts — they are referenced in user-facing docs.
+
+**Example: controller method + use-case**
+
+```typescript
+// Controller
+@Get('')
+@ExternalApiAccessible()
+@ApiOkPaginatedResponse(GetTenantResponseDto)
+@ApiOperation({ summary: 'Get tenants' })
+@SdkUsePagination()
+async listTenants(
+  @UserSession() user: UserSessionData,
+  @Query() query: GetTenantsRequestDto
+): Promise<PaginatedResponseDto<GetTenantResponseDto>> {
+  return await this.getTenantsUsecase.execute(
+    GetTenantsCommand.create({
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      page: query.page,
+      limit: query.limit,
+    })
+  );
+}
+
+// Use-case
+@Injectable()
+export class GetTenants {
+  constructor(private tenantRepository: TenantRepository) {}
+
+  async execute(command: GetTenantsCommand) {
+    const data = await this.tenantRepository.find(
+      { _environmentId: command.environmentId, _organizationId: command.organizationId },
+      '',
+      { limit: command.limit, skip: command.page * command.limit, sort: { createdAt: -1 } }
+    );
+
+    return { page: command.page, hasMore: data.length === command.limit, pageSize: command.limit, data };
+  }
+}
+```
