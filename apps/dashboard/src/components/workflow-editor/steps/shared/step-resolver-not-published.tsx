@@ -322,7 +322,7 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
                 viewBox="0 0 300 300"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="pointer-events-none absolute size-[169px] opacity-[0.35]"
+                className="pointer-events-none absolute size-[169px] opacity-[0.15]"
                 style={{ bottom: -71, right: 19 }}
                 aria-hidden="true"
               >
@@ -340,7 +340,7 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
               >
                 <RiCloseLine className="size-4" />
               </button>
-              <div className="flex flex-col gap-3 p-3">
+              <div className="relative flex flex-col gap-3 p-3">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-1">
                     <FileCode2 className="size-[14px] shrink-0 text-[#525866]" strokeWidth={1.5} />
