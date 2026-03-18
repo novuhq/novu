@@ -67,13 +67,17 @@ Scopes: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-na
 The `.source` folder is a **git submodule** pointing to the `novuhq/packages-enterprise` repository. When changes are made inside this submodule or `enterprise/packages` folder (which contains symlinked folders to the submodule), both repositories must be updated:
 
 1. **Create a branch in the submodule** following the same Conventional Commits naming convention (e.g., `feat/scope-description-fixes-NOV-123`).
-2. **Commit and push** the enterprise changes to that branch in the `novuhq/packages-enterprise` remote.
-3. **Create a PR in the enterprise repository** first, following the conventions from the "Creating Pull Requests" section above. Use the `--repo` flag from the workspace root — do NOT `cd` into the submodule:
+2. **Commit and push** the enterprise changes to that branch in the `novuhq/packages-enterprise` remote (run `git push` from inside the `.source` directory).
+3. **Create a PR in the enterprise repository** using the `--repo` flag from the workspace root (do NOT `cd` into the submodule):
    ```bash
    gh pr create --repo novuhq/packages-enterprise --head <branch-name> --base next --title "..." --body "..."
    ```
+   If this fails due to permissions, provide the user with a link to create the PR manually:
+   ```
+   https://github.com/novuhq/packages-enterprise/compare/next...<branch-name>
+   ```
 4. **Create a matching branch in the main repository** with the same name.
 5. **Commit the updated submodule reference** (the changed pointer in `enterprise/`) along with any other main-repo changes to that branch.
-6. **Push the main repository branch** and **create a PR** that includes a link to the enterprise PR from step 3 in its description.
+6. **Push the main repository branch** and **create a PR** using `gh pr create`. Mention in the PR body that there is a corresponding enterprise branch that needs a PR in `novuhq/packages-enterprise` and include the compare URL from step 3.
 
 Both PRs must follow the conventions from the "Creating Pull Requests" section above (Conventional Commits format, proper scope, Linear ticket ID when available).
