@@ -4,16 +4,28 @@ globs: apps/dashboard/**/*
 alwaysApply: false
 ---
 
+## Dashboard
+
+**Stack:** React 19 + Vite + TypeScript · Radix UI · Tailwind CSS · shadcn/ui · TanStack Query · React Router · motion/react · port 4201
+
+**Run:** Do not build or start the dashboard — the user already has it running on port 4201. Check types via Cursor diagnostics.
+
+**Tests/lint:** see testing.mdc
+
+**Key directories:**
+```
+apps/dashboard/src/components/   # Shared UI components
+apps/dashboard/src/pages/        # Route-level page components
+apps/dashboard/src/hooks/        # Custom React hooks
+apps/dashboard/src/api/          # API client and query definitions
+apps/dashboard/src/ee/           # Enterprise-only features
+```
+
+**Browser automation (new user setup):** Create org when prompted → navigate to `http://localhost:4201` → skip onboarding unless asked.
+
+---
+
 ### Dashboard Conventions
-
-**Running**
-- Do not attempt to build or run the dashboard — the user will already have it running on port 4201.
-- To check types, use the Cursor diagnostics panel (linter errors surfaced in the IDE).
-
-**File and component structure**
-- Use lowercase with dashes for directories and files (e.g., `components/auth-wizard`).
-- Favor named exports for components.
-- Use `type` over `interface` for all frontend TypeScript definitions.
 
 **Data fetching**
 - Use TanStack Query (`useQuery`, `useMutation`) for all server state — do not use `useEffect` + `fetch` directly.
@@ -25,54 +37,7 @@ alwaysApply: false
 - Avoid adding new third-party UI libraries without discussion.
 - Use Tailwind utility classes for all styling; avoid inline `style` props except for dynamic values that cannot be expressed as utilities.
 
-**Animation**
-- Import from `"motion/react"` (not `"framer-motion"` or `"motion-react"`).
-
 **Routing**
 - Use React Router v6 `<Link>` and `useNavigate` — do not use `window.location` for in-app navigation.
 
-**Example: feature component with mutation**
-
-```tsx
-type EditEnvironmentSheetProps = {
-  environment?: IEnvironment;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: EditEnvironmentSheetProps) => {
-  const { mutateAsync: updateEnvironment, isPending } = useUpdateEnvironment();
-
-  const form = useForm<EnvironmentFormData>({
-    resolver: standardSchemaResolver(environmentFormSchema),
-    defaultValues: { name: environment?.name ?? '', color: environment?.color },
-  });
-
-  const onSubmit = async (values: EnvironmentFormData) => {
-    if (!environment) return;
-
-    try {
-      await updateEnvironment({ environment, ...values });
-      showSuccessToast('Environment updated');
-      onOpenChange(false);
-    } catch {
-      showErrorToast('Failed to update environment');
-    }
-  };
-
-  return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <Form {...form}>
-          <FormRoot onSubmit={form.handleSubmit(onSubmit)}>
-            <EnvironmentFormFields />
-            <SheetFooter>
-              <Button type="submit" isLoading={isPending}>Save</Button>
-            </SheetFooter>
-          </FormRoot>
-        </Form>
-      </SheetContent>
-    </Sheet>
-  );
-};
-```
+**Canonical example:** @apps/dashboard/src/components/environments/edit-environment-sheet.tsx

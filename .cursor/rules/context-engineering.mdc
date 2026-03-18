@@ -4,6 +4,10 @@ globs:
   - "**/tools/**/*.ts"
   - "**/prompts/**/*.ts"
   - "**/*.prompt.ts"
+  - "AGENTS.md"
+  - ".cursor/rules/**"
+  - ".cursor/skills/**"
+  - ".agents/skills/**"
 alwaysApply: false
 ---
 

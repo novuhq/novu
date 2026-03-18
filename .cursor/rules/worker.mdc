@@ -4,6 +4,22 @@ globs: apps/worker/**/*
 alwaysApply: false
 ---
 
+## Worker Service
+
+**Stack:** NestJS · Bull + Redis · ClickHouse (execution traces) · cron-parser
+
+**Run:** `pnpm start:worker` — only needed when testing notification triggering; skip for dashboard/API-only tasks.
+
+**Tests/lint:** see testing.mdc
+
+**Key directories:**
+```
+apps/worker/src/app/workflow/usecases/   # Workflow step execution usecases
+apps/worker/src/app/workflow/services/   # Queue consumers and job handlers
+```
+
+---
+
 ### Worker Service Conventions
 
 **Use-case structure**
@@ -15,7 +31,3 @@ alwaysApply: false
 - Job consumers are registered in NestJS modules using Bull's `@Process` decorator.
 - Retry logic and failure handling are configured at the queue level in `libs/application-generic` — do not duplicate this in worker use-cases.
 - Always handle job failures gracefully and log execution details via `CreateExecutionDetails`.
-
-**Testing**
-- Run `cd apps/worker && pnpm test` for unit tests.
-- The worker must be running (`pnpm start:worker`) when testing end-to-end notification flows.

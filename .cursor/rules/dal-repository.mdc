@@ -1,6 +1,6 @@
 ---
 description: Rules for working with DAL repositories in the Novu monorepo
-globs: libs/dal/**/*.ts, apps/api/**/*.ts
+globs: libs/dal/**/*.ts, **/repositories/**/*.ts
 alwaysApply: false
 ---
 
