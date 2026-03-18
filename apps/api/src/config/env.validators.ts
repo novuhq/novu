@@ -26,7 +26,7 @@ export const envValidators = {
   LOG_LEVEL: str({ choices: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'none'] }),
   PORT: port(),
   FRONT_BASE_URL: str(),
-  DASHBOARD_URL: str({ default: 'https://dashboard.novu.co' }),
+  DASHBOARD_URL: str(),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
