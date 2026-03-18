@@ -1096,9 +1096,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   private normalizeDeviceTokens(messages: MessageEntity[]): MessageEntity[] {
     for (const message of messages) {
       if (Array.isArray(message.deviceTokens)) {
-        message.deviceTokens = message.deviceTokens.flat(Infinity).filter(
-          (token): token is string => typeof token === 'string'
-        );
+        message.deviceTokens = message.deviceTokens
+          .flat(Infinity)
+          .filter((token): token is string => typeof token === 'string');
       }
     }
 

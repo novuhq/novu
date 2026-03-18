@@ -201,13 +201,19 @@ export class ConstructFrameworkWorkflow {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
-      throw new InternalServerErrorException(`Step template not found for step ${staticStep.stepId}`);
+      this.logger.warn(`Step template not found for step ${staticStep.stepId}, skipping step`, LOG_CONTEXT);
+
+      return step.custom(
+        staticStep.stepId || staticStep._templateId,
+        async () => ({}),
+        { controlSchema: PERMISSIVE_EMPTY_SCHEMA, skip: () => true }
+      );
     }
 
     const stepType = stepTemplate.type;
-    const { stepId } = staticStep;
+    const stepId = staticStep.stepId || staticStep._templateId;
     if (!stepId) {
-      throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
+      throw new InternalServerErrorException(`Step id not found for step ${staticStep._id}`);
     }
     const stepControls = stepTemplate.controls;
 

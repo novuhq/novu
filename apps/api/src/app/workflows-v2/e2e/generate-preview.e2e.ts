@@ -1216,7 +1216,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse.result.result.preview.body).to.contain('Paragraph static link');
     expect(previewResponse.result.result.preview.body).to.contain('href="https://paragraph.static.link"');
 
-    console.log('Blockquote');
     // blockquote
     expect(previewResponse.result.result.preview.body).to.contain('Just the blockquote');
     expect(previewResponse.result.result.preview.body).to.contain('Blockquote variable link');

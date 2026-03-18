@@ -216,9 +216,13 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
    */
   useEffect(() => {
     if (isAllowedToUnblock) {
-      setTimeout(() => {
-        blocker.proceed?.();
+      const timer = setTimeout(() => {
+        if (blocker.state === 'blocked') {
+          blocker.proceed?.();
+        }
       }, 500);
+
+      return () => clearTimeout(timer);
     }
   }, [isAllowedToUnblock, blocker]);
 

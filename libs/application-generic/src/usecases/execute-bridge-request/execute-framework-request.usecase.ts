@@ -77,7 +77,15 @@ export class ExecuteFrameworkRequest {
     );
 
     const retriesLimit = command.retriesLimit || DEFAULT_RETRIES_LIMIT;
-    const bridgeActionUrl = new URL(bridgeUrl);
+    let bridgeActionUrl: URL;
+    try {
+      bridgeActionUrl = new URL(bridgeUrl);
+    } catch {
+      throw new BadRequestException({
+        code: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.code,
+        message: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.message(bridgeUrl),
+      });
+    }
     bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, command.action);
 
     if (environment.type) {

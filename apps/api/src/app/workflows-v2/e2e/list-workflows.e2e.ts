@@ -95,8 +95,6 @@ describe('List Workflows - /workflows (GET) #novu-v2', () => {
       const createdWorkflow = await createWorkflow(workflowName);
 
       const { result } = await novuClient.workflows.list({});
-      const { result: topics } = await novuClient.topics.list({});
-      console.log(topics);
       const returnedWorkflow = result.workflows[0];
 
       expect(returnedWorkflow).to.include({
