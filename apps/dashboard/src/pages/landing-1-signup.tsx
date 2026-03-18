@@ -80,20 +80,20 @@ function LeftPanel() {
     <div className="relative flex flex-col justify-between overflow-hidden bg-[#05050b] px-6 py-8 text-white lg:w-1/2 lg:px-16 lg:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(100,50,200,0.15),transparent_60%)]" />
 
-      <div className="relative z-10 flex flex-col gap-10">
-        <img src="/images/novu-logo-color.svg" className="h-[44px] w-[142px] object-contain object-left" alt="Novu" />
+      <div className="relative z-10 flex flex-col gap-6 lg:gap-10">
+        <img src="/images/novu-logo-color.svg" className="h-[36px] w-[116px] object-contain object-left lg:h-[44px] lg:w-[142px]" alt="Novu" />
 
-        <div className="flex flex-col gap-7 mt-10">
-          <h1 className="text-3xl font-medium leading-tight tracking-[-0.96px] lg:text-[48px] lg:leading-[1.125]">
+        <div className="flex flex-col gap-4 lg:mt-10 lg:gap-7">
+          <h1 className="text-[28px] font-medium leading-tight tracking-[-0.56px] sm:text-3xl lg:text-[48px] lg:leading-[1.125] lg:tracking-[-0.96px]">
             Open-source notifications, <span className="text-[#99b3ff]">live in minutes</span>
           </h1>
-          <p className="text-lg leading-normal tracking-[-0.36px] text-[#ccc]">
+          <p className="text-base leading-normal tracking-[-0.32px] text-[#ccc] lg:text-lg lg:tracking-[-0.36px]">
             Build and ship multi-channel notifications fast with Novu&apos;s API-first platform and drop-in Inbox. No
             credit card required.
           </p>
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="hidden flex-col gap-5 sm:flex">
           {FEATURES.map((feature, index) => (
             <FeatureBullet
               key={feature.title}
@@ -106,7 +106,7 @@ function LeftPanel() {
         </div>
       </div>
 
-      <div className="relative z-10 mt-10">
+      <div className="relative z-10 mt-8 hidden sm:block lg:mt-10">
         <Testimonial />
       </div>
     </div>
@@ -128,7 +128,7 @@ function FeatureBullet({
     <>
       <div className="flex items-center gap-3.5">
         <img src={icon} className="size-4 shrink-0" alt="" />
-        <p className="text-lg leading-normal tracking-[-0.36px] text-white">
+        <p className="text-base leading-normal tracking-[-0.32px] text-white lg:text-lg lg:tracking-[-0.36px]">
           <span className="font-medium">{title}</span> {description}
         </p>
       </div>
@@ -140,8 +140,8 @@ function FeatureBullet({
 function Testimonial() {
   return (
     <div className="relative flex flex-col gap-5">
-      <img src="/images/auth/quote-mark.svg" className="absolute -top-[35px] left-[-16px] h-[55px] w-[80px]" alt="" />
-      <p className="relative z-10 text-xl leading-normal tracking-[-0.4px] text-white">
+      <img src="/images/auth/quote-mark.svg" className="absolute -top-[30px] left-0 h-[45px] w-[65px] lg:-top-[35px] lg:left-[-16px] lg:h-[55px] lg:w-[80px]" alt="" />
+      <p className="relative z-10 text-lg leading-normal tracking-[-0.36px] text-white lg:text-xl lg:tracking-[-0.4px]">
         Novu&apos;s UI lets us handle configuration without reinventing the wheel, that&apos;s a huge savings on
         development and maintenance.
       </p>
@@ -167,14 +167,14 @@ function Testimonial() {
 
 function RightPanel() {
   return (
-    <div className="relative flex flex-1 flex-col overflow-hidden bg-[#08080c] lg:w-1/2">
+    <div className="relative flex min-h-[600px] flex-1 flex-col overflow-hidden bg-[#08080c] lg:min-h-0 lg:w-1/2">
       <RightPanelBackground />
 
-      <div className="relative z-10 pt-8 lg:pt-16">
+      <div className="relative z-10 pt-6 lg:pt-16">
         <TrustedBySection />
       </div>
 
-      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10 lg:px-16">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-6 sm:px-6 sm:py-10 lg:px-16">
         <div className="flex w-full max-w-[512px] flex-col items-center gap-5">
           <SignUpForm
             path={ROUTES.LANDING_1_SIGN_UP}
@@ -189,10 +189,6 @@ function RightPanel() {
           )}
         </div>
       </div>
-
-      {/*  <div className="relative z-10 pb-10">
-        <ExploreNovuSection />
-      </div> */}
     </div>
   );
 }
@@ -236,10 +232,12 @@ function RightPanelBackground() {
 
 function TrustedBySection() {
   return (
-    <div className="flex flex-col items-center gap-6 px-6">
-      <span className="text-xs uppercase tracking-widest text-white/60">Trusted by top industry leaders</span>
+    <div className="flex flex-col items-center gap-4 px-6 lg:gap-6">
+      <span className="text-[10px] uppercase tracking-widest text-white/60 lg:text-xs">
+        Trusted by top industry leaders
+      </span>
       <div
-        className="flex items-center justify-center gap-12"
+        className="flex origin-center scale-[0.65] items-center justify-center gap-8 sm:scale-[0.8] lg:scale-100 lg:gap-12"
         style={{
           maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
           WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
