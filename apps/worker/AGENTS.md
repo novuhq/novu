@@ -41,3 +41,16 @@ apps/worker/src/app/workflow/services/   # Queue consumers and job handlers
 - Each notification channel (email, SMS, push, in-app, chat) has a dedicated `send-message` usecase.
 - Usecases follow the CQRS pattern: `execute(command: CommandClass)` returning a typed result.
 - Job failure handling and retry logic are defined at the queue level in `libs/application-generic`.
+
+## Boundaries
+
+### Never
+- Duplicate retry logic or failure handling inside worker use-cases — configure it at the queue level in `libs/application-generic`
+- Share send-message logic across channels — keep each channel's use-case isolated
+- Reference `apps/web` or `libs/embed` — those projects have been removed from this repo
+
+### Ask First
+- Before adding a new Bull queue or changing queue configuration
+- Before introducing a new channel-level use-case that may affect step execution ordering
+
+See [root AGENTS.md](../../AGENTS.md) for monorepo-wide boundaries.

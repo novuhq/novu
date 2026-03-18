@@ -40,4 +40,12 @@ When writing FrontEnd code, you are an expert on modern dev tool UI and UX desig
 
 ### Key Conventions
 - Linting: Add blank lines before return statements
-- When importing "motion-react" package, import it from "motion/react" 
+- When importing "motion-react" package, import it from "motion/react"
+
+### AI Boundaries
+- Active apps: `apps/api`, `apps/dashboard`, `apps/worker`, `apps/ws`
+- Removed projects — do not reference or copy patterns from: `apps/web` (replaced by `apps/dashboard`), `libs/embed`
+- Inactive apps — do not read or modify: `apps/inbound-mail`, `apps/webhook`
+- Auto-generated — do not read or modify: `libs/internal-sdk`
+- Do not copy patterns from `playground/` into production code
+- See root `AGENTS.md` for full Always / Ask First / Never rules

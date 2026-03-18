@@ -32,6 +32,29 @@ Each application has its own `AGENTS.md` with stack details, run commands, testi
 - **Worker**: [`apps/worker/AGENTS.md`](apps/worker/AGENTS.md)
 - **WebSocket**: [`apps/ws/AGENTS.md`](apps/ws/AGENTS.md)
 
+## AI Boundaries
+
+### Always
+- Work within the active apps: `apps/api`, `apps/dashboard`, `apps/worker`, `apps/ws`
+- Use existing shared packages: `packages/shared`, `packages/framework`, `packages/js`, `packages/react`
+- Follow patterns from `libs/dal` for data access and `libs/application-generic` for business logic
+- Read the app-specific `AGENTS.md` before making changes to any app
+
+### Ask First
+- Before creating new UI components not already in the dashboard's component library (`apps/dashboard/src/components/`)
+- Before adding new npm dependencies to any package
+- Before modifying database schemas (MongoDB models) or ClickHouse table definitions
+- Before changing anything in `enterprise/` or `packages/providers/`
+
+### Never
+- Read, modify, or reference any code inside `apps/web` — this project no longer exists; `apps/dashboard` is the active UI
+- Read, modify, or reference `libs/embed` — this library has been removed
+- Read, modify, or reference `apps/inbound-mail` or `apps/webhook` — these apps are inactive and no longer under active development
+- Read, modify, or reference `libs/internal-sdk` — this library is auto-generated; never edit it manually
+- Modify files in `.idea/`, `playground/`, `.github/`, `scripts/`, or `docker/`
+- Invent custom UI primitives; reuse Radix/shadcn components already in the dashboard's component library
+- Copy patterns from `playground/` into production code
+
 ## Creating Pull Requests
 
 Follow the Conventional Commits specification. As a team member, include the Linear ticket ID at the end.

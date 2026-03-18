@@ -89,3 +89,18 @@ apps/api/src/ee/                           # Enterprise-only features
 apps/api/migrations/                       # MongoDB migrations
 apps/api/migrations/clickhouse-migrations/ # ClickHouse schema migrations
 ```
+
+## Boundaries
+
+### Never
+- Query MongoDB models directly — always use `libs/dal` repositories
+- Omit `_environmentId` or `_organizationId` from queries — tenant isolation is required
+- Put business logic in controllers — use CQRS use-cases
+- Reference `apps/web` or `libs/embed` — those projects have been removed from this repo
+
+### Ask First
+- Before adding a new endpoint that has no auth decorators (`@RequireAuthentication`, `@ExternalApiAccessible`)
+- Before creating new MongoDB migrations or ClickHouse schema changes
+- Before touching anything in `apps/api/src/ee/`
+
+See [root AGENTS.md](../../AGENTS.md) for monorepo-wide boundaries.
