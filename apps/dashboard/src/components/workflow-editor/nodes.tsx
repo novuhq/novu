@@ -591,13 +591,8 @@ export const AddNode = (props: NodeProps<NodeType>) => {
           <RiInsertRowTop className="size-3.5 text-text-soft" />
           <span className="text-label-xs text-text-soft">Drop here</span>
         </div>
-        {!isIntersecting && (
-          <AddStepMenu
-            disabled={isReadOnly}
-            visible
-            className="-mt-1"
-            onMenuItemClick={(selection) => addNode(data.index, selection)}
-          />
+        {!isIntersecting && !isReadOnly && (
+          <AddStepMenu visible className="-mt-1" onMenuItemClick={(selection) => addNode(data.index, selection)} />
         )}
       </motion.div>
     </AnimatePresence>

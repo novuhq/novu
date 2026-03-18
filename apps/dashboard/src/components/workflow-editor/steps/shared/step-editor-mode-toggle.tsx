@@ -2,6 +2,7 @@ import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { ArrowRight, Check, DraftingCompass, FileCode2 } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { Badge } from '@/components/primitives/badge';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
@@ -92,6 +93,9 @@ export function StepEditorModeToggle() {
             >
               <FileCode2 className="size-3" />
               <span className="text-code-xs">CUSTOM CODE</span>
+              <Badge variant="lighter" color="purple" size="sm">
+                New
+              </Badge>
             </button>
           </TooltipTrigger>
           <TooltipContent
@@ -100,9 +104,12 @@ export function StepEditorModeToggle() {
             align="end"
             className="w-[340px] overflow-hidden border-stroke-weak p-0 shadow-[0px_12px_24px_0px_rgba(14,18,27,0.06),0px_1px_2px_0px_rgba(14,18,27,0.03)]"
           >
-            <div className="flex items-center gap-1 border-b border-stroke-weak bg-bg-weak px-2 py-1.5">
+            <div className="flex items-center gap-1.5 border-b border-stroke-weak bg-bg-weak px-2 py-1.5">
               <FileCode2 className="size-3 shrink-0 text-text-strong" />
               <span className="text-label-xs text-text-strong">Manage this step in your code</span>
+              <Badge variant="lighter" color="gray" size="sm">
+                BETA
+              </Badge>
             </div>
             <div className="flex flex-col gap-3 px-2 py-2">
               <p className="text-paragraph-xs text-text-sub">

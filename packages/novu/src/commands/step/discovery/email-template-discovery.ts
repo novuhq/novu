@@ -1,7 +1,7 @@
+import { type ParserPlugin, parse } from '@babel/parser';
 import fg from 'fast-glob';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as ts from 'typescript';
 
 export interface DiscoveredTemplate {
   filePath: string;
@@ -78,16 +78,32 @@ async function checkIsReactEmailTemplate(filePath: string): Promise<boolean> {
     return false;
   }
 
-  const scriptKind = getScriptKind(filePath);
-  const sf = ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, true, scriptKind);
+  const ext = path.extname(filePath).toLowerCase();
+  const plugins: ParserPlugin[] = ['jsx'];
+  if (ext === '.ts' || ext === '.tsx') {
+    plugins.push('typescript');
+  }
+
+  let ast: ReturnType<typeof parse>;
+  try {
+    ast = parse(text, { sourceType: 'module', plugins, errorRecovery: true });
+  } catch {
+    return false;
+  }
 
   let hasReactEmailImport = false;
   let hasJsx = false;
   let hasDefaultExport = false;
 
-  function visit(node: ts.Node): void {
-    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      const specifier = node.moduleSpecifier.text;
+  function walk(node: unknown): void {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) return;
+
+    const n = node as Record<string, unknown>;
+    if (typeof n.type !== 'string') return;
+
+    if (n.type === 'ImportDeclaration') {
+      const source = n.source as Record<string, unknown> | undefined;
+      const specifier = typeof source?.value === 'string' ? source.value : '';
       if (
         specifier === '@react-email/components' ||
         specifier.startsWith('@react-email/') ||
@@ -97,48 +113,24 @@ async function checkIsReactEmailTemplate(filePath: string): Promise<boolean> {
       }
     }
 
-    if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
+    if (n.type === 'JSXElement' || n.type === 'JSXFragment') {
       hasJsx = true;
     }
 
-    if (ts.isExportAssignment(node) && !node.isExportEquals) {
+    if (n.type === 'ExportDefaultDeclaration') {
       hasDefaultExport = true;
     }
 
-    if (ts.isFunctionDeclaration(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)) {
-      hasDefaultExport = true;
+    for (const value of Object.values(n)) {
+      if (Array.isArray(value)) {
+        for (const item of value) walk(item);
+      } else if (value && typeof value === 'object') {
+        walk(value);
+      }
     }
-
-    if (
-      ts.isExportDeclaration(node) &&
-      node.exportClause &&
-      ts.isNamedExports(node.exportClause) &&
-      node.exportClause.elements.some((e) => e.name.text === 'default')
-    ) {
-      hasDefaultExport = true;
-    }
-
-    ts.forEachChild(node, visit);
   }
 
-  visit(sf);
+  walk(ast.program);
 
   return hasReactEmailImport && hasJsx && hasDefaultExport;
-}
-
-function getScriptKind(filePath: string): ts.ScriptKind {
-  const ext = path.extname(filePath).toLowerCase();
-
-  switch (ext) {
-    case '.tsx':
-      return ts.ScriptKind.TSX;
-    case '.ts':
-      return ts.ScriptKind.TS;
-    case '.jsx':
-      return ts.ScriptKind.JSX;
-    case '.js':
-      return ts.ScriptKind.JS;
-    default:
-      return ts.ScriptKind.JS;
-  }
 }

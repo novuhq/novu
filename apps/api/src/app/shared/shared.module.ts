@@ -166,6 +166,7 @@ const IMPORTS = [
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
       version: packageJson.version,
+      silent: !!process.env.CI,
     })
   ),
 ];

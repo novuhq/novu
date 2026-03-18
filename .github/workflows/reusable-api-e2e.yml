@@ -15,7 +15,11 @@ on:
 
 jobs:
   e2e_api:
-    name: Test E2E
+    name: Test E2E (Shard ${{ matrix.shard }}/${{ matrix.total }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(inputs.ee && '[{"shard":1,"total":4},{"shard":2,"total":4},{"shard":3,"total":4},{"shard":4,"total":4}]' || '[{"shard":1,"total":1}]') }}
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     permissions:
@@ -57,7 +61,7 @@ jobs:
           NEW_RELIC_ENABLED: true
         run: |
           # Start the worker service using pre-built code for deterministic startup
-          cd apps/worker && NODE_ENV=test LOG_LEVEL=debug node dist/main.js &
+          cd apps/worker && NODE_ENV=test LOG_LEVEL=warn node dist/main.js &
 
       - name: Wait on worker
         shell: bash
@@ -71,6 +75,10 @@ jobs:
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
+        env:
+          NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
+          NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
+          NOVU_V2_MOCHA_REPORTER: dot
         run: |
           set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2
