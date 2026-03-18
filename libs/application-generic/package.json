@@ -72,7 +72,7 @@
     "@opentelemetry/semantic-conventions": "1.39.0",
     "@pulsecron/pulse": "1.6.8",
     "@segment/analytics-node": "^1.1.4",
-    "@sentry/node": "^8.33.1",
+    "@sentry/node": "^8.49.0",
     "@types/json-schema-faker": "^0.5.4",
     "@team-plain/typescript-sdk": "5.8.0",
     "@tufjs/canonical-json": "^2.0.0",
