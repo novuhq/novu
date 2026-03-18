@@ -118,6 +118,10 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     expect(workflowData.steps[0].stepId).to.equal('send-email');
     expect(workflowData.steps[0].uuid).to.equal('send-email');
     expect(workflowData.steps[0].template?.name).to.equal('send-email');
+
+    expect(workflowData.rawData.payload).to.be.ok;
+    expect((workflowData.rawData.payload as any).schema).to.be.ok;
+    expect((workflowData.rawData.payload as any).unknownSchema).to.not.exist;
   });
 
   it('should create a workflow identified by a space-separated identifier', async () => {

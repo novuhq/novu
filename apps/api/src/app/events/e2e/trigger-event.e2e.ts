@@ -2446,18 +2446,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
 
       it(`should not create multiple subscribers when multiple triggers are made        
          with the same not created subscribers `, async () => {
-        // Access subscriberRepository and print database indexes
-        console.log('Accessing subscriberRepository indexes...');
-        const subscriberModel = subscriberRepository._model;
-        subscriberModel.collection
-          .getIndexes()
-          .then((indexes) => {
-            console.log('Subscriber Collection Indexes:');
-            console.log(JSON.stringify(indexes, null, 2));
-          })
-          .catch((error) => {
-            console.error('Error fetching indexes:', error);
-          });
         template = await createSimpleWorkflow(session);
         for (let i = 0; i < 3; i += 1) {
           const subscriberId = `not-created-twice-subscriber${i}`;
@@ -3998,18 +3986,13 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   });
 
   describe('Subscriber Schedule Logic', () => {
-    const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
     const isContextPreferencesEnabled = (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
 
     beforeEach(async () => {
-      // Enable the feature flags for schedule tests
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
     });
 
     afterEach(() => {
-      // Restore the original feature flag states
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = isContextPreferencesEnabled;
     });
 

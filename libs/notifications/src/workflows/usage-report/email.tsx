@@ -1,18 +1,5 @@
 import { providers as sharedProviders } from '@novu/shared';
-import {
-  Body,
-  Button,
-  Column,
-  Container,
-  Head,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Row,
-  render,
-  Section,
-} from '@react-email/components';
+import { Body, Column, Container, Head, Html, Img, Link, Preview, Row, render, Section } from '@react-email/components';
 import millify from 'millify';
 import React from 'react';
 import { ControlValueSchema, PayloadSchemaType } from './schemas';
@@ -905,7 +892,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
 
       <Row style={{ marginTop: '20px' }}>
         <Column>
-          <Button
+          <Link
             href={dashboardUrl || 'https://dashboard.novu.co'}
             style={{
               background: '#DF2E5B',
@@ -913,7 +900,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
               fontSize: '14px',
               fontWeight: 600,
               padding: '12px 28px',
-              borderRadius: 'var(--radius-8, 8px)',
+              borderRadius: '8px',
               border: '1px solid #B8244A',
               boxShadow: '0 1px 2px 0 #C92952',
               textDecoration: 'none',
@@ -922,7 +909,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
             }}
           >
             View dashboard
-          </Button>
+          </Link>
         </Column>
       </Row>
     </Card>

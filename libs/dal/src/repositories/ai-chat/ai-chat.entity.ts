@@ -1,4 +1,4 @@
-import { AiResourceTypeEnum } from '@novu/shared';
+import { AiResourceTypeEnum, AiResumeActionEnum } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -23,6 +23,7 @@ export class AiChatEntity {
 
   snapshots?: AiChatSnapshotRef[];
   resumeCheckpointId?: string;
+  resumeAction?: AiResumeActionEnum | null;
 
   hasPendingChanges: boolean;
 

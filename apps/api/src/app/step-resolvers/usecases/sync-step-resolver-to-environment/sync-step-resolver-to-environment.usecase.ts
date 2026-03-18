@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  getStepResolverControlSchema,
-  InstrumentUsecase,
-  STEP_RESOLVER_EMAIL_UI_SCHEMA,
-  stepTypeToControlSchema,
-} from '@novu/application-generic';
+import { getStepResolverControlSchema, InstrumentUsecase, stepTypeToControlSchema } from '@novu/application-generic';
 import { ClientSession, MessageTemplateRepository } from '@novu/dal';
 import {
   StepResolverSourceData,
@@ -72,8 +67,8 @@ export class SyncStepResolverToEnvironmentUsecase {
         $set: {
           stepResolverHash: sourceStep.stepResolverHash,
           'controls.schema': getStepResolverControlSchema(sourceStep.controlSchema),
-          'controls.uiSchema': STEP_RESOLVER_EMAIL_UI_SCHEMA,
         },
+        $unset: { 'controls.uiSchema': 1 },
       },
       { session }
     );

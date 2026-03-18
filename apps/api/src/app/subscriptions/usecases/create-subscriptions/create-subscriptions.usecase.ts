@@ -302,12 +302,24 @@ export class CreateSubscriptionsUsecase {
     if (!topic) {
       this.validateTopicKey(command.topicKey);
 
-      topic = await this.topicRepository.createTopic({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        key: command.topicKey,
-        name: command.name,
-      });
+      try {
+        topic = await this.topicRepository.createTopic({
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          key: command.topicKey,
+          name: command.name,
+        });
+      } catch (error: unknown) {
+        if (this.isDuplicateKeyError(error)) {
+          topic = await this.topicRepository.findTopicByKey(
+            command.topicKey,
+            command.organizationId,
+            command.environmentId
+          );
+        } else {
+          throw error;
+        }
+      }
     } else if (command.name) {
       topic = await this.topicRepository.findOneAndUpdate(
         {
@@ -336,6 +348,10 @@ export class CreateSubscriptionsUsecase {
     throw new BadRequestException(
       `Invalid topic key: "${key}". Topic keys must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address.`
     );
+  }
+
+  private isDuplicateKeyError(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'code' in error && (error as { code: number }).code === 11000;
   }
 
   private async validateSubscriptionLimit(

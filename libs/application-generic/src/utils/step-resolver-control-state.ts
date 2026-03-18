@@ -1,4 +1,3 @@
-import { StepTypeEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { cloneDeep } from 'es-toolkit/compat';
@@ -9,26 +8,6 @@ export const FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA = {
   required: [],
   additionalProperties: false,
 } as const;
-
-const STEP_RESOLVER_RESERVED_CONTROL_KEYS = ['editorType', 'rendererType'] as const;
-
-export const REACT_EMAIL_STEP_RESOLVER_DEFAULTS = {
-  editorType: 'html',
-  rendererType: 'react-email',
-} as const;
-
-export const STEP_RESOLVER_EMAIL_UI_SCHEMA: UiSchema = {
-  group: UiSchemaGroupEnum.EMAIL,
-  properties: {
-    body: {
-      component: UiComponentEnum.EMAIL_BODY,
-    },
-    rendererType: {
-      component: UiComponentEnum.EMAIL_RENDERER_SELECT,
-      placeholder: REACT_EMAIL_STEP_RESOLVER_DEFAULTS.rendererType,
-    },
-  },
-};
 
 const FIELD_REMOVAL_KEYWORDS = new Set([
   'type',
@@ -55,18 +34,13 @@ export function isStepResolverActive(stepResolverHash?: string): boolean {
   return typeof stepResolverHash === 'string' && stepResolverHash.length > 0;
 }
 
-export function isStepResolverEmailStep(stepType: StepTypeEnum | null | undefined, stepResolverHash?: string): boolean {
-  return stepType === StepTypeEnum.EMAIL && isStepResolverActive(stepResolverHash);
-}
-
 export function getStepResolverControlSchema(controlSchema?: Record<string, unknown> | null): Record<string, unknown> {
   return controlSchema ?? FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA;
 }
 
 // When a step resolver is redeployed, the schema can change while old control values
 // still exist in the database. This removes values that no longer match the current
-// schema so the resolver does not keep using hidden stale inputs. The dashboard-only
-// editor fields are kept because they are not part of the resolver input schema.
+// schema so the resolver does not keep using hidden stale inputs.
 export function reconcileStepResolverControlValues(
   controlValues: Record<string, unknown> | null | undefined,
   controlSchema: Record<string, unknown>
@@ -80,8 +54,7 @@ export function reconcileStepResolverControlValues(
   addFormats(ajv);
 
   const validate = ajv.compile(controlSchema);
-  const { reservedControlValues, resolverControlValues } = splitStepResolverControlValues(controlValues);
-  let reconciledControlValues = cloneDeep(resolverControlValues);
+  let reconciledControlValues = cloneDeep(isPlainObject(controlValues) ? controlValues : {});
 
   while (true) {
     const isValid = validate(reconciledControlValues);
@@ -109,38 +82,7 @@ export function reconcileStepResolverControlValues(
     }
   }
 
-  return {
-    ...reconciledControlValues,
-    ...reservedControlValues,
-  };
-}
-
-function splitStepResolverControlValues(controlValues?: Record<string, unknown> | null): {
-  reservedControlValues: Record<string, unknown>;
-  resolverControlValues: Record<string, unknown>;
-} {
-  if (!isPlainObject(controlValues)) {
-    return {
-      reservedControlValues: {},
-      resolverControlValues: {},
-    };
-  }
-
-  const reservedControlValues: Record<string, unknown> = {};
-  const resolverControlValues: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(controlValues)) {
-    if (STEP_RESOLVER_RESERVED_CONTROL_KEYS.includes(key as (typeof STEP_RESOLVER_RESERVED_CONTROL_KEYS)[number])) {
-      reservedControlValues[key] = value;
-    } else {
-      resolverControlValues[key] = value;
-    }
-  }
-
-  return {
-    reservedControlValues,
-    resolverControlValues,
-  };
+  return reconciledControlValues;
 }
 
 function getRemovableJsonPointer(error: ErrorObject): string | undefined {

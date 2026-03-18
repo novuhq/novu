@@ -1,18 +1,20 @@
 import { PermissionsEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { useState } from 'react';
-import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine } from 'react-icons/ri';
+import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiPlayCircleLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
 import { IssuesPanel } from '@/components/issues-panel';
+import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
-import { useReactEmailStepHint } from '@/components/workflow-editor/steps/email/use-react-email-step-hint';
 import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http-request/http-request-test-context';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
+import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
+import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
@@ -32,7 +34,7 @@ type StepEditorLayoutProps = {
 
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale } = useStepEditor();
-  const emailStepHint = useReactEmailStepHint();
+  const stepResolverHint = useStepResolverHint();
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
@@ -88,12 +90,21 @@ function StepEditorContent() {
           <ResizableLayout autoSaveId="step-editor-content-layout">
             <ResizableLayout.EditorPanel>
               <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="min-h-[45px] py-2">
-                <TranslationStatus
-                  resourceId={workflow.workflowId}
-                  resourceType={LocalizationResourceEnum.WORKFLOW}
-                  isTranslationEnabled={isTranslationsEnabled}
-                  className="h-7 text-xs"
-                />
+                <div className="flex items-center gap-2">
+                  <TranslationStatus
+                    resourceId={workflow.workflowId}
+                    resourceType={LocalizationResourceEnum.WORKFLOW}
+                    isTranslationEnabled={isTranslationsEnabled}
+                    className="h-7 text-xs"
+                  />
+                  {step.stepResolverHash && (
+                    <Badge variant="lighter" color="gray" size="md" className="font-mono tracking-wide">
+                      <BadgeIcon as={RiGitCommitFill} className="rotate-90" />
+                      {step.stepResolverHash}
+                    </Badge>
+                  )}
+                  <StepEditorModeToggle />
+                </div>
               </PanelHeader>
               <div className="flex-1 overflow-y-auto">
                 <div className="h-full p-3">
@@ -134,7 +145,7 @@ function StepEditorContent() {
         <IssuesPanel
           issues={step.issues}
           isTranslationEnabled={workflow.isTranslationEnabled}
-          hintMessage={emailStepHint}
+          hintMessage={stepResolverHint}
         />
       </ResizableLayout.MainContentPanel>
 

@@ -7,11 +7,11 @@ import { showToast } from '@/components/primitives/sonner-helpers';
 import { TooltipProvider } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED } from '@/config';
 import { AuthProvider } from '@/context/auth/auth-provider';
+import { CustomerIoProvider } from '@/context/customer-io';
 import { EEAuthProvider as ClerkProvider } from '@/context/ee-auth-provider';
 import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-key-manager';
 import { IdentityProvider } from '@/context/identity-provider';
 import { RegionProvider } from '@/context/region';
-import { CustomerIoProvider } from '@/context/customer-io';
 import { SegmentProvider } from '@/context/segment';
 
 const queryClient = new QueryClient({

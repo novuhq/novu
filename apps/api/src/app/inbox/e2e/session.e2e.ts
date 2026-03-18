@@ -13,7 +13,6 @@ const mockSubscriberId = '12345';
 describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let session: UserSession;
   let subscriberRepository: SubscriberRepository;
-  const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
 
   before(async () => {
     subscriberRepository = new SubscriberRepository();
@@ -27,11 +26,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       _environmentId: session.environment._id,
       _organizationId: session.environment._organizationId,
     });
-    (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
-  });
-
-  afterEach(() => {
-    (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
   });
 
   const initializeSession = async ({
@@ -1131,42 +1125,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       expect(body.data.schedule).to.exist;
       expect(body.data.schedule.weeklySchedule.monday.hours[0].start).to.equal('9:00 AM');
       expect(body.data.schedule.weeklySchedule.tuesday.hours[0].start).to.equal('09:00 AM');
-    });
-
-    it('should not create schedule when feature flag is disabled', async () => {
-      // Disable the feature flag
-
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'false';
-
-      await setIntegrationConfig({
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      });
-
-      const defaultSchedule = {
-        isEnabled: true,
-        weeklySchedule: {
-          monday: {
-            isEnabled: true,
-            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
-          },
-        },
-      };
-
-      const { body, status } = await initializeSession({
-        applicationIdentifier: session.environment.identifier,
-        subscriberId: `feature-flag-disabled-${randomBytes(4).toString('hex')}`,
-        defaultSchedule,
-      });
-
-      expect(status).to.equal(201);
-      expect(body.data.token).to.be.ok;
-      expect(body.data.schedule).to.not.exist;
-
-      // Re-enable the feature flag for other tests
-
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
     });
 
     it('should return context-specific schedule when multiple contexts exist', async () => {

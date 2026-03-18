@@ -243,7 +243,7 @@ export class Sync {
         controls: {
           schema: workflow.controls?.schema as unknown as JSONSchema,
         },
-        rawData: workflow as unknown as Record<string, unknown>,
+        rawData: this.buildRawData(workflow),
         payloadSchema: workflow.payload?.schema as unknown as JSONSchema,
         active: workflowActive,
         status: computeWorkflowStatus(workflowActive, steps),
@@ -276,7 +276,7 @@ export class Sync {
       controls: {
         schema: workflow.controls?.schema as unknown as JSONSchemaDto,
       },
-      rawData: workflow,
+      rawData: this.buildRawData(workflow),
       payloadSchema: workflow.payload?.schema as unknown as JSONSchemaDto,
       type: ResourceTypeEnum.BRIDGE,
       description: this.getWorkflowDescription(workflow),
@@ -379,6 +379,22 @@ export class Sync {
 
   private getWorkflowTags(workflow: DiscoverWorkflowOutput): string[] {
     return workflow.tags || [];
+  }
+
+  private buildRawData(workflow: DiscoverWorkflowOutput): Record<string, unknown> {
+    const rawData = { ...workflow } as Record<string, unknown>;
+
+    if (rawData.payload && typeof rawData.payload === 'object') {
+      const { unknownSchema: _payloadUnknownSchema, ...payloadRest } = rawData.payload as Record<string, unknown>;
+      rawData.payload = payloadRest;
+    }
+
+    if (rawData.controls && typeof rawData.controls === 'object') {
+      const { unknownSchema: _controlsUnknownSchema, ...controlsRest } = rawData.controls as Record<string, unknown>;
+      rawData.controls = controlsRest;
+    }
+
+    return rawData;
   }
 
   private castToAnyNotSupportedParam(param: any): any {

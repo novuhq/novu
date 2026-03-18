@@ -1,5 +1,5 @@
-import type { IUserEntity } from '@novu/shared';
 import { AnalyticsBrowser } from '@customerio/cdp-analytics-browser';
+import type { IUserEntity } from '@novu/shared';
 import { CUSTOMER_IO_WRITE_KEY } from '@/config';
 
 export class CustomerIoService {

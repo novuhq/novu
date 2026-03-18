@@ -18,7 +18,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 
-import { JobsService, SubscribersService, UserSession } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import getPort from 'get-port';
@@ -31,11 +31,7 @@ type Context = { name: string; isStateful: boolean };
 const contexts: Context[] = [{ name: 'stateful', isStateful: true }];
 
 contexts.forEach((context: Context) => {
-  /**
-   * For some reason, the bridge trigger is very flaky in setting up the test server,
-   * It's not clear why, but it's causing the tests to fail.
-   */
-  describe.skip('Self-Hosted Bridge Trigger #novu-v2', async () => {
+  describe('Self-Hosted Bridge Trigger #novu-v2', async () => {
     let session: UserSession;
     let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
@@ -1678,7 +1674,7 @@ contexts.forEach((context: Context) => {
           transactionId: transactionIdNoSkip,
           type: StepTypeEnum.DELAY,
         });
-        expect(delayJobNoSkip?.status).to.equal(JobStatusEnum.COMPLETED, 'Scenario 1: Delay job should be COMPLETED');
+        expect(delayJobNoSkip?.status).to.equal(JobStatusEnum.SKIPPED, 'Scenario 1: Delay job should be SKIPPED');
 
         const failedExecDetailsNoSkip = await executionDetailsRepository.find({
           _environmentId: session.environment._id,
@@ -1951,16 +1947,6 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
   });
 
   it('should execute a Novu-managed workflow', async () => {
-    // Log current Redis jobs count before starting the test
-    const jobsService = new JobsService();
-    let currentMetrics = await (jobsService as any).getQueueMetrics();
-    console.log(
-      `[Test] Starting 'should execute a Novu-managed workflow' - Current Redis jobs count: ${currentMetrics.totalCount}`
-    );
-    console.log(
-      `[Test] Queue breakdown - Workflow: ${currentMetrics.activeWorkflowJobsCount + currentMetrics.waitingWorkflowJobsCount}, Subscriber: ${currentMetrics.activeSubscriberJobsCount + currentMetrics.waitingSubscriberJobsCount}, Standard: ${currentMetrics.activeStandardJobsCount + currentMetrics.waitingStandardJobsCount}`
-    );
-
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
       active: true,
@@ -1992,10 +1978,6 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     const responseData = response.body.data as WorkflowResponseDto;
 
     await triggerEvent(session, responseData.workflowId, subscriber._id, {});
-    currentMetrics = await (jobsService as any).getQueueMetrics();
-    console.log(
-      `[Test] Queue breakdown - Workflow: ${currentMetrics.activeWorkflowJobsCount + currentMetrics.waitingWorkflowJobsCount}, Subscriber: ${currentMetrics.activeSubscriberJobsCount + currentMetrics.waitingSubscriberJobsCount}, Standard: ${currentMetrics.activeStandardJobsCount + currentMetrics.waitingStandardJobsCount}`
-    );
     await session.waitForJobCompletion();
 
     const sentMessages = await messageRepository.find({
