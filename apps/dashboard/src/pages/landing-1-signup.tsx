@@ -78,7 +78,9 @@ function LeftPanel() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(100,50,200,0.15),transparent_60%)]" />
 
       <div className="relative z-10 flex flex-col gap-6 lg:gap-10">
-        <img src="/images/novu-logo-color.svg" className="h-[36px] w-[116px] object-contain object-left lg:h-[44px] lg:w-[142px]" alt="Novu" />
+        <a href="https://novu.co" target="_blank" rel="noopener noreferrer">
+          <img src="/images/novu-logo-color.svg" className="h-[36px] w-[116px] object-contain object-left lg:h-[44px] lg:w-[142px]" alt="Novu" />
+        </a>
 
         <div className="flex flex-col gap-4 lg:mt-10 lg:gap-7">
           <h1 className="text-[28px] font-medium leading-tight tracking-[-0.56px] sm:text-3xl lg:text-[48px] lg:leading-[1.125] lg:tracking-[-0.96px]">
