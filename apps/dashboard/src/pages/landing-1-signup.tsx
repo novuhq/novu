@@ -83,7 +83,7 @@ function LeftPanel() {
       <div className="relative z-10 flex flex-col gap-10">
         <img src="/images/novu-logo-color.svg" className="h-[44px] w-[142px] object-contain object-left" alt="Novu" />
 
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-7 mt-10">
           <h1 className="text-3xl font-medium leading-tight tracking-[-0.96px] lg:text-[48px] lg:leading-[1.125]">
             Open-source notifications, <span className="text-[#99b3ff]">live in minutes</span>
           </h1>
@@ -153,7 +153,11 @@ function Testimonial() {
           </p>
           <div className="flex items-center gap-1.5">
             <span className="text-sm leading-snug tracking-[-0.28px] text-white/50">Lead Engineer at</span>
-            <img src="/images/auth/unified-logo.svg" className="h-[17px] w-[65px] object-contain opacity-70" alt="Unified" />
+            <img
+              src="/images/auth/unified-logo.svg"
+              className="h-[17px] w-[65px] object-contain opacity-70"
+              alt="Unified"
+            />
           </div>
         </div>
       </div>
