@@ -1,5 +1,6 @@
 import { SignUp as SignUpForm } from '@clerk/clerk-react';
 import { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
 import { clerkLandingSignupAppearance } from '@/utils/clerk-appearance';
@@ -60,6 +61,9 @@ export function Landing1SignUpPage() {
   return (
     <>
       <PageMeta title="Sign up" />
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div
         className="flex min-h-screen w-full flex-col lg:flex-row"
         style={{ fontFamily: "'brother-1816', sans-serif", fontWeight: 300 }}
@@ -89,7 +93,7 @@ function LeftPanel() {
           </p>
         </div>
 
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-5">
           {FEATURES.map((feature, index) => (
             <FeatureBullet
               key={feature.title}
@@ -122,12 +126,9 @@ function FeatureBullet({
 }) {
   return (
     <>
-      <div className="flex items-center gap-3.5 py-4">
+      <div className="flex items-center gap-3.5">
         <img src={icon} className="size-4 shrink-0" alt="" />
-        <p
-          className="text-lg leading-normal tracking-[-0.36px] text-white"
-          style={{ fontFamily: "'brother-1816', sans-serif", fontWeight: 200 }}
-        >
+        <p className="text-lg leading-normal tracking-[-0.36px] text-white">
           <span className="font-medium">{title}</span> {description}
         </p>
       </div>
@@ -138,9 +139,9 @@ function FeatureBullet({
 
 function Testimonial() {
   return (
-    <div className="flex flex-col gap-5">
-      <img src="/images/auth/quote-mark.svg" className="h-[55px] w-[80px]" alt="" />
-      <p className="text-xl leading-normal tracking-[-0.4px] text-white">
+    <div className="relative flex flex-col gap-5">
+      <img src="/images/auth/quote-mark.svg" className="absolute -top-[35px] left-[-16px] h-[55px] w-[80px]" alt="" />
+      <p className="relative z-10 text-xl leading-normal tracking-[-0.4px] text-white">
         Novu&apos;s UI lets us handle configuration without reinventing the wheel, that&apos;s a huge savings on
         development and maintenance.
       </p>
@@ -152,7 +153,7 @@ function Testimonial() {
           </p>
           <div className="flex items-center gap-1.5">
             <span className="text-sm leading-snug tracking-[-0.28px] text-white/50">Lead Engineer at</span>
-            <img src="/images/auth/unified-logo.svg" className="h-[18px] w-[65px] opacity-70" alt="Unified" />
+            <img src="/images/auth/unified-logo.svg" className="h-[17px] w-[65px] object-contain opacity-70" alt="Unified" />
           </div>
         </div>
       </div>
@@ -185,9 +186,9 @@ function RightPanel() {
         </div>
       </div>
 
-      <div className="relative z-10 pb-10">
+      {/*  <div className="relative z-10 pb-10">
         <ExploreNovuSection />
-      </div>
+      </div> */}
     </div>
   );
 }
