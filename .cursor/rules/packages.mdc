@@ -1,0 +1,30 @@
+---
+description: Rules for working in the shared NPM packages
+globs: packages/**/*
+alwaysApply: false
+---
+
+### Shared Packages Conventions
+
+**Build requirement**
+- After any change inside `packages/`, run `pnpm build:with-ee` before starting apps or running tests that depend on the updated package. Apps in `apps/` pick up changes automatically without a rebuild.
+
+**Public API / semver**
+- Packages are published to NPM — treat all exported symbols as public API.
+- Follow semver: breaking changes require a major bump, new exports are minor, fixes are patch.
+- Deprecate symbols with `@deprecated` JSDoc before removing them.
+
+**`packages/shared`**
+- Contains types, DTOs, enums, and utility functions used across both frontend and backend.
+- Keep this package free of runtime side-effects; it is imported by both Node.js services and browser bundles.
+
+**`packages/framework`**
+- Defines the code-first workflow SDK — the interface between user-defined workflows and Novu's engine.
+- Changes here affect the developer-facing API; write clear, minimal abstractions.
+
+**`packages/providers`**
+- Each provider implements a standard channel interface (e.g., `IEmailProvider`, `ISmsProvider`).
+- New providers must be registered in the provider index and follow the existing file structure.
+
+**Enterprise packages**
+- Changes to packages under `enterprise/` also require a separate PR in the `novuhq/packages-enterprise` repository on a matching branch from `next`.

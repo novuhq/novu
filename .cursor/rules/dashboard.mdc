@@ -1,8 +1,32 @@
 ---
-description: 
+description: Rules for working in the Dashboard (React frontend)
 globs: apps/dashboard/**/*
 alwaysApply: false
 ---
-- Do not attempt to build or run the dashboard as the user will be already running it, to check types you should be able to access the eslint results in cursor.
-- Use lowercase with dashes for directories and files (e.g., components/auth-wizard).
+
+### Dashboard Conventions
+
+**Running**
+- Do not attempt to build or run the dashboard — the user will already have it running on port 4201.
+- To check types, use the Cursor diagnostics panel (linter errors surfaced in the IDE).
+
+**File and component structure**
+- Use lowercase with dashes for directories and files (e.g., `components/auth-wizard`).
 - Favor named exports for components.
+- Use `type` over `interface` for all frontend TypeScript definitions.
+
+**Data fetching**
+- Use TanStack Query (`useQuery`, `useMutation`) for all server state — do not use `useEffect` + `fetch` directly.
+- Co-locate query keys and fetcher functions in `src/api/` or alongside the feature they belong to.
+- Invalidate related queries after mutations; do not manually update the cache unless necessary for optimistic UI.
+
+**UI components**
+- Build on Radix UI primitives and the existing shadcn/ui component set in `src/components/ui/`.
+- Avoid adding new third-party UI libraries without discussion.
+- Use Tailwind utility classes for all styling; avoid inline `style` props except for dynamic values that cannot be expressed as utilities.
+
+**Animation**
+- Import from `"motion/react"` (not `"framer-motion"` or `"motion-react"`).
+
+**Routing**
+- Use React Router v6 `<Link>` and `useNavigate` — do not use `window.location` for in-app navigation.

@@ -1,0 +1,32 @@
+---
+description: Rules for working in the API service (NestJS backend)
+globs: apps/api/**/*
+alwaysApply: false
+---
+
+### API Service Conventions
+
+**Controllers**
+- Every protected route must use `@RequireAuthentication()`.
+- Routes accessible via user API keys or the official SDK must also use `@ExternalApiAccessible`.
+- Controller method names follow: `getEntityName`, `listEntityName`, `createEntityName`, `updateEntityName`, `deleteEntityName`.
+- List endpoints must support pagination and use `@SdkUsePagination`.
+- Group SDK endpoints with `@SdkGroupName` using `.` as the subresource separator (e.g., `Subscribers.Notifications`).
+
+**Use-cases (CQRS)**
+- Business logic lives in use-case classes, not controllers.
+- Use-cases receive a typed command/query and return a typed result via `execute(command)`.
+- Never put database queries directly in controllers.
+
+**Database**
+- Always go through `libs/dal` repositories — never query MongoDB models directly.
+- All queries must include `_environmentId` or `_organizationId` to enforce tenant isolation.
+
+**OpenAPI**
+- Every endpoint must have `@ApiOperation`, `@ApiResponse`, and `@ApiTags` decorators.
+- Validate with `npm run lint:openapi` (run with API started) before submitting a PR.
+
+**Migrations**
+- Place migration scripts in `apps/api/migrations/<change-description>/<change-action>.ts`.
+- Run via `npm run migration -- ./migrations/<path>.ts`.
+- Never rename existing migration scripts — they are referenced in user-facing docs.

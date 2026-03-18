@@ -1,0 +1,32 @@
+---
+description: Rules for writing and running tests
+globs:
+  - "**/*.spec.ts"
+  - "**/*.test.ts"
+  - "**/e2e/**"
+alwaysApply: false
+---
+
+### Testing Conventions
+
+**General**
+- Match the test style and tooling already used in the same app (Mocha for API/worker, Playwright for dashboard).
+- Shared test utilities and setup helpers live in `libs/testing` — use them instead of rolling custom harnesses.
+- Never mock MongoDB models directly; use the test harness in `libs/testing` which manages real database state.
+
+**API unit tests (`apps/api`)**
+- Run with: `cd apps/api && pnpm test`
+- Use Mocha + `ts-node`. Test files match `src/**/*.spec.ts`.
+- Bootstrap a NestJS testing module for integration-style unit tests rather than mocking the entire DI container.
+
+**API E2E tests**
+- See `.cursor/skills/run-api-e2e-tests/SKILL.md` for the full setup and run instructions.
+
+**Dashboard E2E tests (`apps/dashboard`)**
+- Run with: `cd apps/dashboard && pnpm test:e2e`
+- Uses Playwright. Tests live in `apps/dashboard/tests/` (or `e2e/`).
+- Start the dashboard dev server before running (`pnpm start:dashboard`).
+
+**Worker unit tests (`apps/worker`)**
+- Run with: `cd apps/worker && pnpm test`
+- Mocha + `ts-node`, matches `src/**/**/*.spec.ts`.
