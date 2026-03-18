@@ -10,12 +10,17 @@ const DEFAULT_TOTAL_SHARDS = 1;
 const NOVU_V2_TAG = '#novu-v2';
 const TEST_FILE_PATTERN = /\.e2e(-ee)?\.ts$/;
 const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
+const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
+const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
 
 const MOCHA_ARGS = [
   '--timeout',
   '30000',
   '--retries',
   '3',
+  ...(process.env.CI ? ['--bail'] : []),
+  '--reporter',
+  MOCHA_REPORTER,
   '--grep',
   NOVU_V2_TAG,
   '--require',
@@ -91,6 +96,24 @@ function parseShardConfig() {
   }
 
   return { listOnly, shardIndex, totalShards };
+}
+
+function applyDefaultEnv() {
+  if (!process.env.CI) {
+    return;
+  }
+
+  const defaults = {
+    LOG_LEVEL: 'fatal',
+    NEW_RELIC_ENABLED: 'false',
+    NODE_NO_WARNINGS: '1',
+  };
+
+  for (const [key, value] of Object.entries(defaults)) {
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
 }
 
 function readSource(relativePath) {
@@ -176,6 +199,8 @@ function runMocha(filePaths) {
 }
 
 function run() {
+  applyDefaultEnv();
+
   const { listOnly, shardIndex, totalShards } = parseShardConfig();
   const shard = getShard(collectWeightedFiles(), shardIndex, totalShards);
 

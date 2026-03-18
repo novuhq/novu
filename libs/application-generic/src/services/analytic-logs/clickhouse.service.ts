@@ -27,7 +27,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
 
     if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
       const defaultClient = createClient({
-        host: 'http://localhost:8123',
+        url: 'http://localhost:8123',
         username: 'default',
         password: '',
         database: 'default',
@@ -37,7 +37,9 @@ export class ClickHouseService implements BeforeApplicationShutdown {
         await defaultClient.query({
           query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
         });
-        console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        if (!process.env.CI) {
+          console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        }
       } catch (error) {
         console.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
       }

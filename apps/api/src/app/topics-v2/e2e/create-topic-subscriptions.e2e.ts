@@ -435,7 +435,6 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
         MAX_SUBSCRIPTIONS_PER_SUBSCRIBER
       );
     } catch (error) {
-      console.error(error);
       throw error;
     }
   });
