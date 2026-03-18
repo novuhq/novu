@@ -41,9 +41,6 @@ const TRUSTED_COMPANIES = [
   { name: 'unity', width: 76 },
 ];
 
-const GITHUB_URL = 'https://github.com/novuhq/novu';
-const DOCS_URL = 'https://docs.novu.co';
-
 export function Landing1SignUpPage() {
   const segment = useSegment();
 
@@ -252,35 +249,6 @@ function TrustedBySection() {
             style={{ width }}
           />
         ))}
-      </div>
-    </div>
-  );
-}
-
-function ExploreNovuSection() {
-  return (
-    <div className="flex flex-col items-center gap-5">
-      <p className="text-xl font-medium tracking-[-0.4px] text-white">Explore Novu</p>
-      <div className="flex items-center gap-5">
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-md bg-white px-5 py-[15px] text-[13px] font-medium uppercase leading-none text-black"
-        >
-          Star on Github
-        </a>
-        <a
-          href={DOCS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-md border border-white/20 px-5 py-[15px] text-[13px] font-medium uppercase leading-none text-white"
-          style={{
-            backgroundImage: 'linear-gradient(234deg, rgba(176, 166, 191, 0.06) 8.6%, rgba(176, 166, 191, 0.03) 114%)',
-          }}
-        >
-          Read our docs
-        </a>
       </div>
     </div>
   );
