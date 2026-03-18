@@ -1,9 +1,17 @@
+early_access: true
 reviews:
   high_level_summary: true
   high_level_summary_placeholder: "@coderabbitai summary"
   auto_title_placeholder: "@coderabbitai title"
   poem: false
   request_changes_workflow: false
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  auto_assign_reviewers: false
   auto_title_instructions: |
     Generate the PR title following the Conventional Commits format used in this monorepo.
 
@@ -62,7 +70,7 @@ reviews:
     - Use plain, direct language. No filler words or marketing speak.
     - If the PR touches enterprise code (`/enterprise` or `*/ee/*`), explicitly call that out.
     - If the PR adds or updates npm dependencies, mention the package names and whether they are new or updated.
-    - Keep the entire summary under 250 words.
+    - Keep the entire summary under 300 words.
   auto_review:
     enabled: true
     drafts: false
