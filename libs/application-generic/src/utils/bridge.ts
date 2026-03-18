@@ -90,6 +90,10 @@ export const BRIDGE_EXECUTION_ERROR = {
     code: 'MaximumRedirectsExceeded',
     message: (url: string) => `Maximum redirects exceeded for \`${url}\``,
   },
+  RESPONSE_PARSE_ERROR: {
+    code: 'ResponseParseError',
+    message: (url: string) => `Bridge URL response code is 2xx, but parsing body failed for \`${url}\``,
+  },
   SELF_SIGNED_CERTIFICATE: {
     code: 'SelfSignedCertificate',
     message: (url: string) => `Bridge Endpoint can't use a self signed certificate in production environments.`,

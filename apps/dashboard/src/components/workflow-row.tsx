@@ -22,7 +22,7 @@ import {
   RiTranslate2,
 } from 'react-icons/ri';
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
 import {
@@ -97,15 +97,27 @@ const toastOptions: ExternalToast = {
   },
 };
 
-type WorkflowLinkTableCellProps = ComponentProps<typeof TableCell>;
+type WorkflowLinkTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+  isExternal?: boolean;
+};
 
 const WorkflowLinkTableCell = (props: WorkflowLinkTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, isExternal, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 relative', className)} {...rest}>
+      {to &&
+        (isExternal ? (
+          <a href={to} className="absolute inset-0" tabIndex={-1}>
+            <span className="sr-only">Edit workflow</span>
+          </a>
+        ) : (
+          <Link to={to} className="absolute inset-0" tabIndex={-1}>
+            <span className="sr-only">Edit workflow</span>
+          </Link>
+        ))}
       {children}
-      <span className="sr-only">Edit workflow</span>
     </TableCell>
   );
 };
@@ -116,7 +128,6 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const { isUserLoaded } = useAuth();
   const has = useHasPermission();
-  const navigate = useNavigate();
   const { safeSync, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
@@ -227,20 +238,9 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
     onPauseWorkflow();
   };
 
-  const handleRowClick = () => {
-    if (isV0Workflow && IS_SELF_HOSTED) {
-      return;
-    }
-
-    if (isV0Workflow) {
-      document.location.href = workflowLink;
-    } else {
-      navigate(workflowLink);
-    }
-  };
+  const shouldRenderLink = !(isV0Workflow && IS_SELF_HOSTED);
 
   const stopPropagation = (e: React.MouseEvent) => {
-    // don't propagate the click event to the row
     e.stopPropagation();
   };
 
@@ -253,7 +253,6 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       <TableRow
         key={workflow._id}
         className={cn('group relative isolate cursor-pointer', isV0Workflow && IS_SELF_HOSTED && 'cursor-not-allowed')}
-        onClick={handleRowClick}
       >
         {isV0Workflow && IS_SELF_HOSTED && (
           <Tooltip delayDuration={300}>
@@ -278,7 +277,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </TooltipPortal>
           </Tooltip>
         )}
-        <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
+        <WorkflowLinkTableCell
+          className="flex items-center gap-2 font-medium"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           {workflow.origin === ResourceOriginEnum.EXTERNAL ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
@@ -343,17 +346,25 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             </div>
           </div>
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell className="min-w-[200px]">
+        <WorkflowLinkTableCell
+          className="min-w-[200px]"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           <WorkflowStatus status={workflow.status} steps={workflow.steps || []} />
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell>
+        <WorkflowLinkTableCell to={shouldRenderLink ? workflowLink : undefined} isExternal={isV0Workflow}>
           <WorkflowSteps steps={workflow.stepTypeOverviews} />
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell>
+        <WorkflowLinkTableCell to={shouldRenderLink ? workflowLink : undefined} isExternal={isV0Workflow}>
           <WorkflowTags tags={workflow.tags || []} />
         </WorkflowLinkTableCell>
 
-        <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
+        <WorkflowLinkTableCell
+          className="text-foreground-600 text-sm font-medium"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           {workflow.lastTriggeredAt ? (
             <TimeDisplayHoverCard date={new Date(workflow.lastTriggeredAt)}>
               {formatDateSimple(workflow.lastTriggeredAt)}
@@ -362,7 +373,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             <span className="text-foreground-400 text-sm font-normal">-</span>
           )}
         </WorkflowLinkTableCell>
-        <WorkflowLinkTableCell className="text-foreground-600 text-sm font-medium">
+        <WorkflowLinkTableCell
+          className="text-foreground-600 text-sm font-medium"
+          to={shouldRenderLink ? workflowLink : undefined}
+          isExternal={isV0Workflow}
+        >
           <TimeDisplayHoverCard date={new Date(workflow.updatedAt)}>
             {formatDateSimple(workflow.updatedAt)}
           </TimeDisplayHoverCard>

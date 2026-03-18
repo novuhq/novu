@@ -15,6 +15,12 @@ export class UnseenCountQueryDto {
     default: false,
     type: Boolean,
   })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return value === 'true';
+    if (typeof value === 'boolean') return value;
+
+    return undefined;
+  })
   seen?: boolean;
 
   @ApiProperty({

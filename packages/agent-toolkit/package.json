@@ -1,0 +1,142 @@
+{
+  "name": "@novu/agent-toolkit",
+  "version": "0.1.1",
+  "description": "Novu Agent Toolkit - expose Novu notification workflows as LLM agent tools.",
+  "main": "./dist/cjs/index.cjs",
+  "types": "./dist/cjs/index.d.cts",
+  "module": "./dist/esm/index.js",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novuhq/novu.git"
+  },
+  "files": [
+    "dist",
+    "openai",
+    "langchain",
+    "ai-sdk",
+    "human-in-the-loop",
+    "core",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "NODE_ENV=production tsup",
+    "build:watch": "tsup --watch",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "keywords": [
+    "novu",
+    "agent",
+    "toolkit",
+    "ai",
+    "llm",
+    "notifications",
+    "workflows",
+    "openai",
+    "langchain",
+    "vercel-ai-sdk"
+  ],
+  "author": "Novu Team <engineering@novu.co>",
+  "license": "ISC",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./openai": {
+      "require": {
+        "types": "./dist/cjs/openai/index.d.cts",
+        "default": "./dist/cjs/openai/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/openai/index.d.ts",
+        "default": "./dist/esm/openai/index.js"
+      }
+    },
+    "./langchain": {
+      "require": {
+        "types": "./dist/cjs/langchain/index.d.cts",
+        "default": "./dist/cjs/langchain/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/langchain/index.d.ts",
+        "default": "./dist/esm/langchain/index.js"
+      }
+    },
+    "./ai-sdk": {
+      "require": {
+        "types": "./dist/cjs/ai-sdk/index.d.cts",
+        "default": "./dist/cjs/ai-sdk/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/ai-sdk/index.d.ts",
+        "default": "./dist/esm/ai-sdk/index.js"
+      }
+    },
+    "./human-in-the-loop": {
+      "require": {
+        "types": "./dist/cjs/human-in-the-loop/index.d.cts",
+        "default": "./dist/cjs/human-in-the-loop/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/human-in-the-loop/index.d.ts",
+        "default": "./dist/esm/human-in-the-loop/index.js"
+      }
+    },
+    "./core": {
+      "require": {
+        "types": "./dist/cjs/core/index.d.cts",
+        "default": "./dist/cjs/core/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/core/index.d.ts",
+        "default": "./dist/esm/core/index.js"
+      }
+    }
+  },
+  "peerDependencies": {
+    "openai": ">=4.0.0",
+    "@langchain/core": ">=0.2.0",
+    "ai": ">=6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": true
+    },
+    "@langchain/core": {
+      "optional": true
+    },
+    "ai": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@novu/api": "^3.14.1",
+    "json-schema-to-zod": "^2.7.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@langchain/core": "^0.3.0",
+    "@types/node": "^20.15.0",
+    "ai": "^6.0.0",
+    "openai": "^4.0.0",
+    "tsup": "^8.0.2",
+    "typescript": "5.6.2"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

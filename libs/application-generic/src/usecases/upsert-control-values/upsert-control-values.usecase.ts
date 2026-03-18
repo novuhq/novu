@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum } from '@novu/shared';
+import { type ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
 import { UpsertControlValuesCommand } from './upsert-control-values.command';
 
 @Injectable()

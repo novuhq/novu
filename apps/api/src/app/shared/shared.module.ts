@@ -12,8 +12,11 @@ import {
   DalServiceHealthIndicator,
   DeliveryTrendCountsRepository,
   ExecuteBridgeRequest,
+  ExecuteFrameworkRequest,
+  ExecuteStepResolverRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
+  HttpClientService,
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
@@ -147,7 +150,10 @@ const PROVIDERS = [
   ...DAL_MODELS,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
+  ExecuteFrameworkRequest,
+  ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
+  HttpClientService,
   ...ANALYTICS_PROVIDERS,
 ];
 
@@ -162,6 +168,7 @@ const IMPORTS = [
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
       version: packageJson.version,
+      silent: !!process.env.CI,
     })
   ),
 ];

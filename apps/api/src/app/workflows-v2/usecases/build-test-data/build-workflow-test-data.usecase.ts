@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import {
+  buildVariablesSchema,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  JSONSchemaDto,
+  mockSchemaDefaults,
+  parsePayloadSchema,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -13,13 +19,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum, UserSessionData } from '@novu/shared';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { buildVariablesSchema } from '../../../shared/utils/create-schema';
 import { WorkflowTestDataResponseDto } from '../../dtos';
-import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { mockSchemaDefaults } from '../../util/utils';
 import { WorkflowTestDataCommand } from './build-workflow-test-data.command';
 
 @Injectable()

@@ -1,9 +1,11 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsText, StripeBillingIntervalEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
+import { useAuth } from '@/context/auth/hooks';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
+import { sendGTMEvent } from '../../utils/tracking';
 import { cn } from '../../utils/ui';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { ActivePlanBanner } from './active-plan-banner';
@@ -52,6 +54,7 @@ function getPlansConfig(interval: StripeBillingIntervalEnum): Record<DisplayedPl
 
 export function Plan() {
   const track = useTelemetry();
+  const { currentOrganization } = useAuth();
   const { subscription: data } = useFetchSubscription();
   const [selectedBillingInterval, setSelectedBillingInterval] = useState<'month' | 'year'>(
     data?.billingInterval || 'month'
@@ -67,6 +70,20 @@ export function Plan() {
         billingInterval: selectedBillingInterval,
         plan: data?.apiServiceLevel,
       });
+
+      if (data?.apiServiceLevel && data.apiServiceLevel !== ApiServiceLevelEnum.FREE) {
+        const tierPrice = getFeatureForTierAsText(
+          selectedBillingInterval === 'year'
+            ? FeatureNameEnum.PLATFORM_ANNUAL_COST
+            : FeatureNameEnum.PLATFORM_MONTHLY_COST,
+          data.apiServiceLevel
+        );
+
+        sendGTMEvent('account_upgrade', {
+          value: tierPrice,
+          org_id: currentOrganization?._id,
+        });
+      }
     }
 
     if (checkoutResult === 'canceled') {
@@ -76,7 +93,7 @@ export function Plan() {
         plan: data?.apiServiceLevel,
       });
     }
-  }, [data?.apiServiceLevel, selectedBillingInterval, track]);
+  }, [data?.apiServiceLevel, currentOrganization?._id, selectedBillingInterval, track]);
 
   useEffect(() => {
     track(TelemetryEvent.BILLING_PAGE_VIEWED, {

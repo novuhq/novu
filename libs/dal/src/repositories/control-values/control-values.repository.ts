@@ -1,4 +1,5 @@
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { ClientSession } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
@@ -36,8 +37,13 @@ export class ControlValuesRepository extends BaseRepository<
     this.controlValues = ControlValues;
   }
 
-  async deleteMany(query: DeleteManyValuesQuery) {
-    return await super.delete(query);
+  async deleteMany(
+    query: DeleteManyValuesQuery,
+    options: {
+      session?: ClientSession | null;
+    } = {}
+  ) {
+    return await super.delete(query, options);
   }
 
   async findMany(query: FindControlValuesQuery): Promise<ControlValuesEntity[]> {

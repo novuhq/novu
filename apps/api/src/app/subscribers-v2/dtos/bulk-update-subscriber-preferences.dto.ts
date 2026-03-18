@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsValidContextPayload, parseSlugId } from '@novu/application-generic';
+import { ApiContextPayload, IsValidContextPayload, parseSlugId } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 import { Transform, Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ApiContextPayload } from '../../shared/framework/swagger';
 import { PatchPreferenceChannelsDto } from './patch-subscriber-preferences.dto';
 
 export class BulkUpdateSubscriberPreferenceItemDto {

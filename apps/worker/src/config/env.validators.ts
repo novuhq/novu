@@ -16,6 +16,20 @@ const str32 = makeValidator((variable) => {
   return variable;
 });
 
+function getFeatureFlagValidator(
+  key: FeatureFlagsKeysEnum
+): ValidatorSpec<string | number | boolean | undefined> {
+  if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
+    return num({ default: undefined });
+  }
+
+  if (key.startsWith('IS_')) {
+    return bool({ default: false });
+  }
+
+  return str({ default: undefined });
+}
+
 /**
  * Declare your ENV variables here.
  *
@@ -28,6 +42,9 @@ export const envValidators = {
   PORT: port(),
   STORE_ENCRYPTION_KEY: str32(),
   STORE_NOTIFICATION_CONTENT: bool({ default: false }),
+  ENABLE_OTEL: bool({ default: false }),
+  ENABLE_OTEL_LOGS: bool({ default: false }),
+  OTEL_PROMETHEUS_PORT: num({ default: 9464 }),
   MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({ default: 300 }),
   NOVU_EMAIL_INTEGRATION_API_KEY: str({ default: '' }),
   STORAGE_SERVICE: str({ default: undefined }),
@@ -59,20 +76,25 @@ export const envValidators = {
   NOTIFICATION_RETENTION_DAYS: num({ default: DEFAULT_NOTIFICATION_RETENTION_DAYS }),
   API_ROOT_URL: url(),
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
+  WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
+  WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
+  SUBSCRIBER_PROCESS_WORKER_CONCURRENCY: num({ default: undefined }),
+  STANDARD_WORKER_CONCURRENCY: num({ default: undefined }),
+  WORKFLOW_WORKER_CONCURRENCY: num({ default: undefined }),
+  SQS_DEFAULT_CONCURRENCY: num({ default: undefined }),
+  SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
+  SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),
+  SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
   SOCKET_WORKER_URL: str({ default: undefined }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   SCHEDULER_URL: str({ default: undefined }),
   SCHEDULER_API_KEY: str({ default: undefined }),
+  STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
+  STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   // Feature Flags
-  ...Object.keys(FeatureFlagsKeysEnum).reduce(
-    (acc, key) => {
-      return {
-        ...acc,
-        [key as FeatureFlagsKeysEnum]: bool({ default: false }),
-      };
-    },
-    {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>
-  ),
+  ...(Object.fromEntries(
+    Object.values(FeatureFlagsKeysEnum).map((key) => [key, getFeatureFlagValidator(key)])
+  ) as Record<FeatureFlagsKeysEnum, ValidatorSpec<string | number | boolean | undefined>>),
 
   // Azure validators
   ...(processEnv.STORAGE_SERVICE === 'AZURE' && {

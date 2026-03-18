@@ -61,7 +61,7 @@ export function createMockObjectFromSchema(
             depth + 1
           ),
         ];
-      } else if (definition.default) {
+      } else if (definition.default !== undefined) {
         acc[key] = definition.default;
       } else if (definition.type === 'object' && definition.properties) {
         acc[key] = createMockObjectFromSchema(definition, currentPath, depth + 1);

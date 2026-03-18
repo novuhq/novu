@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { LayoutDtoV0 } from '@novu/application-generic';
 import { OrderByEnum } from '@novu/shared';
-
 import { Transform } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { LayoutDto } from './layout.dto';
 
 export class FilterLayoutsRequestDto {
   @Transform(({ value }) => Number(value))
@@ -42,10 +41,10 @@ export class FilterLayoutsRequestDto {
 
 export class FilterLayoutsResponseDto {
   @ApiProperty({
-    type: LayoutDto,
+    type: LayoutDtoV0,
     isArray: true,
   })
-  data: LayoutDto[];
+  data: LayoutDtoV0[];
 
   @ApiProperty({
     type: Number,

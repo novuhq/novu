@@ -223,7 +223,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
               notifications.{' '}
             </span>
             <Link
-              to="https://docs.novu.co/platform/workflow/contexts"
+              to="https://docs.novu.co/platform/workflow/advanced-features/contexts"
               className="text-xs font-medium text-neutral-600 underline"
               target="_blank"
             >

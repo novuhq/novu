@@ -2446,18 +2446,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
 
       it(`should not create multiple subscribers when multiple triggers are made        
          with the same not created subscribers `, async () => {
-        // Access subscriberRepository and print database indexes
-        console.log('Accessing subscriberRepository indexes...');
-        const subscriberModel = subscriberRepository._model;
-        subscriberModel.collection
-          .getIndexes()
-          .then((indexes) => {
-            console.log('Subscriber Collection Indexes:');
-            console.log(JSON.stringify(indexes, null, 2));
-          })
-          .catch((error) => {
-            console.error('Error fetching indexes:', error);
-          });
         template = await createSimpleWorkflow(session);
         for (let i = 0; i < 3; i += 1) {
           const subscriberId = `not-created-twice-subscriber${i}`;
@@ -3789,21 +3777,222 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(executionDetails?.raw).to.contain('Failed to evaluate rule');
       expect(executionDetails?.raw).to.contain('Unrecognized operation invalidOp');
     });
+
+    it('should skip step when containsAny condition does not match with literal values', async () => {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test ContainsAny Literal',
+        workflowId: 'test-contains-any-literal',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            name: 'Message Name',
+            controlValues: {
+              body: 'Hello!',
+              skip: {
+                containsAny: [{ var: 'payload.tags' }, ['urgent', 'important']],
+              },
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { tags: ['info', 'low'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const skippedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(skippedMessages.length).to.equal(0);
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { tags: ['urgent', 'info'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const executedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(executedMessages.length).to.equal(1);
+    });
+
+    it('should execute step when containsAny matches with var reference to another payload array', async () => {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test ContainsAny Var Ref',
+        workflowId: 'test-contains-any-var-ref',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            name: 'Message Name',
+            controlValues: {
+              body: 'Hello!',
+              skip: {
+                containsAny: [{ var: 'payload.items' }, { var: 'payload.tags' }],
+              },
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { items: ['a', 'b'], tags: ['x', 'y'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const skippedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(skippedMessages.length).to.equal(0);
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { items: ['dima'], tags: ['dima'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const executedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(executedMessages.length).to.equal(1);
+    });
+
+    it('should skip step when doesNotContainAny condition does not match', async () => {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test DoesNotContainAny',
+        workflowId: 'test-does-not-contain-any',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            name: 'Message Name',
+            controlValues: {
+              body: 'Hello!',
+              skip: {
+                doesNotContainAny: [{ var: 'payload.tags' }, ['blocked', 'spam']],
+              },
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { tags: ['info', 'blocked'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const skippedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(skippedMessages.length).to.equal(0);
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { tags: ['info', 'update'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const executedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(executedMessages.length).to.equal(1);
+    });
+
+    it('should execute step when containsAny with var reference to subscriber data', async () => {
+      subscriber = await subscriberService.createSubscriber({
+        firstName: 'John',
+        lastName: 'Doe',
+        data: { tags: ['vip', 'premium'] },
+      });
+
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test ContainsAny Subscriber Data',
+        workflowId: 'test-contains-any-subscriber-data',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            name: 'Message Name',
+            controlValues: {
+              body: 'Hello!',
+              skip: {
+                containsAny: [{ var: 'payload.tags' }, { var: 'subscriber.data.tags' }],
+              },
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { tags: ['basic', 'free'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const skippedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(skippedMessages.length).to.equal(0);
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: { tags: ['vip', 'other'] },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      const executedMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(executedMessages.length).to.equal(1);
+    });
   });
 
   describe('Subscriber Schedule Logic', () => {
-    const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
     const isContextPreferencesEnabled = (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
 
     beforeEach(async () => {
-      // Enable the feature flags for schedule tests
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
     });
 
     afterEach(() => {
-      // Restore the original feature flag states
-      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = isContextPreferencesEnabled;
     });
 

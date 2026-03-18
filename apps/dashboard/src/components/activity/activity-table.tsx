@@ -32,6 +32,7 @@ export interface ActivityTableProps {
   onClearFilters: () => void;
   isLoading?: boolean;
   onTriggerWorkflow?: () => void;
+  onListStateChange?: (hasActivities: boolean) => void;
 }
 
 export function ActivityTable({
@@ -41,6 +42,7 @@ export function ActivityTable({
   hasActiveFilters,
   onClearFilters,
   onTriggerWorkflow,
+  onListStateChange,
 }: ActivityTableProps) {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -75,6 +77,10 @@ export function ActivityTable({
       );
     }
   }, [error]);
+
+  useEffect(() => {
+    onListStateChange?.(!isLoading && activities.length > 0);
+  }, [isLoading, activities.length, onListStateChange]);
 
   function handlePageChange(newPage: number) {
     const newParams = createSearchParams({
@@ -160,7 +166,7 @@ export function ActivityTable({
             containerClassname="bg-transparent w-full flex flex-col overflow-y-auto overflow-x-hidden max-h-full rounded-lg border border-neutral-200 bg-white"
           >
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-bg-weak [&>th]:bg-bg-weak [&>th:last-child]:relative [&>th:last-child]:after:absolute [&>th:last-child]:after:left-full [&>th:last-child]:after:top-0 [&>th:last-child]:after:bottom-0 [&>th:last-child]:after:w-[100vw] [&>th:last-child]:after:bg-bg-weak [&>th:last-child]:after:content-[''] [&>th:last-child]:after:-z-10">
                 <TableHead className="text-text-strong h-8 px-2 py-0">Workflow runs</TableHead>
                 <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
               </TableRow>

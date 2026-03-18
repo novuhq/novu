@@ -31,7 +31,7 @@ const SECURE_CREDENTIALS = [
 
 function FormLabel({ credential, tooltip }: { credential: IConfigCredential; tooltip?: ReactNode }) {
   return (
-    <PrimitiveFormLabel htmlFor={credential.key} optional={!credential.required} tooltip={tooltip}>
+    <PrimitiveFormLabel htmlFor={credential.key} required={credential.required} optional={!credential.required} tooltip={tooltip}>
       {credential.displayName}
     </PrimitiveFormLabel>
   );
@@ -83,6 +83,20 @@ function SwitchInput({
   );
 }
 
+const NULL_DROPDOWN_VALUE = '__null__';
+
+function toSelectValue(value: string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return NULL_DROPDOWN_VALUE;
+
+  return value;
+}
+
+function fromSelectValue(value: string): string {
+  if (value === NULL_DROPDOWN_VALUE) return '';
+
+  return value;
+}
+
 function DropdownInput({
   credential,
   field,
@@ -100,13 +114,17 @@ function DropdownInput({
     <>
       <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
-        <Select value={stringValue} onValueChange={field.onChange} disabled={isReadOnly}>
+        <Select
+          value={toSelectValue(stringValue)}
+          onValueChange={(val) => field.onChange(fromSelectValue(val))}
+          disabled={isReadOnly}
+        >
           <SelectTrigger>
             <SelectValue placeholder={credential.placeholder ?? `Select ${credential.displayName.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
             {credential.dropdown?.map((option) => (
-              <SelectItem key={option.value || ''} value={option.value || ''}>
+              <SelectItem key={toSelectValue(option.value)} value={toSelectValue(option.value)}>
                 {option.name}
               </SelectItem>
             ))}

@@ -60,13 +60,6 @@ export class UpsertPreferences {
   public async upsertSubscriberGlobalPreferences(command: UpsertSubscriberGlobalPreferencesCommand) {
     await this.deleteSubscriberWorkflowChannelPreferences(command);
 
-    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
-    });
-
     return this.upsert({
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
@@ -74,7 +67,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
-      schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
+      schedule: command.schedule,
       contextKeys: command.contextKeys,
     });
   }

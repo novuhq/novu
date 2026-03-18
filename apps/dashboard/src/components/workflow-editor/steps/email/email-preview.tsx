@@ -86,10 +86,11 @@ export const EmailPreviewSubject = (props: EmailPreviewSubjectProps) => {
 type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
   resourceOrigin: ResourceOriginEnum;
+  isStepResolver?: boolean;
 };
 
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
-  const { body, className, resourceOrigin, ...rest } = props;
+  const { body, className, resourceOrigin, isStepResolver, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -160,7 +161,7 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding resourceOrigin={resourceOrigin} />
+      <NovuBranding resourceOrigin={resourceOrigin} isStepResolver={isStepResolver} />
     </div>
   );
 };
@@ -176,10 +177,11 @@ export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps)
 type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
   resourceOrigin: ResourceOriginEnum;
+  isStepResolver?: boolean;
 };
 
 export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
-  const { body, className, resourceOrigin, ...rest } = props;
+  const { body, className, resourceOrigin, isStepResolver, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -252,7 +254,7 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding resourceOrigin={resourceOrigin} />
+      <NovuBranding resourceOrigin={resourceOrigin} isStepResolver={isStepResolver} />
     </div>
   );
 };

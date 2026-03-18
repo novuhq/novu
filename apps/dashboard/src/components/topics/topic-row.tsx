@@ -2,7 +2,7 @@ import { PermissionsEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -24,22 +24,27 @@ import { buildRoute, ROUTES } from '../../utils/routes';
 import { cn } from '../../utils/ui';
 import { showErrorToast } from '../primitives/sonner-helpers';
 import { useDeleteTopic } from './hooks/use-delete-topic';
-import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
 
 type TopicRowProps = {
   topic: Topic;
 };
 
-type TopicTableCellProps = ComponentProps<typeof TableCell>;
+type TopicTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
 
 const TopicTableCell = (props: TopicTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to && (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">Edit topic</span>
+        </Link>
+      )}
       {children}
-      <span className="sr-only">Edit topic</span>
     </TableCell>
   );
 };
@@ -49,7 +54,12 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteTopic, isDeleting } = useDeleteTopic();
   const queryClient = useQueryClient();
-  const { navigateToEditTopicPage } = useTopicsNavigate();
+  const [searchParams] = useSearchParams();
+
+  const topicLink = `${buildRoute(ROUTES.TOPICS_EDIT, {
+    topicKey: topic.key,
+    environmentSlug: currentEnvironment?.slug ?? '',
+  })}?${searchParams.toString()}`;
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -76,16 +86,13 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
     <>
       <TableRow
         className="group relative isolate cursor-pointer"
-        onClick={() => {
-          navigateToEditTopicPage(topic.key);
-        }}
       >
-        <TopicTableCell>
+        <TopicTableCell to={topicLink}>
           <div className="flex items-center">
             <span className="max-w-[300px] truncate font-medium">{topic.name}</span>
           </div>
         </TopicTableCell>
-        <TopicTableCell>
+        <TopicTableCell to={topicLink}>
           <div className="flex items-center gap-1">
             <div className="font-code text-text-soft max-w-[300px] truncate">{topic.key}</div>
             <CopyButton
@@ -95,12 +102,12 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
             />
           </div>
         </TopicTableCell>
-        <TopicTableCell>
+        <TopicTableCell to={topicLink}>
           {topic.createdAt && (
             <TimeDisplayHoverCard date={topic.createdAt}>{formatDateSimple(topic.createdAt)}</TimeDisplayHoverCard>
           )}
         </TopicTableCell>
-        <TopicTableCell>
+        <TopicTableCell to={topicLink}>
           {topic.updatedAt && (
             <TimeDisplayHoverCard date={topic.updatedAt}>{formatDateSimple(topic.updatedAt)}</TimeDisplayHoverCard>
           )}

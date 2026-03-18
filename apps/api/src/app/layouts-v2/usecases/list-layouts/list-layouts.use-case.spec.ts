@@ -2,14 +2,13 @@ import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, DirectionEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import * as mapperModule from '../mapper';
 import { ListLayoutsCommand } from './list-layouts.command';
 import { ListLayoutsUseCase } from './list-layouts.use-case';
 
 describe('ListLayoutsUseCase', () => {
   let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;
   let listLayoutsUseCase: ListLayoutsUseCase;
-  let mapToResponseDtoStub: sinon.SinonStub;
+  let mapSpy: sinon.SinonSpy;
 
   const mockUser = {
     _id: 'user_id',
@@ -66,50 +65,13 @@ describe('ListLayoutsUseCase', () => {
     totalCount: 2,
   };
 
-  const mockLayoutResponseDto = {
-    _id: 'layout_id_1',
-    layoutId: 'layout_identifier_1',
-    name: 'Test Layout 1',
-    isDefault: false,
-    updatedAt: '2023-01-02T00:00:00.000Z',
-    createdAt: '2023-01-01T00:00:00.000Z',
-    origin: ResourceOriginEnum.NOVU_CLOUD,
-    type: ResourceTypeEnum.BRIDGE,
-    variables: {},
-    issues: undefined,
-    controls: {
-      uiSchema: {},
-      values: {},
-    },
-  };
-
-  const mockLayoutResponseDto2 = {
-    _id: 'layout_id_2',
-    layoutId: 'layout_identifier_2',
-    name: 'Test Layout 2',
-    isDefault: true,
-    updatedAt: '2023-01-04T00:00:00.000Z',
-    createdAt: '2023-01-03T00:00:00.000Z',
-    origin: ResourceOriginEnum.NOVU_CLOUD,
-    type: ResourceTypeEnum.BRIDGE,
-    variables: {},
-    issues: undefined,
-    controls: {
-      uiSchema: {},
-      values: {},
-    },
-  };
-
   beforeEach(() => {
     layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
-    mapToResponseDtoStub = sinon.stub(mapperModule, 'mapToResponseDto');
 
     listLayoutsUseCase = new ListLayoutsUseCase(layoutRepositoryMock as any);
+    mapSpy = sinon.spy(listLayoutsUseCase as any, 'mapLayoutToResponseDto');
 
-    // Default mocks
     layoutRepositoryMock.getV2List.resolves(mockRepositoryResponse);
-    mapToResponseDtoStub.onFirstCall().returns(mockLayoutResponseDto);
-    mapToResponseDtoStub.onSecondCall().returns(mockLayoutResponseDto2);
   });
 
   afterEach(() => {
@@ -128,12 +90,15 @@ describe('ListLayoutsUseCase', () => {
 
       const result = await listLayoutsUseCase.execute(command);
 
-      expect(result).to.deep.equal({
-        layouts: [mockLayoutResponseDto, mockLayoutResponseDto2],
-        totalCount: 2,
-      });
+      expect(result.totalCount).to.equal(2);
+      expect(result.layouts).to.have.length(2);
+      expect(result.layouts[0]._id).to.equal('layout_id_1');
+      expect(result.layouts[0].layoutId).to.equal('layout_identifier_1');
+      expect(result.layouts[0].name).to.equal('Test Layout 1');
+      expect(result.layouts[1]._id).to.equal('layout_id_2');
+      expect(result.layouts[1].layoutId).to.equal('layout_identifier_2');
+      expect(result.layouts[1].name).to.equal('Test Layout 2');
 
-      // Verify repository was called with correct parameters
       expect(layoutRepositoryMock.getV2List.calledOnce).to.be.true;
       const repositoryCall = layoutRepositoryMock.getV2List.firstCall.args[0];
       expect(repositoryCall).to.deep.equal({
@@ -268,23 +233,14 @@ describe('ListLayoutsUseCase', () => {
         orderDirection: DirectionEnum.DESC,
       });
 
-      await listLayoutsUseCase.execute(command);
+      const result = await listLayoutsUseCase.execute(command);
 
-      expect(mapToResponseDtoStub.calledTwice).to.be.true;
-
-      // Verify first call
-      const firstCallArgs = mapToResponseDtoStub.firstCall.args[0];
-      expect(firstCallArgs.layout._id).to.equal('layout_id_1');
-      expect(firstCallArgs.layout.identifier).to.equal('layout_identifier_1');
-      expect(firstCallArgs.controlValues).to.be.null;
-      expect(firstCallArgs.variables).to.deep.equal({});
-
-      // Verify second call
-      const secondCallArgs = mapToResponseDtoStub.secondCall.args[0];
-      expect(secondCallArgs.layout._id).to.equal('layout_id_2');
-      expect(secondCallArgs.layout.identifier).to.equal('layout_identifier_2');
-      expect(secondCallArgs.controlValues).to.be.null;
-      expect(secondCallArgs.variables).to.deep.equal({});
+      expect(mapSpy.calledTwice).to.be.true;
+      expect(result.layouts).to.have.length(2);
+      expect(result.layouts[0]._id).to.equal('layout_id_1');
+      expect(result.layouts[0].layoutId).to.equal('layout_identifier_1');
+      expect(result.layouts[1]._id).to.equal('layout_id_2');
+      expect(result.layouts[1].layoutId).to.equal('layout_identifier_2');
     });
 
     it('should handle single layout in result', async () => {
@@ -293,7 +249,6 @@ describe('ListLayoutsUseCase', () => {
         totalCount: 1,
       };
       layoutRepositoryMock.getV2List.resolves(singleLayoutResponse);
-      mapToResponseDtoStub.onFirstCall().returns(mockLayoutResponseDto);
 
       const command = ListLayoutsCommand.create({
         user: mockUser as any,
@@ -305,20 +260,20 @@ describe('ListLayoutsUseCase', () => {
 
       const result = await listLayoutsUseCase.execute(command);
 
-      expect(result).to.deep.equal({
-        layouts: [mockLayoutResponseDto],
-        totalCount: 1,
-      });
-      expect(mapToResponseDtoStub.calledOnce).to.be.true;
+      expect(result.totalCount).to.equal(1);
+      expect(result.layouts).to.have.length(1);
+      expect(result.layouts[0]._id).to.equal('layout_id_1');
+      expect(result.layouts[0].layoutId).to.equal('layout_identifier_1');
+      expect(result.layouts[0].name).to.equal('Test Layout 1');
+      expect(mapSpy.calledOnce).to.be.true;
     });
 
     it('should preserve totalCount from repository response', async () => {
       const responseWithDifferentTotal = {
         data: [mockLayoutEntity],
-        totalCount: 100, // More than actual data length
+        totalCount: 100,
       };
       layoutRepositoryMock.getV2List.resolves(responseWithDifferentTotal);
-      mapToResponseDtoStub.onFirstCall().returns(mockLayoutResponseDto);
 
       const command = ListLayoutsCommand.create({
         user: mockUser as any,
@@ -356,9 +311,9 @@ describe('ListLayoutsUseCase', () => {
 
       await listLayoutsUseCase.execute(command);
 
-      // Verify the mapFromEntity method correctly maps deleted flag
-      const mapperCall = mapToResponseDtoStub.firstCall.args[0];
-      expect(mapperCall.layout.isDeleted).to.be.true;
+      expect(mapSpy.calledOnce).to.be.true;
+      const mappedEntity = mapSpy.firstCall.args[0];
+      expect(mappedEntity.deleted).to.be.true;
     });
 
     it('should handle layouts without controls', async () => {
@@ -381,11 +336,10 @@ describe('ListLayoutsUseCase', () => {
         orderDirection: DirectionEnum.DESC,
       });
 
-      await listLayoutsUseCase.execute(command);
+      const result = await listLayoutsUseCase.execute(command);
 
-      // Verify the mapFromEntity method handles missing controls
-      const mapperCall = mapToResponseDtoStub.firstCall.args[0];
-      expect(mapperCall.layout.controls).to.deep.equal({});
+      expect(result.layouts).to.have.length(1);
+      expect(result.layouts[0].controls.values).to.deep.equal({});
     });
 
     it('should correctly map entity properties to DTO', async () => {
@@ -397,24 +351,18 @@ describe('ListLayoutsUseCase', () => {
         orderDirection: DirectionEnum.DESC,
       });
 
-      await listLayoutsUseCase.execute(command);
+      const result = await listLayoutsUseCase.execute(command);
 
-      const mapperCall = mapToResponseDtoStub.firstCall.args[0];
-      const layoutDto = mapperCall.layout;
+      const layoutDto = result.layouts[0];
 
-      // Verify all entity properties are correctly mapped
       expect(layoutDto._id).to.equal(mockLayoutEntity._id);
-      expect(layoutDto._organizationId).to.equal(mockLayoutEntity._organizationId);
-      expect(layoutDto._environmentId).to.equal(mockLayoutEntity._environmentId);
-      expect(layoutDto.identifier).to.equal(mockLayoutEntity.identifier);
+      expect(layoutDto.layoutId).to.equal(mockLayoutEntity.identifier);
       expect(layoutDto.name).to.equal(mockLayoutEntity.name);
       expect(layoutDto.isDefault).to.equal(mockLayoutEntity.isDefault);
-      expect(layoutDto.channel).to.equal(mockLayoutEntity.channel);
-      expect(layoutDto.content).to.equal(mockLayoutEntity.content);
-      expect(layoutDto.contentType).to.equal(mockLayoutEntity.contentType);
-      expect(layoutDto.isDeleted).to.equal(mockLayoutEntity.deleted);
       expect(layoutDto.origin).to.equal(mockLayoutEntity.origin);
       expect(layoutDto.type).to.equal(mockLayoutEntity.type);
+      expect(layoutDto.updatedAt).to.equal(mockLayoutEntity.updatedAt);
+      expect(layoutDto.createdAt).to.equal(mockLayoutEntity.createdAt);
     });
   });
 });

@@ -83,9 +83,9 @@ export function QuestionnaireForm() {
 
   return (
     <>
-      <div className="w-full max-w-[564px] px-0 pt-[80px]">
+      <div className="w-full max-w-[564px] px-4 pt-10 md:px-0 md:pt-[80px]">
         <div className="flex flex-col items-center gap-8">
-          <div className="flex w-[350px] flex-col gap-1">
+          <div className="flex w-full max-w-[350px] flex-col gap-1">
             <div className="flex w-full items-center gap-1.5">
               <div className="flex flex-1 flex-col gap-1">
                 <StepIndicator step={2} />
@@ -100,7 +100,7 @@ export function QuestionnaireForm() {
           </div>
 
           <Form {...form}>
-            <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex w-[350px] flex-col gap-8">
+            <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex w-full max-w-[350px] flex-col gap-8">
               <div className="flex flex-col gap-7">
                 <div className="flex flex-col gap-[4px]">
                   <label className="text-foreground-600 text-xs font-medium">Job title</label>
@@ -227,7 +227,7 @@ export function QuestionnaireForm() {
         </div>
       </div>
 
-      <div className="w-full max-w-[564px] flex-1">
+      <div className="hidden w-full max-w-[564px] flex-1 md:block">
         <img src="/images/auth/ui-org.svg" alt="create-org-illustration" />
       </div>
     </>

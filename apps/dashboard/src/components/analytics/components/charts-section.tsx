@@ -24,7 +24,7 @@ export function ChartsSection({
   workflowError,
 }: ChartsSectionProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-1.5 lg:grid-rows-1 lg:h-[200px]">
       <DeliveryTrendsChart
         data={charts?.[ReportTypeEnum.DELIVERY_TREND] as ChartDataPoint[]}
         isLoading={isTrendsLoading}

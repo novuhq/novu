@@ -79,6 +79,7 @@ export class ProcessBulkTrigger {
               acknowledged: true,
               status: TriggerEventStatusEnum.ERROR,
               error,
+              transactionId: event.transactionId,
             } as TriggerEventResponseDto;
           }
         })

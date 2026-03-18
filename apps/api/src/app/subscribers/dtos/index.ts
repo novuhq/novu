@@ -1,4 +1,3 @@
-export * from './channelSettingsDto';
 export * from './create-subscriber-request.dto';
 export * from './delete-subscriber-response.dto';
 export * from './get-subscriber-preferences-response.dto';
@@ -6,8 +5,6 @@ export * from './subscriber-feed-response.dto';
 export * from './subscriber-preference.dto';
 export * from './subscriber-preference-override.dto';
 export * from './subscriber-preference-template-response.dto';
-export * from './subscriber-response.dto';
 export * from './subscribers-response.dto';
-export * from './update-subscriber-channel-request.dto';
 export * from './update-subscriber-global-preferences-request.dto';
 export * from './update-subscriber-request.dto';

@@ -18,6 +18,7 @@ export const TEMPLATE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.HTTP_REQUEST,
 ];
 
 export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
@@ -31,6 +32,7 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.THROTTLE]: 'Throttle',
   [StepTypeEnum.TRIGGER]: 'Trigger',
   [StepTypeEnum.CUSTOM]: 'Custom',
+  [StepTypeEnum.HTTP_REQUEST]: 'HTTP Request',
 };
 
 export const DEFAULT_CONTROL_DELAY_AMOUNT = 30;
@@ -49,3 +51,11 @@ export const DEFAULT_CONTROL_THROTTLE_WINDOW = 1;
 export const DEFAULT_CONTROL_THROTTLE_UNIT = TimeUnitEnum.MINUTES;
 export const DEFAULT_CONTROL_THROTTLE_THRESHOLD = 1;
 export const DEFAULT_CONTROL_THROTTLE_KEY = '';
+
+export const DEFAULT_CONTROL_HTTP_REQUEST_METHOD = 'POST';
+export const DEFAULT_CONTROL_HTTP_REQUEST_HEADERS: unknown[] = [];
+export const DEFAULT_CONTROL_HTTP_REQUEST_BODY: unknown[] = [];
+export const DEFAULT_CONTROL_HTTP_REQUEST_RESPONSE_BODY_SCHEMA = { type: 'object', properties: {} };
+export const DEFAULT_CONTROL_HTTP_REQUEST_ENFORCE_SCHEMA_VALIDATION = false;
+export const DEFAULT_CONTROL_HTTP_REQUEST_CONTINUE_ON_FAILURE = false;
+export const DEFAULT_CONTROL_HTTP_REQUEST_TIMEOUT = 5000;

@@ -65,7 +65,7 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.0"
+          node-version: "22.22.1"
           cache: "pnpm"
 
       - name: Upgrade npm for Trusted Publishing
@@ -224,7 +224,7 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.0"
+          node-version: "22.22.1"
           cache: "pnpm"
 
       - name: Upgrade npm for Trusted Publishing

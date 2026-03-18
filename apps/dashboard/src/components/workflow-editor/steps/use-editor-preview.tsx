@@ -132,7 +132,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
       hasInitializedRef.current = true;
       lastServerKeysRef.current = serverKeys;
     }
-  }, [previewData?.previewPayloadExample, parsedEditorPayload]);
+  }, [previewData?.previewPayloadExample]);
 
   return {
     editorValue,

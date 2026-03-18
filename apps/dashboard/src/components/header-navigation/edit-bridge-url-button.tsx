@@ -1,8 +1,9 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { PermissionsEnum } from '@novu/shared';
 import { useLayoutEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiLinkM, RiPencilFill } from 'react-icons/ri';
+import { RiLinkM } from 'react-icons/ri';
 import * as z from 'zod';
 import {
   Form,
@@ -138,7 +139,7 @@ export const EditBridgeUrlButton = () => {
                     <FormItem>
                       <FormLabel required>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} readOnly={isReadOnly} />
+                        <Input leadingIcon={RiLinkM} id={`bridgeUrl-${field.name}`} {...field} readOnly={isReadOnly} />
                       </FormControl>
                       <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>
@@ -147,7 +148,7 @@ export const EditBridgeUrlButton = () => {
               </div>
               <div className="flex items-center justify-between border-t border-neutral-200 px-5 py-3">
                 <a
-                  href="https://docs.novu.co/platform/concepts/endpoint#bridge-endpoint"
+                  href="https://docs.novu.co/framework/endpoint"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs"

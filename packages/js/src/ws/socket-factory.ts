@@ -1,5 +1,6 @@
 import type { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
+import type { NovuSocketOptions, SocketTypeOption } from '../types';
 import { SocketType } from '../types';
 import type { BaseSocketInterface } from './base-socket';
 import { PartySocketClient, PRODUCTION_SOCKET_URL } from './party-socket';
@@ -18,6 +19,11 @@ const URL_TRANSFORMATIONS: Record<string, string> = {
   'https://dev.ws.novu.co': 'wss://socket.novu-staging.co',
 };
 
+const SOCKET_TYPE_OPTION_MAP: Record<SocketTypeOption, SocketType> = {
+  cloud: SocketType.PARTY_SOCKET,
+  'self-hosted': SocketType.SOCKET_IO,
+};
+
 function transformSocketUrl(socketUrl?: string): string {
   if (!socketUrl) return PRODUCTION_SOCKET_URL;
 
@@ -28,6 +34,14 @@ function shouldUsePartySocket(socketUrl?: string): boolean {
   return !socketUrl || PARTY_SOCKET_URLS.includes(socketUrl);
 }
 
+function resolveSocketType(socketUrl?: string, explicitType?: SocketTypeOption): SocketType {
+  if (explicitType) {
+    return SOCKET_TYPE_OPTION_MAP[explicitType];
+  }
+
+  return shouldUsePartySocket(socketUrl) ? SocketType.PARTY_SOCKET : SocketType.SOCKET_IO;
+}
+
 export function createSocket({
   socketUrl,
   socketOptions,
@@ -35,18 +49,19 @@ export function createSocket({
   eventEmitterInstance,
 }: {
   socketUrl?: string;
-  socketOptions?: Record<string, unknown>;
+  socketOptions?: NovuSocketOptions;
   inboxServiceInstance: InboxService;
   eventEmitterInstance: NovuEventEmitter;
 }): BaseSocketInterface {
   const transformedSocketUrl = transformSocketUrl(socketUrl);
-  const socketType = shouldUsePartySocket(transformedSocketUrl) ? SocketType.PARTY_SOCKET : SocketType.SOCKET_IO;
+  const { socketType: explicitSocketType, ...restSocketOptions } = socketOptions || {};
+  const socketType = resolveSocketType(transformedSocketUrl, explicitSocketType);
 
   switch (socketType) {
     case SocketType.PARTY_SOCKET:
       return new PartySocketClient({
         socketUrl: transformedSocketUrl,
-        socketOptions,
+        socketOptions: restSocketOptions,
         inboxServiceInstance,
         eventEmitterInstance,
       });
@@ -54,7 +69,7 @@ export function createSocket({
     default:
       return new Socket({
         socketUrl: transformedSocketUrl,
-        socketOptions,
+        socketOptions: restSocketOptions,
         inboxServiceInstance,
         eventEmitterInstance,
       });

@@ -141,7 +141,7 @@ export abstract class BaseTranslationRendererUsecase {
         errorMessage.includes('No translation found');
 
       if (!isExpectedError) {
-        this.logger.error('Unexpected error during translation context creation', {
+        this.logger.error({
           error: errorMessage,
           resourceId,
           resourceType,
@@ -149,7 +149,7 @@ export abstract class BaseTranslationRendererUsecase {
           environmentId,
           locale,
           stack: error?.stack,
-        });
+        }, 'Unexpected error during translation context creation');
       }
 
       return null;
@@ -174,12 +174,12 @@ export abstract class BaseTranslationRendererUsecase {
 
       return await translate.executeWithContext(context, content, variables);
     } catch (error) {
-      this.logger.error('Translation with context failed', {
+      this.logger.error({
         error: error?.message || error,
         resourceId: context.resourceId,
         locale: context.locale,
         stack: error?.stack,
-      });
+      }, 'Translation with context failed');
 
       throw new InternalServerErrorException(
         `Translation processing failed for resource ${context.resourceId}: ${error?.message || String(error)}`
@@ -209,13 +209,13 @@ export abstract class BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
     if (!resourceId) {
-      this.logger.warn('Resource ID is required for translation module', {
+      this.logger.warn({
         resourceId,
         resourceType,
         organizationId,
         environmentId,
         locale,
-      });
+      }, 'Resource ID is required for translation module');
 
       return content;
     }
@@ -242,7 +242,7 @@ export abstract class BaseTranslationRendererUsecase {
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
     } catch (error) {
-      this.logger.error('Translation processing failed', {
+      this.logger.error({
         error: error?.message || error,
         resourceId,
         resourceType,
@@ -250,7 +250,7 @@ export abstract class BaseTranslationRendererUsecase {
         environmentId,
         locale,
         stack: error?.stack,
-      });
+      }, 'Translation processing failed');
 
       throw new InternalServerErrorException(
         `Translation processing failed for resource ${resourceId}: ${error?.message || String(error)}`
@@ -267,10 +267,10 @@ export abstract class BaseTranslationRendererUsecase {
 
       return this.moduleRef.get(translationModule, { strict: false });
     } catch (error) {
-      this.logger.error('Translation module loading failed', {
+      this.logger.error({
         error: error?.message || error,
         stack: error?.stack,
-      });
+      }, 'Translation module loading failed');
 
       throw new InternalServerErrorException(`Unable to load Translation module: ${error?.message || String(error)}`);
     }

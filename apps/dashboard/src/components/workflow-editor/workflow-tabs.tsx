@@ -1,36 +1,56 @@
-import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
+import {
+  AiAgentTypeEnum,
+  AiResourceTypeEnum,
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  ResourceOriginEnum,
+} from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
-import { Link, useMatch, useNavigate } from 'react-router-dom';
+import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
+import { SidekickToast } from '../ai-sidekick/sidekick-toast';
+import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
 import { Button } from '../primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '../primitives/button-group';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { ToastClose, ToastIcon } from '../primitives/sonner';
-import { showErrorToast, showToast } from '../primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { ResizableLayout } from './steps/layout/resizable-layout';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
+import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
 
 export const WorkflowTabs = () => {
-  const { workflow, isPending: isWorkflowPending } = useWorkflow();
+  const { workflow, isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
+  const [isTriggerDrawerOpen, setIsTriggerDrawerOpen] = useState(false);
+  const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
+  const { testData } = useFetchWorkflowTestData({ workflowSlug });
+  const isNewWorkflowSlug = workflowSlug === 'new';
 
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
@@ -39,6 +59,7 @@ export const WorkflowTabs = () => {
   const userFirstName = currentUser?.firstName;
   const userLastName = currentUser?.lastName;
   const userEmail = currentUser?.email;
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   // API key management
   const has = useHasPermission();
@@ -46,9 +67,10 @@ export const WorkflowTabs = () => {
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
   const isReadOnly =
+    isNewWorkflowSlug ||
     workflow?.origin === ResourceOriginEnum.EXTERNAL ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
-    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+    !isDevEnvironment;
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
@@ -294,7 +316,55 @@ export const WorkflowTabs = () => {
   // Determine current tab based on URL
   const currentTab = activityMatch ? 'activity' : 'workflow';
 
-  return (
+  const { deleteWorkflow, isPending: isDeletePending } = useDeleteWorkflow();
+
+  const aiChatConfig = useMemo(
+    () => ({
+      resourceType: AiResourceTypeEnum.WORKFLOW,
+      resourceId: workflow?._id,
+      agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
+      isResourceLoading: isWorkflowPending,
+      onRefetchResource: () => refetchWorkflow({ cancelRefetch: true }),
+      onData: (data: { type: string }) => {
+        if (
+          data.type === 'data-step-added' ||
+          data.type === 'data-workflow-completed' ||
+          data.type === 'data-step-updated' ||
+          data.type === 'data-step-removed' ||
+          data.type === 'data-step-moved' ||
+          data.type === 'data-workflow-metadata-updated'
+        ) {
+          refetchWorkflow({ cancelRefetch: true });
+        }
+      },
+      onKeepSuccess: () => showSuccessToast('Changes are successfully applied'),
+      onKeepError: () => showErrorToast('Failed to apply changes'),
+      firstMessageRevert: workflow
+        ? {
+            renderDialog: (props: {
+              open: boolean;
+              onOpenChange: (open: boolean) => void;
+              onConfirm: () => Promise<void>;
+            }) => (
+              <DeleteWorkflowDialog
+                workflow={workflow}
+                open={props.open}
+                onOpenChange={props.onOpenChange}
+                onConfirm={props.onConfirm}
+                isLoading={isDeletePending}
+              />
+            ),
+            onConfirm: async () => {
+              await deleteWorkflow({ workflowSlug: workflow.slug });
+              navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' }));
+            },
+          }
+        : undefined,
+    }),
+    [workflow, isWorkflowPending, refetchWorkflow, deleteWorkflow, isDeletePending, navigate, currentEnvironment?.slug]
+  );
+
+  const content = (
     <div className="flex h-full w-full flex-1 flex-nowrap">
       <Tabs defaultValue="workflow" className="-mt-px flex h-full max-w-full flex-1 flex-col" value={currentTab}>
         <TabsList variant="regular" className="items-center">
@@ -356,14 +426,7 @@ export const WorkflowTabs = () => {
                     size="xs"
                     mode="gradient"
                     className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
-                    onClick={() => {
-                      navigate(
-                        buildRoute(ROUTES.TRIGGER_WORKFLOW, {
-                          environmentSlug: currentEnvironment?.slug ?? '',
-                          workflowSlug: workflow?.slug ?? '',
-                        })
-                      );
-                    }}
+                    onClick={() => setIsTriggerDrawerOpen(true)}
                   >
                     Test Workflow
                   </Button>
@@ -399,8 +462,25 @@ export const WorkflowTabs = () => {
             </Protect>
           </div>
         </TabsList>
-        <TabsContent value="workflow" className="mt-0 h-full max-w-full">
-          {workflow && <WorkflowCanvas steps={workflow.steps || []} isReadOnly={isReadOnly} />}
+        <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
+          {isAiWorkflowGenerationEnabled && isDevEnvironment ? (
+            <ResizableLayout autoSaveId="workflow-editor-ai-sidekick-layout" className="flex-1 min-w-0">
+              <ResizableLayout.ContextPanel defaultSize={26} minSize={20} maxSize={80}>
+                <NovuCopilotPanel />
+              </ResizableLayout.ContextPanel>
+              <ResizableLayout.Handle />
+              <ResizableLayout.MainContentPanel>
+                <div className="relative flex-1">
+                  <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+                  <WorkflowCanvasToast />
+                </div>
+              </ResizableLayout.MainContentPanel>
+            </ResizableLayout>
+          ) : (
+            <div className="relative flex-1">
+              <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />
@@ -414,6 +494,39 @@ export const WorkflowTabs = () => {
         to={subscriberData}
         payload={JSON.stringify(integrationPayload, null, 2)}
       />
+      <TestWorkflowDrawer
+        isOpen={isTriggerDrawerOpen}
+        onOpenChange={setIsTriggerDrawerOpen}
+        testData={testData}
+      />
     </div>
   );
+
+  return isAiWorkflowGenerationEnabled ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
 };
+
+function WorkflowCanvasToast() {
+  const {
+    isGenerating,
+    isReviewingChanges,
+    isActionPending,
+    lastUserMessageId,
+    handleStop,
+    handleKeepAll,
+    handleDiscard,
+  } = useAiChat();
+
+  const isVisible = isGenerating || isReviewingChanges;
+  const variant = isGenerating ? 'generating' : 'reviewing';
+
+  return (
+    <SidekickToast
+      isVisible={isVisible}
+      variant={variant}
+      isActionPending={isActionPending}
+      onCancel={handleStop}
+      onKeepAll={handleKeepAll}
+      onDiscard={() => lastUserMessageId && handleDiscard(lastUserMessageId)}
+    />
+  );
+}

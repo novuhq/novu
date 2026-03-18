@@ -1,5 +1,5 @@
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsValidContextPayload } from '@novu/application-generic';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import {
   ContextPayload,
   ProvidersIdEnum,
@@ -20,7 +20,6 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { ApiContextPayload } from '../../shared/framework/swagger';
 import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';

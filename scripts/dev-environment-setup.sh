@@ -266,16 +266,18 @@ check_nvm () {
 }
 
 install_node () {
-    NODE_JS_VERSION="v20.19.0"
+    NODE_JS_VERSION="v22.22.1"
+    REQUIRED_NODE_MAJOR="22"
 
     SKIP="$(check_nvm)"
 
     if [[ -z "$SKIP" ]]; then
         TEST_CMD=$(execute_command_without_error_print "node --version")
-        if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == "zsh: command not found: node" ]]; then
+        if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == "zsh: command not found: node" ]] || [[ "$TEST_CMD" != v${REQUIRED_NODE_MAJOR}.* ]]; then
             installing_dependency "Node.js $NODE_JS_VERSION"
 
             nvm install $NODE_JS_VERSION
+            nvm alias default $NODE_JS_VERSION
 	    TEST_NODE_CMD=$(execute_command_without_error_print "node --version")
 
             if [[ -z "$TEST_NODE_CMD" ]] || [[ "$TEST_NODE_CMD" == "zsh: command not found: node" ]]; then
