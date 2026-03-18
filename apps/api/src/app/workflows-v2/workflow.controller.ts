@@ -283,6 +283,7 @@ export class WorkflowController {
   }
 
   @Post('/:workflowId/step/:stepId/preview')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Generate step preview',
     description: 'Generates a preview for a specific workflow step by its unique identifier **stepId**',

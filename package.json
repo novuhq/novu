@@ -239,7 +239,10 @@
       "undici@>=5.0.0 <5.29.0": "^5.29.0",
       "markdown-it@>=13.0.0 <14.1.1": "^14.1.1",
       "mdast-util-to-hast@>=13.0.0 <13.2.1": "^13.2.1",
-      "webpack@>=5.49.0 <5.104.1": "^5.104.1"
+      "webpack@>=5.49.0 <5.104.1": "^5.104.1",
+      "micromatch@>=4.0.0 <4.0.8": "^4.0.8",
+      "brace-expansion@>=1.0.0 <1.1.12": "^1.1.12",
+      "brace-expansion@>=2.0.0 <2.0.2": "^2.0.2"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
