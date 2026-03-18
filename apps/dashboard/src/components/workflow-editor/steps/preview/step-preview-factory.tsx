@@ -6,6 +6,7 @@ import { useStepEditor } from '@/components/workflow-editor/steps/context/step-e
 import { HttpRequestConsolePreview } from '@/components/workflow-editor/steps/http-request/http-request-console-preview';
 import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
+import { StepResolverEmptyPreview } from '@/components/workflow-editor/steps/shared/step-resolver-empty-preview';
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
@@ -29,7 +30,11 @@ const MobilePreviewWrapper = memo(({ children, description }: { children: React.
 });
 
 export function StepPreviewFactory() {
-  const { step, previewData, isInitialLoad, controlValues } = useStepEditor();
+  const { step, previewData, isInitialLoad, controlValues, isPendingResolverActivation } = useStepEditor();
+
+  if (isPendingResolverActivation && !step.stepResolverHash) {
+    return <StepResolverEmptyPreview />;
+  }
 
   const commonProps = {
     previewData: previewData ?? undefined,
