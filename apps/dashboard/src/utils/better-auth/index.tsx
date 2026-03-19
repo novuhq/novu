@@ -394,7 +394,12 @@ export function OrganizationList(props?: {
   afterSelectOrganizationUrl?: string;
   afterCreateOrganizationUrl?: string;
 }) {
-  return <OrganizationCreateComponent />;
+  return (
+    <OrganizationCreateComponent
+      afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl || ROUTES.ENV}
+      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.INBOX_USECASE}
+    />
+  );
 }
 
 export function OrganizationProfile({ appearance, children }: { appearance?: any; children?: React.ReactNode }) {

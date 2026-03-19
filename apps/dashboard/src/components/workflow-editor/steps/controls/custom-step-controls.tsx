@@ -3,6 +3,7 @@ import { RJSFSchema } from '@rjsf/utils';
 import isEqual from 'lodash.isequal';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -33,6 +34,8 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const [isRestoreDefaultModalOpen, setIsRestoreDefaultModalOpen] = useState(false);
   const { step, workflow, update } = useWorkflow();
   const { saveForm } = useSaveForm();
+  const { control, reset } = useFormContext();
+  const watchedValues = useWatch({ control });
 
   const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
   const dbValues = step?.controls.values ?? {};
@@ -114,6 +117,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
           if (!workflow || !step) return;
 
           update(updateStepInWorkflow(workflow, step.stepId, { controlValues: null }));
+          reset(dataSchemaDefaults, { keepErrors: true });
           setIsRestoreDefaultModalOpen(false);
           setIsOverridden(false);
         }}
@@ -168,7 +172,12 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
                 !isOverridden && 'opacity-60 pointer-events-none'
               )}
             >
-              <JsonForm schema={(dataSchema as RJSFSchema) || {}} disabled={!isOverridden} />
+              <JsonForm
+                key={String(isOverridden)}
+                schema={(dataSchema as RJSFSchema) || {}}
+                formData={isOverridden ? watchedValues : dataSchemaDefaults}
+                disabled={!isOverridden}
+              />
             </div>
           </AccordionContent>
         </AccordionItem>

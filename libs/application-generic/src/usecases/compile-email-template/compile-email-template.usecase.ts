@@ -91,6 +91,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
     if (isEditorMode) {
       for (const block of content as IEmailBlock[]) {
+        if (typeof block !== 'object' || block === null) continue;
         block.content = await this.renderContent(block.content, payload, i18nInstance);
         block.url = await this.renderContent(block.url || '', payload, i18nInstance);
       }

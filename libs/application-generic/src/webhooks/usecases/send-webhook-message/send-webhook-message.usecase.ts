@@ -1,9 +1,7 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../../instrumentation';
-import { FeatureFlagsService } from '../../../services/feature-flags';
 import { generateObjectId } from '../../../utils';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
 import { SvixClient } from '../../services';
@@ -14,27 +12,13 @@ export class SendWebhookMessage {
   constructor(
     @Optional() @Inject('SVIX_CLIENT') private readonly svix: SvixClient | undefined,
     private logger: PinoLogger,
-    private environmentRepository: EnvironmentRepository,
-    private featureFlagsService: FeatureFlagsService
+    private environmentRepository: EnvironmentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   async execute(command: SendWebhookMessageCommand): Promise<{ eventId: string } | undefined> {
-    const isOutboundWebhooksEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_OUTBOUND_WEBHOOKS_ENABLED,
-      defaultValue: true,
-      environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
-    });
-
-    if (!isOutboundWebhooksEnabled) {
-      this.logger.debug('Outbound webhooks are disabled via feature flag.');
-
-      return;
-    }
-
     if (!this.svix) {
       this.logger.debug('Svix client not available – webhooks are disabled for this instance.');
 

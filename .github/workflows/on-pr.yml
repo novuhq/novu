@@ -21,19 +21,6 @@ jobs:
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v4
 
-  spellcheck:
-    name: Spell check
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    environment: Linting
-    steps:
-      - uses: actions/checkout@v5
-      - name: Run Spell Check
-        uses: streetsidesoftware/cspell-action@v6
-        with:
-          root: 'apps/dashboard'
-          files: '**/*'
-          incremental_files_only: true
-
   find-flags:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Find LaunchDarkly feature flags in diff

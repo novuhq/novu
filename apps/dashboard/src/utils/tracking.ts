@@ -1,3 +1,10 @@
+export function sendGTMEvent(event: string, data?: Record<string, unknown>) {
+  const dataLayer = (window as { dataLayer?: Record<string, unknown>[] }).dataLayer;
+  if (!dataLayer) return;
+
+  dataLayer.push({ event, ...data });
+}
+
 export function getUtmParams(): Record<string, string> {
   const searchParams = new URLSearchParams(window.location.search);
   const utmParams: Record<string, string> = {};

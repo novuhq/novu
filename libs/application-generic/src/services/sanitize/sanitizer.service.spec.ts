@@ -111,6 +111,23 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitizeHTML(null as any)).to.equal(null);
       expect(sanitizeHTML(undefined as any)).to.equal(undefined);
     });
+
+    it('should prevent XSS via malformed style closing tag </style/>', () => {
+      const maliciousHtml = '<style></style/><img src onerror=alert(origin)></style>';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('onerror');
+      expect(sanitized).to.not.include('alert');
+    });
+
+    it('should preserve legitimate style tags', () => {
+      const safeHtml = '<style>body { color: red; }</style>';
+      const sanitized = sanitizeHTML(safeHtml);
+
+      expect(sanitized).to.include('<style>');
+      expect(sanitized).to.include('body { color: red; }');
+      expect(sanitized).to.include('</style>');
+    });
   });
 
   describe('sanitizeHtmlInObject', () => {

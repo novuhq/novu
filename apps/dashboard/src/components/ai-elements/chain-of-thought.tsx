@@ -83,7 +83,7 @@ export type ChainOfThoughtStepProps = ComponentProps<'div'> & {
   icon?: IconType | LucideIcon;
   label?: ReactNode;
   description?: ReactNode;
-  status?: 'complete' | 'active' | 'pending';
+  status?: 'complete' | 'active' | 'pending' | 'error';
   collapsible?: boolean;
   defaultOpen?: boolean;
   autoCollapse?: boolean;
@@ -105,7 +105,7 @@ export const ChainOfThoughtStep = memo(
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     useEffect(() => {
-      if (autoCollapse && status === 'complete') {
+      if (autoCollapse && (status === 'complete' || status === 'error')) {
         setIsOpen(false);
       }
     }, [autoCollapse, status]);
@@ -114,6 +114,7 @@ export const ChainOfThoughtStep = memo(
       complete: 'text-muted-foreground',
       active: 'text-foreground',
       pending: 'text-muted-foreground/50',
+      error: 'text-muted-foreground',
     };
 
     return (

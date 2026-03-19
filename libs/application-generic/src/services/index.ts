@@ -21,6 +21,7 @@ export * from './control-value-sanitizer.service';
 export * from './cron';
 export * from './feature-flags';
 export * from './helper-service';
+export * from './http-client';
 export * from './in-memory-lru-cache';
 export * from './in-memory-provider';
 export {

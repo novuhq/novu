@@ -8,7 +8,7 @@ import { capitalize } from '@/utils/string';
 import { getFieldName } from './template-utils';
 
 export function SelectWidget(props: WidgetProps) {
-  const { label, required, readonly, options, disabled, id } = props;
+  const { label, required, readonly, options, disabled, id, value: rjsfValue } = props;
 
   const data = useMemo(
     () =>
@@ -29,6 +29,7 @@ export function SelectWidget(props: WidgetProps) {
     <FormField
       control={control}
       name={extractedName}
+      defaultValue={rjsfValue}
       render={({ field }) => (
         <FormItem className="py-1">
           <FormLabel>{capitalize(label)}</FormLabel>

@@ -7,13 +7,11 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
       required: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
       required: true,
     },
     _subscriberId: {
@@ -30,7 +28,6 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
     },
     topicKey: {
       type: Schema.Types.String,
-      index: true,
       required: true,
     },
     externalSubscriberId: Schema.Types.String,

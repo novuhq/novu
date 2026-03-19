@@ -34,7 +34,14 @@ import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.m
 import { SharedModule } from '../shared/shared.module';
 import { StepResolversModule } from '../step-resolvers/step-resolvers.module';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
-import { BuildWorkflowTestDataUseCase, ListWorkflowsUseCase, SyncToEnvironmentUseCase } from './usecases';
+
+import {
+  BuildWorkflowTestDataUseCase,
+  ListWorkflowsUseCase,
+  SyncToEnvironmentUseCase,
+  TestHttpEndpointUsecase,
+} from './usecases';
+
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
 import { WorkflowController } from './workflow.controller';
@@ -86,6 +93,7 @@ const MODULES = [
     PreviewPayloadProcessorService,
     MockDataGeneratorService,
     PreviewErrorHandler,
+    TestHttpEndpointUsecase,
   ],
   exports: [UpsertWorkflowUseCase, SyncToEnvironmentUseCase, GetWorkflowUseCase, DeleteWorkflowUseCase],
 })

@@ -509,7 +509,7 @@ export class AddJob {
 
     if (tierValidationErrors && tierValidationErrors.length > 0) {
       const errorMessage = tierValidationErrors[0].message;
-      this.logger.error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
+      this.logger.debug(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -535,7 +535,7 @@ export class AddJob {
     detail: DetailEnum
   ): Promise<AddJobResult> {
     const stepTypeName = stepType.toLowerCase();
-    this.logger.error(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
+    this.logger.debug(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -1146,10 +1146,24 @@ export class AddJob {
   }
 }
 
-function isJobDeferredType(jobType: StepTypeEnum | undefined) {
+const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
+  [StepTypeEnum.DELAY]: true,
+  [StepTypeEnum.DIGEST]: true,
+  [StepTypeEnum.THROTTLE]: true,
+  [StepTypeEnum.TRIGGER]: false,
+  [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.HTTP_REQUEST]: false,
+  [StepTypeEnum.IN_APP]: false,
+  [StepTypeEnum.EMAIL]: false,
+  [StepTypeEnum.SMS]: false,
+  [StepTypeEnum.CHAT]: false,
+  [StepTypeEnum.PUSH]: false,
+};
+
+function isJobDeferredType(jobType: StepTypeEnum | undefined): boolean {
   if (!jobType) return false;
 
-  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE].includes(jobType);
+  return DEFERRED_JOB_TYPE_MAP[jobType];
 }
 
 function isShouldHaltJobExecution(digestCreationResult: DigestCreationResultEnum) {

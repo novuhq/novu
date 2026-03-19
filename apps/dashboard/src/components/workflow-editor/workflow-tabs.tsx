@@ -16,6 +16,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
@@ -33,6 +34,7 @@ import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonne
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import { ResizableLayout } from './steps/layout/resizable-layout';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
+import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
@@ -45,7 +47,9 @@ export const WorkflowTabs = () => {
   const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
+  const [isTriggerDrawerOpen, setIsTriggerDrawerOpen] = useState(false);
   const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
+  const { testData } = useFetchWorkflowTestData({ workflowSlug });
   const isNewWorkflowSlug = workflowSlug === 'new';
 
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
@@ -422,14 +426,7 @@ export const WorkflowTabs = () => {
                     size="xs"
                     mode="gradient"
                     className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
-                    onClick={() => {
-                      navigate(
-                        buildRoute(ROUTES.TRIGGER_WORKFLOW, {
-                          environmentSlug: currentEnvironment?.slug ?? '',
-                          workflowSlug: workflow?.slug ?? '',
-                        })
-                      );
-                    }}
+                    onClick={() => setIsTriggerDrawerOpen(true)}
                   >
                     Test Workflow
                   </Button>
@@ -496,6 +493,11 @@ export const WorkflowTabs = () => {
         workflow={workflow}
         to={subscriberData}
         payload={JSON.stringify(integrationPayload, null, 2)}
+      />
+      <TestWorkflowDrawer
+        isOpen={isTriggerDrawerOpen}
+        onOpenChange={setIsTriggerDrawerOpen}
+        testData={testData}
       />
     </div>
   );

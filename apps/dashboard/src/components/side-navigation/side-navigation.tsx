@@ -144,12 +144,7 @@ export const SideNavigation = () => {
                 }
               >
                 <RiTranslate2 className="size-4" />
-                <span>
-                  Translations{' '}
-                  <Badge variant="lighter" className="text-xs">
-                    BETA
-                  </Badge>
-                </span>
+                <span>Translations</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Data">

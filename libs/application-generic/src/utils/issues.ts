@@ -21,7 +21,9 @@ const getErrorPath = (error: ErrorObject): string => {
 
 const isUrlFieldError = (errorPath: string | undefined, instancePath: string): boolean => {
   return (
-    (errorPath && (errorPath.endsWith('.url') || errorPath === 'avatar' || errorPath === 'redirect')) ||
+    (errorPath &&
+      (errorPath === 'url' || errorPath.endsWith('.url') || errorPath === 'avatar' || errorPath === 'redirect')) ||
+    instancePath === '/url' ||
     instancePath.includes('/url') ||
     instancePath === '/avatar' ||
     instancePath === '/redirect'
@@ -55,6 +57,10 @@ const mapAjvErrorToMessage = (
 
   // Handle URL validation errors (anyOf from Zod union, or pattern errors)
   if (isUrlField && (error.keyword === 'anyOf' || error.keyword === 'pattern')) {
+    if (stepType === StepTypeEnum.HTTP_REQUEST) {
+      return `Invalid URL. Must be a valid absolute URL (https://...) or {{variable}}`;
+    }
+
     return `Invalid URL. Must be a valid full URL, path starting with /, or {{variable}}`;
   }
 

@@ -94,7 +94,7 @@ export class PreferencesDto {
 }
 
 // Optional: Runtime deprecation warning
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && !process.env.CI) {
   console.warn(
     'DEPRECATION WARNING: PreferencesDto and related classes are deprecated ' +
       'and will be removed in future versions. Please migrate to the new preferences structure.'

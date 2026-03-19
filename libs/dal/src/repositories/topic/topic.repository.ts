@@ -216,11 +216,11 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
     };
 
     if (key) {
-      query.key = { $regex: key, $options: 'i' };
+      query.key = { $regex: this.regExpEscape(key), $options: 'i' };
     }
 
     if (name) {
-      query.name = { $regex: name, $options: 'i' };
+      query.name = { $regex: this.regExpEscape(name), $options: 'i' };
     }
 
     const pagination = await this.findWithCursorBasedPagination({

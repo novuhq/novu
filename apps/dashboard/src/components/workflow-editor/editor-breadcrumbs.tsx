@@ -1,10 +1,11 @@
 import { ResourceOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import React from 'react';
 import { FaCode } from 'react-icons/fa6';
-import { RiArrowLeftSLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { RouteFill } from '@/components/icons';
+import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Badge } from '@/components/primitives/badge';
 import {
   Breadcrumb,
@@ -15,14 +16,34 @@ import {
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
 import { CompactButton } from '@/components/primitives/button-compact';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
-import { STEP_TYPE_LABELS } from '@/utils/constants';
+import type { ProviderColorToken } from '@/utils/color';
+import { STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 import { SavingStatusIndicator } from './saving-status-indicator';
-import { getStepTypeIcon } from './steps/utils/preview-context.utils';
 import { useWorkflow } from './workflow-provider';
+
+const COLOR_TOKEN_TO_TEXT: Record<ProviderColorToken, string> = {
+  neutral: 'text-neutral-400',
+  stable: 'text-stable/30',
+  information: 'text-information/30',
+  feature: 'text-feature/30',
+  destructive: 'text-destructive/30',
+  verified: 'text-verified/30',
+  alert: 'text-alert/30',
+  highlighted: 'text-highlighted/30',
+  warning: 'text-warning/30',
+};
 
 type BreadcrumbData = {
   label: string;
@@ -144,16 +165,71 @@ function WorkflowBreadcrumbContent({
 }
 
 function StepBreadcrumb({ step }: { step: StepResponseDto }) {
-  const Icon = getStepTypeIcon(step.type);
-  const { isUpdatePatchPending, lastSaveError } = useWorkflow();
+  const Icon = STEP_TYPE_TO_ICON[step.type];
+  const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
+  const steps = workflow?.steps ?? [];
+  const hasMultipleSteps = steps.length > 1;
+
+  function handleStepSwitch(targetStep: StepResponseDto) {
+    if (!workflow || !currentEnvironment?.slug) return;
+    if (targetStep.slug === step.slug) return;
+
+    const basePath =
+      buildRoute(ROUTES.EDIT_WORKFLOW, {
+        environmentSlug: currentEnvironment.slug,
+        workflowSlug,
+      }) + `/steps/${targetStep.slug}`;
+
+    const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(targetStep.type);
+    const finalPath = isTemplateConfigurable ? `${basePath}/editor` : basePath;
+
+    navigate(finalPath);
+  }
 
   return (
     <BreadcrumbItem>
       <BreadcrumbPage className="flex items-center gap-1">
-        <Icon className="size-3.5" />
-        <div className="flex max-w-[32ch]">
-          <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
-        </div>
+        {hasMultipleSteps ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 rounded-md border border-transparent px-1 py-[1px] hover:border-neutral-alpha-200 hover:bg-neutral-50">
+              <Icon className="text-foreground-950 size-3" />
+              <span className="text-foreground-950 max-w-[32ch] truncate text-sm font-medium">
+                {step.name || STEP_TYPE_LABELS[step.type]}
+              </span>
+              <RiExpandUpDownLine className="text-foreground-400 size-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[144px]">
+              {steps.map((s) => {
+                const StepIcon = STEP_TYPE_TO_ICON[s.type];
+                const isCurrentStep = s.slug === step.slug;
+
+                return (
+                  <DropdownMenuItem
+                    key={s._id}
+                    onSelect={() => handleStepSwitch(s)}
+                    className={cn(
+                      'flex cursor-pointer items-center gap-1 px-1 py-1 text-xs',
+                      isCurrentStep && 'bg-neutral-alpha-50'
+                    )}
+                  >
+                    <StepIcon className={cn('size-4 shrink-0', COLOR_TOKEN_TO_TEXT[STEP_TYPE_TO_COLOR[s.type]])} />
+                    <span className="truncate">{s.name || STEP_TYPE_LABELS[s.type]}</span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <>
+            <Icon className="text-foreground-950 size-4" />
+            <div className="flex max-w-[32ch]">
+              <TruncatedText>{step.name || STEP_TYPE_LABELS[step.type]}</TruncatedText>
+            </div>
+          </>
+        )}
         <SavingStatusIndicator isSaving={isUpdatePatchPending} hasError={!!lastSaveError} />
       </BreadcrumbPage>
     </BreadcrumbItem>

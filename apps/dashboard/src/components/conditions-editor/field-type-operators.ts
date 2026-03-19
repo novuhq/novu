@@ -71,6 +71,8 @@ export const FIELD_TYPE_OPERATORS: Record<FieldDataType, Operator[]> = {
   array: [
     { name: 'contains', label: 'contains' },
     { name: 'doesNotContain', label: 'does not contain' },
+    { name: 'containsAny', label: 'contains any of' },
+    { name: 'doesNotContainAny', label: 'does not contain any of' },
     { name: 'null', label: 'is null' },
     { name: 'notNull', label: 'is not null' },
   ],

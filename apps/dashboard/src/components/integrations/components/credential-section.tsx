@@ -31,7 +31,7 @@ const SECURE_CREDENTIALS = [
 
 function FormLabel({ credential, tooltip }: { credential: IConfigCredential; tooltip?: ReactNode }) {
   return (
-    <PrimitiveFormLabel htmlFor={credential.key} optional={!credential.required} tooltip={tooltip}>
+    <PrimitiveFormLabel htmlFor={credential.key} required={credential.required} optional={!credential.required} tooltip={tooltip}>
       {credential.displayName}
     </PrimitiveFormLabel>
   );

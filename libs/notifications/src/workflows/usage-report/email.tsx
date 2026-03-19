@@ -1,18 +1,5 @@
 import { providers as sharedProviders } from '@novu/shared';
-import {
-  Body,
-  Button,
-  Column,
-  Container,
-  Head,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Row,
-  render,
-  Section,
-} from '@react-email/components';
+import { Body, Column, Container, Head, Html, Img, Link, Preview, Row, render, Section } from '@react-email/components';
 import millify from 'millify';
 import React from 'react';
 import { ControlValueSchema, PayloadSchemaType } from './schemas';
@@ -778,23 +765,29 @@ function ChannelsSection({ channels }: { channels: IChannel[] }) {
                           <Column style={{ width: '175px', padding: '3px 0' }}>
                             <Section>
                               <Row>
-                                <Column style={{ paddingRight: '4px', width: '28px' }}>
-                                  <Section>
-                                    {channel.icon && (
-                                      <Img
-                                        src={channel.icon}
-                                        alt=""
-                                        style={{
-                                          display: 'block',
-                                          maxWidth: '16px',
-                                          maxHeight: '16px',
-                                          padding: '3.5px',
-                                        }}
-                                      />
-                                    )}
-                                  </Section>
+                                <Column
+                                  style={{
+                                    paddingRight: '4px',
+                                    width: '28px',
+                                    textAlign: 'center' as const,
+                                    verticalAlign: 'middle' as const,
+                                  }}
+                                >
+                                  {channel.icon && (
+                                    <Img
+                                      src={channel.icon}
+                                      alt=""
+                                      style={{
+                                        display: 'inline-block',
+                                        maxWidth: '16px',
+                                        maxHeight: '16px',
+                                        margin: '0 auto',
+                                        verticalAlign: 'middle',
+                                      }}
+                                    />
+                                  )}
                                 </Column>
-                                <Column>
+                                <Column style={{ verticalAlign: 'middle' as const }}>
                                   <Text
                                     style={{
                                       fontSize: '12px',
@@ -899,7 +892,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
 
       <Row style={{ marginTop: '20px' }}>
         <Column>
-          <Button
+          <Link
             href={dashboardUrl}
             style={{
               background: '#DF2E5B',
@@ -907,7 +900,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
               fontSize: '14px',
               fontWeight: 600,
               padding: '12px 28px',
-              borderRadius: 'var(--radius-8, 8px)',
+              borderRadius: '8px',
               border: '1px solid #B8244A',
               boxShadow: '0 1px 2px 0 #C92952',
               textDecoration: 'none',
@@ -916,7 +909,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
             }}
           >
             View dashboard
-          </Button>
+          </Link>
         </Column>
       </Row>
     </Card>
@@ -1110,8 +1103,8 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
   );
 }
 
-// export default function UsageReportEmailPreview() {
-//   return (
+// export default async function renderEmail(payload: PayloadSchemaType, controls: ControlValueSchema) {
+//   return render(
 //     <UsageReportEmail
 //       props={{
 //         dateRangeFrom: '2025-02-01',
@@ -1136,9 +1129,9 @@ export function UsageReportEmail({ props }: { props: PayloadSchemaType & Control
 //         ],
 //         channels: [
 //           // { name: 'in_app', value: 2300 },
-//           // { name: 'email', value: 1762 },
-//           // { name: 'chat', value: 562 },
-//           { name: 'push', value: 22362 },
+//           { name: 'email', value: 1762 },
+//           { name: 'chat', value: 562 },
+//           { name: 'push', value: 2 },
 //           { name: 'sms', value: 62 },
 //         ],
 //         dashboardUrl: 'https://dashboard.novu.co',

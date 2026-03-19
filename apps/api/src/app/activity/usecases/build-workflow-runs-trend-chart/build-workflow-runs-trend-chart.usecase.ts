@@ -3,7 +3,7 @@ import {
   FeatureFlagsService,
   InstrumentUsecase,
   PinoLogger,
-  TraceLogRepository,
+  WorkflowRunCountRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -14,7 +14,7 @@ import { BuildWorkflowRunsTrendChartCommand } from './build-workflow-runs-trend-
 export class BuildWorkflowRunsTrendChart {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
-    private traceLogRepository: TraceLogRepository,
+    private workflowRunCountRepository: WorkflowRunCountRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
@@ -25,33 +25,31 @@ export class BuildWorkflowRunsTrendChart {
   async execute(command: BuildWorkflowRunsTrendChartCommand): Promise<WorkflowRunsTrendDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
-    const isTraceBasedEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_TRACES_ENABLED,
+    const isWorkflowRunCountEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_COUNT_ENABLED,
       defaultValue: false,
       organization: { _id: organizationId },
       environment: { _id: environmentId },
     });
 
-    if (isTraceBasedEnabled) {
-      return this.buildChartFromTraces(startDate, endDate, environmentId, organizationId, workflowIds);
+    if (isWorkflowRunCountEnabled) {
+      return this.buildChartFromWorkflowRunCount(startDate, endDate, environmentId, organizationId);
     }
 
     return this.buildChartFromWorkflowRuns(startDate, endDate, environmentId, organizationId, workflowIds);
   }
 
-  private async buildChartFromTraces(
+  private async buildChartFromWorkflowRunCount(
     startDate: Date,
     endDate: Date,
     environmentId: string,
-    organizationId: string,
-    workflowIds?: string[]
+    organizationId: string
   ): Promise<WorkflowRunsTrendDataPointDto[]> {
-    const workflowRuns = await this.traceLogRepository.getWorkflowRunsTrendData(
+    const workflowRuns = await this.workflowRunCountRepository.getWorkflowRunsTrendData(
       environmentId,
       organizationId,
       startDate,
-      endDate,
-      workflowIds
+      endDate
     );
 
     const dataByDate = new Map<string, WorkflowRunsTrendDataPointDto>();

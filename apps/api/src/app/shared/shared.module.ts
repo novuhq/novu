@@ -16,6 +16,7 @@ import {
   ExecuteStepResolverRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
+  HttpClientService,
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
@@ -25,6 +26,7 @@ import {
   storageService,
   TraceLogRepository,
   TraceRollupRepository,
+  WorkflowRunCountRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -125,6 +127,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  WorkflowRunCountRepository,
   TraceRollupRepository,
   DeliveryTrendCountsRepository,
 
@@ -150,6 +153,7 @@ const PROVIDERS = [
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
+  HttpClientService,
   ...ANALYTICS_PROVIDERS,
 ];
 
@@ -164,6 +168,7 @@ const IMPORTS = [
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
       version: packageJson.version,
+      silent: !!process.env.CI,
     })
   ),
 ];

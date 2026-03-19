@@ -109,9 +109,9 @@ export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends U
       .flatMap((m) => m.parts.filter((p) => p.type.startsWith('data-'))) as DataUIPart<D>[];
   }, [messages]);
 
-  const handleStop = useCallback(() => {
+  const handleStop = useCallback(async () => {
     setIsAborted(true);
-    stop();
+    await stop();
   }, [stop]);
 
   return {

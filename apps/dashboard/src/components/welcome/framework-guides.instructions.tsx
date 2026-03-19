@@ -1,6 +1,6 @@
+import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { API_HOSTNAME, IS_EU } from '@/config';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { Language } from '../primitives/code-block';
 import { getFrameworkPrompt } from './ai-prompts/simple-prompt-getter';
 
@@ -24,6 +24,8 @@ export interface InstallationStep {
   buttonText?: string;
   buttonAction?: () => void;
   copyText?: string;
+  applicationIdentifier?: string;
+  subscriberId?: string;
 }
 
 const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
@@ -113,6 +115,8 @@ export const commonAIAssistInstallStep = (
   buttonText: 'Copy AI prompt',
   copyText: getFrameworkPrompt(frameworkName, applicationIdentifier, IS_EU ? 'eu' : 'us', subscriberId),
   codeLanguage: 'shell',
+  applicationIdentifier,
+  subscriberId,
 });
 
 export const getFrameworks = (

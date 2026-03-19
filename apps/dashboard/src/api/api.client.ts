@@ -118,6 +118,10 @@ function parseErrorMessage(errorData: any): string {
     return DEFAULT_ERROR;
   }
 
+  if (Array.isArray(errorData.message)) {
+    return errorData.message.filter(Boolean).join('. ') || DEFAULT_ERROR;
+  }
+
   if (typeof errorData.message !== 'string') {
     return errorData.message?.message || DEFAULT_ERROR;
   }

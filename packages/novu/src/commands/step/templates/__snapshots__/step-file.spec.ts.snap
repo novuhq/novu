@@ -1,0 +1,371 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateChatStepFile > should match snapshot with zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.chat(
+  'send-chat',
+  async (controls, { payload, subscriber }) => ({
+    body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
+  }),
+  {
+    controlSchema: z.object({
+      message: z.string().default('You have a new message.'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.chat,
+  }
+);
+"
+`;
+
+exports[`generateChatStepFile > should match snapshot without zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.chat(
+  'send-chat',
+  async (controls, { payload, subscriber }) => ({
+    body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', default: 'You have a new message.' },
+      },
+      additionalProperties: false,
+    } as const,
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.chat,
+  }
+);
+"
+`;
+
+exports[`generateEmailStepFile > with zod > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.email(
+  'plain-email',
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.subject,
+    body: \`
+      <html>
+        <body>
+          <h1>\${controls.heading}</h1>
+          <p>Hi \${subscriber.firstName ?? 'there'},</p>
+          <p>\${controls.body}</p>
+          <p><a href="\${controls.ctaUrl}">View details</a></p>
+        </body>
+      </html>
+    \`,
+    // Optionally override the sender for this step:
+    // from: { email: 'noreply@example.com', name: 'My App' },
+  }),
+  {
+    controlSchema: z.object({
+      subject: z.string().default('You have a new notification'),
+      heading: z.string().default('New activity'),
+      body: z.string().default('You have a new message.'),
+      ctaUrl: z.string().default('/'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.email,
+  }
+);
+"
+`;
+
+exports[`generateEmailStepFile > without zod > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.email(
+  'plain-email',
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.subject,
+    body: \`
+      <html>
+        <body>
+          <h1>\${controls.heading}</h1>
+          <p>Hi \${subscriber.firstName ?? 'there'},</p>
+          <p>\${controls.body}</p>
+          <p><a href="\${controls.ctaUrl}">View details</a></p>
+        </body>
+      </html>
+    \`,
+    // Optionally override the sender for this step:
+    // from: { email: 'noreply@example.com', name: 'My App' },
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        subject: { type: 'string', default: 'You have a new notification' },
+        heading: { type: 'string', default: 'New activity' },
+        body: { type: 'string', default: 'You have a new message.' },
+        ctaUrl: { type: 'string', default: '/' },
+      },
+      additionalProperties: false,
+    } as const,
+    // skip: (_controls, { subscriber }) => !subscriber.email,
+  }
+);
+"
+`;
+
+exports[`generateInAppStepFile > should match snapshot with zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.inApp(
+  'in-app-notify',
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.subject,
+    body: controls.body,
+    // avatar: subscriber.avatar,
+    primaryAction: {
+      label: controls.ctaLabel,
+      redirect: { url: controls.ctaUrl, target: '_blank' },
+    },
+    // secondaryAction: { label: 'Dismiss' },
+  }),
+  {
+    controlSchema: z.object({
+      subject: z.string().default('New activity'),
+      body: z.string().default('You have a new notification.'),
+      ctaLabel: z.string().default('View details'),
+      ctaUrl: z.string().default('/'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.in_app,
+  }
+);
+"
+`;
+
+exports[`generateInAppStepFile > should match snapshot without zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.inApp(
+  'in-app-notify',
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.subject,
+    body: controls.body,
+    // avatar: subscriber.avatar,
+    primaryAction: {
+      label: controls.ctaLabel,
+      redirect: { url: controls.ctaUrl, target: '_blank' },
+    },
+    // secondaryAction: { label: 'Dismiss' },
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        subject: { type: 'string', default: 'New activity' },
+        body: { type: 'string', default: 'You have a new notification.' },
+        ctaLabel: { type: 'string', default: 'View details' },
+        ctaUrl: { type: 'string', default: '/' },
+      },
+      additionalProperties: false,
+    } as const,
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.in_app,
+  }
+);
+"
+`;
+
+exports[`generatePushStepFile > should match snapshot with zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.push(
+  'send-push',
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.title,
+    body: controls.body,
+  }),
+  {
+    controlSchema: z.object({
+      title: z.string().default('New activity'),
+      body: z.string().default('You have a new notification.'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.push,
+  }
+);
+"
+`;
+
+exports[`generatePushStepFile > should match snapshot without zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.push(
+  'send-push',
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.title,
+    body: controls.body,
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', default: 'New activity' },
+        body: { type: 'string', default: 'You have a new notification.' },
+      },
+      additionalProperties: false,
+    } as const,
+    // skip: (_controls, { subscriber }) => !subscriber.channels?.push,
+  }
+);
+"
+`;
+
+exports[`generateReactEmailStepFile > with zod > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+import { render } from '@react-email/components';
+import EmailTemplate from '../emails/welcome';
+
+export default step.email(
+  'welcome-email',
+  async (controls, { payload, subscriber, steps }) => ({
+    subject: controls.subject,
+    body: await render(
+      <EmailTemplate
+        controls={controls}
+        subscriber={subscriber}
+        steps={steps}
+      />
+    ),
+  }),
+  {
+    controlSchema: z.object({
+      subject: z.string().default('You have a new notification'),
+    }),
+  }
+);
+"
+`;
+
+exports[`generateReactEmailStepFile > with zod > should match snapshot with different import paths > nested-import 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+import { render } from '@react-email/components';
+import EmailTemplate from '../../src/emails/welcome';
+
+export default step.email(
+  'welcome-email',
+  async (controls, { payload, subscriber, steps }) => ({
+    subject: controls.subject,
+    body: await render(
+      <EmailTemplate
+        controls={controls}
+        subscriber={subscriber}
+        steps={steps}
+      />
+    ),
+  }),
+  {
+    controlSchema: z.object({
+      subject: z.string().default('You have a new notification'),
+    }),
+  }
+);
+"
+`;
+
+exports[`generateReactEmailStepFile > with zod > should match snapshot with different import paths > relative-import 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+import { render } from '@react-email/components';
+import EmailTemplate from './emails/welcome';
+
+export default step.email(
+  'welcome-email',
+  async (controls, { payload, subscriber, steps }) => ({
+    subject: controls.subject,
+    body: await render(
+      <EmailTemplate
+        controls={controls}
+        subscriber={subscriber}
+        steps={steps}
+      />
+    ),
+  }),
+  {
+    controlSchema: z.object({
+      subject: z.string().default('You have a new notification'),
+    }),
+  }
+);
+"
+`;
+
+exports[`generateReactEmailStepFile > without zod > should match snapshot 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { render } from '@react-email/components';
+import EmailTemplate from '../emails/welcome';
+
+export default step.email(
+  'welcome-email',
+  async (controls, { payload, subscriber, steps }) => ({
+    subject: controls.subject,
+    body: await render(
+      <EmailTemplate
+        controls={controls}
+        subscriber={subscriber}
+        steps={steps}
+      />
+    ),
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        subject: { type: 'string', default: 'You have a new notification' },
+      },
+      additionalProperties: false,
+    } as const,
+  }
+);
+"
+`;
+
+exports[`generateSmsStepFile > should match snapshot with zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.sms(
+  'send-sms',
+  async (controls, { payload, subscriber }) => ({
+    body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
+  }),
+  {
+    controlSchema: z.object({
+      message: z.string().default('You have a new notification. Reply STOP to unsubscribe.'),
+    }),
+    // skip: (_controls, { subscriber }) => !subscriber.phone,
+  }
+);
+"
+`;
+
+exports[`generateSmsStepFile > should match snapshot without zod 1`] = `
+"import { step } from '@novu/framework/step-resolver';
+
+export default step.sms(
+  'send-sms',
+  async (controls, { payload, subscriber }) => ({
+    body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
+  }),
+  {
+    controlSchema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', default: 'You have a new notification. Reply STOP to unsubscribe.' },
+      },
+      additionalProperties: false,
+    } as const,
+    // skip: (_controls, { subscriber }) => !subscriber.phone,
+  }
+);
+"
+`;

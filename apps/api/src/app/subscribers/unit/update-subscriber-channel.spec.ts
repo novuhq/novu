@@ -1,6 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
-import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
+import {
+  OAuthHandlerEnum,
+  SYSTEM_LIMITS,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
+} from '@novu/application-generic';
 
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
@@ -447,5 +452,96 @@ describe('Update Subscriber channel credentials', () => {
 
     expect(addedFcmToken?.credentials?.deviceTokens?.length).to.equal(1);
     expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['token_1']);
+  });
+
+  it('should reject device tokens exceeding the system limit when creating a new channel', async () => {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    const tokens = Array.from({ length: SYSTEM_LIMITS.SUBSCRIBER_DEVICE_TOKENS + 1 }, (_, i) => `token_${i}`);
+
+    try {
+      await updateSubscriberChannelUsecase.execute(
+        UpdateSubscriberChannelCommand.create({
+          organizationId: subscriber._organizationId,
+          subscriberId: subscriber.subscriberId,
+          environmentId: session.environment._id,
+          providerId: PushProviderIdEnum.FCM,
+          credentials: { deviceTokens: tokens },
+          oauthHandler: OAuthHandlerEnum.NOVU,
+          isIdempotentOperation: true,
+        })
+      );
+      expect.fail('Should have thrown BadRequestException');
+    } catch (error: any) {
+      expect(error.response.message).to.contain('Device tokens limit exceeded');
+      expect(error.response.limit).to.equal(SYSTEM_LIMITS.SUBSCRIBER_DEVICE_TOKENS);
+    }
+  });
+
+  it('should reject device tokens exceeding the system limit when appending to existing channel', async () => {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    const initialTokens = Array.from({ length: 50 }, (_, i) => `token_${i}`);
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: initialTokens },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: true,
+      })
+    );
+
+    const additionalTokens = Array.from({ length: 60 }, (_, i) => `new_token_${i}`);
+
+    try {
+      await updateSubscriberChannelUsecase.execute(
+        UpdateSubscriberChannelCommand.create({
+          organizationId: subscriber._organizationId,
+          subscriberId: subscriber.subscriberId,
+          environmentId: session.environment._id,
+          providerId: PushProviderIdEnum.FCM,
+          credentials: { deviceTokens: additionalTokens },
+          oauthHandler: OAuthHandlerEnum.NOVU,
+          isIdempotentOperation: false,
+        })
+      );
+      expect.fail('Should have thrown BadRequestException');
+    } catch (error: any) {
+      expect(error.response.message).to.contain('Device tokens limit exceeded');
+      expect(error.response.limit).to.equal(SYSTEM_LIMITS.SUBSCRIBER_DEVICE_TOKENS);
+    }
+  });
+
+  it('should allow device tokens at exactly the system limit', async () => {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    const tokens = Array.from({ length: SYSTEM_LIMITS.SUBSCRIBER_DEVICE_TOKENS }, (_, i) => `token_${i}`);
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: tokens },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: true,
+      })
+    );
+
+    const updatedSubscriber = await subscriberRepository.findOne({
+      _id: subscriber._id,
+      _environmentId: subscriber._environmentId,
+    });
+
+    const fcmChannel = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
+
+    expect(fcmChannel?.credentials?.deviceTokens?.length).to.equal(SYSTEM_LIMITS.SUBSCRIBER_DEVICE_TOKENS);
   });
 });

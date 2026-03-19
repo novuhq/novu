@@ -1,26 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { MessageTemplateRepository } from '@novu/dal';
+import { ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
+import { ControlValuesLevelEnum } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
-import { emailControlSchema, emailUiSchema } from '../../schemas/control';
+import { stepTypeToControlSchema } from '../../utils/step-type-to-control.mapper';
 import { DisconnectStepResolverCommand } from './disconnect-step-resolver.command';
 
 @Injectable()
 export class DisconnectStepResolverUsecase {
-  constructor(private messageTemplateRepository: MessageTemplateRepository) {}
+  constructor(
+    private messageTemplateRepository: MessageTemplateRepository,
+    private controlValuesRepository: ControlValuesRepository
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: DisconnectStepResolverCommand): Promise<void> {
+    const controlSchemas = stepTypeToControlSchema[command.stepType];
+
     await this.messageTemplateRepository.update(
       { _id: command.stepInternalId, _environmentId: command.user.environmentId },
       {
-        $unset: {
-          stepResolverHash: 1,
-        },
+        $unset: { stepResolverHash: 1 },
         $set: {
-          'controls.schema': emailControlSchema,
-          'controls.uiSchema': emailUiSchema,
+          'controls.schema': controlSchemas?.schema,
+          'controls.uiSchema': controlSchemas?.uiSchema,
         },
       }
     );
+
+    // Instead of resetting control values to their defaults, we simply remove them.
+    // This allows new control values in the correct shape to be generated automatically as users input content.
+    await this.controlValuesRepository.deleteMany({
+      _environmentId: command.user.environmentId,
+      _organizationId: command.user.organizationId,
+      _stepId: command.stepInternalId,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
   }
 }
