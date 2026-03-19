@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum, StepTypeEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
@@ -58,6 +58,8 @@ export class BuildStepDataUsecase {
   ): StepResponseDto {
     const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
+    const stepType = currentStep.template?.type;
+    const isHttpRequestStep = stepType === StepTypeEnum.HTTP_REQUEST;
 
     return {
       controls: {
@@ -71,12 +73,12 @@ export class BuildStepDataUsecase {
       slug,
       _id: currentStep._templateId,
       stepId: currentStep.stepId || 'Missing Step Id',
-      type: currentStep.template?.type,
+      type: stepType,
       origin: workflow.origin || ResourceOriginEnum.EXTERNAL,
       workflowId: workflow.triggers[0].identifier,
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
-      stepResolverHash: currentStep.template?.stepResolverHash,
+      stepResolverHash: isHttpRequestStep ? undefined : currentStep.template?.stepResolverHash,
     } as StepResponseDto;
   }
 

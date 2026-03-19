@@ -38,8 +38,11 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const context = await this.initializePreviewContext(command);
+      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
       const stepResolverHash =
-        typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
+        typeof context.stepData.stepResolverHash === 'string' && !isHttpRequestStep
+          ? context.stepData.stepResolverHash
+          : undefined;
       const isStepResolver = isStepResolverActive(stepResolverHash);
 
       const sanitizedControls = isStepResolver
@@ -67,8 +70,6 @@ export class PreviewUsecase {
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
-
-      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
 
       try {
         const executeOutput = await this.executePreviewUsecase(

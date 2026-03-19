@@ -8,6 +8,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   reconcileStepResolverControlValues,
+  SUPPORTED_STEP_RESOLVER_TYPES,
 } from '@novu/application-generic';
 import {
   ClientSession,
@@ -27,14 +28,6 @@ const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
 // cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
-
-const SUPPORTED_STEP_RESOLVER_TYPES = new Set<StepTypeEnum>([
-  StepTypeEnum.EMAIL,
-  StepTypeEnum.SMS,
-  StepTypeEnum.CHAT,
-  StepTypeEnum.PUSH,
-  StepTypeEnum.IN_APP,
-]);
 
 interface ResolvedManifestStep {
   workflowId: string;
