@@ -245,7 +245,7 @@ function TrustedBySection() {
         {TRUSTED_COMPANIES.map(({ name, width }) => (
           <img
             key={name}
-            src={`/images/auth/${name}-customer.svg`}
+            src={`/images/auth/${name}-customer-white.svg`}
             alt={name}
             className="h-7 shrink-0"
             style={{ width }}
