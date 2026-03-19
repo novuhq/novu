@@ -43,17 +43,7 @@ const MARQUEE_LOGOS = [
   { src: '/images/customers/logo-checkpoint.svg', alt: 'Check Point', height: 22 },
   { src: '/images/customers/logo-sinch.svg', alt: 'Sinch', height: 18 },
   { src: '/images/customers/logo-korn-ferry.svg', alt: 'Korn Ferry', height: 18 },
-  { src: '/images/customers/logo-cloud-software-group.svg', alt: 'Cloud Software Group', height: 20 },
-  { src: '/images/customers/logo-hudl.svg', alt: 'Hudl', height: 18 },
-  { src: '/images/customers/logo-bitmex.svg', alt: 'BitMEX', height: 18 },
-  { src: '/images/customers/logo-lottie-files.svg', alt: 'LottieFiles', height: 18 },
   { src: '/images/customers/logo-unops.svg', alt: 'UNOPS', height: 20 },
-  { src: '/images/customers/logo-docplanner-group.svg', alt: 'Docplanner', height: 18 },
-  { src: '/images/customers/logo-phocas.svg', alt: 'Phocas', height: 18 },
-  { src: '/images/customers/logo-deriv.svg', alt: 'Deriv', height: 18 },
-  { src: '/images/customers/logo-ebury.svg', alt: 'Ebury', height: 18 },
-  { src: '/images/customers/logo-guesty.svg', alt: 'Guesty', height: 18 },
-  { src: '/images/customers/logo-sherweb.svg', alt: 'Sherweb', height: 18 },
 ];
 
 export function Landing1SignUpPage() {
@@ -245,18 +235,12 @@ function RightPanelBackground() {
 }
 
 function TrustedBySection() {
-  const topRow = MARQUEE_LOGOS.slice(0, 10);
-  const bottomRow = MARQUEE_LOGOS.slice(10);
-
   return (
     <div className="flex flex-col items-center gap-4 lg:gap-5">
       <span className="text-[10px] uppercase tracking-widest text-white/60 lg:text-xs">
         Trusted by top industry leaders
       </span>
-      <div className="flex w-full flex-col gap-3">
-        <LogoMarqueeRow logos={topRow} direction="left" duration={80} />
-        <LogoMarqueeRow logos={bottomRow} direction="right" duration={70} />
-      </div>
+      <LogoMarqueeRow logos={MARQUEE_LOGOS} direction="left" duration={50} />
     </div>
   );
 }
