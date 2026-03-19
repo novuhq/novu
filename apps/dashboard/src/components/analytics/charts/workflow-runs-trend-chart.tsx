@@ -282,7 +282,7 @@ function WorkflowRunsTrendChartInner({
 }
 
 export function WorkflowRunsTrendChart(props: WorkflowRunsTrendChartProps) {
-  const isFinalStatusOnly = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_TRACES_ENABLED);
+  const isFinalStatusOnly = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_COUNT_ENABLED);
 
   return <WorkflowRunsTrendChartInner {...props} variant={isFinalStatusOnly ? 'finalStatus' : 'legacy'} />;
 }
