@@ -54,6 +54,7 @@ import { showErrorToast } from './primitives/sonner-helpers';
 
 export type WorkflowCreatedEvent = {
   type: 'workflow-created';
+  workflowId: string;
   workflowSlug: string;
   chatId: string;
 };
@@ -111,7 +112,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
         createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
 
         track(TelemetryEvent.COPILOT_WORKFLOW_GENERATED, {
-          workflowSlug: workflowCreatedEvent.workflowSlug,
+          workflowId: workflowCreatedEvent.workflowId,
           chatId: workflowCreatedEvent.chatId,
         });
 
@@ -136,11 +137,15 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
 
   useEffect(() => {
     if (error) {
-      showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
-      Sentry.captureException(error, {
-        tags: { feature: 'ai-copilot', action: 'chat-stream' },
-        extra: { chatId },
-      });
+      const errorMessage = error.message || 'There was an error creating the chat.';
+      showErrorToast(errorMessage, 'Failed to create chat');
+      // ignore errors from the input guard middleware
+      if (!errorMessage.includes('Novu Copilot')) {
+        Sentry.captureException(error, {
+          tags: { feature: 'ai-copilot', action: 'stream-creation-error' },
+          extra: { chatId },
+        });
+      }
     }
   }, [error, chatId]);
 
