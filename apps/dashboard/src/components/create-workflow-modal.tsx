@@ -74,6 +74,8 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const track = useTelemetry();
   const [open, setOpen] = useState(true);
   const createdWorkflowSlugRef = useRef<string | null>(null);
+  const chatId = useMemo(() => generateId(), []);
+  const persistedChatIdRef = useRef<string | null>(null);
   const [tab, setTab] = useState<CreateWorkflowTab>('guided');
 
   const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
@@ -128,7 +130,6 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     [currentEnvironment?.slug, navigate, track]
   );
 
-  const chatId = useMemo(() => generateId(), []);
   const { sendPrompt, stop, isGenerating, error } = useAiChatStream({
     id: chatId,
     agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
@@ -137,13 +138,13 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
 
   useEffect(() => {
     if (error) {
-      const errorMessage = error.message || 'There was an error creating the chat.';
-      showErrorToast(errorMessage, 'Failed to create chat');
+      const errorMessage = error.message || 'There was an error starting the stream.';
+      showErrorToast(errorMessage, 'Failed to start stream');
       // ignore errors from the input guard middleware
       if (!errorMessage.includes('Novu Copilot')) {
         Sentry.captureException(error, {
-          tags: { feature: 'ai-copilot', action: 'stream-creation-error' },
-          extra: { chatId },
+          tags: { feature: 'ai-copilot', action: 'stream-start-error' },
+          extra: { chatId: persistedChatIdRef.current ?? chatId },
         });
       }
     }
@@ -184,6 +185,11 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
       promptLength: clearedPrompt.length,
     });
 
+    if (persistedChatIdRef.current) {
+      sendPrompt({ chatId: persistedChatIdRef.current, prompt: clearedPrompt });
+      return;
+    }
+
     await createAiChat(
       { resourceType: AiResourceTypeEnum.WORKFLOW },
       {
@@ -194,6 +200,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
           });
         },
         onSuccess: async (chat) => {
+          persistedChatIdRef.current = chat._id;
           sendPrompt({ chatId: chat._id, prompt: clearedPrompt });
         },
       }
