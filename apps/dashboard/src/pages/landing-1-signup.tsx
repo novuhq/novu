@@ -254,8 +254,8 @@ function TrustedBySection() {
         Trusted by top industry leaders
       </span>
       <div className="flex w-full flex-col gap-3">
-        <LogoMarqueeRow logos={topRow} direction="left" duration={35} />
-        <LogoMarqueeRow logos={bottomRow} direction="right" duration={30} />
+        <LogoMarqueeRow logos={topRow} direction="left" duration={80} />
+        <LogoMarqueeRow logos={bottomRow} direction="right" duration={70} />
       </div>
     </div>
   );
