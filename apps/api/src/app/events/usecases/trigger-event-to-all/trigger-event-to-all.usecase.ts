@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestBroadcastCommand } from '../parse-event-request';
 import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
 
@@ -27,6 +27,11 @@ export class TriggerEventToAll {
       })
     );
 
-    return result;
+    return {
+      acknowledged: result.acknowledged,
+      status: result.status,
+      transactionId: result.transactionId,
+      activityFeedLink: result.activityFeedLink,
+    };
   }
 }
