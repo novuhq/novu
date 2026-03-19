@@ -9,7 +9,7 @@ import { useStepEditor } from '@/components/workflow-editor/steps/context/step-e
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
 import { cn } from '@/utils/ui';
 
 export function StepEditorModeToggle() {
@@ -21,7 +21,7 @@ export function StepEditorModeToggle() {
 
   if (
     !isStepResolverEnabled ||
-    !TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type) ||
+    !STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type) ||
     currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
     readOnly
   ) {
