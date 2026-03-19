@@ -6,7 +6,7 @@ import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services';
-import { buildSlug, isChannelStepType } from '../../utils';
+import { buildSlug } from '../../utils';
 import { InvalidStepException } from '../../utils/exceptions';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { GetWorkflowByIdsUseCase } from '../workflow';
@@ -58,8 +58,6 @@ export class BuildStepDataUsecase {
   ): StepResponseDto {
     const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
-    const stepType = currentStep.template?.type;
-    const isChannelStep = stepType && isChannelStepType(stepType);
 
     return {
       controls: {
@@ -73,12 +71,12 @@ export class BuildStepDataUsecase {
       slug,
       _id: currentStep._templateId,
       stepId: currentStep.stepId || 'Missing Step Id',
-      type: stepType,
+      type: currentStep.template?.type,
       origin: workflow.origin || ResourceOriginEnum.EXTERNAL,
       workflowId: workflow.triggers[0].identifier,
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
-      stepResolverHash: isChannelStep ? currentStep.template?.stepResolverHash : undefined,
+      stepResolverHash: currentStep.template?.stepResolverHash,
     } as StepResponseDto;
   }
 
