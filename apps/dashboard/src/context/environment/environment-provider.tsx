@@ -50,7 +50,8 @@ function selectEnvironment(
 }
 
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
-  const { currentOrganization } = useAuth();
+  const authResp = useAuth();
+  const currentOrganization = authResp.currentOrganization;
   const navigate = useNavigate();
   const location = useLocation();
   const { pathname, search, hash } = location;

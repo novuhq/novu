@@ -12,7 +12,7 @@ type IssuesPanelProps = {
   };
   className?: string;
   children?: React.ReactNode;
-  hintMessage?: string;
+  hintMessage?: React.ReactNode;
   isTranslationEnabled?: boolean;
 };
 

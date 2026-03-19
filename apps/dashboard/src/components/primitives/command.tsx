@@ -2,8 +2,9 @@ import { type DialogProps } from '@radix-ui/react-dialog';
 import { Command as CommandPrimitive } from 'cmdk';
 import * as React from 'react';
 
-import { Dialog, DialogContent } from '@/components/primitives/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/primitives/dialog';
 import { InputRoot, InputWrapper } from '@/components/primitives/input';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { cn } from '@/utils/ui';
 
 const Command = React.forwardRef<
@@ -27,7 +28,10 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0">
-        <Command className="[&_[cmdk-group-heading]]:text-foreground-400 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <VisuallyHidden>
+          <DialogTitle>Command</DialogTitle>
+        </VisuallyHidden>
+        <Command className="**:[[cmdk-group-heading]]:text-foreground-400 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 **:[[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 **:[[cmdk-input]]:h-12 **:[[cmdk-item]]:px-2 **:[[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
           {children}
         </Command>
       </DialogContent>
@@ -49,7 +53,10 @@ const CommandInput = React.forwardRef<
       {inlineLeadingNode}
       <CommandPrimitive.Input
         ref={ref}
-        className={cn('text-paragraph-xs placeholder:text-text-soft h-9 w-full bg-transparent outline-none', className)}
+        className={cn(
+          'text-paragraph-xs placeholder:text-text-soft h-9 w-full bg-transparent outline-hidden',
+          className
+        )}
         {...props}
       />
     </InputWrapper>
@@ -85,7 +92,7 @@ const CommandGroup = React.forwardRef<
   <CommandPrimitive.Group
     ref={ref}
     className={cn(
-      'text-foreground [&_[cmdk-group-heading]]:text-foreground-400 overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium',
+      'text-foreground **:[[cmdk-group-heading]]:text-foreground-400 overflow-hidden p-1 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium',
       className
     )}
     {...props}
@@ -110,7 +117,7 @@ const CommandItem = React.forwardRef<
     ref={ref}
     style={{ wordBreak: 'break-all' }}
     className={cn(
-      'data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
+      'data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-hidden data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
       className
     )}
     {...props}

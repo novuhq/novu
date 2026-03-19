@@ -1,0 +1,22 @@
+{
+  "name": "@novu/step-resolver-worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "cf-typegen": "wrangler types",
+    "namespace:create:staging": "wrangler dispatch-namespace create novu-step-resolvers-staging",
+    "namespace:create:production": "wrangler dispatch-namespace create novu-step-resolvers-production",
+    "secret:staging": "wrangler secret put STEP_RESOLVER_HMAC_SECRET --env staging",
+    "secret:production": "wrangler secret put STEP_RESOLVER_HMAC_SECRET --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2",
+    "wrangler": "^4.49.0"
+  }
+}

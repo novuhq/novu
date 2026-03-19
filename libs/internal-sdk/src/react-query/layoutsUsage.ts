@@ -5,28 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { layoutsUsage } from "../funcs/layoutsUsage.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type LayoutsUsageQueryData =
-  operations.LayoutsControllerGetUsageResponse;
+import {
+  buildLayoutsUsageQuery,
+  LayoutsUsageQueryData,
+  prefetchLayoutsUsage,
+  queryKeyLayoutsUsage,
+} from "./layoutsUsage.core.js";
+export {
+  buildLayoutsUsageQuery,
+  type LayoutsUsageQueryData,
+  prefetchLayoutsUsage,
+  queryKeyLayoutsUsage,
+};
 
 /**
  * Get layout usage
@@ -74,21 +75,6 @@ export function useLayoutsUsageSuspense(
   });
 }
 
-export function prefetchLayoutsUsage(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  layoutId: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildLayoutsUsageQuery(
-      client$,
-      layoutId,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setLayoutsUsageData(
   client: QueryClient,
   queryKeyBase: [
@@ -123,41 +109,4 @@ export function invalidateAllLayoutsUsage(
     ...filters,
     queryKey: ["@novu/api", "Layouts", "usage"],
   });
-}
-
-export function buildLayoutsUsageQuery(
-  client$: NovuCore,
-  layoutId: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<LayoutsUsageQueryData>;
-} {
-  return {
-    queryKey: queryKeyLayoutsUsage(layoutId, { idempotencyKey }),
-    queryFn: async function layoutsUsageQueryFn(
-      ctx,
-    ): Promise<LayoutsUsageQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(layoutsUsage(
-        client$,
-        layoutId,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyLayoutsUsage(
-  layoutId: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Layouts", "usage", layoutId, parameters];
 }

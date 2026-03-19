@@ -70,7 +70,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
   }
 
   private async getOrganizationApiServiceLevel(_organizationId: string): Promise<ApiServiceLevelEnum> {
-    const organization = await this.organizationRepository.findById(_organizationId);
+    const organization = await this.organizationRepository.findById(_organizationId, '_id apiServiceLevel');
 
     if (!organization) {
       const message = `Organization id: ${_organizationId} not found`;
@@ -86,7 +86,9 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
   }
 
   private async getEnvironment(_environmentId: string) {
-    const environment = await this.environmentRepository.findOne({ _id: _environmentId });
+    const environment = await this.environmentRepository.findOne({ _id: _environmentId }, '_id apiRateLimits', {
+      readPreference: 'secondaryPreferred',
+    });
 
     if (!environment) {
       const message = `Environment id: ${_environmentId} not found`;

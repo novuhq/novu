@@ -9,6 +9,8 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   apiServiceLevel: ApiServiceLevelEnum;
 
+  isTrial?: boolean;
+
   branding?: Branding;
 
   partnerConfigurations?: IPartnerConfiguration[];

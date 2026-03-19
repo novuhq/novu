@@ -1,12 +1,16 @@
+import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-
+import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
+import { CloudflareSchedulerService } from '../cloudflare-scheduler';
+import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
+import { SqsService } from '../sqs';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import { ReadinessService } from './readiness.service';
 
@@ -16,14 +20,59 @@ let workflowQueueService: WorkflowQueueService;
 let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
 
+const mockCloudflareSchedulerService = {
+  scheduleJob: jest.fn(),
+} as unknown as CloudflareSchedulerService;
+
+const mockFeatureFlagsService = {
+  getFlag: jest.fn(),
+} as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: jest.fn(),
+} as unknown as CommunityOrganizationRepository;
+
+const mockSqsService = {
+  getQueueUrl: jest.fn(),
+  getProducer: jest.fn(),
+  getClient: jest.fn(),
+} as unknown as SqsService;
+
+const mockLogger = {
+  setContext: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as PinoLogger;
+
 describe('Readiness Service', () => {
   beforeAll(async () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-    standardQueueService = new StandardQueueService(new WorkflowInMemoryProviderService());
-    workflowQueueService = new WorkflowQueueService(new WorkflowInMemoryProviderService());
-    subscriberProcessQueueService = new SubscriberProcessQueueService(new WorkflowInMemoryProviderService());
+    standardQueueService = new StandardQueueService(
+      new WorkflowInMemoryProviderService(),
+      mockCloudflareSchedulerService,
+      mockFeatureFlagsService,
+      mockOrganizationRepository,
+      mockSqsService,
+      mockLogger
+    );
+    workflowQueueService = new WorkflowQueueService(
+      new WorkflowInMemoryProviderService(),
+      mockSqsService,
+      mockFeatureFlagsService,
+      mockOrganizationRepository,
+      mockLogger
+    );
+    subscriberProcessQueueService = new SubscriberProcessQueueService(
+      new WorkflowInMemoryProviderService(),
+      mockSqsService,
+      mockFeatureFlagsService,
+      mockOrganizationRepository,
+      mockLogger
+    );
 
     await Promise.all([
       standardQueueService.workflowInMemoryProviderService.initialize(),
@@ -76,7 +125,7 @@ describe('Readiness Service', () => {
 
       const getWorkerProcessor = () => {
         return async ({ data }) => {
-          return await new Promise((resolve, reject) => {
+          return await new Promise((resolve) => {
             resolve(data);
           });
         };

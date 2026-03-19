@@ -11,5 +11,5 @@ export class SetJobAsFailedCommand extends SetJobAsCommand {
   organizationId: string;
 
   @IsOptional()
-  isLastJobInWorkflow?: boolean;
+  isLastJobFailed?: boolean;
 }

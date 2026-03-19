@@ -48,4 +48,12 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   @IsOptional()
   @IsEnumOrArray(SeverityLevelEnum)
   readonly severity?: SeverityLevelEnum | SeverityLevelEnum[];
+
+  @IsOptional()
+  @IsInt()
+  readonly createdGte?: number;
+
+  @IsOptional()
+  @IsInt()
+  readonly createdLte?: number;
 }

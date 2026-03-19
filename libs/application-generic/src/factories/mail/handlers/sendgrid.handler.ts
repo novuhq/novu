@@ -15,6 +15,7 @@ export class SendgridHandler extends BaseEmailHandler {
       senderName: credentials.senderName,
       ipPoolName: credentials.ipPoolName,
       webhookPublicKey: credentials.inboundWebhookSigningKey,
+      region: credentials.region,
     });
   }
 }

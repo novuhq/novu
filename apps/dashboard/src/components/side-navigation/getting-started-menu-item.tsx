@@ -45,9 +45,13 @@ export function HomeMenuItem() {
   return (
     <motion.div className="contents" whileHover="hover" initial="initial">
       <NavigationLink
-        to={buildRoute(ROUTES.WELCOME, {
-          environmentSlug: currentEnvironment?.slug ?? '',
-        })}
+        to={
+          currentEnvironment?.slug
+            ? buildRoute(ROUTES.WELCOME, {
+                environmentSlug: currentEnvironment?.slug ?? '',
+              })
+            : undefined
+        }
       >
         <RiQuestionLine className="size-4" />
         <span>Getting started</span>

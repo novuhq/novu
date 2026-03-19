@@ -13,7 +13,7 @@ export interface StepIndicatorsProps {
 
 export function StepIndicators({ jobs, size = 'md' }: StepIndicatorsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) {

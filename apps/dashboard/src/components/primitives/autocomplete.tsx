@@ -183,7 +183,7 @@ export function Autocomplete<T extends AutocompleteItem>({
           </PopoverTrigger>
 
           <PopoverContent
-            className="w-[var(--radix-popover-trigger-width)] min-w-[240px] overflow-hidden p-0"
+            className="w-(--radix-popover-trigger-width) min-w-[240px] overflow-hidden p-0"
             align="start"
             sideOffset={5}
             onOpenAutoFocus={(e) => {
@@ -242,15 +242,15 @@ export function Autocomplete<T extends AutocompleteItem>({
 
                 <div className="flex justify-between rounded-b-md border-t border-neutral-100 bg-white p-1">
                   <div className="flex items-center gap-0.5">
-                    <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
+                    <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,0px_1px_4px_0px_rgba(14,18,27,0.12)]">
                       <RiArrowUpLine className="h-3 w-3 text-neutral-400" />
                     </div>
-                    <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
+                    <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,0px_1px_4px_0px_rgba(14,18,27,0.12)]">
                       <RiArrowDownLine className="h-3 w-3 text-neutral-400" />
                     </div>
                     <span className="text-foreground-500 ml-1.5 text-xs font-normal">Navigate</span>
                   </div>
-                  <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,_0px_1px_4px_0px_rgba(14,18,27,0.12)]">
+                  <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 bg-white p-1 shadow-[0px_0px_0px_1px_rgba(14,18,27,0.02)_inset,0px_1px_4px_0px_rgba(14,18,27,0.12)]">
                     <EnterLineIcon className="h-3 w-3 text-neutral-400" />
                   </div>
                 </div>

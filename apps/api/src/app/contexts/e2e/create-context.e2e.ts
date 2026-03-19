@@ -13,18 +13,10 @@ describe('Create Context - /contexts (POST) #novu-v2', () => {
   let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
-  before(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdk(session);
-  });
-
-  after(() => {
-    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
   });
 
   it('should create a new context', async () => {

@@ -138,7 +138,7 @@ export type WorkflowResponseDto = {
   /**
    * Whether the workflow is active
    */
-  active?: boolean | undefined;
+  active: boolean;
   /**
    * Enable or disable payload schema validation
    */
@@ -150,7 +150,7 @@ export type WorkflowResponseDto = {
   /**
    * Enable or disable translations for this workflow
    */
-  isTranslationEnabled?: boolean | undefined;
+  isTranslationEnabled: boolean;
   /**
    * Database identifier of the workflow
    */

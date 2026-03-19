@@ -8,6 +8,7 @@ import { Separator } from '@/components/primitives/separator';
 import { TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { AMOUNT_KEY, CRON_KEY, TYPE_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest-delay-tabs/keys';
+import { LookbackWindow } from '@/components/workflow-editor/steps/digest-delay-tabs/lookback-window';
 import { RegularType } from '@/components/workflow-editor/steps/digest-delay-tabs/regular-type';
 import { ScheduledType } from '@/components/workflow-editor/steps/digest-delay-tabs/scheduled-type';
 import { EVERY_MINUTE_CRON } from '@/components/workflow-editor/steps/digest-delay-tabs/utils';
@@ -136,11 +137,17 @@ export const DigestDelayTabs = ({ isDigest = true }: { isDigest?: boolean }) => 
             </TabsList>
           </div>
           <Separator className="before:bg-neutral-100" />
-          <div className="bg-background rounded-b-lg p-2">
-            <TabsContent value={REGULAR_TYPE}>
+          <div className="bg-background flex flex-col gap-2 rounded-b-lg p-2">
+            <TabsContent value={REGULAR_TYPE} className="m-0">
               <RegularType isReadOnly={isReadOnly} isDigest={isDigest} />
+              {isDigest && (
+                <>
+                  <Separator className="my-2 stroke-stroke-weak" />
+                  <LookbackWindow isReadOnly={isReadOnly} />
+                </>
+              )}
             </TabsContent>
-            <TabsContent value={SCHEDULED_TYPE}>
+            <TabsContent value={SCHEDULED_TYPE} className="m-0">
               <FormField
                 control={control}
                 name={CRON_KEY}

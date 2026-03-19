@@ -8,4 +8,6 @@ export type StepType =
   | 'trigger'
   | 'delay'
   | 'custom'
-  | 'throttle';
+  | 'throttle'
+  | 'http_request'
+  | '';

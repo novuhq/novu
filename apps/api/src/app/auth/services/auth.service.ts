@@ -36,7 +36,7 @@ export class AuthService implements IAuthService {
     return this.authService.getUserByApiKey(apiKey);
   }
 
-  getSubscriberWidgetToken(subscriber: SubscriberEntity, contextKeys?: string[]): Promise<string> {
+  getSubscriberWidgetToken(subscriber: SubscriberEntity, contextKeys: string[]): Promise<string> {
     return this.authService.getSubscriberWidgetToken(subscriber, contextKeys);
   }
 

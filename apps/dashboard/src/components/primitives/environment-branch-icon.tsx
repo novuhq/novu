@@ -63,7 +63,7 @@ export function EnvironmentBranchIcon({
       }
       className={cn(
         container,
-        'flex items-center justify-center rounded-[6px] border-[1px] border-solid',
+        'flex items-center justify-center rounded-[6px] border border-solid',
         size === 'xs' ? 'border-none' : 'border',
         padding,
         hasCustomColor

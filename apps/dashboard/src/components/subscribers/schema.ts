@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const SubscriberFormSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  email: z.string().email().optional().nullable(),
+  email: z.email().optional().nullable(),
   phone: z
     .string()
     .refine(isValidPhoneNumber, { message: 'Invalid phone number' })
@@ -16,31 +16,27 @@ export const SubscriberFormSchema = z.object({
   timezone: z.string().optional().nullable(),
   data: z
     .string()
-    .transform((str, ctx) => {
-      try {
-        if (!str) return '';
-        return JSON.parse(str);
-      } catch (e) {
-        ctx.addIssue({ code: 'custom', message: 'Custom data must be a valid JSON' });
-        return z.NEVER;
-      }
-    })
+    .refine(
+      (str) => {
+        if (!str) return true;
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Custom data must be a valid JSON' }
+    )
     .optional(),
 });
 
 export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
-  subscriberId: z.string().transform((str, ctc) => {
-    if (!str.trim()) {
-      ctc.addIssue({ code: 'custom', message: 'SubscriberId is required' });
-      return z.NEVER;
-    }
-
-    return str;
-  }),
+  subscriberId: z.string().min(1, 'SubscriberId is required').trim(),
   email: z
     .string()
     .trim()
-    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
+    .refine((val) => val === '' || z.email().safeParse(val).success, {
       message: 'Invalid email',
     }),
   locale: z.string().optional(),

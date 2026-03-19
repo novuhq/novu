@@ -38,6 +38,7 @@ export class ListTopicSubscriptionsUseCase {
       organizationId: command.organizationId,
       topicKey: command.topicKey,
       subscriberId: command.subscriberId,
+      contextKeys: command.contextKeys,
       limit: command.limit || 10,
       before: command.before,
       after: command.after,

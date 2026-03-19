@@ -22,7 +22,10 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     properties: { url: { type: 'string' as const }, channel: { type: 'string' as const } },
     required: ['url'],
     validate: (endpoint: Record<string, unknown>) =>
-      typeof endpoint.url === 'string' && Object.keys(endpoint).length === 1,
+      typeof endpoint.url === 'string' &&
+      Object.keys(endpoint).length >= 1 &&
+      Object.keys(endpoint).length <= 2 &&
+      (endpoint.channel === undefined || typeof endpoint.channel === 'string'),
   },
   [ENDPOINT_TYPES.PHONE]: {
     description: 'Phone Endpoint',

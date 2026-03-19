@@ -1,3 +1,7 @@
+import { PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { PageMeta } from '@/components/page-meta';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -6,13 +10,8 @@ import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useRegion } from '@/context/region';
-import { getRegionConfig } from '@/context/region/region-config';
+import { getRegionConfig, useRegion } from '@/context/region';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { PermissionsEnum } from '@novu/shared';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { Button } from '../components/primitives/button';
 import { Container } from '../components/primitives/container';
@@ -207,7 +206,7 @@ function SettingField({
   };
 
   return (
-    <div className="grid grid-cols-[1fr,400px] items-center gap-3">
+    <div className="grid grid-cols-[1fr_400px] items-center gap-3">
       <label className="text-foreground-600 font-medium\\ inline-flex items-center gap-1 text-xs">
         {label}
         {tooltip && <HelpTooltipIndicator text={tooltip} />}
@@ -222,7 +221,7 @@ function SettingField({
         ) : (
           <>
             <Input
-              className="cursor-default font-mono !text-neutral-500"
+              className="cursor-default font-mono text-neutral-500!"
               value={secret ? (showSecret ? value : maskSecret(value ?? '')) : value}
               readOnly={readOnly}
               trailingNode={<CopyButton valueToCopy={value ?? ''} />}

@@ -62,7 +62,7 @@ export const NumbersPicker = <T extends string | number>({
           <div
             ref={inputRef}
             className={cn(
-              'border-1 focus:ring-ring ring-offset-background flex h-7 w-full items-center gap-0.5 rounded-lg border border-neutral-100 p-0 focus-within:border-transparent focus:outline-none focus:ring-2 focus-visible:border-transparent',
+              'border focus:ring-ring ring-offset-background flex h-7 w-full items-center gap-0.5 rounded-lg border-neutral-100 p-0 focus-within:border-transparent focus:outline-hidden focus:ring-2 focus-visible:border-transparent',
               { 'cursor-not-allowed': isDisabled }
             )}
             tabIndex={0}

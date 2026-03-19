@@ -13,15 +13,13 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { EmailControlType } from '@novu/application-generic';
+import { buildWorkflowSchema, DEFAULT_ARRAY_ELEMENTS, EmailControlType } from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { DEFAULT_ARRAY_ELEMENTS } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { buildWorkflowSchema } from '../../shared/utils/create-schema';
 import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
 import { buildWorkflow } from '../workflow.controller.e2e';
 
@@ -190,6 +188,30 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             description: 'Previous Steps Results',
           },
           workflow: buildWorkflowSchema(),
+          context: {
+            type: 'object',
+            description: 'Context data passed at trigger time following ContextPayload structure',
+            properties: {},
+            required: [],
+            additionalProperties: {
+              type: 'object',
+              description: 'Context value - can be accessed as string or object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Context identifier',
+                },
+                data: {
+                  type: 'object',
+                  description: 'Additional context data',
+                  properties: {},
+                  additionalProperties: true,
+                },
+              },
+              required: [],
+              additionalProperties: false,
+            },
+          },
         },
         additionalProperties: false,
       },
@@ -441,6 +463,30 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             description: 'Previous Steps Results',
           },
           workflow: buildWorkflowSchema(),
+          context: {
+            type: 'object',
+            description: 'Context data passed at trigger time following ContextPayload structure',
+            properties: {},
+            required: [],
+            additionalProperties: {
+              type: 'object',
+              description: 'Context value - can be accessed as string or object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Context identifier',
+                },
+                data: {
+                  type: 'object',
+                  description: 'Additional context data',
+                  properties: {},
+                  additionalProperties: true,
+                },
+              },
+              required: [],
+              additionalProperties: false,
+            },
+          },
         },
         type: 'object',
       },
@@ -1170,7 +1216,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse.result.result.preview.body).to.contain('Paragraph static link');
     expect(previewResponse.result.result.preview.body).to.contain('href="https://paragraph.static.link"');
 
-    console.log('Blockquote');
     // blockquote
     expect(previewResponse.result.result.preview.body).to.contain('Just the blockquote');
     expect(previewResponse.result.result.preview.body).to.contain('Blockquote variable link');
@@ -1345,6 +1390,76 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(previewResponseDto.previewPayloadExample).to.have.property('subscriber');
       expect(previewResponseDto.previewPayloadExample.payload).to.have.property('subject');
       expect(previewResponseDto.previewPayloadExample.payload?.subject.test).to.have.property('payload');
+    });
+
+    it('email: should render HTML without escaping quotes in attributes', async () => {
+      const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.EMAIL);
+
+      const controlValues = {
+        subject: 'Test HTML Rendering',
+        body: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'button',
+              attrs: {
+                text: 'Click Me',
+                isTextVariable: false,
+                url: 'https://example.com',
+                isUrlVariable: false,
+                alignment: 'center',
+                variant: 'filled',
+                borderRadius: 'smooth',
+                buttonColor: '#FF5733',
+                textColor: '#FFFFFF',
+                showIfKey: null,
+                paddingTop: 12,
+                paddingRight: 24,
+                paddingBottom: 12,
+                paddingLeft: 24,
+                width: 'auto',
+                aliasFor: null,
+              },
+            },
+            {
+              type: 'paragraph',
+              attrs: { textAlign: 'center', showIfKey: null },
+              content: [
+                {
+                  type: 'text',
+                  text: 'Test content with special characters: "quotes" & symbols',
+                },
+              ],
+            },
+          ],
+        }),
+      };
+
+      const previewResponseDto = await generatePreview(novuClient, workflowId, stepDatabaseId, {
+        controlValues,
+      });
+
+      expect(previewResponseDto.result).to.exist;
+      if (!previewResponseDto.result || previewResponseDto.result.type !== 'email') {
+        throw new Error('Expected email preview');
+      }
+
+      const preview = previewResponseDto.result.preview as EmailRenderOutput;
+      expect(preview.body).to.exist;
+
+      expect(preview.body).to.not.contain('\\"');
+      expect(preview.body).to.not.contain('\\&quot;');
+      expect(preview.body).to.not.contain('&quot;center&quot;');
+      expect(preview.body).to.not.contain('align=\\"center\\"');
+
+      expect(preview.body).to.contain('#FF5733');
+      expect(preview.body).to.contain('#FFFFFF');
+      expect(preview.body).to.contain('Click Me');
+      expect(preview.body).to.contain('Test content with special characters');
+
+      expect(preview.body).to.match(/style="[^"]*color[^"]*"/);
+      expect(preview.body).to.match(/style="[^"]*background-color[^"]*"/);
+      expect(preview.body).to.match(/align="center"/);
     });
 
     async function createWorkflowAndPreview(type: StepTypeEnum, description: string) {

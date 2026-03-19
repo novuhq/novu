@@ -1,4 +1,5 @@
 import type { Editor, Range } from '@tiptap/core';
+import type { JSX } from 'react';
 
 interface CommandProps {
   editor: Editor;

@@ -67,7 +67,7 @@ export const AiDrawer = forwardRef<HTMLDivElement, AiDrawerProps>(({ isOpen, onO
       <SheetContent
         ref={ref}
         side="right"
-        className="w-[600px] !max-w-none p-0 h-[calc(100vh)] [&>[data-close-button]]:hidden"
+        className="w-[600px] max-w-none! p-0 h-[calc(100vh)] *:data-close-button:hidden"
       >
         <VisuallyHidden>
           <SheetTitle>AI Assistant</SheetTitle>

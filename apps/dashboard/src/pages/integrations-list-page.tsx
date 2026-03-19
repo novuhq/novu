@@ -31,7 +31,7 @@ export function IntegrationsListPage() {
     >
       <Tabs defaultValue="providers" className="-mx-2">
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
-          <TabsList variant="regular" className="border-b-0 border-transparent p-0 !px-2">
+          <TabsList variant="regular" className="border-b-0 border-transparent p-0 px-2!">
             <TabsTrigger value="providers" variant="regular" size="xl">
               Providers
             </TabsTrigger>
@@ -47,7 +47,7 @@ export function IntegrationsListPage() {
             Connect Provider
           </PermissionButton>
         </div>
-        <TabsContent value="providers" className="!mt-0 p-2.5">
+        <TabsContent value="providers" className="mt-0! p-2.5">
           <IntegrationsList onItemClick={onItemClick} />
         </TabsContent>
       </Tabs>

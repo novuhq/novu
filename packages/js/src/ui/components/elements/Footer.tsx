@@ -1,7 +1,7 @@
 import { Show } from 'solid-js';
-import { useInboxContext, useNovu } from 'src/ui/context';
-import { isBrowser } from 'src/utils/is-browser';
 import { DEFAULT_API_VERSION } from '../../../api/http-client';
+import { isBrowser } from '../../../utils/is-browser';
+import { useInboxContext, useNovu } from '../../context';
 import { cn } from '../../helpers';
 import { Novu } from '../../icons';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';

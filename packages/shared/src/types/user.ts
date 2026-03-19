@@ -42,7 +42,6 @@ export const jobTitleToLabelMapper = {
 };
 
 export interface IServicesHashes {
-  intercom?: string;
   plain?: string;
 }
 

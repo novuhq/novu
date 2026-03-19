@@ -19,7 +19,6 @@ export enum CacheKeyPrefixEnum {
   FEED = 'feed',
   GROUPED_BLUEPRINTS = 'grouped-blueprints',
   HAS_NOTIFICATION = 'has_notification',
-  INTEGRATION = 'integration',
   MAXIMUM_API_RATE_LIMIT = 'maximum_api_rate_limit',
   MESSAGE_COUNT = 'message_count',
   NOTIFICATION_TEMPLATE = 'notification_template',

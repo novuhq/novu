@@ -5,28 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { activityRequestsList } from "../funcs/activityRequestsList.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type ActivityRequestsListQueryData = components.GetRequestsResponseDto;
+import {
+  ActivityRequestsListQueryData,
+  buildActivityRequestsListQuery,
+  prefetchActivityRequestsList,
+  queryKeyActivityRequestsList,
+} from "./activityRequestsList.core.js";
+export {
+  type ActivityRequestsListQueryData,
+  buildActivityRequestsListQuery,
+  prefetchActivityRequestsList,
+  queryKeyActivityRequestsList,
+};
 
 /**
  * List activity requests
@@ -67,19 +69,6 @@ export function useActivityRequestsListSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchActivityRequestsList(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.ActivityControllerGetLogsRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildActivityRequestsListQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -132,56 +121,4 @@ export function invalidateAllActivityRequestsList(
     ...filters,
     queryKey: ["@novu/api", "Requests", "list"],
   });
-}
-
-export function buildActivityRequestsListQuery(
-  client$: NovuCore,
-  request: operations.ActivityControllerGetLogsRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<ActivityRequestsListQueryData>;
-} {
-  return {
-    queryKey: queryKeyActivityRequestsList({
-      page: request.page,
-      limit: request.limit,
-      statusCodes: request.statusCodes,
-      urlPattern: request.urlPattern,
-      transactionId: request.transactionId,
-      createdGte: request.createdGte,
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function activityRequestsListQueryFn(
-      ctx,
-    ): Promise<ActivityRequestsListQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(activityRequestsList(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyActivityRequestsList(
-  parameters: {
-    page?: number | undefined;
-    limit?: number | undefined;
-    statusCodes?: Array<number> | undefined;
-    urlPattern?: string | undefined;
-    transactionId?: string | undefined;
-    createdGte?: number | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "Requests", "list", parameters];
 }

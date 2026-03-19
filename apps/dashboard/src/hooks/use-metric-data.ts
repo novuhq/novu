@@ -21,11 +21,19 @@ type PeriodData = {
   previousPeriod: number;
 };
 
+function formatDecimal(value: number): string {
+  const isWhole = Number.isInteger(value) || Math.abs(value - Math.round(value)) < 1e-9;
+
+  return isWhole ? String(Math.round(value)) : value.toFixed(1);
+}
+
 function formatNumber(num: number): string {
   const { value, suffix } = getCompactFormat(num);
 
   if (suffix) {
-    return `${value.toFixed(1)}${suffix}`;
+    const valueStr = formatDecimal(value);
+
+    return `${valueStr}${suffix}`;
   }
 
   return num.toLocaleString();
@@ -88,11 +96,7 @@ export function useMetricData(charts: Record<string, unknown> | undefined) {
 
   const avgMessagesPerSubscriberData = useMemo(() => {
     const data = charts?.[ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER] as AvgMessagesPerSubscriberDataPoint;
-    return processMetricData(
-      data,
-      (value) => value.toFixed(1),
-      (value) => value.toFixed(1)
-    );
+    return processMetricData(data, formatDecimal, formatDecimal);
   }, [charts]);
 
   const workflowRunsMetricData = useMemo(() => {

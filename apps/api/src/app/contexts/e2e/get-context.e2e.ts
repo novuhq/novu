@@ -9,10 +9,6 @@ describe('Get Context - /contexts/:type/:id (GET) #novu-v2', () => {
   let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
-  before(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -23,10 +19,6 @@ describe('Get Context - /contexts/:type/:id (GET) #novu-v2', () => {
     await contextRepository.delete({
       _environmentId: session.environment._id,
     });
-  });
-
-  after(() => {
-    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
   });
 
   it('should get a newly created context', async () => {

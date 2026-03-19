@@ -42,6 +42,20 @@ export class SubscriptionsCache {
       }
     });
 
+    this.#emitter.on('subscription.update.resolved', ({ data }) => {
+      if (data) {
+        this.handleUpdate(data);
+      }
+    });
+
+    this.#emitter.on('subscription.delete.resolved', ({ args }) => {
+      if ('subscription' in args) {
+        this.handleDelete(args.subscription);
+      } else if ('identifier' in args) {
+        this.handleDeleteByIdentifier(args.identifier);
+      }
+    });
+
     this.#emitter.on('subscription.preference.update.pending', ({ data }) => {
       if (data) {
         this.handlePreferenceUpdate(data);
@@ -58,14 +72,6 @@ export class SubscriptionsCache {
         this.handleBulkPreferenceUpdate(data);
       }
     });
-
-    this.#emitter.on('subscription.delete.resolved', ({ args }) => {
-      if ('subscription' in args) {
-        this.handleDelete(args.subscription);
-      } else if ('subscriptionId' in args) {
-        this.handleDeleteById(args.subscriptionId);
-      }
-    });
   }
 
   private handleCreate = (subscription: TopicSubscription): void => {
@@ -74,6 +80,25 @@ export class SubscriptionsCache {
 
     if (subscriptions) {
       const updatedSubscriptions = [...subscriptions, subscription];
+      this.#cache.set(listKey, updatedSubscriptions);
+
+      this.#emitter.emit('subscriptions.list.updated', {
+        data: { topicKey: subscription.topicKey, subscriptions: updatedSubscriptions },
+      });
+    }
+
+    this.#itemCache.set(
+      getItemCacheKey({ topicKey: subscription.topicKey, identifier: subscription.identifier }),
+      subscription
+    );
+  };
+
+  private handleUpdate = (subscription: TopicSubscription): void => {
+    const listKey = getListCacheKey({ topicKey: subscription.topicKey });
+    const subscriptions = this.#cache.get(listKey);
+
+    if (subscriptions) {
+      const updatedSubscriptions = subscriptions.map((el) => (el.id === subscription.id ? subscription : el));
       this.#cache.set(listKey, updatedSubscriptions);
 
       this.#emitter.emit('subscriptions.list.updated', {
@@ -110,7 +135,7 @@ export class SubscriptionsCache {
 
       let hasUpdates = false;
       const updatedSubscriptions = subscriptions.map((subscription) => {
-        const subscriptionPreferences = preferencesBySubscription.get(subscription.id);
+        const subscriptionPreferences = preferencesBySubscription.get(subscription.identifier);
         if (subscriptionPreferences) {
           hasUpdates = true;
 
@@ -134,13 +159,13 @@ export class SubscriptionsCache {
       const subscription = this.#itemCache.get(key);
       if (!subscription) continue;
 
-      const subscriptionPreferences = preferencesBySubscription.get(subscription.id);
+      const subscriptionPreferences = preferencesBySubscription.get(subscription.identifier);
       if (subscriptionPreferences) {
         const updatedSubscription = this.createUpdatedSubscription(subscription, subscriptionPreferences);
         this.#itemCache.set(key, updatedSubscription);
 
         this.#emitter.emit('subscription.update.resolved', {
-          args: undefined,
+          args: { subscription: subscription },
           data: updatedSubscription,
         });
       }
@@ -151,7 +176,7 @@ export class SubscriptionsCache {
     subscription: TopicSubscription,
     subscriptionPreferences: SubscriptionPreference[]
   ): TopicSubscription => {
-    const updatedPreferences = subscription.preferences.map((pref) => {
+    const updatedPreferences = subscription.preferences?.map((pref) => {
       const newPreference = subscriptionPreferences.find((el) => el.workflow.id === pref.workflow.id);
       if (newPreference) {
         return newPreference;
@@ -190,15 +215,15 @@ export class SubscriptionsCache {
     this.#itemCache.remove(getItemCacheKey({ topicKey: subscription.topicKey, identifier: subscription.identifier }));
   };
 
-  private handleDeleteById = (subscriptionId: string): void => {
+  private handleDeleteByIdentifier = (identifier: string): void => {
     const allListKeys = this.#cache.keys();
 
     for (const listKey of allListKeys) {
       const subscriptions = this.#cache.get(listKey);
       if (subscriptions) {
-        const subscription = subscriptions.find((el) => el.id === subscriptionId);
+        const subscription = subscriptions.find((el) => el.identifier === identifier);
         if (subscription) {
-          const updatedSubscriptions = subscriptions.filter((el) => el.id !== subscriptionId);
+          const updatedSubscriptions = subscriptions.filter((el) => el.identifier !== identifier);
           this.#cache.set(listKey, updatedSubscriptions);
 
           this.#emitter.emit('subscriptions.list.updated', {
@@ -217,7 +242,7 @@ export class SubscriptionsCache {
     const allItemKeys = this.#itemCache.keys();
     for (const key of allItemKeys) {
       const subscription = this.#itemCache.get(key);
-      if (subscription && subscription.id === subscriptionId) {
+      if (subscription && subscription.identifier === identifier) {
         this.#itemCache.remove(key);
 
         return;

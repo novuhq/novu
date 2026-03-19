@@ -2,7 +2,7 @@ import { SizeType } from '../types';
 import { BaseFilterContent } from './base-filter-content';
 
 interface TextFilterContentProps {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;

@@ -7,13 +7,10 @@ import {
   SubscriberEntity,
 } from '@novu/dal';
 import { DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
-import { JobsService, SubscribersService, UserSession } from '@novu/testing';
-import axios from 'axios';
+import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
-
-const axiosInstance = axios.create();
 
 describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
@@ -22,7 +19,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
   const messageRepository = new MessageRepository();
-  const jobsService = new JobsService();
+
   let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
@@ -246,9 +243,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
 
     expect(jobs && jobs.length).to.eql(3);
 
-    const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
+    const delayedJobs = jobs?.filter((elem) => elem.status === JobStatusEnum.DELAYED);
     expect(delayedJobs && delayedJobs.length).to.eql(2);
-    const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
+    const mergedJobs = jobs?.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
     expect(mergedJobs && mergedJobs.length).to.eql(1);
 
     await session.waitForDbJobCompletion({ templateId: template?._id });

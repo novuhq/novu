@@ -46,6 +46,8 @@ export class MessageEntity {
 
   templateIdentifier: string;
 
+  stepId?: string;
+
   createdAt: string;
 
   updatedAt: string;

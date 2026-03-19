@@ -48,7 +48,7 @@ export function RepeatMenuDescription({ editor }: { editor: Editor }) {
         >
           <Separator className="mt-0.5" />
           <div className="flex items-start gap-1 px-1 py-1.5">
-            <Lightbulb className="mt-0.5 size-3.5 stroke-[2] text-gray-400" />
+            <Lightbulb className="mt-0.5 size-3.5 stroke-2 text-gray-400" />
             <div>
               <div>Use iterable variables to access the current item</div>
               <span>in the loop, e.g. </span>

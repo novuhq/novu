@@ -144,8 +144,8 @@ const CommandList = forwardRef(function CommandList(props: CommandListProps, ref
     },
   }));
 
-  const commandListContainer = useRef<HTMLDivElement>(null);
-  const activeCommandRef = useRef<HTMLButtonElement>(null);
+  const commandListContainer = useRef<HTMLDivElement | null>(null);
+  const activeCommandRef = useRef<HTMLButtonElement | null>(null);
 
   useLayoutEffect(() => {
     const container = commandListContainer?.current;

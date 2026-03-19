@@ -121,8 +121,10 @@ export const inboxAppearanceKeys = [
   'notificationDot',
   'notificationSubject',
   'notificationSubject__strong',
+  'notificationSubject__em',
   'notificationBody',
   'notificationBody__strong',
+  'notificationBody__em',
   'notificationBodyContainer',
   'notificationImage',
   'notificationImageLoadingFallback',
@@ -291,6 +293,7 @@ export const inboxAppearanceKeys = [
   'notificationSnoozedUntil__icon',
   // Text formatting
   'strong',
+  'em',
 ] as const;
 
 export const subscriptionAppearanceKeys = [

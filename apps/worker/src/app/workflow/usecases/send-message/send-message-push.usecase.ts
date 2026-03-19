@@ -52,6 +52,26 @@ import { SendMessageResult, SendMessageStatus } from './send-message-type.usecas
 
 const LOG_CONTEXT = 'SendMessagePush';
 
+export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
+  'NotRegistered',
+  'InvalidRegistration',
+  'MismatchSenderId',
+  'Unregistered',
+  'BadDeviceToken',
+  'DeviceTokenNotForTopic',
+  'ExpiredPushToken',
+  'InvalidProviderToken',
+  'Requested entity was not found',
+  'SenderId mismatch',
+  'Make sure you have provided a server key as directed by the Expo FCM documentation',
+  'is not a valid Expo push token',
+  'The registration token is not a valid FCM registration token',
+];
+
+export function isSubscriberError(errorMessage: string): boolean {
+  return SUBSCRIBER_ERROR_PATTERNS.some((pattern) => errorMessage.includes(pattern));
+}
+
 interface IPushProviderOverride {
   providerId: PushProviderIdEnum;
   overrides: Record<string, unknown>;
@@ -156,11 +176,23 @@ export class SendMessagePush extends SendMessageBase {
     const allPushChannels = [...pushChannels, ...uniqueOverrideChannels];
 
     if (!allPushChannels.length) {
-      await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
       return {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PUSH_TOKEN,
+        },
       };
     }
 
@@ -257,9 +289,11 @@ export class SendMessagePush extends SendMessageBase {
         if (result.success) {
           status = SendMessageStatus.SUCCESS;
         } else {
-          Logger.error(
+          const errorMessage = result.error.message || result.error.toString();
+          const logMethod = isSubscriberError(errorMessage) ? 'debug' : 'error';
+          Logger[logMethod](
             { jobId: command.jobId },
-            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
+            `Error sending push notification for jobId ${command.jobId} ${errorMessage}`,
             LOG_CONTEXT
           );
         }
@@ -307,9 +341,11 @@ export class SendMessagePush extends SendMessageBase {
         if (result.success) {
           status = SendMessageStatus.SUCCESS;
         } else {
-          Logger.error(
+          const errorMessage = result.error.message || result.error.toString();
+          const logMethod = isSubscriberError(errorMessage) ? 'debug' : 'error';
+          Logger[logMethod](
             { jobId: command.jobId },
-            `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
+            `Error sending push notification for jobId ${command.jobId} ${errorMessage}`,
             LOG_CONTEXT
           );
         }
@@ -322,7 +358,7 @@ export class SendMessagePush extends SendMessageBase {
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.PUSH_SOME_CHANNELS_SKIPPED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
+          status: ExecutionDetailsStatusEnum.WARNING,
           isTest: false,
           isRetry: false,
         })
@@ -553,7 +589,7 @@ export class SendMessagePush extends SendMessageBase {
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
 
-      Logger.log(
+      Logger.debug(
         { jobId: command.jobId, deviceToken, overrides, step },
         `Push handler obtained for jobId ${command.jobId}`,
         LOG_CONTEXT
@@ -731,7 +767,8 @@ export class SendMessagePush extends SendMessageBase {
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      stepId: command.step?.stepId,
+      contextKeys: command.contextKeys,
     });
 
     await this.createExecutionDetails.execute(
@@ -753,7 +790,7 @@ export class SendMessagePush extends SendMessageBase {
     return message;
   }
 
-  private getIntegrationHandler(integration): IPushHandler {
+  private getIntegrationHandler(integration: IntegrationEntity): IPushHandler {
     const pushFactory = new PushFactory();
     const pushHandler = pushFactory.getHandler(integration);
 

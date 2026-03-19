@@ -22,18 +22,23 @@ const statusToTooltipStyles: Record<string, string> = {
   disabled: 'before:bg-faded-lighter before:border before:border-faded-light text-faded-base',
 };
 
+const DEFAULT_EMPTY_DESCRIPTION =
+  "This subscriber hasn't received any notifications yet. Once a workflow is triggered for them, you'll see their notification history and delivery details here.";
+
 export const SubscriberActivityList = ({
   isLoading,
   activities,
   hasChangesInFilters,
   onClearFilters,
   onActivitySelect,
+  emptyFiltersDescription = DEFAULT_EMPTY_DESCRIPTION,
 }: {
   isLoading: boolean;
   activities: IActivity[];
   hasChangesInFilters: boolean;
   onClearFilters: () => void;
   onActivitySelect: (activityId: string) => void;
+  emptyFiltersDescription?: string;
 }) => {
   if (!isLoading && activities.length === 0) {
     return (
@@ -48,7 +53,7 @@ export const SubscriberActivityList = ({
         <ActivityEmptyState
           emptySearchResults={hasChangesInFilters}
           onClearFilters={onClearFilters}
-          emptyFiltersDescription="This subscriber hasn't received any notifications yet. Once a workflow is triggered for them, you'll see their notification history and delivery details here."
+          emptyFiltersDescription={emptyFiltersDescription}
         />
       </motion.div>
     );

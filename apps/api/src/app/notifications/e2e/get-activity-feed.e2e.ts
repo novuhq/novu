@@ -12,15 +12,6 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
   let smsOnlyTemplate: NotificationTemplateEntity;
   let subscriberId: string;
   let novuClient: Novu;
-  const isContextEnabled = process.env.IS_CONTEXT_ENABLED;
-
-  before(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
-  after(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = isContextEnabled;
-  });
 
   beforeEach(async () => {
     session = new UserSession();

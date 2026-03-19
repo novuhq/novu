@@ -1,5 +1,5 @@
+import { WorkflowDataContainer } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { WorkflowDataContainer } from '../../../../../shared/containers/workflow-data.container';
 import { IResourceDiff } from '../../../../types/sync.types';
 
 export interface IBaseComparator<T> {

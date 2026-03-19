@@ -6,6 +6,7 @@ export type SwitchProps = {
   state?: SwitchState;
   onChange: (state: SwitchState) => void;
   disabled?: boolean;
+  id?: string;
 };
 
 export const Switch = (props: SwitchProps) => {
@@ -45,7 +46,14 @@ export const Switch = (props: SwitchProps) => {
         }),
       })}
     >
-      <input type="checkbox" class="nt-sr-only" checked={isChecked()} disabled={disabled()} onChange={handleChange} />
+      <input
+        type="checkbox"
+        class="nt-sr-only"
+        id={props.id}
+        checked={isChecked()}
+        disabled={disabled()}
+        onChange={handleChange}
+      />
       <div
         class={style({
           key: 'channelSwitchThumb',

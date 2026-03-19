@@ -18,7 +18,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 
-import { JobsService, SubscribersService, UserSession } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import getPort from 'get-port';
@@ -31,11 +31,7 @@ type Context = { name: string; isStateful: boolean };
 const contexts: Context[] = [{ name: 'stateful', isStateful: true }];
 
 contexts.forEach((context: Context) => {
-  /**
-   * For some reason, the bridge trigger is very flaky in setting up the test server,
-   * It's not clear why, but it's causing the tests to fail.
-   */
-  describe.skip('Self-Hosted Bridge Trigger #novu-v2', async () => {
+  describe('Self-Hosted Bridge Trigger #novu-v2', async () => {
     let session: UserSession;
     let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
@@ -1678,7 +1674,7 @@ contexts.forEach((context: Context) => {
           transactionId: transactionIdNoSkip,
           type: StepTypeEnum.DELAY,
         });
-        expect(delayJobNoSkip?.status).to.equal(JobStatusEnum.COMPLETED, 'Scenario 1: Delay job should be COMPLETED');
+        expect(delayJobNoSkip?.status).to.equal(JobStatusEnum.SKIPPED, 'Scenario 1: Delay job should be SKIPPED');
 
         const failedExecDetailsNoSkip = await executionDetailsRepository.find({
           _environmentId: session.environment._id,
@@ -1951,16 +1947,6 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
   });
 
   it('should execute a Novu-managed workflow', async () => {
-    // Log current Redis jobs count before starting the test
-    const jobsService = new JobsService();
-    let currentMetrics = await (jobsService as any).getQueueMetrics();
-    console.log(
-      `[Test] Starting 'should execute a Novu-managed workflow' - Current Redis jobs count: ${currentMetrics.totalCount}`
-    );
-    console.log(
-      `[Test] Queue breakdown - Workflow: ${currentMetrics.activeWorkflowJobsCount + currentMetrics.waitingWorkflowJobsCount}, Subscriber: ${currentMetrics.activeSubscriberJobsCount + currentMetrics.waitingSubscriberJobsCount}, Standard: ${currentMetrics.activeStandardJobsCount + currentMetrics.waitingStandardJobsCount}`
-    );
-
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
       active: true,
@@ -1992,10 +1978,6 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     const responseData = response.body.data as WorkflowResponseDto;
 
     await triggerEvent(session, responseData.workflowId, subscriber._id, {});
-    currentMetrics = await (jobsService as any).getQueueMetrics();
-    console.log(
-      `[Test] Queue breakdown - Workflow: ${currentMetrics.activeWorkflowJobsCount + currentMetrics.waitingWorkflowJobsCount}, Subscriber: ${currentMetrics.activeSubscriberJobsCount + currentMetrics.waitingSubscriberJobsCount}, Standard: ${currentMetrics.activeStandardJobsCount + currentMetrics.waitingStandardJobsCount}`
-    );
     await session.waitForJobCompletion();
 
     const sentMessages = await messageRepository.find({
@@ -2006,6 +1988,141 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     });
 
     expect(sentMessages.length).to.be.eq(2);
+  });
+
+  it('should render control values with payload containing double quotes', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      active: true,
+      name: 'Test Quotes Workflow',
+      description: 'Test Workflow with Quotes',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-quotes-workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: '{{payload.title}}',
+            body: '{{payload.body}}',
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
+    expect(response.status).to.be.eq(201);
+
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    const payloadWithQuotes = {
+      title: 'Test message with "quotes"',
+      body: 'This content has "double quotes" and "special characters" in the text',
+    };
+
+    await triggerEvent(session, responseData.workflowId, subscriber._id, payloadWithQuotes);
+    await session.waitForJobCompletion();
+
+    const sentMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      templateIdentifier: responseData.workflowId,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(sentMessages.length).to.be.eq(1);
+    expect(sentMessages[0].subject).to.equal('Test message with "quotes"');
+    expect(sentMessages[0].content).to.include('"double quotes"');
+    expect(sentMessages[0].content).to.include('"special characters"');
+  });
+
+  it('should handle empty body with non-empty subject in in-app step', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      active: true,
+      name: 'Test Empty Body Workflow',
+      description: 'Test Workflow with Empty Body',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-empty-body-workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: '{{payload.title}}',
+            body: '{{payload.body}}',
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
+    expect(response.status).to.be.eq(201);
+
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    const payloadWithEmptyBody = {
+      title: 'Test Subject',
+      body: '',
+    };
+
+    await triggerEvent(session, responseData.workflowId, subscriber._id, payloadWithEmptyBody);
+    await session.waitForJobCompletion();
+
+    const sentMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      templateIdentifier: responseData.workflowId,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(sentMessages.length).to.be.eq(1);
+    expect(sentMessages[0].subject).to.equal('Test Subject');
+  });
+
+  it('should handle empty subject with non-empty body in in-app step', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      active: true,
+      name: 'Test Empty Subject Workflow',
+      description: 'Test Workflow with Empty Subject',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-empty-subject-workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: '{{payload.title}}',
+            body: '{{payload.body}}',
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
+    expect(response.status).to.be.eq(201);
+
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    const payloadWithEmptySubject = {
+      title: '',
+      body: 'This is the message body',
+    };
+
+    await triggerEvent(session, responseData.workflowId, subscriber._id, payloadWithEmptySubject);
+    await session.waitForJobCompletion();
+
+    const sentMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      templateIdentifier: responseData.workflowId,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(sentMessages.length).to.be.eq(1);
+    expect(sentMessages[0].subject).to.be.undefined;
+    expect(sentMessages[0].content).to.equal('This is the message body');
   });
 });
 

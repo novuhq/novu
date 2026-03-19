@@ -1,10 +1,10 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { formatDistanceToNow } from 'date-fns';
-import { forwardRef, useCallback, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line, RiSettings4Line } from 'react-icons/ri';
 import { useBlocker, useNavigate } from 'react-router-dom';
@@ -74,19 +74,26 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
     const isReadOnly =
       layout?.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
-    const form = useForm<LayoutSettingsFormData>({
-      resolver: zodResolver(layoutSchema),
+    const form = useForm({
+      resolver: standardSchemaResolver(layoutSchema),
       defaultValues: {
         name: layout?.name || '',
         layoutId: layout?.layoutId || '',
         isTranslationEnabled: layout?.isTranslationEnabled || false,
       },
-      values: {
-        name: layout?.name || '',
-        layoutId: layout?.layoutId || '',
-        isTranslationEnabled: layout?.isTranslationEnabled || false,
-      },
     });
+
+    const wasOpenRef = useRef(false);
+    useEffect(() => {
+      if (isOpen && !wasOpenRef.current && layout) {
+        form.reset({
+          name: layout.name || '',
+          layoutId: layout.layoutId || '',
+          isTranslationEnabled: layout.isTranslationEnabled || false,
+        });
+      }
+      wasOpenRef.current = isOpen;
+    }, [isOpen, layout, form]);
 
     const hasUnsavedChanges = form.formState.isDirty;
 
@@ -105,7 +112,12 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
     });
 
     const { updateLayout, isPending: isUpdating } = useUpdateLayout({
-      onSuccess: () => {
+      onSuccess: (data) => {
+        form.reset({
+          name: data.name || '',
+          layoutId: data.layoutId || '',
+          isTranslationEnabled: data.isTranslationEnabled || false,
+        });
         showSuccessToast('Layout updated successfully', '', toastOptions);
         onOpenChange(false);
       },
@@ -240,7 +252,10 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
                 id="layout-settings"
                 autoComplete="off"
                 noValidate
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={(e) => {
+                  e.stopPropagation();
+                  form.handleSubmit(onSubmit)(e);
+                }}
                 className="flex h-full flex-col"
               >
                 <VisuallyHidden>
@@ -297,7 +312,7 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
                     name="isTranslationEnabled"
                     render={({ field }) => (
                       <TranslationToggleSection
-                        value={field.value}
+                        value={field.value ?? false}
                         onChange={field.onChange}
                         isReadOnly={isReadOnly}
                         resourceId={layout?.layoutId}

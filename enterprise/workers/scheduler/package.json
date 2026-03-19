@@ -1,0 +1,24 @@
+{
+  "name": "scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev --config wrangler.local.jsonc",
+    "start": "wrangler dev --config wrangler.local.jsonc",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@hono/valibot-validator": "^0.6.0",
+    "hono": "^4.10.8",
+    "ky": "^1.14.1",
+    "valibot": "^1.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.12.7",
+    "typescript": "^5.5.2",
+    "vitest": "~3.2.0",
+    "wrangler": "^4.49.0"
+  }
+}

@@ -5,28 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { workflowsStepsRetrieve } from "../funcs/workflowsStepsRetrieve.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type WorkflowsStepsRetrieveQueryData =
-  operations.WorkflowControllerGetWorkflowStepDataResponse;
+import {
+  buildWorkflowsStepsRetrieveQuery,
+  prefetchWorkflowsStepsRetrieve,
+  queryKeyWorkflowsStepsRetrieve,
+  WorkflowsStepsRetrieveQueryData,
+} from "./workflowsStepsRetrieve.core.js";
+export {
+  buildWorkflowsStepsRetrieveQuery,
+  prefetchWorkflowsStepsRetrieve,
+  queryKeyWorkflowsStepsRetrieve,
+  type WorkflowsStepsRetrieveQueryData,
+};
 
 /**
  * Retrieve workflow step
@@ -78,23 +79,6 @@ export function useWorkflowsStepsRetrieveSuspense(
   });
 }
 
-export function prefetchWorkflowsStepsRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  workflowId: string,
-  stepId: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildWorkflowsStepsRetrieveQuery(
-      client$,
-      workflowId,
-      stepId,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setWorkflowsStepsRetrieveData(
   client: QueryClient,
   queryKeyBase: [
@@ -134,48 +118,4 @@ export function invalidateAllWorkflowsStepsRetrieve(
     ...filters,
     queryKey: ["@novu/api", "Steps", "retrieve"],
   });
-}
-
-export function buildWorkflowsStepsRetrieveQuery(
-  client$: NovuCore,
-  workflowId: string,
-  stepId: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<WorkflowsStepsRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyWorkflowsStepsRetrieve(workflowId, stepId, {
-      idempotencyKey,
-    }),
-    queryFn: async function workflowsStepsRetrieveQueryFn(
-      ctx,
-    ): Promise<WorkflowsStepsRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(workflowsStepsRetrieve(
-        client$,
-        workflowId,
-        stepId,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyWorkflowsStepsRetrieve(
-  workflowId: string,
-  stepId: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Steps", "retrieve", workflowId, stepId, parameters];
 }

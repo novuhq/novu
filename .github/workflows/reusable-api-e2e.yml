@@ -8,14 +8,18 @@ on:
   workflow_call:
     inputs:
       ee:
-        description: 'use the ee version of api'
+        description: "use the ee version of api"
         required: false
         default: false
         type: boolean
 
 jobs:
   e2e_api:
-    name: Test E2E
+    name: Test E2E (Shard ${{ matrix.shard }}/${{ matrix.total }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(inputs.ee && '[{"shard":1,"total":4},{"shard":2,"total":4},{"shard":3,"total":4},{"shard":4,"total":4}]' || '[{"shard":1,"total":1}]') }}
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     permissions:
@@ -45,6 +49,8 @@ jobs:
         name: Start localstack
 
       - name: Build API & Worker
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: CI='' pnpm nx run-many --target=build --all --projects=@novu/api-service,@novu/worker
 
       - name: Start Worker
@@ -54,8 +60,8 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
           NEW_RELIC_ENABLED: true
         run: |
-          # Start the worker service in the background
-          cd apps/worker && LOG_LEVEL=debug npm run start:test &
+          # Start the worker service using pre-built code for deterministic startup
+          cd apps/worker && NODE_ENV=test LOG_LEVEL=warn node dist/main.js &
 
       - name: Wait on worker
         shell: bash
@@ -69,6 +75,10 @@ jobs:
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
+        env:
+          NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
+          NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
+          NOVU_V2_MOCHA_REPORTER: dot
         run: |
           set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2

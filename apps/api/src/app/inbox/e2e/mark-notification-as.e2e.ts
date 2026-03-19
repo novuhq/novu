@@ -133,7 +133,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
 
   it('should update the read status', async () => {
     const { body, status } = await updateNotification({ id: message._id, status: 'read' });
-    const updatedMessage = (await messageRepository.findOne({
+    const updatedMessage = (await messageRepository.findOneForInbox({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
       _templateId: template._id,
@@ -158,7 +158,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
 
     const { body, status } = await updateNotification({ id: message._id, status: 'unread' });
 
-    const updatedMessage = (await messageRepository.findOne({
+    const updatedMessage = (await messageRepository.findOneForInbox({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
       _templateId: template._id,
@@ -177,7 +177,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
   it('should update the archived status', async () => {
     const { body, status } = await updateNotification({ id: message._id, status: 'archive' });
 
-    const updatedMessage = (await messageRepository.findOne({
+    const updatedMessage = (await messageRepository.findOneForInbox({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
       _templateId: template._id,
@@ -202,7 +202,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
 
     const { body, status } = await updateNotification({ id: message._id, status: 'unarchive' });
 
-    const updatedMessage = (await messageRepository.findOne({
+    const updatedMessage = (await messageRepository.findOneForInbox({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
       _templateId: template._id,
@@ -226,7 +226,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
       body: { snoozeUntil },
     });
 
-    const updatedMessage = (await messageRepository.findOne({
+    const updatedMessage = (await messageRepository.findOneForInbox({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
       _templateId: template._id,
@@ -254,7 +254,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     // Then unsnooze it
     const { body, status } = await updateNotification({ id: message._id, status: 'unsnooze' });
 
-    const updatedMessage = (await messageRepository.findOne({
+    const updatedMessage = (await messageRepository.findOneForInbox({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
       _templateId: template._id,
@@ -266,5 +266,25 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
     expect(body.data.isSnoozed).to.be.false;
     expect(body.data.snoozedUntil).to.be.undefined;
+  });
+
+  it('should return workflow and to fields populated', async () => {
+    const { body, status } = await updateNotification({ id: message._id, status: 'read' });
+
+    expect(status).to.equal(200);
+    expect(body.data.workflow).to.exist;
+    expect(body.data.workflow.id).to.equal(String(template._id));
+    expect(body.data.workflow.identifier).to.equal(template.triggers?.[0]?.identifier);
+    expect(body.data.workflow.name).to.equal(template.name);
+    expect(body.data.workflow.critical).to.equal(template.critical);
+    expect(body.data.workflow.tags).to.deep.equal(template.tags);
+    expect(body.data.workflow.severity).to.exist;
+
+    expect(body.data.to).to.exist;
+    expect(body.data.to.id).to.equal(subscriber?._id ? String(subscriber._id) : '');
+    expect(body.data.to.subscriberId).to.equal(subscriber?.subscriberId ?? '');
+    expect(body.data.to.firstName).to.equal(subscriber?.firstName);
+    expect(body.data.to.lastName).to.equal(subscriber?.lastName);
+    expect(body.data.to.avatar).to.equal(subscriber?.avatar);
   });
 });

@@ -1,6 +1,7 @@
 import type { IEnvironment } from '@novu/shared';
 import { Button } from '../primitives/button';
-import { Dialog, DialogContent } from '../primitives/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
+import { VisuallyHidden } from '../primitives/visually-hidden';
 
 type NoChangesModalProps = {
   isOpen: boolean;
@@ -12,6 +13,10 @@ export function NoChangesModal({ isOpen, onClose }: NoChangesModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md gap-4 p-3">
+        <VisuallyHidden>
+          <DialogTitle>No changes to publish</DialogTitle>
+          <DialogDescription>There are no workflows or layouts pending for publishing right now.</DialogDescription>
+        </VisuallyHidden>
         <div className="flex items-start justify-start">
           <svg width="116" height="44" viewBox="0 0 116 44" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="0.5" y="0.5" width="115" height="43" rx="7.5" stroke="#E1E4EA" strokeDasharray="5 3" />

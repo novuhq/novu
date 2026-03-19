@@ -1,6 +1,7 @@
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   buildGroupedBlueprintsKey,
+  computeWorkflowStatus,
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
   InvalidateCacheService,
@@ -26,7 +27,6 @@ import {
   IPreferenceChannels,
   PreferencesTypeEnum,
 } from '@novu/shared';
-import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { INotificationTemplateChangeService } from '../shared';

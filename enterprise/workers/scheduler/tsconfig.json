@@ -1,0 +1,45 @@
+{
+	"compilerOptions": {
+		/* Visit https://aka.ms/tsconfig.json to read more about this file */
+
+    /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+		"target": "es2021",
+    /* Specify a set of bundled library declaration files that describe the target runtime environment. */
+		"lib": ["es2021"],
+    /* Specify what JSX code is generated. */
+		"jsx": "react-jsx",
+
+    /* Specify what module code is generated. */
+		"module": "es2022",
+    /* Specify how TypeScript looks up a file from a given module specifier. */
+		"moduleResolution": "Bundler",
+    /* Enable importing .json files */
+		"resolveJsonModule": true,
+
+    /* Allow JavaScript files to be a part of your program. Use the `checkJS` option to get errors from these files. */
+		"allowJs": true,
+    /* Enable error reporting in type-checked JavaScript files. */
+		"checkJs": false,
+
+    /* Disable emitting files from a compilation. */
+		"noEmit": true,
+
+    /* Ensure that each file can be safely transpiled without relying on other imports. */
+		"isolatedModules": true,
+    /* Allow 'import x from y' when a module doesn't have a default export. */
+		"allowSyntheticDefaultImports": true,
+    /* Ensure that casing is correct in imports. */
+		"forceConsistentCasingInFileNames": true,
+
+    /* Enable all strict type-checking options. */
+		"strict": true,
+
+    /* Skip type checking all .d.ts files. */
+		"skipLibCheck": true,
+		"types": [
+			"./worker-configuration.d.ts"
+		]
+	},
+	"exclude": ["test"],
+	"include": ["worker-configuration.d.ts", "src/**/*.ts"]
+}

@@ -78,7 +78,7 @@ export const TranslationDrawer = forwardRef<HTMLDivElement, TranslationDrawerPro
           <SheetContent
             ref={ref}
             side="right"
-            className="w-[1100px] !max-w-none"
+            className="w-[1100px] max-w-none!"
             onInteractOutside={handleCloseAttempt}
             onEscapeKeyDown={handleCloseAttempt}
           >

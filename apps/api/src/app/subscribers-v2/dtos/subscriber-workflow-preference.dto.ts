@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 import { SubscriberPreferenceOverrideDto } from '../../subscribers/dtos';
@@ -22,4 +22,10 @@ export class SubscriberWorkflowPreferenceDto {
   @ApiProperty({ description: 'Workflow information', type: SubscriberPreferencesWorkflowInfoDto })
   @Type(() => SubscriberPreferencesWorkflowInfoDto)
   workflow: SubscriberPreferencesWorkflowInfoDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Timestamp when the subscriber last updated their preference. Only present if subscriber explicitly set preferences.',
+  })
+  updatedAt?: string;
 }

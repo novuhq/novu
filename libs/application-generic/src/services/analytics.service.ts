@@ -31,11 +31,17 @@ export class AnalyticsService {
     }
 
     if (process.env.MIXPANEL_TOKEN) {
-      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN);
+      const options: Mixpanel.InitConfig = {};
+
+      if (process.env.MIXPANEL_HOST) {
+        options.host = process.env.MIXPANEL_HOST;
+      }
+
+      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN, options);
     }
   }
 
-  upsertGroup(organizationId: string, organization: IOrganizationEntity, user?: IUser) {
+  upsertGroup(organizationId: string, organization: IOrganizationEntity, user?: Pick<IUser, '_id'>) {
     if (!this.segmentEnabled) {
       return;
     }
@@ -45,7 +51,6 @@ export class AnalyticsService {
       id: organizationId,
       name: organization.name,
       createdAt: this.convertToIsoDate(organization.createdAt),
-      domain: organization.domain || user?.email?.split('@')[1] || '',
     };
 
     if (organization.productUseCases) {

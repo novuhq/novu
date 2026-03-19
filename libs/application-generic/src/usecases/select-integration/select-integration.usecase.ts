@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { CachedQuery } from '../../services/cache/interceptors/cached-query.interceptor';
-import { buildIntegrationKey } from '../../services/cache/key-builders/queries';
 import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
@@ -19,13 +17,6 @@ export class SelectIntegration {
   ) {}
 
   @InstrumentUsecase()
-  @CachedQuery({
-    builder: ({ organizationId, ...command }: SelectIntegrationCommand) =>
-      buildIntegrationKey().cache({
-        _organizationId: organizationId,
-        ...command,
-      }),
-  })
   async execute(command: SelectIntegrationCommand): Promise<IntegrationEntity | undefined> {
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(command);
 

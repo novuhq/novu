@@ -17,7 +17,7 @@ export const ContextListBlank = () => {
       </div>
 
       <div className="flex items-center justify-center gap-6">
-        <Link to="https://docs.novu.co/platform/workflow/contexts" target="_blank">
+        <Link to="https://docs.novu.co/platform/workflow/advanced-features/contexts" target="_blank">
           <LinkButton variant="gray" trailingIcon={RiBookMarkedLine}>
             View Docs
           </LinkButton>

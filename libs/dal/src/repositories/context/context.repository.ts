@@ -26,7 +26,9 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
 
     const validPromises = findOrCreatePromises.filter((promise): promise is Promise<ContextEntity> => promise !== null);
 
-    return Promise.all(validPromises);
+    const contexts = await Promise.all(validPromises);
+
+    return contexts.sort((a, b) => a.key.localeCompare(b.key));
   }
 
   async findOrCreateContext(

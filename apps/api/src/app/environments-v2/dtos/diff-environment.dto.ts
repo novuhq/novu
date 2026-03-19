@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { DependencyReasonEnum, ResourceTypeEnum } from '../types/sync.types';
+import { DependencyReasonEnum, DiffActionEnum, ResourceTypeEnum } from '../types/sync.types';
 
 export class DiffEnvironmentRequestDto {
   @ApiPropertyOptional({
@@ -36,8 +36,8 @@ export class UserInfoDto {
 export class ResourceInfoDto {
   @ApiPropertyOptional({
     description: 'Resource ID (workflow ID or step ID)',
+    type: 'string',
     nullable: true,
-    example: 'welcome-email-workflow',
   })
   @IsOptional()
   @IsString()
@@ -45,8 +45,8 @@ export class ResourceInfoDto {
 
   @ApiPropertyOptional({
     description: 'Resource name (workflow name or step name)',
+    type: 'string',
     nullable: true,
-    example: 'Welcome Email Workflow',
   })
   @IsOptional()
   @IsString()
@@ -99,17 +99,17 @@ export class ResourceDiffDto {
     description: 'Type of resource',
     enum: [...Object.values(ResourceTypeEnum)],
     enumName: 'ResourceTypeEnum',
-    example: 'workflow',
   })
   @IsEnum(ResourceTypeEnum)
   resourceType: ResourceTypeEnum;
 
   @ApiProperty({
     description: 'Type of change',
-    enum: ['added', 'modified', 'deleted', 'unchanged', 'moved'],
+    enum: [...Object.values(DiffActionEnum)],
+    enumName: 'DiffActionEnum',
   })
-  @IsEnum(['added', 'modified', 'deleted', 'unchanged', 'moved'])
-  action: 'added' | 'modified' | 'deleted' | 'unchanged' | 'moved';
+  @IsEnum(DiffActionEnum)
+  action: DiffActionEnum;
 
   @ApiPropertyOptional({
     type: 'object',
@@ -174,28 +174,24 @@ export class ResourceDependencyDto {
     description: 'Type of dependent resource',
     enum: [...Object.values(ResourceTypeEnum)],
     enumName: 'ResourceTypeEnum',
-    example: 'layout',
   })
   @IsEnum(ResourceTypeEnum)
   resourceType: ResourceTypeEnum;
 
   @ApiProperty({
     description: 'ID of the dependent resource',
-    example: 'layout-id-123',
   })
   @IsString()
   resourceId: string;
 
   @ApiProperty({
     description: 'Name of the dependent resource',
-    example: 'Email Layout Template',
   })
   @IsString()
   resourceName: string;
 
   @ApiProperty({
     description: 'Whether this dependency blocks the operation',
-    example: true,
   })
   @IsBoolean()
   isBlocking: boolean;
@@ -204,7 +200,6 @@ export class ResourceDependencyDto {
     description: 'Reason for the dependency',
     enum: [...Object.values(DependencyReasonEnum)],
     enumName: 'DependencyReasonEnum',
-    example: 'LAYOUT_REQUIRED_FOR_WORKFLOW',
   })
   @IsEnum(DependencyReasonEnum)
   reason: DependencyReasonEnum;
@@ -215,7 +210,6 @@ export class ResourceDiffResultDto {
     description: 'Type of resource being compared',
     enum: [...Object.values(ResourceTypeEnum)],
     enumName: 'ResourceTypeEnum',
-    example: 'workflow',
   })
   @IsEnum(ResourceTypeEnum)
   resourceType: ResourceTypeEnum;

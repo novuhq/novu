@@ -5,7 +5,7 @@ import { STYLES } from '../styles';
 import { SizeType } from '../types';
 
 interface FilterInputProps {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
@@ -17,12 +17,12 @@ export function FilterInput({ inputRef, value, onChange, placeholder, size, show
   return (
     <div className="flex items-center gap-2 px-2 py-1">
       <InputPure
-        ref={inputRef}
+        ref={inputRef as React.RefObject<HTMLInputElement>}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         className={cn(
-          'w-full !border-none !shadow-none !ring-0',
+          'w-full border-none! shadow-none! ring-0!',
           STYLES.size[size].input,
           STYLES.input.base,
           STYLES.input.text

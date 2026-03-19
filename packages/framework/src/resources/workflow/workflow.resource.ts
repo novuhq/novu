@@ -161,6 +161,7 @@ export function workflow<
           throttleActionSchemas.result
         ),
         custom: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
+        httpRequest: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.HTTP_REQUEST),
       } as never,
     });
 

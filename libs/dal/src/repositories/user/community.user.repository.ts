@@ -18,8 +18,12 @@ export class CommunityUserRepository
     });
   }
 
-  async findById(id: string, select?: string): Promise<UserEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
+  async findById(
+    id: string,
+    select?: string,
+    options?: { readPreference?: 'secondaryPreferred' | 'primary' }
+  ): Promise<UserEntity | null> {
+    const data = await this.MongooseModel.findById(id, select).read(options?.readPreference || 'primary');
     if (!data) return null;
 
     return this.mapEntity(data.toObject());

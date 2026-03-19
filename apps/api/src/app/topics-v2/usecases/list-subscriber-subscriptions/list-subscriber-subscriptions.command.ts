@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class ListSubscriberSubscriptionsCommand extends EnvironmentCommand {
@@ -9,6 +9,11 @@ export class ListSubscriberSubscriptionsCommand extends EnvironmentCommand {
   @IsString()
   @IsOptional()
   topicKey?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @IsOptional()
   limit?: number;

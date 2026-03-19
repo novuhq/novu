@@ -1,5 +1,5 @@
 import { DynamicModule, Module, OnApplicationShutdown, Provider } from '@nestjs/common';
-import { MessageRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, MessageRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { featureFlagsService } from '../custom-providers';
 import {
@@ -10,7 +10,13 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { ReadinessService, SocketWorkerService, WorkflowInMemoryProviderService } from '../services';
+import {
+  CloudflareSchedulerService,
+  ReadinessService,
+  SocketWorkerService,
+  SqsService,
+  WorkflowInMemoryProviderService,
+} from '../services';
 import {
   ActiveJobsMetricQueueService,
   InboundParseQueueService,
@@ -33,7 +39,12 @@ const memoryQueueService = {
 };
 
 const INTERNAL_MODULE_PROVIDERS = [memoryQueueService, featureFlagsService];
-const BASE_PROVIDERS: Provider[] = [ReadinessService];
+const BASE_PROVIDERS: Provider[] = [
+  ReadinessService,
+  CloudflareSchedulerService,
+  CommunityOrganizationRepository,
+  SqsService,
+];
 
 @Module({
   providers: [],

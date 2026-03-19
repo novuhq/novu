@@ -51,7 +51,7 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
         leadingIcon={RiDeleteBin2Line}
         onClick={onRemove}
         aria-label="Delete property"
-        className={cn('border-1 !ml-1.5 h-7 w-7 border-neutral-200')}
+        className={cn('border ml-1.5! h-7 w-7 border-neutral-200')}
       />
     </div>
   );

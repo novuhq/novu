@@ -17,6 +17,7 @@ import {
 } from '@novu/api/models/components';
 import { ErrorDto } from '@novu/api/models/errors';
 import { WorkflowResponseDto } from '@novu/api/src/models/components';
+import { buildSlug, JSONSchemaDto } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -30,8 +31,6 @@ import {
 import { UserSession } from '@novu/testing';
 import chai, { expect } from 'chai';
 import chaiSubset from 'chai-subset';
-import { JSONSchemaDto } from '../shared/dtos/json-schema.dto';
-import { buildSlug } from '../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
@@ -246,6 +245,67 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       expect(workflowCreated).to.be.ok;
       expect(workflowCreated.validatePayload).to.be.false;
+    });
+
+    it('should create workflow with skip condition on a step using payload variable', async () => {
+      const skipCondition = {
+        '!=': [{ var: 'payload.skipStep' }, 'true'],
+      };
+
+      const steps = [
+        buildEmailStep({
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+            disableOutputSanitization: false,
+            skip: skipCondition,
+          },
+        }),
+        buildInAppStep({
+          controlValues: {
+            body: 'In-App Body',
+          },
+        }),
+      ];
+
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          skipStep: { type: 'string' },
+        },
+        required: ['skipStep'],
+        additionalProperties: false,
+      };
+
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        name: `Skip Logic Workflow ${new Date().toISOString()}`,
+        steps: steps as any,
+        payloadSchema,
+      });
+
+      const workflow = await createWorkflow(apiClient, createWorkflowDto);
+
+      expect(workflow).to.be.ok;
+      expect(workflow.steps).to.have.lengthOf(2);
+      expect(Object.keys(workflow.issues || {}).length).to.equal(0);
+
+      const emailStep = workflow.steps[0] as EmailStepResponseDto;
+      expect(emailStep.type).to.equal('email');
+      expect(emailStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(emailStep.controls.values.subject).to.equal('Test Email Subject');
+
+      const inAppStep = workflow.steps[1] as InAppStepResponseDto;
+      expect(inAppStep.type).to.equal('in_app');
+      expect(inAppStep.controls.values.skip).to.be.undefined;
+
+      const retrievedWorkflow = await getWorkflow(workflow.id);
+      const retrievedEmailStep = retrievedWorkflow.steps[0] as EmailStepResponseDto;
+      expect(retrievedEmailStep.controls.values.skip).to.deep.equal(skipCondition);
+
+      const retrievedInAppStep = retrievedWorkflow.steps[1] as InAppStepResponseDto;
+      expect(retrievedInAppStep.controls.values.skip).to.be.undefined;
+
+      expect(retrievedWorkflow.payloadSchema).to.deep.equal(payloadSchema);
     });
 
     it('should reject workflow creation with invalid JSON schema', async () => {
@@ -501,6 +561,42 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       return { workflowV2Id, workflowId, name: listWorkflowResponse.workflows[0].name };
     }
 
+    it('should filter workflows by a single tag', async () => {
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Tagged Workflow 1', tags: ['ai'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Tagged Workflow 2', tags: ['ai', 'ml'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Untagged Workflow', tags: ['other'] }));
+
+      const res = await apiClient.workflows.list({ tags: ['ai'] });
+      expect(res.result.totalCount).to.equal(2);
+      expect(res.result.workflows).to.have.lengthOf(2);
+      const names = res.result.workflows.map((w) => w.name);
+      expect(names).to.include('Tagged Workflow 1');
+      expect(names).to.include('Tagged Workflow 2');
+    });
+
+    it('should filter workflows by multiple tags', async () => {
+      await createWorkflow(apiClient, buildWorkflow({ name: 'AI Workflow', tags: ['ai'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'ML Workflow', tags: ['ml'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Both Tags Workflow', tags: ['ai', 'ml'] }));
+      await createWorkflow(apiClient, buildWorkflow({ name: 'No Match Workflow', tags: ['other'] }));
+
+      const res = await apiClient.workflows.list({ tags: ['ai', 'ml'] });
+      expect(res.result.totalCount).to.equal(3);
+      expect(res.result.workflows).to.have.lengthOf(3);
+      const names = res.result.workflows.map((w) => w.name);
+      expect(names).to.include('AI Workflow');
+      expect(names).to.include('ML Workflow');
+      expect(names).to.include('Both Tags Workflow');
+    });
+
+    it('should return empty results when filtering by non-existent tag', async () => {
+      await createWorkflow(apiClient, buildWorkflow({ name: 'Some Workflow', tags: ['existing'] }));
+
+      const res = await apiClient.workflows.list({ tags: ['non-existent'] });
+      expect(res.result.totalCount).to.equal(0);
+      expect(res.result.workflows).to.have.lengthOf(0);
+    });
+
     it('old list endpoint should not retrieve the new workflow', async () => {
       const { workflowV2Id, name } = await getV2WorkflowIdAndExternalId('Test Workflow');
       const [, , workflowV0Created] = await Promise.all([
@@ -696,9 +792,22 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(error?.message).to.equal('Cannot sync workflow to the same environment');
     });
 
-    it('should throw an error if the workflow to promote is not found', async () => {
+    it('should throw an error if the target environment is not found', async () => {
       const { error } = await expectSdkExceptionGeneric(() =>
         apiClient.workflows.sync({ targetEnvironmentId: '123' }, '123')
+      );
+
+      expect(error?.statusCode).to.equal(404);
+      expect(error?.message).to.equal('Environment 123 not found');
+    });
+
+    it('should throw an error if the workflow to promote is not found', async () => {
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const { error } = await expectSdkExceptionGeneric(() =>
+        apiClient.workflows.sync({ targetEnvironmentId: prodEnvironmentId }, '123')
       );
 
       expect(error?.statusCode).to.equal(404);
@@ -786,6 +895,37 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(res.error!.statusCode).to.equal(404);
       expect(res.error!.message).to.contain('Workflow');
       expect(res.error!.ctx?.workflowId).to.contain('123');
+    });
+
+    it('should duplicate a workflow with payloadSchema, validatePayload, and severity', async () => {
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          email: { type: 'string' },
+        },
+        required: ['name'],
+      };
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        name: 'Test Workflow with Schema',
+        payloadSchema,
+        validatePayload: true,
+      });
+      const workflowCreated = await createWorkflow(apiClient, createWorkflowDto);
+
+      const duplicatedWorkflow = (
+        await apiClient.workflows.duplicate(
+          {
+            name: 'Duplicated Workflow with Schema',
+          },
+          workflowCreated.id
+        )
+      ).result;
+
+      expect(duplicatedWorkflow?.id).to.not.equal(workflowCreated.id);
+      expect(duplicatedWorkflow?.payloadSchema).to.deep.equal(payloadSchema);
+      expect(duplicatedWorkflow?.validatePayload).to.equal(true);
+      expect(duplicatedWorkflow?.severity).to.equal(workflowCreated.severity);
     });
   });
 

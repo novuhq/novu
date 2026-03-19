@@ -35,6 +35,7 @@ export class GetInboxPreferences {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
+        contextKeys: command.contextKeys,
         includeInactiveChannels: false,
         subscriber,
       })
@@ -56,6 +57,7 @@ export class GetInboxPreferences {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
+        contextKeys: command.contextKeys,
         tags: command.tags,
         severity,
         subscriber,

@@ -33,7 +33,7 @@ export type InteractionChartData = {
 
 export type WorkflowRunsChartData = {
   date: string;
-  processing: number;
+  processing?: number;
   completed: number;
   error: number;
   timestamp: string;

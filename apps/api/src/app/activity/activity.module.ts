@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { WorkflowRunService } from '@novu/application-generic';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
 import { BuildActiveSubscribersChart } from './usecases/build-active-subscribers-chart/build-active-subscribers-chart.usecase';
@@ -18,7 +19,6 @@ import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
-import { WorkflowRunService } from '@novu/application-generic';
 
 const USE_CASES = [
   GetRequests,

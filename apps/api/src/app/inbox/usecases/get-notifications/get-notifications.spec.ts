@@ -132,6 +132,8 @@ describe('GetNotifications', () => {
       snoozed: command.snoozed,
       severity: command.severity,
       seen: command.seen,
+      createdGte: command.createdGte,
+      createdLte: command.createdLte,
     });
     expect(result.hasMore).to.be.false;
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;

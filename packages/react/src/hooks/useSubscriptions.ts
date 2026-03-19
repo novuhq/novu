@@ -51,7 +51,7 @@ export const useSubscriptions = ({ topicKey, onSuccess, onError }: UseSubscripti
       }
       setIsFetching(true);
 
-      const response = await novu.subscriptions.list({ topicKey });
+      const response = await novu.subscriptions.list({ topicKey }, { refetch: options?.refetch });
 
       if (response.error) {
         setError(response.error);

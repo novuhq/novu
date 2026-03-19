@@ -1,3 +1,5 @@
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -37,4 +39,13 @@ export class CreateSubscriptionsCommand extends EnvironmentWithUserCommand {
   @IsArray()
   @IsOptional()
   preferences?: Array<GroupPreferenceFilterDto>;
+
+  @IsValidContextPayload({ maxCount: 5 })
+  @IsOptional()
+  context?: ContextPayload;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  contextKeys?: string[];
 }

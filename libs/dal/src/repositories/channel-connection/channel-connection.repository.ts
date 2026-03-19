@@ -11,16 +11,4 @@ export class ChannelConnectionRepository extends BaseRepository<
   constructor() {
     super(ChannelConnection, ChannelConnectionEntity);
   }
-
-  buildContextExactMatchQuery(contextKeys?: string[]) {
-    // empty array = no context, only match connections with no context
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return { contextKeys: [] };
-    }
-
-    // non-empty array = exact match filtering (order-insensitive)
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
-  }
 }

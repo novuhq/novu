@@ -116,6 +116,10 @@ export class GenerateSlackOauthUrl {
     const secret = await this.getEnvironmentApiKey(_environmentId);
     const signature = createHash(secret, payload);
 
+    if (!signature) {
+      throw new BadRequestException('Failed to create OAuth state signature');
+    }
+
     return Buffer.from(`${payload}.${signature}`).toString('base64url');
   }
 

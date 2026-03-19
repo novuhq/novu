@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsValidContextPayload } from '@novu/application-generic';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 import { IsArray, IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import { SLACK_DEFAULT_OAUTH_SCOPES } from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 
 export class GenerateChatOauthUrlRequestDto {
@@ -31,7 +30,9 @@ export class GenerateChatOauthUrlRequestDto {
 
   @ApiProperty({
     type: String,
-    description: 'Identifier of the channel connection that will be created',
+    description:
+      'Identifier of the channel connection that will be created. It is generated automatically if not provided.',
+    example: 'slack-connection-abc123',
   })
   @IsString()
   @IsOptional()

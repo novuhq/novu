@@ -4,10 +4,10 @@ import { DecodedJwt } from '.';
 import { createUserFromJwt, SelfHostedUser } from './user.types';
 
 export const UserContext = React.createContext<{
-  user: SelfHostedUser;
+  user: SelfHostedUser | null;
   isLoaded: boolean;
 }>({
-  user: createUserFromJwt(null),
+  user: null,
   isLoaded: false,
 });
 

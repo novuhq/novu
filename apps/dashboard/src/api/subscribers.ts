@@ -110,16 +110,28 @@ export const patchSubscriber = async ({
 export const getSubscriberPreferences = async ({
   environment,
   subscriberId,
+  contextKeys,
 }: {
   environment: IEnvironment;
   subscriberId: string;
+  contextKeys?: string[];
 }) => {
-  const { data } = await getV2<{ data: GetSubscriberPreferencesDto }>(
-    `/subscribers/${encodeURIComponent(subscriberId)}/preferences`,
-    {
-      environment,
+  const params = new URLSearchParams();
+
+  if (contextKeys !== undefined) {
+    if (contextKeys.length === 0) {
+      params.append('contextKeys', '');
+    } else {
+      for (const key of contextKeys) {
+        params.append('contextKeys', key);
+      }
     }
-  );
+  }
+
+  const url = `/subscribers/${encodeURIComponent(subscriberId)}/preferences${params.toString() ? `?${params}` : ''}`;
+  const { data } = await getV2<{ data: GetSubscriberPreferencesDto }>(url, {
+    environment,
+  });
 
   return data;
 };
@@ -172,6 +184,7 @@ export const getSubscriberSubscriptions = async ({
   orderBy,
   key,
   includeCursor,
+  contextKeys,
 }: {
   environment: IEnvironment;
   subscriberId: string;
@@ -182,6 +195,7 @@ export const getSubscriberSubscriptions = async ({
   orderBy?: string;
   key?: string;
   includeCursor?: boolean;
+  contextKeys?: string[];
 }) => {
   const params = new URLSearchParams({
     limit: limit.toString(),
@@ -192,6 +206,12 @@ export const getSubscriberSubscriptions = async ({
     ...(key && { key }),
     ...(includeCursor && { includeCursor: includeCursor.toString() }),
   });
+
+  if (contextKeys?.length) {
+    for (const contextKey of contextKeys) {
+      params.append('contextKeys', contextKey);
+    }
+  }
 
   const response = await getV2<ListTopicSubscriptionsResponse>(
     `/subscribers/${encodeURIComponent(subscriberId)}/subscriptions?${params}`,

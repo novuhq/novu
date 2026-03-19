@@ -5,31 +5,28 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { environmentsGetTags } from "../funcs/environmentsGetTags.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
-
-export type EnvironmentsGetTagsQueryData =
-  operations.EnvironmentsControllerGetEnvironmentTagsResponse;
+  buildEnvironmentsGetTagsQuery,
+  EnvironmentsGetTagsQueryData,
+  prefetchEnvironmentsGetTags,
+  queryKeyEnvironmentsGetTags,
+} from './environmentsGetTags.core.js';
+export {
+  buildEnvironmentsGetTagsQuery,
+  type EnvironmentsGetTagsQueryData,
+  prefetchEnvironmentsGetTags,
+  queryKeyEnvironmentsGetTags,
+};
 
 /**
- * Get environment tags
+ * List environment tags
  *
  * @remarks
  * Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.
@@ -37,22 +34,17 @@ export type EnvironmentsGetTagsQueryData =
 export function useEnvironmentsGetTags(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentsGetTagsQueryData>,
+  options?: QueryHookOptions<EnvironmentsGetTagsQueryData>
 ): UseQueryResult<EnvironmentsGetTagsQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
     ...options,
   });
 }
 
 /**
- * Get environment tags
+ * List environment tags
  *
  * @remarks
  * Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.
@@ -60,42 +52,19 @@ export function useEnvironmentsGetTags(
 export function useEnvironmentsGetTagsSuspense(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData>,
+  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData>
 ): UseSuspenseQueryResult<EnvironmentsGetTagsQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
     ...options,
-  });
-}
-
-export function prefetchEnvironmentsGetTags(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  environmentId: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client$,
-      environmentId,
-      idempotencyKey,
-    ),
   });
 }
 
 export function setEnvironmentsGetTagsData(
   client: QueryClient,
-  queryKeyBase: [
-    environmentId: string,
-    parameters: { idempotencyKey?: string | undefined },
-  ],
-  data: EnvironmentsGetTagsQueryData,
+  queryKeyBase: [environmentId: string, parameters: { idempotencyKey?: string | undefined }],
+  data: EnvironmentsGetTagsQueryData
 ): EnvironmentsGetTagsQueryData | undefined {
   const key = queryKeyEnvironmentsGetTags(...queryKeyBase);
 
@@ -104,62 +73,21 @@ export function setEnvironmentsGetTagsData(
 
 export function invalidateEnvironmentsGetTags(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<
-    [environmentId: string, parameters: { idempotencyKey?: string | undefined }]
-  >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  queryKeyBase: TupleToPrefixes<[environmentId: string, parameters: { idempotencyKey?: string | undefined }]>,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "getTags", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Environments', 'getTags', ...queryKeyBase],
   });
 }
 
 export function invalidateAllEnvironmentsGetTags(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "getTags"],
+    queryKey: ['@novu/api', 'Environments', 'getTags'],
   });
-}
-
-export function buildEnvironmentsGetTagsQuery(
-  client$: NovuCore,
-  environmentId: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<EnvironmentsGetTagsQueryData>;
-} {
-  return {
-    queryKey: queryKeyEnvironmentsGetTags(environmentId, { idempotencyKey }),
-    queryFn: async function environmentsGetTagsQueryFn(
-      ctx,
-    ): Promise<EnvironmentsGetTagsQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(environmentsGetTags(
-        client$,
-        environmentId,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyEnvironmentsGetTags(
-  environmentId: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Environments", "getTags", environmentId, parameters];
 }

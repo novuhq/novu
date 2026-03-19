@@ -160,3 +160,16 @@ export type MutationHookOptions<
     "mutationKey" | "mutationFn" | keyof RequestOptions
   >
   & RequestOptions;
+
+/**
+ * Removes non-serializable properties (functions and symbols) from a PageIterator for SSR hydration.
+ * React Server Components cannot serialize functions or Symbol properties across the server/client boundary.
+ */
+export function pageIteratorToJSON<T extends { "~next"?: unknown }>(
+  page: T,
+): T {
+  const { next: _, ...rest } = page as T & { next?: unknown };
+  // Symbol properties are copied by spread but can't be serialized for RSC
+  delete (rest as Record<symbol, unknown>)[Symbol.asyncIterator];
+  return rest as T;
+}

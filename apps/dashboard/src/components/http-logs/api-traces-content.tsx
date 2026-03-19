@@ -52,7 +52,7 @@ function formatRawData(rawData: string): string {
 function TraceEventSkeleton() {
   return (
     <div className="flex items-center gap-2 w-full h-6">
-      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-xs">
         <Skeleton className="h-4 w-4 rounded-full" />
       </div>
       <div className="flex-1">
@@ -77,7 +77,7 @@ function TraceEvent({ trace }: { trace: ApiTrace }) {
 
   return (
     <div className="flex items-center gap-2 w-full h-6">
-      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-xs">
         <StatusBadge variant="stroke" status={badgeStatus} className="h-4 w-4 border-0 px-0 ring-0">
           <StatusBadgeIcon as={StatusIcon} />
         </StatusBadge>

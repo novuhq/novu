@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { RulesLogic } from 'json-logic-js';
 import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
 import { WorkflowDto } from './workflow.dto';
 
@@ -43,4 +44,11 @@ export class GetPreferencesResponseDto {
   @ValidateNested()
   @Type(() => SubscriberPreferenceChannels)
   channels: SubscriberPreferenceChannels;
+
+  @ApiPropertyOptional({
+    description: 'Condition using JSON Logic rules',
+    nullable: true,
+  })
+  @IsOptional()
+  condition?: RulesLogic;
 }

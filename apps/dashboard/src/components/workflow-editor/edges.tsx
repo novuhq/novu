@@ -55,7 +55,7 @@ export function AddNodeEdge({
           style={style}
           d={edgePath}
           fill="none"
-          className="react-flow__edge-path"
+          className="react-flow__edge-path color-neutral-alpha-200"
           key={`${id}-path`}
         />
         <motion.path
@@ -64,7 +64,7 @@ export function AddNodeEdge({
           fill="none"
           strokeOpacity={0}
           strokeWidth={20}
-          className="react-flow__edge-interaction"
+          className="react-flow__edge-interaction color-neutral-alpha-200"
           key={`${id}-interaction`}
         />
       </AnimatePresence>
@@ -101,7 +101,7 @@ export function AddNodeEdge({
             className="nodrag nopan"
           >
             {!isReadOnly && !isAnyNodeDragging && (
-              <AddStepMenu onMenuItemClick={async (stepType) => addNode(data.addStepIndex, stepType)} />
+              <AddStepMenu onMenuItemClick={(selection) => addNode(data.addStepIndex, selection)} />
             )}
           </div>
         </EdgeLabelRenderer>
@@ -121,7 +121,7 @@ export const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: E
         style={style}
         d={edgePath}
         fill="none"
-        className="react-flow__edge-path"
+        className="react-flow__edge-path color-neutral-alpha-200"
         key={`${id}-path`}
       />
       <motion.path
@@ -132,7 +132,7 @@ export const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: E
         fill="none"
         strokeOpacity={0}
         strokeWidth={20}
-        className="react-flow__edge-interaction"
+        className="react-flow__edge-interaction color-neutral-alpha-200"
         key={`${id}-interaction`}
       />
     </AnimatePresence>

@@ -1,0 +1,165 @@
+name: Contributor Checks
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: ["next"]
+
+jobs:
+  # Only run if this is a community contribution (not team member)
+  check-contributor:
+    name: Check if community contribution
+    runs-on: ubuntu-latest
+    outputs:
+      is_community: ${{ steps.check.outputs.is_community }}
+    steps:
+      - name: Check if PR author is team member
+        id: check
+        run: |
+          author="${{ github.event.pull_request.user.login }}"
+          echo "Checking if $author is a team member..."
+
+          if [[ "$author" == *"[bot]" ]]; then
+            echo "is_community=false" >> $GITHUB_OUTPUT
+            echo "$author is a bot account - skipping contributor checks"
+            exit 0
+          fi
+
+          response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/collaborators/$author/permission")
+
+          permission=$(echo "$response" | jq -r '.permission // "none"')
+          echo "Permission level: $permission"
+
+          if [[ "$permission" == "admin" || "$permission" == "write" ]]; then
+            echo "is_community=false" >> $GITHUB_OUTPUT
+            echo "$author is a team member - skipping contributor checks"
+          else
+            echo "is_community=true" >> $GITHUB_OUTPUT
+            echo "$author is a community contributor - running contributor checks"
+          fi
+
+  contributor-install-build-lint:
+    name: Install, Build & Lint (No Submodules)
+    needs: [check-contributor]
+    if: needs.check-contributor.outputs.is_community == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NX_NO_CLOUD: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.16.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.1"
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Reset Nx cache
+        run: npx nx reset || true
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Report Success
+        if: success()
+        run: |
+          echo "✅ Contributor checks passed!"
+          echo "Your changes successfully build and lint without requiring private access."
+          echo "A maintainer will review your PR and run the full test suite."
+
+      - name: Report Failure
+        if: failure()
+        run: |
+          echo "❌ Contributor checks failed."
+          echo "Please review the errors above and fix any build or lint issues."
+          echo "If you believe this is related to missing enterprise packages, please mention it in your PR."
+
+  status-check:
+    name: Contributor Checks Status
+    needs: [check-contributor, contributor-install-build-lint]
+    if: always() && needs.check-contributor.outputs.is_community == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment on PR - Success
+        if: needs.contributor-install-build-lint.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: contributor-checks
+          message: |
+            ## ✅ Contributor Checks Passed!
+
+            Thank you for your contribution! Your changes have successfully passed our automated checks:
+
+            - ✅ **Build**: All packages compile successfully
+            - ✅ **Lint**: Code style and quality checks passed
+
+            ### Next Steps
+            A Novu team member will review your PR and run the full test suite, which includes:
+            - Unit tests for affected packages
+            - End-to-end tests
+            - Integration tests
+            - Enterprise feature compatibility
+
+            If you need to make additional changes, simply push to your branch and the checks will run again automatically.
+
+      - name: Comment on PR - Failure
+        if: needs.contributor-install-build-lint.result == 'failure'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: contributor-checks
+          message: |
+            ## ❌ Contributor Checks Failed
+
+            Thank you for your contribution! However, the automated checks found some issues that need to be addressed:
+
+            ### What Happened?
+            The build or lint checks failed. This usually means:
+            - **Build errors**: Code doesn't compile or has TypeScript errors
+            - **Lint errors**: Code style or quality issues detected
+
+            ### How to Fix
+            1. Review the failed check details above in the workflow run
+            2. Fix the issues locally by running:
+               ```bash
+               pnpm install
+               pnpm run lint
+               pnpm run build
+               ```
+            3. Commit and push your fixes - the checks will run again automatically
+
+            ### Need Help?
+            - Check the workflow logs above for detailed error messages
+            - If you believe this is related to missing enterprise packages, mention it in your PR description
+            - Feel free to ask questions in the PR comments or on our [Discord](https://discord.novu.co)
+
+      - name: Check build status
+        run: |
+          if [[ "${{ needs.contributor-install-build-lint.result }}" == "success" ]]; then
+            echo "✅ All contributor checks passed!"
+            exit 0
+          else
+            echo "❌ Contributor checks failed"
+            exit 1
+          fi

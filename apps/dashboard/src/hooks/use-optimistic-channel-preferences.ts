@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchSubscriberPreferences } from '@/api/subscribers';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { convertContextKeysToPayload } from '@/utils/context-variable-utils';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
@@ -10,12 +11,14 @@ type PatchSubscriberPreferencesParameters = OmitEnvironmentFromParameters<typeof
 
 type UseOptimisticChannelPreferencesProps = {
   subscriberId: string;
+  contextKeys?: string[];
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
 };
 
 export const useOptimisticChannelPreferences = ({
   subscriberId,
+  contextKeys,
   onSuccess,
   onError,
 }: UseOptimisticChannelPreferencesProps) => {
@@ -28,6 +31,7 @@ export const useOptimisticChannelPreferences = ({
     currentOrganization?._id,
     currentEnvironment?._id,
     subscriberId,
+    contextKeys,
   ];
 
   const { mutateAsync, isPending } = useMutation({
@@ -85,9 +89,11 @@ export const useOptimisticChannelPreferences = ({
   });
 
   const updateChannelPreferences = async (channels: PatchPreferenceChannelsDto, workflowId?: string) => {
+    const context = convertContextKeysToPayload(contextKeys);
+
     return mutateAsync({
       subscriberId,
-      preferences: { channels, workflowId },
+      preferences: { channels, workflowId, context },
     });
   };
 

@@ -1,11 +1,12 @@
 // useFormAutosave.ts
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { FieldValues, UseFormReturn } from 'react-hook-form';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useDebounce } from '@/hooks/use-debounce';
 
 const TEN_SECONDS = 10 * 1000;
+const FIVE_HUNDRED_MS = 500;
 
 type UseFormAutosaveProps<U extends Record<string, unknown>, T extends FieldValues = FieldValues> = {
   previousData: U;
@@ -21,6 +22,7 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
 }: UseFormAutosaveProps<U, T>) {
   const formRef = useDataRef(propsForm);
   const savePropsRef = useDataRef({ ...saveProps });
+  const lastSavedDataRef = useRef<string | null>(null);
 
   const onSave = useCallback(
     async (data: T, options?: { forceSubmit?: boolean; onSuccess?: () => void }) => {
@@ -39,6 +41,11 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
         return;
       }
 
+      const serializedData = JSON.stringify(data);
+      if (serializedData === lastSavedDataRef.current && !options?.forceSubmit) {
+        return;
+      }
+
       // manually trigger the validation of the form
       if (shouldClientValidate) {
         const isValid = await form.trigger();
@@ -49,16 +56,21 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       }
 
       const values = { ...previousData, ...data };
-      // reset the dirty fields right away because on slow networks the patch request might take a while
-      // so other blur/change events might trigger in the meantime
-      // we also send the invalid values to api and should keep the errors in the form
-      form.reset(values, { keepErrors: true });
-      save(values, { onSuccess: options?.onSuccess });
+      lastSavedDataRef.current = serializedData;
+      save(values, {
+        onSuccess: () => {
+          // Reset dirty state after successful save so that polling hooks (e.g. useStepResolverPolling)
+          // are not permanently blocked. keepValues: true avoids regenerating useFieldArray field IDs.
+          formRef.current.reset(values, { keepErrors: true, keepValues: true });
+          options?.onSuccess?.();
+        },
+      });
     },
     [formRef, savePropsRef]
   );
 
   const debouncedOnSave = useDebounce(onSave, TEN_SECONDS);
+  const shortDebouncedOnSave = useDebounce(onSave, FIVE_HUNDRED_MS);
 
   const onBlur = useCallback(
     (e: React.FocusEvent<HTMLFormElement, Element>) => {
@@ -70,9 +82,10 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
 
       // cancel the pending debounces for example on change events
       debouncedOnSave.cancel();
+      shortDebouncedOnSave.cancel();
       onSave(values);
     },
-    [formRef, onSave, debouncedOnSave]
+    [formRef, onSave, debouncedOnSave, shortDebouncedOnSave]
   );
 
   // flush the form updates right away
@@ -93,6 +106,18 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
     [formRef, onSave]
   );
 
+  // Debounced save for field array mutations (append/remove).
+  // Using a short debounce instead of saveForm() prevents the immediate
+  // save → API response → values change → form.reset() cycle that regenerates
+  // useFieldArray field IDs and causes row flicker.
+  const saveFormDebounced = useCallback(() => {
+    setTimeout(() => {
+      const form = formRef.current;
+      const values = form.getValues();
+      shortDebouncedOnSave(values);
+    }, 0);
+  }, [formRef, shortDebouncedOnSave]);
+
   useEffect(() => {
     const form = formRef.current;
 
@@ -107,5 +132,6 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
   return {
     onBlur,
     saveForm,
+    saveFormDebounced,
   };
 }

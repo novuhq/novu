@@ -18,7 +18,7 @@ type SelectedVariable = {
  * 3. Handles proper Liquid syntax maintenance
  * 4. Manages cursor position and editor state updates
  */
-export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (value: string) => void) {
+export function useVariables(viewRef: React.RefObject<EditorView | null>, onChange: (value: string) => void) {
   const [selectedVariable, setSelectedVariable] = useState<SelectedVariable | null>(null);
   const isUpdatingRef = useRef(false);
   const onChangeRef = useDataRef(onChange);
@@ -36,25 +36,27 @@ export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (va
         isUpdatingRef.current = true;
         const { from, to } = selectedVariable;
         const view = viewRef.current;
+        const docLength = view.state.doc.length;
+
+        if (from > docLength) return;
+
         const parsedVariable = parseVariable(newValue);
         let newVariableText = parsedVariable?.liquidVariable ?? '';
 
         if (!parsedVariable?.name) {
-          // if the value is empty, remove the variable
           newVariableText = '';
         }
 
-        // Calculate the actual end position including closing brackets
         const currentContent = view.state.doc.toString();
         const contentAfterFrom = currentContent.slice(from);
 
-        // If there are no next opening brackets, or they come after our closing brackets
         const closingBracketsPos = contentAfterFrom.indexOf('}}');
         const actualEnd = closingBracketsPos > -1 ? from + closingBracketsPos + 2 : to;
+        const clampedEnd = Math.min(actualEnd, docLength);
 
         const changes = {
           from,
-          to: actualEnd,
+          to: clampedEnd,
           insert: newVariableText,
         };
 
@@ -65,8 +67,7 @@ export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (va
 
         onChangeRef.current(view.state.doc.toString());
 
-        // Update the selected variable with new bounds
-        setSelectedVariable({ value: newValue, from, to: actualEnd });
+        setSelectedVariable({ value: newValue, from, to: clampedEnd });
       } finally {
         isUpdatingRef.current = false;
       }

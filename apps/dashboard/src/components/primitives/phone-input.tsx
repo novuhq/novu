@@ -13,10 +13,25 @@ type PhoneInputProps = Omit<React.ComponentProps<'input'>, 'onChange' | 'value' 
     onChange?: (value: RPNInput.Value) => void;
   };
 
+const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+
+function sanitizePhoneValue(value: RPNInput.Value | string | undefined): RPNInput.Value | undefined {
+  if (!value) return undefined;
+
+  const stripped = String(value).replace(/[\s\-()]/g, '');
+  const candidate = stripped.startsWith('+') ? stripped : `+${stripped}`;
+
+  if (E164_REGEX.test(candidate)) return candidate as RPNInput.Value;
+
+  return undefined;
+}
+
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwardRef<
   React.ElementRef<typeof RPNInput.default>,
   PhoneInputProps
->(({ className, onChange, ...props }, ref) => {
+>(({ className, onChange, value, ...props }, ref) => {
+  const sanitizedValue = sanitizePhoneValue(value);
+
   return (
     <RPNInput.default
       ref={ref}
@@ -25,16 +40,8 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwa
       countrySelectComponent={CountrySelect}
       inputComponent={InputComponent}
       smartCaret={false}
-      /**
-       * Handles the onChange event.
-       *
-       * react-phone-number-input might trigger the onChange event as undefined
-       * when a valid phone number is not entered. To prevent this,
-       * the value is coerced to an empty string.
-       *
-       * @param {E164Number | undefined} value - The entered value
-       */
-      onChange={(value) => onChange?.(value || ('' as RPNInput.Value))}
+      value={sanitizedValue}
+      onChange={(v) => onChange?.(v || ('' as RPNInput.Value))}
       international
       {...props}
     />
@@ -52,8 +59,8 @@ type CountrySelectProps = {
 };
 
 const CountrySelect = ({ disabled, value: selectedCountry, options: countryList, onChange }: CountrySelectProps) => {
-  const listRef = React.useRef<HTMLDivElement>(null);
-  const scrollId = React.useRef<ReturnType<typeof setTimeout>>();
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  const scrollId = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
     <Popover modal={false}>
@@ -78,8 +85,10 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
              * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
              */
             onValueChange={() => {
-              // clear pending scroll
-              clearTimeout(scrollId.current);
+              if (scrollId.current) {
+                // clear pending scroll
+                clearTimeout(scrollId.current);
+              }
 
               // the setTimeout is used to create a new task
               // this is to make sure that we don't scroll until the user is done typing

@@ -314,6 +314,7 @@ export class DeleteTopicSubscriptionsUsecase {
               updatedAt: subscriber.updatedAt,
             }
           : null,
+        contextKeys: subscription.contextKeys,
         createdAt: subscription.createdAt ?? new Date().toISOString(),
         updatedAt: subscription.updatedAt ?? new Date().toISOString(),
       };

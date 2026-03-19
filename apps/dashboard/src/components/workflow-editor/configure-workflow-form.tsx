@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   EnvironmentTypeEnum,
   MAX_DESCRIPTION_LENGTH,
@@ -153,7 +153,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     });
   };
 
-  const form = useForm<z.infer<typeof workflowSchema>>({
+  const form = useForm({
     defaultValues: {
       active: workflow.active,
       name: workflow.name,
@@ -162,7 +162,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
       tags: workflow.tags,
       isTranslationEnabled: workflow.isTranslationEnabled,
     },
-    resolver: zodResolver(workflowSchema),
+    resolver: standardSchemaResolver(workflowSchema),
     shouldFocusError: false,
   });
 

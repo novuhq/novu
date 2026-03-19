@@ -125,7 +125,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   /**
    * Send message to a specific user
    */
-  async sendToUser(userId: string, event: string, data: unknown, contextKeys?: string[]): Promise<void> {
+  async sendToUser(userId: string, event: string, data: unknown, contextKeys: string[]): Promise<void> {
     const userConnections = this.ctx.getWebSockets(`user:${userId}`);
 
     if (userConnections.length === 0) {
@@ -139,21 +139,13 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       timestamp: Date.now(),
     });
 
-    if (this.isFeatureFlagOff(contextKeys)) {
-      await this.broadcastToAllSockets(userId, message, userConnections);
-    } else {
-      await this.sendToMatchingContexts(userId, message, contextKeys, userConnections);
-    }
+    await this.sendToMatchingContexts(userId, message, contextKeys, userConnections);
   }
 
   /**
    * Context matching logic (same as ws.gateway.ts)
    */
-  private isExactMatch(messageContextKeys: string[], inboxContextKeys?: string[]): boolean {
-    if (inboxContextKeys === undefined) {
-      return true;
-    }
-
+  private isExactMatch(messageContextKeys: string[], inboxContextKeys: string[]): boolean {
     if (messageContextKeys.length === 0) {
       return inboxContextKeys.length === 0;
     }
@@ -291,11 +283,11 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     }
   }
 
-  private extractContextKeysFromHeader(request: Request): string[] | undefined {
+  private extractContextKeysFromHeader(request: Request): string[] {
     const contextKeysHeader = request.headers.get('X-Context-Keys');
 
-    if (!contextKeysHeader) {
-      return undefined;
+    if (!contextKeysHeader || contextKeysHeader === '') {
+      return [];
     }
 
     try {
@@ -303,46 +295,19 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     } catch (e) {
       console.error('Failed to parse contextKeys:', e);
 
-      return undefined;
+      return [];
     }
   }
 
   /**
-   * Check if feature flag is OFF (contextKeys is undefined)
-   */
-  private isFeatureFlagOff(contextKeys?: string[]): boolean {
-    return contextKeys === undefined;
-  }
-
-  /**
-   * Broadcast message to all user connections (FF OFF behavior)
-   */
-  private async broadcastToAllSockets(userId: string, message: string, sockets: WebSocket[]): Promise<void> {
-    const sendPromises = sockets.map(async (ws) => {
-      try {
-        ws.send(message);
-      } catch (error) {
-        console.error(`Failed to send message to user ${userId}:`, error);
-        throw error;
-      }
-    });
-
-    await Promise.allSettled(sendPromises);
-  }
-
-  /**
-   * Send message only to sockets with matching contexts (FF ON behavior)
+   * Send message only to sockets with matching contexts
    */
   private async sendToMatchingContexts(
     userId: string,
     message: string,
-    messageContextKeys: string[] | undefined,
+    messageContextKeys: string[],
     sockets: WebSocket[]
   ): Promise<void> {
-    if (!messageContextKeys) {
-      return;
-    }
-
     const sendPromises = sockets.map(async (ws) => {
       const metadata = this.getConnectionMetadata(ws);
 
@@ -363,7 +328,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   /**
    * Determine if message should be delivered based on context match
    */
-  private shouldDeliverMessage(messageContextKeys: string[], inboxContextKeys?: string[]): boolean {
+  private shouldDeliverMessage(messageContextKeys: string[], inboxContextKeys: string[]): boolean {
     return this.isExactMatch(messageContextKeys, inboxContextKeys);
   }
 

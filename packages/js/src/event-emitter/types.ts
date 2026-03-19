@@ -1,4 +1,3 @@
-import { SubscriptionPreference } from 'src/subscriptions';
 import type {
   ArchivedArgs,
   CompleteArgs,
@@ -21,11 +20,13 @@ import { Schedule } from '../preferences/schedule';
 import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import type { TopicSubscription } from '../subscriptions/subscription';
+import { SubscriptionPreference } from '../subscriptions/subscription-preference';
 import type {
   CreateSubscriptionArgs,
   DeleteSubscriptionArgs,
   GetSubscriptionArgs,
   ListSubscriptionsArgs,
+  UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from '../subscriptions/types';
 import { Session, WebSocketEvent } from '../types';
@@ -96,7 +97,7 @@ type PreferenceScheduleUpdateEvents = BaseEvents<'preference.schedule.update', U
 type SubscriptionsFetchEvents = BaseEvents<'subscriptions.list', ListSubscriptionsArgs, TopicSubscription[]>;
 type SubscriptionGetEvents = BaseEvents<'subscription.get', GetSubscriptionArgs, TopicSubscription | null>;
 type SubscriptionCreateEvents = BaseEvents<'subscription.create', CreateSubscriptionArgs, TopicSubscription>;
-type SubscriptionUpdateEvents = BaseEvents<'subscription.update', void, TopicSubscription>;
+type SubscriptionUpdateEvents = BaseEvents<'subscription.update', UpdateSubscriptionArgs, TopicSubscription>;
 type SubscriptionPreferenceUpdateEvents = BaseEvents<
   'subscription.preference.update',
   UpdateSubscriptionPreferenceArgs,

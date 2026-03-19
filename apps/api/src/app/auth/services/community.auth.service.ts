@@ -196,7 +196,7 @@ export class CommunityAuthService implements IAuthService {
     };
   }
 
-  public async getSubscriberWidgetToken(subscriber: SubscriberEntity, contextKeys?: string[]): Promise<string> {
+  public async getSubscriberWidgetToken(subscriber: SubscriberEntity, contextKeys: string[]): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,

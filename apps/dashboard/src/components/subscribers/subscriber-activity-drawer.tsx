@@ -43,7 +43,7 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
         ref={ref}
         className={
           // to make the drawers stacking effect, we need to make sure the width is a bit smaller than the normal sidebar width
-          'w-3/4 sm:max-w-[540px] [&_[data-close-button="true"]]:hidden'
+          'w-3/4 sm:max-w-[540px] **:data-[close-button="true"]:hidden'
         }
       >
         <VisuallyHidden>

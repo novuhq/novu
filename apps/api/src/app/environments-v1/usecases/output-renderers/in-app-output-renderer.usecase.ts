@@ -43,8 +43,18 @@ export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     const { data, ...restOutputControls } = translatedControls;
 
+    const sanitized = sanitizeHtmlInObject(restOutputControls);
+
+    const { body, subject, ...otherSanitizedControls } = sanitized;
+
+    /**
+     * We need to remove the subject and body from the output if they are empty.
+     * Otherwise, the ajv anyOf validation will fail as it will try to make the minLength validation.
+     */
     return {
-      ...sanitizeHtmlInObject(restOutputControls),
+      ...otherSanitizedControls,
+      ...(subject && typeof subject === 'string' && subject.length > 0 ? { subject } : {}),
+      ...(body && typeof body === 'string' && body.length > 0 ? { body } : {}),
       ...(data ? { data } : {}),
     } as any;
   }

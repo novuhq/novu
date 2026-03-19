@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  buildFeedKey,
   buildMessageCountKey,
   EventType,
   InvalidateCacheService,
@@ -59,13 +58,6 @@ export class DeleteManyNotifications {
     });
 
     await this.invalidateCacheService.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: subscriber.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCacheService.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,
@@ -90,7 +82,7 @@ export class DeleteManyNotifications {
         event: WebSocketEventEnum.UNREAD,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
-        ...(command.contextKeys && { contextKeys: command.contextKeys }),
+        contextKeys: command.contextKeys ?? [],
       },
       groupId: subscriber._organizationId,
     });
@@ -209,13 +201,13 @@ function createTraceLog({
     event_type: eventType,
     title: mapEventTypeToTitle(eventType),
     message: `Message ${eventType.replace('message_', '')} for subscriber ${message._subscriberId}`,
-    raw_data: null,
+    raw_data: '',
     status: 'success',
-    entity_type: 'step_run',
     entity_id: message._jobId,
     step_run_type: message.channel as StepType,
     workflow_run_identifier: '',
     _notificationId: message._notificationId,
     workflow_id: message._templateId,
+    provider_id: '',
   };
 }

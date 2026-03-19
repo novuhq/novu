@@ -15,7 +15,7 @@ export const popoverContentVariants = cva(
     variants: {
       size: {
         inbox: 'nt-w-[400px] nt-h-[600px]',
-        subscription: 'nt-w-[400px] nt-h-auto',
+        subscription: 'nt-w-[350px] nt-h-auto',
       },
     },
     defaultVariants: {

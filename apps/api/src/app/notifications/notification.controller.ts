@@ -1,13 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
-import {
-  ChannelTypeEnum,
-  FeatureFlagsKeysEnum,
-  PermissionsEnum,
-  SeverityLevelEnum,
-  UserSessionData,
-} from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
+import { ChannelTypeEnum, PermissionsEnum, SeverityLevelEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -34,8 +28,7 @@ export class NotificationsController {
     private getActivityFeedUsecase: GetActivityFeed,
     private getActivityStatsUsecase: GetActivityStats,
     private getActivityGraphStatsUsecase: GetActivityGraphStats,
-    private getActivityUsecase: GetActivity,
-    private featureFlagsService: FeatureFlagsService
+    private getActivityUsecase: GetActivity
   ) {}
 
   @Get('')
@@ -85,17 +78,6 @@ export class NotificationsController {
       severityQuery = Array.isArray(query.severity) ? query.severity : [query.severity];
     }
 
-    // Check if context search is enabled via feature flag
-    const isContextEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      environment: { _id: user.environmentId },
-    });
-
-    const contextKeysQuery: string[] | undefined = isContextEnabled ? query.contextKeys : undefined;
-
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
         page: query.page,
@@ -110,10 +92,11 @@ export class NotificationsController {
         subscriberIds: subscribersQuery,
         transactionId: transactionIdQuery,
         topicKey: query.topicKey,
+        subscriptionId: query.subscriptionId,
         severity: severityQuery,
         after: query.after,
         before: query.before,
-        contextKeys: contextKeysQuery,
+        contextKeys: query.contextKeys,
       })
     );
   }

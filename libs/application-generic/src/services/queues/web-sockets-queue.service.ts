@@ -1,9 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
+import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
+import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
+import { SqsService } from '../sqs';
 import { QueueBaseService } from './queue-base.service';
 
 const LOG_CONTEXT = 'WebSocketsQueueService';
@@ -12,13 +16,25 @@ const LOG_CONTEXT = 'WebSocketsQueueService';
 export class WebSocketsQueueService extends QueueBaseService {
   constructor(
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private socketWorkerService: SocketWorkerService
+    private socketWorkerService: SocketWorkerService,
+    sqsService: SqsService,
+    featureFlagsService: FeatureFlagsService,
+    organizationRepository: CommunityOrganizationRepository,
+    logger: PinoLogger
   ) {
-    super(JobTopicNameEnum.WEB_SOCKETS, new BullMqService(workflowInMemoryProviderService));
+    super(
+      JobTopicNameEnum.WEB_SOCKETS,
+      new BullMqService(workflowInMemoryProviderService),
+      sqsService,
+      featureFlagsService,
+      organizationRepository,
+      logger
+    );
 
-    Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
+    Logger.log({ topic: this.topic }, 'Creating queue', LOG_CONTEXT);
 
     this.createQueue();
+    this.logger.setContext(LOG_CONTEXT);
   }
 
   public async add(data: IWebSocketJobDto) {
@@ -36,14 +52,23 @@ export class WebSocketsQueueService extends QueueBaseService {
         contextKeys,
       });
 
-      Logger.debug(`Sent message directly to socket worker for user ${userId}, event ${event}`, LOG_CONTEXT);
+      Logger.debug({ userId, event }, 'Sent message directly to socket worker', LOG_CONTEXT);
+
+      const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
+        data.data._environmentId,
+        data.data._organizationId
+      );
+      if (isLegacyWsDisabled) {
+        Logger.debug({ userId }, 'Legacy WS service is disabled, skipping queue push', LOG_CONTEXT);
+
+        return;
+      }
     }
 
     return await super.add(data);
   }
 
   public async addBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
-    // Check if socket worker is enabled using the first item's context
     const firstItem = data.find((item) => item.data);
     const isSocketWorkerEnabled = firstItem
       ? await this.socketWorkerService.isEnabled(firstItem.data?._environmentId)
@@ -68,7 +93,17 @@ export class WebSocketsQueueService extends QueueBaseService {
 
       await Promise.all(promises);
 
-      Logger.debug(`Sent ${data.length} messages directly to socket worker`, LOG_CONTEXT);
+      Logger.debug({ count: data.length }, 'Sent messages directly to socket worker', LOG_CONTEXT);
+
+      const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
+        firstItem?.data?._environmentId,
+        firstItem?.data?._organizationId
+      );
+      if (isLegacyWsDisabled) {
+        Logger.debug('Legacy WS service is disabled, skipping bulk queue push', LOG_CONTEXT);
+
+        return;
+      }
     }
 
     await super.addBulk(data);

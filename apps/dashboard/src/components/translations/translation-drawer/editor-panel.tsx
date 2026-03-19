@@ -90,7 +90,7 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           basicSetup={BASIC_SETUP}
           placeholder="Enter JSON content..."
           className={cn(
-            'flex-1 [&_.cm-scroller]:p-4 [&_div.cm-gutters]:bg-background [&_div.cm-gutters]:-translate-x-[16px] [&_div.cm-gutters]:pl-4 [&_div.cm-gutters]:-ml-4 [&_.cm-editor]:h-full rounded-lg [&_.cm-scroller]:!h-full [&_.cm-scroller]:overflow-auto [&_.cm-content]:max-w-[calc(100%-2rem)]',
+            'flex-1 [&_.cm-scroller]:p-4 [&_div.cm-gutters]:bg-background [&_div.cm-gutters]:-translate-x-[16px] [&_div.cm-gutters]:pl-4 [&_div.cm-gutters]:-ml-4 [&_.cm-editor]:h-full rounded-lg [&_.cm-scroller]:h-full! [&_.cm-scroller]:overflow-auto [&_.cm-content]:max-w-[calc(100%-2rem)]',
             error ? 'h-[calc(100%-32px)]' : 'h-full'
           )}
           foldGutter

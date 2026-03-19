@@ -1,3 +1,4 @@
+import { Novu } from '@novu/api';
 import {
   ContextRepository,
   JobRepository,
@@ -17,25 +18,23 @@ import {
 } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let workflow: WorkflowResponseDto;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let novuClient: Novu;
   const contextRepository = new ContextRepository();
   const notificationRepository = new NotificationRepository();
   const messageRepository = new MessageRepository();
   const jobRepository = new JobRepository();
 
-  before(() => {
-    // Enable the context feature flag
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
 
     // Create V2 workflow for context testing
     const workflowBody: CreateWorkflowDto = {
@@ -70,11 +69,6 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     subscriber = await subscriberService.createSubscriber();
   });
 
-  after(() => {
-    // Clean up the feature flag
-    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
-  });
-
   afterEach(async () => {
     // Clean up contexts after each test
     await contextRepository.delete({
@@ -91,8 +85,8 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     actor?: TriggerRecipientSubscriber,
     context?: ContextPayload
   ) {
-    const request = {
-      name: workflowInner.workflowId,
+    const triggerPayload = {
+      workflowId: workflowInner.workflowId,
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
       payload: {
         organizationName: 'Umbrella Corp',
@@ -102,19 +96,14 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
       overrides,
       tenant,
       actor,
-      context,
-    };
+      ...(context && { context }),
+    } as Parameters<typeof novuClient.trigger>[0];
 
-    // TODO: Replace with SDK when available
-    const response = await session.testAgent
-      .post('/v1/events/trigger')
-      .send(request)
-      .set('Authorization', `ApiKey ${session.apiKey}`)
-      .expect(201);
+    const response = await novuClient.trigger(triggerPayload);
 
     // Validate standard response structure
-    expect(response.body.data.status).to.equal('processed');
-    expect(response.body.data.acknowledged).to.equal(true);
+    expect(response.result.status).to.equal('processed');
+    expect(response.result.acknowledged).to.equal(true);
 
     return response;
   }

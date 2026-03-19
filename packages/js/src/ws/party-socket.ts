@@ -128,13 +128,16 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #emitter: NovuEventEmitter;
   #partySocket: WebSocket | undefined;
   #socketUrl: string;
+  #socketOptions?: Record<string, unknown>;
 
   constructor({
     socketUrl,
+    socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
   }: {
     socketUrl?: string;
+    socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
   }) {
@@ -144,6 +147,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     });
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
+    this.#socketOptions = socketOptions;
   }
 
   protected onSessionSuccess({ token }: Session): void {
@@ -223,7 +227,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     const url = new URL(this.#socketUrl);
     url.searchParams.set('token', this.#token);
 
-    this.#partySocket = new WebSocket(url.toString());
+    this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
 
     this.#partySocket.addEventListener('open', () => {
       this.#emitter.emit('socket.connect.resolved', { args });

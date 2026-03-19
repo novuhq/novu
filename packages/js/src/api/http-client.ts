@@ -1,12 +1,11 @@
 export type HttpClientOptions = {
   apiVersion?: string;
   apiUrl?: string;
-  userAgent?: string;
   headers?: Record<string, string>;
 };
 
 export const DEFAULT_API_VERSION = 'v1';
-const DEFAULT_USER_AGENT = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
+const DEFAULT_CLIENT_VERSION = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
 
 export class HttpClient {
   // Environment variable for local development that overrides the default API endpoint without affecting the Inbox DX
@@ -18,18 +17,13 @@ export class HttpClient {
   private headers: Record<string, string>;
 
   constructor(options: HttpClientOptions = {}) {
-    const {
-      apiVersion = DEFAULT_API_VERSION,
-      apiUrl = this.DEFAULT_BACKEND_URL,
-      userAgent = DEFAULT_USER_AGENT,
-      headers = {},
-    } = options || {};
+    const { apiVersion = DEFAULT_API_VERSION, apiUrl = this.DEFAULT_BACKEND_URL, headers = {} } = options || {};
     this.apiVersion = apiVersion;
     this.apiUrl = `${apiUrl}/${apiVersion}`;
     this.headers = {
       'Novu-API-Version': NOVU_API_VERSION,
+      'Novu-Client-Version': DEFAULT_CLIENT_VERSION,
       'Content-Type': 'application/json',
-      'User-Agent': userAgent,
       ...headers,
     };
   }
@@ -121,7 +115,9 @@ export class HttpClient {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`${this.headers['User-Agent']} error. Status: ${response.status}, Message: ${errorData.message}`);
+      throw new Error(
+        `${this.headers['Novu-Client-Version']} error. Status: ${response.status}, Message: ${errorData.message}`
+      );
     }
     if (response.status === 204) {
       return undefined as unknown as T;

@@ -18,7 +18,9 @@ import { MutationHookOptions } from "./_types.js";
 
 export type MessagesDeleteByTransactionIdMutationVariables = {
   transactionId: string;
-  channel?: operations.Channel | undefined;
+  channel?:
+    | operations.MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
+    | undefined;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };

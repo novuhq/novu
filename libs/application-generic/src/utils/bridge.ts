@@ -90,6 +90,10 @@ export const BRIDGE_EXECUTION_ERROR = {
     code: 'MaximumRedirectsExceeded',
     message: (url: string) => `Maximum redirects exceeded for \`${url}\``,
   },
+  RESPONSE_PARSE_ERROR: {
+    code: 'ResponseParseError',
+    message: (url: string) => `Bridge URL response code is 2xx, but parsing body failed for \`${url}\``,
+  },
   SELF_SIGNED_CERTIFICATE: {
     code: 'SelfSignedCertificate',
     message: (url: string) => `Bridge Endpoint can't use a self signed certificate in production environments.`,
@@ -97,6 +101,11 @@ export const BRIDGE_EXECUTION_ERROR = {
   PAYLOAD_TOO_LARGE: {
     code: 'PayloadTooLarge',
     message: (url: string) => `Payload too large for \`${url}\``,
+  },
+  BRIDGE_AUTHENTICATION_FAILED: {
+    code: 'BridgeAuthenticationFailed',
+    message: (url: string) =>
+      `Bridge authentication failed for \`${url}\`. Please check your NOVU_SECRET_KEY environment variable.`,
   },
   UNKNOWN_BRIDGE_REQUEST_ERROR: {
     code: 'UnknownBridgeRequestError',

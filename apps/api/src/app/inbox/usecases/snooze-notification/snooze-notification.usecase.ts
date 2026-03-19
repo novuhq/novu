@@ -92,18 +92,14 @@ export class SnoozeNotification {
   }
 
   public async enqueueJob(job: JobEntity, delay: number) {
-    this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue');
-
-    const jobData = {
-      _environmentId: job._environmentId,
-      _id: job._id,
-      _organizationId: job._organizationId,
-      _userId: job._userId,
-    };
-
     await this.standardQueueService.add({
       name: job._id,
-      data: jobData,
+      data: {
+        _environmentId: job._environmentId,
+        _id: job._id,
+        _organizationId: job._organizationId,
+        _userId: job._userId,
+      },
       groupId: job._organizationId,
       options: { delay, attempts: this.RETRY_ATTEMPTS, backoff: { type: 'exponential', delay: 5000 } },
     });
@@ -132,7 +128,7 @@ export class SnoozeNotification {
   }
 
   private calculateDelayInMs(snoozeUntil: Date): number {
-    return snoozeUntil.getTime() - new Date().getTime();
+    return snoozeUntil.getTime() - Date.now();
   }
 
   private async getOrganization(organizationId: string): Promise<OrganizationEntity> {
@@ -178,7 +174,7 @@ export class SnoozeNotification {
       status: JobStatusEnum.PENDING,
       delay,
       createdAt: Date.now().toString(),
-      id: JobRepository.createObjectId(),
+      _id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
         ...originalJob.payload,

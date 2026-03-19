@@ -36,6 +36,7 @@ export class GetSubscriberGlobalPreference {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       subscriberId: subscriber._id,
+      contextKeys: command.contextKeys,
     });
 
     const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);
@@ -58,10 +59,21 @@ export class GetSubscriberGlobalPreference {
 
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
-    const workflowList = await this.notificationTemplateRepository.filterActive({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-    });
+    if (command.includeInactiveChannels) {
+      return Object.values(ChannelTypeEnum);
+    }
+
+    const workflowList =
+      command.workflowList ??
+      (await this.notificationTemplateRepository.filterActive({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        tags: undefined,
+        critical: undefined,
+        severity: undefined,
+        select: '_id steps.active steps._templateId',
+        limit: 100,
+      }));
 
     const activeChannels = new Set<ChannelTypeEnum>();
 
@@ -91,15 +103,13 @@ export class GetSubscriberGlobalPreference {
     return Array.from(channelSet);
   }
 
-  @CachedResponse({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
-  private async getSubscriber(command: GetSubscriberGlobalPreferenceCommand): Promise<SubscriberEntity> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+  private async getSubscriber(command: GetSubscriberGlobalPreferenceCommand): Promise<Pick<SubscriberEntity, '_id'>> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      command.subscriberId,
+      false,
+      '_id'
+    );
 
     if (!subscriber) {
       throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
@@ -107,6 +117,7 @@ export class GetSubscriberGlobalPreference {
 
     return subscriber;
   }
+
   // adds default state for missing channels
   private buildDefaultPreferences(preference: IPreferenceChannels) {
     const defaultPreference: IPreferenceChannels = {

@@ -5,6 +5,13 @@ import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntit
 import { createLiquidEngine } from '@novu/framework/internal';
 import { FullPayloadForRender } from './render-command';
 
+type TranslationContext = {
+  i18nInstance: unknown;
+  liquidEngine: unknown;
+  locale: string;
+  resourceId: string;
+};
+
 @Injectable()
 export abstract class BaseTranslationRendererUsecase {
   constructor(
@@ -33,7 +40,7 @@ export abstract class BaseTranslationRendererUsecase {
     resourceEntity?: NotificationTemplateEntity | LayoutDto;
     organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
       return controls;
     }
 
@@ -69,7 +76,7 @@ export abstract class BaseTranslationRendererUsecase {
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
       return content;
     }
 
@@ -83,6 +90,101 @@ export abstract class BaseTranslationRendererUsecase {
       locale,
       organization,
     }) as Promise<string>;
+  }
+
+  protected async createTranslationContext({
+    environmentId,
+    organizationId,
+    resourceId,
+    resourceType,
+    locale,
+    organization,
+    resourceEntity,
+  }: {
+    environmentId: string;
+    organizationId: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
+    locale?: string;
+    organization?: OrganizationEntity;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
+  }): Promise<TranslationContext | null> {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
+      return null;
+    }
+
+    if (!resourceId) {
+      return null;
+    }
+
+    try {
+      const translate = this.getTranslationModule();
+      const liquidEngine = createLiquidEngine();
+
+      return await translate.createContext({
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        userId: 'system',
+        locale,
+        liquidEngine,
+        organization,
+        resourceEntity,
+      });
+    } catch (error) {
+      const errorMessage = error?.message || String(error);
+      const isExpectedError =
+        error?.status === 402 ||
+        errorMessage.includes('Translation is not enabled') ||
+        errorMessage.includes('Translation feature is not available on your plan') ||
+        errorMessage.includes('No translation found');
+
+      if (!isExpectedError) {
+        this.logger.error({
+          error: errorMessage,
+          resourceId,
+          resourceType,
+          organizationId,
+          environmentId,
+          locale,
+          stack: error?.stack,
+        }, 'Unexpected error during translation context creation');
+      }
+
+      return null;
+    }
+  }
+
+  protected async processStringWithContext({
+    context,
+    content,
+    variables,
+  }: {
+    context: TranslationContext | null;
+    content: string;
+    variables: FullPayloadForRender;
+  }): Promise<string> {
+    if ((process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') || !context) {
+      return content;
+    }
+
+    try {
+      const translate = this.getTranslationModule();
+
+      return await translate.executeWithContext(context, content, variables);
+    } catch (error) {
+      this.logger.error({
+        error: error?.message || error,
+        resourceId: context.resourceId,
+        locale: context.locale,
+        stack: error?.stack,
+      }, 'Translation with context failed');
+
+      throw new InternalServerErrorException(
+        `Translation processing failed for resource ${context.resourceId}: ${error?.message || String(error)}`
+      );
+    }
   }
 
   private async executeTranslation({
@@ -107,13 +209,13 @@ export abstract class BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
     if (!resourceId) {
-      this.logger.warn('Resource ID is required for translation module', {
+      this.logger.warn({
         resourceId,
         resourceType,
         organizationId,
         environmentId,
         locale,
-      });
+      }, 'Resource ID is required for translation module');
 
       return content;
     }
@@ -140,7 +242,7 @@ export abstract class BaseTranslationRendererUsecase {
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
     } catch (error) {
-      this.logger.error('Translation processing failed', {
+      this.logger.error({
         error: error?.message || error,
         resourceId,
         resourceType,
@@ -148,7 +250,7 @@ export abstract class BaseTranslationRendererUsecase {
         environmentId,
         locale,
         stack: error?.stack,
-      });
+      }, 'Translation processing failed');
 
       throw new InternalServerErrorException(
         `Translation processing failed for resource ${resourceId}: ${error?.message || String(error)}`
@@ -165,10 +267,10 @@ export abstract class BaseTranslationRendererUsecase {
 
       return this.moduleRef.get(translationModule, { strict: false });
     } catch (error) {
-      this.logger.error('Translation module loading failed', {
+      this.logger.error({
         error: error?.message || error,
         stack: error?.stack,
-      });
+      }, 'Translation module loading failed');
 
       throw new InternalServerErrorException(`Unable to load Translation module: ${error?.message || String(error)}`);
     }

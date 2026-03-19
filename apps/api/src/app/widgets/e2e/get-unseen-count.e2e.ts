@@ -166,13 +166,6 @@ describe('Unseen Count - GET /widget/notifications/unseen #novu-v0', () => {
     expect(seenCount).to.equal(3);
 
     await invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId,
-        _environmentId: session.environment._id,
-      }),
-    });
-
-    await invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId,
         _environmentId: session.environment._id,

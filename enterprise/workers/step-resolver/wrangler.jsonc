@@ -1,0 +1,56 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "step-resolver-dispatch-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-18",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "observability": {
+    "logs": {
+      "enabled": true
+    }
+  },
+  "workers_dev": false,
+  "dispatch_namespaces": [
+    {
+      "binding": "DISPATCHER",
+      "namespace": "novu-step-resolvers-staging"
+    }
+  ],
+  "env": {
+    "staging": {
+      "name": "step-resolver-dispatch-staging",
+      "workers_dev": true,
+      "dispatch_namespaces": [
+        {
+          "binding": "DISPATCHER",
+          "namespace": "novu-step-resolvers-staging"
+        }
+      ]
+    },
+    "production": {
+      "name": "step-resolver-dispatch-production",
+      "workers_dev": false,
+      "routes": [
+        {
+          "pattern": "step-resolver.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "dispatch_namespaces": [
+        {
+          "binding": "DISPATCHER",
+          "namespace": "novu-step-resolvers-production"
+        }
+      ]
+    }
+  }
+  /**
+   * Required secret for this worker (set per environment):
+   *   pnpm wrangler secret put STEP_RESOLVER_HMAC_SECRET --env staging
+   *   pnpm wrangler secret put STEP_RESOLVER_HMAC_SECRET --env production
+   */
+}

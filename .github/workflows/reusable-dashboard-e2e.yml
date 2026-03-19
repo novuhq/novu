@@ -93,6 +93,8 @@ jobs:
           echo NODE_ENV=test >> .env.playwright
 
       - uses: mansagroup/nrwl-nx-action@v3
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
           projects: '@novu/dashboard,@novu/api-service,@novu/worker'
@@ -174,7 +176,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.19.0
+          node-version: 22.22.1
 
       - name: Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v4

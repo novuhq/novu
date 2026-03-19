@@ -26,7 +26,7 @@ export const DeleteLayoutDialog = ({ layout, open, onOpenChange, onConfirm, isLo
     if (isUsagePending) {
       return (
         <>
-          You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{layout.name}</TruncatedText>{' '}
+          You're about to delete the <TruncatedText className="max-w-[32ch] font-semibold">{layout.name}</TruncatedText>{' '}
           layout, this action is permanent.
           <br />
           <br />
@@ -43,7 +43,7 @@ export const DeleteLayoutDialog = ({ layout, open, onOpenChange, onConfirm, isLo
     if (workflowCount === 0) {
       return (
         <>
-          You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{layout.name}</TruncatedText>{' '}
+          You're about to delete the <TruncatedText className="max-w-[32ch] font-semibold">{layout.name}</TruncatedText>{' '}
           layout, this action is permanent.
         </>
       );
@@ -51,7 +51,7 @@ export const DeleteLayoutDialog = ({ layout, open, onOpenChange, onConfirm, isLo
 
     return (
       <>
-        You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{layout.name}</TruncatedText>{' '}
+        You're about to delete the <TruncatedText className="max-w-[32ch] font-semibold">{layout.name}</TruncatedText>{' '}
         layout, this action is permanent.
         <br />
         <br />

@@ -23,4 +23,11 @@ export type ClientOptions = {
    * Defaults to true.
    */
   strictAuthentication?: boolean;
+
+  /**
+   * Enable verbose logging for workflow discovery and execution.
+   * When set to `false`, discovery and execution logs will be suppressed.
+   * Defaults to `true` in development, `false` in production.
+   */
+  verbose?: boolean;
 };

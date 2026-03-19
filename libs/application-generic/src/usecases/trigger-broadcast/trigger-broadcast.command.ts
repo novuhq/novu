@@ -14,8 +14,7 @@ export class TriggerBroadcastCommand extends TriggerEventBroadcastCommand {
   @ValidateNested()
   tenant: ITenantDefine | null;
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  contextKeys?: string[];
+  contextKeys: string[];
 }

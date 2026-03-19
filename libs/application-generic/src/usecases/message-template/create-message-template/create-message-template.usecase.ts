@@ -64,7 +64,7 @@ export class CreateMessageTemplate {
       })) as MessageTemplateEntity;
     }
 
-    if (!isBridgeWorkflow(command.workflowType)) {
+    if (!isBridgeWorkflow(command.workflowType) && item._id) {
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,

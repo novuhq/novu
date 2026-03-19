@@ -1,10 +1,5 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
-import type {
-  TopicSubscription,
-  WorkflowFilter,
-  WorkflowGroupFilter,
-  WorkflowIdentifierOrId,
-} from '../../../subscriptions';
+import type { PreferenceFilter, TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';
@@ -19,28 +14,74 @@ export type SubscriptionPreferencesRenderer = (
   loading?: boolean
 ) => () => void;
 
+export type WorkflowPreference = {
+  label?: string;
+  workflowId: WorkflowIdentifierOrId;
+  enabled?: boolean;
+  filter?: never;
+};
+
 export type GroupPreference = {
   label: string;
-} & WorkflowGroupFilter;
+  filter: {
+    workflowIds?: Array<WorkflowIdentifierOrId>;
+    workflows?: Array<{ label: string; workflowId: WorkflowIdentifierOrId }>;
+    tags?: string[];
+  };
+  enabled?: boolean;
+  workflowId?: never;
+};
+
+export type UIPreference = WorkflowIdentifierOrId | WorkflowPreference | GroupPreference;
 
 export type SubscriptionProps = {
   open?: boolean;
   placement?: Placement;
   placementOffset?: OffsetOptions;
-  topic: string;
-  identifier: string;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  topicKey: string;
+  identifier?: string;
+  preferences?: Array<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
+
+export function extractWorkflowIds(preferences: Array<UIPreference>): string[] {
+  const ids: string[] = [];
+  for (const preference of preferences) {
+    if (typeof preference === 'string') {
+      ids.push(preference);
+    } else if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
+      ids.push(preference.workflowId);
+    } else if (typeof preference === 'object' && 'filter' in preference && preference.filter?.workflowIds) {
+      ids.push(...preference.filter.workflowIds);
+    }
+  }
+
+  return ids;
+}
+
+export function extractTags(preferences: Array<UIPreference>): string[] {
+  const tags: string[] = [];
+  for (const preference of preferences) {
+    if (typeof preference === 'object' && 'filter' in preference && preference.filter?.tags) {
+      tags.push(...preference.filter.tags);
+    }
+  }
+
+  return tags;
+}
 
 export const Subscription = (props: SubscriptionProps) => {
   const style = useStyle();
   const { isOpened, setIsOpened } = useInboxContext();
   const isOpen = () => props?.open ?? isOpened();
 
+  const workflowIds = extractWorkflowIds(props.preferences ?? []);
+  const tags = extractTags(props.preferences ?? []);
   const { subscription, loading, create, remove } = useSubscription({
-    topicKey: props.topic,
+    topicKey: props.topicKey,
     identifier: props.identifier,
+    workflowIds,
+    tags,
   });
 
   const onSubscribeClick = () => {
@@ -48,7 +89,16 @@ export const Subscription = (props: SubscriptionProps) => {
     if (currentSubscription) {
       remove({ subscription: currentSubscription });
     } else {
-      create({ topicKey: props.topic, identifier: props.identifier, filters: props.preferences });
+      const preferences = props.preferences?.map((preference) => {
+        if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
+          return { workflowId: preference.workflowId, enabled: preference.enabled };
+        } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
+          return { filter: preference.filter, enabled: preference.enabled };
+        }
+
+        return preference;
+      });
+      create({ topicKey: props.topicKey, identifier: props.identifier, preferences: preferences });
     }
   };
 

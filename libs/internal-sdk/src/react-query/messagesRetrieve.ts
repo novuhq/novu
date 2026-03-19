@@ -5,29 +5,31 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { messagesRetrieve } from "../funcs/messagesRetrieve.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type MessagesRetrieveQueryData =
-  operations.MessagesControllerGetMessagesResponse;
+import {
+  buildMessagesRetrieveQuery,
+  MessagesRetrieveQueryData,
+  prefetchMessagesRetrieve,
+  queryKeyMessagesRetrieve,
+} from "./messagesRetrieve.core.js";
+export {
+  buildMessagesRetrieveQuery,
+  type MessagesRetrieveQueryData,
+  prefetchMessagesRetrieve,
+  queryKeyMessagesRetrieve,
+};
 
 /**
  * List all messages
@@ -72,19 +74,6 @@ export function useMessagesRetrieveSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchMessagesRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.MessagesControllerGetMessagesRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildMessagesRetrieveQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -137,56 +126,4 @@ export function invalidateAllMessagesRetrieve(
     ...filters,
     queryKey: ["@novu/api", "Messages", "retrieve"],
   });
-}
-
-export function buildMessagesRetrieveQuery(
-  client$: NovuCore,
-  request: operations.MessagesControllerGetMessagesRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<MessagesRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyMessagesRetrieve({
-      channel: request.channel,
-      subscriberId: request.subscriberId,
-      transactionId: request.transactionId,
-      contextKeys: request.contextKeys,
-      page: request.page,
-      limit: request.limit,
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function messagesRetrieveQueryFn(
-      ctx,
-    ): Promise<MessagesRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(messagesRetrieve(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyMessagesRetrieve(
-  parameters: {
-    channel?: components.ChannelTypeEnum | undefined;
-    subscriberId?: string | undefined;
-    transactionId?: Array<string> | undefined;
-    contextKeys?: Array<string> | undefined;
-    page?: number | undefined;
-    limit?: number | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "Messages", "retrieve", parameters];
 }

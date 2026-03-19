@@ -20,6 +20,10 @@ export class PushRenderOutput extends RenderOutput {
 export class EmailRenderOutput extends RenderOutput {
   subject: string;
   body: string;
+  from?: {
+    email?: string;
+    name?: string;
+  };
 }
 
 export class DigestOutputProcessor {
@@ -118,6 +122,12 @@ export class InAppRenderOutput extends RenderOutput {
   };
 }
 
+export type PreviewError = {
+  title: string;
+  message: string;
+  hint: string;
+};
+
 export class PreviewPayload {
   subscriber?: Partial<SubscriberDto>;
   payload?: Record<string, unknown>;
@@ -128,26 +138,32 @@ export class PreviewPayload {
 export class GeneratePreviewResponseDto {
   previewPayloadExample: PreviewPayload;
   schema?: JSONSchemaDto | null;
+  novuSignature?: string;
   result:
     | {
         type: ChannelTypeEnum.EMAIL;
         preview: EmailRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.IN_APP;
         preview: InAppRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.SMS;
         preview: SmsRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.PUSH;
         preview: PushRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ChannelTypeEnum.CHAT;
         preview: ChatRenderOutput;
+        error?: PreviewError;
       }
     | {
         type: ActionTypeEnum.DELAY;

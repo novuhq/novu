@@ -17,7 +17,7 @@ type PanelProps = {
   maxSize?: number;
 };
 
-function ContextPanel({ children, className, defaultSize = 25, minSize = 20, maxSize = 40 }: PanelProps) {
+function ContextPanel({ children, className, defaultSize = 20, minSize = 20, maxSize = 40 }: PanelProps) {
   return (
     <ResizablePanel defaultSize={defaultSize} minSize={minSize} maxSize={maxSize} className="h-full">
       <div className={cn('flex h-full flex-col border-neutral-200', className)}>{children}</div>

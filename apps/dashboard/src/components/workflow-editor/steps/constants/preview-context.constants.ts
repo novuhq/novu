@@ -4,6 +4,7 @@ import {
   RiBracesFill,
   RiChat1Line,
   RiCodeLine,
+  RiGlobalLine,
   RiMailLine,
   RiNotificationLine,
   RiPlayCircleLine,
@@ -17,12 +18,13 @@ export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.EMAIL]: RiMailLine,
   [StepTypeEnum.SMS]: RiSmartphoneLine,
   [StepTypeEnum.PUSH]: RiNotificationLine,
-  [StepTypeEnum.IN_APP]: InboxBell,
+  [StepTypeEnum.IN_APP]: InboxBell as IconType,
   [StepTypeEnum.CHAT]: RiChat1Line,
   [StepTypeEnum.DIGEST]: RiTimeLine,
   [StepTypeEnum.DELAY]: RiTimeLine,
   [StepTypeEnum.THROTTLE]: RiSpeedFill,
   [StepTypeEnum.CUSTOM]: RiBracesFill,
+  [StepTypeEnum.HTTP_REQUEST]: RiGlobalLine,
   [StepTypeEnum.TRIGGER]: RiPlayCircleLine,
 } as const;
 

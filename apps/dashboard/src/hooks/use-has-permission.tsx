@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/clerk-react';
-import { CheckAuthorizationWithCustomPermissions } from '@clerk/types';
+import type { CheckAuthorizationWithCustomPermissions } from '@clerk/types';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
@@ -26,24 +26,20 @@ export function useHasPermission(): CheckAuthorizationWithCustomPermissions {
   const { subscription } = useFetchSubscription();
   const isRbacFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED, false);
 
-  // Check if RBAC is enabled for this organization
   const isRbacFeatureEnabled = useMemo(
     () => isRbacEnabled(isRbacFlagEnabled, subscription),
     [isRbacFlagEnabled, subscription]
   );
 
   return useMemo(() => {
-    // If RBAC is not enabled, allow access
     if (!isRbacFeatureEnabled) {
       return () => true;
     }
 
-    // If auth is still loading, restrict access
     if (!isLoaded) {
       return () => false;
     }
 
-    // Use Clerk's permission checking system
-    return has;
+    return has as CheckAuthorizationWithCustomPermissions;
   }, [has, isLoaded, isRbacFeatureEnabled]);
 }

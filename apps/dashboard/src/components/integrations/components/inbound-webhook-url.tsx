@@ -31,7 +31,7 @@ export function InboundWebhookUrl({ integrationId, autoConfigureState, provider,
         Inbound Webhook URL
       </FormLabel>
       <Input
-        className="cursor-default font-mono !text-neutral-500"
+        className="cursor-default font-mono text-neutral-500!"
         id={'inboundWebhookUrl'}
         value={inboundWebhookUrl}
         type="text"

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchSubscriberPreferences } from '@/api/subscribers';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { convertContextKeysToPayload } from '@/utils/context-variable-utils';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
@@ -10,11 +11,17 @@ type PatchSubscriberPreferencesParameters = OmitEnvironmentFromParameters<typeof
 
 type UseOptimisticScheduleUpdateProps = {
   subscriberId: string;
+  contextKeys?: string[];
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
 };
 
-export const useOptimisticScheduleUpdate = ({ subscriberId, onSuccess, onError }: UseOptimisticScheduleUpdateProps) => {
+export const useOptimisticScheduleUpdate = ({
+  subscriberId,
+  contextKeys,
+  onSuccess,
+  onError,
+}: UseOptimisticScheduleUpdateProps) => {
   const queryClient = useQueryClient();
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
@@ -24,6 +31,7 @@ export const useOptimisticScheduleUpdate = ({ subscriberId, onSuccess, onError }
     currentOrganization?._id,
     currentEnvironment?._id,
     subscriberId,
+    contextKeys,
   ];
 
   const { mutateAsync, isPending } = useMutation({
@@ -69,9 +77,11 @@ export const useOptimisticScheduleUpdate = ({ subscriberId, onSuccess, onError }
   });
 
   const updateSchedule = async (schedule: ScheduleDto) => {
+    const context = convertContextKeysToPayload(contextKeys);
+
     return mutateAsync({
       subscriberId,
-      preferences: { schedule },
+      preferences: { schedule, context },
     });
   };
 

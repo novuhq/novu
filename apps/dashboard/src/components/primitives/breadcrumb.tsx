@@ -17,7 +17,7 @@ const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWi
     <ol
       ref={ref}
       className={cn(
-        'flex flex-nowrap items-center gap-1.5 break-words text-sm font-medium text-neutral-600 sm:gap-2.5',
+        'flex flex-nowrap items-center gap-1.5 wrap-break-word text-sm font-medium text-neutral-600 sm:gap-2.5',
         className
       )}
       {...props}
@@ -45,7 +45,7 @@ const BreadcrumbLink = React.forwardRef<
     <Component
       ref={ref}
       className={cn(
-        'focus-visible:ring-ring transition-colors hover:text-neutral-950 hover:underline focus-visible:outline-none focus-visible:ring-2',
+        'focus-visible:ring-ring transition-colors hover:text-neutral-950 hover:underline focus-visible:outline-hidden focus-visible:ring-2',
         className
       )}
       {...props}

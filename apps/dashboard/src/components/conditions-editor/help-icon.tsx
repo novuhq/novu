@@ -48,7 +48,7 @@ export function HelpIcon({ hasError, errorMessage, helpText, contentWidth = 'w-[
               <div className="mt-1 space-y-1 pl-1.5">
                 {helpText.examples.map((example, idx) => (
                   <div key={idx} className="flex items-start gap-1.5">
-                    <div className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-gray-400" />
+                    <div className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
                     <div className="text-label-xs text-gray-600">{example}</div>
                   </div>
                 ))}

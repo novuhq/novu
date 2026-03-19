@@ -10,6 +10,10 @@ export type DuplicateWorkflowDto = {
    */
   name?: string | undefined;
   /**
+   * Custom workflow identifier for the duplicated workflow
+   */
+  workflowId?: string | undefined;
+  /**
    * Tags associated with the workflow
    */
   tags?: Array<string> | undefined;
@@ -26,6 +30,7 @@ export type DuplicateWorkflowDto = {
 /** @internal */
 export type DuplicateWorkflowDto$Outbound = {
   name?: string | undefined;
+  workflowId?: string | undefined;
   tags?: Array<string> | undefined;
   description?: string | undefined;
   isTranslationEnabled: boolean;
@@ -38,6 +43,7 @@ export const DuplicateWorkflowDto$outboundSchema: z.ZodType<
   DuplicateWorkflowDto
 > = z.object({
   name: z.string().optional(),
+  workflowId: z.string().optional(),
   tags: z.array(z.string()).optional(),
   description: z.string().optional(),
   isTranslationEnabled: z.boolean().default(false),

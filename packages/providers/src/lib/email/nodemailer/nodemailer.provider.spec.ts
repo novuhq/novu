@@ -55,6 +55,8 @@ describe.skip('NodemailerProvider', () => {
         host: config.host,
         port: config.port,
         secure: config.secure,
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
         auth: undefined,
         dkim: undefined,
         ignoreTls: undefined,
@@ -107,6 +109,8 @@ describe.skip('NodemailerProvider', () => {
         host: mockConfig.host,
         port: mockConfig.port,
         secure: mockConfig.secure,
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
         auth: {
           user: mockConfig.user,
           pass: mockConfig.password,

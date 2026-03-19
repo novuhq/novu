@@ -26,6 +26,7 @@ interface IPreferenceResponse {
   channels: IPreferenceChannels;
   overrides: IPreferenceOverride[];
   schedule?: Schedule;
+  updatedAt?: string;
 }
 
 export interface ITemplateConfiguration {

@@ -16,8 +16,8 @@ export class DuplicateWorkflowDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'workflowId must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+  @Matches(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
+    message: 'workflowId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
   })
   workflowId?: string;
 

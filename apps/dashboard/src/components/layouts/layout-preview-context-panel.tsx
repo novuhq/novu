@@ -27,7 +27,6 @@ export const LayoutPreviewContextPanel = () => {
   const { data: organizationSettings } = useFetchOrganizationSettings();
   const { currentEnvironment } = useEnvironment();
   const createDefaultSubscriberData = useDefaultSubscriberData(undefined, organizationSettings?.data?.defaultLocale);
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
 
   const handleSubscriberSelection = useCallback(
     (subscriber: ISubscriberResponseDto) => {
@@ -65,14 +64,12 @@ export const LayoutPreviewContextPanel = () => {
         onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
       />
 
-      {isContextEnabled && (
-        <PreviewContextSection
-          error={errors.context}
-          context={previewContext.context}
-          onUpdate={updatePreviewSection}
-          onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
-        />
-      )}
+      <PreviewContextSection
+        error={errors.context}
+        context={previewContext.context}
+        onUpdate={updatePreviewSection}
+        onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+      />
     </Accordion>
   );
 };

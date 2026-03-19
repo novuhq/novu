@@ -1,6 +1,6 @@
 import { RegionSelector, useRegion } from '@/context/region';
 import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
 import { ROUTES } from '../../utils/routes';
@@ -54,8 +54,8 @@ interface IllustrationProps {
 // Small Components
 function FormContainer({ children }: FormContainerProps) {
   return (
-    <div className="flex min-w-[564px] max-w-[564px] items-center p-[60px]">
-      <div className="flex flex-col gap-[4px]">{children}</div>
+    <div className="flex w-full items-center p-6 md:min-w-[564px] md:max-w-[564px] md:p-[60px]">
+      <div className="flex w-full flex-col gap-[4px]">{children}</div>
     </div>
   );
 }
@@ -118,7 +118,7 @@ function Illustration({ src, alt, className }: IllustrationProps) {
 
 function IllustrationSection() {
   return (
-    <div className="flex flex-1 items-center justify-center">
+    <div className="hidden flex-1 items-center justify-center md:flex">
       <Illustration {...ILLUSTRATION_CONFIG} />
     </div>
   );
@@ -126,7 +126,7 @@ function IllustrationSection() {
 
 function MainContent() {
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 flex-col md:flex-row">
       <OrganizationFormSection />
       <IllustrationSection />
     </div>
@@ -150,10 +150,14 @@ export default function OrganizationCreate() {
   const { organization } = useOrganization();
   const { selectedRegion } = useRegion();
   const track = useTelemetry();
+  const hasTrackedRef = useRef(false);
+  const trackedOrgIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Track when an organization is successfully created/selected
-    if (organization) {
+    if (organization?.id && !hasTrackedRef.current && trackedOrgIdRef.current !== organization.id) {
+      hasTrackedRef.current = true;
+      trackedOrgIdRef.current = organization.id;
+
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',
         organizationId: organization.id,
@@ -161,7 +165,7 @@ export default function OrganizationCreate() {
         region: selectedRegion,
       });
     }
-  }, [organization, track, selectedRegion]);
+  }, [organization?.id, organization?.name, selectedRegion, track]);
 
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">

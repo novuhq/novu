@@ -9,10 +9,10 @@ export type PreferencesRenderer = (subscription?: TopicSubscription, loading?: b
 
 export type DefaultSubscriptionProps = {
   renderPreferences?: PreferencesRenderer;
-} & Pick<SubscriptionProps, 'open' | 'placement' | 'placementOffset' | 'topic' | 'identifier' | 'preferences'>;
+} & Pick<SubscriptionProps, 'open' | 'placement' | 'placementOffset' | 'topicKey' | 'identifier' | 'preferences'>;
 
 export const DefaultSubscription = (props: DefaultSubscriptionProps) => {
-  const { topic, identifier, preferences, open, placement, placementOffset, renderPreferences } = props;
+  const { topicKey, identifier, preferences, open, placement, placementOffset, renderPreferences } = props;
   const { novuUI } = useNovuUI();
   const { mountElement } = useRenderer();
 
@@ -21,7 +21,7 @@ export const DefaultSubscription = (props: DefaultSubscriptionProps) => {
       return novuUI.mountComponent({
         name: 'Subscription',
         props: {
-          topic,
+          topicKey,
           identifier,
           preferences,
           open,
@@ -34,7 +34,7 @@ export const DefaultSubscription = (props: DefaultSubscriptionProps) => {
         element,
       });
     },
-    [topic, identifier, preferences, open, placementOffset, placement, renderPreferences, novuUI, mountElement]
+    [topicKey, identifier, preferences, open, placementOffset, placement, renderPreferences, novuUI, mountElement]
   );
 
   return <Mounter mount={mount} />;

@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -36,9 +36,13 @@ const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
-// Custom rule processor to handle relative date operators
+const CONTAINS_ANY_OPERATORS = ['containsAny', 'doesNotContainAny'] as const;
+
+function isContainsAnyOperator(operator: string): boolean {
+  return (CONTAINS_ANY_OPERATORS as readonly string[]).includes(operator);
+}
+
 const customRuleProcessor = (rule: RuleType, options: any) => {
-  // Handle relative date operators
   if (isRelativeDateOperator(rule.operator)) {
     try {
       const parsedValue = JSON.parse(rule.value as string);
@@ -48,18 +52,35 @@ const customRuleProcessor = (rule: RuleType, options: any) => {
         (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
         parsedValue.unit
       ) {
-        const result = {
+        return {
           [rule.operator]: [{ var: rule.field }, parsedValue],
         };
-
-        return result;
       }
     } catch (error) {
       console.warn('Failed to parse relative date value:', rule.value, error);
     }
   }
 
-  // Fall back to the default rule processor for all other operators
+  if (isContainsAnyOperator(rule.operator)) {
+    const trimmedValue = (rule.value as string).trim();
+    const variableMatch = trimmedValue.match(/^\{\{(.+?)\}\}$/);
+
+    if (variableMatch) {
+      return {
+        [rule.operator]: [{ var: rule.field }, { var: variableMatch[1].trim() }],
+      };
+    }
+
+    const values = trimmedValue
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    return {
+      [rule.operator]: [{ var: rule.field }, values],
+    };
+  }
+
   return defaultRuleProcessorJsonLogic(rule, options);
 };
 
@@ -71,12 +92,11 @@ const getRuleSchema = (
 
   return z.union([
     z
-      .object({
+      .looseObject({
         field: z.string().min(1),
         operator: z.string(),
         value: z.string().nullable(),
       })
-      .passthrough()
       .superRefine(({ field, operator, value }, ctx) => {
         if (operator === 'between' || operator === 'notBetween') {
           const values = value?.split(',').filter((val) => val.trim() !== '');
@@ -138,12 +158,10 @@ const getRuleSchema = (
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
         }
       }),
-    z
-      .object({
-        combinator: z.string(),
-        rules: z.array(z.lazy(() => getRuleSchema(fields, isAllowedVariableFn))),
-      })
-      .passthrough(),
+    z.looseObject({
+      combinator: z.string(),
+      rules: z.array(z.lazy(() => getRuleSchema(fields, isAllowedVariableFn))),
+    }),
   ]);
 };
 
@@ -154,7 +172,7 @@ type FormQuery = {
 const getConditionsSchema = (
   fields: Array<{ value: string }>,
   isAllowedVariableFn: (variable: { name: string }) => boolean
-): z.ZodType<FormQuery> => {
+) => {
   return z.object({
     query: z
       .object({
@@ -217,24 +235,27 @@ export const EditStepConditionsForm = () => {
     format: enhancedVariable.format,
   }));
 
-  const form = useForm<FormQuery>({
+  const form = useForm({
     mode: 'onSubmit',
-    resolver: zodResolver(getConditionsSchema(fields, isAllowedVariable)),
+    resolver: standardSchemaResolver(getConditionsSchema(fields, isAllowedVariable)),
     defaultValues: {
-      query,
+      query: query as unknown as z.infer<ReturnType<typeof getConditionsSchema>>['query'],
     },
   });
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: {
-      query,
+      query: query as unknown as z.infer<ReturnType<typeof getConditionsSchema>>['query'],
     },
     form,
     shouldClientValidate: true,
     save: (data) => {
       if (!step || !workflow) return;
 
-      const skip = formatQuery(data.query, { format: 'jsonlogic', ruleProcessor: customRuleProcessor });
+      const skip = formatQuery(data.query as unknown as RuleGroupType, {
+        format: 'jsonlogic',
+        ruleProcessor: customRuleProcessor,
+      });
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: { ...step.controls.values, skip },
       };
@@ -318,7 +339,7 @@ export const EditStepConditionsForm = () => {
             render={({ field }) => (
               <ConditionsEditor
                 saveForm={saveForm}
-                query={field.value}
+                query={field.value as RuleGroupType}
                 onQueryChange={field.onChange}
                 fields={fields}
                 variables={variables}

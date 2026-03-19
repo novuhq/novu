@@ -3,9 +3,6 @@ import { IUserEntity, JobTitleEnum } from '@novu/shared';
 
 export class ServicesHashesDto {
   @ApiProperty()
-  intercom?: string;
-
-  @ApiProperty()
   plain?: string;
 }
 

@@ -66,7 +66,7 @@ export function TransactionIdDisplay({ transactionId, className }: TransactionId
                       className="bg-muted/40 hover:bg-muted flex items-center justify-between gap-2 rounded-sm p-1 transition-colors"
                     >
                       <span className="break-all font-mono text-xs">{id}</span>
-                      <CopyButton valueToCopy={id} className="text-text-soft size-4 flex-shrink-0 p-0.5" size="2xs" />
+                      <CopyButton valueToCopy={id} className="text-text-soft size-4 shrink-0 p-0.5" size="2xs" />
                     </div>
                   ))}
                 </div>

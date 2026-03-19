@@ -42,7 +42,7 @@ export class GetSubscriberTemplatePreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
-    const subscriber = command.subscriber ?? (await this.getSubscriber(command));
+    const subscriber: Pick<SubscriberEntity, '_id'> | null = command.subscriber ?? (await this.getSubscriber(command));
 
     const initialChannels = await this.getChannels(command);
 
@@ -93,6 +93,7 @@ export class GetSubscriberTemplatePreference {
       organizationId: command.organizationId,
       subscriberId,
       templateId: command.template._id,
+      contextKeys: command.contextKeys,
     });
 
     const subscriberWorkflowChannels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(
@@ -201,12 +202,19 @@ export class GetSubscriberTemplatePreference {
         subscriberId: command.subscriberId,
       }),
   })
-  private async getSubscriber(command: GetSubscriberTemplatePreferenceCommand): Promise<SubscriberEntity | null> {
+  private async getSubscriber(
+    command: GetSubscriberTemplatePreferenceCommand
+  ): Promise<Pick<SubscriberEntity, '_id'> | null> {
     if (command.subscriber) {
       return command.subscriber;
     }
 
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber: Pick<SubscriberEntity, '_id'> | null = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      command.subscriberId,
+      true,
+      '_id'
+    );
 
     if (!subscriber) {
       throw new BadRequestException(`Subscriber ${command.subscriberId} not found`);

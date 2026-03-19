@@ -27,7 +27,6 @@ export class SyncExternalOrganization {
   constructor(
     private readonly organizationRepository: OrganizationRepository,
     private readonly getOrganizationUsecase: GetOrganization,
-    private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
     private readonly createNovuIntegrations: CreateNovuIntegrations,
     private readonly upsertLayoutUsecase: UpsertLayout,
@@ -39,25 +38,20 @@ export class SyncExternalOrganization {
   }
 
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
-    const user = await this.userRepository.findById(command.userId);
-    if (!user) throw new BadRequestException('User not found');
-    if (!user._id) {
-      this.logger.error({ err: 'User not found' }, 'User not found when syncing external organization');
-
-      throw new BadRequestException('User not found');
-    }
-
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
 
-    const organization = await this.organizationRepository.create({
-      externalId: command.externalId,
-      apiServiceLevel: isSelfHosted && isEnterprise ? 'unlimited' : undefined,
-    });
+    const organization = await this.organizationRepository.create(
+      {
+        externalId: command.externalId,
+        apiServiceLevel: isSelfHosted && isEnterprise ? 'unlimited' : undefined,
+      },
+      { headers: command.headers }
+    );
 
     const devEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
-        userId: user._id,
+        userId: command.userId,
         name: 'Development',
         organizationId: organization._id,
         system: true,
@@ -68,7 +62,7 @@ export class SyncExternalOrganization {
       CreateNovuIntegrationsCommand.create({
         environmentId: devEnv._id,
         organizationId: devEnv._organizationId,
-        userId: user._id,
+        userId: command.userId,
         name: devEnv.name,
       })
     );
@@ -77,7 +71,7 @@ export class SyncExternalOrganization {
       UpsertLayoutCommand.create({
         environmentId: devEnv._id,
         organizationId: devEnv._organizationId,
-        userId: user._id,
+        userId: command.userId,
         layoutDto: {
           name: 'Default layout',
           controlValues: {
@@ -92,7 +86,7 @@ export class SyncExternalOrganization {
 
     const prodEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
-        userId: user._id,
+        userId: command.userId,
         name: 'Production',
         organizationId: organization._id,
         parentEnvironmentId: devEnv._id,
@@ -104,7 +98,7 @@ export class SyncExternalOrganization {
       CreateNovuIntegrationsCommand.create({
         environmentId: prodEnv._id,
         organizationId: prodEnv._organizationId,
-        userId: user._id,
+        userId: command.userId,
         name: prodEnv.name,
       })
     );
@@ -113,7 +107,7 @@ export class SyncExternalOrganization {
       UpsertLayoutCommand.create({
         environmentId: prodEnv._id,
         organizationId: prodEnv._organizationId,
-        userId: user._id,
+        userId: command.userId,
         layoutDto: {
           name: 'Default layout',
           controlValues: {
@@ -126,9 +120,9 @@ export class SyncExternalOrganization {
       })
     );
 
-    this.analyticsService.upsertGroup(organization._id, organization, user);
+    this.analyticsService.upsertGroup(organization._id, organization, { _id: command.userId });
 
-    this.analyticsService.track('[Authentication] - Create Organization', user._id, {
+    this.analyticsService.track('[Authentication] - Create Organization', command.userId, {
       _organization: organization._id,
     });
 
@@ -140,7 +134,7 @@ export class SyncExternalOrganization {
     );
 
     if (organizationAfterChanges !== null) {
-      await this.createCustomer(user.email, organizationAfterChanges._id);
+      await this.createCustomer(command.email, organizationAfterChanges._id);
     }
 
     return organizationAfterChanges as OrganizationEntity;

@@ -1,16 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { EventType, ORDER_BY, TABLE_NAME, Trace, traceLogSchema } from './trace-log.schema';
+import {
+  EventType,
+  ORDER_BY,
+  RequestTraceInput,
+  StepRunTraceInput,
+  TABLE_NAME,
+  Trace,
+  traceLogSchema,
+  WorkflowRunTraceInput,
+} from './trace-log.schema';
 
 const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.TRACES_ASYNC_INSERT,
   process.env.TRACES_WAIT_ASYNC_INSERT
 );
+
+const WORKFLOW_RUN_FIELD_DEFAULTS = {
+  step_run_type: '' as const,
+  workflow_run_identifier: '',
+  workflow_id: '',
+  provider_id: '',
+  workflow_name: '',
+  transaction_id: '',
+  channels: '',
+  subscriber_to: '',
+  payload: '',
+  control_values: '',
+  topics: '',
+  is_digest: false,
+  digested_workflow_run_id: '',
+  delivery_lifecycle_status: '',
+  delivery_lifecycle_detail: '',
+  severity: '',
+  critical: false,
+  context_keys: [] as string[],
+};
 
 @Injectable()
 export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Trace> {
@@ -20,9 +51,10 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    @Optional() protected readonly batchService?: ClickHouseBatchService
   ) {
-    super(clickhouseService, logger, traceLogSchema, ORDER_BY, featureFlagsService);
+    super(clickhouseService, logger, traceLogSchema, ORDER_BY, featureFlagsService, batchService);
     this.logger.setContext(this.constructor.name);
   }
 
@@ -80,20 +112,32 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     }
   }
 
-  async createStepRun(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+  async createStepRun(traceData: StepRunTraceInput[]): Promise<void> {
     return this.createMany(
       traceData.map((trace) => ({
+        ...WORKFLOW_RUN_FIELD_DEFAULTS,
         ...trace,
         entity_type: 'step_run',
       }))
     );
   }
 
-  async createRequest(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+  async createRequest(traceData: RequestTraceInput[]): Promise<void> {
     return this.createMany(
       traceData.map((trace) => ({
+        ...WORKFLOW_RUN_FIELD_DEFAULTS,
         ...trace,
         entity_type: 'request',
+      }))
+    );
+  }
+
+  async createWorkflowRun(traceData: WorkflowRunTraceInput[]): Promise<void> {
+    return this.createMany(
+      traceData.map((trace) => ({
+        step_run_type: '',
+        ...trace,
+        entity_type: 'workflow_run',
       }))
     );
   }
@@ -225,6 +269,206 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       previousPeriod,
     };
   }
+
+  async getWorkflowRunsTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    workflowIds?: string[]
+  ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
+
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        event_type,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND entity_type = 'workflow_run'
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type IN ('workflow_run_status_processing', 'workflow_run_status_completed', 'workflow_run_status_error')
+        ${workflowFilter}
+      GROUP BY date, event_type
+      ORDER BY date, event_type
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      event_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getMessagesSentCount(environmentIds: string[], startDate: Date, endDate: Date): Promise<number> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getMessagesSentCount' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return 0;
+    }
+
+    const query = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{ count: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.count || '0', 10);
+  }
+
+  async getUsageReportScalarStats(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    messagesSentCount: number;
+    uniqueSubscribers: number;
+    interactions: number;
+  }> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportScalarStats' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return {
+        messagesSentCount: 0,
+        uniqueSubscribers: 0,
+        interactions: 0,
+      };
+    }
+
+    const query = `
+      SELECT 
+        countIf(event_type = 'message_sent') as messages_sent_count,
+        uniqExactIf(subscriber_id, event_type = 'workflow_run_delivery_sent') as unique_subscribers,
+        countIf(
+          event_type IN (
+            'message_seen', 'message_unseen', 'message_clicked',
+            'message_read', 'message_unread', 'message_archived',
+            'message_unarchived', 'message_snoozed', 'message_unsnoozed'
+          )
+        ) as interactions
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      messages_sent_count: string;
+      unique_subscribers: string;
+      interactions: string;
+    }>({
+      query,
+      params,
+    });
+
+    const data = result.data[0] || {
+      messages_sent_count: '0',
+      unique_subscribers: '0',
+      interactions: '0',
+    };
+
+    return {
+      messagesSentCount: parseInt(data.messages_sent_count, 10),
+      uniqueSubscribers: parseInt(data.unique_subscribers, 10),
+      interactions: parseInt(data.interactions, 10),
+    };
+  }
+
+  async getUsageReportBreakdown(
+    environmentIds: string[],
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ step_run_type: string; provider_id: string; count: string }>> {
+    if (environmentIds.length === 0) {
+      this.logger.info(
+        { method: 'getUsageReportBreakdown' },
+        'Skipping trace query: environmentIds is empty (prevents invalid IN clause)'
+      );
+
+      return [];
+    }
+
+    const query = `
+      SELECT 
+        step_run_type,
+        provider_id,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id IN {environmentIds:Array(String)}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type = 'message_sent'
+      GROUP BY step_run_type, provider_id
+      ORDER BY count DESC
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentIds,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      step_run_type: string;
+      provider_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {
@@ -246,6 +490,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter failed';
     case 'step_completed':
       return 'Step completed';
+    case 'step_processed':
+      return 'Step processed';
     case 'step_canceled':
       return 'Step canceled';
     case 'step_throttled':
@@ -326,6 +572,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Throttle window in past';
 
     // Provider events
+    case 'provider_missing':
+      return 'Provider missing';
     case 'provider_error':
       return 'Provider error';
     case 'provider_limit_exceeded':
@@ -356,6 +604,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Bridge execution failed';
     case 'bridge_execution_skipped':
       return 'Bridge execution skipped';
+
+    // Step resolver events
+    case 'step_resolver_execution_failed':
+      return 'Step resolver execution failed';
+    case 'step_resolver_execution_timeout':
+      return 'Step resolver execution timeout';
 
     // Webhook events
     case 'webhook_filter_retrying':
@@ -496,6 +750,36 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step was executed due to maximum number of subscriber schedule extensions reached';
     case 'push_invalid_token_removed':
       return 'Invalid push device token was removed from subscriber';
+    case 'topic_subscription_preference_evaluation':
+      return 'Topic subscription preference evaluated';
+    case 'action_step_execution_failed':
+      return 'Action step execution failed';
+
+    // Workflow run status events
+    case 'workflow_run_status_processing':
+      return 'Workflow run processing';
+    case 'workflow_run_status_completed':
+      return 'Workflow run completed';
+    case 'workflow_run_status_error':
+      return 'Workflow run error';
+
+    // Workflow run delivery lifecycle events
+    case 'workflow_run_delivery_pending':
+      return 'Workflow run delivery pending';
+    case 'workflow_run_delivery_sent':
+      return 'Workflow run delivery sent';
+    case 'workflow_run_delivery_errored':
+      return 'Workflow run delivery errored';
+    case 'workflow_run_delivery_skipped':
+      return 'Workflow run delivery skipped';
+    case 'workflow_run_delivery_canceled':
+      return 'Workflow run delivery canceled';
+    case 'workflow_run_delivery_merged':
+      return 'Workflow run delivery merged';
+    case 'workflow_run_delivery_delivered':
+      return 'Workflow run delivery delivered';
+    case 'workflow_run_delivery_interacted':
+      return 'Workflow run delivery interacted';
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

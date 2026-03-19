@@ -1,7 +1,7 @@
 import React from 'react';
 import { OperatorSelectorProps } from 'react-querybuilder';
 
-import { toSelectOptions } from '@/components/conditions-editor/select-option-utils';
+import { fromSafeValue, toSafeValue, toSelectOptions } from '@/components/conditions-editor/select-option-utils';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { cn } from '@/utils/ui';
 
@@ -10,15 +10,15 @@ export const OperatorSelector = React.memo(
     return (
       <Select
         onValueChange={(e) => {
-          handleOnChange(e);
+          handleOnChange(fromSafeValue(e));
           context?.saveForm();
         }}
         disabled={disabled}
-        value={value}
+        value={toSafeValue(value)}
       >
         <SelectTrigger
           size="2xs"
-          className={cn('w-18 bg-background hover:bg-bg-weak hover:text-text-strong text-label-xs gap-1')}
+          className={cn('w-fit bg-background hover:bg-bg-weak hover:text-text-strong text-label-xs gap-1')}
         >
           <SelectValue />
         </SelectTrigger>

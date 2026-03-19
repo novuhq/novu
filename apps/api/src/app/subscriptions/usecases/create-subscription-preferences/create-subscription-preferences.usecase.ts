@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { GetPreferences, GetPreferencesCommand, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  buildDefaultSubscriptionIdentifier,
+  GetPreferences,
+  GetPreferencesCommand,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import { NotificationTemplateEntity, PreferencesRepository, TopicSubscribersEntity } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -11,6 +17,11 @@ import {
 import { RulesLogic } from 'json-logic-js';
 import { SubscriptionPreferenceDto } from '../../../shared/dtos/subscriptions/create-subscriptions-response.dto';
 import { CreateSubscriptionPreferencesCommand } from './create-subscription-preferences.command';
+
+type CreateSubscriptionPreferencesBatchCommand = Omit<
+  CreateSubscriptionPreferencesCommand,
+  'subscriptionId' | '_subscriberId' | 'topicKey' | 'externalSubscriberId' | '_topicSubscriptionId'
+>;
 
 @Injectable()
 export class CreateSubscriptionPreferencesUsecase {
@@ -37,15 +48,35 @@ export class CreateSubscriptionPreferencesUsecase {
         continue;
       }
 
-      const createdPreference = await this.preferencesRepository.create({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _subscriberId: command._subscriberId,
-        _templateId: workflow._id,
-        _topicSubscriptionId: command.subscriptionId,
-        type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-        preferences: workflowPreferences,
-      });
+      let createdPreference;
+      try {
+        createdPreference = await this.preferencesRepository.create({
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _subscriberId: command._subscriberId,
+          _templateId: workflow._id,
+          _topicSubscriptionId: command._topicSubscriptionId,
+          type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+          preferences: workflowPreferences,
+          contextKeys: command.contextKeys,
+        });
+      } catch (error) {
+        const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+
+        if (isDuplicateKeyError) {
+          createdPreference = await this.preferencesRepository.findOne({
+            _environmentId: command.environmentId,
+            _subscriberId: command._subscriberId,
+            _templateId: workflow._id,
+            _topicSubscriptionId: command._topicSubscriptionId,
+            type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+          });
+        }
+
+        if (!isDuplicateKeyError || !createdPreference) {
+          throw error;
+        }
+      }
 
       if (createdPreference) {
         preferencesResult.push({
@@ -58,7 +89,9 @@ export class CreateSubscriptionPreferencesUsecase {
             data: workflow.data,
             severity: workflow.severity || SeverityLevelEnum.NONE,
           },
-          subscriptionId: command.subscriptionId,
+          subscriptionId:
+            command.subscriptionId ||
+            buildDefaultSubscriptionIdentifier(command.topicKey, command.externalSubscriberId, command.contextKeys),
           enabled: createdPreference.preferences?.all?.enabled ?? true,
           condition: createdPreference.preferences?.all?.condition as RulesLogic | undefined,
         });
@@ -70,11 +103,9 @@ export class CreateSubscriptionPreferencesUsecase {
 
   @InstrumentUsecase()
   async executeBatch(
-    command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
+    command: CreateSubscriptionPreferencesBatchCommand,
     subscriptions: TopicSubscribersEntity[] = []
   ): Promise<Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }>> {
-    // Optimizes database round trips by batching all preference inserts into a single insertMany operation
-    // instead of making individual database calls for each subscription-workflow combination
     if (!command.preferences.length || !command.workflows.length || subscriptions.length === 0) {
       return [];
     }
@@ -126,7 +157,7 @@ export class CreateSubscriptionPreferencesUsecase {
   }
 
   private async buildPreferencesToCreate(
-    command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
+    command: CreateSubscriptionPreferencesBatchCommand,
     subscriptions: TopicSubscribersEntity[] = []
   ): Promise<
     Array<{
@@ -137,6 +168,7 @@ export class CreateSubscriptionPreferencesUsecase {
       _topicSubscriptionId: string;
       type: PreferencesTypeEnum;
       preferences: WorkflowPreferences;
+      contextKeys?: string[];
       subscriptionId: string;
       workflow: NotificationTemplateEntity;
     }>
@@ -149,6 +181,7 @@ export class CreateSubscriptionPreferencesUsecase {
       _topicSubscriptionId: string;
       type: PreferencesTypeEnum;
       preferences: WorkflowPreferences;
+      contextKeys?: string[];
       subscriptionId: string;
       workflow: NotificationTemplateEntity;
     }> = [];
@@ -170,7 +203,14 @@ export class CreateSubscriptionPreferencesUsecase {
             _topicSubscriptionId: subscription._id.toString(),
             type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
             preferences: workflowPreferences,
-            subscriptionId: subscription._id.toString(),
+            contextKeys: command.contextKeys,
+            subscriptionId:
+              subscription.identifier ||
+              buildDefaultSubscriptionIdentifier(
+                subscription.topicKey,
+                subscription.externalSubscriberId,
+                subscription.contextKeys
+              ),
             workflow,
           });
         }
@@ -181,7 +221,7 @@ export class CreateSubscriptionPreferencesUsecase {
   }
 
   private async getWorkflowPreferencesForBatch(
-    command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
+    command: CreateSubscriptionPreferencesBatchCommand,
     workflow: NotificationTemplateEntity,
     _subscriberId: string
   ): Promise<WorkflowPreferences | undefined> {
@@ -191,16 +231,16 @@ export class CreateSubscriptionPreferencesUsecase {
     if (preferenceFilterDefinition?.enabled !== undefined) {
       enabled = preferenceFilterDefinition.enabled;
     } else {
-      enabled = (
-        await this.getPreferences.safeExecute(
-          GetPreferencesCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            templateId: workflow._id,
-            subscriberId: _subscriberId,
-          })
-        )
-      )?.preferences.all?.enabled;
+      const getPreferencesResult = await this.getPreferences.safeExecute(
+        GetPreferencesCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          templateId: workflow._id,
+          subscriberId: _subscriberId,
+          excludeSubscriberPreferences: true,
+        })
+      );
+      enabled = getPreferencesResult?.preferences.all?.enabled;
     }
 
     const partialPreferences: WorkflowPreferencesPartial = {
@@ -224,16 +264,16 @@ export class CreateSubscriptionPreferencesUsecase {
     if (preferenceFilterDefinition?.enabled !== undefined) {
       enabled = preferenceFilterDefinition.enabled;
     } else {
-      enabled = (
-        await this.getPreferences.safeExecute(
-          GetPreferencesCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            templateId: workflow._id,
-            subscriberId: command._subscriberId,
-          })
-        )
-      )?.preferences.all?.enabled;
+      const getPreferencesResult = await this.getPreferences.safeExecute(
+        GetPreferencesCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          templateId: workflow._id,
+          subscriberId: command._subscriberId,
+          excludeSubscriberPreferences: true,
+        })
+      );
+      enabled = getPreferencesResult?.preferences.all?.enabled;
     }
 
     const partialPreferences: WorkflowPreferencesPartial = {
@@ -248,9 +288,7 @@ export class CreateSubscriptionPreferencesUsecase {
   }
 
   private findPreferenceFilterDefinition(
-    command:
-      | CreateSubscriptionPreferencesCommand
-      | Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
+    command: CreateSubscriptionPreferencesCommand | CreateSubscriptionPreferencesBatchCommand,
     workflow: { _id: string; tags?: string[]; triggers?: Array<{ identifier?: string }> }
   ) {
     return command.preferences.find((pref) => {
@@ -260,9 +298,11 @@ export class CreateSubscriptionPreferencesUsecase {
       if (pref.filter.workflowIds && pref.filter.workflowIds.length > 0) {
         return pref.filter.workflowIds.some((id) => {
           const workflowIdentifier = workflow.triggers?.[0]?.identifier;
+
           return id === workflow._id || id === workflowIdentifier;
         });
       }
+
       return false;
     });
   }

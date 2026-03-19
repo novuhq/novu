@@ -1,8 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   filteredPreference,
   GetPreferences,
   GetPreferencesResponseDto,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   MergePreferences,
@@ -16,13 +19,16 @@ import {
   NotificationTemplateRepository,
   PreferencesEntity,
   PreferencesRepository,
+  SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
+  SeverityLevelEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
 import { chunk } from 'es-toolkit';
@@ -33,24 +39,28 @@ export class GetSubscriberPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private preferencesRepository: PreferencesRepository
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
-    const subscriber =
+    const subscriber: Pick<SubscriberEntity, '_id'> | null =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId, false, '_id'));
     if (!subscriber) {
       throw new NotFoundException(`Subscriber with id: ${command.subscriberId} not found`);
     }
 
-    const workflowList = await this.notificationTemplateRepository.filterActive({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      tags: command.tags,
-      severity: command.severity,
-    });
+    const workflowList =
+      command.workflowList ??
+      (await this.getActiveWorkflows({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        tags: command.tags,
+        severity: command.severity,
+      }));
 
     const workflowIds = workflowList.map((wf) => wf._id);
 
@@ -62,6 +72,7 @@ export class GetSubscriberPreference {
     } = await this.findAllPreferences({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
+      contextKeys: command.contextKeys,
       subscriberId: subscriber._id,
       workflowIds,
     });
@@ -174,11 +185,14 @@ export class GetSubscriberPreference {
 
           const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
-          return {
+          const preference: ISubscriberPreferenceResponse = {
             preference: {
               channels,
               enabled: true,
               overrides,
+              ...(preferences.subscriberWorkflowPreference?.updatedAt && {
+                updatedAt: preferences.subscriberWorkflowPreference.updatedAt,
+              }),
             },
             template: mapTemplateConfiguration({
               ...workflow,
@@ -186,6 +200,8 @@ export class GetSubscriberPreference {
             }),
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
+
+          return preference;
         })
         .filter((item): item is ISubscriberPreferenceResponse => item !== null);
 
@@ -241,11 +257,13 @@ export class GetSubscriberPreference {
     organizationId,
     subscriberId,
     workflowIds,
+    contextKeys,
   }: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
     workflowIds: string[];
+    contextKeys?: string[];
   }) {
     const baseQuery = {
       _environmentId: environmentId,
@@ -253,6 +271,15 @@ export class GetSubscriberPreference {
     };
 
     const readOptions = { readPreference: 'secondaryPreferred' as const };
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     const [
       workflowResourcePreferences,
@@ -284,6 +311,7 @@ export class GetSubscriberPreference {
           _subscriberId: subscriberId,
           _templateId: { $in: workflowIds },
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          ...contextQuery,
         },
         undefined,
         readOptions
@@ -293,6 +321,7 @@ export class GetSubscriberPreference {
           ...baseQuery,
           _subscriberId: subscriberId,
           type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          ...contextQuery,
         },
         undefined,
         readOptions
@@ -305,5 +334,47 @@ export class GetSubscriberPreference {
       subscriberWorkflowPreferences,
       subscriberGlobalPreference: subscriberGlobalPreferences[0] ?? null,
     };
+  }
+
+  @Instrument()
+  private async getActiveWorkflows({
+    organizationId,
+    environmentId,
+    tags,
+    severity,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    tags?: string[];
+    severity?: SeverityLevelEnum[];
+  }): Promise<NotificationTemplateEntity[]> {
+    const cacheKey = `${organizationId}:${environmentId}`;
+    const cacheVariant = this.buildCacheVariant(tags, severity);
+
+    return this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.ACTIVE_WORKFLOWS,
+      cacheKey,
+      () =>
+        this.notificationTemplateRepository.filterActive({
+          organizationId,
+          environmentId,
+          tags,
+          severity,
+        }),
+      {
+        organizationId,
+        environmentId,
+        cacheVariant,
+      }
+    );
+  }
+
+  private buildCacheVariant(tags?: string[], severity?: SeverityLevelEnum[]): string {
+    const filters = {
+      ...(tags && tags.length > 0 && { tags: [...tags].sort() }),
+      ...(severity && severity.length > 0 && { severity: [...severity].sort() }),
+    };
+
+    return Object.keys(filters).length > 0 ? JSON.stringify(filters) : 'default';
   }
 }

@@ -19,10 +19,14 @@ export class ProcessBulkTrigger {
     // Extract unique workflow identifiers from all events
     const uniqueWorkflowIdentifiers = [...new Set(command.events.map((event) => event.name))];
 
-    // Fetch all unique workflows in a single batch operation
-    const workflows = await this.notificationTemplateRepository.findByTriggerIdentifierBulk(
-      command.environmentId,
-      uniqueWorkflowIdentifiers
+    // Fetch all unique workflows in a single batch operation with specific fields
+    const workflows = await this.notificationTemplateRepository.find(
+      {
+        _environmentId: command.environmentId,
+        'triggers.identifier': { $in: uniqueWorkflowIdentifiers },
+      },
+      '_id active payloadSchema validatePayload triggers',
+      { readPreference: 'secondaryPreferred' }
     );
 
     // Create a map for quick lookup
@@ -75,6 +79,7 @@ export class ProcessBulkTrigger {
               acknowledged: true,
               status: TriggerEventStatusEnum.ERROR,
               error,
+              transactionId: event.transactionId,
             } as TriggerEventResponseDto;
           }
         })
@@ -105,6 +110,6 @@ export class ProcessBulkTrigger {
       await this.workflowQueueService.addBulk(jobsToQueue);
     }
 
-    return results;
+    return results.map(({ jobData, ...rest }) => rest);
   }
 }

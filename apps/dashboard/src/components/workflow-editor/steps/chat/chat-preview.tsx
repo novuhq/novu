@@ -58,7 +58,7 @@ export const ChatPreview = ({
           </div>
         </div>
       </div>
-      <div className="to-background absolute -bottom-1 -left-1 -right-1 z-0 h-16 bg-gradient-to-b from-transparent to-80%" />
+      <div className="to-background absolute -bottom-1 -left-1 -right-1 z-0 h-16 bg-linear-to-b from-transparent to-80%" />
     </div>
   );
 };

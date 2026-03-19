@@ -26,5 +26,6 @@ export interface IExecutionDetail {
   raw?: string;
   createdAt: string;
   updatedAt: string;
+  eventType: string;
   id: string;
 }

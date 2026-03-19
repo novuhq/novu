@@ -10,6 +10,7 @@ export type MessageWebhookResponseDto = Pick<
   | '_notificationId'
   | 'actorSubscriber'
   | 'templateIdentifier'
+  | 'stepId'
   | 'createdAt'
   | 'updatedAt'
   | 'archivedAt'
@@ -34,4 +35,5 @@ export type MessageWebhookResponseDto = Pick<
   webhookUrl?: string;
   channelData?: ChannelData;
   subscriberId?: string;
+  workflowId?: string;
 };

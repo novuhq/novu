@@ -8,8 +8,8 @@ import { TestingQueueService } from './testing-queue.service';
  * This service is contains utilities to manage the jobs in the Redis queue and Mongo during testing.
  */
 export class JobsService {
-  public standardQueue: Queue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
-  public workflowQueue: Queue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+  public workflowQueue: Queue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+  public standardQueue: Queue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   public subscriberProcessQueue: Queue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
 
   constructor(private jobRepository: JobRepository = new JobRepository()) {}

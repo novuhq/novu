@@ -66,10 +66,13 @@ export type NotificationFilter = {
   seen?: boolean;
   data?: string;
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
+  createdGte?: number;
+  createdLte?: number;
 };
 
 export type InboxPreference = {
   level: PreferenceLevelEnum;
+  subscriptionId?: string;
   enabled: boolean;
   condition?: RulesLogic;
   channels: IPreferenceChannels;

@@ -1,6 +1,7 @@
 import { ResourceOriginEnum } from '@novu/shared';
 import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
-import { RiArrowDownSFill } from 'react-icons/ri';
+import { useFormContext } from 'react-hook-form';
+import { RiArrowDownSFill, RiEdit2Line } from 'react-icons/ri';
 import { MAILY_EMAIL_WIDTH } from '@/components/maily/maily-config';
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -8,14 +9,24 @@ import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integratio
 import { cn } from '@/utils/ui';
 import { NovuBranding } from './novu-branding';
 
-type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & { minimalHeader?: boolean };
+type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & {
+  minimalHeader?: boolean;
+  onEditSenderClick?: () => void;
+  previewFrom?: {
+    email?: string;
+    name?: string;
+  };
+};
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
-  const { className, children, minimalHeader = false, ...rest } = props;
+  const { className, children, minimalHeader = false, onEditSenderClick, previewFrom, ...rest } = props;
   const { senderEmail, senderName, isLoading } = usePrimaryEmailIntegration();
+  const formContext = useFormContext();
+  const fromEmail = formContext?.watch('from.email');
+  const fromName = formContext?.watch('from.name');
 
-  const displaySenderName = senderName || 'Acme Inc.';
-  const displaySenderEmail = senderEmail || 'noreply@novu.co';
+  const displaySenderName = previewFrom?.name || fromName || senderName || 'Acme Inc.';
+  const displaySenderEmail = previewFrom?.email || fromEmail || senderEmail || 'noreply@novu.co';
 
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
@@ -30,9 +41,20 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
             {isLoading ? (
               <Skeleton className="h-4 w-40" />
             ) : (
-              <>
-                {displaySenderName} <span className="text-foreground-600 text-xs">{`<${displaySenderEmail}>`}</span>
-              </>
+              <button
+                type="button"
+                onClick={onEditSenderClick}
+                className="group flex items-center gap-1 text-left hover:text-foreground-950 focus:outline-none"
+              >
+                {displaySenderName}
+                <span className="text-foreground-600 text-xs">
+                  {'<'}
+                  <span className="text-foreground-600 text-xs underline decoration-dotted">{displaySenderEmail}</span>
+                  {'>'}
+                </span>
+
+                {onEditSenderClick && <RiEdit2Line className="text-foreground-600 size-3.5" />}
+              </button>
             )}
           </div>
           {!minimalHeader && (
@@ -64,10 +86,11 @@ export const EmailPreviewSubject = (props: EmailPreviewSubjectProps) => {
 type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
   resourceOrigin: ResourceOriginEnum;
+  isStepResolver?: boolean;
 };
 
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
-  const { body, className, resourceOrigin, ...rest } = props;
+  const { body, className, resourceOrigin, isStepResolver, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -138,7 +161,7 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding resourceOrigin={resourceOrigin} />
+      <NovuBranding resourceOrigin={resourceOrigin} isStepResolver={isStepResolver} />
     </div>
   );
 };
@@ -154,10 +177,11 @@ export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps)
 type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
   resourceOrigin: ResourceOriginEnum;
+  isStepResolver?: boolean;
 };
 
 export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
-  const { body, className, resourceOrigin, ...rest } = props;
+  const { body, className, resourceOrigin, isStepResolver, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -230,7 +254,7 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding resourceOrigin={resourceOrigin} />
+      <NovuBranding resourceOrigin={resourceOrigin} isStepResolver={isStepResolver} />
     </div>
   );
 };

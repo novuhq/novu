@@ -69,6 +69,27 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitized).to.include('id="main"');
     });
 
+    it('should strip oncontentvisibilityautostatechange attribute', () => {
+      const maliciousHtml =
+        '<a oncontentvisibilityautostatechange="alert(window.origin)" style="display:block;content-visibility:auto">click</a>';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('oncontentvisibilityautostatechange');
+      expect(sanitized).to.not.include('alert');
+      expect(sanitized).to.include('<a');
+      expect(sanitized).to.include('style="display:block;content-visibility:auto"');
+    });
+
+    it('should strip any attribute starting with "on" as event handlers', () => {
+      const maliciousHtml = '<div onfutureevent="alert(1)" data-value="safe">Content</div>';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('onfutureevent');
+      expect(sanitized).to.not.include('alert');
+      expect(sanitized).to.include('data-value="safe"');
+      expect(sanitized).to.include('Content');
+    });
+
     it('should remove script tags', () => {
       const maliciousHtml = '<div>Safe content</div><script>alert("XSS")</script>';
       const sanitized = sanitizeHTML(maliciousHtml);
@@ -89,6 +110,23 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitizeHTML('')).to.equal('');
       expect(sanitizeHTML(null as any)).to.equal(null);
       expect(sanitizeHTML(undefined as any)).to.equal(undefined);
+    });
+
+    it('should prevent XSS via malformed style closing tag </style/>', () => {
+      const maliciousHtml = '<style></style/><img src onerror=alert(origin)></style>';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('onerror');
+      expect(sanitized).to.not.include('alert');
+    });
+
+    it('should preserve legitimate style tags', () => {
+      const safeHtml = '<style>body { color: red; }</style>';
+      const sanitized = sanitizeHTML(safeHtml);
+
+      expect(sanitized).to.include('<style>');
+      expect(sanitized).to.include('body { color: red; }');
+      expect(sanitized).to.include('</style>');
     });
   });
 

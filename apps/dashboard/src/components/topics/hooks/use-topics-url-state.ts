@@ -1,6 +1,9 @@
 import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
+
+const TOPICS_TABLE_ID = 'topics-list';
 
 export type TopicsSortableColumn = '_id' | 'updatedAt' | 'name';
 
@@ -28,12 +31,16 @@ export interface TopicsUrlState {
   handlePageSizeChange: (newSize: number) => void;
 }
 
-const DEFAULT_LIMIT = 10;
+const DEFAULT_LIMIT = getPersistedPageSize(TOPICS_TABLE_ID, 10);
 
 export const useTopicsUrlState = (): TopicsUrlState => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [previousCursor, setPreviousCursor] = useState<string | undefined>(undefined);
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: TOPICS_TABLE_ID,
+    defaultPageSize: 10,
+  });
 
   const key = searchParams.get('key') || '';
   const name = searchParams.get('name') || '';
@@ -176,18 +183,18 @@ export const useTopicsUrlState = (): TopicsUrlState => {
 
   const handlePageSizeChange = useCallback(
     (newSize: number) => {
+      setPersistedPageSize(newSize);
       setNextCursor(undefined);
       setPreviousCursor(undefined);
       setSearchParams((prev) => {
         prev.set('limit', newSize.toString());
-        // Reset pagination when page size changes
         prev.delete('before');
         prev.delete('after');
 
         return prev;
       });
     },
-    [setSearchParams]
+    [setSearchParams, setPersistedPageSize]
   );
 
   return {

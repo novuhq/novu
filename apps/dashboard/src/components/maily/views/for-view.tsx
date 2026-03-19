@@ -12,7 +12,7 @@ export function ForView(props: NodeViewProps) {
       draggable="true"
       data-drag-handle=""
       data-type="repeat"
-      className="mly-relative border-soft-100 mx-[-0.5rem] rounded-md border px-3 py-3"
+      className="mly-relative border-soft-100 -mx-2 rounded-md border px-3 py-3"
     >
       <NodeViewContent className="is-editable" />
       <div
@@ -24,8 +24,8 @@ export function ForView(props: NodeViewProps) {
         }}
         className="border-soft-100 absolute right-[-2px] top-[-3px] flex cursor-grab items-center justify-center gap-[2px] rounded border bg-white px-1 py-[2px]"
       >
-        <Repeat2 className="size-3 flex-shrink-0" />
-        <span className="text-2xs font-medium leading-[1]">repeat</span>
+        <Repeat2 className="size-3 shrink-0" />
+        <span className="text-2xs font-medium leading-none">repeat</span>
       </div>
     </NodeViewWrapper>
   );

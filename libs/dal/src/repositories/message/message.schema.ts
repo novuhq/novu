@@ -34,6 +34,7 @@ const messageSchema = new Schema<MessageDBModel>(
       ref: 'Job',
     },
     templateIdentifier: Schema.Types.String,
+    stepId: Schema.Types.String,
     email: Schema.Types.String,
     subject: Schema.Types.String,
     cta: {
@@ -71,7 +72,7 @@ const messageSchema = new Schema<MessageDBModel>(
     phone: Schema.Types.String,
     directWebhookUrl: Schema.Types.String,
     providerId: Schema.Types.String,
-    deviceTokens: [Schema.Types.Array],
+    deviceTokens: [Schema.Types.String],
     title: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
@@ -157,6 +158,18 @@ const messageSchema = new Schema<MessageDBModel>(
   schemaOptions
 );
 
+messageSchema.pre('init', function sanitizeCorruptCta(doc: Record<string, unknown>) {
+  if (doc.cta !== undefined && doc.cta !== null && typeof doc.cta !== 'object') {
+    doc.cta = {};
+  }
+  if (doc.cta && typeof doc.cta === 'object') {
+    const cta = doc.cta as Record<string, unknown>;
+    if (cta.action !== undefined && cta.action !== null && typeof cta.action !== 'object') {
+      cta.action = {};
+    }
+  }
+});
+
 /**
  * todo: all the pre hooks should be removed after all the soft deletes are removed task nv-5688
  */
@@ -170,9 +183,6 @@ messageSchema.pre('findOneAndUpdate', function filterDeletedFindOneAndUpdate() {
   this.where({ deleted: { $exists: false } });
 });
 messageSchema.pre('countDocuments', function filterDeletedCountDocuments() {
-  this.where({ deleted: { $exists: false } });
-});
-messageSchema.pre('count', function filterDeletedCount() {
   this.where({ deleted: { $exists: false } });
 });
 

@@ -3,7 +3,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cn } from '@/utils/ui';
 
 const linkVariants = cva(
-  `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer`,
+  `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer`,
   {
     variants: {
       variant: {

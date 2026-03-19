@@ -1,5 +1,4 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "jest.enable": false,
   "editor.defaultFormatter": "biomejs.biome",
@@ -27,7 +26,10 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "files.exclude": {
-    "**/.source": true
+    "**/.source": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/*.map": true
   },
   "search.exclude": {
     "**/.source": true

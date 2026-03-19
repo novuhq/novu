@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, buildIntegrationKey, InvalidateCacheService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
@@ -8,7 +8,6 @@ import { SetIntegrationAsPrimaryCommand } from './set-integration-as-primary.com
 @Injectable()
 export class SetIntegrationAsPrimary {
   constructor(
-    private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger
@@ -73,12 +72,6 @@ export class SetIntegrationAsPrimary {
       channel,
       _organizationId,
       _environmentId,
-    });
-
-    await this.invalidateCache.invalidateQuery({
-      key: buildIntegrationKey().invalidate({
-        _organizationId,
-      }),
     });
 
     await this.updatePrimaryFlag({ existingIntegration });

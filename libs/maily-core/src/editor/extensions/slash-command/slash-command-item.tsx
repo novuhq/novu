@@ -12,7 +12,7 @@ type SlashCommandItemProps = {
   selectedGroupIndex: number;
   selectedCommandIndex: number;
   editor: Editor;
-  activeCommandRef: React.RefObject<HTMLButtonElement>;
+  activeCommandRef: React.RefObject<HTMLButtonElement | null>;
   selectItem: (groupIndex: number, commandIndex: number) => void;
   hoveredItemKey: string | null;
   onHover: (isHovered: boolean) => void;
@@ -139,6 +139,7 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
           onClick={() => selectItem(groupIndex, commandIndex)}
           onMouseEnter={() => onHover(true)}
           onMouseLeave={() => onHover(false)}
+          onMouseDown={(e) => e.preventDefault()}
           type="button"
           ref={isActive ? activeCommandRef : null}
           data-item-key={itemKey}

@@ -47,7 +47,7 @@ describe('Upsert Workflow #novu-v2', () => {
         expect(error.message).to.contain('Validation Error');
         expect(error.errors).to.exist;
         expect(error.errors.general.messages[0]).to.contain(
-          'must be a valid slug format (lowercase letters, numbers, and hyphens only)'
+          'must be a valid slug format (letters, numbers, hyphens, dot and underscores only)'
         );
       }
     });
@@ -506,8 +506,8 @@ describe('Upsert Workflow #novu-v2', () => {
       expect(updatedEmailStep.controls.values.body).to.contain('<html');
       expect(updatedEmailStep.controls.values.body).to.contain('<body');
       expect(updatedEmailStep.controls.values.body).to.contain(`>
-              test
-            </p>`);
+                      test
+                    </p>`);
       expect(updatedEmailStep.controls.values.body).to.contain('</body>');
       expect(updatedEmailStep.controls.values.body).to.contain('</html>');
 

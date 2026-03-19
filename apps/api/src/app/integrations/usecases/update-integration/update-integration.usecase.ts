@@ -1,14 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AnalyticsService,
-  buildIntegrationKey,
-  encryptCredentials,
-  FeatureFlagsService,
-  InvalidateCacheService,
-  PinoLogger,
-} from '@novu/application-generic';
-import { IntegrationEntity, IntegrationRepository, OrganizationEntity } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
+import { AnalyticsService, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { UpdateIntegrationCommand } from './update-integration.command';
@@ -18,10 +11,8 @@ export class UpdateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
-    private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private featureFlagService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -127,20 +118,6 @@ export class UpdateIntegration {
       _organization: command.organizationId,
       active: command.active,
     });
-
-    const isInvalidationDisabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-    });
-
-    if (!isInvalidationDisabled) {
-      await this.invalidateCache.invalidateQuery({
-        key: buildIntegrationKey().invalidate({
-          _organizationId: command.organizationId,
-        }),
-      });
-    }
 
     const environmentId = command.environmentId ?? existingIntegration._environmentId;
 

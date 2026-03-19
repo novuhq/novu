@@ -5,28 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { integrationsListActive } from "../funcs/integrationsListActive.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type IntegrationsListActiveQueryData =
-  operations.IntegrationsControllerGetActiveIntegrationsResponse;
+import {
+  buildIntegrationsListActiveQuery,
+  IntegrationsListActiveQueryData,
+  prefetchIntegrationsListActive,
+  queryKeyIntegrationsListActive,
+} from "./integrationsListActive.core.js";
+export {
+  buildIntegrationsListActiveQuery,
+  type IntegrationsListActiveQueryData,
+  prefetchIntegrationsListActive,
+  queryKeyIntegrationsListActive,
+};
 
 /**
  * List active integrations
@@ -70,19 +71,6 @@ export function useIntegrationsListActiveSuspense(
   });
 }
 
-export function prefetchIntegrationsListActive(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildIntegrationsListActiveQuery(
-      client$,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setIntegrationsListActiveData(
   client: QueryClient,
   queryKeyBase: [parameters: { idempotencyKey?: string | undefined }],
@@ -114,40 +102,4 @@ export function invalidateAllIntegrationsListActive(
     ...filters,
     queryKey: ["@novu/api", "Integrations", "listActive"],
   });
-}
-
-export function buildIntegrationsListActiveQuery(
-  client$: NovuCore,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<IntegrationsListActiveQueryData>;
-} {
-  return {
-    queryKey: queryKeyIntegrationsListActive({ idempotencyKey }),
-    queryFn: async function integrationsListActiveQueryFn(
-      ctx,
-    ): Promise<IntegrationsListActiveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(integrationsListActive(
-        client$,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyIntegrationsListActive(
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Integrations", "listActive", parameters];
 }

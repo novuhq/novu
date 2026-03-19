@@ -46,11 +46,11 @@ export function StepPreview({ type, controlValues }: StepPreviewProps) {
   }
 
   if (type === StepTypeEnum.EMAIL) {
-    const { subject, body } = controlValues;
+    const { subject, body, from } = controlValues;
 
     return (
       <div className="bg-background p-3">
-        <EmailPreviewHeader />
+        <EmailPreviewHeader previewFrom={from} />
         <EmailPreviewSubject className="px-3 py-2" subject={subject} />
         <div className="mx-auto w-full overflow-auto">
           <Maily value={body} translationValueInput={() => null} />

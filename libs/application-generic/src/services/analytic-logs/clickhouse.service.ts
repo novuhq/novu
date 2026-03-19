@@ -1,5 +1,5 @@
 import { ClickHouseClient, ClickHouseSettings, createClient, PingResult } from '@clickhouse/client';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable } from '@nestjs/common';
 
 export { ClickHouseClient };
 
@@ -9,7 +9,7 @@ export type InsertOptions = {
 };
 
 @Injectable()
-export class ClickHouseService implements OnModuleDestroy {
+export class ClickHouseService implements BeforeApplicationShutdown {
   private _client: ClickHouseClient | undefined;
 
   async init() {
@@ -27,7 +27,7 @@ export class ClickHouseService implements OnModuleDestroy {
 
     if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
       const defaultClient = createClient({
-        host: 'http://localhost:8123',
+        url: 'http://localhost:8123',
         username: 'default',
         password: '',
         database: 'default',
@@ -37,7 +37,9 @@ export class ClickHouseService implements OnModuleDestroy {
         await defaultClient.query({
           query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
         });
-        console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        if (!process.env.CI) {
+          console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        }
       } catch (error) {
         console.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
       }
@@ -58,12 +60,11 @@ export class ClickHouseService implements OnModuleDestroy {
     return this._client;
   }
 
-  async onModuleDestroy() {
+  async beforeApplicationShutdown(signal?: string) {
     if (!this._client) {
       return;
     }
     await this._client.close();
-    // this.logger.info('ClickHouse client closed');
   }
 
   async ping(): Promise<PingResult> {

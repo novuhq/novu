@@ -112,10 +112,34 @@ export async function bootstrap(
     bodyParser.text({ verify: rawBodyBuffer })
   );
 
-  app.use(bodyParser.json({ verify: rawBodyBuffer }));
-  app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/v1/better-auth')) {
+      return next();
+    }
 
-  app.use(compression());
+    return bodyParser.json({ verify: rawBodyBuffer })(req, res, next);
+  });
+
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/v1/better-auth')) {
+      return next();
+    }
+
+    return bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer })(req, res, next);
+  });
+
+  app.use(
+    compression({
+      filter: (req, res) => {
+        // the compression middleware buffers the response to compress it, which breaks SSE streaming
+        if (res.getHeader('Content-Type') === 'text/event-stream') {
+          return false;
+        }
+
+        return compression.filter(req, res);
+      },
+    })
+  );
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 

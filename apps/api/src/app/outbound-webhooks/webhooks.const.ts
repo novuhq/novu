@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MessageWebhookResponseDto } from '@novu/application-generic';
+import { MessageWebhookResponseDto, WorkflowResponseDto } from '@novu/application-generic';
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { InboxPreference } from '../inbox/utils/types';
-import { WorkflowResponseDto } from '../workflows-v2/dtos/workflow-response.dto';
 
 interface WebhookEventConfig {
   event: WebhookEventEnum;
@@ -75,6 +74,9 @@ export class WebhookMessageFailedDto {
 export class WebhookPreferenceDto {
   @ApiProperty({ description: 'Current preference state' })
   object: InboxPreference;
+
+  @ApiProperty({ description: 'Subscriber ID' })
+  subscriberId: string;
 }
 
 // Create the webhook events as a record to ensure all enum values are covered

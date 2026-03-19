@@ -181,15 +181,16 @@ export function LocaleSelect(props: LocaleSelectProps) {
 
   const handleToggle = () => {
     if (!disabled && !readOnly) {
-      // Calculate dropdown position based on available space
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
         const dropdownWidth = 320;
-        const spaceOnRight = viewportWidth - rect.right;
-        const spaceOnLeft = rect.left;
+        const spaceOnRight = window.innerWidth - rect.left;
+        const spaceOnLeft = rect.right;
 
-        if (spaceOnRight < dropdownWidth && spaceOnLeft >= dropdownWidth) {
+        const fitsOnLeft = spaceOnLeft >= dropdownWidth;
+        const fitsOnRight = spaceOnRight >= dropdownWidth;
+
+        if (!fitsOnRight && fitsOnLeft) {
           setDropdownPosition('right');
         } else {
           setDropdownPosition('left');
@@ -257,60 +258,60 @@ export function LocaleSelect(props: LocaleSelectProps) {
               dropdownPosition === 'right' ? 'right-0' : 'left-0'
             )}
           >
-          <div className="border-border border-b p-2">
-            <Input
-              ref={inputRef}
-              type="text"
-              placeholder="Search locales..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              size="xs"
-            />
-          </div>
+            <div className="border-border border-b p-2">
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Search locales..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                size="xs"
+              />
+            </div>
 
-          <div ref={listRef} className="max-h-[300px] overflow-y-auto p-1" style={{ scrollBehavior: 'smooth' }}>
-            {filteredLocales.length === 0 ? (
-              <div className="text-muted-foreground py-6 text-center text-sm">No locales found.</div>
-            ) : (
-              <>
-                {filteredLocales.map((locale) => {
-                  const isSelected = multiSelect
-                    ? (value as string[])?.includes(locale.langIso)
-                    : locale.langIso === value;
+            <div ref={listRef} className="max-h-[300px] overflow-y-auto p-1" style={{ scrollBehavior: 'smooth' }}>
+              {filteredLocales.length === 0 ? (
+                <div className="text-muted-foreground py-6 text-center text-sm">No locales found.</div>
+              ) : (
+                <>
+                  {filteredLocales.map((locale) => {
+                    const isSelected = multiSelect
+                      ? (value as string[])?.includes(locale.langIso)
+                      : locale.langIso === value;
 
-                  return (
-                    <button
-                      key={locale.langIso}
-                      type="button"
-                      className={cn(
-                        'hover:bg-accent focus:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors focus:outline-none',
-                        isSelected && 'bg-accent'
-                      )}
-                      onClick={() => handleSelect(locale.langIso)}
-                      onMouseDown={(e) => e.preventDefault()}
-                    >
-                      <FlagCircle locale={locale.langIso} size="sm" className="shrink-0" />
-                      <div className="flex-1 overflow-hidden text-left">
-                        <TruncatedText>
-                          <span className="font-medium">{locale.langIso}</span>
-                          <span className="text-muted-foreground"> - {locale.langName}</span>
-                        </TruncatedText>
-                      </div>
-                      <RiCheckLine className={cn('size-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
-                    </button>
-                  );
-                })}
-                {showSearchLimitMessage && (
-                  <div className="text-muted-foreground py-2 text-center text-xs">
-                    Showing first 100 results. Continue typing to narrow down.
-                  </div>
-                )}
-              </>
-            )}
+                    return (
+                      <button
+                        key={locale.langIso}
+                        type="button"
+                        className={cn(
+                          'hover:bg-accent focus:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors focus:outline-hidden',
+                          isSelected && 'bg-accent'
+                        )}
+                        onClick={() => handleSelect(locale.langIso)}
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        <FlagCircle locale={locale.langIso} size="sm" className="shrink-0" />
+                        <div className="flex-1 overflow-hidden text-left">
+                          <TruncatedText>
+                            <span className="font-medium">{locale.langIso}</span>
+                            <span className="text-muted-foreground"> - {locale.langName}</span>
+                          </TruncatedText>
+                        </div>
+                        <RiCheckLine className={cn('size-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
+                      </button>
+                    );
+                  })}
+                  {showSearchLimitMessage && (
+                    <div className="text-muted-foreground py-2 text-center text-xs">
+                      Showing first 100 results. Continue typing to narrow down.
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
 
       {showCimodeWarning && (

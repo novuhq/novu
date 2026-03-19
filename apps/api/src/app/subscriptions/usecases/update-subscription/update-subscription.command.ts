@@ -9,7 +9,7 @@ export class UpdateSubscriptionCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsDefined()
-  subscriptionId: string;
+  identifier: string;
 
   @IsString()
   @IsOptional()
@@ -18,4 +18,9 @@ export class UpdateSubscriptionCommand extends EnvironmentWithUserCommand {
   @IsArray()
   @IsOptional()
   preferences?: Array<GroupPreferenceFilterDto>;
+
+  @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
+  contextKeys?: string[];
 }

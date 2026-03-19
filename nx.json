@@ -46,7 +46,6 @@
           "@novu/api-service",
           "@novu/dashboard",
           "@novu/inbound-mail",
-          "@novu/web",
           "@novu/webhook",
           "@novu/worker",
           "@novu/ws"

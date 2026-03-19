@@ -20,16 +20,15 @@
       "!**/*.generated.ts",
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
-      "!apps/web",
       "!playground",
       "!libs/internal-sdk",
-      "!libs/design-system",
       "!.github",
       "!scripts",
       "!packages/framework/scripts",
       "!packages/framework/src/jsonSchemaFaker.js",
       "!libs/maily-tsconfig/*",
-      "!libs/maily-tailwind-config/*"
+      "!libs/maily-tailwind-config/*",
+      "!packages/add-inbox/vitest.config.js"
     ]
   },
   "formatter": {
@@ -280,8 +279,20 @@
       }
     },
     {
+      "includes": [
+        "apps/api/**/*.{ts,tsx,js}",
+        "apps/worker/**/*.{ts,tsx,js}",
+        "libs/application-generic/**/*.{ts,tsx,js}"
+      ],
+      "plugins": ["./biome-plugins/pino-logger-arg-order.grit"]
+    },
+    {
       "includes": ["**/*.dto.ts"],
       "plugins": ["./biome-plugins/api-property-record-type.grit"]
+    },
+    {
+      "includes": ["**/*.command.ts"],
+      "plugins": ["./biome-plugins/command-session-exclusion.grit"]
     }
   ],
   "assist": {

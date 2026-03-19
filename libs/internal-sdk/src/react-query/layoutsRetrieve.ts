@@ -5,27 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { layoutsRetrieve } from "../funcs/layoutsRetrieve.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type LayoutsRetrieveQueryData = operations.LayoutsControllerGetResponse;
+import {
+  buildLayoutsRetrieveQuery,
+  LayoutsRetrieveQueryData,
+  prefetchLayoutsRetrieve,
+  queryKeyLayoutsRetrieve,
+} from "./layoutsRetrieve.core.js";
+export {
+  buildLayoutsRetrieveQuery,
+  type LayoutsRetrieveQueryData,
+  prefetchLayoutsRetrieve,
+  queryKeyLayoutsRetrieve,
+};
 
 /**
  * Retrieve a layout
@@ -73,21 +75,6 @@ export function useLayoutsRetrieveSuspense(
   });
 }
 
-export function prefetchLayoutsRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  layoutId: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildLayoutsRetrieveQuery(
-      client$,
-      layoutId,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setLayoutsRetrieveData(
   client: QueryClient,
   queryKeyBase: [
@@ -122,41 +109,4 @@ export function invalidateAllLayoutsRetrieve(
     ...filters,
     queryKey: ["@novu/api", "Layouts", "retrieve"],
   });
-}
-
-export function buildLayoutsRetrieveQuery(
-  client$: NovuCore,
-  layoutId: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<LayoutsRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyLayoutsRetrieve(layoutId, { idempotencyKey }),
-    queryFn: async function layoutsRetrieveQueryFn(
-      ctx,
-    ): Promise<LayoutsRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(layoutsRetrieve(
-        client$,
-        layoutId,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyLayoutsRetrieve(
-  layoutId: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Layouts", "retrieve", layoutId, parameters];
 }

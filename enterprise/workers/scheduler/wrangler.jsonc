@@ -1,0 +1,211 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scheduler-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-18",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "observability": {
+    "traces": {
+      "enabled": true
+    },
+    "logs": {
+      "enabled": true
+    }
+  },
+  "logpush": true,
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Scheduler"]
+    }
+  ],
+  "env": {
+    // Staging London
+    "staging-eu": {
+      "name": "scheduler-staging-eu",
+      "routes": [
+        {
+          "pattern": "scheduler.novu-staging.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production North Virginia
+    "prod-ue1": {
+      "name": "scheduler-prod-ue1",
+      "routes": [
+        {
+          "pattern": "scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production EU Central 1 (Frankfurt)
+    "prod-ec1": {
+      "name": "scheduler-prod-ec1",
+      "routes": [
+        {
+          "pattern": "eu.scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production Europe West 2 (London)
+    "prod-ew2": {
+      "name": "scheduler-prod-ew2",
+      "routes": [
+        {
+          "pattern": "ew2.scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production Asia Pacific Southeast 1 (Singapore)
+    "prod-apse1": {
+      "name": "scheduler-prod-apse1",
+      "routes": [
+        {
+          "pattern": "apse1.scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production Asia Pacific Southeast 2 (Sydney)
+    "prod-apse2": {
+      "name": "scheduler-prod-apse2",
+      "routes": [
+        {
+          "pattern": "apse2.scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production Asia Pacific Northeast 1 (Tokyo)
+    "prod-apne1": {
+      "name": "scheduler-prod-apne1",
+      "routes": [
+        {
+          "pattern": "apne1.scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    },
+    // Production Asia Pacific Northeast 2 (Seoul)
+    "prod-apne2": {
+      "name": "scheduler-prod-apne2",
+      "routes": [
+        {
+          "pattern": "apne2.scheduler.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "Scheduler"
+          }
+        ]
+      }
+    }
+  }
+  /**
+   * Smart Placement
+   * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+   */
+  // "placement": { "mode": "smart" }
+  /**
+   * Bindings
+   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+   * databases, object storage, AI inference, real-time communication and more.
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+   */
+  /**
+   * Environment Variables
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+   */
+  /**
+   * Note: Use secrets to store sensitive data.
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   *
+   * Required secrets for this worker (set per environment):
+   *   pnpm wrangler secret put API_KEY --env [staging-eu|prod-ue1|prod-ec1|prod-ew2|prod-apse1|prod-apse2|prod-apne1|prod-apne2]
+   *   pnpm wrangler secret put CALLBACK_API_URL --env [staging-eu|prod-ue1|prod-ec1|prod-ew2|prod-apse1|prod-apse2|prod-apne1|prod-apne2]
+   *   pnpm wrangler secret put CALLBACK_API_KEY --env [staging-eu|prod-ue1|prod-ec1|prod-ew2|prod-apse1|prod-apse2|prod-apne1|prod-apne2]
+   *
+   * Secret descriptions:
+   *   API_KEY: For incoming auth (Worker → Scheduler)
+   *   CALLBACK_API_URL: Novu API URL for callbacks
+   *   CALLBACK_API_KEY: For outgoing auth (Scheduler → API, must match INTERNAL_CALLBACK_API_KEY on API side)
+   */
+  /**
+   * Static Assets
+   * https://developers.cloudflare.com/workers/static-assets/binding/
+   */
+  // "assets": { "directory": "./public/", "binding": "ASSETS" }
+  /**
+   * Service Bindings (communicate between multiple Workers)
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+   */
+  // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+}

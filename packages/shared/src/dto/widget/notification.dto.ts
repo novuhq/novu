@@ -25,6 +25,7 @@ export interface INotificationDto {
   channel: ChannelTypeEnum;
   read: boolean;
   seen: boolean;
+  archived: boolean;
   subject?: string | null;
   deviceTokens?: string[] | null;
   cta: IMessageCTADto;

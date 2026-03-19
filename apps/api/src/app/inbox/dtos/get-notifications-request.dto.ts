@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SeverityLevelEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 
 import { CursorPaginationRequestDto } from '../../shared/dtos/cursor-pagination-request';
 import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
@@ -56,4 +56,22 @@ export class GetNotificationsRequestDto
     enum: SeverityLevelEnum,
   })
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
+
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @ApiPropertyOptional({
+    description: 'Filter notifications created on or after this timestamp (Unix timestamp in milliseconds)',
+    example: 1704067200000,
+  })
+  createdGte?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @ApiPropertyOptional({
+    description: 'Filter notifications created on or before this timestamp (Unix timestamp in milliseconds)',
+    example: 1735689599999,
+  })
+  createdLte?: number;
 }

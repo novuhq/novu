@@ -5,7 +5,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscriptionId (PATCH) #novu-v2', async () => {
+describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identifier (PATCH) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   let subscriber1: SubscriberEntity;
@@ -100,11 +100,11 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
     );
 
     expect(subscriptionResponse.result.data.length, 'Should have created a subscription').to.equal(1);
-    const subscriptionId = subscriptionResponse.result.data[0].id;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      identifier: subscriptionIdentifier,
       updateTopicSubscriptionRequestDto: {
         preferences: [
           {
@@ -116,12 +116,12 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
     });
 
     expect(updateResponse, 'Should have updated the subscription').to.exist;
-    expect(updateResponse.result.id, 'Should have updated the subscription').to.equal(subscriptionId);
+    expect(updateResponse.result.identifier, 'Should have updated the subscription').to.equal(subscriptionIdentifier);
     expect(updateResponse.result.preferences, 'Should have preferences').to.exist;
     expect(updateResponse.result.preferences?.length, 'Should have preferences').to.be.greaterThan(0);
 
     const subscription = await topicSubscribersRepository.findOne({
-      _id: subscriptionId,
+      identifier: subscriptionIdentifier,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });
@@ -150,11 +150,11 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
       topicKey
     );
 
-    const subscriptionId = subscriptionResponse.result.data[0].id;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      identifier: subscriptionIdentifier,
       updateTopicSubscriptionRequestDto: {
         preferences: [
           {
@@ -171,7 +171,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
     });
 
     expect(updateResponse).to.exist;
-    expect(updateResponse.result.id).to.equal(subscriptionId);
+    expect(updateResponse.result.identifier).to.equal(subscriptionIdentifier);
     expect(updateResponse.result.preferences).to.exist;
   });
 
@@ -183,12 +183,12 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
       name: 'Test Topic',
     });
 
-    const nonExistentSubscriptionId = '507f1f77bcf86cd799439011';
+    const nonExistentSubscriptionIdentifier = 'non-existent-identifier';
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.topics.subscriptions.update({
         topicKey,
-        subscriptionId: nonExistentSubscriptionId,
+        identifier: nonExistentSubscriptionIdentifier,
         updateTopicSubscriptionRequestDto: {
           preferences: [
             {
@@ -206,12 +206,12 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
   it('should return 404 when topic does not exist', async () => {
     const nonExistentTopicKey = `non-existent-topic-${Date.now()}`;
-    const nonExistentSubscriptionId = '507f1f77bcf86cd799439011';
+    const nonExistentSubscriptionIdentifier = 'non-existent-identifier';
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.topics.subscriptions.update({
         topicKey: nonExistentTopicKey,
-        subscriptionId: nonExistentSubscriptionId,
+        identifier: nonExistentSubscriptionIdentifier,
         updateTopicSubscriptionRequestDto: {
           preferences: [
             {
@@ -248,16 +248,16 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
       topicKey
     );
 
-    const subscriptionId = subscriptionResponse.result.data[0].id;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      identifier: subscriptionIdentifier,
       updateTopicSubscriptionRequestDto: {},
     });
 
     expect(updateResponse).to.exist;
-    expect(updateResponse.result.id).to.equal(subscriptionId);
+    expect(updateResponse.result.identifier).to.equal(subscriptionIdentifier);
   });
 
   it('should update subscription with custom condition preferences', async () => {
@@ -275,7 +275,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
       topicKey
     );
 
-    const subscriptionId = subscriptionResponse.result.data[0].id;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
 
     const customCondition = {
       and: [{ '==': [{ var: 'priority' }, 'high'] }, { '>': [{ var: 'amount' }, 100] }],
@@ -283,7 +283,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      identifier: subscriptionIdentifier,
       updateTopicSubscriptionRequestDto: {
         preferences: [
           {
@@ -296,7 +296,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
     });
 
     expect(updateResponse).to.exist;
-    expect(updateResponse.result.id).to.equal(subscriptionId);
+    expect(updateResponse.result.identifier).to.equal(subscriptionIdentifier);
     expect(updateResponse.result.preferences).to.exist;
     expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
   });
@@ -316,21 +316,21 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
       topicKey
     );
 
-    const subscriptionId = subscriptionResponse.result.data[0].id;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      identifier: subscriptionIdentifier,
       updateTopicSubscriptionRequestDto: {
         name: 'Updated Subscription Name',
       },
     });
 
     expect(updateResponse).to.exist;
-    expect(updateResponse.result.id).to.equal(subscriptionId);
+    expect(updateResponse.result.identifier).to.equal(subscriptionIdentifier);
 
     const subscription = await topicSubscribersRepository.findOne({
-      _id: subscriptionId,
+      identifier: subscriptionIdentifier,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });

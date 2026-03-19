@@ -33,4 +33,6 @@ export const QueryKeys = Object.freeze({
   fetchCharts: 'fetchCharts',
   fetchContexts: 'fetchContexts',
   fetchContext: 'fetchContext',
+  fetchSubscriberSubscriptions: 'fetchSubscriberSubscriptions',
+  fetchChat: 'fetchChat',
 });

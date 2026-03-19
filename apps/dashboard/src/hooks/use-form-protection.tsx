@@ -36,11 +36,12 @@ export function useFormProtection<T>(props: UseFormProtectionProps<T>) {
           setPendingChange(null);
         }}
         onProceed={() => {
+          setShowAlert(false);
+        }}
+        onExitComplete={() => {
           if (pendingChange) {
             onValueChange(pendingChange.value);
           }
-
-          setShowAlert(false);
           setPendingChange(null);
         }}
       />

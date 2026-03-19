@@ -127,13 +127,16 @@ export class Socket extends BaseModule implements BaseSocketInterface {
   #emitter: NovuEventEmitter;
   #socketIo: SocketIO | undefined;
   #socketUrl: string;
+  #socketOptions?: Record<string, unknown>;
 
   constructor({
     socketUrl,
+    socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
   }: {
     socketUrl?: string;
+    socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
   }) {
@@ -143,6 +146,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
+    this.#socketOptions = socketOptions;
   }
 
   protected onSessionSuccess({ token }: Session): void {
@@ -181,6 +185,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
       query: {
         token: `${this.#token}`,
       },
+      ...(this.#socketOptions ?? {}),
     });
 
     this.#socketIo.on('connect', () => {

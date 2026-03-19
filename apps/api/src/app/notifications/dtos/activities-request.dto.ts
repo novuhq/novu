@@ -97,6 +97,14 @@ export class ActivitiesRequestDto {
 
   @ApiPropertyOptional({
     type: String,
+    description: 'Subscription ID for filtering notifications by subscription',
+  })
+  @IsOptional()
+  @IsString()
+  subscriptionId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
     isArray: true,
     description: 'Filter by exact context keys, order insensitive (format: "type:id")',
   })

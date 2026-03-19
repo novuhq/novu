@@ -53,5 +53,17 @@ export const getEnvVariable = (name: string, context?: unknown): string => {
   return '';
 };
 
-export const isClerkEnabled = () =>
-  (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') && process.env.CLERK_ENABLED === 'true';
+export type EEAuthProvider = 'clerk' | 'better-auth';
+
+export const isEEAuthEnabled = () =>
+  process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+export const getEEAuthProvider = (): EEAuthProvider => {
+  const provider = process.env.EE_AUTH_PROVIDER as EEAuthProvider | undefined;
+
+  return provider || 'clerk';
+};
+
+export const isClerkEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'clerk';
+
+export const isBetterAuthEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'better-auth';

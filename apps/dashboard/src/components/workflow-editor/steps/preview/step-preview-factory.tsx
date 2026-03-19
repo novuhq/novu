@@ -1,13 +1,16 @@
-import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { type PreviewError, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { memo } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
+import { HttpRequestConsolePreview } from '@/components/workflow-editor/steps/http-request/http-request-console-preview';
 import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
+import { StepResolverEmptyPreview } from '@/components/workflow-editor/steps/shared/step-resolver-empty-preview';
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
+import { StepResolverPreviewError } from './step-resolver-preview-error';
 
 const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   return (
@@ -27,25 +30,41 @@ const MobilePreviewWrapper = memo(({ children, description }: { children: React.
 });
 
 export function StepPreviewFactory() {
-  const { step, previewData, isInitialLoad, controlValues } = useStepEditor();
+  const { step, previewData, isInitialLoad, controlValues, isPendingResolverActivation } = useStepEditor();
+
+  if (isPendingResolverActivation && !step.stepResolverHash) {
+    return <StepResolverEmptyPreview />;
+  }
 
   const commonProps = {
     previewData: previewData ?? undefined,
     isPreviewPending: isInitialLoad,
   };
 
+  const isStepResolver = typeof step.stepResolverHash === 'string';
+
+  const resolverError = isStepResolver
+    ? (previewData?.result as { error?: PreviewError } | undefined)?.error
+    : undefined;
+
+  if (resolverError) {
+    return <StepResolverPreviewError error={resolverError} />;
+  }
+
   const mobilePreviewDescription =
     'This preview shows how your message will appear on mobile. Actual rendering may vary by device.';
 
   switch (step.type) {
-    case StepTypeEnum.EMAIL:
+    case StepTypeEnum.EMAIL: {
       return (
         <EmailCorePreview
           {...commonProps}
           isCustomHtmlEditor={controlValues?.editorType === 'html'}
           resourceOrigin={step.origin ?? ResourceOriginEnum.NOVU_CLOUD}
+          isStepResolver={isStepResolver}
         />
       );
+    }
 
     case StepTypeEnum.IN_APP:
       return <InboxPreview {...commonProps} />;
@@ -66,6 +85,9 @@ export function StepPreviewFactory() {
 
     case StepTypeEnum.CHAT:
       return <ChatPreview {...commonProps} />;
+
+    case StepTypeEnum.HTTP_REQUEST:
+      return <HttpRequestConsolePreview />;
 
     default:
       return <NoPreviewAvailable stepType={step.type} />;

@@ -1,14 +1,9 @@
-import type { Notification } from '../notifications';
+import type { Notification } from '../notifications/notification';
 import { Novu } from '../novu';
 import { Schedule } from '../preferences';
+import type { Preference } from '../preferences/preference';
 import { SubscriptionPreference, TopicSubscription } from '../subscriptions';
-import {
-  type NotificationFilter,
-  type NovuOptions,
-  type Preference,
-  type UnreadCount,
-  WorkflowCriticalityEnum,
-} from '../types';
+import { type NotificationFilter, type NovuOptions, type UnreadCount, WorkflowCriticalityEnum } from '../types';
 import { commonAppearanceKeys, inboxAppearanceKeys, subscriptionAppearanceKeys } from './config';
 import { AllLocalization } from './context/LocalizationContext';
 

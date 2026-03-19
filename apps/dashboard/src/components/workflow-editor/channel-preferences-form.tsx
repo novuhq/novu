@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   ChannelTypeEnum,
   PermissionsEnum,
@@ -91,9 +91,9 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     };
   }, [workflow.preferences.default, workflow.preferences.user, workflow.severity]);
 
-  const form = useForm<z.infer<typeof UserPreferencesFormSchema>>({
+  const form = useForm({
     defaultValues,
-    resolver: zodResolver(UserPreferencesFormSchema),
+    resolver: standardSchemaResolver(UserPreferencesFormSchema),
     shouldFocusError: false,
   });
 
@@ -242,7 +242,6 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                               new_status: checked,
                             });
                           }}
-                          disabled={isReadOnly}
                         />
                       </FormControl>
                     </FormItem>

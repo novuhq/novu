@@ -18,7 +18,7 @@ export const welcomeOnboardingEmail = workflow(
       }
     );
 
-    await step.inApp('In-App Step', async () => {
+    await step.inApp('in-app-step', async () => {
       return {
         subject: payload.inAppSubject,
         body: payload.inAppBody,

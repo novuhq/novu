@@ -33,7 +33,7 @@ export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @ValidateIf((object) => object.level === PreferenceLevelEnum.TEMPLATE)
   @IsString()
-  readonly subscriptionIdOrIdentifier?: string;
+  readonly subscriptionIdentifier?: string;
 
   @IsOptional()
   @ValidateNested()

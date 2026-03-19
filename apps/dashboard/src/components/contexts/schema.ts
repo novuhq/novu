@@ -15,29 +15,35 @@ export const CreateContextFormSchema = z.object({
     .regex(CONTEXT_IDENTIFIER_REGEX, 'Type must match: /^[a-zA-Z0-9_-]+$/'),
   data: z
     .string()
-    .transform((str, ctx) => {
-      try {
-        if (!str) return {};
-        return JSON.parse(str);
-      } catch (_e) {
-        ctx.addIssue({ code: 'custom', message: 'Custom data must be a valid JSON' });
-        return z.NEVER;
-      }
-    })
+    .refine(
+      (str) => {
+        if (!str) return true;
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Custom data must be a valid JSON' }
+    )
     .optional(),
 });
 
 export const EditContextFormSchema = z.object({
   data: z
     .string()
-    .transform((str, ctx) => {
-      try {
-        if (!str) return {};
-        return JSON.parse(str);
-      } catch (_e) {
-        ctx.addIssue({ code: 'custom', message: 'Custom data must be a valid JSON' });
-        return z.NEVER;
-      }
-    })
+    .refine(
+      (str) => {
+        if (!str) return true;
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Custom data must be a valid JSON' }
+    )
     .optional(),
 });

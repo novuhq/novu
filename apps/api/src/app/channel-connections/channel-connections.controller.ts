@@ -12,12 +12,13 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible, FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelConnectionRequestDto } from './dtos/create-channel-connection-request.dto';
 import { mapChannelConnectionEntityToDto } from './dtos/dto.mapper';
@@ -39,8 +40,8 @@ import { UpdateChannelConnection } from './usecases/update-channel-connection/up
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/channel-connections', version: '1' })
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
 @ApiTags('Channel Connections')
+@SdkGroupName('ChannelConnections')
 @RequireAuthentication()
 @ApiCommonResponses()
 export class ChannelConnectionsController {
@@ -67,10 +68,11 @@ export class ChannelConnectionsController {
 
   @Get()
   @ApiOperation({
-    summary: 'List channel connections',
-    description: `Retrieve all channel connections for a resource.`,
+    summary: 'List all channel connections',
+    description: `List all channel connections for a resource.`,
   })
   @ApiResponse(ListChannelConnectionsResponseDto, 200)
+  @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   @ExternalApiAccessible()
   async listChannelConnections(
@@ -107,10 +109,11 @@ export class ChannelConnectionsController {
 
   @Post()
   @ApiOperation({
-    summary: 'Create channel connection for a resource and integration',
+    summary: 'Create a channel connection',
     description: `Create a new channel connection for a resource for given integration. Only one channel connection is allowed per resource and integration.`,
   })
   @ApiResponse(GetChannelConnectionResponseDto, 201)
+  @SdkMethodName('create')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async createChannelConnection(
@@ -137,11 +140,12 @@ export class ChannelConnectionsController {
 
   @Get('/:identifier')
   @ApiOperation({
-    summary: 'Retrieve channel connection by identifier',
+    summary: 'Retrieve a channel connection',
     description: `Retrieve a specific channel connection by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
   @ApiResponse(GetChannelConnectionResponseDto, 200)
+  @SdkMethodName('retrieve')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   @ExternalApiAccessible()
   async getChannelConnectionByIdentifier(
@@ -163,11 +167,12 @@ export class ChannelConnectionsController {
 
   @Patch('/:identifier')
   @ApiOperation({
-    summary: 'Update channel connection',
+    summary: 'Update a channel connection',
     description: `Update an existing channel connection by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
   @ApiResponse(GetChannelConnectionResponseDto, 200)
+  @SdkMethodName('update')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async updateChannelConnection(
@@ -193,10 +198,11 @@ export class ChannelConnectionsController {
   @Delete('/:identifier')
   @HttpCode(204)
   @ApiOperation({
-    summary: 'Delete channel connection',
+    summary: 'Delete a channel connection',
     description: `Delete a specific channel connection by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
+  @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async deleteChannelConnection(

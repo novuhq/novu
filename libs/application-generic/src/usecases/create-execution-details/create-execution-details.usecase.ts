@@ -3,7 +3,7 @@ import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Instrument } from '../../instrumentation';
 import { FeatureFlagsService, LogRepository, StepType } from '../../services';
-import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
+import { EventType, StepRunTraceInput, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
@@ -54,6 +54,7 @@ const mapDetailToEventType = {
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
   // Provider events
+  [DetailEnum.PROVIDER_MISSING]: 'provider_missing',
   [DetailEnum.PROVIDER_ERROR]: 'provider_error',
   [DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION]: 'provider_limit_exceeded',
 
@@ -75,10 +76,20 @@ const mapDetailToEventType = {
 
   // Workflow events
   [DetailEnum.STEP_COMPLETED]: 'step_completed',
+  [DetailEnum.STEP_PROCESSED]: 'step_processed',
+
+  // Action step events
+  [DetailEnum.ACTION_STEP_EXECUTION_FAILED]: 'action_step_execution_failed',
+  [DetailEnum.ACTION_STEP_NON_OBJECT_RESPONSE]: 'action_step_execution_failed',
+  [DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED]: 'action_step_execution_failed',
 
   // Bridge events
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
   [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
+
+  // Step resolver events
+  [DetailEnum.FAILED_STEP_RESOLVER_EXECUTION]: 'step_resolver_execution_failed',
+  [DetailEnum.STEP_RESOLVER_EXECUTION_TIMEOUT]: 'step_resolver_execution_timeout',
 
   // Webhook events
   [DetailEnum.WEBHOOK_FILTER_FAILED_RETRY]: 'webhook_filter_retrying',
@@ -131,6 +142,9 @@ const mapDetailToEventType = {
   [DetailEnum.STEP_EXTENDED_TO_SCHEDULE]: 'step_extended_to_schedule',
   [DetailEnum.SKIPPED_STEP_MAX_EXTENSIONS_REACHED]: 'step_skipped_max_extensions_reached',
   [DetailEnum.PUSH_INVALID_TOKEN_REMOVED]: 'push_invalid_token_removed',
+
+  [DetailEnum.TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION]: 'topic_subscription_preference_evaluation',
+  [DetailEnum.STEP_CANCELED]: 'step_canceled',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()
@@ -176,7 +190,7 @@ export class CreateExecutionDetails {
     // Handle dynamic provider selection messages
     const eventType = this.getEventType(command.detail);
 
-    const traceData = {
+    const traceData: StepRunTraceInput = {
       created_at: LogRepository.formatDateTime64(new Date(createdAt)),
       organization_id: command.organizationId,
       environment_id: command.environmentId,
@@ -188,11 +202,11 @@ export class CreateExecutionDetails {
       message: null,
       raw_data: command.raw || null,
       status: this.mapExecutionStatusToTraceStatus(command.status),
-      entity_type: 'step_run' as EntityType,
       entity_id: command.jobId,
       step_run_type: command.channel as StepType,
       workflow_run_identifier: command.workflowRunIdentifier,
       workflow_id: command.notificationTemplateId,
+      provider_id: command.providerId || null,
     };
 
     await this.traceLogRepository.createStepRun([traceData]);

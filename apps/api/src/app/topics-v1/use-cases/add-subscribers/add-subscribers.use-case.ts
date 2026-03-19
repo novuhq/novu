@@ -98,7 +98,7 @@ export class AddSubscribersUseCase {
       _topicId: topic._id,
       topicKey: topic.key,
       externalSubscriberId: subscriber.subscriberId,
-      identifier: buildDefaultSubscriptionIdentifier(topic.key, subscriber.subscriberId),
+      identifier: buildDefaultSubscriptionIdentifier(topic.key, subscriber.subscriberId, undefined),
     }));
   }
 }

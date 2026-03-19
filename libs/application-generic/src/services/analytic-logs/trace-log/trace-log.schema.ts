@@ -1,7 +1,9 @@
+import { DeliveryLifecycleEventType } from '@novu/shared';
 import {
+  CHArray,
+  CHBoolean,
   CHDateTime64,
   CHLowCardinality,
-  CHNullable,
   CHString,
   ClickhouseSchema,
   InferClickhouseSchemaType,
@@ -18,21 +20,21 @@ const schemaDefinition = {
   // Context
   organization_id: { type: CHString() },
   environment_id: { type: CHString() },
-  user_id: { type: CHNullable(CHString()) },
-  external_subscriber_id: { type: CHNullable(CHString()) },
-  subscriber_id: { type: CHNullable(CHString()) },
+  user_id: { type: CHString('') },
+  external_subscriber_id: { type: CHString('') },
+  subscriber_id: { type: CHString('') },
 
   // Trace metadata
   event_type: { type: CHLowCardinality(CHString()) }, // e.g., "message:seen", "step_run:start", "step_run:end"
   title: { type: CHString() }, // Human readable message
-  message: { type: CHNullable(CHString()) },
-  raw_data: { type: CHNullable(CHString()) },
+  message: { type: CHString('') },
+  raw_data: { type: CHString('') },
 
   status: { type: CHLowCardinality(CHString()) },
 
   // Correlation, Hierarchy context
-  entity_type: { type: CHLowCardinality(CHString()) }, // request, step_run
-  entity_id: { type: CHString() }, // ID of the related entity, request-> request.id, step_run-> job._id
+  entity_type: { type: CHLowCardinality(CHString()) },
+  entity_id: { type: CHString() }, // ID of the related entity, request-> request.id, step_run-> job._id, workflow_run-> notification._id
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
@@ -43,13 +45,33 @@ const schemaDefinition = {
   // Workflow run metadata
   workflow_run_identifier: { type: CHString('') }, // default value is empty string
   workflow_id: { type: CHString('') }, // Maps to NotificationTemplateEntity._id
+
+  // Provider metadata
+  provider_id: { type: CHString('') },
+
+  // Workflow run columns (14 new columns)
+  workflow_name: { type: CHString('') },
+  transaction_id: { type: CHString('') },
+  channels: { type: CHString('') }, // JSON array of channels
+  subscriber_to: { type: CHString('') }, // JSON representation of the 'to' field
+  payload: { type: CHString('') }, // JSON representation of the payload
+  control_values: { type: CHString('') }, // JSON representation of controls
+  topics: { type: CHString('') }, // JSON array of topics
+  is_digest: { type: CHBoolean(false) },
+  digested_workflow_run_id: { type: CHString('') }, // Reference to parent digest if this is a digested notification
+  delivery_lifecycle_status: { type: CHLowCardinality(CHString('')) },
+  delivery_lifecycle_detail: { type: CHLowCardinality(CHString('')) },
+  severity: { type: CHLowCardinality(CHString('')) },
+  critical: { type: CHBoolean(false) },
+  context_keys: { type: CHArray(CHString(), []) },
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [
-  'entity_type',
   'organization_id',
-  'entity_id',
+  'environment_id',
+  'entity_type',
   'created_at',
+  'entity_id',
 ];
 
 export const TTL: keyof typeof schemaDefinition = 'expires_at';
@@ -62,6 +84,11 @@ const clickhouseSchemaOptions = {
 };
 
 export const traceLogSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
+
+export type WorkflowRunStatusType =
+  | 'workflow_run_status_processing'
+  | 'workflow_run_status_completed'
+  | 'workflow_run_status_error';
 
 export type EventType =
   | 'message_seen'
@@ -104,6 +131,7 @@ export type EventType =
   | 'subscriber_context_channel_missing'
   | 'subscriber_validation_failed'
   | 'topic_not_found'
+  | 'provider_missing'
   | 'provider_error'
   | 'provider_limit_exceeded'
   | 'digest_merged'
@@ -118,6 +146,8 @@ export type EventType =
   | 'throttle_window_in_past'
   | 'bridge_response_received'
   | 'bridge_execution_failed'
+  | 'step_resolver_execution_failed'
+  | 'step_resolver_execution_timeout'
   | 'bridge_execution_skipped'
   | 'webhook_filter_retrying'
   | 'webhook_filter_failed'
@@ -149,6 +179,7 @@ export type EventType =
   | 'notification_error'
   | 'execution_detail'
   | 'step_completed'
+  | 'step_processed'
   | 'step_canceled'
   | 'request_received'
   | 'request_queued'
@@ -176,11 +207,15 @@ export type EventType =
   | 'step_skipped_outside_of_the_schedule'
   | 'step_extended_to_schedule'
   | 'step_skipped_max_extensions_reached'
-  | 'push_invalid_token_removed';
+  | 'push_invalid_token_removed'
+  | 'topic_subscription_preference_evaluation'
+  | 'action_step_execution_failed'
+  | WorkflowRunStatusType
+  | DeliveryLifecycleEventType;
 
-export type EntityType = 'request' | 'step_run';
+export type EntityType = 'request' | 'step_run' | 'workflow_run';
 
-export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
+export type TraceStatus = 'success' | 'error' | 'warning' | 'pending' | '';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 
@@ -188,7 +223,37 @@ export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | '
   event_type: EventType;
   entity_type: EntityType;
   status: TraceStatus;
-  step_run_type?: StepType;
+  step_run_type: StepType;
 };
 
 export type Trace = Prettify<TraceLogComplex>;
+
+type AutoGeneratedFields = keyof Pick<Trace, 'id' | 'expires_at' | 'entity_type'>;
+
+type WorkflowRunExclusiveFields = keyof Pick<
+  Trace,
+  | 'workflow_name'
+  | 'transaction_id'
+  | 'channels'
+  | 'subscriber_to'
+  | 'payload'
+  | 'control_values'
+  | 'topics'
+  | 'is_digest'
+  | 'digested_workflow_run_id'
+  | 'delivery_lifecycle_status'
+  | 'delivery_lifecycle_detail'
+  | 'severity'
+  | 'critical'
+  | 'context_keys'
+>;
+
+type StepRunExclusiveFields = keyof Pick<Trace, 'step_run_type'>;
+
+export type RequestTraceInput = Prettify<
+  Omit<Trace, AutoGeneratedFields | WorkflowRunExclusiveFields | StepRunExclusiveFields>
+>;
+
+export type StepRunTraceInput = Prettify<Omit<Trace, AutoGeneratedFields | WorkflowRunExclusiveFields>>;
+
+export type WorkflowRunTraceInput = Prettify<Omit<Trace, AutoGeneratedFields | StepRunExclusiveFields>>;

@@ -39,11 +39,11 @@ export abstract class Filter {
 
         break;
       case FieldOperatorEnum.NOT_IN:
-        result = !actualValue.includes(filterValue);
+        result = !(actualValue as any).includes(filterValue);
 
         break;
       case FieldOperatorEnum.IN:
-        result = actualValue.includes(filterValue);
+        result = (actualValue as any).includes(filterValue);
 
         break;
       case FieldOperatorEnum.IS_DEFINED:

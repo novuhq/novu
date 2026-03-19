@@ -10,8 +10,8 @@ interface CallQueueItem {
 }
 
 export class BaseModule {
-  protected _inboxService: InboxService;
-  protected _emitter: NovuEventEmitter;
+  _inboxService: InboxService;
+  _emitter: NovuEventEmitter;
   #callsQueue: CallQueueItem[] = [];
   #sessionError: unknown;
 

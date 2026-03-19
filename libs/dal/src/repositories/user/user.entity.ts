@@ -52,7 +52,7 @@ export class UserEntity implements IUserEntity {
     lastFailedAttempt: string;
   };
 
-  servicesHashes?: { intercom?: string; plain?: string };
+  servicesHashes?: { plain?: string };
 
   jobTitle?: JobTitleEnum;
 

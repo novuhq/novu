@@ -1,5 +1,6 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { RiDiscussLine } from 'react-icons/ri';
 import { ListTopicSubscriptionsResponse, TopicSubscription } from '@/api/topics';
 import { Separator } from '@/components/primitives/separator';
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { TooltipProvider } from '@/components/primitives/tooltip';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
 import { cn } from '../../utils/ui';
@@ -72,6 +74,8 @@ type TopicSubscribersProps = {
   subscriberId?: string;
   onSubscriberIdChange: (subscriberId?: string) => void;
   onLoadingChange: (loading: boolean) => void;
+  contextKeys: string[];
+  onContextKeysChange: (contextKeys: string[]) => void;
 };
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
@@ -84,6 +88,8 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
     subscriberId,
     onSubscriberIdChange,
     onLoadingChange,
+    contextKeys,
+    onContextKeysChange,
   } = props;
 
   if (error) {
@@ -111,7 +117,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           'flex flex-col gap-4': !readOnly,
         })}
       >
-        {!readOnly && <AddSubscriberForm topicKey={topicKey} />}
+        {!readOnly && <AddSubscriberForm topicKey={topicKey} contextKeys={contextKeys} />}
       </div>
       <div
         className={cn('border-b border-b-neutral-200 px-3 py-2', {
@@ -124,6 +130,8 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           onSubscriberIdChange={onSubscriberIdChange}
           isLoading={isLoading}
           onLoadingChange={onLoadingChange}
+          contextKeys={contextKeys}
+          onContextKeysChange={onContextKeysChange}
         />
       </div>
 
@@ -179,12 +187,21 @@ type TopicTabsProps = {
 
 function TopicTabs(props: TopicTabsProps) {
   const { topicKey, readOnly = false } = props;
+  const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
   const [tab, setTab] = useState('overview');
   const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
+  const [contextKeys, setContextKeys] = useState<string[]>(['']);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
 
   // Fetch subscription data at the top level so count is always available
-  const { data: subscriptionData, isPending, error } = useTopicSubscriptions(topicKey, { subscriberId });
+  const {
+    data: subscriptionData,
+    isPending,
+    error,
+  } = useTopicSubscriptions(topicKey, {
+    subscriberId,
+    contextKeys: isContextPreferencesEnabled ? contextKeys : undefined,
+  });
 
   const {
     protectedOnValueChange,
@@ -263,6 +280,8 @@ function TopicTabs(props: TopicTabsProps) {
             subscriberId={subscriberId}
             onSubscriberIdChange={handleSubscriberIdChange}
             onLoadingChange={setIsFilterLoading}
+            contextKeys={contextKeys}
+            onContextKeysChange={setContextKeys}
           />
         </TabsContent>
         <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
@@ -294,29 +313,39 @@ type TopicDrawerProps = {
   onOpenChange: (open: boolean) => void;
   topicKey: string;
   readOnly?: boolean;
+  className?: string;
 };
 
 export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, forwardedRef) => {
-  const { open, onOpenChange, topicKey, readOnly = false } = props;
+  const { open, onOpenChange, topicKey, readOnly = false, className } = props;
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const handleInteractOutside = (e: Event) => {
+    const target = e.target as Node;
+    if (overlayRef.current?.contains(target)) {
+      onOpenChange(false);
+    } else {
+      e.preventDefault();
+    }
+  };
 
   return (
-    <>
-      <Sheet open={open} modal={false} onOpenChange={onOpenChange}>
-        {/* Custom overlay since SheetOverlay does not work with modal={false} */}
-        <div
-          className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-            'pointer-events-none opacity-0': !open,
-          })}
-        />
-        <SheetContent ref={forwardedRef} className="w-[580px]">
-          <VisuallyHidden>
-            <SheetTitle />
-            <SheetDescription />
-          </VisuallyHidden>
-          <TopicTabs topicKey={topicKey} readOnly={readOnly} />
-        </SheetContent>
-      </Sheet>
-    </>
+    <Sheet open={open} modal={false} onOpenChange={onOpenChange}>
+      {/* Custom overlay since SheetOverlay does not work with modal={false} */}
+      <div
+        ref={overlayRef}
+        className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
+          'pointer-events-none opacity-0': !open,
+        })}
+      />
+      <SheetContent ref={forwardedRef} className={cn('w-[580px]', className)} onInteractOutside={handleInteractOutside}>
+        <VisuallyHidden>
+          <SheetTitle />
+          <SheetDescription />
+        </VisuallyHidden>
+        <TopicTabs topicKey={topicKey} readOnly={readOnly} />
+      </SheetContent>
+    </Sheet>
   );
 });
 

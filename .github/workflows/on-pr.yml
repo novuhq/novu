@@ -21,19 +21,6 @@ jobs:
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v4
 
-  spellcheck:
-    name: Spell check
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    environment: Linting
-    steps:
-      - uses: actions/checkout@v5
-      - name: Run Spell Check
-        uses: streetsidesoftware/cspell-action@v6
-        with:
-          root: 'apps/web'
-          files: '**/*'
-          incremental_files_only: true
-
   find-flags:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Find LaunchDarkly feature flags in diff
@@ -138,6 +125,8 @@ jobs:
         with:
           slim: 'true'
       - uses: mansagroup/nrwl-nx-action@v3
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           parallel: 5
@@ -168,6 +157,7 @@ jobs:
         uses: mansagroup/nrwl-nx-action@v3
         env:
           LOG_LEVEL: 'info'
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
           projects: '@novu/api'
@@ -176,6 +166,7 @@ jobs:
         uses: mansagroup/nrwl-nx-action@v3
         env:
           LOG_LEVEL: 'info'
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
@@ -195,6 +186,8 @@ jobs:
 
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
@@ -230,6 +223,8 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
           projects: '@novu/api'
@@ -237,6 +232,8 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
@@ -270,16 +267,6 @@ jobs:
     with:
       ee: true
     secrets: inherit
-
-  # TODO: Uncomment this when we have update on the web app
-  # test_e2e_web:
-  #   name: E2E test Web app
-  #   needs: [get-affected]
-  #   if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
-  #   uses: ./.github/workflows/reusable-web-e2e.yml
-  #   secrets: inherit
-  #   with:
-  #     ee: true
 
   #test_e2e_dashboard:
   #  name: E2E test Dashboard app

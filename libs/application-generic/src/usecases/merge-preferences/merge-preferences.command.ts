@@ -6,4 +6,10 @@ export class MergePreferencesCommand extends BaseCommand {
   workflowUserPreference?: PreferenceSet['workflowUserPreference'];
   subscriberGlobalPreference?: PreferenceSet['subscriberGlobalPreference'];
   subscriberWorkflowPreference?: PreferenceSet['subscriberWorkflowPreference'];
+  /**
+   * If true, subscriber preferences will be excluded from the merge calculation.
+   * Used when extracting subscription preferences to only consider workflow-level preferences.
+   * @default false
+   */
+  excludeSubscriberPreferences?: boolean = false;
 }

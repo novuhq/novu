@@ -14,7 +14,7 @@ export function AnimatedPage({ children, className }: AnimatedPageProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className={cn('flex min-h-[100%] w-full items-center justify-center', className)}
+      className={cn('flex min-h-full w-full items-center justify-center', className)}
     >
       {children}
     </motion.div>

@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
   LogRepository,
@@ -147,12 +146,6 @@ export class MarkNotificationsAsSeen {
 
     await Promise.all([
       this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      }),
-      this.invalidateCache.invalidateQuery({
         key: buildMessageCountKey().invalidate({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
@@ -166,7 +159,7 @@ export class MarkNotificationsAsSeen {
         event: WebSocketEventEnum.UNSEEN,
         userId: subscriber._id,
         _environmentId: command.environmentId,
-        ...(contextKeys && { contextKeys }),
+        contextKeys: contextKeys ?? [],
       },
       groupId: subscriber._organizationId,
     });
@@ -268,14 +261,14 @@ export class MarkNotificationsAsSeen {
       event_type: 'message_seen',
       title: mapEventTypeToTitle('message_seen'),
       message: `Message seen for subscriber ${message._subscriberId}`,
-      raw_data: null,
+      raw_data: '',
       status: 'success',
-      entity_type: 'step_run',
       entity_id: message._jobId,
       step_run_type: message.channel as StepType,
       workflow_run_identifier: '',
       _notificationId: message._notificationId,
       workflow_id: message._templateId,
+      provider_id: '',
     };
   }
 }

@@ -1,5 +1,5 @@
 import { providers as novuProviders } from '@novu/shared';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -7,6 +7,7 @@ import { showSuccessToast } from '../../../components/primitives/sonner-helpers'
 import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
 import { buildRoute, ROUTES } from '../../../utils/routes';
 import { Button } from '../../primitives/button';
+import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
 import { ChannelTabs } from './channel-tabs';
 import { useIntegrationList } from './hooks/use-integration-list';
@@ -16,6 +17,7 @@ import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
+import { cleanCredentials } from './utils/helpers';
 
 export type CreateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -29,7 +31,9 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const { integrations } = useFetchIntegrations();
-  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown> });
+  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(isOpened);
 
   const handleIntegrationSelect = (integrationId: string) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }), { replace: true });
@@ -70,7 +74,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       const integration = await createIntegration({
         providerId: provider.id,
         channel: provider.channel,
-        credentials: data.credentials,
+        credentials: cleanCredentials(data.credentials),
         configurations: data.configurations,
         name: data.name,
         identifier: data.identifier,
@@ -84,20 +88,44 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
 
       showSuccessToast('Integration created successfully');
 
+      setIsSheetOpen(false);
       navigate(ROUTES.INTEGRATIONS);
     } catch (error: unknown) {
       handleIntegrationError(error, 'create');
     }
   }
 
+  // Sync sheet open state with isOpened prop
+  useEffect(() => {
+    setIsSheetOpen(isOpened);
+  }, [isOpened]);
+
   const handleClose = () => {
+    // Only check for unsaved changes if we're on the configure step (form is visible)
+    if (step === 'configure' && formState.isDirty && !isPending && !isSettingPrimary) {
+      setShowUnsavedDialog(true);
+
+      return;
+    }
+
+    setIsSheetOpen(false);
     navigate(ROUTES.INTEGRATIONS);
+  };
+
+  const handleProceedClose = () => {
+    setShowUnsavedDialog(false);
+    setIsSheetOpen(false);
+    navigate(ROUTES.INTEGRATIONS);
+  };
+
+  const handleCancelClose = () => {
+    setShowUnsavedDialog(false);
   };
 
   return (
     <>
       <IntegrationSheet
-        isOpened={isOpened}
+        isOpened={isSheetOpen}
         onClose={handleClose}
         provider={provider}
         mode="create"
@@ -147,6 +175,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         newPrimaryName={pendingData?.name ?? ''}
         isLoading={isPending || isSettingPrimary}
       />
+
+      <UnsavedChangesAlertDialog show={showUnsavedDialog} onCancel={handleCancelClose} onProceed={handleProceedClose} />
     </>
   );
 }

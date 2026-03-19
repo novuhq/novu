@@ -28,7 +28,15 @@ import {
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  JobStatusEnum,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  SubscriberRepository,
+  TopicPreferenceEvaluation,
+} from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
@@ -91,6 +99,7 @@ export class AddJob {
     private stepRunRepository: StepRunRepository,
     private subscriberRepository: SubscriberRepository,
     private redisThrottleService: RedisThrottleService,
+    private notificationRepository: NotificationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -112,7 +121,24 @@ export class AddJob {
       };
     }
 
-    this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    if (job.type === StepTypeEnum.TRIGGER) {
+      this.logger.debug(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    } else {
+      this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+    }
+
+    const notification =
+      command.notification ??
+      (await this.notificationRepository.findOne({
+        _id: job._notificationId,
+        _environmentId: job._environmentId,
+      }));
+
+    const topicsContext =
+      notification?.topics && notification.topics.length > 0
+        ? this.formatTopicsContextForExecution(notification.topics)
+        : undefined;
+
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -121,14 +147,48 @@ export class AddJob {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
+        raw: topicsContext ? JSON.stringify(topicsContext) : undefined,
       })
     );
+
+    if (topicsContext && job.type === StepTypeEnum.TRIGGER) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(topicsContext),
+        })
+      );
+    }
 
     const result = isJobDeferredType(job.type)
       ? await this.executeDeferredJob(command)
       : await this.executeNoneDeferredJob(command);
 
     return result;
+  }
+
+  private formatTopicsContextForExecution(
+    topics: Array<{ _topicId: string; topicKey: string; preferenceEvaluation?: TopicPreferenceEvaluation }>
+  ) {
+    return {
+      topics: topics.map((topic) => ({
+        topic: topic.topicKey,
+        preferenceEvaluation: topic.preferenceEvaluation
+          ? {
+              result: topic.preferenceEvaluation.result,
+              subscriptionIdentifier: topic.preferenceEvaluation.subscriptionIdentifier,
+              ...(topic.preferenceEvaluation.condition && {
+                condition: topic.preferenceEvaluation.condition,
+              }),
+            }
+          : undefined,
+      })),
+    };
   }
 
   private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
@@ -327,7 +387,7 @@ export class AddJob {
 
     if (errors.length > 0) {
       const uniqueErrors = _.uniq(errors.map((error) => error.message));
-      this.logger.warn({ errors, jobId: job._id }, uniqueErrors);
+      this.logger.warn({ errors, jobId: job._id }, uniqueErrors?.toString());
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -449,7 +509,7 @@ export class AddJob {
 
     if (tierValidationErrors && tierValidationErrors.length > 0) {
       const errorMessage = tierValidationErrors[0].message;
-      this.logger.error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
+      this.logger.debug(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -475,7 +535,7 @@ export class AddJob {
     detail: DetailEnum
   ): Promise<AddJobResult> {
     const stepTypeName = stepType.toLowerCase();
-    this.logger.error(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
+    this.logger.debug(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -1010,9 +1070,8 @@ export class AddJob {
     timezone?: string;
   }) {
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
-    const options: JobsOptions = {
-      delay,
-    };
+    const options: JobsOptions = { delay };
+
     if (stepContainsWebhookFilter) {
       options.backoff = {
         type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
@@ -1020,51 +1079,51 @@ export class AddJob {
       options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
-    const jobData = {
-      _environmentId: job._environmentId,
-      _id: job._id,
-      _organizationId: job._organizationId,
-      _userId: job._userId,
-    };
-
-    this.logger.trace(jobData, 'Going to add a minimal job in Standard Queue');
-
     await this.standardQueueService.add({
       name: job._id,
-      data: jobData,
+      data: {
+        _environmentId: job._environmentId,
+        _id: job._id,
+        _organizationId: job._organizationId,
+        _userId: job._userId,
+      },
       groupId: job._organizationId,
       options,
     });
 
     if (delay) {
-      const logMessage =
-        job.type === StepTypeEnum.DELAY
-          ? 'Delay is active, Creating execution details'
-          : job.type === StepTypeEnum.DIGEST
-            ? 'Digest is active, Creating execution details'
-            : 'Unexpected job type, Creating execution details';
-
-      this.logger.trace(logMessage);
-
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            delay,
-            ...(untilDate && {
-              untilDate: timezone
-                ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
-                : untilDate.toISOString(),
-            }),
-          }),
-        })
-      );
+      await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
     }
+  }
+
+  private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {
+    const logMessage =
+      job.type === StepTypeEnum.DELAY
+        ? 'Delay is active, Creating execution details'
+        : job.type === StepTypeEnum.DIGEST
+          ? 'Digest is active, Creating execution details'
+          : 'Unexpected job type, Creating execution details';
+
+    this.logger.trace(logMessage);
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          delay,
+          ...(untilDate && {
+            untilDate: timezone
+              ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
+              : untilDate.toISOString(),
+          }),
+        }),
+      })
+    );
   }
 
   private stepContainsFilter(job: JobEntity, onFilter: string) {
@@ -1087,10 +1146,24 @@ export class AddJob {
   }
 }
 
-function isJobDeferredType(jobType: StepTypeEnum | undefined) {
+const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
+  [StepTypeEnum.DELAY]: true,
+  [StepTypeEnum.DIGEST]: true,
+  [StepTypeEnum.THROTTLE]: true,
+  [StepTypeEnum.TRIGGER]: false,
+  [StepTypeEnum.CUSTOM]: false,
+  [StepTypeEnum.HTTP_REQUEST]: false,
+  [StepTypeEnum.IN_APP]: false,
+  [StepTypeEnum.EMAIL]: false,
+  [StepTypeEnum.SMS]: false,
+  [StepTypeEnum.CHAT]: false,
+  [StepTypeEnum.PUSH]: false,
+};
+
+function isJobDeferredType(jobType: StepTypeEnum | undefined): boolean {
   if (!jobType) return false;
 
-  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE].includes(jobType);
+  return DEFERRED_JOB_TYPE_MAP[jobType];
 }
 
 function isShouldHaltJobExecution(digestCreationResult: DigestCreationResultEnum) {

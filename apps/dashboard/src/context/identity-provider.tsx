@@ -1,14 +1,15 @@
 import { setUser as sentrySetUser, setTags as setSentryTags } from '@sentry/react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useRef } from 'react';
+import { getRegionConfig, useRegion } from '@/context/region';
 import { useAuth } from './auth/hooks';
-import { getRegionConfig } from './region/region-config';
-import { useRegion } from './region/region-context';
+import { useCustomerIo } from './customer-io/hooks';
 import { useSegment } from './segment/hooks';
 
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const ldClient = useLDClient();
   const segment = useSegment();
+  const customerIo = useCustomerIo();
   const { currentUser, currentOrganization } = useAuth();
   const { selectedRegion } = useRegion();
   const hasIdentifiedUser = useRef(false);
@@ -38,6 +39,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
     if (shouldMonitor) {
       if (!hasIdentifiedOrg.current) {
         segment.identify(currentUser);
+        customerIo.identify(currentUser);
 
         sentrySetUser({
           email: currentUser.email ?? '',
@@ -83,7 +85,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
     } else {
       sentrySetUser(null);
     }
-  }, [ldClient, currentOrganization, currentUser, segment, selectedRegion]);
+  }, [ldClient, currentOrganization, currentUser, segment, customerIo, selectedRegion]);
 
   return <>{children}</>;
 }

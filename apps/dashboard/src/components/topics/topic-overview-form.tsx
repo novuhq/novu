@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -60,12 +60,12 @@ export function TopicOverviewForm({ topic, readOnly = false }: TopicOverviewForm
   const queryClient = useQueryClient();
   const { navigateToTopicsPage } = useTopicsNavigate();
 
-  const form = useForm<z.infer<typeof TopicFormSchema>>({
+  const form = useForm({
     defaultValues: {
       name: topic.name,
       key: topic.key,
     },
-    resolver: zodResolver(TopicFormSchema),
+    resolver: standardSchemaResolver(TopicFormSchema),
     shouldFocusError: false,
   });
 

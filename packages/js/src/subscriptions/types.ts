@@ -5,38 +5,20 @@ import { SubscriptionPreference } from './subscription-preference';
 export type WorkflowIdentifierOrId = string;
 
 export type WorkflowFilter = {
-  label?: string;
   workflowId: WorkflowIdentifierOrId;
+  enabled?: boolean;
+  condition?: RulesLogic;
+  filter?: never;
 };
 
 export type WorkflowGroupFilter = {
-  label: string;
   filter: { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] };
+  enabled?: boolean;
+  condition?: RulesLogic;
+  workflowId?: never;
 };
 
-export type WorkflowGroupFilterFunction = {
-  label: string;
-  filter: (args: {
-    preferences: Array<SubscriptionPreference>;
-  }) => Array<{ label: string; preference: SubscriptionPreference }>;
-};
-
-export type PreferenceFilter =
-  | WorkflowIdentifierOrId
-  | WorkflowFilter
-  | WorkflowGroupFilter
-  | WorkflowGroupFilterFunction;
-
-export type SubscriptionWorkflowPreference = {
-  workflowId: WorkflowIdentifierOrId;
-  value?: boolean | RulesLogic;
-};
-
-export type SubscriptionGroupPreference = {
-  group: Array<SubscriptionWorkflowPreference>;
-};
-
-export type SubscriptionPreferences = SubscriptionWorkflowPreference | SubscriptionGroupPreference;
+export type PreferenceFilter = WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter;
 
 export type ListSubscriptionsArgs = {
   topicKey: string;
@@ -45,13 +27,32 @@ export type ListSubscriptionsArgs = {
 export type GetSubscriptionArgs = {
   topicKey: string;
   identifier?: string;
+  workflowIds?: string[];
+  tags?: string[];
 };
 
 export type CreateSubscriptionArgs = {
   topicKey: string;
+  topicName?: string;
   identifier?: string;
-  filters: Array<WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter>;
+  name?: string;
+  preferences?: Array<PreferenceFilter> | undefined;
 };
+
+export type BaseUpdateSubscriptionArgs = {
+  topicKey: string;
+  identifier: string;
+  name?: string;
+  preferences?: Array<PreferenceFilter>;
+};
+
+export type InstanceUpdateSubscriptionArgs = {
+  subscription: TopicSubscription;
+  name?: string;
+  preferences?: Array<PreferenceFilter>;
+};
+
+export type UpdateSubscriptionArgs = BaseUpdateSubscriptionArgs | InstanceUpdateSubscriptionArgs;
 
 export type BaseSubscriptionPreferenceArgs = {
   workflowId: string;
@@ -66,7 +67,8 @@ export type InstanceSubscriptionPreferenceArgs = {
 export type UpdateSubscriptionPreferenceArgs = BaseSubscriptionPreferenceArgs | InstanceSubscriptionPreferenceArgs;
 
 export type BaseDeleteSubscriptionArgs = {
-  subscriptionId: string;
+  identifier: string;
+  topicKey: string;
 };
 
 export type InstanceDeleteSubscriptionArgs = {

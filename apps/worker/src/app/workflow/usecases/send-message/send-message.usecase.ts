@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildSubscriberKey,
-  CachedResponse,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
@@ -43,7 +41,8 @@ import {
 } from '@novu/shared';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
-import { ExecuteStepCustom } from './execute-step-custom.usecase';
+import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
+import { ExecuteHttpRequestStep } from './execute-http-request-step.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageChat } from './send-message-chat.usecase';
@@ -69,7 +68,8 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private sendMessageDelay: SendMessageDelay,
     private throttle: Throttle,
-    private executeStepCustom: ExecuteStepCustom,
+    private executeCodeFirstCustomStep: ExecuteCodeFirstCustomStep,
+    private executeHttpRequestStep: ExecuteHttpRequestStep,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
@@ -98,13 +98,14 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (isChannelStep(stepType)) {
+    if (requiresBridgeExecution(stepType)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
         workflow: command.workflow,
       });
     }
+
     const isBridgeSkipped = bridgeResponse?.options?.skip;
     if (isBridgeSkipped) {
       await this.createExecutionDetails.execute(
@@ -120,7 +121,7 @@ export class SendMessage {
       );
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
+    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables, payload);
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -203,8 +204,11 @@ export class SendMessage {
       case StepTypeEnum.THROTTLE: {
         return await this.throttle.execute(command);
       }
+      case StepTypeEnum.HTTP_REQUEST: {
+        return await this.executeHttpRequestStep.execute(sendMessageChannelCommand);
+      }
       case StepTypeEnum.CUSTOM: {
-        return await this.executeStepCustom.execute(sendMessageChannelCommand);
+        return await this.executeCodeFirstCustomStep.execute(sendMessageChannelCommand);
       }
       default: {
         throw new Error(`Unsupported step type: ${stepType}`);
@@ -214,14 +218,15 @@ export class SendMessage {
 
   private async evaluateFilters(
     command: SendMessageCommand,
-    variables: IFilterVariables
+    variables: IFilterVariables,
+    compileContext: SendMessageChannelCommand['compileContext']
   ): Promise<{
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),
-      this.evaluateChannelPreference(command),
+      this.evaluateChannelPreference(command, compileContext),
     ]);
 
     return { stepCondition, channelPreference };
@@ -322,11 +327,12 @@ export class SendMessage {
 
   @Instrument()
   private async evaluateChannelPreference(
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    compileContext: SendMessageChannelCommand['compileContext']
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
-    if (this.isActionStep(job)) {
+    if (!this.isChannelStep(job)) {
       return { result: true };
     }
 
@@ -337,10 +343,7 @@ export class SendMessage {
         environmentId: job._environmentId,
       }));
 
-    const subscriber = await this.getSubscriberBySubscriberId({
-      _environmentId: job._environmentId,
-      subscriberId: job.subscriberId,
-    });
+    const subscriber = compileContext.subscriber;
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
@@ -374,6 +377,7 @@ export class SendMessage {
           subscriber,
           tenant: job.tenant,
           includeInactiveChannels: false,
+          contextKeys: job.contextKeys,
         })
       );
       subscriberPreference = preference;
@@ -457,7 +461,7 @@ export class SendMessage {
   private async resolveContext(command: SendMessageCommand): Promise<ContextResolved> {
     const { contextKeys, environmentId, organizationId } = command;
 
-    if (!contextKeys || contextKeys.length === 0) {
+    if (contextKeys.length === 0) {
       return {} as ContextResolved;
     }
 
@@ -476,13 +480,6 @@ export class SendMessage {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
-  @CachedResponse({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
   public async getSubscriberBySubscriberId({
     subscriberId,
     _environmentId,
@@ -507,10 +504,10 @@ export class SendMessage {
     return workflowPreferred && channelPreferred;
   }
 
-  private isActionStep(job: JobEntity) {
+  private isChannelStep(job: JobEntity) {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
-    return !channels.find((channel) => channel === job.type);
+    return !!channels.find((channel) => channel === job.type);
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
@@ -568,6 +565,8 @@ export class SendMessage {
   }
 }
 
-function isChannelStep(stepType: StepTypeEnum | undefined) {
-  return ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum);
+function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {
+  if (!stepType) return false;
+
+  return ![StepTypeEnum.TRIGGER, StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.HTTP_REQUEST].includes(stepType);
 }

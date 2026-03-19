@@ -12,6 +12,12 @@ export const emailControlZodSchema = z
     subject: z.string().min(1),
     disableOutputSanitization: z.boolean().optional(),
     layoutId: z.string().nullish(),
+    from: z
+      .object({
+        email: z.string().optional(),
+        name: z.string().optional(),
+      })
+      .optional(),
   })
   .strict();
 

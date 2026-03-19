@@ -1,6 +1,6 @@
 import { BaseCommand } from '@novu/application-generic';
 import { MessageEntity } from '@novu/dal';
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class ExternalServicesRouteCommand extends BaseCommand {
   @IsDefined()
@@ -27,5 +27,7 @@ export class ExternalServicesRouteCommand extends BaseCommand {
   _environmentId: string;
 
   @IsOptional()
-  contextKeys?: string[];
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys: string[] = [];
 }

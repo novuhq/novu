@@ -107,6 +107,7 @@ describe('GetInboxPreferences', () => {
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
+      contextKeys: [],
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
@@ -133,6 +134,7 @@ describe('GetInboxPreferences', () => {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
+      contextKeys: [],
       includeInactiveChannels: false,
       subscriber: {
         _id: 'test-mockSubscriber',
@@ -151,6 +153,7 @@ describe('GetInboxPreferences', () => {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       organizationId: command.organizationId,
+      contextKeys: [],
       tags: undefined,
       severity: undefined,
       includeInactiveChannels: false,
@@ -220,6 +223,7 @@ describe('GetInboxPreferences', () => {
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
+      contextKeys: [],
       tags: ['newsletter', 'security'],
       severity: [SeverityLevelEnum.HIGH],
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
@@ -248,6 +252,7 @@ describe('GetInboxPreferences', () => {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
+      contextKeys: [],
       includeInactiveChannels: false,
       subscriber: {
         _id: 'test-mockSubscriber',
@@ -266,6 +271,7 @@ describe('GetInboxPreferences', () => {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       organizationId: command.organizationId,
+      contextKeys: [],
       tags: command.tags,
       severity: command.severity,
       includeInactiveChannels: false,

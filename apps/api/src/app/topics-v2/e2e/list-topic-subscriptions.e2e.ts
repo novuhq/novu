@@ -14,6 +14,8 @@ describe('List topic subscriptions - /v2/topics/:topicKey/subscriptions (GET) #n
   let topicId: string;
 
   before(async () => {
+    (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdk(session);
@@ -115,5 +117,115 @@ describe('List topic subscriptions - /v2/topics/:topicKey/subscriptions (GET) #n
     expect(response.result.data).to.be.an('array').that.is.empty;
     expect(response.result.next).to.be.null;
     expect(response.result.previous).to.be.null;
+  });
+
+  describe('Context-aware filtering', () => {
+    let contextTopicKey: string;
+    let sub1WithContextA: string;
+    let sub2WithContextB: string;
+    let sub3NoContext: string;
+
+    before(async () => {
+      contextTopicKey = `context-topic-${Date.now()}`;
+
+      const response1 = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-a' },
+        },
+        contextTopicKey
+      );
+      sub1WithContextA = response1.result.data[0].id;
+
+      const response2 = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber2.subscriberId],
+          context: { tenant: 'org-b' },
+        },
+        contextTopicKey
+      );
+      sub2WithContextB = response2.result.data[0].id;
+
+      const response3 = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber3.subscriberId],
+        },
+        contextTopicKey
+      );
+      sub3NoContext = response3.result.data[0].id;
+    });
+
+    it('should filter subscriptions by exact contextKeys match', async () => {
+      const response = await novuClient.topics.subscriptions.list({
+        topicKey: contextTopicKey,
+        contextKeys: ['tenant:org-a'],
+      });
+
+      expect(response).to.exist;
+      expect(response.result.data.length).to.equal(1);
+      expect(response.result.data[0].id).to.equal(sub1WithContextA);
+      expect(response.result.data[0].subscriber.subscriberId).to.equal(subscriber1.subscriberId);
+      expect(response.result.data[0].contextKeys).to.deep.equal(['tenant:org-a']);
+    });
+
+    it('should return all subscriptions when contextKeys not provided', async () => {
+      const response = await novuClient.topics.subscriptions.list({
+        topicKey: contextTopicKey,
+      });
+
+      expect(response).to.exist;
+      expect(response.result.data.length).to.equal(3);
+
+      const returnedIds = response.result.data.map((sub) => sub.id);
+      expect(returnedIds).to.include.members([sub1WithContextA, sub2WithContextB, sub3NoContext]);
+
+      const sub1 = response.result.data.find((s) => s.id === sub1WithContextA);
+      const sub2 = response.result.data.find((s) => s.id === sub2WithContextB);
+      const sub3 = response.result.data.find((s) => s.id === sub3NoContext);
+
+      expect(sub1?.contextKeys).to.deep.equal(['tenant:org-a']);
+      expect(sub2?.contextKeys).to.deep.equal(['tenant:org-b']);
+      const sub3ContextKeys = sub3?.contextKeys;
+      expect(sub3ContextKeys === undefined || (Array.isArray(sub3ContextKeys) && sub3ContextKeys.length === 0)).to.be
+        .true;
+    });
+
+    it('should match exact contextKeys (order-insensitive)', async () => {
+      const multiContextTopicKey = `multi-context-topic-${Date.now()}`;
+
+      const createResponse = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-a', project: 'proj-1' },
+        },
+        multiContextTopicKey
+      );
+      const subscriptionId = createResponse.result.data[0].id;
+
+      const responseOrderA = await novuClient.topics.subscriptions.list({
+        topicKey: multiContextTopicKey,
+        contextKeys: ['project:proj-1', 'tenant:org-a'],
+      });
+
+      expect(responseOrderA.result.data.length).to.equal(1);
+      expect(responseOrderA.result.data[0].id).to.equal(subscriptionId);
+      expect(responseOrderA.result.data[0].contextKeys).to.have.members(['project:proj-1', 'tenant:org-a']);
+
+      const responseOrderB = await novuClient.topics.subscriptions.list({
+        topicKey: multiContextTopicKey,
+        contextKeys: ['tenant:org-a', 'project:proj-1'],
+      });
+
+      expect(responseOrderB.result.data.length).to.equal(1);
+      expect(responseOrderB.result.data[0].id).to.equal(subscriptionId);
+      expect(responseOrderB.result.data[0].contextKeys).to.have.members(['project:proj-1', 'tenant:org-a']);
+
+      const responsePartial = await novuClient.topics.subscriptions.list({
+        topicKey: multiContextTopicKey,
+        contextKeys: ['tenant:org-a'],
+      });
+
+      expect(responsePartial.result.data.length).to.equal(0);
+    });
   });
 });

@@ -142,7 +142,7 @@ export const nodemailerConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Secure,
     displayName: 'Secure',
-    type: 'boolean',
+    type: 'switch',
     required: false,
   },
   {
@@ -200,6 +200,18 @@ export const sendgridConfig: IConfigCredential[] = [
     displayName: 'API Key',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    description: 'Select EU if your SendGrid account is hosted in the EU data center',
+    type: 'dropdown',
+    required: false,
+    value: 'global',
+    dropdown: [
+      { name: 'Global (US)', value: 'global' },
+      { name: 'EU', value: 'eu' },
+    ],
   },
   {
     key: CredentialsKeyEnum.IpPoolName,

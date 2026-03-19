@@ -1,15 +1,8 @@
 import { EnvironmentEnum, EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
-import {
-  Background,
-  BackgroundVariant,
-  ReactFlow,
-  ReactFlowProvider,
-  useReactFlow,
-  ViewportHelperFunctionOptions,
-} from '@xyflow/react';
+import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useUser } from '@clerk/clerk-react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -17,7 +10,6 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
-import { NODE_WIDTH } from './base-node';
 import { CanvasContext } from './drag-context';
 import { edgeTypes, nodeTypes } from './node-utils';
 import { useCanvasNodesEdges } from './use-canvas-nodes-edges';
@@ -40,6 +32,7 @@ const WorkflowCanvasChild = ({
   const { workflow } = useWorkflow();
   const navigate = useNavigate();
   const { user } = useUser();
+
   const {
     nodes,
     edges,
@@ -60,31 +53,27 @@ const WorkflowCanvasChild = ({
   } = useCanvasNodesEdges({
     steps,
     reactFlowInstance,
+    reactFlowWrapper,
   });
 
-  const positionCanvas = useCallback(
-    (options?: ViewportHelperFunctionOptions) => {
-      const clientWidth = reactFlowWrapper.current?.clientWidth;
-      const middle = clientWidth ? clientWidth / 2 - NODE_WIDTH / 2 : 0;
-
-      reactFlowInstance.setViewport({ x: middle, y: 50, zoom: 0.99 }, options);
-    },
-    [reactFlowInstance]
-  );
-
   useEffect(() => {
-    const listener = () => positionCanvas({ duration: 300 });
+    const oldClientWidth = reactFlowWrapper.current?.clientWidth ?? 0;
+    const listener = () => {
+      const currentClientWidth = reactFlowWrapper.current?.clientWidth;
+      if (!currentClientWidth || currentClientWidth === oldClientWidth) return;
+
+      const difference = currentClientWidth - oldClientWidth;
+      const newX = difference / 2;
+
+      reactFlowInstance.setViewport({ x: newX, y: 0, zoom: 1 });
+    };
 
     window.addEventListener('resize', listener);
 
     return () => {
       window.removeEventListener('resize', listener);
     };
-  }, [positionCanvas]);
-
-  useLayoutEffect(() => {
-    positionCanvas();
-  }, [positionCanvas]);
+  }, [reactFlowInstance]);
 
   const dragContextValue = useMemo(() => {
     return {

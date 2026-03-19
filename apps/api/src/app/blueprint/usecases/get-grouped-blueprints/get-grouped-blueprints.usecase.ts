@@ -17,10 +17,6 @@ export class GetGroupedBlueprints {
     this.logger.setContext(this.constructor.name);
   }
 
-  @CachedResponse({
-    builder: (command: GetGroupedBlueprintsCommand) => buildGroupedBlueprintsKey(command.environmentId),
-    options: { ttl: WEEK_IN_SECONDS },
-  })
   async execute(command: GetGroupedBlueprintsCommand): Promise<GroupedBlueprintResponse> {
     const generalGroups = await this.fetchGroupedBlueprints();
 

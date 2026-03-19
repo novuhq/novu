@@ -9,7 +9,6 @@ on:
       - next
       - main
     paths:
-      - 'apps/web/**'
       - 'apps/dashboard/**'
 
 env:

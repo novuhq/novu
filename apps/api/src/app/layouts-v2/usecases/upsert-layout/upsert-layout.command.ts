@@ -1,9 +1,11 @@
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import {
+  EnvironmentWithUserCommand,
+  LayoutControlValuesDto,
+  LayoutCreationSourceEnum,
+} from '@novu/application-generic';
 import { MAX_NAME_LENGTH } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Length, ValidateNested } from 'class-validator';
-import { LayoutControlValuesDto } from '../../dtos/layout-controls.dto';
-import { LayoutCreationSourceEnum } from '../../types';
 
 export class UpsertLayoutDataCommand {
   @IsString()

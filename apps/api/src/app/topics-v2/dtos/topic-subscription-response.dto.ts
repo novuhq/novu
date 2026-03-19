@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TopicResponseDto } from './topic-response.dto';
 
 export class SubscriberDto {
@@ -51,6 +51,12 @@ export class TopicSubscriptionResponseDto {
   _id: string;
 
   @ApiProperty({
+    description: 'The identifier of the subscription',
+    example: 'tk=product-updates:si=subscriber-123',
+  })
+  identifier: string;
+
+  @ApiProperty({
     description: 'The date and time the subscription was created',
     example: '2021-01-01T00:00:00.000Z',
   })
@@ -67,4 +73,11 @@ export class TopicSubscriptionResponseDto {
     type: SubscriberDto,
   })
   subscriber: SubscriberDto;
+
+  @ApiPropertyOptional({
+    description: 'Context keys that scope this subscription (e.g., tenant:org-a, project:proj-123)',
+    example: ['tenant:org-a', 'project:proj-123'],
+    type: [String],
+  })
+  contextKeys?: string[];
 }

@@ -36,8 +36,7 @@
     "event-stream": "^4.0.1",
     "fs-extra": "^9.0.0",
     "jsonfile": "^6.0.1",
-    "jsonwebtoken": "9.0.0",
-    "ng-intercom": "^8.0.2",
+    "jsonwebtoken": "9.0.3",
     "reflect-metadata": "0.2.2",
     "rimraf": "^3.0.2",
     "shortid": "^2.2.16",
@@ -47,7 +46,7 @@
   },
   "devDependencies": {
     "@types/async": "^3.2.1",
-    "@types/node": "^20.15.0",
+    "@types/node": "^22.0.0",
     "@types/supertest": "^6.0.2",
     "apollo-boost": "0.4.9",
     "ts-node": "~10.9.1",

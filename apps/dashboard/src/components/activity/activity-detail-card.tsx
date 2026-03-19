@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { ReactNode, useState } from 'react';
+import { RiInformation2Line } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 
 interface ActivityDetailCardProps {
@@ -8,14 +9,22 @@ interface ActivityDetailCardProps {
   expandable?: boolean;
   open?: boolean;
   children?: ReactNode;
+  footer?: string | null;
 }
 
-export function ActivityDetailCard({ title, timestamp, expandable = false, open, children }: ActivityDetailCardProps) {
+export function ActivityDetailCard({
+  title,
+  timestamp,
+  expandable = false,
+  open,
+  children,
+  footer,
+}: ActivityDetailCardProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isExpanded = open ?? internalOpen;
 
   return (
-    <div className="border-1 w-full overflow-hidden rounded-lg border border-neutral-100">
+    <div className="border w-full overflow-hidden rounded-lg border border-neutral-100">
       <div
         className={cn('group flex w-full items-center px-3 py-2 hover:bg-neutral-50', expandable && 'cursor-pointer')}
         onClick={expandable ? () => setInternalOpen(!internalOpen) : undefined}
@@ -33,11 +42,21 @@ export function ActivityDetailCard({ title, timestamp, expandable = false, open,
         </div>
       </div>
       {isExpanded && children && (
-        <div className="border-t border-neutral-200 bg-neutral-50 p-3">
-          <div className="text-foreground-600 text-xs">
-            <div className="overflow-x-auto">{children}</div>
+        <>
+          <div className="border-t border-neutral-200 bg-neutral-50 p-3">
+            <div className="text-foreground-600 text-xs">
+              <div className="overflow-x-auto">{children}</div>
+            </div>
           </div>
-        </div>
+          {footer && (
+            <div className="flex gap-2 items-center border-t border-neutral-200 bg-transparent py-1 px-2">
+              <RiInformation2Line className="size-4 text-text-soft" />
+              <span className="text-label-xs text-text-soft truncate" title={footer}>
+                {footer}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

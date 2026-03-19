@@ -1,6 +1,6 @@
-import { EnvironmentWithSubscriber } from '@novu/application-generic';
-import { SubscriberEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { IsBoolean, IsDefined, IsOptional } from 'class-validator';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class GetSubscriberGlobalPreferenceCommand extends EnvironmentWithSubscriber {
   @IsBoolean()
@@ -8,5 +8,8 @@ export class GetSubscriberGlobalPreferenceCommand extends EnvironmentWithSubscri
   includeInactiveChannels: boolean;
 
   @IsOptional()
-  subscriber?: SubscriberEntity;
+  subscriber?: Pick<SubscriberEntity, '_id'>;
+
+  @IsOptional()
+  workflowList?: NotificationTemplateEntity[];
 }

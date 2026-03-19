@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { useInboxContext } from 'src/ui/context';
+import { useInboxContext } from '../../../context/InboxContext';
 import { useStyle } from '../../../helpers';
 import { Dots as DefaultDots } from '../../../icons';
 import { NotificationStatus } from '../../../types';

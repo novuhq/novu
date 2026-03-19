@@ -12,7 +12,7 @@ export function TimelineLine({ variant = 'default' }: { variant?: 'default' | 'c
   if (variant === 'continuous') {
     return (
       <div
-        className="absolute bottom-0 left-3 top-0 w-[1px] -translate-x-1/2"
+        className="absolute bottom-0 left-3 top-0 w-px -translate-x-1/2"
         style={{
           background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 15%, #E1E4EA 85%, transparent 100%)',
         }}
@@ -20,7 +20,7 @@ export function TimelineLine({ variant = 'default' }: { variant?: 'default' | 'c
     );
   }
 
-  return <div className="absolute left-3 top-6 h-[calc(100%+2rem)] w-[1px] -translate-x-1/2 bg-neutral-100" />;
+  return <div className="absolute left-3 top-6 h-[calc(100%+2rem)] w-px -translate-x-1/2 bg-neutral-100" />;
 }
 
 const stepAnimation = (index: number) => ({

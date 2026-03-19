@@ -8,6 +8,7 @@ import {
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
+  InMemoryLRUCacheService,
   InvalidateCacheService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
@@ -15,6 +16,7 @@ import {
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
+  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
   MessageRepository,
@@ -71,6 +73,7 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   TenantRepository,
   MessageRepository,
+  ContextRepository,
 ];
 
 @Module({
@@ -85,6 +88,7 @@ const DAL_MODELS = [
     CommunityOrganizationRepository,
     featureFlagsService,
     EnvironmentRepository,
+    InMemoryLRUCacheService,
   ],
 })
 export class SubscribersModule {}

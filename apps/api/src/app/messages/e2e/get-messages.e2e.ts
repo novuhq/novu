@@ -12,15 +12,6 @@ describe('Get Message - /messages (GET) #novu-v2', () => {
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   let novuClient: Novu;
-  const isContextEnabled = process.env.IS_CONTEXT_ENABLED;
-
-  before(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
-  after(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = isContextEnabled;
-  });
 
   beforeEach(async () => {
     session = new UserSession();

@@ -8,7 +8,7 @@ export function useNotificationVisibility() {
 
   createEffect(() => {
     // Initialize the visibility tracker with the inbox service
-    tracker = new NotificationVisibilityTracker(novuAccessor().notifications.inboxService);
+    tracker = new NotificationVisibilityTracker(novuAccessor().notifications._inboxService);
 
     onCleanup(() => {
       if (tracker) {

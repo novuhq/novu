@@ -2,8 +2,6 @@
   - apps/api/**/*
 '@novu/worker':
   - apps/worker/**/*
-'@novu/web':
-  - apps/web/**/*
 '@novu/dashboard':
   - apps/dashboard/**/*
 '@novu/ws':

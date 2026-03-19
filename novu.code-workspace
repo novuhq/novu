@@ -13,10 +13,6 @@
       "path": "apps/worker"
     },
     {
-      "name": "🚀 @novu/web",
-      "path": "apps/web"
-    },
-    {
       "name": "🚀 @novu/dashboard",
       "path": "apps/dashboard"
     },
@@ -31,14 +27,6 @@
     {
       "name": "📦 @novu/dal",
       "path": "libs/dal"
-    },
-    {
-      "name": "📦 @novu/design-system",
-      "path": "libs/design-system"
-    },
-    {
-      "name": "📦 @novu/novui",
-      "path": "libs/novui"
     },
     {
       "name": "📦 novu",

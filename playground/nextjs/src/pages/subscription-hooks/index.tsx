@@ -1,4 +1,4 @@
-import { NovuProvider, RulesLogic, useSubscription } from '@novu/nextjs/hooks';
+import { NovuProvider, RulesLogic, useCreateSubscription, useSubscription } from '@novu/nextjs/hooks';
 import { useCallback, useMemo } from 'react';
 import Title from '@/components/Title';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,12 +34,12 @@ const filters = [
   { workflowId: 'test-workflow2', label: 'New project update is posted', condition: enabledRulesLogic },
 ];
 
-const SubscriptionHooks = () => {
-  const { subscription, isLoading, isFetching, create } = useSubscription({
-    topicKey: 'test',
-    identifier: 'test',
-    filters,
+const SubscriptionHooks = ({ identifier, topicKey }: { identifier: string; topicKey: string }) => {
+  const { subscription, isLoading, isFetching } = useSubscription({
+    topicKey,
+    identifier,
   });
+  const { create: createSubscription, isCreating } = useCreateSubscription();
 
   const preferencesWithLabels = useMemo(() => {
     if (!subscription) {
@@ -50,7 +50,7 @@ const SubscriptionHooks = () => {
     }
 
     return filters.map((filter) => {
-      const preference = subscription.preferences.find(
+      const preference = subscription.preferences?.find(
         (pref) => pref.workflow?.id === filter.workflowId || pref.workflow?.identifier === filter.workflowId
       );
 
@@ -114,11 +114,11 @@ const SubscriptionHooks = () => {
   const handleCheckboxChange = useCallback(
     async (workflowId: string, checked: boolean) => {
       if (!subscription) {
-        await create();
+        await createSubscription({ topicKey, identifier, preferences: filters });
         return;
       }
 
-      const preference = subscription.preferences.find(
+      const preference = subscription.preferences?.find(
         (pref) => pref.workflow?.id === workflowId || pref.workflow?.identifier === workflowId
       );
 
@@ -126,7 +126,7 @@ const SubscriptionHooks = () => {
         await preference.update({ value: checked });
       }
     },
-    [subscription, create]
+    [subscription, createSubscription]
   );
 
   const handleDropdownChange = useCallback(
@@ -139,11 +139,11 @@ const SubscriptionHooks = () => {
       }
 
       if (!subscription) {
-        await create();
+        await createSubscription({ topicKey, identifier, preferences: filters });
         return;
       }
 
-      const preference = subscription.preferences.find(
+      const preference = subscription.preferences?.find(
         (pref) => pref.workflow?.id === workflowId || pref.workflow?.identifier === workflowId
       );
 
@@ -151,14 +151,14 @@ const SubscriptionHooks = () => {
         await preference.update({ value: rulesLogicValue as Parameters<typeof preference.update>[0]['value'] });
       }
     },
-    [subscription, create]
+    [subscription, createSubscription]
   );
 
   const handleCreateSubscription = useCallback(async () => {
     if (!subscription) {
-      await create();
+      await createSubscription({ topicKey, identifier, preferences: filters });
     }
-  }, [subscription, create]);
+  }, [subscription, createSubscription]);
 
   if (isLoading) {
     return (
@@ -337,9 +337,10 @@ export default function SubscriptionComponentsPage() {
   return (
     <>
       <Title title="Subscription Hooks" />
-      <div className="h-[600px] w-full flex flex-col gap-2 items-center justify-center p-4">
+      <div className="h-[600px] w-full flex flex-col gap-8 items-center justify-center p-4">
         <NovuProvider {...novuConfig}>
-          <SubscriptionHooks />
+          <SubscriptionHooks identifier={`${novuConfig.subscriberId}-test-hooks-1`} topicKey="test-hooks-1" />
+          <SubscriptionHooks identifier={`${novuConfig.subscriberId}-test-hooks-2`} topicKey="test-hooks-2" />
         </NovuProvider>
       </div>
     </>

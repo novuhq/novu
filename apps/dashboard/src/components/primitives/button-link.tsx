@@ -14,13 +14,13 @@ export const linkButtonVariants = tv({
   slots: {
     root: [
       // base
-      'group inline-flex items-center justify-center whitespace-nowrap outline-none',
+      'group inline-flex items-center justify-center whitespace-nowrap outline-hidden',
       'transition duration-200 ease-out',
       'underline decoration-transparent underline-offset-[3px]',
       // hover
       'hover:decoration-current',
       // focus
-      'focus:outline-none focus-visible:underline',
+      'focus:outline-hidden focus-visible:underline',
       // disabled
       'disabled:pointer-events-none disabled:text-text-disabled disabled:no-underline',
     ],

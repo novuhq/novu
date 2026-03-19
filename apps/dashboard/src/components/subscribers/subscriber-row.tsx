@@ -1,7 +1,8 @@
 import { ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
@@ -26,6 +27,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
+import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useSubscribersUrlState } from './hooks/use-subscribers-url-state';
@@ -43,15 +45,21 @@ type SubscriberRowProps = {
   firstTwoSubscribersInternalIds: string[];
 };
 
-type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell>;
+type SubscriberLinkTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
 
 const SubscriberTableCell = (props: SubscriberLinkTableCellProps) => {
-  const { children, className, ...rest } = props;
+  const { children, className, to, ...rest } = props;
 
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to && (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">Edit subscriber</span>
+        </Link>
+      )}
       {children}
-      <span className="sr-only">Edit subscriber</span>
     </TableCell>
   );
 };
@@ -60,8 +68,15 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
-  const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
+  const queryClient = useQueryClient();
+  const location = useLocation();
+  const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
   const { handleNavigationAfterDelete } = useSubscribersUrlState();
+
+  const subscriberLink = `${buildRoute(ROUTES.EDIT_SUBSCRIBER, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    subscriberId: encodeURIComponent(subscriber.subscriberId),
+  })}${location.search}`;
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
@@ -104,7 +119,11 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
     const hasSingleSubscriber = subscribersCount === 1;
 
     if (hasSingleSubscriber) {
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscribers],
+      });
       navigateToSubscribersFirstPage();
+
       return;
     }
 
@@ -129,11 +148,8 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
       <TableRow
         key={subscriber.subscriberId}
         className="group relative isolate cursor-pointer"
-        onClick={() => {
-          navigateToEditSubscriberPage(subscriber.subscriberId);
-        }}
       >
-        <SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src={subscriber.avatar || undefined} />
@@ -154,16 +170,16 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
             </div>
           </div>
         </SubscriberTableCell>
-        <SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <TruncatedText className="relative z-10 max-w-[28ch]">{subscriber.email || '-'}</TruncatedText>
         </SubscriberTableCell>
-        <SubscriberTableCell>{subscriber.phone || '-'}</SubscriberTableCell>
-        <SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>{subscriber.phone || '-'}</SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <TimeDisplayHoverCard date={new Date(subscriber.createdAt)}>
             {formatDateSimple(subscriber.createdAt)}
           </TimeDisplayHoverCard>
         </SubscriberTableCell>
-        <SubscriberTableCell>
+        <SubscriberTableCell to={subscriberLink}>
           <TimeDisplayHoverCard date={new Date(subscriber.updatedAt)}>
             {formatDateSimple(subscriber.updatedAt)}
           </TimeDisplayHoverCard>

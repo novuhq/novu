@@ -83,7 +83,7 @@ function CardContent({ currentEvents, maxEvents, resetDate }: CardContentProps) 
       <div className="flex items-center">
         {!isComplete ? (
           <>
-            <span className="text-label-xs">Events Used</span>
+            <span className="text-label-xs">Workflow Runs</span>
           </>
         ) : (
           <>

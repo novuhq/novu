@@ -1,63 +1,49 @@
 import { RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 
-// Custom JsonLogic operations for parsing relative date operators
+function parseArrayOperatorArgs(val: any, operator: string) {
+  if (!val || !Array.isArray(val) || val.length < 2) {
+    return false;
+  }
+
+  const secondOperand = val[1];
+  let values: string;
+
+  if (secondOperand && typeof secondOperand === 'object' && 'var' in secondOperand) {
+    values = `{{${secondOperand.var}}}`;
+  } else if (Array.isArray(secondOperand)) {
+    values = secondOperand.join(', ');
+  } else {
+    values = String(secondOperand);
+  }
+
+  return {
+    field: val[0]?.var,
+    operator,
+    value: values,
+  };
+}
+
+function parseRelativeDateArgs(val: any, operator: string) {
+  if (!val || !Array.isArray(val) || val.length < 2) {
+    return false;
+  }
+
+  return {
+    field: val[0]?.var,
+    operator,
+    value: JSON.stringify(val[1]),
+  };
+}
+
 const customJsonLogicOperations = {
-  moreThanXAgo: (val: any) => {
-    if (!val || !Array.isArray(val) || val.length < 2) {
-      return false;
-    }
-
-    return {
-      field: val[0]?.var,
-      operator: 'moreThanXAgo',
-      value: JSON.stringify(val[1]),
-    };
-  },
-  lessThanXAgo: (val: any) => {
-    if (!val || !Array.isArray(val) || val.length < 2) {
-      return false;
-    }
-
-    return {
-      field: val[0]?.var,
-      operator: 'lessThanXAgo',
-      value: JSON.stringify(val[1]),
-    };
-  },
-  exactlyXAgo: (val: any) => {
-    if (!val || !Array.isArray(val) || val.length < 2) {
-      return false;
-    }
-
-    return {
-      field: val[0]?.var,
-      operator: 'exactlyXAgo',
-      value: JSON.stringify(val[1]),
-    };
-  },
-  withinLast: (val: any) => {
-    if (!val || !Array.isArray(val) || val.length < 2) {
-      return false;
-    }
-
-    return {
-      field: val[0]?.var,
-      operator: 'withinLast',
-      value: JSON.stringify(val[1]),
-    };
-  },
-  notWithinLast: (val: any) => {
-    if (!val || !Array.isArray(val) || val.length < 2) {
-      return false;
-    }
-
-    return {
-      field: val[0]?.var,
-      operator: 'notWithinLast',
-      value: JSON.stringify(val[1]),
-    };
-  },
+  moreThanXAgo: (val: any) => parseRelativeDateArgs(val, 'moreThanXAgo'),
+  lessThanXAgo: (val: any) => parseRelativeDateArgs(val, 'lessThanXAgo'),
+  exactlyXAgo: (val: any) => parseRelativeDateArgs(val, 'exactlyXAgo'),
+  withinLast: (val: any) => parseRelativeDateArgs(val, 'withinLast'),
+  notWithinLast: (val: any) => parseRelativeDateArgs(val, 'notWithinLast'),
+  containsAny: (val: any) => parseArrayOperatorArgs(val, 'containsAny'),
+  doesNotContainAny: (val: any) => parseArrayOperatorArgs(val, 'doesNotContainAny'),
 };
 
 // Shared parse options for consistency
@@ -94,7 +80,9 @@ function recursiveGetUniqueFields(query: RuleGroupType): string[] {
     if ('rules' in rule) {
       // recursively get fields from nested rule groups
       const nestedFields = recursiveGetUniqueFields(rule);
-      nestedFields.forEach((field) => fields.add(field));
+      for (const field of nestedFields) {
+        fields.add(field);
+      }
     } else {
       // add field from individual rule
       const field = rule.field.split('.').shift();
@@ -123,7 +111,9 @@ function recursiveGetUniqueOperators(query: RuleGroupType): string[] {
     if ('rules' in rule) {
       // recursively get operators from nested rule groups
       const nestedOperators = recursiveGetUniqueOperators(rule);
-      nestedOperators.forEach((operator) => operators.add(operator));
+      for (const operator of nestedOperators) {
+        operators.add(operator);
+      }
     } else {
       // add operator from individual rule
       operators.add(rule.operator);

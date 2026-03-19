@@ -1,7 +1,6 @@
+import { LayoutDtoV0 } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-
-import { LayoutDto } from '../../dtos';
 import { LayoutIdentifier, LayoutName, TemplateVariableTypeEnum } from '../../types';
 
 const BASE_PATH = '/v1/layouts';
@@ -11,7 +10,7 @@ export const createLayout = async (
   name: LayoutName,
   isDefault: boolean,
   identifier: LayoutIdentifier
-): Promise<LayoutDto> => {
+): Promise<LayoutDtoV0> => {
   const description = 'Amazing new layout';
   const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
   const variables = [

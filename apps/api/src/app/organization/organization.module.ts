@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { AuthGuard } from '@nestjs/passport';
-import { isClerkEnabled } from '@novu/shared';
+import { isBetterAuthEnabled, isClerkEnabled } from '@novu/shared';
 import { AuthModule } from '../auth/auth.module';
 import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { IntegrationModule } from '../integrations/integrations.module';
@@ -32,7 +32,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 function getControllers() {
-  if (isClerkEnabled()) {
+  if (isClerkEnabled() || isBetterAuthEnabled()) {
     return [EEOrganizationController];
   }
 

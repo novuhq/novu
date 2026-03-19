@@ -3,7 +3,7 @@ import { ChangeEventHandler, KeyboardEventHandler, useRef } from 'react';
 import { cn } from '@/utils/ui';
 
 const dayContainerClassName =
-  'flex h-full items-center justify-center border-r border-r-neutral-200 last:border-r-0 last:rounded-r-lg first:rounded-l-lg first:border-l-0 [&_label]:first:rounded-l-lg [&_label]:last:rounded-r-lg';
+  'flex h-full items-center justify-center border-r border-r-neutral-200 last:border-r-0 last:rounded-r-lg first:rounded-l-lg first:border-l-0 first:[&_label]:rounded-l-lg last:[&_label]:rounded-r-lg';
 const inputClassName = 'peer hidden';
 const labelClassName =
   'text-foreground-600 peer-checked:bg-neutral-alpha-100 flex h-full w-full cursor-pointer select-none items-center justify-center text-xs font-normal';

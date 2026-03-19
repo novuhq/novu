@@ -52,7 +52,7 @@ export function UsecaseSelectOnboarding({
               onBlur={() => onHover(null)}
             >
               <Card
-                className={`rounded-xl ${isSelected ? 'shadow-sm' : ''} shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)] transition-all duration-300 hover:shadow-sm`}
+                className={`rounded-xl ${isSelected ? 'shadow-sm' : ''} shadow-xs transition-all duration-300 hover:shadow-sm`}
                 onMouseEnter={() => onHover(option.id)}
                 onMouseLeave={() => onHover(null)}
                 onClick={() => onClick(option.id)}
@@ -60,7 +60,7 @@ export function UsecaseSelectOnboarding({
                 <CardContent
                   className={`rounded-[11px] p-[2.5px] hover:cursor-pointer ${
                     isSelected
-                      ? 'bg-gradient-to-tr from-[hsla(310,100%,45%,1)] to-[hsla(20,100%,65%,1)]'
+                      ? 'bg-linear-to-tr from-[hsla(310,100%,45%,1)] to-[hsla(20,100%,65%,1)]'
                       : 'border-transparent'
                   }`}
                 >

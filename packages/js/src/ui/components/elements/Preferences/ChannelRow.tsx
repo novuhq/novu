@@ -34,6 +34,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
 
   const state = () => props.channel.state;
   const channel = () => props.channel.channel;
+  const channelId = () => `channel-${props.workflowId ?? ''}-${channel()}`;
 
   return (
     <div
@@ -49,7 +50,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
       <div
         class={style({
           key: 'channelLabelContainer',
-          className: 'nt-flex nt-items-center nt-gap-2 nt-text-foreground',
+          className: 'nt-flex nt-items-center nt-gap-2 nt-text-foreground nt-w-full',
           context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
             InboxAppearanceCallback['channelLabelContainer']
           >[0],
@@ -72,17 +73,18 @@ export const ChannelRow = (props: ChannelRowProps) => {
             preferenceGroup={props.preferenceGroup}
           />
         </div>
-        <span
+        <label
+          for={channelId()}
           class={style({
             key: 'channelLabel',
-            className: 'nt-text-sm nt-font-semibold',
+            className: 'nt-text-sm nt-font-semibold nt-w-full nt-cursor-pointer',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
               InboxAppearanceCallback['channelLabel']
             >[0],
           })}
         >
           {getLabel(channel())}
-        </span>
+        </label>
       </div>
       <div
         class={style({
@@ -94,6 +96,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
         })}
       >
         <Switch
+          id={channelId()}
           state={state()}
           onChange={(newState) => onChange(newState === 'enabled')}
           disabled={props.preference?.workflow?.critical}

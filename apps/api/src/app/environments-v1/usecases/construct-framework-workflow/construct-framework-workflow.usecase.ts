@@ -1,5 +1,15 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  emailControlSchema,
+  evaluateRules,
+  FeatureFlagsService,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
+  Instrument,
+  InstrumentUsecase,
+  isMatchingJsonSchema,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
@@ -9,12 +19,10 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
+import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
-import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
-import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
 import {
   ChatOutputRendererUsecase,
   EmailOutputRendererUsecase,
@@ -44,7 +52,9 @@ export class ConstructFrameworkWorkflow {
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
     private digestOutputRendererUseCase: DigestOutputRendererUsecase,
-    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase
+    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @InstrumentUsecase()
@@ -53,14 +63,18 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
+    const shouldUseCache =
+      command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
+
+    const dbWorkflow = await this.getWorkflow(command.environmentId, command.workflowId, shouldUseCache);
+
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
         step.controlVariables = command.controlValues;
       }
     }
 
-    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+    const organization = await this.getOrganization(dbWorkflow._organizationId, shouldUseCache, command.environmentId);
 
     return this.constructFrameworkWorkflow({
       dbWorkflow,
@@ -71,12 +85,20 @@ export class ConstructFrameworkWorkflow {
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId }, '_organizationId');
     if (!environment) {
       throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
     }
+
+    const organization =
+      (await this.communityOrganizationRepository.findById(environment._organizationId)) || undefined;
+
+    const syntheticDbWorkflow: NotificationTemplateEntity = {
+      _id: LAYOUT_PREVIEW_WORKFLOW_ID,
+      _environmentId: command.environmentId,
+      _organizationId: environment._organizationId,
+      _creatorId: environment._organizationId,
+    } as NotificationTemplateEntity;
 
     return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
@@ -85,8 +107,8 @@ export class ConstructFrameworkWorkflow {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
             fullPayloadForRender: { payload, subscriber, context, steps: {} },
-            environmentId: environment._id,
-            organizationId: environment._organizationId,
+            dbWorkflow: syntheticDbWorkflow,
+            organization,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
             layoutId: command.layoutId,
@@ -179,13 +201,19 @@ export class ConstructFrameworkWorkflow {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
-      throw new InternalServerErrorException(`Step template not found for step ${staticStep.stepId}`);
+      this.logger.warn(`Step template not found for step ${staticStep.stepId}, skipping step`, LOG_CONTEXT);
+
+      return step.custom(
+        staticStep.stepId || staticStep._templateId,
+        async () => ({}),
+        { controlSchema: PERMISSIVE_EMPTY_SCHEMA, skip: () => true }
+      );
     }
 
     const stepType = stepTemplate.type;
-    const { stepId } = staticStep;
+    const stepId = staticStep.stepId || staticStep._templateId;
     if (!stepId) {
-      throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
+      throw new InternalServerErrorException(`Step id not found for step ${staticStep._id}`);
     }
     const stepControls = stepTemplate.controls;
 
@@ -218,9 +246,7 @@ export class ConstructFrameworkWorkflow {
             return this.emailOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
-              environmentId: dbWorkflow._environmentId,
-              organizationId: dbWorkflow._organizationId,
-              workflowId: dbWorkflow._id,
+              dbWorkflow,
               organization,
               locale,
               skipLayoutRendering,
@@ -296,6 +322,28 @@ export class ConstructFrameworkWorkflow {
           },
           this.constructActionStepOptions(staticStep, fullPayloadForRender)
         );
+      /*
+       * Custom steps are executed by the worker, bypassing the bridge entirely. However, when a subsequent
+       * step triggers a bridge call, the framework reconstructs the full workflow from the DB and iterates
+       * over every step — including these. We must register each such step here so the framework can build
+       * the workflow graph correctly. The resolve function is a passthrough because execution already happened.
+       */
+      case StepTypeEnum.HTTP_REQUEST:
+        return step.custom(
+          stepId,
+          async (controlValues) => {
+            return controlValues;
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
+      case StepTypeEnum.CUSTOM:
+        return step.custom(
+          stepId,
+          async (controlValues) => {
+            return controlValues;
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
       default:
         throw new InternalServerErrorException(`Step type ${stepType} is not supported`);
     }
@@ -349,14 +397,57 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
+  private async getWorkflow(
+    environmentId: string,
+    workflowId: string,
+    shouldUseCache: boolean
+  ): Promise<NotificationTemplateEntity> {
+    const workflow = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.WORKFLOW,
+      `${environmentId}:${workflowId}`,
+      async () => {
+        const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(
+          environmentId,
+          workflowId,
+          null,
+          false
+        );
+        if (!foundWorkflow) {
+          throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
+        }
 
-    if (!foundWorkflow) {
+        return foundWorkflow;
+      },
+      {
+        environmentId,
+        skipCache: !shouldUseCache,
+      }
+    );
+
+    if (!workflow) {
       throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
     }
 
-    return foundWorkflow;
+    return workflow;
+  }
+
+  private async getOrganization(
+    organizationId: string,
+    shouldUseCache: boolean,
+    environmentId: string
+  ): Promise<OrganizationEntity | undefined> {
+    const organization = await this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.ORGANIZATION,
+      organizationId,
+      () => this.communityOrganizationRepository.findById(organizationId),
+      {
+        environmentId,
+        organizationId,
+        skipCache: !shouldUseCache,
+      }
+    );
+
+    return organization || undefined;
   }
 
   private async processSkipOption(

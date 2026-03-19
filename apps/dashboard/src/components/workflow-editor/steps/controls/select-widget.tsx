@@ -8,7 +8,7 @@ import { capitalize } from '@/utils/string';
 import { getFieldName } from './template-utils';
 
 export function SelectWidget(props: WidgetProps) {
-  const { label, required, readonly, options, disabled, id } = props;
+  const { label, required, readonly, options, disabled, id, value: rjsfValue } = props;
 
   const data = useMemo(
     () =>
@@ -29,6 +29,7 @@ export function SelectWidget(props: WidgetProps) {
     <FormField
       control={control}
       name={extractedName}
+      defaultValue={rjsfValue}
       render={({ field }) => (
         <FormItem className="py-1">
           <FormLabel>{capitalize(label)}</FormLabel>
@@ -42,7 +43,7 @@ export function SelectWidget(props: WidgetProps) {
               disabled={disabled || readonly}
               required={required}
             >
-              <SelectTrigger className="group p-1.5 shadow-sm last:[&>svg]:hidden">
+              <SelectTrigger className="group p-1.5 shadow-sm [&>svg]:last:hidden">
                 <SelectValue asChild>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground text-sm">{field.value}</span>

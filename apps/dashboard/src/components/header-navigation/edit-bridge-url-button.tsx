@@ -1,8 +1,9 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { PermissionsEnum } from '@novu/shared';
 import { useLayoutEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiLinkM, RiPencilFill } from 'react-icons/ri';
+import { RiLinkM } from 'react-icons/ri';
 import * as z from 'zod';
 import {
   Form,
@@ -25,11 +26,11 @@ import { PermissionButton } from '../primitives/permission-button';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
-const formSchema = z.object({ bridgeUrl: z.string().url() });
+const formSchema = z.object({ bridgeUrl: z.url() });
 
 export const EditBridgeUrlButton = () => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({ mode: 'onSubmit', resolver: zodResolver(formSchema) });
+  const form = useForm({ mode: 'onSubmit', resolver: standardSchemaResolver(formSchema) });
   const {
     control,
     handleSubmit,
@@ -92,7 +93,11 @@ export const EditBridgeUrlButton = () => {
               <div
                 className={cn(
                   'relative flex size-4 items-center justify-center rounded-lg',
-                  status === ConnectionStatus.DISCONNECTED ? 'bg-[rgba(220,38,38,0.1)]' : 'bg-[rgba(31,193,107,0.1)]'
+                  status === ConnectionStatus.DISCONNECTED
+                    ? 'bg-[rgba(220,38,38,0.1)]'
+                    : status === ConnectionStatus.LOADING
+                      ? 'bg-[rgba(59,130,246,0.1)]'
+                      : 'bg-[rgba(31,193,107,0.1)]'
                 )}
               >
                 <div
@@ -100,7 +105,9 @@ export const EditBridgeUrlButton = () => {
                     'flex size-full items-center justify-center rounded-lg p-1',
                     status === ConnectionStatus.DISCONNECTED
                       ? 'bg-[rgba(220,38,38,0.16)]'
-                      : 'bg-[rgba(31,193,107,0.16)]'
+                      : status === ConnectionStatus.LOADING
+                        ? 'bg-[rgba(59,130,246,0.16)]'
+                        : 'bg-[rgba(31,193,107,0.16)]'
                   )}
                 >
                   <div
@@ -109,7 +116,7 @@ export const EditBridgeUrlButton = () => {
                       status === ConnectionStatus.DISCONNECTED
                         ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(220,38,38,0.6)] [--pulse-color:rgba(220,38,38,1)]'
                         : status === ConnectionStatus.LOADING
-                          ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(31,193,107,0.6)] [--pulse-color:rgba(31,193,107,1)]'
+                          ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(59,130,246,0.6)] [--pulse-color:rgba(59,130,246,1)]'
                           : 'bg-[rgba(31,193,107,0.6)]'
                     )}
                   />
@@ -132,7 +139,7 @@ export const EditBridgeUrlButton = () => {
                     <FormItem>
                       <FormLabel required>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <Input leadingIcon={RiLinkM} id="bridgeUrl" {...field} readOnly={isReadOnly} />
+                        <Input leadingIcon={RiLinkM} id={`bridgeUrl-${field.name}`} {...field} readOnly={isReadOnly} />
                       </FormControl>
                       <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>
@@ -141,7 +148,7 @@ export const EditBridgeUrlButton = () => {
               </div>
               <div className="flex items-center justify-between border-t border-neutral-200 px-5 py-3">
                 <a
-                  href="https://docs.novu.co/platform/concepts/endpoint#bridge-endpoint"
+                  href="https://docs.novu.co/framework/endpoint"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs"

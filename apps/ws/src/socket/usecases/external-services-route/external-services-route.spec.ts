@@ -14,6 +14,7 @@ const commandReceivedMessage = ExternalServicesRouteCommand.create({
   event: WebSocketEventEnum.RECEIVED,
   userId,
   _environmentId: environmentId,
+  contextKeys: [],
   payload: {
     message: {
       _id: messageId,

@@ -14,8 +14,7 @@ export class TriggerMulticastCommand extends TriggerEventMulticastCommand {
   @ValidateNested()
   tenant: ITenantDefine | null;
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  contextKeys?: string[];
+  contextKeys: string[];
 }

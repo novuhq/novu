@@ -24,10 +24,10 @@ export function RegionPicker() {
   function handleRegionChange(value: RegionType) {
     switch (value) {
       case REGION_MAP.US:
-        window.location.href = 'https://dashboard-v2.novu.co';
+        window.location.href = 'https://dashboard.novu.co';
         break;
       case REGION_MAP.EU:
-        window.location.href = 'https://eu.dashboard-v2.novu.co';
+        window.location.href = 'https://eu.dashboard.novu.co';
         break;
     }
   }

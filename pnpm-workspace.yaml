@@ -7,6 +7,7 @@ packages:
   - '!**/test/**'
   # all packages in enterprise modules
   - 'enterprise/packages/*'
+  - 'enterprise/workers/step-resolver'
   # playground apps
   - 'playground/*'
 

@@ -9,7 +9,7 @@ export { UserSession };
 export interface SubscriberSession extends SubscriberEntity {
   organizationId: string;
   environmentId: string;
-  contextKeys?: string[];
+  contextKeys: string[];
   scheme: ApiAuthSchemeEnum;
 }
 

@@ -53,7 +53,7 @@ export const ConditionBadge = ({ conditionsCount, stepSlug, conditionsData, clas
     <button
       type="button"
       className={cn(
-        'absolute left-3 right-3 top-full flex h-[26px] flex-col justify-center items-start rounded-b-lg border-l border-r border-b border-stroke-soft bg-gradient-to-b from-[#F8F8F8] to-white px-2 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity duration-200',
+        'absolute left-3 right-3 top-full flex h-[26px] flex-col justify-center items-start rounded-b-lg border-l border-r border-b border-stroke-soft bg-linear-to-b from-[#F8F8F8] to-white px-2 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity duration-200',
         className
       )}
       onClick={handleClick}
@@ -62,7 +62,7 @@ export const ConditionBadge = ({ conditionsCount, stepSlug, conditionsData, clas
         <span className="text-foreground-400 text-xs italic font-serif">if</span>
         <span className="bg-bg-weak border-stroke-soft font-code inline-flex items-center gap-1 rounded-md border px-1.5 py-px font-medium">
           <Code2 className="text-feature size-3.5 min-w-3.5" />
-          <span className="leading-1 text-[#6C6E73] max-w-[24ch] truncate " title={displayVariableName}>
+          <span className="text-label-xs text-[#6C6E73] max-w-[24ch] truncate " title={displayVariableName}>
             {displayVariableName}
           </span>
         </span>
@@ -117,7 +117,7 @@ export const ConditionBadgeContent = ({
   return (
     <button
       type="button"
-      className="flex h-[26px] w-full flex-col justify-center items-start rounded-b-lg border-l border-r border-b border-stroke-soft bg-gradient-to-b from-[#F8F8F8] to-white px-2 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity duration-200"
+      className="flex h-[26px] w-full flex-col justify-center items-start rounded-b-lg border-l border-r border-b border-stroke-soft bg-linear-to-b from-[#F8F8F8] to-white px-2 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity duration-200"
       onClick={handleClick}
     >
       <div className="flex items-center gap-1.5 text-foreground-600 font-code tracking-[-0.24px]">

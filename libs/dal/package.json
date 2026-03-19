@@ -36,14 +36,14 @@
     "fs-extra": "^9.0.0",
     "googleapis": "^60.0.1",
     "jsonfile": "^6.0.1",
-    "mongoose": "^7.8.7",
-    "mongoose-delete": "^1.0.1",
+    "mongoose": "^8.9.5",
+    "mongoose-delete": "^1.0.7",
     "reflect-metadata": "0.2.2",
     "superagent-defaults": "^0.1.14",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
-    "@types/node": "^20.15.0",
+    "@types/node": "^22.0.0",
     "apollo-boost": "0.4.9",
     "rimraf": "^3.0.2",
     "supertest": "^7.0.0",

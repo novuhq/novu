@@ -65,7 +65,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               ref={ref}
               autoComplete="off"
               value={inputValue}
-              className={cn('flex-grow', className)}
+              className={cn('grow', className)}
               placeholder="Type a tag and press Enter"
               onValueChange={(value) => {
                 setInputValue(value);
@@ -88,7 +88,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               <Tag
                 key={index}
                 variant="stroke"
-                className="max-w-[12rem] shrink-0"
+                className="max-w-48 shrink-0"
                 onDismiss={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

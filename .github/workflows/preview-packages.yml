@@ -28,7 +28,7 @@ jobs:
 
       - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 20.19.0
+          node-version: 22.22.1
           cache: 'pnpm'
 
       - name: Install pnpm
@@ -41,6 +41,8 @@ jobs:
         run: pnpm run packages:set-latest
 
       - name: Build
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: pnpm run preview:pkg:build
 
       - name: Release package previews to pkg.pr.new

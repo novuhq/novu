@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { createNestLoggingModuleOptions, LoggerModule, TracingModule } from '@novu/application-generic';
+import { TracingModule } from '@novu/application-generic';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { join } from 'path';
 import packageJson from '../package.json';
@@ -15,12 +15,6 @@ const modules = [
   HealthModule,
   TracingModule.register(packageJson.name, packageJson.version),
   SocketModule,
-  LoggerModule.forRoot(
-    createNestLoggingModuleOptions({
-      serviceName: packageJson.name,
-      version: packageJson.version,
-    })
-  ),
 ];
 
 const providers: any[] = [AppService];

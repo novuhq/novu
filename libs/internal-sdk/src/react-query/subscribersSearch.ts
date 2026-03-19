@@ -5,28 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { subscribersSearch } from "../funcs/subscribersSearch.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type SubscribersSearchQueryData =
-  operations.SubscribersControllerSearchSubscribersResponse;
+import {
+  buildSubscribersSearchQuery,
+  prefetchSubscribersSearch,
+  queryKeySubscribersSearch,
+  SubscribersSearchQueryData,
+} from "./subscribersSearch.core.js";
+export {
+  buildSubscribersSearchQuery,
+  prefetchSubscribersSearch,
+  queryKeySubscribersSearch,
+  type SubscribersSearchQueryData,
+};
 
 /**
  * Search subscribers
@@ -69,19 +71,6 @@ export function useSubscribersSearchSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchSubscribersSearch(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.SubscribersControllerSearchSubscribersRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildSubscribersSearchQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -142,64 +131,4 @@ export function invalidateAllSubscribersSearch(
     ...filters,
     queryKey: ["@novu/api", "Subscribers", "search"],
   });
-}
-
-export function buildSubscribersSearchQuery(
-  client$: NovuCore,
-  request: operations.SubscribersControllerSearchSubscribersRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<SubscribersSearchQueryData>;
-} {
-  return {
-    queryKey: queryKeySubscribersSearch({
-      after: request.after,
-      before: request.before,
-      limit: request.limit,
-      orderDirection: request.orderDirection,
-      orderBy: request.orderBy,
-      includeCursor: request.includeCursor,
-      email: request.email,
-      name: request.name,
-      phone: request.phone,
-      subscriberId: request.subscriberId,
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function subscribersSearchQueryFn(
-      ctx,
-    ): Promise<SubscribersSearchQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(subscribersSearch(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeySubscribersSearch(
-  parameters: {
-    after?: string | undefined;
-    before?: string | undefined;
-    limit?: number | undefined;
-    orderDirection?: operations.QueryParamOrderDirection | undefined;
-    orderBy?: string | undefined;
-    includeCursor?: boolean | undefined;
-    email?: string | undefined;
-    name?: string | undefined;
-    phone?: string | undefined;
-    subscriberId?: string | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "Subscribers", "search", parameters];
 }

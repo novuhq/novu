@@ -59,7 +59,7 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
                 size="2xs"
                 className={inboxButtonVariants({
                   variant: 'secondary',
-                  className: 'border-[1px] border-dashed shadow-none ring-0',
+                  className: 'border border-dashed shadow-none ring-0',
                 })}
                 trailingIcon={RiForbid2Line}
                 tabIndex={-1}
@@ -127,7 +127,7 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
               size="2xs"
               className={inboxButtonVariants({
                 variant: 'secondary',
-                className: 'h-6 border-[1px] border-dashed shadow-none ring-0',
+                className: 'h-6 border border-dashed shadow-none ring-0',
               })}
               trailingIcon={RiForbid2Line}
             >

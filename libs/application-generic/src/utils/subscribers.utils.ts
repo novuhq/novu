@@ -1,11 +1,10 @@
-import { TopicEntity } from '@novu/dal';
 import { ISubscribersDefine, SubscriberSourceEnum } from '@novu/shared';
-import { IProcessSubscriberBulkJobDto } from '../dtos';
+import { IProcessSubscriberBulkJobDto, SubscriberTopicPreference } from '../dtos';
 import { BaseTriggerCommand } from '../usecases/trigger-base/trigger-base.usecase';
 
 export function mapSubscribersToJobs(
   subscriberSource: SubscriberSourceEnum,
-  subscribers: { subscriberId: string; topics?: Pick<TopicEntity, '_id' | 'key'>[] }[] | ISubscribersDefine[],
+  subscribers: { subscriberId: string; topics?: SubscriberTopicPreference[] }[] | ISubscribersDefine[],
   command: BaseTriggerCommand
 ): IProcessSubscriberBulkJobDto[] {
   return subscribers.map((subscriber) => {
@@ -15,6 +14,7 @@ export function mapSubscribersToJobs(
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
+        contextKeys: command.contextKeys,
         transactionId: command.transactionId,
         requestId: command.requestId,
         identifier: command.identifier,
@@ -39,9 +39,6 @@ export function mapSubscribersToJobs(
     }
     if (command.tenant) {
       job.data.tenant = command.tenant;
-    }
-    if (command.contextKeys) {
-      job.data.contextKeys = command.contextKeys;
     }
 
     return job;

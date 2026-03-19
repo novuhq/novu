@@ -1,4 +1,6 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
@@ -50,6 +52,11 @@ export class CreateTopicSubscriptionsRequestDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 
   @ApiProperty({
     description:

@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { createMockObjectFromSchema, type WorkflowTestDataResponseDto } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -38,7 +38,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
 
   const form = useForm<TestWorkflowFormType>({
     mode: 'onSubmit',
-    resolver: zodResolver(buildDynamicFormSchema({ to: testData?.to ?? {} })),
+    resolver: standardSchemaResolver(buildDynamicFormSchema({ to: testData?.to ?? {} })),
     values: { to, payload: JSON.stringify(payload, null, 2) },
   });
 
@@ -47,9 +47,10 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
 
   const onSubmit = async (data: TestWorkflowFormType) => {
     try {
+      const parsedPayload = data.payload ? JSON.parse(data.payload as string) : {};
       const {
         data: { transactionId: newTransactionId },
-      } = await triggerWorkflow({ name: workflow?.workflowId ?? '', to: data.to, payload: data.payload });
+      } = await triggerWorkflow({ name: workflow?.workflowId ?? '', to: data.to, payload: parsedPayload });
 
       if (!newTransactionId) {
         return showToast({
@@ -88,7 +89,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
         <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-1">
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={70} minSize={40} className="h-full">
-              <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-1 flex-col" value="trigger">
+              <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value="trigger">
                 <TabsList variant="regular" className="items-center">
                   <TabsTrigger value="workflow" asChild variant="regular" size="xl">
                     <Link

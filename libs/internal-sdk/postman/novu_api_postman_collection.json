@@ -1977,6 +1977,515 @@
             "description": "All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system."
         },
         {
+            "name": "Channel Connections",
+            "item": [
+                {
+                    "name": "List all channel connections",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-connections",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-connections"
+                            ],
+                            "query": [
+                                {
+                                    "key": "after",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "7991.59",
+                                    "type": "number"
+                                },
+                                {
+                                    "key": "orderDirection",
+                                    "value": "ASC",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "includeCursor",
+                                    "value": false,
+                                    "type": "boolean"
+                                },
+                                {
+                                    "key": "subscriberId",
+                                    "value": "subscriber-123",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "channel",
+                                    "value": "in_app",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "providerId",
+                                    "value": "eazy-sms",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "integrationIdentifier",
+                                    "value": "slack-prod",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "contextKeys",
+                                    "value": [
+                                        "tenant:org-123",
+                                        "region:us-east-1"
+                                    ],
+                                    "type": "array"
+                                }
+                            ]
+                        },
+                        "description": "List all channel connections for a resource."
+                    }
+                },
+                {
+                    "name": "Create a channel connection",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-connections",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-connections"
+                            ]
+                        },
+                        "description": "Create a new channel connection for a resource for given integration. Only one channel connection is allowed per resource and integration."
+                    }
+                },
+                {
+                    "name": "Retrieve a channel connection",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-connections/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-connections",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Retrieve a specific channel connection by its unique identifier."
+                    }
+                },
+                {
+                    "name": "Update a channel connection",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-connections/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-connections",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Update an existing channel connection by its unique identifier."
+                    }
+                },
+                {
+                    "name": "Delete a channel connection",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-connections/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-connections",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Delete a specific channel connection by its unique identifier."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Channel Endpoints",
+            "item": [
+                {
+                    "name": "List all channel endpoints",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-endpoints",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-endpoints"
+                            ],
+                            "query": [
+                                {
+                                    "key": "after",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "1433.53",
+                                    "type": "number"
+                                },
+                                {
+                                    "key": "orderDirection",
+                                    "value": "DESC",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "includeCursor",
+                                    "value": false,
+                                    "type": "boolean"
+                                },
+                                {
+                                    "key": "subscriberId",
+                                    "value": "subscriber-123",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "contextKeys",
+                                    "value": [
+                                        "tenant:org-123",
+                                        "region:us-east-1"
+                                    ],
+                                    "type": "array"
+                                },
+                                {
+                                    "key": "channel",
+                                    "value": "sms",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "providerId",
+                                    "value": "braze",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "integrationIdentifier",
+                                    "value": "slack-prod",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "connectionIdentifier",
+                                    "value": "slack-connection-abc123",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "List all channel endpoints for a resource based on query filters."
+                    }
+                },
+                {
+                    "name": "Create a channel endpoint",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "\"<value>\""
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-endpoints",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-endpoints"
+                            ]
+                        },
+                        "description": "Create a new channel endpoint for a resource."
+                    }
+                },
+                {
+                    "name": "Retrieve a channel endpoint",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-endpoints/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-endpoints",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Retrieve a specific channel endpoint by its unique identifier."
+                    }
+                },
+                {
+                    "name": "Update a channel endpoint",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-endpoints/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-endpoints",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Update an existing channel endpoint by its unique identifier."
+                    }
+                },
+                {
+                    "name": "Delete a channel endpoint",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/channel-endpoints/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "channel-endpoints",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Delete a specific channel endpoint by its unique identifier."
+                    }
+                }
+            ]
+        },
+        {
             "name": "Integrations",
             "item": [
                 {
@@ -2233,6 +2742,46 @@
                             ]
                         },
                         "description": "List all the active integrations created in the organization"
+                    }
+                },
+                {
+                    "name": "Generate chat OAuth URL",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/integrations/chat/oauth",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "integrations",
+                                "chat",
+                                "oauth"
+                            ]
+                        },
+                        "description": "Generate an OAuth URL for chat integrations like Slack and MS Teams. \n    This URL allows subscribers to authorize the integration, enabling the system to send messages \n    through their chat workspace. The generated URL expires after 5 minutes."
                     }
                 }
             ],

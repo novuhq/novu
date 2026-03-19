@@ -25,14 +25,17 @@ function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefi
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
-  // TODO: There is a bug here, if the redirect doesn't contain both a url and a target it is removed from the new controlValues
-  if (!redirect?.url || redirect.url.length === 0 || !redirect?.target) {
+  if (!redirect?.url || redirect.url.length === 0) {
     return undefined;
   }
 
+  const url = redirect.url as string;
+  const isRelativeUrl = url.startsWith('/');
+  const defaultTarget = isRelativeUrl ? '_self' : '_blank';
+
   return {
-    url: redirect.url as string,
-    target: redirect.target as '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop',
+    url,
+    target: (redirect.target ?? defaultTarget) as '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop',
   };
 }
 
@@ -83,11 +86,13 @@ function sanitizeEmail(controlValues: EmailControlType) {
   });
 
   const emailControls: EmailControlType = {
+    editorType: controlValues.editorType,
     subject: sanitizeEmptyInput(controlValues.subject, ' '),
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
     skip: controlValues.skip,
     disableOutputSanitization: controlValues.disableOutputSanitization,
     layoutId: controlValues.layoutId,
+    from: controlValues.from,
   };
 
   return filterNullishValues(emailControls);
@@ -240,7 +245,26 @@ function parseAmount(amount?: unknown) {
 
 function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
   if (typeof obj === 'object' && obj !== null) {
-    return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== null && value !== undefined)) as T;
+    if (Array.isArray(obj)) {
+      return obj as T;
+    }
+
+    const result = {} as T;
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          result[key as keyof T] = value.map((item) =>
+            typeof item === 'object' && item !== null ? filterNullishValues(item as Record<string, unknown>) : item
+          ) as T[keyof T];
+        } else if (typeof value === 'object') {
+          result[key as keyof T] = filterNullishValues(value as Record<string, unknown>) as T[keyof T];
+        } else {
+          result[key as keyof T] = value as T[keyof T];
+        }
+      }
+    }
+
+    return result;
   }
 
   return obj;

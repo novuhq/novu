@@ -43,6 +43,7 @@ type ControlInputProps = {
   indentWithTab?: boolean;
   enableTranslations?: boolean;
   disabled?: boolean;
+  readOnly?: boolean;
 };
 
 export function ControlInput({
@@ -60,6 +61,7 @@ export function ControlInput({
   isAllowedVariable,
   enableTranslations = false,
   disabled = false,
+  readOnly = false,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -67,7 +69,6 @@ export function ControlInput({
   const resourceId = workflow?.workflowId || '';
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const {
     handleCreateNewVariable,
     isPayloadSchemaDrawerOpen,
@@ -127,7 +128,7 @@ export function ControlInput({
       completionSources={translationCompletionSource}
       isPayloadSchemaEnabled={isPayloadSchemaEnabled}
       isTranslationEnabled={shouldEnableTranslations}
-      isContextEnabled={isContextEnabled}
+      isContextEnabled={true}
       getSchemaPropertyByKey={getSchemaPropertyByKey}
       extensions={extensions}
       digestStepName={digestStepBeforeCurrent?.stepId}
@@ -135,6 +136,7 @@ export function ControlInput({
       onManageSchemaClick={openSchemaDrawer}
       onCreateNewVariable={handleCreateNewVariable}
       disabled={disabled}
+      readOnly={readOnly}
     >
       <EditorOverlays
         resourceId={resourceId}

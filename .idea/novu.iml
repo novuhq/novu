@@ -7,20 +7,15 @@
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/apps/api/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/apps/web/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/dashboard/dist" />
       <excludeFolder url="file://$MODULE_DIR$/apps/widget/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/ws/dist" />
       <excludeFolder url="file://$MODULE_DIR$/libs/dal/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/libs/embed/dist" />
       <excludeFolder url="file://$MODULE_DIR$/libs/testing/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/novu/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/packages/stateless/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/shared/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/providers/dist" />
       <excludeFolder url="file://$MODULE_DIR$/.source" />
-      <excludeFolder url="file://$MODULE_DIR$/apps/web/src/styled-system" />
-      <excludeFolder url="file://$MODULE_DIR$/libs/novui/styled-system" />
       <excludePattern pattern="dist" />
       <excludePattern pattern="build" />
     </content>

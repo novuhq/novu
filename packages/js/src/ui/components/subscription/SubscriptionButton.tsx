@@ -69,19 +69,16 @@ export const SubscriptionButton = (props: SubscriptionButtonProps) => {
                 SubscriptionAppearanceCallback['subscriptionButtonIcon']
               >[0],
             })}
-            fallback={
-              IconComponent() &&
-              IconComponent()?.({
-                class: style({
-                  key: 'subscriptionButtonIcon',
-                  className: 'nt-text-foreground-alpha-600 nt-size-3.5',
-                  iconKey: iconKey(),
-                  context: { subscription: subscription() } satisfies Parameters<
-                    SubscriptionAppearanceCallback['subscriptionButtonIcon']
-                  >[0],
-                }),
-              })
-            }
+            fallback={IconComponent()?.({
+              class: style({
+                key: 'subscriptionButtonIcon',
+                className: 'nt-text-foreground-alpha-600 nt-size-3.5',
+                iconKey: iconKey(),
+                context: { subscription: subscription() } satisfies Parameters<
+                  SubscriptionAppearanceCallback['subscriptionButtonIcon']
+                >[0],
+              }),
+            })}
           />
         </Motion.span>
         <Motion.span

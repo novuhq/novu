@@ -14,18 +14,6 @@ describe('Key builder for queries', () => {
       }}:${QUERY_PREFIX}=${JSON.stringify(command)}`;
       expect(buildFeedKey().cache(command)).toEqual(expectedKey);
     });
-
-    it('should return the correct invalidation key', () => {
-      const subscriberId = 'sub789';
-      const environmentId = 'env456';
-      const expectedKey = `{${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.FEED}:e=${environmentId}:s=${subscriberId}}`;
-      expect(
-        buildFeedKey().invalidate({
-          subscriberId,
-          _environmentId: environmentId,
-        })
-      ).toEqual(expectedKey);
-    });
   });
 
   describe('buildMessageCountKey', () => {

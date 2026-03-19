@@ -5,7 +5,7 @@ export function SubscriberOverviewSkeleton() {
   return (
     <div className="flex flex-col items-stretch gap-8 p-5">
       <div className="flex items-center gap-3">
-        <Skeleton className="size-[3.75rem] rounded-full" />
+        <Skeleton className="size-15 rounded-full" />
         <div className="flex flex-1 items-center gap-2.5">
           <Skeleton className="h-6 flex-1" />
           <Skeleton className="h-6 flex-1" />

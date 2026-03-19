@@ -2,7 +2,10 @@ import { useOrganization } from '@clerk/clerk-react';
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { getMaxAvailableLogsDateRange } from '@/utils/logs-filters.utils';
+
+const LOGS_TABLE_ID = 'logs-table';
 
 export interface LogsFilters {
   status: string[];
@@ -19,6 +22,7 @@ export interface LogsUrlState {
   handleNext: () => void;
   handlePrevious: () => void;
   handleFirst: () => void;
+  handlePageSizeChange: (newLimit: number) => void;
   filters: LogsFilters;
   handleFiltersChange: (newFilters: LogsFilters) => void;
   clearFilters: () => void;
@@ -30,6 +34,10 @@ export function useLogsUrlState(): LogsUrlState {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
   const selectedLogId = searchParams.get('selectedLogId');
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: LOGS_TABLE_ID,
+    defaultPageSize: 20,
+  });
 
   const maxAvailableLogsDateRange = useMemo(
     () =>
@@ -55,9 +63,10 @@ export function useLogsUrlState(): LogsUrlState {
     [selectedLogId, searchParams, setSearchParams]
   );
 
-  // Pagination state
+  const defaultLimit = getPersistedPageSize(LOGS_TABLE_ID, 20);
+
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
-  const limit = parseInt(searchParams.get('limit') || '20', 10);
+  const limit = parseInt(searchParams.get('limit') || defaultLimit.toString(), 10);
 
   const handleNext = useCallback(() => {
     setSearchParams((prev) => {
@@ -76,9 +85,23 @@ export function useLogsUrlState(): LogsUrlState {
   const handleFirst = useCallback(() => {
     setSearchParams((prev) => {
       prev.delete('page');
+
       return prev;
     });
   }, [setSearchParams]);
+
+  const handlePageSizeChange = useCallback(
+    (newLimit: number) => {
+      setPersistedPageSize(newLimit);
+      setSearchParams((prev) => {
+        prev.set('limit', newLimit.toString());
+        prev.delete('page');
+
+        return prev;
+      });
+    },
+    [setSearchParams, setPersistedPageSize]
+  );
 
   // Filter state
   const filters = useMemo(
@@ -102,7 +125,9 @@ export function useLogsUrlState(): LogsUrlState {
 
         // Set new filter params
         if (newFilters.status.length > 0) {
-          newFilters.status.forEach((status) => prev.append('status', status));
+          for (const status of newFilters.status) {
+            prev.append('status', status);
+          }
         }
 
         if (newFilters.transactionId.trim()) {
@@ -155,6 +180,7 @@ export function useLogsUrlState(): LogsUrlState {
       handleNext,
       handlePrevious,
       handleFirst,
+      handlePageSizeChange,
       filters,
       handleFiltersChange,
       clearFilters,
@@ -168,6 +194,7 @@ export function useLogsUrlState(): LogsUrlState {
       handleNext,
       handlePrevious,
       handleFirst,
+      handlePageSizeChange,
       filters,
       handleFiltersChange,
       clearFilters,

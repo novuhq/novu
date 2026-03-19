@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CompileEmailTemplate,
@@ -7,8 +7,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   FeatureFlagsService,
-  GetLayoutCommand,
-  GetLayoutUseCase as GetLayoutUseCaseV1,
+  GetLayoutCommandV0,
+  GetLayoutUseCaseV0,
   GetNovuProviderCredentials,
   Instrument,
   InstrumentUsecase,
@@ -43,7 +43,6 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { addBreadcrumb } from '@sentry/node';
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
@@ -69,7 +68,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
-    private getLayoutUseCaseV1: GetLayoutUseCaseV1,
+    private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
@@ -132,10 +131,6 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
 
-    addBreadcrumb({
-      message: 'Sending Email',
-    });
-
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -162,6 +157,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const bridgeOutputs = command.bridgeData?.outputs;
+
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
       this.getOverrideLayoutId(command, !!bridgeOutputs),
@@ -181,6 +177,7 @@ export class SendMessageEmail extends SendMessageBase {
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
+    const bridgeFrom = (bridgeOutputs as EmailOutput)?.from;
 
     const payload = {
       senderName: step.template.senderName,
@@ -210,10 +207,11 @@ export class SendMessageEmail extends SendMessageBase {
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      stepId: command.step.stepId,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
     });
 
     let replyToAddress: string | undefined;
@@ -261,6 +259,7 @@ export class SendMessageEmail extends SendMessageBase {
           html = await inlineCss(html, {
             // Used for style sheet links that starts with / so should not be needed in our case.
             url: ' ',
+            applyLinkTags: false,
           });
         }
       }
@@ -328,9 +327,9 @@ export class SendMessageEmail extends SendMessageBase {
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
-        from: integration?.credentials.from || 'no-reply@novu.co',
+        from: bridgeFrom?.email || integration?.credentials.from || 'no-reply@novu.co',
         attachments,
-        senderName,
+        senderName: bridgeFrom?.name || senderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {
@@ -626,8 +625,8 @@ export class SendMessageEmail extends SendMessageBase {
 
     // Look up layout by identifier or MongoDB ObjectId
     try {
-      const layout = await this.getLayoutUseCaseV1.execute(
-        GetLayoutCommand.create({
+      const layout = await this.getLayoutUseCaseV0.execute(
+        GetLayoutCommandV0.create({
           layoutIdOrInternalId: layoutId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,

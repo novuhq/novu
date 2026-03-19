@@ -32,7 +32,7 @@ const useAutoSave = (
   onReplaceKey?: (newKey: string) => void
 ) => {
   const lastSavedValueRef = useRef<string>('');
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const trimmedKey = editKey.trim();

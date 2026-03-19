@@ -15,9 +15,9 @@ const helpfulResources: Resource[] = [
     url: 'https://docs.novu.co/',
   },
   {
-    title: 'Join our community on Discord',
-    image: 'discord.svg',
-    url: 'https://discord.gg/novu',
+    title: 'Install Novu MCP',
+    image: 'mcp.svg',
+    url: 'https://docs.novu.co/platform/additional-resources/mcp',
   },
   {
     title: 'See our code on GitHub',
@@ -92,7 +92,7 @@ export function WelcomePage(): ReactElement {
     <>
       <PageMeta title="Get Started with Novu" />
       <DashboardLayout>
-        <motion.div className="flex flex-col gap-8 p-9 pt-4" variants={pageVariants} initial="hidden" animate="show">
+        <motion.div className="flex flex-col gap-6 p-4 pt-2 md:gap-8 md:p-9 md:pt-4" variants={pageVariants} initial="hidden" animate="show">
           <motion.div variants={sectionVariants}>
             <ProgressSection />
           </motion.div>
