@@ -12,7 +12,7 @@ import type {
 import type { Subscriber } from '../../types/subscriber.types';
 import type { Awaitable } from '../../types/util.types';
 
-type StepResolverContext<TPayload extends Record<string, unknown> = Record<string, unknown>> = {
+export type StepResolverContext<TPayload extends Record<string, unknown> = Record<string, unknown>> = {
   payload: TPayload;
   subscriber: Subscriber;
   context: ContextResolved;
