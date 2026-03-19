@@ -5,6 +5,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   dashboardSanitizeControlValues,
+  evaluateRules,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientService,
@@ -19,6 +20,8 @@ import { ControlValuesRepository, JobRepository, MessageRepository, Notification
 import { createLiquidEngine } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ResourceOriginEnum,
@@ -26,6 +29,7 @@ import {
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import * as dns from 'dns';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { LRUCache } from 'lru-cache';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -59,13 +63,41 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   @InstrumentUsecase()
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const controlValues = await this.fetchControlValues(command);
+    const compileContext = this.buildCompileContect(command.compileContext);
+    const shouldSkip = this.evaluateSkipCondition(controlValues, compileContext);
+
+    if (shouldSkip) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SKIPPED_BRIDGE_EXECUTION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ skip: true }),
+        })
+      );
+
+      return {
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
+        },
+      };
+    }
+
+    const { skip: _skip, ...controlValuesWithoutSkip } = controlValues;
 
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.environmentId })
     );
 
-    const compileContext = this.buildCompileContect(command.compileContext);
-    const compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+    const compiled = (await this.compileControlValues(
+      controlValuesWithoutSkip,
+      compileContext
+    )) as typeof controlValuesWithoutSkip;
 
     const url = compiled.url as string | undefined;
     const method = (compiled.method as string) ?? 'POST';
@@ -91,7 +123,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       return {
         status: SendMessageStatus.FAILED,
         errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-        shouldHalt: !controlValues.continueOnFailure,
+        shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
       };
     }
 
@@ -113,7 +145,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       return {
         status: SendMessageStatus.FAILED,
         errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-        shouldHalt: !controlValues.continueOnFailure,
+        shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
       };
     }
 
@@ -177,14 +209,14 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       return {
         status: SendMessageStatus.FAILED,
         errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
-        shouldHalt: !controlValues.continueOnFailure,
+        shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
       };
     }
 
-    if (controlValues.enforceSchemaValidation && controlValues.responseBodySchema) {
+    if (controlValuesWithoutSkip.enforceSchemaValidation && controlValuesWithoutSkip.responseBodySchema) {
       const validationResult = this.validateResponseSchema(
         result.body,
-        controlValues.responseBodySchema as Record<string, unknown>
+        controlValuesWithoutSkip.responseBodySchema as Record<string, unknown>
       );
 
       if (!validationResult.isValid) {
@@ -204,7 +236,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         return {
           status: SendMessageStatus.FAILED,
           errorMessage: DetailEnum.RESPONSE_SCHEMA_VALIDATION_FAILED,
-          shouldHalt: !controlValues.continueOnFailure,
+          shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
         };
       }
     }
@@ -274,7 +306,28 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       actor: compileContext.actor ?? {},
       tenant: compileContext.tenant ?? {},
       context: compileContext.context ?? {},
+      step: compileContext.step,
+      webhook: compileContext.webhook ?? {},
     };
+  }
+
+  private evaluateSkipCondition(
+    controlValues: Record<string, unknown>,
+    compileContext: Record<string, unknown>
+  ): boolean {
+    const skipRules = controlValues.skip as RulesLogic<AdditionalOperation> | undefined;
+
+    if (!skipRules || (typeof skipRules === 'object' && Object.keys(skipRules).length === 0)) {
+      return false;
+    }
+
+    const { result, error } = evaluateRules(skipRules, compileContext);
+
+    if (error) {
+      this.logger.error({ err: error }, 'Failed to evaluate skip rule for HTTP request step');
+    }
+
+    return !result;
   }
 
   private async fetchControlValues(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {
