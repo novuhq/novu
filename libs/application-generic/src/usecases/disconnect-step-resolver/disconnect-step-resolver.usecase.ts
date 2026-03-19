@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
+import { isChannelStepType } from '../../utils/digest';
 import { stepTypeToControlSchema } from '../../utils/step-type-to-control.mapper';
-import { SUPPORTED_STEP_RESOLVER_TYPES } from '../../utils/step-resolver.constants';
 import { DisconnectStepResolverCommand } from './disconnect-step-resolver.command';
 
 @Injectable()
@@ -15,9 +15,9 @@ export class DisconnectStepResolverUsecase {
 
   @InstrumentUsecase()
   async execute(command: DisconnectStepResolverCommand): Promise<void> {
-    if (!SUPPORTED_STEP_RESOLVER_TYPES.has(command.stepType)) {
+    if (!isChannelStepType(command.stepType)) {
       throw new BadRequestException(
-        `Step type '${command.stepType}' does not support step resolvers and cannot be disconnected`
+        `Step type '${command.stepType}' does not support step resolvers. Only channel steps (email, SMS, chat, push, in-app) can be disconnected.`
       );
     }
 

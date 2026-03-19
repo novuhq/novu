@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum, StepTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services';
-import { buildSlug } from '../../utils';
+import { buildSlug, isChannelStepType } from '../../utils';
 import { InvalidStepException } from '../../utils/exceptions';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { GetWorkflowByIdsUseCase } from '../workflow';
@@ -59,7 +59,7 @@ export class BuildStepDataUsecase {
     const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
     const stepType = currentStep.template?.type;
-    const isHttpRequestStep = stepType === StepTypeEnum.HTTP_REQUEST;
+    const isChannelStep = stepType && isChannelStepType(stepType);
 
     return {
       controls: {
@@ -78,7 +78,7 @@ export class BuildStepDataUsecase {
       workflowId: workflow.triggers[0].identifier,
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
-      stepResolverHash: isHttpRequestStep ? undefined : currentStep.template?.stepResolverHash,
+      stepResolverHash: isChannelStep ? currentStep.template?.stepResolverHash : undefined,
     } as StepResponseDto;
   }
 

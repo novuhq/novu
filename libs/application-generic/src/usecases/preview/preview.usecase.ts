@@ -8,6 +8,7 @@ import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
 import { shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
+import { isChannelStepType } from '../../utils/digest';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
@@ -38,12 +39,13 @@ export class PreviewUsecase {
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
       const context = await this.initializePreviewContext(command);
-      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
+      const isChannelStep = context.stepData.type && isChannelStepType(context.stepData.type);
       const stepResolverHash =
-        typeof context.stepData.stepResolverHash === 'string' && !isHttpRequestStep
+        typeof context.stepData.stepResolverHash === 'string' && isChannelStep
           ? context.stepData.stepResolverHash
           : undefined;
       const isStepResolver = isStepResolverActive(stepResolverHash);
+      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
 
       const sanitizedControls = isStepResolver
         ? context.controlValues
