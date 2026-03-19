@@ -1,5 +1,6 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import {
+  BaseRepository,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
@@ -82,6 +83,10 @@ export class GetWorkflowUseCase {
 
     if (!environmentId || environmentId === command.user.environmentId) {
       return command.user.environmentId;
+    }
+
+    if (!BaseRepository.isInternalId(environmentId)) {
+      throw new BadRequestException(`Invalid environment ID format: ${environmentId}`);
     }
 
     const environment = await this.environmentRepository.findByIdAndOrganization(

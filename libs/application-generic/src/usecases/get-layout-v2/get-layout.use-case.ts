@@ -28,7 +28,7 @@ export class GetLayoutUseCase {
       })
     );
 
-    this.analyticsService.track('Get layout - [Layouts]', command.userId ?? command.environmentId, {
+    this.analyticsService.track('Get layout - [Layouts]', command.userId, {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       layoutId: layout._id!,

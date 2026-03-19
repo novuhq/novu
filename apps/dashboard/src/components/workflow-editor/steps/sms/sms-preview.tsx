@@ -15,7 +15,9 @@ export const SmsPreview = ({
 }) => {
   const previewResult = previewData?.result;
   const isValidSmsPreview =
-    previewResult && previewResult.type === ChannelTypeEnum.SMS && previewResult.preview.body.length > 0;
+    previewResult &&
+    previewResult.type === ChannelTypeEnum.SMS &&
+    (previewResult.preview as SmsRenderOutput)?.body?.length > 0;
   const body = isValidSmsPreview ? ((previewData?.result.preview as SmsRenderOutput)?.body ?? '') : '';
 
   if (isPreviewPending || previewData === undefined) {

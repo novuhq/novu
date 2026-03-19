@@ -43,6 +43,7 @@ export interface HttpRequestOptions {
   headers?: Record<string, string>;
   body?: unknown;
   timeout?: number;
+  responseType?: 'json' | 'text';
   retry?: {
     limit: number;
     statusCodes?: number[];

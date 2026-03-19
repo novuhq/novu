@@ -1,6 +1,18 @@
 import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '../../../dto/workflows/step.dto';
 
+/**
+ * Regex pattern for validating HTTP request URLs with template variables. Matches two cases:
+ *
+ * 1. URLs that start with template variables like {{variable}}
+ *    - Example: {{subscriber.data.webhookUrl}}, {{payload.baseUrl}}/endpoint
+ *
+ * 2. Full absolute URLs (http/https) that may contain template variables anywhere
+ *    - Example: https://api.example.com, https://api.example.com/users/{{payload.userId}}
+ *
+ */
+export const HTTP_REQUEST_URL_REGEX = /^(?:\{\{[^}]*\}\}.*|https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
+
 export enum HttpMethodEnum {
   GET = 'GET',
   POST = 'POST',
@@ -47,7 +59,7 @@ export const httpRequestControlSchema = {
     },
     url: {
       type: 'string',
-      format: 'uri',
+      pattern: HTTP_REQUEST_URL_REGEX.source,
       minLength: 1,
       maxLength: 2048,
     },

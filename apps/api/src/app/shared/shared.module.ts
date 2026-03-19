@@ -26,6 +26,7 @@ import {
   storageService,
   TraceLogRepository,
   TraceRollupRepository,
+  WorkflowRunCountRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -126,6 +127,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  WorkflowRunCountRepository,
   TraceRollupRepository,
   DeliveryTrendCountsRepository,
 

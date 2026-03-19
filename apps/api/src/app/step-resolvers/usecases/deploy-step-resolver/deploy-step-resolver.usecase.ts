@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
+  BuildStepIssuesUsecase,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -8,7 +9,13 @@ import {
   PinoLogger,
   reconcileStepResolverControlValues,
 } from '@novu/application-generic';
-import { ClientSession, ControlValuesEntity, ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
+import {
+  ClientSession,
+  ControlValuesEntity,
+  ControlValuesRepository,
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { createHash } from 'crypto';
 import { DeployStepResolverResponseDto } from '../../dtos';
@@ -47,6 +54,8 @@ export class DeployStepResolverUsecase {
     private cloudflareStepResolverDeployService: CloudflareStepResolverDeployService,
     private controlValuesRepository: ControlValuesRepository,
     private messageTemplateRepository: MessageTemplateRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
@@ -97,6 +106,8 @@ export class DeployStepResolverUsecase {
       await this.upsertControlValues(command, resolvedManifestSteps, session);
       await this.updateStepControlSchemas(command, resolvedManifestSteps, session);
     });
+
+    await this.recalculateAndPersistStepIssues(command, resolvedManifestSteps);
 
     return {
       stepResolverHash,
@@ -251,6 +262,47 @@ export class DeployStepResolverUsecase {
         { $set: { 'controls.schema': step.controlSchema }, $unset: { 'controls.uiSchema': 1 } },
         { session }
       );
+    }
+  }
+
+  private async recalculateAndPersistStepIssues(
+    command: DeployStepResolverCommand,
+    resolvedSteps: ResolvedManifestStep[]
+  ): Promise<void> {
+    const workflowInternalIds = [...new Set(resolvedSteps.map((s) => s.workflowInternalId))];
+
+    for (const workflowInternalId of workflowInternalIds) {
+      const workflow = await this.getWorkflowByIdsUseCase.execute(
+        GetWorkflowByIdsCommand.create({
+          workflowIdOrInternalId: workflowInternalId,
+          environmentId: command.user.environmentId,
+          organizationId: command.user.organizationId,
+          userId: command.user._id,
+        })
+      );
+
+      for (const step of resolvedSteps.filter((s) => s.workflowInternalId === workflowInternalId)) {
+        const workflowStep = workflow.steps.find((s) => s._templateId === step.stepInternalId);
+        if (!workflowStep?._templateId || !workflowStep.template?.type || !workflow.origin) continue;
+
+        const issues = await this.buildStepIssuesUsecase.execute({
+          workflowOrigin: workflow.origin,
+          user: command.user,
+          stepInternalId: workflowStep._templateId,
+          workflow,
+          controlSchema: workflowStep.template.controls?.schema ?? step.controlSchema,
+          stepType: workflowStep.template.type,
+        });
+
+        await this.notificationTemplateRepository.update(
+          {
+            _id: workflowInternalId,
+            _environmentId: command.user.environmentId,
+            'steps._templateId': step.stepInternalId,
+          },
+          { $set: { 'steps.$.issues': issues } }
+        );
+      }
     }
   }
 

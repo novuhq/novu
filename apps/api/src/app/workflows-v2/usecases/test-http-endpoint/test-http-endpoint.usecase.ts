@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   buildNovuSignatureHeader,
-  CompileTemplate,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientError,
@@ -12,6 +11,8 @@ import {
   KeyValuePair,
   shouldIncludeBody,
 } from '@novu/application-generic';
+import { createLiquidEngine } from '@novu/framework/internal';
+import { Liquid } from 'liquidjs';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
 
@@ -31,11 +32,14 @@ const HTTP_CLIENT_ERROR_STATUS_MAP: Record<HttpClientErrorType, number> = {
 
 @Injectable()
 export class TestHttpEndpointUsecase {
+  private readonly liquidEngine: Liquid;
+
   constructor(
-    private readonly compileTemplate: CompileTemplate,
     private readonly httpClientService: HttpClientService,
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey
-  ) {}
+  ) {
+    this.liquidEngine = createLiquidEngine();
+  }
 
   @InstrumentUsecase()
   async execute(command: TestHttpEndpointCommand): Promise<TestHttpEndpointResponseDto> {
@@ -43,26 +47,20 @@ export class TestHttpEndpointUsecase {
 
     const compileContext = this.buildCompileContext(previewPayload);
 
-    const rawUrl = (controlValues.url as string) ?? '';
-    const method = (controlValues.method as string) ?? 'GET';
-    const rawHeaders = (controlValues.headers as KeyValuePair[]) ?? [];
-    const rawBody = (controlValues.body as KeyValuePair[]) ?? [];
+    const compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
 
-    const resolvedUrl = await this.compileString(rawUrl, compileContext);
+    const resolvedUrl = (compiled.url as string) ?? '';
+    const method = (compiled.method as string) ?? 'GET';
+    const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
+    const compiledBody = (compiled.body as KeyValuePair[]) ?? [];
 
-    const resolvedHeaders: Record<string, string> = {};
-    for (const { key, value } of rawHeaders) {
-      if (key) {
-        resolvedHeaders[key] = await this.compileString(value, compileContext);
-      }
-    }
+    const resolvedHeaders: Record<string, string> = Object.fromEntries(
+      compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
+    );
 
-    const resolvedBodyPairs: Record<string, unknown> = {};
-    for (const { key, value } of rawBody) {
-      if (key) {
-        resolvedBodyPairs[key] = await this.compileString(value, compileContext);
-      }
-    }
+    const resolvedBodyPairs: Record<string, unknown> = Object.fromEntries(
+      compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value])
+    );
 
     const hasBody = shouldIncludeBody(resolvedBodyPairs, method);
 
@@ -74,18 +72,19 @@ export class TestHttpEndpointUsecase {
     const startTime = performance.now();
 
     try {
-      const response = await this.httpClientService.request({
+      const response = await this.httpClientService.request<string>({
         url: resolvedUrl,
         method: method as HttpRequestOptions['method'],
         headers: resolvedHeaders,
         ...(hasBody ? { body: resolvedBodyPairs } : {}),
         timeout: 30_000,
+        responseType: 'text',
       });
       const durationMs = Math.round(performance.now() - startTime);
 
       return {
         statusCode: response.statusCode,
-        body: response.body,
+        body: tryParseJson(response.body),
         headers: response.headers,
         durationMs,
         resolvedRequest: {
@@ -136,11 +135,20 @@ export class TestHttpEndpointUsecase {
     };
   }
 
-  private async compileString(template: string, data: Record<string, unknown>): Promise<string> {
-    if (!template || !template.includes('{{')) {
-      return template;
-    }
+  private async compileControlValues(
+    values: Record<string, unknown>,
+    context: Record<string, unknown>
+  ): Promise<unknown> {
+    const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
 
-    return this.compileTemplate.execute({ template, data });
+    return JSON.parse(compiled);
+  }
+}
+
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
   }
 }

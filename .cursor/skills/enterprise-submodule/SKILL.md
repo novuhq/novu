@@ -31,7 +31,7 @@ Novu uses a git submodule at `.source` pointing to `git@github.com:novuhq/packag
 4. **Install and build with enterprise:**
    ```bash
    pnpm install:with-ee
-   pnpm build:with-ee
+   pnpm build
    ```
    `install:with-ee` runs `pnpm install` then `pnpm symlink:submodules` which symlinks `src` dirs from `.source/` into `enterprise/packages/`.
 
