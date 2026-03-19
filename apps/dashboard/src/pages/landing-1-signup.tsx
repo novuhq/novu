@@ -33,12 +33,27 @@ const FEATURES = [
   },
 ];
 
-const TRUSTED_COMPANIES = [
-  { name: 'capgemini', width: 105 },
-  { name: 'hemnet', width: 94 },
-  { name: 'mongodb', width: 100 },
-  { name: 'siemens', width: 78 },
-  { name: 'unity', width: 76 },
+const MARQUEE_LOGOS = [
+  { src: '/images/customers/logo-mongodb.svg', alt: 'MongoDB', height: 22 },
+  { src: '/images/customers/logo-unity.svg', alt: 'Unity', height: 20 },
+  { src: '/images/customers/logo-capgemini.svg', alt: 'Capgemini', height: 24 },
+  { src: '/images/customers/logo-siemens.svg', alt: 'Siemens', height: 24 },
+  { src: '/images/customers/logo-roche.svg', alt: 'Roche', height: 22 },
+  { src: '/images/customers/logo-hemnet.svg', alt: 'Hemnet', height: 22 },
+  { src: '/images/customers/logo-checkpoint.svg', alt: 'Check Point', height: 22 },
+  { src: '/images/customers/logo-sinch.svg', alt: 'Sinch', height: 18 },
+  { src: '/images/customers/logo-korn-ferry.svg', alt: 'Korn Ferry', height: 18 },
+  { src: '/images/customers/logo-cloud-software-group.svg', alt: 'Cloud Software Group', height: 20 },
+  { src: '/images/customers/logo-hudl.svg', alt: 'Hudl', height: 18 },
+  { src: '/images/customers/logo-bitmex.svg', alt: 'BitMEX', height: 18 },
+  { src: '/images/customers/logo-lottie-files.svg', alt: 'LottieFiles', height: 18 },
+  { src: '/images/customers/logo-unops.svg', alt: 'UNOPS', height: 20 },
+  { src: '/images/customers/logo-docplanner-group.svg', alt: 'Docplanner', height: 18 },
+  { src: '/images/customers/logo-phocas.svg', alt: 'Phocas', height: 18 },
+  { src: '/images/customers/logo-deriv.svg', alt: 'Deriv', height: 18 },
+  { src: '/images/customers/logo-ebury.svg', alt: 'Ebury', height: 18 },
+  { src: '/images/customers/logo-guesty.svg', alt: 'Guesty', height: 18 },
+  { src: '/images/customers/logo-sherweb.svg', alt: 'Sherweb', height: 18 },
 ];
 
 export function Landing1SignUpPage() {
@@ -230,25 +245,54 @@ function RightPanelBackground() {
 }
 
 function TrustedBySection() {
+  const topRow = MARQUEE_LOGOS.slice(0, 10);
+  const bottomRow = MARQUEE_LOGOS.slice(10);
+
   return (
-    <div className="flex flex-col items-center gap-4 px-6 lg:gap-6">
+    <div className="flex flex-col items-center gap-4 lg:gap-5">
       <span className="text-[10px] uppercase tracking-widest text-white/60 lg:text-xs">
         Trusted by top industry leaders
       </span>
+      <div className="flex w-full flex-col gap-3">
+        <LogoMarqueeRow logos={topRow} direction="left" duration={35} />
+        <LogoMarqueeRow logos={bottomRow} direction="right" duration={30} />
+      </div>
+    </div>
+  );
+}
+
+function LogoMarqueeRow({
+  logos,
+  direction,
+  duration,
+}: {
+  logos: { src: string; alt: string; height: number }[];
+  direction: 'left' | 'right';
+  duration: number;
+}) {
+  const repeated = [...logos, ...logos];
+
+  return (
+    <div
+      className="relative w-full overflow-hidden"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+      }}
+    >
       <div
-        className="flex origin-center scale-[0.65] items-center justify-center gap-8 sm:scale-[0.8] lg:scale-100 lg:gap-12"
+        className="flex w-max items-center gap-10"
         style={{
-          maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-          WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+          animation: `marquee-${direction} ${duration}s linear infinite`,
         }}
       >
-        {TRUSTED_COMPANIES.map(({ name, width }) => (
+        {repeated.map(({ src, alt, height }, index) => (
           <img
-            key={name}
-            src={`/images/auth/${name}-customer-white.svg`}
-            alt={name}
-            className="h-7 shrink-0"
-            style={{ width }}
+            key={`${alt}-${index}`}
+            src={src}
+            alt={alt}
+            className="shrink-0 opacity-70 transition-opacity hover:opacity-100"
+            style={{ height }}
           />
         ))}
       </div>
