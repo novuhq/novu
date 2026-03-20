@@ -138,18 +138,41 @@ function extractStepMetadata(body: unknown[]): StepMetadata {
   const metadata: StepMetadata = {};
 
   for (const node of body) {
-    if (!isAstNode(node) || node.type !== 'ExportDefaultDeclaration') continue;
+    if (!isAstNode(node)) continue;
 
-    extractFromDefaultExport(node.declaration, metadata);
+    if (node.type === 'ExportDefaultDeclaration') {
+      extractFromDefaultExport(node.declaration, body, metadata);
+    } else if (node.type === 'ExportNamedDeclaration') {
+      const specifiers = node.specifiers as AstNode[] | undefined;
+      const defaultSpec = specifiers?.find((s) => isAstNode(s.exported) && s.exported.name === 'default');
+
+      if (defaultSpec && isAstNode(defaultSpec.local)) {
+        const resolved = resolveIdentifierInitializer(defaultSpec.local.name as string, body);
+
+        if (resolved !== undefined) {
+          extractFromDefaultExport(resolved, body, metadata);
+        }
+      }
+    }
+
     if (metadata.stepId !== undefined || metadata.type !== undefined) break;
   }
 
   return metadata;
 }
 
-function extractFromDefaultExport(declaration: unknown, metadata: StepMetadata): void {
-  const unwrapped = unwrapExpression(declaration);
-  if (!unwrapped || unwrapped.type !== 'CallExpression') return;
+function extractFromDefaultExport(declaration: unknown, body: unknown[], metadata: StepMetadata): void {
+  let unwrapped = unwrapExpression(declaration);
+  if (!unwrapped) return;
+
+  if (unwrapped.type === 'Identifier') {
+    const resolved = resolveIdentifierInitializer(unwrapped.name as string, body);
+    if (resolved === undefined) return;
+    unwrapped = unwrapExpression(resolved);
+    if (!unwrapped) return;
+  }
+
+  if (unwrapped.type !== 'CallExpression') return;
 
   const callee = unwrapped.callee;
   if (!isAstNode(callee) || callee.type !== 'MemberExpression') return;
@@ -168,6 +191,38 @@ function extractFromDefaultExport(declaration: unknown, metadata: StepMetadata):
 
   metadata.stepId = firstArg.value as string;
   metadata.type = METHOD_NAME_TO_TYPE[methodName] ?? methodName;
+}
+
+function resolveIdentifierInitializer(name: string, body: unknown[]): unknown {
+  for (const node of body) {
+    if (!isAstNode(node)) continue;
+
+    if (node.type === 'VariableDeclaration') {
+      const declarations = node.declarations as AstNode[] | undefined;
+      const declarator = declarations?.find((d) => isAstNode(d) && isAstNode(d.id) && (d.id as AstNode).name === name);
+
+      if (declarator !== undefined) return (declarator as AstNode).init;
+    }
+
+    if (node.type === 'FunctionDeclaration' && isAstNode(node.id) && (node.id as AstNode).name === name) {
+      return node;
+    }
+
+    if (node.type === 'ExportNamedDeclaration' && isAstNode(node.declaration)) {
+      const decl = node.declaration as AstNode;
+
+      if (decl.type === 'VariableDeclaration') {
+        const declarations = decl.declarations as AstNode[] | undefined;
+        const declarator = declarations?.find(
+          (d) => isAstNode(d) && isAstNode(d.id) && (d.id as AstNode).name === name
+        );
+
+        if (declarator !== undefined) return (declarator as AstNode).init;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function unwrapExpression(node: unknown): AstNode | null {
