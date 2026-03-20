@@ -6,7 +6,9 @@ export const getStepResolversCount = async ({
 }: {
   environment: IEnvironment;
 }): Promise<{ count: number }> => {
-  return getV2<{ count: number }>('/step-resolvers/count', { environment });
+  const { data } = await getV2<{ data: { count: number } }>('/step-resolvers/count', { environment });
+
+  return data;
 };
 
 export const disconnectStepResolver = async ({
