@@ -21,6 +21,14 @@ export const TEMPLATE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.HTTP_REQUEST,
 ];
 
+export const STEP_RESOLVER_SUPPORTED_STEP_TYPES: readonly StepTypeEnum[] = [
+  StepTypeEnum.IN_APP,
+  StepTypeEnum.EMAIL,
+  StepTypeEnum.SMS,
+  StepTypeEnum.CHAT,
+  StepTypeEnum.PUSH,
+];
+
 export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.EMAIL]: 'Email',
   [StepTypeEnum.SMS]: 'SMS',

@@ -11,7 +11,6 @@ import {
   TriggerRequestCategoryEnum,
   UserSessionData,
 } from '@novu/shared';
-import { v4 as uuidv4 } from 'uuid';
 import { PayloadValidationExceptionDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -200,8 +199,6 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     await this.checkKillSwitch(user);
 
-    const transactionId = body.transactionId || uuidv4();
-
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
         userId: user._id,
@@ -210,7 +207,7 @@ export class EventsController {
         identifier: body.name,
         payload: body.payload,
         tenant: body.tenant,
-        transactionId,
+        transactionId: body.transactionId,
         overrides: body.overrides || {},
         actor: body.actor,
         context: body.context,

@@ -47,7 +47,7 @@ export class GetMyEnvironments {
   }
 }
 
-function shortenEnvironmentName(name: string): string {
+export function shortenEnvironmentName(name: string): string {
   const mapToShotEnvName: Record<EnvironmentEnum, string> = {
     [EnvironmentEnum.PRODUCTION]: 'prod',
     [EnvironmentEnum.DEVELOPMENT]: 'dev',

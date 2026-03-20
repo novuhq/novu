@@ -20,7 +20,7 @@ import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver'
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useStepResolversCount } from '@/hooks/use-step-resolvers-count';
-import { TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
 import { cn } from '@/utils/ui';
 
 export function StepEditorModeToggle() {
@@ -34,7 +34,7 @@ export function StepEditorModeToggle() {
 
   if (
     !isStepResolverEnabled ||
-    !TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type) ||
+    !STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type) ||
     currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
     readOnly
   ) {
