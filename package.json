@@ -253,7 +253,10 @@
       "cookie@<0.7.0": "^0.7.0",
       "tmp@<=0.2.3": "^0.2.4",
       "socket.io-parser@>=4.0.0 <4.2.6": "^4.2.6",
-      "cross-spawn@<6.0.6": "^6.0.6"
+      "cross-spawn@<6.0.6": "^6.0.6",
+      "path-to-regexp@>=0.2.0 <1.9.0": "^1.9.0",
+      "path-to-regexp@>=3.0.0 <3.3.0": "^3.3.0",
+      "path-to-regexp@>=6.0.0 <6.3.0": "^6.3.0"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
