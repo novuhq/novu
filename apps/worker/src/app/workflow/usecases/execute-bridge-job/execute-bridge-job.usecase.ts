@@ -169,7 +169,7 @@ export class ExecuteBridgeJob {
     const stepResolverHash = command.job.step.template?.stepResolverHash ?? undefined;
 
     let sanitizedControls: Record<string, unknown> = {};
-    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && rawControls) {
+    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && rawControls && !stepResolverHash) {
       const result = dashboardSanitizeControlValues(this.logger, rawControls, command.job?.step?.template?.type);
       sanitizedControls = result ?? {};
     } else {
