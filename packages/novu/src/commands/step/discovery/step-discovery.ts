@@ -1,7 +1,7 @@
+import { type ParserPlugin, parse } from '@babel/parser';
 import fg from 'fast-glob';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as ts from 'typescript';
 import type { DiscoveredStep, StepDiscoveryResult, ValidationError } from '../types';
 
 interface StepMetadata {
@@ -17,6 +17,8 @@ interface AnalyzedStepFile {
   parseErrors: string[];
 }
 
+type AstNode = Record<string, unknown>;
+
 const STEP_FILE_PATTERN = '**/*.step.{ts,tsx,js,jsx}';
 
 const METHOD_NAME_TO_TYPE: Record<string, string> = {
@@ -28,6 +30,13 @@ const METHOD_NAME_TO_TYPE: Record<string, string> = {
 };
 
 const VALID_STEP_TYPES = new Set(Object.values(METHOD_NAME_TO_TYPE));
+
+const TS_WRAPPING_NODE_TYPES = new Set([
+  'TSAsExpression',
+  'TSTypeAssertion',
+  'TSNonNullExpression',
+  'TSSatisfiesExpression',
+]);
 
 export async function discoverStepFiles(stepsDir: string): Promise<StepDiscoveryResult> {
   const matchedStepFiles = await fg([STEP_FILE_PATTERN], {
@@ -82,17 +91,29 @@ export async function discoverStepFiles(stepsDir: string): Promise<StepDiscovery
 function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFile {
   try {
     const sourceCode = fs.readFileSync(filePath, 'utf-8');
-    const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true, getScriptKind(filePath));
+    const plugins = getParserPlugins(filePath);
+
+    const ast = parse(sourceCode, {
+      sourceType: 'module',
+      plugins,
+      errorRecovery: true,
+    });
 
     return {
       filePath,
       relativePath,
-      metadata: extractStepMetadata(sourceFile),
-      hasDefaultExport: hasDefaultExportInFile(sourceFile),
-      parseErrors: extractParseDiagnostics(sourceFile),
+      metadata: extractStepMetadata(ast.program.body),
+      hasDefaultExport: hasDefaultExport(ast.program.body),
+      parseErrors: ast.errors.map((e) => {
+        const line = e.loc?.line ?? '?';
+        const col = e.loc?.column !== undefined ? e.loc.column + 1 : '?';
+
+        return `Syntax error at ${line}:${col}: ${e.message}`;
+      }),
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+
     return {
       filePath,
       relativePath,
@@ -103,91 +124,87 @@ function analyzeStepFile(filePath: string, relativePath: string): AnalyzedStepFi
   }
 }
 
-function extractStepMetadata(sourceFile: ts.SourceFile): StepMetadata {
+function getParserPlugins(filePath: string): ParserPlugin[] {
+  const ext = path.extname(filePath).toLowerCase();
+  const plugins: ParserPlugin[] = [];
+
+  if (ext === '.jsx' || ext === '.tsx') plugins.push('jsx');
+  if (ext === '.ts' || ext === '.tsx') plugins.push('typescript');
+
+  return plugins;
+}
+
+function extractStepMetadata(body: unknown[]): StepMetadata {
   const metadata: StepMetadata = {};
 
-  function visit(node: ts.Node) {
-    if (ts.isExportAssignment(node) && !node.isExportEquals) {
-      extractStepResolverCallMetadata(node.expression, metadata);
-    }
-    ts.forEachChild(node, visit);
-  }
+  for (const node of body) {
+    if (!isAstNode(node) || node.type !== 'ExportDefaultDeclaration') continue;
 
-  visit(sourceFile);
+    extractFromDefaultExport(node.declaration, metadata);
+    if (metadata.stepId !== undefined || metadata.type !== undefined) break;
+  }
 
   return metadata;
 }
 
-function deriveWorkflowId(relativePath: string): string | undefined {
-  const parentDir = path.dirname(relativePath);
-  if (parentDir === '.' || parentDir === '') {
-    return undefined;
-  }
+function extractFromDefaultExport(declaration: unknown, metadata: StepMetadata): void {
+  const unwrapped = unwrapExpression(declaration);
+  if (!unwrapped || unwrapped.type !== 'CallExpression') return;
 
-  return parentDir.split('/')[0];
-}
+  const callee = unwrapped.callee;
+  if (!isAstNode(callee) || callee.type !== 'MemberExpression') return;
 
-// Matches: step.email('stepId', resolver, opts) — also handles (step.email(...)), `as` casts, and `satisfies` expressions
-function extractStepResolverCallMetadata(node: ts.Expression, metadata: StepMetadata): void {
-  let unwrapped: ts.Expression = node;
-  while (
-    ts.isParenthesizedExpression(unwrapped) ||
-    ts.isAsExpression(unwrapped) ||
-    ts.isTypeAssertionExpression(unwrapped) ||
-    ts.isNonNullExpression(unwrapped) ||
-    ts.isSatisfiesExpression(unwrapped)
-  ) {
-    unwrapped = unwrapped.expression;
-  }
+  const obj = callee.object;
+  const prop = callee.property;
 
-  if (!ts.isCallExpression(unwrapped)) return;
+  if (!isAstNode(obj) || obj.type !== 'Identifier' || obj.name !== 'step') return;
+  if (!isAstNode(prop) || prop.type !== 'Identifier') return;
 
-  const callee = unwrapped.expression;
+  const methodName = prop.name as string;
+  const args = unwrapped.arguments as unknown[] | undefined;
+  const firstArg = args?.[0];
 
-  if (
-    !ts.isPropertyAccessExpression(callee) ||
-    !ts.isIdentifier(callee.expression) ||
-    callee.expression.text !== 'step'
-  ) {
-    return;
-  }
+  if (!isAstNode(firstArg) || firstArg.type !== 'StringLiteral') return;
 
-  const methodName = callee.name.text;
-  const firstArg = unwrapped.arguments[0];
-
-  if (!firstArg || !ts.isStringLiteral(firstArg)) return;
-
-  metadata.stepId = firstArg.text;
+  metadata.stepId = firstArg.value as string;
   metadata.type = METHOD_NAME_TO_TYPE[methodName] ?? methodName;
 }
 
-function hasDefaultExportInFile(sourceFile: ts.SourceFile): boolean {
-  let hasExport = false;
+function unwrapExpression(node: unknown): AstNode | null {
+  if (!isAstNode(node)) return null;
 
-  function visit(node: ts.Node) {
-    if (ts.isFunctionDeclaration(node) && hasModifier(node.modifiers, ts.SyntaxKind.DefaultKeyword)) {
-      hasExport = true;
-    }
-    if (ts.isExportAssignment(node) && !node.isExportEquals) {
-      hasExport = true;
-    }
-    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
-      if (node.exportClause.elements.some((el) => el.name.text === 'default')) {
-        hasExport = true;
-      }
-    }
-    ts.forEachChild(node, visit);
+  let current = node;
+  while (TS_WRAPPING_NODE_TYPES.has(current.type as string)) {
+    const inner = current.expression;
+    if (!isAstNode(inner)) break;
+    current = inner;
   }
 
-  visit(sourceFile);
-  return hasExport;
+  return current;
 }
 
-function extractParseDiagnostics(sourceFile: ts.SourceFile): string[] {
-  const parseDiagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics?: readonly ts.DiagnosticWithLocation[] })
-    .parseDiagnostics;
+function hasDefaultExport(body: unknown[]): boolean {
+  for (const node of body) {
+    if (!isAstNode(node)) continue;
 
-  return (parseDiagnostics ?? []).map((diagnostic) => formatParseDiagnostic(sourceFile, diagnostic));
+    if (node.type === 'ExportDefaultDeclaration') return true;
+
+    if (node.type === 'ExportNamedDeclaration') {
+      const specifiers = node.specifiers as AstNode[] | undefined;
+      if (specifiers?.some((s) => isAstNode(s.exported) && s.exported.name === 'default')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function deriveWorkflowId(relativePath: string): string | undefined {
+  const parentDir = path.dirname(relativePath);
+  if (parentDir === '.' || parentDir === '') return undefined;
+
+  return parentDir.split('/')[0];
 }
 
 function buildValidationErrors(analysis: AnalyzedStepFile, workflowId: string | undefined): string[] {
@@ -234,9 +251,7 @@ function groupAnalysesByCompositeKey(
 
   for (const analysis of analyses) {
     const workflowId = getWorkflowId(analysis.relativePath);
-    if (!analysis.metadata.stepId || !workflowId) {
-      continue;
-    }
+    if (!analysis.metadata.stepId || !workflowId) continue;
 
     const key = `${workflowId}:${analysis.metadata.stepId}`;
     const files = grouped.get(key) ?? [];
@@ -251,9 +266,7 @@ function buildErrorsForDuplicates(filesByKey: Map<string, AnalyzedStepFile[]>): 
   const errors = new Map<string, string[]>();
 
   for (const [compositeKey, files] of filesByKey) {
-    if (files.length <= 1) {
-      continue;
-    }
+    if (files.length <= 1) continue;
 
     const firstColonIndex = compositeKey.indexOf(':');
     const workflowId = firstColonIndex >= 0 ? compositeKey.substring(0, firstColonIndex) : compositeKey;
@@ -274,29 +287,6 @@ function buildErrorsForDuplicates(filesByKey: Map<string, AnalyzedStepFile[]>): 
   return errors;
 }
 
-function getScriptKind(filePath: string): ts.ScriptKind {
-  const extension = path.extname(filePath).toLowerCase();
-
-  switch (extension) {
-    case '.ts':
-      return ts.ScriptKind.TS;
-    case '.tsx':
-      return ts.ScriptKind.TSX;
-    case '.js':
-      return ts.ScriptKind.JS;
-    case '.jsx':
-      return ts.ScriptKind.JSX;
-    default:
-      return ts.ScriptKind.Unknown;
-  }
-}
-
-function hasModifier(modifiers: readonly ts.ModifierLike[] | undefined, kind: ts.SyntaxKind): boolean {
-  return (modifiers ?? []).some((modifier) => modifier.kind === kind);
-}
-
-function formatParseDiagnostic(sourceFile: ts.SourceFile, diagnostic: ts.DiagnosticWithLocation): string {
-  const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-  const position = sourceFile.getLineAndCharacterOfPosition(diagnostic.start ?? 0);
-  return `Syntax error at ${position.line + 1}:${position.character + 1}: ${message}`;
+function isAstNode(value: unknown): value is AstNode {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
