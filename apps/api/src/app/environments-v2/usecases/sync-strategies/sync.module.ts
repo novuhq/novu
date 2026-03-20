@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { DeletePreferencesUseCase, GetWorkflowByIdsUseCase } from '@novu/application-generic';
+import { DeletePreferencesUseCase, GetWorkflowByIdsUseCase, ResourceValidatorService } from '@novu/application-generic';
 import { LayoutsV2Module } from '../../../layouts-v2/layouts.module';
 import { DeleteLayoutUseCase } from '../../../layouts-v2/usecases/delete-layout';
 import { LayoutSyncToEnvironmentUseCase } from '../../../layouts-v2/usecases/sync-to-environment';
@@ -70,6 +70,7 @@ import { WorkflowSyncStrategy } from './workflow-sync.strategy';
     DeletePreferencesUseCase,
     LayoutSyncToEnvironmentUseCase,
     SyncStepResolverToEnvironmentUsecase,
+    ResourceValidatorService,
     DeleteLayoutUseCase,
 
     // Strategies
