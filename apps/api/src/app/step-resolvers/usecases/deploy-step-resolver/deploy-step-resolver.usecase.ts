@@ -6,6 +6,7 @@ import {
   GetWorkflowByIdsUseCase,
   getStepResolverControlSchema,
   InstrumentUsecase,
+  isChannelStepType,
   PinoLogger,
   reconcileStepResolverControlValues,
 } from '@novu/application-generic';
@@ -27,14 +28,6 @@ const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
 // cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
-
-const SUPPORTED_STEP_RESOLVER_TYPES = new Set<StepTypeEnum>([
-  StepTypeEnum.EMAIL,
-  StepTypeEnum.SMS,
-  StepTypeEnum.CHAT,
-  StepTypeEnum.PUSH,
-  StepTypeEnum.IN_APP,
-]);
 
 interface ResolvedManifestStep {
   workflowId: string;
@@ -150,9 +143,9 @@ export class DeployStepResolverUsecase {
 
       const actualStepType = step.template?.type;
 
-      if (!actualStepType || !SUPPORTED_STEP_RESOLVER_TYPES.has(actualStepType)) {
+      if (!actualStepType || !isChannelStepType(actualStepType)) {
         throw new BadRequestException({
-          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers`,
+          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers. Only channel steps (email, SMS, chat, push, in-app) support step resolvers.`,
           workflowId: manifestStep.workflowId,
           stepId: manifestStep.stepId,
         });

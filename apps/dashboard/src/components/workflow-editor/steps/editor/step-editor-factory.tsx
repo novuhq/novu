@@ -14,7 +14,7 @@ import { ThrottleEditor } from '@/components/workflow-editor/steps/throttle/thro
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useStepResolverPolling } from '@/hooks/use-step-resolver-polling';
-import { STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { STEP_RESOLVER_SUPPORTED_STEP_TYPES, STEP_TYPE_LABELS } from '@/utils/constants';
 
 function NoEditorAvailable({ message }: { message: string }) {
   return <div className="flex h-full items-center justify-center text-sm text-neutral-500">{message}</div>;
@@ -31,7 +31,7 @@ export function StepEditorFactory() {
   }, [refetch]);
 
   useStepResolverPolling({
-    enabled: isStepResolverEnabled && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type),
+    enabled: isStepResolverEnabled && STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type),
     stepResolverHash: step.stepResolverHash,
     onHashChange,
   });

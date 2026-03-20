@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { getStepResolverControlSchema, InstrumentUsecase, stepTypeToControlSchema } from '@novu/application-generic';
+import {
+  getStepResolverControlSchema,
+  InstrumentUsecase,
+  isChannelStepType,
+  stepTypeToControlSchema,
+} from '@novu/application-generic';
 import { ClientSession, MessageTemplateRepository } from '@novu/dal';
 import {
   StepResolverSourceData,
@@ -18,6 +23,10 @@ export class SyncStepResolverToEnvironmentUsecase {
     const relevantSteps = command.sourceSteps.filter((sourceStep) => {
       const targetStep = targetStepsByStepId.get(sourceStep.stepId);
       if (!targetStep) {
+        return false;
+      }
+
+      if (!isChannelStepType(sourceStep.stepType)) {
         return false;
       }
 
