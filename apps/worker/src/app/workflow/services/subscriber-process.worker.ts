@@ -22,7 +22,11 @@ const LOG_CONTEXT = 'SubscriberProcessWorker';
 const SUBSCRIBER_ID_VALIDATION_PREFIX = 'subscriberId under property to';
 
 function isSubscriberIdValidationError(e: unknown): boolean {
-  return e instanceof BadRequestException && typeof e.message === 'string' && e.message.startsWith(SUBSCRIBER_ID_VALIDATION_PREFIX);
+  return (
+    e instanceof BadRequestException &&
+    typeof e.message === 'string' &&
+    e.message.startsWith(SUBSCRIBER_ID_VALIDATION_PREFIX)
+  );
 }
 
 @Injectable()

@@ -19,8 +19,11 @@ function selectEnvironment(
   let environment: IEnvironment | undefined;
 
   // Find the environment based on the current user's last environment
+  // Support both slug and _id
   if (selectedEnvironmentSlug) {
-    environment = environments.find((env) => env.slug === selectedEnvironmentSlug);
+    environment = environments.find(
+      (env) => env.slug === selectedEnvironmentSlug || env._id === selectedEnvironmentSlug
+    );
   }
 
   // If no environment slug in URL, try to load the last selected environment from storage
@@ -50,7 +53,8 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   const authResp = useAuth();
   const currentOrganization = authResp.currentOrganization;
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname, search, hash } = location;
   const { environmentSlug: paramsEnvironmentSlug } = useParams<{ environmentSlug?: string }>();
   const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment>();
 
@@ -59,7 +63,8 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       const selectedEnvironment = selectEnvironment(allEnvironments, environmentSlug, currentOrganization?._id);
       setCurrentEnvironment(selectedEnvironment);
       const newEnvironmentSlug = selectedEnvironment.slug;
-      const isNewEnvironmentDifferent = paramsEnvironmentSlug !== selectedEnvironment.slug;
+      const isNewEnvironmentDifferent =
+        paramsEnvironmentSlug !== selectedEnvironment.slug && paramsEnvironmentSlug !== selectedEnvironment._id;
 
       // Save the selected environment to localStorage for persistence
       if (currentOrganization?._id && newEnvironmentSlug) {
@@ -71,14 +76,13 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       }
 
       if (pathname === ROUTES.ROOT || pathname === ROUTES.ENV || pathname === `${ROUTES.ENV}/`) {
-        // TODO: check if this ROUTES is correct
         navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: newEnvironmentSlug ?? '' }));
       } else if (pathname.includes(ROUTES.ENV) && isNewEnvironmentDifferent) {
         const newPath = pathname.replace(/\/env\/[^/]+(\/|$)/, `${ROUTES.ENV}/${newEnvironmentSlug}$1`);
-        navigate(newPath);
+        navigate(`${newPath}${search}${hash}`);
       }
     },
-    [navigate, pathname, paramsEnvironmentSlug, currentOrganization?._id]
+    [navigate, pathname, search, hash, paramsEnvironmentSlug, currentOrganization?._id]
   );
 
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({

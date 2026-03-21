@@ -1,6 +1,7 @@
 export const ROUTES = {
   SIGN_IN: '/auth/sign-in',
   SIGN_UP: '/auth/sign-up',
+  LANDING_1_SIGN_UP: '/landing-1/signup',
   SIGNUP_ORGANIZATION_LIST: '/auth/organization-list',
   INVITATION_ACCEPT: '/auth/invitation/accept',
   FORGOT_PASSWORD: '/auth/forgot-password',

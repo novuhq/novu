@@ -32,6 +32,7 @@ import {
 } from '@/pages';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
+import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
@@ -77,6 +78,10 @@ const router = createBrowserRouter([
     element: <RootRoute />,
     errorElement: <ErrorPage />,
     children: [
+      {
+        path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
+        element: <Landing1SignUpPage />,
+      },
       {
         element: <AuthRoute />,
         children: [

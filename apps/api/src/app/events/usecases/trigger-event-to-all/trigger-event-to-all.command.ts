@@ -13,8 +13,8 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   payload: any;
 
   @IsString()
-  @IsDefined()
-  transactionId: string;
+  @IsOptional()
+  transactionId?: string;
 
   @IsObject()
   @IsOptional()

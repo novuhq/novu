@@ -87,6 +87,7 @@ export enum DetailEnum {
   MSTEAMS_INVALID_CREDENTIALS = 'Invalid MS Teams bot credentials',
   TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION = 'Topic subscription preference evaluated',
   ACTION_STEP_EXECUTION_FAILED = 'Action step execution failed',
+  ACTION_STEP_NON_OBJECT_RESPONSE = 'HTTP request step received a non-object response',
   RESPONSE_SCHEMA_VALIDATION_FAILED = 'Response body schema validation failed',
   STEP_CANCELED = 'Step was canceled because a previous step failed',
 }

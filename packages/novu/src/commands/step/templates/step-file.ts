@@ -8,11 +8,47 @@ function escapeString(value: string): string {
     .replace(/\u2029/g, '\\u2029');
 }
 
-export function generateReactEmailStepFile(stepId: string, templateImportPath: string): string {
-  return `import { step } from '@novu/framework/step-resolver';
-import { render } from '@react-email/components';
-import { z } from 'zod';
-import EmailTemplate from '${escapeString(templateImportPath)}';
+type ControlFields = Record<string, { default: string }>;
+
+function zodSchema(fields: ControlFields): string {
+  const entries = Object.entries(fields)
+    .map(([key, { default: def }]) => `      ${key}: z.string().default('${escapeString(def)}')`)
+    .join(',\n');
+
+  return `z.object({\n${entries},\n    })`;
+}
+
+function jsonSchema(fields: ControlFields): string {
+  const props = Object.entries(fields)
+    .map(([key, { default: def }]) => `        ${key}: { type: 'string', default: '${escapeString(def)}' }`)
+    .join(',\n');
+
+  return `{\n      type: 'object',\n      properties: {\n${props},\n      },\n      additionalProperties: false,\n    } as const`;
+}
+
+function controlSchema(fields: ControlFields, useZod: boolean): string {
+  return useZod ? zodSchema(fields) : jsonSchema(fields);
+}
+
+function stepImports(useZod: boolean, extras: string[] = []): string {
+  const lines = ["import { step } from '@novu/framework/step-resolver';"];
+
+  if (useZod) lines.push("import { z } from 'zod';");
+
+  lines.push(...extras);
+
+  return lines.join('\n');
+}
+
+const reactEmailFields: ControlFields = {
+  subject: { default: 'You have a new notification' },
+};
+
+export function generateReactEmailStepFile(stepId: string, templateImportPath: string, useZod: boolean): string {
+  return `${stepImports(useZod, [
+    "import { render } from '@react-email/components';",
+    `import EmailTemplate from '${escapeString(templateImportPath)}';`,
+  ])}
 
 export default step.email(
   '${escapeString(stepId)}',
@@ -27,17 +63,21 @@ export default step.email(
     ),
   }),
   {
-    controlSchema: z.object({
-      subject: z.string().default('You have a new notification'),
-    }),
+    controlSchema: ${controlSchema(reactEmailFields, useZod)},
   }
 );
 `;
 }
 
-export function generateEmailStepFile(stepId: string): string {
-  return `import { step } from '@novu/framework/step-resolver';
-import { z } from 'zod';
+const emailFields: ControlFields = {
+  subject: { default: 'You have a new notification' },
+  heading: { default: 'New activity' },
+  body: { default: 'You have a new message.' },
+  ctaUrl: { default: '/' },
+};
+
+export function generateEmailStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
 
 export default step.email(
   '${escapeString(stepId)}',
@@ -57,21 +97,19 @@ export default step.email(
     // from: { email: 'noreply@example.com', name: 'My App' },
   }),
   {
-    controlSchema: z.object({
-      subject: z.string().default('You have a new notification'),
-      heading: z.string().default('New activity'),
-      body: z.string().default('You have a new message.'),
-      ctaUrl: z.string().default('/'),
-    }),
+    controlSchema: ${controlSchema(emailFields, useZod)},
     // skip: (_controls, { subscriber }) => !subscriber.email,
   }
 );
 `;
 }
 
-export function generateSmsStepFile(stepId: string): string {
-  return `import { step } from '@novu/framework/step-resolver';
-import { z } from 'zod';
+const smsFields: ControlFields = {
+  message: { default: 'You have a new notification. Reply STOP to unsubscribe.' },
+};
+
+export function generateSmsStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
 
 export default step.sms(
   '${escapeString(stepId)}',
@@ -79,18 +117,20 @@ export default step.sms(
     body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
   }),
   {
-    controlSchema: z.object({
-      message: z.string().default('You have a new notification. Reply STOP to unsubscribe.'),
-    }),
+    controlSchema: ${controlSchema(smsFields, useZod)},
     // skip: (_controls, { subscriber }) => !subscriber.phone,
   }
 );
 `;
 }
 
-export function generatePushStepFile(stepId: string): string {
-  return `import { step } from '@novu/framework/step-resolver';
-import { z } from 'zod';
+const pushFields: ControlFields = {
+  title: { default: 'New activity' },
+  body: { default: 'You have a new notification.' },
+};
+
+export function generatePushStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
 
 export default step.push(
   '${escapeString(stepId)}',
@@ -99,19 +139,19 @@ export default step.push(
     body: controls.body,
   }),
   {
-    controlSchema: z.object({
-      title: z.string().default('New activity'),
-      body: z.string().default('You have a new notification.'),
-    }),
+    controlSchema: ${controlSchema(pushFields, useZod)},
     // skip: (_controls, { subscriber }) => !subscriber.channels?.push,
   }
 );
 `;
 }
 
-export function generateChatStepFile(stepId: string): string {
-  return `import { step } from '@novu/framework/step-resolver';
-import { z } from 'zod';
+const chatFields: ControlFields = {
+  message: { default: 'You have a new message.' },
+};
+
+export function generateChatStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
 
 export default step.chat(
   '${escapeString(stepId)}',
@@ -119,18 +159,22 @@ export default step.chat(
     body: \`Hi \${subscriber.firstName ?? 'there'}, \${controls.message}\`,
   }),
   {
-    controlSchema: z.object({
-      message: z.string().default('You have a new message.'),
-    }),
+    controlSchema: ${controlSchema(chatFields, useZod)},
     // skip: (_controls, { subscriber }) => !subscriber.channels?.chat,
   }
 );
 `;
 }
 
-export function generateInAppStepFile(stepId: string): string {
-  return `import { step } from '@novu/framework/step-resolver';
-import { z } from 'zod';
+const inAppFields: ControlFields = {
+  subject: { default: 'New activity' },
+  body: { default: 'You have a new notification.' },
+  ctaLabel: { default: 'View details' },
+  ctaUrl: { default: '/' },
+};
+
+export function generateInAppStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
 
 export default step.inApp(
   '${escapeString(stepId)}',
@@ -145,19 +189,14 @@ export default step.inApp(
     // secondaryAction: { label: 'Dismiss' },
   }),
   {
-    controlSchema: z.object({
-      subject: z.string().default('New activity'),
-      body: z.string().default('You have a new notification.'),
-      ctaLabel: z.string().default('View details'),
-      ctaUrl: z.string().default('/'),
-    }),
+    controlSchema: ${controlSchema(inAppFields, useZod)},
     // skip: (_controls, { subscriber }) => !subscriber.channels?.in_app,
   }
 );
 `;
 }
 
-const STEP_GENERATORS: Record<string, (stepId: string) => string> = {
+const STEP_GENERATORS: Record<string, (stepId: string, useZod: boolean) => string> = {
   email: generateEmailStepFile,
   sms: generateSmsStepFile,
   push: generatePushStepFile,
@@ -165,11 +204,11 @@ const STEP_GENERATORS: Record<string, (stepId: string) => string> = {
   in_app: generateInAppStepFile,
 };
 
-export function generateStepFileForType(stepId: string, stepType: string): string {
+export function generateStepFileForType(stepId: string, stepType: string, useZod: boolean): string {
   const generator = STEP_GENERATORS[stepType];
   if (!generator) {
     throw new Error(`No generator available for step type '${stepType}'.`);
   }
 
-  return generator(stepId);
+  return generator(stepId, useZod);
 }

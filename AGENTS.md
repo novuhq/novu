@@ -2,75 +2,82 @@
 
 ## Cursor Cloud specific instructions
 
-When running in the cloud environment the pnpm setup:agent was already run, so you don't need to run it again and everything should be already setup (including .env files copied from .env.agent, and pnpm build and install with enterprise packages).
-
-### Prerequisites
-- **Docker** required for MongoDB, Redis, ClickHouse, and LocalStack
+`pnpm setup:agent` has already been run. Do not run it again. The environment is fully configured: dependencies installed, enterprise packages linked, project built, `.env` files in place, Docker services running, and a default user/org seeded.
 
 ### Infrastructure Services
 
-Start with: `docker compose -f docker/local/docker-compose.yml up -d`
+Docker services are running. To restart them after a reboot:
+
+`docker compose -f docker/local/docker-compose.agent.yml up -d`
 
 | Service | Port | Purpose |
 |---------|------|---------|
 | MongoDB | 27017 | Primary database |
 | Redis | 6379 | Caching + Bull queues |
-| ClickHouse | 8123/9000 | Analytics (optional) |
-| LocalStack | 4566 | S3 emulation (optional) |
+| ClickHouse | 8123/9000 | Analytics |
+| LocalStack | 4566 | S3 emulation |
 
-
-**🏃 Running Services:**
-Before running the use computer resource to navigate to the dashboard, make sure to run pnpm build:with-ee script to ensure all your code changes are built and ready to be used. Only run those changes if you made changes to the "packages" folder or the "enterprise" folder. Direct changes to the "apps" folder should not require a build, as it will be done automatically when you run the start:dashboard script or worker, etc...
+### Running Services
 
 ```bash
-# Core development stack
 pnpm start:api:dev    # API service with hot reload
-pnpm start:dashboard  # New React dashboard  
+pnpm start:dashboard  # Dashboard (Vite dev server on port 4201)
+pnpm start:worker     # Background worker (only needed when testing workflow triggers)
 ```
 
 Key gotchas:
 - The Dashboard Vite dev server runs on **port 4201** (configured in `apps/dashboard/vite.config.ts`)
 - The Worker service must be running when testing the triggering of a workflow notification in Novu, otherwise can be skipped.
 
-```
-pnpm start:worker    # Background worker
-```
+
+Run `pnpm build` before starting services **only** if you made changes to the `libs/`, `packages/` or `enterprise/` folder.
 
 ### Dashboard interaction
-Immediately after creating a new user in the dashboard, you will need to create a new organization. After the organization name is submitted, you can immediately navigate to the localhost:4201 root url and you should see the dashboard directly on the workflows page (Avoid doing the full onboarding unless requested).
+
+A default user and organization are pre-seeded. Sign in at `http://localhost:4201/auth/sign-in` with these credentials — no signup or org creation is needed:
+
+| Field        | Value                |
+|--------------|----------------------|
+| Email        | `agent@novu.co`      |
+| Password     | `Agent123!@#`        |
+| Organization | `Agent Organization` |
+
+Do not go through the onboarding flow unless explicitly requested.
 
 ### Linting
 
-`pnpm check` runs Biome across the entire monorepo. Pre-existing warnings/errors are expected in this large codebase. The linter itself functions correctly.
+`pnpm check` runs Biome across the monorepo. Pre-existing warnings/errors are expected.
 
 ### Testing
-
 
 - API E2E tests: see `.cursor/skills/run-api-e2e-tests/SKILL.md`
 - Dashboard E2E: `cd apps/dashboard && pnpm test:e2e`
 - API unit tests: `cd apps/api && pnpm test`
 
 ## Creating Pull Requests
-Requirements:
 
-Follow the Conventional Commits specification
-As a team member, include Linear ticket ID at the end: fixes TICKET-ID or include it in your branch name
-Expected format: feat(scope): Add fancy new feature fixes NOV-123
+Follow the Conventional Commits specification. Include a Linear ticket ID when available.
 
-Possible scopes:
-- dashboard
-- api-service
-- worker
-- shared
-- js
-- react
-- react-native
-- nextjs
-- providers
-- root 
+Format: `feat(scope): Add fancy new feature fixes NOV-123`
 
-PR title must end with 'fixes TICKET-ID' (e.g., 'fixes NOV-123') when a linear ticket id is available in context.
+Scopes: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`, `application-generic`
 
-### Enterprise Packages
+### Enterprise Packages (Git Submodule)
 
-When a change was made in the packages of enterprise, we need to also create a PR in the novuhq/packages-enterprise repository committing the linked changes (Creating a similiar branch from next there).
+The `.source` folder is a **git submodule** pointing to the `novuhq/packages-enterprise` repository. When changes are made inside this submodule or `enterprise/packages` folder (which contains symlinked folders to the submodule), both repositories must be updated:
+
+1. **Create a branch in the submodule** following the same Conventional Commits naming convention (e.g., `feat/scope-description-fixes-NOV-123`).
+2. **Commit and push** the enterprise changes to that branch in the `novuhq/packages-enterprise` remote (run `git push` from inside the `.source` directory).
+3. **Create a PR in the enterprise repository** using the `--repo` flag from the workspace root (do NOT `cd` into the submodule):
+   ```bash
+   gh pr create --repo novuhq/packages-enterprise --head <branch-name> --base next --title "..." --body "..."
+   ```
+   If this fails due to permissions, provide the user with a link to create the PR manually:
+   ```
+   https://github.com/novuhq/packages-enterprise/compare/next...<branch-name>
+   ```
+4. **Create a matching branch in the main repository** with the same name.
+5. **Commit the updated submodule reference** (the changed pointer in `enterprise/`) along with any other main-repo changes to that branch.
+6. **Push the main repository branch** and **create a PR** using `gh pr create`. Mention in the PR body that there is a corresponding enterprise branch that needs a PR in `novuhq/packages-enterprise` and include the compare URL from step 3.
+
+Both PRs must follow the conventions from the "Creating Pull Requests" section above (Conventional Commits format, proper scope, Linear ticket ID when available).

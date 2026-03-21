@@ -22,6 +22,7 @@ export enum FeatureNameEnum {
   PLATFORM_SUBSCRIBERS = 'platformSubscribers',
   PLATFORM_MAX_WORKFLOWS = 'platformMaxWorkflows',
   PLATFORM_MAX_LAYOUTS = 'platformMaxLayouts',
+  PLATFORM_MAX_STEP_RESOLVERS = 'platformMaxStepResolvers',
   PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN = 'platformGuiBasedWorkflowManagementBoolean',
   PLATFORM_CODE_BASED_WORKFLOW_MANAGEMENT_BOOLEAN = 'platformCodeBasedWorkflowManagementBoolean',
   PLATFORM_SUBSCRIBER_MANAGEMENT_BOOLEAN = 'platformSubscriberManagementBoolean',
@@ -234,6 +235,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
+  },
+  [FeatureNameEnum.PLATFORM_MAX_STEP_RESOLVERS]: {
+    [ApiServiceLevelEnum.FREE]: { label: '1 code step', value: 1 },
+    [ApiServiceLevelEnum.PRO]: { label: '10 code steps', value: 10 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited code steps', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited code steps', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited code steps', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,

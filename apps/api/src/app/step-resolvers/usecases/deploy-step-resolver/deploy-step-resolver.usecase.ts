@@ -1,17 +1,26 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
+  BuildStepIssuesUsecase,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   getStepResolverControlSchema,
   InstrumentUsecase,
+  isChannelStepType,
   PinoLogger,
+  ResourceValidatorService,
   reconcileStepResolverControlValues,
 } from '@novu/application-generic';
-import { ClientSession, ControlValuesEntity, ControlValuesRepository, MessageTemplateRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
-import { createHash } from 'crypto';
-import { DeployStepResolverResponseDto } from '../../dtos';
+import {
+  ClientSession,
+  ControlValuesEntity,
+  ControlValuesRepository,
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum, UNLIMITED_VALUE } from '@novu/shared';
+import { DeployStepResolverResponseDto, SkippedStepDto } from '../../dtos';
 import { CloudflareStepResolverDeployService } from '../../services/cloudflare-step-resolver-deploy.service';
 import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver-worker-id';
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
@@ -20,14 +29,6 @@ const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
 // cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
-
-const SUPPORTED_STEP_RESOLVER_TYPES = new Set<StepTypeEnum>([
-  StepTypeEnum.EMAIL,
-  StepTypeEnum.SMS,
-  StepTypeEnum.CHAT,
-  StepTypeEnum.PUSH,
-  StepTypeEnum.IN_APP,
-]);
 
 interface ResolvedManifestStep {
   workflowId: string;
@@ -47,7 +48,10 @@ export class DeployStepResolverUsecase {
     private cloudflareStepResolverDeployService: CloudflareStepResolverDeployService,
     private controlValuesRepository: ControlValuesRepository,
     private messageTemplateRepository: MessageTemplateRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private featureFlagsService: FeatureFlagsService,
+    private resourceValidatorService: ResourceValidatorService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -69,6 +73,25 @@ export class DeployStepResolverUsecase {
 
     const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
 
+    const availableSlots = await this.resourceValidatorService.getStepResolversAvailableSlots(
+      command.user.environmentId,
+      command.user.organizationId
+    );
+
+    const redeploySteps = resolvedManifestSteps.filter((s) => s.existingStepResolverHash);
+    const newSteps = resolvedManifestSteps.filter((s) => !s.existingStepResolverHash);
+
+    const stepsToActivate = availableSlots >= UNLIMITED_VALUE ? newSteps : newSteps.slice(0, availableSlots);
+    const skippedNewSteps = availableSlots >= UNLIMITED_VALUE ? [] : newSteps.slice(availableSlots);
+
+    const stepsToProcess = [...redeploySteps, ...stepsToActivate];
+
+    const skippedSteps: SkippedStepDto[] = skippedNewSteps.map((step) => ({
+      workflowId: step.workflowId,
+      stepId: step.stepId,
+      reason: 'Code steps limit reached. Upgrade your plan to deploy more code steps.',
+    }));
+
     const stepResolverHash = this.generateStepResolverHash(command.bundleBuffer);
     const workerId = generateStepResolverWorkerId(command.user.organizationId, stepResolverHash);
 
@@ -76,7 +99,8 @@ export class DeployStepResolverUsecase {
       {
         workerId,
         stepResolverHash,
-        selectedStepsCount: resolvedManifestSteps.length,
+        deployedStepsCount: stepsToProcess.length,
+        skippedStepsCount: skippedSteps.length,
         bundleSizeBytes: command.bundleBuffer.byteLength,
         userId: command.user._id,
         organizationId: command.user.organizationId,
@@ -93,15 +117,18 @@ export class DeployStepResolverUsecase {
     });
 
     await this.controlValuesRepository.withTransaction(async (session) => {
-      await this.writeHashToMessageTemplates(command, resolvedManifestSteps, stepResolverHash, session);
-      await this.upsertControlValues(command, resolvedManifestSteps, session);
-      await this.updateStepControlSchemas(command, resolvedManifestSteps, session);
+      await this.writeHashToMessageTemplates(command, stepsToProcess, stepResolverHash, session);
+      await this.upsertControlValues(command, stepsToProcess, session);
+      await this.updateStepControlSchemas(command, stepsToProcess, session);
     });
+
+    await this.recalculateAndPersistStepIssues(command, stepsToProcess);
 
     return {
       stepResolverHash,
       workerId,
-      selectedStepsCount: resolvedManifestSteps.length,
+      deployedStepsCount: stepsToProcess.length,
+      skippedSteps,
       deployedAt: new Date().toISOString(),
     };
   }
@@ -139,9 +166,9 @@ export class DeployStepResolverUsecase {
 
       const actualStepType = step.template?.type;
 
-      if (!actualStepType || !SUPPORTED_STEP_RESOLVER_TYPES.has(actualStepType)) {
+      if (!actualStepType || !isChannelStepType(actualStepType)) {
         throw new BadRequestException({
-          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers`,
+          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers. Only channel steps (email, SMS, chat, push, in-app) support step resolvers.`,
           workflowId: manifestStep.workflowId,
           stepId: manifestStep.stepId,
         });
@@ -251,6 +278,47 @@ export class DeployStepResolverUsecase {
         { $set: { 'controls.schema': step.controlSchema }, $unset: { 'controls.uiSchema': 1 } },
         { session }
       );
+    }
+  }
+
+  private async recalculateAndPersistStepIssues(
+    command: DeployStepResolverCommand,
+    resolvedSteps: ResolvedManifestStep[]
+  ): Promise<void> {
+    const workflowInternalIds = [...new Set(resolvedSteps.map((s) => s.workflowInternalId))];
+
+    for (const workflowInternalId of workflowInternalIds) {
+      const workflow = await this.getWorkflowByIdsUseCase.execute(
+        GetWorkflowByIdsCommand.create({
+          workflowIdOrInternalId: workflowInternalId,
+          environmentId: command.user.environmentId,
+          organizationId: command.user.organizationId,
+          userId: command.user._id,
+        })
+      );
+
+      for (const step of resolvedSteps.filter((s) => s.workflowInternalId === workflowInternalId)) {
+        const workflowStep = workflow.steps.find((s) => s._templateId === step.stepInternalId);
+        if (!workflowStep?._templateId || !workflowStep.template?.type || !workflow.origin) continue;
+
+        const issues = await this.buildStepIssuesUsecase.execute({
+          workflowOrigin: workflow.origin,
+          user: command.user,
+          stepInternalId: workflowStep._templateId,
+          workflow,
+          controlSchema: workflowStep.template.controls?.schema ?? step.controlSchema,
+          stepType: workflowStep.template.type,
+        });
+
+        await this.notificationTemplateRepository.update(
+          {
+            _id: workflowInternalId,
+            _environmentId: command.user.environmentId,
+            'steps._templateId': step.stepInternalId,
+          },
+          { $set: { 'steps.$.issues': issues } }
+        );
+      }
     }
   }
 

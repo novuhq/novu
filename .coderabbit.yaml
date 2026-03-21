@@ -1,0 +1,143 @@
+early_access: true
+reviews:
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai title"
+  poem: false
+  request_changes_workflow: false
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  auto_assign_reviewers: false
+  auto_title_instructions: |
+    Generate the PR title following the Conventional Commits format used in this monorepo.
+
+    Format: `type(scope): description`
+
+    Type — pick ONE based on the nature of the change:
+    - `feat` — a new feature or capability
+    - `fix` — a bug fix
+    - `chore` — maintenance, config, CI, dependency updates, refactoring
+    - `docs` — documentation only
+    - `test` — adding or updating tests
+    - `perf` — performance improvement
+    - `ci` — CI/CD changes
+
+    Scope — the monorepo area(s) affected. Use comma-separated values if multiple areas are touched:
+    - `api` — apps/api
+    - `dashboard` — apps/dashboard
+    - `worker` — apps/worker
+    - `ws` — apps/ws
+    - `webhook` — apps/webhook
+    - `shared` — packages/shared
+    - `dal` — libs/dal
+    - `application-generic` — libs/application-generic
+    - `js` — packages/js
+    - `react` — packages/react
+    - `react-native` — packages/react-native
+    - `nextjs` — packages/nextjs
+    - `providers` — packages/providers
+    - `framework` — packages/framework
+    - `root` — repo-wide config, CI, tooling, or cross-cutting changes
+
+    Description: concise, lowercase, imperative mood (e.g., "add retry logic for webhook delivery").
+
+    Linear ticket: if the PR branch name or description contains a Linear ticket ID (e.g., XXX-1234), append ` fixes XXX-1234` at the end of the title.
+
+    Examples:
+    - `feat(dashboard): add workflow execution history page fixes NOV-456`
+    - `fix(api,worker): handle missing environment gracefully`
+    - `chore(root): update Node.js to v22`
+  high_level_summary_instructions: |
+    Write the summary to answer "What changed? Why was the change needed?" — matching the style of our PR template.
+
+    Structure:
+
+    1. **What changed**: A concise paragraph (80 words max) explaining the change in plain language. Focus on the "what" and "why", not individual files. Mention the motivation or problem being solved.
+
+    2. **Affected areas**: List the monorepo scopes impacted (e.g., `api`, `dashboard`, `worker`, `shared`, `dal`, `js`, `react`, `providers`). For each scope, write one sentence describing what changed there. Omit scopes with no meaningful changes (e.g., skip auto-generated files, lockfile-only changes).
+
+    3. **Key technical decisions**: Only include this section if there are notable architectural choices, new dependencies, database/schema changes, API contract changes, or breaking changes. Keep each bullet to one sentence.
+
+    4. **Testing**: Briefly note what kind of testing applies — new unit tests, e2e tests, manual verification, or if no tests were added. If no tests are needed, say why.
+
+    Rules:
+    - Do NOT list every file changed. Summarize by scope/area instead.
+    - Do NOT include contributor statistics or line counts.
+    - Use plain, direct language. No filler words or marketing speak.
+    - If the PR touches enterprise code (`/enterprise` or `*/ee/*`), explicitly call that out.
+    - If the PR adds or updates npm dependencies, mention the package names and whether they are new or updated.
+    - Keep the entire summary under 300 words.
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+    auto_pause_after_reviewed_commits: 5
+  path_instructions:
+    - path: "apps/api/**"
+      instructions: |
+        Review with focus on security, authentication, and authorization.
+        Ensure CQRS patterns (commands/queries) are followed.
+        Check for proper error handling and input validation.
+        Flag any endpoints missing auth guards.
+    - path: "apps/dashboard/**"
+      instructions: |
+        Review with focus on UX, accessibility, and performance.
+        Ensure components follow Radix UI + Tailwind patterns.
+        Check for proper loading/error states.
+        Verify React Query usage for data fetching.
+    - path: "apps/worker/**"
+      instructions: |
+        Review with focus on reliability, idempotency, and error handling.
+        Ensure Bull queue jobs handle failures gracefully.
+        Check for proper retry logic and dead letter handling.
+    - path: "libs/dal/**"
+      instructions: |
+        Review with focus on data integrity and query performance.
+        Check for proper MongoDB indexes on new queries.
+        Ensure repository pattern is followed.
+        Flag any schema changes that need migrations.
+    - path: "packages/shared/**"
+      instructions: |
+        Review with extra care — changes here affect the entire monorepo.
+        Check for backward compatibility.
+        Ensure exported types and constants are intentional.
+    - path: "packages/js/**"
+      instructions: |
+        Review with focus on bundle size, browser compatibility, and public API surface.
+        This is a client-facing SDK — breaking changes must be flagged.
+    - path: "packages/providers/**"
+      instructions: |
+        Ensure the provider implements the standard channel interface.
+        Check for proper error handling of provider API failures.
+        Verify credentials are not hardcoded.
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: |
+        Title must follow Conventional Commits: `type(scope): description`
+        Valid types: feat, fix, chore, docs, test, perf, ci
+        Valid scopes: api, dashboard, worker, ws, webhook, shared, dal, application-generic, js, react, react-native, nextjs, providers, framework, root (comma-separated for multiple)
+        Description should be lowercase and imperative mood.
+        If a Linear ticket is referenced, title should end with `fixes XXX-XXXX`.
+knowledge_base:
+  linear:
+    usage: enabled
+  learnings:
+    scope: global
+  pull_requests:
+    scope: global
+  issues:
+    scope: global
+chat:
+  auto_reply: true

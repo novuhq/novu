@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { getStepResolverControlSchema, InstrumentUsecase, stepTypeToControlSchema } from '@novu/application-generic';
+import {
+  getStepResolverControlSchema,
+  InstrumentUsecase,
+  isChannelStepType,
+  ResourceValidatorService,
+  stepTypeToControlSchema,
+} from '@novu/application-generic';
 import { ClientSession, MessageTemplateRepository } from '@novu/dal';
 import {
   StepResolverSourceData,
@@ -9,15 +15,30 @@ import {
 
 @Injectable()
 export class SyncStepResolverToEnvironmentUsecase {
-  constructor(private messageTemplateRepository: MessageTemplateRepository) {}
+  constructor(
+    private messageTemplateRepository: MessageTemplateRepository,
+    private resourceValidatorService: ResourceValidatorService
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: SyncStepResolverToEnvironmentCommand): Promise<void> {
+    const newResolverStepsOnTarget = this.countNewResolverAssignments(command);
+
+    await this.resourceValidatorService.validateStepResolversLimit(
+      command.targetEnvironmentId,
+      command.user.organizationId,
+      newResolverStepsOnTarget
+    );
+
     const targetStepsByStepId = new Map(command.targetSteps.map((step) => [step.stepId, step]));
 
     const relevantSteps = command.sourceSteps.filter((sourceStep) => {
       const targetStep = targetStepsByStepId.get(sourceStep.stepId);
       if (!targetStep) {
+        return false;
+      }
+
+      if (!isChannelStepType(sourceStep.stepType)) {
         return false;
       }
 
@@ -53,6 +74,31 @@ export class SyncStepResolverToEnvironmentUsecase {
           : this.clearStepResolver(targetStep, command.targetEnvironmentId, sourceStep);
       })
     );
+  }
+
+  private countNewResolverAssignments(command: SyncStepResolverToEnvironmentCommand): number {
+    const targetStepsByStepId = new Map(command.targetSteps.map((step) => [step.stepId, step]));
+    let count = 0;
+
+    for (const sourceStep of command.sourceSteps) {
+      if (sourceStep.stepResolverHash == null || sourceStep.stepResolverHash === '') {
+        continue;
+      }
+
+      const targetStep = targetStepsByStepId.get(sourceStep.stepId);
+
+      if (!targetStep) {
+        continue;
+      }
+
+      const targetHasResolver = targetStep.stepResolverHash != null && targetStep.stepResolverHash !== '';
+
+      if (!targetHasResolver) {
+        count += 1;
+      }
+    }
+
+    return count;
   }
 
   private async promoteStepResolver(

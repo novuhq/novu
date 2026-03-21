@@ -2,6 +2,21 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export function hasZodV3(rootDir: string): boolean {
+  try {
+    const zodPkgPath = path.join(rootDir, 'node_modules', 'zod', 'package.json');
+
+    if (!fs.existsSync(zodPkgPath)) return false;
+
+    const pkg = JSON.parse(fs.readFileSync(zodPkgPath, 'utf8')) as { version?: string };
+    const major = parseInt((pkg.version ?? '').split('.')[0], 10);
+
+    return major === 3;
+  } catch {
+    return false;
+  }
+}
+
 type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export function detectPackageManager(rootDir: string): PackageManager {

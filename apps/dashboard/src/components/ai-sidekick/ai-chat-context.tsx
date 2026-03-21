@@ -1,4 +1,5 @@
 import { AiAgentTypeEnum, AiMessageRoleEnum, AiResourceTypeEnum } from '@novu/shared';
+import * as Sentry from '@sentry/react';
 import { ChatStatus, DataUIPart, DynamicToolUIPart, generateId, UIMessage } from 'ai';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -11,6 +12,8 @@ import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useKeepAiChanges } from '@/hooks/use-keep-ai-changes';
 import { useRevertMessage } from '@/hooks/use-revert-message';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { showErrorToast } from '../primitives/sonner-helpers';
 import { isCancelledToolCall } from './message-utils';
 
@@ -123,6 +126,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     firstMessageRevert,
   } = config;
 
+  const track = useTelemetry();
   const [inputText, setInputText] = useState('');
   const [isFirstMessageRevertDialogOpen, setFirstMessageRevertDialogOpen] = useState(false);
   const [pendingRevertAction, setPendingRevertAction] = useState<{
@@ -174,11 +178,29 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
           return;
         }
 
+        track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, {
+          chatId,
+          agentType,
+          resourceType,
+          messageCount: messages.length,
+        });
+
         skipMessageSyncRef.current = true;
         refetchLatestChat();
       },
+      onError: (err) => {
+        track(TelemetryEvent.COPILOT_GENERATION_ERROR, {
+          chatId,
+          agentType,
+          resourceType,
+        });
+        Sentry.captureException(err, {
+          tags: { feature: 'ai-copilot', action: 'stream-error', agentType, resourceType },
+          extra: { chatId },
+        });
+      },
     });
-  const dataRef = useDataRef({ isGenerating, resourceType, resourceId, isAborted, latestChat, messages });
+  const dataRef = useDataRef({ isGenerating, resourceType, resourceId, agentType, isAborted, latestChat, messages });
 
   const { keepChanges, isPending: isKeepPending } = useKeepAiChanges();
   const { revertMessage, isPending: isRevertPending } = useRevertMessage();
@@ -204,11 +226,17 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     if (latestChat && !hasHandledInitialResumeRef.current) {
       hasHandledInitialResumeRef.current = true;
 
+      const { agentType, resourceType } = dataRef.current;
       if (latestChat.activeStreamId) {
+        track(TelemetryEvent.COPILOT_CHAT_RESUMED, {
+          chatId: latestChat._id,
+          agentType,
+          resourceType,
+        });
         resume();
       }
     }
-  }, [latestChat, resume]);
+  }, [latestChat, resume, track, dataRef]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -239,7 +267,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
   const handleSendMessage = useCallback(
     async (message: string) => {
-      const { resourceType, resourceId, latestChat, messages } = dataRef.current;
+      const { resourceType, resourceId, agentType, latestChat, messages } = dataRef.current;
       const isLastUserMessage = messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
 
       const messageToSend = message.trim();
@@ -247,6 +275,11 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       if (!latestChat) {
         const newChat = await createAiChat({ resourceType, resourceId });
+        track(TelemetryEvent.COPILOT_CHAT_CREATED, {
+          chatId: newChat._id,
+          resourceType,
+          agentType,
+        });
         sendPrompt({ chatId: newChat._id, prompt: messageToSend });
       } else if (isLastUserMessage) {
         const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
@@ -254,32 +287,53 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       } else if (messageToSend) {
         sendPrompt({ chatId: latestChat._id, prompt: messageToSend });
       }
+
+      track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
+        resourceType,
+        agentType,
+        isNewChat: !latestChat,
+        messageLength: messageToSend.length,
+      });
+
       setInputText('');
     },
-    [dataRef, createAiChat, sendPrompt]
+    [dataRef, createAiChat, sendPrompt, track]
   );
 
   const handleKeepAll = useCallback(async () => {
     if (!lastUserMessageId || !latestChat) return;
 
+    const { agentType, resourceType } = dataRef.current;
+
     await keepChanges(
       { chatId: latestChat._id, messageId: lastUserMessageId },
       {
         onSuccess: () => {
+          track(TelemetryEvent.COPILOT_CHANGES_KEPT, {
+            chatId: latestChat._id,
+            agentType,
+            resourceType,
+            userMessageId: lastUserMessageId,
+          });
           refetchLatestChat();
           onKeepSuccess?.();
         },
-        onError: () => {
+        onError: (err) => {
+          Sentry.captureException(err, {
+            tags: { feature: 'ai-copilot', action: 'keep-changes', agentType, resourceType },
+            extra: { chatId: latestChat._id },
+          });
           onKeepError?.();
         },
       }
     );
-  }, [latestChat, lastUserMessageId, keepChanges, refetchLatestChat, onKeepSuccess, onKeepError]);
+  }, [latestChat, lastUserMessageId, keepChanges, refetchLatestChat, onKeepSuccess, onKeepError, track, dataRef]);
 
   const executeTryAgain = useCallback(
     async (userMessageId: string) => {
       if (!latestChat) return;
 
+      const { agentType, resourceType } = dataRef.current;
       const previousMessages = [...messages];
       const messageIndex = messages.findIndex((m) => m.id === userMessageId);
       if (messageIndex === -1) return;
@@ -291,24 +345,33 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
         {
           onSuccess: async () => {
             onRefetchResource?.();
-            // we set the resume checkpoint id when we reverted the message,
-            // so we need to resume the stream to continue from that checkpoint
             resume();
+            track(TelemetryEvent.COPILOT_TRY_AGAIN, {
+              chatId: latestChat._id,
+              agentType,
+              resourceType,
+              userMessageId,
+            });
           },
           onError: async (error) => {
             showErrorToast(`Failed to try again: ${error.message}`);
+            Sentry.captureException(error, {
+              tags: { feature: 'ai-copilot', action: 'try-again', agentType, resourceType },
+              extra: { chatId: latestChat._id, messageId: userMessageId },
+            });
             setMessages(previousMessages);
           },
         }
       );
     },
-    [latestChat, messages, setMessages, revertMessage, resume, onRefetchResource]
+    [latestChat, messages, setMessages, revertMessage, resume, onRefetchResource, track, dataRef]
   );
 
   const executeRevertMessage = useCallback(
     async (messageId: string) => {
       if (!latestChat) return;
 
+      const { agentType, resourceType } = dataRef.current;
       const previousMessages = [...messages];
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex === -1) return;
@@ -327,15 +390,25 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
           onSuccess: async () => {
             await refetchLatestChat();
             onRefetchResource?.();
+            track(TelemetryEvent.COPILOT_CHANGES_REVERTED, {
+              chatId: latestChat._id,
+              agentType,
+              resourceType,
+              userMessageId: messageId,
+            });
           },
           onError: async (error) => {
             showErrorToast(`Failed to revert message: ${error.message}`);
+            Sentry.captureException(error, {
+              tags: { feature: 'ai-copilot', action: 'revert-message', agentType, resourceType },
+              extra: { chatId: latestChat._id, messageId },
+            });
             setMessages(previousMessages);
           },
         }
       );
     },
-    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat]
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat, track, dataRef]
   );
 
   const handleTryAgain = useCallback(async (userMessageId: string) => {
@@ -358,6 +431,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     async (messageId: string) => {
       if (!latestChat) return;
 
+      const { agentType, resourceType } = dataRef.current;
       const previousMessages = [...messages];
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex === -1) return;
@@ -374,16 +448,26 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
           onSuccess: async () => {
             await refetchLatestChat();
             onRefetchResource?.();
+            track(TelemetryEvent.COPILOT_CHANGES_DISCARDED, {
+              chatId: latestChat._id,
+              agentType,
+              resourceType,
+              userMessageId: messageId,
+            });
           },
           onError: async (error) => {
             showErrorToast(`Failed to discard changes: ${error.message}`);
+            Sentry.captureException(error, {
+              tags: { feature: 'ai-copilot', action: 'discard-changes', agentType, resourceType },
+              extra: { chatId: latestChat._id, messageId },
+            });
             setMessages(previousMessages);
             setInputText('');
           },
         }
       );
     },
-    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat]
+    [latestChat, messages, setMessages, revertMessage, onRefetchResource, refetchLatestChat, track, dataRef]
   );
 
   const handleRevertConfirmationConfirm = useCallback(async () => {
@@ -407,14 +491,21 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
   const handleStop = useCallback(async () => {
     isStoppingRef.current = true;
+    const { agentType, resourceType } = dataRef.current;
     await stop();
     if (latestChat && currentEnvironment && isGenerating) {
       await cancelStream({ environment: currentEnvironment, chatId: latestChat._id });
     }
 
+    track(TelemetryEvent.COPILOT_GENERATION_STOPPED, {
+      chatId: latestChat?._id,
+      agentType,
+      resourceType,
+    });
+
     await refetchLatestChat();
     isStoppingRef.current = false;
-  }, [latestChat, currentEnvironment, isGenerating, stop, refetchLatestChat]);
+  }, [latestChat, currentEnvironment, isGenerating, stop, refetchLatestChat, track, dataRef]);
 
   const isLoading = isResourceLoading || isFetchingAiChat || areEnvironmentsInitialLoading;
 

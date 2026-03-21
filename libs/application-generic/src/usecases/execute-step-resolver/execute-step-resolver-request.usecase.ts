@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { ExecuteOutput, HttpQueryKeysEnum } from '@novu/framework/internal';
+import { createLiquidEngine, ExecuteOutput, HttpQueryKeysEnum, State } from '@novu/framework/internal';
 import got, { HTTPError } from 'got';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
@@ -118,8 +118,9 @@ export class ExecuteStepResolverRequest {
       stepId
     );
     const retriesLimit = command.retriesLimit ?? DEFAULT_RETRIES_LIMIT;
-    const normalizedEvent = command.event ?? {};
-    const headers = this.buildRequestHeaders(normalizedEvent, hmacSecret);
+    const normalizedEvent = (command.event ?? {}) as Record<string, unknown>;
+    const compiledEvent = await this.compileControlValues(normalizedEvent, url, command.processError);
+    const headers = this.buildRequestHeaders(compiledEvent, hmacSecret);
 
     this.logger.debug(
       { url, stepResolverHash: command.stepResolverHash, workflowId, stepId },
@@ -129,7 +130,7 @@ export class ExecuteStepResolverRequest {
     try {
       const response = await got
         .post(url, {
-          json: normalizedEvent,
+          json: compiledEvent,
           headers,
           timeout: { request: DEFAULT_TIMEOUT },
           retry: {
@@ -188,6 +189,58 @@ export class ExecuteStepResolverRequest {
         duration,
       },
     };
+  }
+
+  private async compileControlValues(
+    event: Record<string, unknown>,
+    url: string,
+    processError?: ProcessError
+  ): Promise<Record<string, unknown>> {
+    const controls = (event.controls ?? {}) as Record<string, unknown>;
+
+    if (Object.keys(controls).length === 0) {
+      return event;
+    }
+
+    try {
+      const liquidEngine = createLiquidEngine();
+      const parsedTemplate = liquidEngine.parse(JSON.stringify(controls));
+
+      const stateArray = Array.isArray(event.state) ? (event.state as State[]) : [];
+      const stepsMap = stateArray.reduce<Record<string, Record<string, unknown>>>((acc, state) => {
+        acc[state.stepId] = state.outputs ?? {};
+
+        return acc;
+      }, {});
+
+      const renderVariables = {
+        payload: (event.payload ?? {}) as Record<string, unknown>,
+        subscriber: (event.subscriber ?? {}) as Record<string, unknown>,
+        context: (event.context ?? {}) as Record<string, unknown>,
+        steps: stepsMap,
+      };
+
+      const compiledString = await liquidEngine.render(parsedTemplate, renderVariables);
+
+      return { ...event, controls: JSON.parse(compiledString) };
+    } catch (cause) {
+      const compilationError: BridgeError = {
+        url,
+        code: 'STEP_RESOLVER_CONTROL_COMPILATION_FAILED',
+        message:
+          cause instanceof Error
+            ? `Step control compilation failed: ${cause.message}`
+            : 'Step control compilation failed: invalid template syntax in control values',
+        statusCode: HttpStatus.BAD_REQUEST,
+        cause,
+      };
+
+      if (processError) {
+        await processError(compilationError);
+      }
+
+      throw new StepResolverRequestError(compilationError);
+    }
   }
 
   private buildRequestHeaders(event: unknown, hmacSecret: string): Record<string, string> {

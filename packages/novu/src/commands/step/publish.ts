@@ -19,6 +19,7 @@ import type {
 import {
   detectPackageManager,
   getInstallCommand,
+  hasZodV3,
   installPackageSync,
   isPackageInstalled,
   renderTable,
@@ -99,7 +100,8 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
         workflowIds[0],
         stepIds[0],
         rootDir,
-        effectiveOutDir
+        effectiveOutDir,
+        hasZodV3(rootDir)
       );
     }
 
@@ -132,7 +134,7 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
     }
 
     if (options.dryRun) {
-      printDryRunSummary(releaseBundle, selectedSteps, startTime);
+      printDryRunSummary(releaseBundle, selectedSteps, startTime, rootDir);
       return;
     }
 
@@ -147,7 +149,7 @@ export async function stepPublish(options: PublishOptions): Promise<void> {
     }
 
     const deployment = await deployRelease(client, releaseBundle, manifestSteps);
-    printSuccessSummary(deployment, selectedSteps, startTime);
+    printSuccessSummary(deployment, selectedSteps, startTime, rootDir);
   } catch (error) {
     console.error('');
     console.error(red('❌ Publish failed:'), error instanceof Error ? error.message : error);
@@ -173,7 +175,13 @@ async function resolveScaffoldInteractively(
   const outDirPath = path.resolve(rootDir, outDir);
   const pathResolver = new StepFilePathResolver(rootDir, outDirPath);
 
-  if (pathResolver.findExistingStepFilePath(workflowIds[0], stepIds[0])) {
+  const existingStepFilePath = pathResolver.findExistingStepFilePath(workflowIds[0], stepIds[0]);
+  if (existingStepFilePath) {
+    const relPath = path.relative(rootDir, existingStepFilePath);
+    console.log(yellow(`ℹ  Step file found: ${relPath}`));
+    console.log(`   Edit this file and re-run to update, or delete it to re-scaffold.`);
+    console.log('');
+
     return undefined;
   }
 
@@ -387,7 +395,8 @@ async function scaffoldStepFileIfNeeded(
   workflowId: string,
   stepId: string,
   rootDir: string,
-  configOutDir?: string
+  configOutDir?: string,
+  useZod = false
 ): Promise<boolean> {
   const outDir = configOutDir || './novu';
   const outDirPath = path.resolve(rootDir, outDir);
@@ -420,9 +429,9 @@ async function scaffoldStepFileIfNeeded(
       process.exit(1);
     }
     const templateImportPath = pathResolver.getTemplateImportPath(workflowId, templatePath);
-    stepFileContent = generateReactEmailStepFile(stepId, templateImportPath);
+    stepFileContent = generateReactEmailStepFile(stepId, templateImportPath, useZod);
   } else {
-    stepFileContent = generateStepFileForType(stepId, scaffoldResult.stepType);
+    stepFileContent = generateStepFileForType(stepId, scaffoldResult.stepType, useZod);
   }
 
   fsSync.writeFileSync(stepFilePath, stepFileContent, 'utf8');
@@ -671,7 +680,15 @@ async function deployRelease(
   manifestSteps: StepResolverManifestStep[]
 ): Promise<DeploymentResult> {
   return withSpinner('Publishing...', () => client.deployRelease(releaseBundle, manifestSteps), {
-    successMessage: 'Published',
+    successMessage: (result) => {
+      const skippedCount = result.skippedSteps.length;
+
+      if (skippedCount > 0) {
+        return `Published (${skippedCount} ${skippedCount === 1 ? 'step' : 'steps'} skipped — plan limit)`;
+      }
+
+      return 'Published';
+    },
     failMessage: 'Publishing failed',
   });
 }
@@ -679,7 +696,8 @@ async function deployRelease(
 function printDryRunSummary(
   bundle: StepResolverReleaseBundle,
   selectedSteps: DiscoveredStep[],
-  startTime: number
+  startTime: number,
+  rootDir: string
 ): void {
   const workflowCount = new Set(selectedSteps.map((step) => step.workflowId)).size;
   const stepText = selectedSteps.length === 1 ? 'step' : 'steps';
@@ -694,6 +712,7 @@ function printDryRunSummary(
     [
       { header: 'Step', getValue: (s) => s.stepId },
       { header: 'Workflow', getValue: (s) => s.workflowId },
+      { header: 'File', getValue: (s) => path.relative(rootDir, s.filePath) },
     ],
     '   '
   );
@@ -704,25 +723,62 @@ function printDryRunSummary(
   console.log('');
 }
 
-function printSuccessSummary(deployment: DeploymentResult, steps: DiscoveredStep[], startTime: number): void {
-  const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
-  const stepText = steps.length === 1 ? 'step' : 'steps';
-  const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
+function printSuccessSummary(
+  deployment: DeploymentResult,
+  steps: DiscoveredStep[],
+  startTime: number,
+  rootDir: string
+): void {
+  const skippedSet = new Set(deployment.skippedSteps.map((s) => `${s.workflowId}::${s.stepId}`));
+  const hasSkipped = skippedSet.size > 0;
   const elapsed = formatElapsed(Date.now() - startTime);
 
   console.log('');
-  renderTable(
-    steps,
-    [
-      { header: 'Step', getValue: (s) => s.stepId },
-      { header: 'Workflow', getValue: (s) => s.workflowId },
-    ],
-    '   '
-  );
-  console.log('');
-  console.log(
-    `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
-  );
+
+  if (hasSkipped) {
+    renderTable(
+      steps,
+      [
+        { header: 'Step', getValue: (s) => s.stepId },
+        { header: 'Workflow', getValue: (s) => s.workflowId },
+        { header: 'File', getValue: (s) => path.relative(rootDir, s.filePath) },
+        {
+          header: 'Status',
+          getValue: (s) => (skippedSet.has(`${s.workflowId}::${s.stepId}`) ? yellow('⚠ skipped') : green('✓ deployed')),
+        },
+      ],
+      '   '
+    );
+    console.log('');
+    const attemptedCount = steps.length;
+    const deployedCount = deployment.deployedStepsCount;
+    const skippedCount = deployment.skippedSteps.length;
+    console.log(
+      `   ${attemptedCount} attempted · ${green(`${deployedCount} deployed`)} · ${yellow(`${skippedCount} skipped`)} (plan limit)${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
+    );
+    console.log('');
+    console.log(
+      `   ${yellow('ℹ')}  Upgrade your plan to deploy more code steps: https://dashboard.novu.co/settings/billing`
+    );
+  } else {
+    const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
+    const stepText = steps.length === 1 ? 'step' : 'steps';
+    const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
+    renderTable(
+      steps,
+      [
+        { header: 'Step', getValue: (s) => s.stepId },
+        { header: 'Workflow', getValue: (s) => s.workflowId },
+        { header: 'File', getValue: (s) => path.relative(rootDir, s.filePath) },
+      ],
+      '   '
+    );
+    console.log('');
+    console.log(
+      `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
+    );
+  }
+
   console.log('');
 }
 

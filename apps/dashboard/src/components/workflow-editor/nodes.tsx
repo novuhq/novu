@@ -592,11 +592,7 @@ export const AddNode = (props: NodeProps<NodeType>) => {
           <span className="text-label-xs text-text-soft">Drop here</span>
         </div>
         {!isIntersecting && !isReadOnly && (
-          <AddStepMenu
-            visible
-            className="-mt-1"
-            onMenuItemClick={(selection) => addNode(data.index, selection)}
-          />
+          <AddStepMenu visible className="-mt-1" onMenuItemClick={(selection) => addNode(data.index, selection)} />
         )}
       </motion.div>
     </AnimatePresence>

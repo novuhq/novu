@@ -216,7 +216,7 @@ export const WorkflowCanvas = ({
                 transition: 'border 0.3s ease-in-out, background 0.3s ease-in-out',
               }}
             />
-            <div className="absolute left-4 top-4 z-50">
+            <div className="absolute left-4 top-4 z-50 rounded-lg bg-white">
               <InlineToast
                 className="bg-warning/10 border shadow-md"
                 variant={'warning'}

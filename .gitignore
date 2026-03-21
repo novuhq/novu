@@ -115,3 +115,6 @@ nx-cloud.env
 
 # Ignore Cursor Plans folder
 .cursor/plans
+
+# Dead code analysis artifacts (generated at runtime)
+.cursor-artifacts/

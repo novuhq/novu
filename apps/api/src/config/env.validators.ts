@@ -8,9 +8,7 @@ export function validateEnv() {
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 const processEnv = process.env as Record<string, string>; // Hold the initial process.env to avoid circular reference
 
-function getFeatureFlagValidator(
-  key: FeatureFlagsKeysEnum
-): ValidatorSpec<string | number | boolean | undefined> {
+function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<string | number | boolean | undefined> {
   if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
     return num({ default: undefined });
   }
@@ -28,6 +26,7 @@ export const envValidators = {
   LOG_LEVEL: str({ choices: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'none'] }),
   PORT: port(),
   FRONT_BASE_URL: str(),
+  DASHBOARD_URL: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
@@ -70,9 +69,11 @@ export const envValidators = {
   AI_LLM_PROVIDER: str({ choices: ['openai', 'anthropic'], default: 'openai' }),
   AI_LLM_API_KEY: str({ default: '' }),
   AI_LLM_MODEL: str({ default: '' }),
-  AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 4096 }),
+  AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 8192 }),
   AI_LLM_TEMPERATURE: num({ default: 0.7 }),
   AI_LLM_MAX_RETRIES: num({ default: 3 }),
+  AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
+  AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
   STEP_RESOLVER_CF_ACCOUNT_ID: str({ default: undefined }),
   STEP_RESOLVER_CF_API_TOKEN: str({ default: undefined }),
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),

@@ -5,7 +5,14 @@ import PQueue from 'p-queue';
 import { QueueBaseService } from '../queues';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
-const nr = require('newrelic');
+const noopTransaction = { end: () => {} };
+const noopNewRelic = {
+  startBackgroundTransaction: (_transactionName: string, _groupName: string, callback: () => void) => callback(),
+  getTransaction: () => noopTransaction,
+  noticeError: (_error: unknown) => {},
+};
+const shouldDisableNewRelic = !!process.env.CI && process.env.NODE_ENV === 'test';
+const nr = shouldDisableNewRelic ? noopNewRelic : require('newrelic');
 
 type Row = Record<string, unknown>;
 

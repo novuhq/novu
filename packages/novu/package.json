@@ -51,12 +51,12 @@
   },
   "devDependencies": {
     "@types/configstore": "^5.0.1",
+    "@types/cross-spawn": "6.0.0",
     "@types/gradient-string": "^1.1.6",
     "@types/inquirer": "^8.2.0",
     "@types/mocha": "10.0.2",
     "@types/prompts": "2.4.2",
     "@types/uuid": "^8.3.4",
-    "@types/cross-spawn": "6.0.0",
     "@types/validate-npm-package-name": "3.0.0",
     "@types/ws": "^8.5.3",
     "ncp": "^2.0.0",
@@ -66,6 +66,7 @@
     "vitest": "^1.2.1"
   },
   "dependencies": {
+    "@babel/parser": "^7.29.0",
     "@novu/framework": "workspace:*",
     "@novu/ntfr-client": "^0.0.4",
     "@novu/shared": "workspace:*",
