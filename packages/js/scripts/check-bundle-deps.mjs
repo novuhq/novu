@@ -27,7 +27,10 @@ const forbiddenExternalImports = [
   /\bfrom\s+['"]@motionone\/[^'"]+['"]/,
   /\brequire\s*\(\s*['"]solid-js(?:\/[^'"]*)?['"]\s*\)/,
   /\brequire\s*\(\s*['"]solid-motionone['"]\s*\)/,
+  /\brequire\s*\(\s*['"]solid-floating-ui['"]\s*\)/,
   /\brequire\s*\(\s*['"]@kobalte\/[^'"]+['"]\s*\)/,
+  /\brequire\s*\(\s*['"]@solid-primitives\/[^'"]+['"]\s*\)/,
+  /\brequire\s*\(\s*['"]@motionone\/[^'"]+['"]\s*\)/,
 ];
 
 // React should never appear in the bundle
@@ -43,12 +46,14 @@ const checkBundle = async () => {
   let hasFailure = false;
 
   for (const filePath of bundleFiles) {
+    let hasFileFailure = false;
     const fileName = path.relative(baseDir, filePath);
     let content;
     try {
       content = await fs.readFile(filePath, 'utf-8');
     } catch {
-      console.log(chalk.yellow(`  Skipping ${fileName} (not found)`));
+      console.log(chalk.red(`  FAIL: ${fileName} not found`));
+      hasFailure = true;
       continue;
     }
 
@@ -57,7 +62,7 @@ const checkBundle = async () => {
       const match = content.match(pattern);
       if (match) {
         console.log(chalk.red(`  FAIL: ${fileName} has external Solid import: ${match[0]}`));
-        hasFailure = true;
+        hasFileFailure = true;
       }
     }
 
@@ -66,17 +71,19 @@ const checkBundle = async () => {
       const match = content.match(pattern);
       if (match) {
         console.log(chalk.red(`  FAIL: ${fileName} contains React reference: ${match[0]}`));
-        hasFailure = true;
+        hasFileFailure = true;
       }
     }
 
     // Verify Solid runtime is actually inlined
     if (!content.includes('createSignal') && !content.includes('createEffect')) {
       console.log(chalk.red(`  FAIL: ${fileName} missing inlined Solid runtime`));
-      hasFailure = true;
+      hasFileFailure = true;
     }
 
-    if (!hasFailure) {
+    if (hasFileFailure) {
+      hasFailure = true;
+    } else {
       console.log(chalk.green(`  PASS: ${fileName}`));
     }
   }
