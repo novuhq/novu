@@ -1,12 +1,10 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { TopicRepository } from '@novu/dal';
+import { ErrorCodesEnum, TopicRepository } from '@novu/dal';
 import { VALID_ID_REGEX } from '@novu/shared';
 import { TopicResponseDto } from '../../dtos/topic-response.dto';
 import { mapTopicEntityToDto } from '../list-topics/map-topic-entity-to.dto';
 import { UpsertTopicCommand } from './upsert-topic.command';
-
-const DUPLICATE_KEY_ERROR_CODE = 11000;
 
 @Injectable()
 export class UpsertTopicUseCase {
@@ -31,11 +29,7 @@ export class UpsertTopicUseCase {
         });
       } catch (error: unknown) {
         if (this.isDuplicateKeyError(error)) {
-          topic = await this.topicRepository.findTopicByKey(
-            command.key,
-            command.organizationId,
-            command.environmentId
-          );
+          topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
         } else {
           throw error;
         }
@@ -76,6 +70,8 @@ export class UpsertTopicUseCase {
   }
 
   private isDuplicateKeyError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && 'code' in error && error.code === DUPLICATE_KEY_ERROR_CODE;
+    return (
+      typeof error === 'object' && error !== null && 'code' in error && error.code === ErrorCodesEnum.DUPLICATE_KEY
+    );
   }
 }

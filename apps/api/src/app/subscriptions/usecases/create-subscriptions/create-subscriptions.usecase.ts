@@ -9,6 +9,7 @@ import {
   BaseRepository,
   ContextRepository,
   CreateTopicSubscribersEntity,
+  ErrorCodesEnum,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesRepository,
@@ -351,7 +352,12 @@ export class CreateSubscriptionsUsecase {
   }
 
   private isDuplicateKeyError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && 'code' in error && (error as { code: number }).code === 11000;
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: number }).code === ErrorCodesEnum.DUPLICATE_KEY
+    );
   }
 
   private async validateSubscriptionLimit(

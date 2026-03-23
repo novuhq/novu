@@ -63,6 +63,9 @@ export enum FeatureNameEnum {
 
   // Webhooks Features
   WEBHOOKS = 'webhooks',
+
+  // Environment Variables Features
+  ENVIRONMENT_VARIABLES = 'environmentVariables',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -284,6 +287,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Translations', value: true },
+  },
+  [FeatureNameEnum.ENVIRONMENT_VARIABLES]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'Environment Variables', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'Environment Variables', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Environment Variables', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Environment Variables', value: true },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Environment Variables', value: true },
   },
   [FeatureNameEnum.PLATFORM_MULTI_ORG_MULTI_TENANCY]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No', value: 0 },
@@ -557,7 +567,11 @@ function getConvertToMs(conversionToMs: boolean | undefined) {
 }
 
 export function getFeatureForTierAsBoolean(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): boolean {
-  const feature: FeatureValue = novuServiceTiers[featureName][tier];
+  const featureTiers = novuServiceTiers[featureName];
+
+  if (!featureTiers) return false;
+
+  const feature: FeatureValue = featureTiers[tier];
 
   // Handle DetailedPriceListItem
   if (isDetailedPriceListItem(feature)) {

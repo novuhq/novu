@@ -195,7 +195,7 @@ export class DeployStepResolverUsecase {
 
     const existingControlValuesResults = await Promise.all(
       partialSteps.map((step) =>
-        this.controlValuesRepository.findFirst({
+        this.controlValuesRepository.findOne({
           _environmentId: command.user.environmentId,
           _organizationId: command.user.organizationId,
           _workflowId: step.workflowInternalId,

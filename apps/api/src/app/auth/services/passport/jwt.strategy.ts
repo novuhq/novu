@@ -57,9 +57,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   resolveEnvironmentId(req: http.IncomingMessage, session: UserSessionData) {
     const environmentIdHeader = req.headers[HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()];
 
-    const environmentIdFromHeader = Array.isArray(environmentIdHeader)
-      ? environmentIdHeader[0]
-      : environmentIdHeader;
+    const environmentIdFromHeader = Array.isArray(environmentIdHeader) ? environmentIdHeader[0] : environmentIdHeader;
 
     return environmentIdFromHeader || session.environmentId || '';
   }

@@ -9,6 +9,7 @@ export * from './context';
 export * from './controls';
 export * from './cron';
 export * from './environment';
+export * from './environment-variable';
 export * from './events';
 export * from './feature-flags';
 export * from './files';

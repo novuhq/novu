@@ -14,8 +14,9 @@ import {
   PreviewPayloadProcessorService,
   PreviewStep,
   PreviewStepCommand,
+  resolveEnvironmentVariables,
 } from '@novu/application-generic';
-import { JsonSchemaTypeEnum } from '@novu/dal';
+import { EnvironmentVariableRepository, JsonSchemaTypeEnum } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
@@ -35,7 +36,8 @@ export class PreviewLayoutUsecase {
     private controlValueSanitizer: ControlValueSanitizerService,
     private payloadProcessor: PreviewPayloadProcessorService,
     private payloadMerger: PayloadMergerService,
-    private previewStepUsecase: PreviewStep
+    private previewStepUsecase: PreviewStep,
+    private readonly environmentVariableRepository: EnvironmentVariableRepository
   ) {}
 
   @InstrumentUsecase()
@@ -87,6 +89,12 @@ export class PreviewLayoutUsecase {
       const editorType = email?.editorType ?? 'block';
       const body = email?.body ?? (editorType === 'block' ? '{}' : '');
 
+      const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
+        command.user.organizationId,
+        command.user.environmentId
+      );
+      const envVars = resolveEnvironmentVariables(rawEnvVars);
+
       const executeOutput = await this.previewStepUsecase.execute(
         PreviewStepCommand.create({
           payload: (cleanedPayloadExample.payload ?? {}) as Record<string, unknown>,
@@ -106,6 +114,7 @@ export class PreviewLayoutUsecase {
           workflowOrigin: ResourceOriginEnum.NOVU_CLOUD,
           layoutId: layout.layoutId,
           state: [],
+          env: envVars,
         })
       );
 
