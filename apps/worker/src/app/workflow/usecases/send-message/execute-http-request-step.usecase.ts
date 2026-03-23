@@ -308,6 +308,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       context: compileContext.context ?? {},
       step: compileContext.step,
       webhook: compileContext.webhook ?? {},
+      env: compileContext.env ?? {},
     };
   }
 

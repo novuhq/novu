@@ -9,6 +9,7 @@ export interface ICompileContext {
   webhook?: Record<string, unknown>;
   tenant?: TenantEntity;
   context?: ContextResolved;
+  env?: Record<string, string>;
   step: {
     digest: boolean;
     events: any[] | undefined;
