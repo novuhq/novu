@@ -192,6 +192,7 @@ function WorkflowStepItem({
     [workflow?.steps, output?.stepId]
   );
   const isClickable = !!matchedStep && action !== 'remove';
+  const routeStepType = (matchedStep?.type ?? stepType) as StepTypeEnum;
 
   const handleClick = () => {
     if (!isClickable || !matchedStep) return;
@@ -202,7 +203,9 @@ function WorkflowStepItem({
     };
 
     const stepRoute =
-      stepType === StepTypeEnum.DELAY || stepType === StepTypeEnum.DIGEST || stepType === StepTypeEnum.THROTTLE
+      routeStepType === StepTypeEnum.DELAY ||
+      routeStepType === StepTypeEnum.DIGEST ||
+      routeStepType === StepTypeEnum.THROTTLE
         ? ROUTES.EDIT_STEP
         : ROUTES.EDIT_STEP_TEMPLATE;
 

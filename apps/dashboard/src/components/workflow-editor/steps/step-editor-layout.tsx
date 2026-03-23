@@ -163,6 +163,7 @@ function StepEditorContent() {
             className="p-1.5"
             leadingIcon={RiPlayCircleLine}
             onClick={handleTestWorkflowClick}
+            aria-label="Test workflow"
           />
         </Protect>
       </div>
@@ -190,6 +191,7 @@ function StepEditorContent() {
             className="p-1.5"
             leadingIcon={RiPlayCircleLine}
             onClick={handleTestWorkflowClick}
+            aria-label="Test workflow"
           />
         </Protect>
       </PanelHeader>
