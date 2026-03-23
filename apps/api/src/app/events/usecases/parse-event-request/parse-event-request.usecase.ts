@@ -49,12 +49,21 @@ import {
 const ajv = new Ajv({
   allErrors: true,
   useDefaults: true,
+  strict: false,
 });
 addFormats(ajv);
 
 function getSchemaHash(schema: object): string {
   return createHash('sha256').update(JSON.stringify(schema)).digest('hex');
 }
+
+export type ParseEventRequestResult = {
+  acknowledged: boolean;
+  status: TriggerEventStatusEnum;
+  transactionId: string;
+  activityFeedLink?: string;
+  jobData?: IWorkflowDataDto;
+};
 
 @Injectable()
 export class ParseEventRequest {
@@ -75,7 +84,7 @@ export class ParseEventRequest {
   }
 
   @InstrumentUsecase()
-  public async execute(command: ParseEventRequestCommand) {
+  public async execute(command: ParseEventRequestCommand): Promise<ParseEventRequestResult> {
     const transactionId = command.transactionId || generateTransactionId();
     const requestId = command.requestId;
 
@@ -160,6 +169,7 @@ export class ParseEventRequest {
           return {
             acknowledged: true,
             status: TriggerEventStatusEnum.TENANT_MISSING,
+            transactionId,
           };
         }
       }
@@ -183,6 +193,7 @@ export class ParseEventRequest {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.NOT_ACTIVE,
+          transactionId,
         };
       }
 
@@ -306,7 +317,7 @@ export class ParseEventRequest {
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
-  }) {
+  }): Promise<ParseEventRequestResult> {
     // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
     const { workflow, ...commandArgs } = command;
 
@@ -370,10 +381,12 @@ export class ParseEventRequest {
       );
     }
 
+    const activityFeedLink = `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
+      activityFeedLink,
       jobData: command.skipQueueInsertion ? jobData : undefined,
     };
   }

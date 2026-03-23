@@ -13,9 +13,10 @@ import { cn } from '@/utils/ui';
 
 type NovuBrandingProps = HTMLAttributes<HTMLDivElement> & {
   resourceOrigin: ResourceOriginEnum;
+  isStepResolver?: boolean;
 };
 
-export const NovuBranding = ({ className, resourceOrigin, ...rest }: NovuBrandingProps) => {
+export const NovuBranding = ({ className, resourceOrigin, isStepResolver, ...rest }: NovuBrandingProps) => {
   const { subscription } = useFetchSubscription();
   const navigate = useNavigate();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
@@ -29,9 +30,9 @@ export const NovuBranding = ({ className, resourceOrigin, ...rest }: NovuBrandin
   const removeNovuBranding = organizationSettings?.data?.removeNovuBranding;
   const isUpdating = updateOrganizationSettings.isPending;
 
-  const showBranding = resourceOrigin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings;
+  const showBranding =
+    resourceOrigin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings && !isStepResolver;
 
-  // Don't render anything while loading or if branding should be removed
   if (!showBranding) return null;
 
   const handleRemoveBrandingChange = (value: boolean) => {

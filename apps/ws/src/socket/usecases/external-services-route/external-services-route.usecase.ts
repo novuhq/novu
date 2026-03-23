@@ -18,7 +18,7 @@ export class ExternalServicesRoute {
     const isOnline = await this.connectionExist(command);
 
     if (!isOnline) {
-      Logger.log(`Connection does not exist, ignoring command for ${command.userId}`, LOG_CONTEXT);
+      Logger.debug(`Connection does not exist, ignoring command for ${command.userId}`, LOG_CONTEXT);
 
       return;
     }

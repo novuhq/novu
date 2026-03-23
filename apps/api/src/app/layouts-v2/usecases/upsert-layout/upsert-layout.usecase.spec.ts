@@ -2,8 +2,13 @@ import { BadRequestException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
+  GetLayoutUseCase,
   GetLayoutUseCase as GetLayoutUseCaseV0,
+  JSONSchemaDto,
+  LayoutCreationSourceEnum,
+  LayoutDtoV0,
   layoutControlSchema,
+  mapLayoutToResponseDto,
   PinoLogger,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
@@ -20,13 +25,8 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { LayoutDto } from '../../../layouts-v1/dtos';
 import { CreateLayoutUseCase, UpdateLayoutUseCase } from '../../../layouts-v1/usecases';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { LayoutCreationSourceEnum } from '../../types';
 import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
-import { GetLayoutUseCase } from '../get-layout';
-import { mapToResponseDto } from '../mapper';
 import { UpsertLayoutCommand } from './upsert-layout.command';
 import { UpsertLayout } from './upsert-layout.usecase';
 
@@ -35,39 +35,17 @@ const isStringifiedMailyJSONContentStub = sinon.stub();
 
 // Mock modules using require to ensure proper stubbing
 sinon
-  .stub(require('../../../shared/helpers/maily-utils'), 'isStringifiedMailyJSONContent')
+  .stub(require('@novu/application-generic'), 'isStringifiedMailyJSONContent')
   .callsFake(isStringifiedMailyJSONContentStub);
 
-/**
- * Sets up mocks for the enterprise translation module
- * Returns the translation stub for further customization if needed
- */
 function setupTranslationMocks(moduleRef: sinon.SinonStubbedInstance<ModuleRef>): sinon.SinonStub {
-  const eeTranslation = require('@novu/ee-translation');
-  if (!eeTranslation) {
-    throw new Error('ee-translation does not exist');
-  }
+  const manageTranslationsExecuteStub = sinon.stub().resolves();
 
-  const { ManageTranslations } = eeTranslation;
-
-  // Create translation service stub that returns original content (no translation applied)
-  const manageTranslationsStub = sinon.stub(ManageTranslations.prototype, 'execute').callsFake(async (command: any) => {
-    return command.content || '';
+  (moduleRef as any).get = sinon.stub().returns({
+    execute: manageTranslationsExecuteStub,
   });
 
-  const mockLogger = {
-    setContext: sinon.stub(),
-  };
-
-  // Mock moduleRef.get to return the ManageTranslations class when requested
-  (moduleRef as any).get = sinon.stub().callsFake((token) => {
-    if (token === ManageTranslations) {
-      return new ManageTranslations({} as any, {} as any, mockLogger as any, {} as any);
-    }
-    return null;
-  });
-
-  return manageTranslationsStub;
+  return manageTranslationsExecuteStub;
 }
 
 describe('UpsertLayoutUseCase', () => {
@@ -102,7 +80,7 @@ describe('UpsertLayoutUseCase', () => {
     } as LayoutControlValuesDto,
   };
 
-  const mockExistingLayout: LayoutDto & { _id: string } = {
+  const mockExistingLayout: LayoutDtoV0 & { _id: string } = {
     _id: 'existing_layout_id',
     identifier: 'existing_layout_identifier',
     name: 'Existing Layout',
@@ -122,7 +100,7 @@ describe('UpsertLayoutUseCase', () => {
     },
   };
 
-  const mockCreatedLayout: LayoutDto & { _id: string } = {
+  const mockCreatedLayout: LayoutDtoV0 & { _id: string } = {
     _id: 'new_layout_id',
     identifier: 'test-layout',
     name: 'Test Layout',
@@ -213,7 +191,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -326,7 +304,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(mockExistingLayout);
         updateLayoutUseCaseMock.execute.resolves(mockExistingLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockExistingLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -421,7 +399,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -499,7 +477,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,
@@ -664,7 +642,7 @@ describe('UpsertLayoutUseCase', () => {
         getLayoutUseV0CaseMock.execute.resolves(undefined);
         createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
         getLayoutUseCaseMock.execute.resolves(
-          mapToResponseDto({
+          mapLayoutToResponseDto({
             layout: mockCreatedLayout,
             controlValues: mockControlValues,
             variables: mockLayoutVariablesSchema,

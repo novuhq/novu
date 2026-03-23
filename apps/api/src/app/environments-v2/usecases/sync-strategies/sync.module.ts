@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { DeletePreferencesUseCase, GetWorkflowByIdsUseCase } from '@novu/application-generic';
+import { DeletePreferencesUseCase, GetWorkflowByIdsUseCase, ResourceValidatorService } from '@novu/application-generic';
 import { LayoutsV2Module } from '../../../layouts-v2/layouts.module';
 import { DeleteLayoutUseCase } from '../../../layouts-v2/usecases/delete-layout';
 import { LayoutSyncToEnvironmentUseCase } from '../../../layouts-v2/usecases/sync-to-environment';
 import { OutboundWebhooksModule } from '../../../outbound-webhooks/outbound-webhooks.module';
 import { SharedModule } from '../../../shared/shared.module';
+import { SyncStepResolverToEnvironmentUsecase } from '../../../step-resolvers/usecases/sync-step-resolver-to-environment';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { SyncToEnvironmentUseCase } from '../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { WorkflowModule } from '../../../workflows-v2/workflow.module';
@@ -68,6 +69,8 @@ import { WorkflowSyncStrategy } from './workflow-sync.strategy';
     GetWorkflowByIdsUseCase,
     DeletePreferencesUseCase,
     LayoutSyncToEnvironmentUseCase,
+    SyncStepResolverToEnvironmentUsecase,
+    ResourceValidatorService,
     DeleteLayoutUseCase,
 
     // Strategies

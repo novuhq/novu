@@ -1,17 +1,18 @@
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { StepTypeEnum } from '@novu/shared';
-import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 import {
   ChatControlDto,
   CustomControlDto,
   DelayControlDto,
   DigestControlDto,
   EmailControlDto,
+  HttpRequestControlDto,
   InAppControlDto,
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
-} from './controls';
+} from '@novu/application-generic';
+import { StepTypeEnum } from '@novu/shared';
+import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 // Base DTO for common properties
 export class BaseStepConfigDto {
@@ -210,6 +211,25 @@ export class CustomStepUpsertDto extends BaseStepConfigDto {
   controlValues?: CustomControlDto | Record<string, unknown> | null;
 }
 
+export class HttpRequestStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.HTTP_REQUEST,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'http_request' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the HTTP Request step.',
+    oneOf: [{ $ref: getSchemaPath(HttpRequestControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: HttpRequestControlDto | Record<string, unknown> | null;
+}
+
 /*
  * This export allows using StepUpsertDto as a type for the discriminated union.
  * The actual DTO used will be one of the specific step DTOs at runtime.
@@ -223,4 +243,5 @@ export type StepUpsertDto =
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
-  | CustomStepUpsertDto;
+  | CustomStepUpsertDto
+  | HttpRequestStepUpsertDto;

@@ -1,3 +1,13 @@
+## v3.14.1 (2026-02-27)
+
+### 🚀 Features
+
+- **js, react:** Socket type explicit option ([#10117](https://github.com/novuhq/novu/pull/10117))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+
 ## v3.14.0 (2026-02-12)
 
 ### 🚀 Features

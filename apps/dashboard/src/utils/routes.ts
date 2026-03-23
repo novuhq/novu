@@ -1,6 +1,7 @@
 export const ROUTES = {
   SIGN_IN: '/auth/sign-in',
   SIGN_UP: '/auth/sign-up',
+  LANDING_1_SIGN_UP: '/landing-1/signup',
   SIGNUP_ORGANIZATION_LIST: '/auth/organization-list',
   INVITATION_ACCEPT: '/auth/invitation/accept',
   FORGOT_PASSWORD: '/auth/forgot-password',
@@ -68,6 +69,8 @@ export const ROUTES = {
   LAYOUTS_EDIT: '/env/:environmentSlug/layouts/:layoutSlug',
   TRANSLATIONS: '/env/:environmentSlug/translations',
   TRANSLATIONS_EDIT: '/env/:environmentSlug/translations/:resourceType/:resourceId/:locale',
+  VARIABLES: '/env/:environmentSlug/variables',
+  VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

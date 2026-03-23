@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum } from '@novu/shared';
+import { type ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
 import { UpsertControlValuesCommand } from './upsert-control-values.command';
 
 @Injectable()
@@ -9,7 +8,7 @@ export class UpsertControlValuesUseCase {
   constructor(private controlValuesRepository: ControlValuesRepository) {}
 
   async execute(command: UpsertControlValuesCommand) {
-    const existingControlValues = await this.controlValuesRepository.findFirst({
+    const existingControlValues = await this.controlValuesRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _workflowId: command.workflowId,

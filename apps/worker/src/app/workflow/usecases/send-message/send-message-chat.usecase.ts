@@ -98,25 +98,27 @@ export class SendMessageChat extends SendMessageBase {
       // Phase 2: Resolve all channels into unified format
       const channels = await this.resolveAllChannels(command);
 
-      // Check if there are any active channels
       if (channels.length === 0) {
         if (command.contextKeys.length > 0) {
           await this.createExecutionDetail(
             command,
             DetailEnum.SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL,
-            ExecutionDetailsStatusEnum.FAILED
+            ExecutionDetailsStatusEnum.WARNING
           );
         } else {
           await this.createExecutionDetail(
             command,
             DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-            ExecutionDetailsStatusEnum.FAILED
+            ExecutionDetailsStatusEnum.WARNING
           );
         }
 
         return {
-          status: SendMessageStatus.FAILED,
-          errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          status: SendMessageStatus.SKIPPED,
+          deliveryLifecycleState: {
+            status: DeliveryLifecycleStatusEnum.SKIPPED,
+            detail: DeliveryLifecycleDetail.USER_MISSING_CREDENTIALS,
+          },
         };
       }
 
@@ -272,7 +274,7 @@ export class SendMessageChat extends SendMessageBase {
       await this.createExecutionDetail(
         command,
         DetailEnum.CHAT_SOME_CHANNELS_SKIPPED,
-        ExecutionDetailsStatusEnum.FAILED
+        ExecutionDetailsStatusEnum.WARNING
       );
 
       return {

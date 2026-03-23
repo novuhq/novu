@@ -1,4 +1,5 @@
 export * from './bridge';
+export * from './environment-variable';
 export * from './environments';
 export * from './events';
 export * from './integration';

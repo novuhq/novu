@@ -1,6 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { EmailControlType, InstrumentUsecase, LayoutControlType } from '@novu/application-generic';
-import { JsonSchemaTypeEnum } from '@novu/dal';
+import {
+  buildContextSchema,
+  buildSubscriberSchema,
+  ControlValueSanitizerService,
+  CreateVariablesObject,
+  CreateVariablesObjectCommand,
+  EmailControlType,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  InstrumentUsecase,
+  LayoutControlType,
+  PayloadMergerService,
+  PreviewPayloadProcessorService,
+  PreviewStep,
+  PreviewStepCommand,
+  resolveEnvironmentVariables,
+} from '@novu/application-generic';
+import { EnvironmentVariableRepository, JsonSchemaTypeEnum } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
@@ -8,14 +24,7 @@ import {
   LAYOUT_PREVIEW_WORKFLOW_ID,
   ResourceOriginEnum,
 } from '@novu/shared';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
-import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
-import { buildContextSchema, buildSubscriberSchema } from '../../../shared/utils/create-schema';
-import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
-import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
 import { GenerateLayoutPreviewResponseDto } from '../../dtos/generate-layout-preview-response.dto';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { PreviewLayoutCommand } from './preview-layout.command';
 import { enhanceBodyForPreview } from './preview-utils';
 
@@ -27,7 +36,8 @@ export class PreviewLayoutUsecase {
     private controlValueSanitizer: ControlValueSanitizerService,
     private payloadProcessor: PreviewPayloadProcessorService,
     private payloadMerger: PayloadMergerService,
-    private previewStepUsecase: PreviewStep
+    private previewStepUsecase: PreviewStep,
+    private readonly environmentVariableRepository: EnvironmentVariableRepository
   ) {}
 
   @InstrumentUsecase()
@@ -79,6 +89,12 @@ export class PreviewLayoutUsecase {
       const editorType = email?.editorType ?? 'block';
       const body = email?.body ?? (editorType === 'block' ? '{}' : '');
 
+      const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
+        command.user.organizationId,
+        command.user.environmentId
+      );
+      const envVars = resolveEnvironmentVariables(rawEnvVars);
+
       const executeOutput = await this.previewStepUsecase.execute(
         PreviewStepCommand.create({
           payload: (cleanedPayloadExample.payload ?? {}) as Record<string, unknown>,
@@ -98,6 +114,7 @@ export class PreviewLayoutUsecase {
           workflowOrigin: ResourceOriginEnum.NOVU_CLOUD,
           layoutId: layout.layoutId,
           state: [],
+          env: envVars,
         })
       );
 

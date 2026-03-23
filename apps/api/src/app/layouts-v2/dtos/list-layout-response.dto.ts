@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { LayoutResponseDto } from '@novu/application-generic';
 import { Type } from 'class-transformer';
 import { IsArray, IsNumber, ValidateNested } from 'class-validator';
-import { LayoutResponseDto } from './layout-response.dto';
 
 export class ListLayoutResponseDto {
   @ApiProperty({

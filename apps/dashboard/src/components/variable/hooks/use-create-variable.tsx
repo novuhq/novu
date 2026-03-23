@@ -71,7 +71,7 @@ function createPayloadVariableSuccessToast() {
  * Hook that is triggered when a new liquid variable is being created in control-input, email-body or preview-context-panel
  */
 export const useCreateVariable = () => {
-  const { workflow, step } = useWorkflow();
+  const { workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
 
   const {

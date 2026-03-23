@@ -4,12 +4,12 @@ import {
   PatchSubscriberPreferencesDto,
   SubscriberResponseDto,
 } from '@novu/api/models/components';
+import { buildSlug } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ShortIsPrefixEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
-import { buildSlug } from '../../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,

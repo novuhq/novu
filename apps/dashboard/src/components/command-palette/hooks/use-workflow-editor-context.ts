@@ -11,9 +11,9 @@ export function useWorkflowEditorContext() {
     !location.pathname.includes('/workflows/templates');
 
   const workflowSlug = params.workflowSlug;
-
+  const isNewWorkflowSlug = workflowSlug === 'new';
   const { workflow: fetchedWorkflow, isPending: fetchIsPending } = useFetchWorkflow({
-    workflowSlug: isOnWorkflowEditorPath ? workflowSlug : undefined,
+    workflowSlug: isOnWorkflowEditorPath && !isNewWorkflowSlug ? workflowSlug : undefined,
   });
 
   const workflow = fetchedWorkflow;

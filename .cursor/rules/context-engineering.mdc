@@ -1,0 +1,424 @@
+---
+description: Context engineering guidelines for system prompts and tool descriptions
+globs:
+  - "**/tools/**/*.ts"
+  - "**/prompts/**/*.ts"
+  - "**/*.prompt.ts"
+alwaysApply: false
+---
+
+# Context Engineering Guidelines
+
+A comprehensive guide to optimizing system prompts and tool descriptions for LLM agents, synthesized from 30+ sources published since July 2025.
+
+**Key Sources**:
+- [Anthropic: Effective Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) (Sep 2025)
+- [Mei et al.: A Survey of Context Engineering for LLMs](https://huggingface.co/papers/2507.13334) (Jul 2025)
+- [Jiang & Nam: Empirical Study on Developer-Provided Context](https://arxiv.org/abs/2512.18925) (Dec 2025)
+- [Gartner: Context Engineering as Strategic Priority](https://www.gartner.com/en/articles/context-engineering) (Oct 2025)
+- [InfoWorld: Four Important Lessons About Context Engineering](https://www.infoworld.com/article/4085355/four-important-lessons-about-context-engineering.html) (Jan 2026)
+
+---
+
+## Part 1: Foundational Principles
+
+### The Core Thesis
+
+Context engineering is a formal discipline that systematically optimizes information payloads for LLMs, extending far beyond prompt design to encompass the entire informational environment (Mei et al., 2025).
+
+**Goal**: Find the *smallest possible set of high-signal tokens* that maximize desired outcomes (Anthropic, 2025).
+
+### Why Context is Finite
+
+LLMs have an "attention budget" constrained by transformer architecture:
+- **n² pairwise relationships** for n tokens causes performance degradation at scale
+- **Context rot**: As token count increases, recall accuracy decreases
+- Models develop attention patterns from training where shorter sequences are more common
+
+Every token competes for attention. Tokens that don't directly contribute to the task dilute the model's focus.
+
+### The Context Engineering Taxonomy (Mei et al., 2025)
+
+Context engineering decomposes into three foundational components:
+
+| Component | Description | Examples |
+|-----------|-------------|----------|
+| **Context Retrieval & Generation** | Designing and assembling input payloads | Prompt construction, RAG, tool outputs |
+| **Context Processing** | Transforming context into optimized representations | Summarization, chunking, compression |
+| **Context Management** | Storing, persisting, and refreshing context | Memory systems, caching, compaction |
+
+These integrate into system implementations: RAG, memory systems, tool-integrated reasoning, and multi-agent architectures.
+
+### Developer-Provided Context Taxonomy (Jiang & Nam, 2025)
+
+An empirical study of 401 open-source repositories with cursor rules identified five essential context categories:
+
+1. **Conventions**: Coding style, naming patterns, formatting rules
+2. **Guidelines**: Decision-making heuristics, workflow patterns
+3. **Project Information**: Architecture, dependencies, domain knowledge
+4. **LLM Directives**: Behavioral instructions, output format requirements
+5. **Examples**: Canonical code samples, input/output demonstrations
+
+**Insight**: Structure developer-provided context into these categories for maximum clarity.
+
+---
+
+## Part 2: Core Design Principles
+
+### 1. Right Altitude (Anthropic, 2025)
+
+Balance between two failure modes:
+
+| Too Low (Brittle) | Sweet Spot | Too High (Vague) |
+|-------------------|------------|------------------|
+| Hardcoded if-else logic | Specific heuristics | Generic guidance |
+| Prescriptive step lists | Clear decision criteria | Assumes shared context |
+| Breaks on edge cases | Model applies intelligently | Inconsistent behavior |
+
+**Calibration test**: Would a senior engineer need this level of detail, or would they infer it?
+
+### 2. Single Source of Truth
+
+Never explain the same concept twice. Duplication wastes tokens and can cause inconsistency.
+
+| Information Type | Location | Content |
+|------------------|----------|---------|
+| Tool mechanics | Tool description | HOW: parameters, output format, technical behavior |
+| Tool workflow | System prompt | WHEN: decision points, sequencing, priorities |
+| Domain knowledge | technicalResources | Reference material, examples, API docs |
+
+### 3. Examples Over Rules
+
+Examples are "pictures worth a thousand words" (Anthropic, 2025). They:
+- Demonstrate multiple concepts simultaneously
+- Are more robust to edge cases than explicit rules
+- Reduce token count vs. equivalent rule sets
+
+**Pattern**: One comprehensive example > three paragraphs of explanation.
+
+### 4. Trust Model Capability
+
+Modern LLMs are highly capable. Avoid:
+- Explaining obvious steps ("analyze the error, understand it, fix it")
+- Defensive repetition ("MUST", "NEVER", "CRITICAL", "IMPORTANT")
+- Over-specifying standard programming practices
+
+**Test**: If a competent developer wouldn't need this instruction, the model probably doesn't either.
+
+---
+
+## Part 3: Optimization Techniques
+
+### Semantic Chunking (InfoWorld, 2026)
+
+Divide content into meaningful segments by topic or section, not arbitrary token limits.
+
+**Impact**: 60-80% context size reduction with 20-30% quality improvement.
+
+```
+Before: Dump entire codebase into context
+After:  Retrieve only files relevant to current task via embeddings
+```
+
+### Progressive Context Loading
+
+Start with minimal context, add incrementally as needed:
+
+1. **Initial**: Role + current task + immediate context
+2. **On-demand**: Retrieve additional context when required
+3. **Escalation**: Pull in more detail only for complex cases
+
+**Impact**: Reduces latency and cost while maintaining quality for complex queries.
+
+### Context Compression Techniques
+
+| Technique | Description | Use Case |
+|-----------|-------------|----------|
+| Entity extraction | Keep named entities, discard prose | Reference data |
+| Summarization | Condense verbose content | Long documents |
+| Schema enforcement | Structured output format | API responses |
+| Tool result clearing | Remove old tool outputs | Long conversations |
+
+### Smart Caching (Anthropic, 2025)
+
+Structure context so stable portions can be cached:
+
+```
+[CACHED: System prompt + tool definitions + static examples]
+[DYNAMIC: Conversation history + current task + retrieved context]
+```
+
+Prompt caching can reduce input costs significantly for the cached portion.
+
+### Sliding Context Windows
+
+For conversation systems, maintain windows of different sizes:
+
+| Window | Size | Content |
+|--------|------|---------|
+| Immediate | Last 2-3 turns | Full detail |
+| Recent | Last 10 turns | Summarized |
+| Historical | Session start | Key decisions only |
+
+### Dynamic Tool Discovery (Elastic, 2025)
+
+Address "prompt bloat" from extensive tool descriptions:
+
+**Problem**: Loading 50+ tool descriptions into every request wastes context.
+
+**Solution**: Semantic search over tool metadata at runtime:
+1. Embed tool descriptions into vector store
+2. Match user intent to relevant tools
+3. Load only necessary tool definitions
+
+**Impact**: Reduces static prompt size, improves tool selection accuracy.
+
+---
+
+## Part 4: System Prompt Guidelines
+
+### Structure with Clear Sections
+
+Use XML tags or Markdown headers for distinct sections:
+
+```xml
+<role_definition>One paragraph max</role_definition>
+<workflow>Tool sequence and decision points</workflow>
+<constraints>Hard rules and boundaries</constraints>
+```
+
+**Why**: Helps model parse and reference specific guidance; enables selective attention.
+
+### Tool References, Not Re-explanations
+
+**Anti-pattern** (wasteful):
+```
+## Filesystem Tools
+- **read_file**: Read contents of any file. Supports line offset and limit for large files...
+- **edit_file**: Edit existing files with precise changes. Use // ... existing code ... syntax...
+```
+
+**Better** (efficient):
+```
+## Workflow
+1. Read existing files before editing
+2. Use edit_file for modifications, create_file for new files  
+3. Verify with get_kernel_result after changes
+```
+
+The tool descriptions already explain HOW; the prompt only needs WHEN.
+
+### Condense Prescriptive Lists
+
+**Anti-pattern** (30 tokens):
+```
+When you receive error feedback:
+1. Analyze the specific error messages carefully
+2. Preserve successful geometry from previous iterations
+3. Apply incremental fixes rather than rewriting
+4. Test edge cases that might have caused failures
+5. Validate parameter bounds are within reasonable ranges
+```
+
+**Better** (15 tokens):
+```
+On errors: analyze root cause, fix incrementally, preserve working code.
+```
+
+### Merge Duplicated Concepts
+
+If a concept appears multiple times, consolidate to ONE authoritative location:
+
+| Symptom | Solution |
+|---------|----------|
+| Same workflow in 3 sections | Keep in `<workflow>`, reference elsewhere |
+| Tool explained in prompt AND description | Remove from prompt |
+| Example repeated with variations | Keep one canonical example |
+
+### Terse Professional Language
+
+| Verbose | Terse |
+|---------|-------|
+| "This transparency ensures users understand your thought process and can provide input if needed." | Remove entirely |
+| "CRITICAL: You MUST always do X. Never forget X." | "Do X after Y." |
+| "The goal is to achieve a final model that not only executes without errors but also..." | "Goal: working model matching requirements." |
+
+---
+
+## Part 5: Tool Description Guidelines
+
+### Optimal Structure
+
+```typescript
+description: `[One-line purpose statement]
+
+[When to use - 2-3 bullet points max]
+
+[Key behavior/output - only if non-obvious]`
+```
+
+**Target**: Under 150 words per tool.
+
+### Let Schemas Self-Document
+
+Parameter documentation belongs in Zod schemas, not description text:
+
+```typescript
+// Good: Schema describes parameters
+const schema = z.object({
+  pattern: z.string().describe('Glob pattern (e.g., "**/*.ts")'),
+  directory: z.string().optional().describe('Directory to search'),
+});
+
+// Tool description focuses on purpose/behavior
+description: `Find files matching a glob pattern. Use for locating files by type or name.`
+```
+
+### Separation of Concerns
+
+| Tool Description | System Prompt |
+|------------------|---------------|
+| What the tool does | When to use it in workflow |
+| Parameter semantics | Sequencing with other tools |
+| Output format | Priority and decision criteria |
+| Error conditions | Domain-specific guidance |
+
+---
+
+## Part 6: Advanced Patterns
+
+### Plan-Aware Context Engineering (PAACE, Yuksel 2025)
+
+For long-horizon tasks, optimize context based on upcoming plan:
+
+1. **Next-k-task relevance modeling**: Keep only context relevant to next k steps
+2. **Plan-structure analysis**: Identify dependencies between steps
+3. **Function-preserving compression**: Compress completed step context while preserving outputs
+
+**Impact**: Improves agent correctness while substantially reducing context load.
+
+### Multi-Agent Context Patterns (Haseeb, 2025)
+
+For complex tasks, specialize agents with clean context windows:
+
+```
+Lead Agent: High-level plan, coordinates sub-agents
+├── Intent Clarifier: User requirements → structured spec
+├── Retriever Agent: Semantic search for relevant context
+├── Code Generator: Implementation with focused context
+└── Validator Agent: Testing and verification
+```
+
+Each sub-agent operates with minimal, task-specific context rather than carrying full conversation history.
+
+### Context Compaction (Anthropic, 2025)
+
+When approaching context limits, summarize and reinitialize:
+
+1. Pass full message history to model for summarization
+2. Preserve: architectural decisions, unresolved issues, key outputs
+3. Discard: redundant tool outputs, verbose intermediate steps
+4. Continue with compressed context + recent files
+
+**Lightest touch**: Clear tool call results from old messages (preserve calls, remove results).
+
+### Evolving Contexts (ACE Framework, Zhang 2025)
+
+Treat context as an evolving "playbook" that accumulates strategies:
+
+1. **Generation**: Create initial context from task requirements
+2. **Reflection**: Analyze what worked/failed in executions
+3. **Curation**: Update context with learned patterns
+
+Prevents "context collapse" where repeated patterns degrade into noise.
+
+---
+
+## Part 7: Anti-Patterns
+
+### 1. Redundant Tool Documentation
+❌ Tool description + prompt section + inline mentions all explaining same tool
+✅ Tool description = HOW, prompt = WHEN (reference only)
+
+### 2. Verbose Inline Examples
+❌ Multiple code examples showing similar concepts
+✅ One canonical example OR external `technicalResources` reference
+
+### 3. Prescriptive Step Lists
+❌ "1. Analyze 2. Understand 3. Fix 4. Verify" (obvious sequence)
+✅ "Fix incrementally, verify after changes"
+
+### 4. Defensive Over-explanation
+❌ "IMPORTANT: You MUST always... NEVER forget to... CRITICAL:..."
+✅ State once, trust model capability
+
+### 5. Static Tool Overload
+❌ Loading all 50 tool definitions in every request
+✅ Dynamic tool discovery based on task intent
+
+### 6. Context Hoarding
+❌ Keeping all conversation history indefinitely
+✅ Sliding windows with summarization for older content
+
+---
+
+## Part 8: Audit Checklist
+
+When reviewing prompts or tool descriptions:
+
+| Question | If Yes |
+|----------|--------|
+| Is this explained elsewhere? | Consolidate to single location |
+| Would a senior dev need this? | Remove if obvious |
+| Can this be an example instead? | One example > paragraphs of rules |
+| Is the altitude right? | Adjust brittle ↔ vague balance |
+| Are there prescriptive lists? | Compress to sentences |
+| Is this defensive repetition? | State once, remove emphasis |
+| Does this duplicate tool docs? | Keep in tool description only |
+| Is this stable across requests? | Move to cached portion |
+
+---
+
+## Part 9: Token Budget Guidelines
+
+| Component | Target | Rationale |
+|-----------|--------|-----------|
+| Role definition | <100 tokens | One paragraph establishes persona |
+| Per-tool description | <150 words | Purpose + when + key behavior |
+| Workflow section | <300 tokens | References tools, doesn't re-explain |
+| Error handling | <100 tokens | Trust model capability |
+| Examples | External reference | Use `technicalResources` section |
+| Total static prompt | <3000 tokens | Leaves room for dynamic context |
+
+---
+
+## Appendix A: Research Sources
+
+### Primary Sources (2025-2026)
+
+1. Anthropic (Sep 2025) - Effective Context Engineering for AI Agents
+2. Mei et al. (Jul 2025) - A Survey of Context Engineering for LLMs
+3. Jiang & Nam (Dec 2025) - Empirical Study of Developer-Provided Context
+4. Yuksel (Dec 2025) - PAACE: Plan-Aware Automated Context Engineering
+5. Xu et al. (Dec 2025) - Agentic File System Abstraction
+6. Zhang & Wang (Dec 2025) - Monadic Context Engineering
+7. Haseeb (Aug 2025) - Multi-Agent LLM Code Assistants
+8. Rivasseau (Dec 2025) - Invasive Context Engineering for LLM Control
+9. Hua et al. (Oct 2025) - Historical Landscape of Context Engineering
+10. Wang et al. (Apr 2025) - Context Utilization in Code Intelligence
+11. Zhang et al. (Oct 2025) - ACE: Evolving Contexts for Self-Improving LLMs
+12. Gartner (Oct 2025) - Context Engineering as Strategic Priority
+13. Forbes (Sep 2025) - Cost-Effective Context Engineering Strategies
+14. InfoWorld (Jan 2026) - Four Important Lessons About Context Engineering
+15. Elastic (2025) - Dynamic Tool Discovery and Context Engineering
+16. ResearchGate - Comprehensive Contextual Management for LLMs
+17. Emergent Mind - Context Engineering Foundations and Techniques
+18. Frontiers in AI (Nov 2025) - Context-Aware RAG in Engineering Research
+
+### Key Repositories
+
+- [Awesome-Context-Engineering](https://github.com/Meirtz/Awesome-Context-Engineering) - Curated papers and frameworks
+- AIGNE Framework - Open-source context engineering pipeline
+---
+alwaysApply: true
+---

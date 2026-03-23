@@ -18,6 +18,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
   RequirePermissions,
+  SubscriberResponseDto,
   UserSession,
 } from '@novu/application-generic';
 import {
@@ -56,7 +57,6 @@ import { UpdateNotificationAction } from '../inbox/usecases/update-notification-
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { SubscriberResponseDto } from '../subscribers/dtos';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -359,11 +359,11 @@ export class SubscribersController {
   ): Promise<GetPreferencesResponseDto[]> {
     const preferences = body.preferences.map((preference) => ({
       workflowId: preference.workflowId,
-      email: preference.channels.email,
-      sms: preference.channels.sms,
-      in_app: preference.channels.in_app,
-      push: preference.channels.push,
-      chat: preference.channels.chat,
+      email: preference.channels?.email,
+      sms: preference.channels?.sms,
+      in_app: preference.channels?.in_app,
+      push: preference.channels?.push,
+      chat: preference.channels?.chat,
     }));
 
     return await this.bulkUpdatePreferencesUsecase.execute(

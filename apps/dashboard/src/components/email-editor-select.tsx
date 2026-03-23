@@ -35,14 +35,15 @@ export const EmailEditorSelect = ({
               defaultValue="editor"
               value={field.value ?? 'block'}
               onValueChange={(value) => {
-                // allow freely switching if the body is empty string or maily json
                 if (!body || body === '' || isEmptyMailyJson(body)) {
                   field.onChange(value);
+
                   return;
                 }
 
                 if (value === 'html') {
                   setIsSwitchingToHtml(true);
+
                   return;
                 }
 
@@ -64,12 +65,12 @@ export const EmailEditorSelect = ({
             <ConfirmationModal
               open={isSwitchingToHtml}
               onOpenChange={setIsSwitchingToHtml}
-              onConfirm={async () => {
+              onConfirm={() => {
                 field.onChange('html');
                 saveForm?.({ editorType: 'html', onSuccess: () => setIsSwitchingToHtml(false) });
               }}
               title="Are you sure?"
-              description="You’re switching to code editor. Once you do, you can’t go back to blocks unless you reset the template. Ready to get your hands dirty?"
+              description="You're switching to code editor. Once you do, you can't go back to blocks unless you reset the template. Ready to get your hands dirty?"
               confirmButtonText="Proceed"
               isLoading={isLoading}
             />
@@ -81,7 +82,7 @@ export const EmailEditorSelect = ({
                 saveForm?.({ editorType: 'block', onSuccess: () => setIsSwitchingToBlock(false) });
               }}
               title="Are you sure?"
-              description="Switching to visual mode will reset your code. You’ll start fresh with blocks. Sure you want to do that?"
+              description="Switching to visual mode will reset your code. You'll start fresh with blocks. Sure you want to do that?"
               confirmButtonText="Proceed"
               isLoading={isLoading}
             />

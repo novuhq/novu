@@ -5,11 +5,13 @@ import { ParsedData, PreviewSubscriberData } from '../types/preview-context.type
 export function parseJsonValue(value: string): ParsedData {
   try {
     const parsed = JSON.parse(value || '{}');
+
     return {
       payload: parsed.payload || {},
       subscriber: parsed.subscriber || {},
       steps: parsed.steps || {},
       context: parsed.context || {},
+      env: parsed.env || {},
     };
   } catch {
     return {
@@ -17,6 +19,7 @@ export function parseJsonValue(value: string): ParsedData {
       subscriber: {},
       steps: {},
       context: {},
+      env: {},
     };
   }
 }

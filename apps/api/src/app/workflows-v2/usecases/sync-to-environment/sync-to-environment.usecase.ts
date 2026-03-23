@@ -1,14 +1,31 @@
-import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
 import {
+  FeatureFlagsService,
+  GetWorkflowCommand,
+  GetWorkflowUseCase,
+  Instrument,
+  InstrumentUsecase,
+  SendWebhookMessage,
+  StepResponseDto,
+  UpsertStepDataCommand,
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+  WorkflowPreferencesDto,
+  WorkflowResponseDto,
+} from '@novu/application-generic';
+import {
+  BaseRepository,
   ClientSession,
+  EnvironmentRepository,
   LocalizationResourceEnum,
   NotificationTemplateRepository,
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
 import {
+  FeatureFlagsKeysEnum,
   PreferencesTypeEnum,
   ResourceOriginEnum,
   StepTypeEnum,
@@ -20,15 +37,11 @@ import {
   LayoutSyncToEnvironmentCommand,
   LayoutSyncToEnvironmentUseCase,
 } from '../../../layouts-v2/usecases/sync-to-environment';
-import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
-import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
-import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import {
-  UpsertStepDataCommand,
-  UpsertWorkflowCommand,
-  UpsertWorkflowDataCommand,
-  UpsertWorkflowUseCase,
-} from '../upsert-workflow';
+  SyncStepResolverToEnvironmentCommand,
+  SyncStepResolverToEnvironmentUsecase,
+} from '../../../step-resolvers/usecases/sync-step-resolver-to-environment';
+import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
@@ -50,8 +63,11 @@ export class SyncToEnvironmentUseCase {
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
+    private syncStepResolverToEnvironmentUsecase: SyncStepResolverToEnvironmentUsecase,
+    private featureFlagsService: FeatureFlagsService,
     private moduleRef: ModuleRef,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private environmentRepository: EnvironmentRepository,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -61,6 +77,8 @@ export class SyncToEnvironmentUseCase {
     if (command.user.environmentId === command.targetEnvironmentId) {
       throw new BadRequestException('Cannot sync workflow to the same environment');
     }
+
+    await this.validateTargetEnvironment(command.targetEnvironmentId, command.user.organizationId);
 
     const sourceWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
@@ -116,6 +134,8 @@ export class SyncToEnvironmentUseCase {
       })
     );
 
+    await this.syncStepResolver(command, sourceWorkflow, upsertedWorkflow);
+
     await this.publishTranslationGroup(sourceWorkflow.workflowId, LocalizationResourceEnum.WORKFLOW, command);
 
     // Update the source workflow with publish information
@@ -140,6 +160,52 @@ export class SyncToEnvironmentUseCase {
     }
 
     return upsertedWorkflow;
+  }
+
+  private async validateTargetEnvironment(targetEnvironmentId: string, organizationId: string): Promise<void> {
+    if (!BaseRepository.isInternalId(targetEnvironmentId)) {
+      throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
+    }
+
+    const environment = await this.environmentRepository.findByIdAndOrganization(targetEnvironmentId, organizationId);
+
+    if (!environment) {
+      throw new NotFoundException(`Environment ${targetEnvironmentId} not found`);
+    }
+  }
+
+  @Instrument()
+  private async syncStepResolver(
+    command: SyncToEnvironmentCommand,
+    sourceWorkflow: WorkflowResponseDto,
+    upsertedWorkflow: WorkflowResponseDto
+  ): Promise<void> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.user.organizationId },
+    });
+
+    if (!isEnabled) return;
+
+    await this.syncStepResolverToEnvironmentUsecase.execute(
+      SyncStepResolverToEnvironmentCommand.create({
+        user: command.user,
+        targetEnvironmentId: command.targetEnvironmentId,
+        session: command.session,
+        sourceSteps: sourceWorkflow.steps.map((step) => ({
+          stepId: step.stepId,
+          stepType: step.type,
+          stepResolverHash: step.stepResolverHash,
+          controlSchema: (step.controls.dataSchema as Record<string, unknown>) ?? null,
+        })),
+        targetSteps: upsertedWorkflow.steps.map((step) => ({
+          stepId: step.stepId,
+          stepResolverHash: step.stepResolverHash,
+          templateId: step._id,
+        })),
+      })
+    );
   }
 
   private async publishTranslationGroup(

@@ -34,4 +34,9 @@ export const QueryKeys = Object.freeze({
   fetchContexts: 'fetchContexts',
   fetchContext: 'fetchContext',
   fetchSubscriberSubscriptions: 'fetchSubscriberSubscriptions',
+  fetchChat: 'fetchChat',
+  fetchEnvironmentVariables: 'fetchEnvironmentVariables',
+  fetchEnvironmentVariable: 'fetchEnvironmentVariable',
+  fetchEnvironmentVariableUsage: 'fetchEnvironmentVariableUsage',
+  stepResolversCount: 'stepResolversCount',
 });

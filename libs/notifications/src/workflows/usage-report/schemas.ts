@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
 export const controlValueSchema = z.object({
-  subject: z.string().default('Your Monthly Novu Usage Report'),
-  previewText: z.string().default('Your monthly Novu usage report'),
+  subject: z.string().default('Your Novu Usage Report for {orgName} - {month} {year}'),
+  previewText: z.string().default('Your Monthly Novu usage report'),
 });
 
 export const payloadSchema = z.object({
+  organizationName: z.string(),
   dateRangeFrom: z.string().datetime(),
   dateRangeTo: z.string().datetime().optional(),
   messagesSent: z.number(),
@@ -15,7 +16,6 @@ export const payloadSchema = z.object({
   usersReachedChange: z.number(),
   usersReachedUp: z.boolean(),
   workflowRuns: z.number(),
-  successRate: z.number(),
   userInteractions: z.number(),
   interactionRate: z.number(),
   topProviders: z.array(

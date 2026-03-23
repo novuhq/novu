@@ -86,6 +86,30 @@ const novu = new Novu({
 
 You can provide custom socket configuration options using the `socketOptions` parameter. These options will be merged with the default socket configuration when initializing the WebSocket connection.
 
+### Socket Type
+
+By default, the socket type is determined automatically based on the `socketUrl`. You can explicitly set the socket type using the `socketType` option:
+
+- `'cloud'` — uses PartySocket (default for Novu Cloud URLs)
+- `'self-hosted'` — uses socket.io (default for custom/self-hosted URLs)
+
+This is useful when proxying Novu Cloud through your own domain, where the URL no longer matches a known Novu Cloud URL but PartySocket is still required, or conversely when you need socket.io behavior with a custom URL.
+
+```ts
+const novu = new Novu({
+  applicationIdentifier: 'YOUR_NOVU_APPLICATION_IDENTIFIER',
+  subscriber: 'YOUR_INTERNAL_SUBSCRIBER_ID',
+  socketUrl: 'wss://your-proxy.example.com/novu-socket',
+  socketOptions: {
+    socketType: 'cloud',
+  },
+});
+```
+
+### Custom socket.io Options
+
+When using socket.io (`socketType: 'self-hosted'` or a non-Cloud URL), you can pass any socket.io-client options:
+
 ```ts
 const novu = new Novu({
   applicationIdentifier: 'YOUR_NOVU_APPLICATION_IDENTIFIER',

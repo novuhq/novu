@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EnforceEnvOrOrgIds, PreferencesDBModel, PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import {
+  EnforceEnvOrOrgIds,
+  ErrorCodesEnum,
+  PreferencesDBModel,
+  PreferencesEntity,
+  PreferencesRepository,
+} from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
   PreferencesTypeEnum,
@@ -60,13 +66,6 @@ export class UpsertPreferences {
   public async upsertSubscriberGlobalPreferences(command: UpsertSubscriberGlobalPreferencesCommand) {
     await this.deleteSubscriberWorkflowChannelPreferences(command);
 
-    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-      organization: { _id: command.organizationId },
-    });
-
     return this.upsert({
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
@@ -74,7 +73,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
-      schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
+      schedule: command.schedule,
       contextKeys: command.contextKeys,
     });
   }
@@ -194,7 +193,8 @@ export class UpsertPreferences {
         contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
       });
     } catch (error) {
-      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+      const isDuplicateKeyError =
+        error && typeof error === 'object' && 'code' in error && error.code === ErrorCodesEnum.DUPLICATE_KEY;
 
       if (isDuplicateKeyError) {
         const existingPreference = await this.getPreference(command);

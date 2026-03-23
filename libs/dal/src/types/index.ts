@@ -1,4 +1,5 @@
-export { ClientSession } from 'mongoose';
+export type { FilterQuery } from 'mongoose';
+export { ClientSession, Schema, Types } from 'mongoose';
 export * from './auth';
 export * from './enforce';
 export * from './error.enum';

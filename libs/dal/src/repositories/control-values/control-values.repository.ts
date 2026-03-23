@@ -1,4 +1,5 @@
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { ClientSession } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
@@ -14,16 +15,6 @@ export interface DeleteManyValuesQuery {
   level?: ControlValuesLevelEnum;
 }
 
-export interface FindControlValuesQuery {
-  _environmentId: string;
-  _organizationId: string;
-  _workflowId?: string;
-  _stepId?: string;
-  _layoutId?: string;
-  level?: ControlValuesLevelEnum;
-  [key: string]: unknown;
-}
-
 export class ControlValuesRepository extends BaseRepository<
   ControlValuesModel,
   ControlValuesEntity,
@@ -36,15 +27,12 @@ export class ControlValuesRepository extends BaseRepository<
     this.controlValues = ControlValues;
   }
 
-  async deleteMany(query: DeleteManyValuesQuery) {
-    return await super.delete(query);
-  }
-
-  async findMany(query: FindControlValuesQuery): Promise<ControlValuesEntity[]> {
-    return await super.find(query);
-  }
-
-  async findFirst(query: FindControlValuesQuery): Promise<ControlValuesEntity | null> {
-    return await this.findOne(query);
+  async deleteMany(
+    query: DeleteManyValuesQuery,
+    options: {
+      session?: ClientSession | null;
+    } = {}
+  ) {
+    return await super.delete(query, options);
   }
 }

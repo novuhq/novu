@@ -13,7 +13,7 @@ export const useFetchWorkflow = ({ workflowSlug }: { workflowSlug?: string }) =>
     [workflowSlug]
   );
 
-  const { data, isPending, error } = useQuery<WorkflowResponseDto>({
+  const { data, isPending, error, refetch } = useQuery<WorkflowResponseDto>({
     queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflowId],
     queryFn: () => getWorkflow({ environment: currentEnvironment!, workflowSlug }),
     enabled: !!currentEnvironment?._id && !!workflowSlug,
@@ -23,5 +23,6 @@ export const useFetchWorkflow = ({ workflowSlug }: { workflowSlug?: string }) =>
     workflow: data,
     isPending,
     error,
+    refetch,
   };
 };

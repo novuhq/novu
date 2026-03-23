@@ -4,6 +4,7 @@ import {
   RiBracesFill,
   RiChat1Line,
   RiCodeLine,
+  RiGlobalLine,
   RiMailLine,
   RiNotificationLine,
   RiPlayCircleLine,
@@ -23,6 +24,7 @@ export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.DELAY]: RiTimeLine,
   [StepTypeEnum.THROTTLE]: RiSpeedFill,
   [StepTypeEnum.CUSTOM]: RiBracesFill,
+  [StepTypeEnum.HTTP_REQUEST]: RiGlobalLine,
   [StepTypeEnum.TRIGGER]: RiPlayCircleLine,
 } as const;
 
@@ -35,4 +37,4 @@ export const ACCORDION_STYLES = {
   jsonViewer: 'border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid',
 } as const;
 
-export const DEFAULT_ACCORDION_VALUES = ['payload', 'subscriber', 'step-results', 'context'];
+export const DEFAULT_ACCORDION_VALUES = ['payload', 'subscriber', 'step-results', 'context', 'env'];

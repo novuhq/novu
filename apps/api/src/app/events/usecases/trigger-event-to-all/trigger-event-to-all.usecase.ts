@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestBroadcastCommand } from '../parse-event-request';
 import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
 
@@ -8,7 +8,7 @@ export class TriggerEventToAll {
   constructor(private parseEventRequest: ParseEventRequest) {}
 
   public async execute(command: TriggerEventToAllCommand) {
-    await this.parseEventRequest.execute(
+    const result = await this.parseEventRequest.execute(
       ParseEventRequestBroadcastCommand.create({
         userId: command.userId,
         environmentId: command.environmentId,
@@ -28,9 +28,10 @@ export class TriggerEventToAll {
     );
 
     return {
-      acknowledged: true,
-      status: TriggerEventStatusEnum.PROCESSED,
-      transactionId: command.transactionId,
+      acknowledged: result.acknowledged,
+      status: result.status,
+      transactionId: result.transactionId,
+      activityFeedLink: result.activityFeedLink,
     };
   }
 }

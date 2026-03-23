@@ -1,8 +1,10 @@
 import { type Controls } from '@novu/shared';
 import { RJSFSchema } from '@rjsf/utils';
+import isEqual from 'lodash.isequal';
 import { motion } from 'motion/react';
-import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
+
 import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -31,9 +33,22 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { className, dataSchema, origin } = props;
   const [isRestoreDefaultModalOpen, setIsRestoreDefaultModalOpen] = useState(false);
   const { step, workflow, update } = useWorkflow();
-  const [isOverridden, setIsOverridden] = useState(() => Object.keys(step?.controls.values ?? {}).length > 0);
-  const { reset } = useFormContext();
   const { saveForm } = useSaveForm();
+  const { control, reset } = useFormContext();
+  const watchedValues = useWatch({ control });
+
+  const dataSchemaDefaults = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
+  const dbValues = step?.controls.values ?? {};
+  const initialIsOverridden = Object.keys(dataSchemaDefaults).some((k) => {
+    const dbVal = dbValues[k];
+    return dbVal !== undefined && !isEqual(dbVal, dataSchemaDefaults[k]);
+  });
+
+  const [isOverridden, setIsOverridden] = useState(initialIsOverridden);
+
+  useEffect(() => {
+    setIsOverridden(initialIsOverridden);
+  }, [initialIsOverridden]);
 
   if (origin !== ResourceOriginEnum.EXTERNAL || Object.keys(dataSchema?.properties ?? {}).length === 0) {
     return (
@@ -94,16 +109,15 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   }
 
   return (
-    <SidebarContent size="md" className="p-0">
+    <SidebarContent size="md">
       <ConfirmationModal
         open={isRestoreDefaultModalOpen}
         onOpenChange={setIsRestoreDefaultModalOpen}
         onConfirm={async () => {
           if (!workflow || !step) return;
 
-          const defaultValues = buildDefaultValuesOfDataSchema(step.controls.dataSchema ?? {});
-          reset(defaultValues);
           update(updateStepInWorkflow(workflow, step.stepId, { controlValues: null }));
+          reset(dataSchemaDefaults, { keepErrors: true });
           setIsRestoreDefaultModalOpen(false);
           setIsOverridden(false);
         }}
@@ -158,7 +172,12 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
                 !isOverridden && 'opacity-60 pointer-events-none'
               )}
             >
-              <JsonForm schema={(dataSchema as RJSFSchema) || {}} disabled={!isOverridden} />
+              <JsonForm
+                key={String(isOverridden)}
+                schema={(dataSchema as RJSFSchema) || {}}
+                formData={isOverridden ? watchedValues : dataSchemaDefaults}
+                disabled={!isOverridden}
+              />
             </div>
           </AccordionContent>
         </AccordionItem>

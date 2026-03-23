@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
   FeatureFlagsService,
   getSubscriberProcessWorkerOptions,
   IProcessSubscriberDataDto,
   PinoLogger,
+  SqsService,
   Store,
   SubscriberProcessWorkerService,
   storage,
@@ -18,6 +19,15 @@ import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-
 const nr = require('newrelic');
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
+const SUBSCRIBER_ID_VALIDATION_PREFIX = 'subscriberId under property to';
+
+function isSubscriberIdValidationError(e: unknown): boolean {
+  return (
+    e instanceof BadRequestException &&
+    typeof e.message === 'string' &&
+    e.message.startsWith(SUBSCRIBER_ID_VALIDATION_PREFIX)
+  );
+}
 
 @Injectable()
 export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
@@ -25,9 +35,11 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
     private subscriberJobBoundUsecase: SubscriberJobBound,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
+    sqsService: SqsService,
+    logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
@@ -66,8 +78,12 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
                 .execute(data)
                 .then(resolve)
                 .catch((e) => {
-                  Logger.error(e, 'unexpected error', 'SubscriberProcessWorkerService - getWorkerProcessor');
-                  nr.noticeError(e);
+                  if (isSubscriberIdValidationError(e)) {
+                    Logger.debug(e, e.message, 'SubscriberProcessWorkerService - getWorkerProcessor');
+                  } else {
+                    Logger.error(e, 'unexpected error', 'SubscriberProcessWorkerService - getWorkerProcessor');
+                    nr.noticeError(e);
+                  }
                   reject(e);
                 })
 

@@ -10,6 +10,7 @@ import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
 import { generateUUID } from '@/utils/uuid';
+import { AddStepMenuSelection } from './add-step-menu';
 import { AddNodeEdgeType } from './edges';
 import {
   createAddNode,
@@ -210,27 +211,29 @@ export const useCanvasNodesEdges = ({
   );
 
   const addNode = useCallback(
-    (insertIndex: number, type: keyof typeof NODE_TYPE_TO_STEP_TYPE) => {
+    (insertIndex: number, selection: AddStepMenuSelection | keyof typeof NODE_TYPE_TO_STEP_TYPE) => {
       const workflow = dataRef.current.workflow;
       if (!workflow) return;
+
+      const selectionType = typeof selection === 'string' ? NODE_TYPE_TO_STEP_TYPE[selection] : selection.type;
 
       const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
       const addDefaultLayout = !!defaultLayout;
       const defaultLayoutId = defaultLayout?.layoutId;
 
-      const stepType = NODE_TYPE_TO_STEP_TYPE[type];
-      const newStep = createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity);
+      const newStep = createStep(selectionType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity);
+      const nodeName = `${STEP_TYPE_LABELS[selectionType]} Step`;
       const newNode = createNode({
         x: 0,
         y: 0,
-        name: `${STEP_TYPE_LABELS[stepType]} Step`,
-        content: mapStepToNodeContent(stepType, newStep.controlValues ?? {}, ResourceOriginEnum.NOVU_CLOUD),
+        name: nodeName,
+        content: mapStepToNodeContent(selectionType, newStep.controlValues ?? {}, ResourceOriginEnum.NOVU_CLOUD),
         index: insertIndex,
         stepSlug: '_st_',
         error: '',
         controlValues: newStep.controlValues ?? {},
         isPending: true,
-        type: stepType,
+        type: selectionType,
       });
 
       insertStep(insertIndex, newNode, newStep, {
@@ -593,9 +596,9 @@ export const useCanvasNodesEdges = ({
       }
 
       if (goto === 'editor') {
-        const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(
-          NODE_TYPE_TO_STEP_TYPE[potentialNode?.type as keyof typeof NODE_TYPE_TO_STEP_TYPE]
-        );
+        const stepType = NODE_TYPE_TO_STEP_TYPE[potentialNode?.type as keyof typeof NODE_TYPE_TO_STEP_TYPE];
+        const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType);
+
         if (isTemplateConfigurable) {
           navigate(
             buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {

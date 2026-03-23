@@ -1,9 +1,9 @@
 import type { IEnvironment } from '@novu/shared';
-import { RiArrowRightSLine, RiCheckboxCircleFill, RiCloseFill } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckboxCircleFill } from 'react-icons/ri';
 import type { IEnvironmentPublishResponse } from '@/api/environments';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Button } from '../primitives/button';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
 import { VisuallyHidden } from '../primitives/visually-hidden';
 
 type PublishSuccessModalProps = {
@@ -59,15 +59,8 @@ export function PublishSuccessModal({
             {buildSummaryText()} have been published to {environment?.name}.
           </DialogDescription>
         </VisuallyHidden>
-        <div className="flex items-start justify-between">
-          <div className="bg-success-lighter rounded-full p-2">
-            <RiCheckboxCircleFill className="text-success-base size-6" />
-          </div>
-          <DialogClose asChild>
-            <button className="opacity-70 transition-opacity hover:opacity-100">
-              <RiCloseFill className="size-4" />
-            </button>
-          </DialogClose>
+        <div className="bg-success-lighter w-fit rounded-full p-2">
+          <RiCheckboxCircleFill className="text-success-base size-6" />
         </div>
 
         <div className="space-y-2">

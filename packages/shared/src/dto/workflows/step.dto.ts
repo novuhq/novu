@@ -1,5 +1,4 @@
-import { ResourceOriginEnum, Slug, StepTypeEnum } from '../../types';
-import { RuntimeIssue } from '../../utils/issues';
+import { ResourceOriginEnum, RuntimeIssue, Slug, StepTypeEnum } from '@novu/shared';
 import type { JSONSchemaDto } from './json-schema-dto';
 
 export type StepResponseDto = {
@@ -15,6 +14,7 @@ export type StepResponseDto = {
   workflowId: string;
   workflowDatabaseId: string;
   issues?: StepIssuesDto;
+  stepResolverHash?: string;
 };
 
 export type StepUpdateDto = StepCreateDto & {
@@ -56,6 +56,7 @@ export enum UiSchemaGroupEnum {
   PUSH = 'PUSH',
   SKIP = 'SKIP',
   LAYOUT = 'LAYOUT',
+  HTTP_REQUEST = 'HTTP_REQUEST',
 }
 
 export enum UiComponentEnum {
@@ -97,6 +98,14 @@ export enum UiComponentEnum {
   QUERY_EDITOR = 'QUERY_EDITOR',
   DATA = 'DATA',
   LAYOUT_EMAIL = 'LAYOUT_EMAIL',
+  DESTINATION_METHOD = 'DESTINATION_METHOD',
+  DESTINATION_URL = 'DESTINATION_URL',
+  DESTINATION_HEADERS = 'DESTINATION_HEADERS',
+  DESTINATION_BODY = 'DESTINATION_BODY',
+  DESTINATION_RESPONSE_BODY_SCHEMA = 'DESTINATION_RESPONSE_BODY_SCHEMA',
+  DESTINATION_ENFORCE_SCHEMA_VALIDATION = 'DESTINATION_ENFORCE_SCHEMA_VALIDATION',
+  DESTINATION_CONTINUE_ON_FAILURE = 'DESTINATION_CONTINUE_ON_FAILURE',
+  DESTINATION_TIMEOUT = 'DESTINATION_TIMEOUT',
 }
 
 export class UiSchemaProperty {

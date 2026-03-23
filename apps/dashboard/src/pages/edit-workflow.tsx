@@ -1,4 +1,4 @@
-import { useLocation, useMatch } from 'react-router-dom';
+import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
@@ -28,13 +28,15 @@ function renderActivityLayout() {
   );
 }
 
-function renderTraditionalLayout() {
+function renderTraditionalLayout({ isNewWorkflowSlug }: { isNewWorkflowSlug: boolean }) {
   return (
     <div className="flex h-full flex-1 flex-nowrap">
       <WorkflowTabs />
-      <aside className="text-foreground-950 [&_textarea]:text-neutral-600'; flex h-full w-[350px] max-w-[350px] flex-col border-l [&_input]:text-xs [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-xs">
-        <AnimatedOutlet />
-      </aside>
+      {!isNewWorkflowSlug && (
+        <aside className="text-foreground-950 [&_textarea]:text-neutral-600'; flex h-full w-[350px] max-w-[350px] flex-col border-l [&_input]:text-xs [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-xs">
+          <AnimatedOutlet />
+        </aside>
+      )}
     </div>
   );
 }
@@ -42,6 +44,8 @@ function renderTraditionalLayout() {
 export const EditWorkflowPage = () => {
   const location = useLocation();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
+  const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
+  const isNewWorkflowSlug = workflowSlug === 'new';
 
   // Check if current route is a full-page route
   const isFullPageRoute = FULL_PAGE_ROUTES.some((route) => {
@@ -61,7 +65,7 @@ export const EditWorkflowPage = () => {
       return renderActivityLayout();
     }
 
-    return renderTraditionalLayout();
+    return renderTraditionalLayout({ isNewWorkflowSlug });
   }
 
   return (

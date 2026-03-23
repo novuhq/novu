@@ -6,6 +6,7 @@ import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import type http from 'http';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from '../auth.service';
+import { addNewRelicTraceAttributes } from './newrelic.util';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -47,14 +48,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
     }
 
+    addNewRelicTraceAttributes(session);
+
     return session;
   }
 
   @Instrument()
   resolveEnvironmentId(req: http.IncomingMessage, session: UserSessionData) {
-    const environmentIdFromHeader =
-      (req.headers[HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()] as string) || '';
+    const environmentIdHeader = req.headers[HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()];
 
-    return environmentIdFromHeader;
+    const environmentIdFromHeader = Array.isArray(environmentIdHeader) ? environmentIdHeader[0] : environmentIdHeader;
+
+    return environmentIdFromHeader || session.environmentId || '';
   }
 }

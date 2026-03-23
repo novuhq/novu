@@ -4,7 +4,6 @@ import {
   IEnvironment,
   ResourceOriginEnum,
   StepResponseDto,
-  StepTypeEnum,
   StepUpdateDto,
   WorkflowResponseDto,
 } from '@novu/shared';
@@ -13,8 +12,6 @@ import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } 
 import { useForm } from 'react-hook-form';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiEdit2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -43,6 +40,8 @@ import {
 import { DelayControlValues } from '@/components/workflow-editor/steps/delay/delay-control-values';
 import { DigestControlValues } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-control-values';
 import { ConfigureEmailStepPreview } from '@/components/workflow-editor/steps/email/configure-email-step-preview';
+import { ConfigureHttpRequestStepPreview } from '@/components/workflow-editor/steps/http-request/configure-http-request-step-preview';
+import { ContinueOnFailure } from '@/components/workflow-editor/steps/http-request/continue-on-failure';
 import { ConfigureInAppStepPreview } from '@/components/workflow-editor/steps/in-app/configure-in-app-step-preview';
 import { ConfigurePushStepPreview } from '@/components/workflow-editor/steps/push/configure-push-step-preview';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
@@ -54,6 +53,7 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { getControlsDefaultValues } from '@/utils/default-values';
+import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
@@ -66,6 +66,7 @@ const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.E
   [StepTypeEnum.CHAT]: () => null,
   [StepTypeEnum.PUSH]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
+  [StepTypeEnum.HTTP_REQUEST]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
 };
 
@@ -76,6 +77,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.CHAT]: ConfigureChatStepPreview,
   [StepTypeEnum.PUSH]: ConfigurePushStepPreview,
   [StepTypeEnum.CUSTOM]: null,
+  [StepTypeEnum.HTTP_REQUEST]: null,
   [StepTypeEnum.TRIGGER]: null,
   [StepTypeEnum.DIGEST]: null,
   [StepTypeEnum.DELAY]: null,
@@ -102,6 +104,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
     StepTypeEnum.THROTTLE,
+    StepTypeEnum.HTTP_REQUEST,
   ];
 
   const isSupportedStep = supportedStepTypes.includes(step.type);
@@ -137,6 +140,15 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         };
       }
 
+      if ((step.type as string) === StepTypeEnum.HTTP_REQUEST) {
+        return {
+          controlValues: {
+            ...(step.controls.values ?? {}),
+            continueOnFailure: (step.controls.values?.continueOnFailure as boolean) ?? false,
+          },
+        };
+      }
+
       return {};
     };
   }, [isInlineConfigurableStep]);
@@ -156,7 +168,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     resolver: standardSchemaResolver(stepSchema),
   });
 
-  const { onBlur, saveForm } = useFormAutosave({
+  const { onBlur, saveForm, saveFormDebounced } = useFormAutosave({
     previousData: defaultValues,
     form,
     isReadOnly,
@@ -181,26 +193,24 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   );
 
   const setControlValuesIssues = useCallback(() => {
-    const stepIssues = flattenIssues(step.issues?.controls);
-    const currentErrors = form.formState.errors;
+    // @ts-expect-error - isNew is set by useUpdateWorkflow, see that file for details
+    if (step.isNew) {
+      form.clearErrors();
+      return;
+    }
 
-    // Clear errors that are not in stepIssues
-    Object.values(currentErrors).forEach((controlValues) => {
-      Object.keys(controlValues).forEach((key) => {
-        if (!stepIssues[`${key}`]) {
-          // @ts-expect-error - dynamic key
-          form.clearErrors(`controlValues.${key}`);
-        }
-      });
-    });
+    const issues = flattenIssues(step.issues?.controls);
+    const formValues = form.getValues() as unknown as Record<string, Record<string, unknown>>;
+    const controlValues = formValues.controlValues ?? {};
+    const formErrors = form.formState.errors as Record<string, Record<string, unknown>>;
+    const setError = form.setError as (key: string, error: { message: string }) => void;
+    const clearError = form.clearErrors as (key: string) => void;
 
-    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
-    if (!step.isNew) {
-      // Set new errors from stepIssues
-      Object.entries(stepIssues).forEach(([key, value]) => {
-        // @ts-expect-error - dynamic key
-        form.setError(`controlValues.${key}`, { message: value });
-      });
+    for (const key of new Set([...Object.keys(formErrors.controlValues ?? {}), ...Object.keys(issues)])) {
+      const hasValue = controlValues[key] != null && controlValues[key] !== '';
+
+      if (issues[key] && !hasValue) setError(`controlValues.${key}`, { message: issues[key] });
+      else clearError(`controlValues.${key}`);
     }
   }, [form, step]);
 
@@ -210,8 +220,10 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
   const Preview = STEP_TYPE_TO_PREVIEW[step.type];
   const InlineControlValues = STEP_TYPE_TO_INLINE_CONTROL_VALUES[step.type];
+  const httpRequestControlValues =
+    step.type === StepTypeEnum.HTTP_REQUEST ? (step.controls.values as Record<string, unknown>) : null;
 
-  const value = useMemo(() => ({ saveForm }), [saveForm]);
+  const value = useMemo(() => ({ saveForm, saveFormDebounced }), [saveForm, saveFormDebounced]);
 
   return (
     <>
@@ -302,6 +314,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 <Separator />
 
                 {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
+
+                {step.type === StepTypeEnum.HTTP_REQUEST && (
+                  <SidebarContent>
+                    <ContinueOnFailure />
+                  </SidebarContent>
+                )}
               </SaveFormContext.Provider>
             </FormRoot>
           </Form>
@@ -316,7 +334,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                     className="flex w-full justify-start gap-1.5 text-xs font-medium"
                   >
                     <RiEdit2Line className="h-4 w-4 text-neutral-600" />
-                    Edit {STEP_TYPE_LABELS[step.type]} Step content{' '}
+                    {step.type === StepTypeEnum.HTTP_REQUEST
+                      ? 'Edit API request'
+                      : `Edit ${STEP_TYPE_LABELS[step.type]} Step content`}
                     <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
                   </Button>
                 </Link>
@@ -340,14 +360,24 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                   <Separator />
                 </>
               ) : (
-                Preview && (
-                  <>
-                    <SidebarContent>
-                      <Preview />
-                    </SidebarContent>
-                    <Separator />
-                  </>
-                )
+                <>
+                  {Preview && (
+                    <>
+                      <SidebarContent>
+                        <Preview />
+                      </SidebarContent>
+                      <Separator />
+                    </>
+                  )}
+                  {step.type === StepTypeEnum.HTTP_REQUEST && httpRequestControlValues && (
+                    <>
+                      <SidebarContent>
+                        <ConfigureHttpRequestStepPreview controlValues={httpRequestControlValues} />
+                      </SidebarContent>
+                      <Separator />
+                    </>
+                  )}
+                </>
               )}
             </>
           )}

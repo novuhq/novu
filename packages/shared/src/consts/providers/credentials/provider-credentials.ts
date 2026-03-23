@@ -142,7 +142,7 @@ export const nodemailerConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Secure,
     displayName: 'Secure',
-    type: 'boolean',
+    type: 'switch',
     required: false,
   },
   {
