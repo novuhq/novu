@@ -3,6 +3,7 @@ import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  EnvironmentVariableRepository,
   LayoutRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
@@ -38,6 +39,7 @@ export const SYSTEM_LIMITS = {
   DEFER_DURATION_MS: 180 * DAY_IN_MS,
   ENVIRONMENTS: 10,
   SUBSCRIBER_DEVICE_TOKENS: 100,
+  ENVIRONMENT_VARIABLES: 10,
   STEP_RESOLVERS: 1000,
 } as const;
 
@@ -57,6 +59,7 @@ export class ResourceValidatorService {
     private environmentRepository: EnvironmentRepository,
     private featureFlagService: FeatureFlagsService,
     private layoutRepository: LayoutRepository,
+    private environmentVariableRepository: EnvironmentVariableRepository,
     private messageTemplateRepository: MessageTemplateRepository
   ) {}
 
@@ -296,6 +299,23 @@ export class ResourceValidatorService {
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
       false
     );
+  }
+
+  async validateEnvironmentVariablesLimit(organizationId: string): Promise<void> {
+    const variablesCount = await this.environmentVariableRepository.count({ _organizationId: organizationId });
+    const maxEnvironmentVariablesLimit = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER,
+      defaultValue: SYSTEM_LIMITS.ENVIRONMENT_VARIABLES,
+      organization: { _id: organizationId },
+    });
+
+    if (variablesCount >= maxEnvironmentVariablesLimit) {
+      throw new BadRequestException({
+        message: `Environment variables limit exceeded. Maximum allowed variables is ${maxEnvironmentVariablesLimit}.`,
+        currentCount: variablesCount,
+        limit: maxEnvironmentVariablesLimit,
+      });
+    }
   }
 
   private async getEnvironment(environmentId: string) {

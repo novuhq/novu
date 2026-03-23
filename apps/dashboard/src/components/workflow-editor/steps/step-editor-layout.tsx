@@ -9,7 +9,7 @@ import { LocaleSelect } from '@/components/primitives/locale-select';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
-import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http-request/http-request-test-context';
+import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http-request/http-request-test-provider';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';

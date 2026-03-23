@@ -59,6 +59,7 @@ export function mergePreviewContextData(persistedData: ParsedData, serverDefault
     subscriber: mergeObjectData(persistedData.subscriber, serverDefaults.subscriber),
     steps: mergeObjectData(persistedData.steps, serverDefaults.steps),
     context: mergeObjectData(persistedData.context, serverDefaults.context),
+    env: mergeObjectData(persistedData.env, serverDefaults.env),
   };
 }
 

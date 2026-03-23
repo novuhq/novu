@@ -32,8 +32,9 @@ import { Form, FormRoot } from '../primitives/form/form';
 import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
 import { usePersistedPreviewContext } from '../workflow-editor/steps/hooks/use-persisted-preview-context';
+import { EnvData } from '../workflow-editor/steps/types/preview-context.types';
 
-type ParsedData = { subscriber: Partial<SubscriberDto>; context: ContextPayload };
+type ParsedData = { subscriber: Partial<SubscriberDto>; context: ContextPayload; env: EnvData };
 
 function parseJsonValue(value: string): ParsedData {
   try {
@@ -41,11 +42,13 @@ function parseJsonValue(value: string): ParsedData {
     return {
       subscriber: parsed.subscriber || {},
       context: parsed.context || {},
+      env: parsed.env || {},
     };
   } catch {
     return {
       subscriber: {},
       context: {},
+      env: {},
     };
   }
 }
@@ -125,7 +128,8 @@ export type LayoutContextType = {
   isUpdating: boolean;
   updateLayout: (data: UpdateLayoutParameters) => Promise<LayoutResponseDto>;
   updatePreviewSection: ((section: 'subscriber', data: Partial<SubscriberDto>) => void) &
-    ((section: 'context', data: ContextPayload) => void);
+    ((section: 'context', data: ContextPayload) => void) &
+    ((section: 'env', data: EnvData) => void);
   issues: { controls: Record<string, RuntimeIssue[]> };
   selectedLocale: string;
   onLocaleChange: (locale: string) => void;
@@ -281,14 +285,15 @@ export const LayoutEditorProvider = ({
 
   const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection } = usePreviewContext<
     ParsedData,
-    { subscriber: string | null; context: string | null }
+    { subscriber: string | null; context: string | null; env: string | null }
   >({
     value: previewContextValue,
     onChange: setPreviewContextValueSafe,
-    defaultAccordionValue: ['subscriber', 'context'],
+    defaultAccordionValue: ['subscriber', 'context', 'env'],
     defaultErrors: {
       subscriber: null,
       context: null,
+      env: null,
     },
     parseJsonValue,
     onDataPersist: (data: ParsedData) => {

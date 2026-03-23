@@ -203,11 +203,10 @@ export class ConstructFrameworkWorkflow {
     if (!stepTemplate) {
       this.logger.warn(`Step template not found for step ${staticStep.stepId}, skipping step`, LOG_CONTEXT);
 
-      return step.custom(
-        staticStep.stepId || staticStep._templateId,
-        async () => ({}),
-        { controlSchema: PERMISSIVE_EMPTY_SCHEMA, skip: () => true }
-      );
+      return step.custom(staticStep.stepId || staticStep._templateId, async () => ({}), {
+        controlSchema: PERMISSIVE_EMPTY_SCHEMA,
+        skip: () => true,
+      });
     }
 
     const stepType = stepTemplate.type;

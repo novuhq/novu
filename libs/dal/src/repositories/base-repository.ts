@@ -14,6 +14,13 @@ import {
 } from 'mongoose';
 import { DalException } from '../shared';
 
+/**
+ * @deprecated Use BaseRepositoryV2 instead. BaseRepositoryV2 enforces required
+ * field selection via a mandatory `select` parameter and provides auto-inferred
+ * return types based on the selected fields (Pick<Entity, Keys>).
+ * All existing repositories remain on this class; only new repositories should
+ * extend BaseRepositoryV2.
+ */
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   public _model: Model<T_DBModel>;
 

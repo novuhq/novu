@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EnforceEnvOrOrgIds, PreferencesDBModel, PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import {
+  EnforceEnvOrOrgIds,
+  ErrorCodesEnum,
+  PreferencesDBModel,
+  PreferencesEntity,
+  PreferencesRepository,
+} from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
   PreferencesTypeEnum,
@@ -187,7 +193,8 @@ export class UpsertPreferences {
         contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
       });
     } catch (error) {
-      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+      const isDuplicateKeyError =
+        error && typeof error === 'object' && 'code' in error && error.code === ErrorCodesEnum.DUPLICATE_KEY;
 
       if (isDuplicateKeyError) {
         const existingPreference = await this.getPreference(command);

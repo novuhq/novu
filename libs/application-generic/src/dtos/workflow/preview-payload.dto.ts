@@ -37,4 +37,13 @@ export class PreviewPayloadDto {
   @IsOptional()
   @IsValidContextPayload()
   context?: ContextPayload;
+
+  @ApiPropertyOptional({
+    description: 'Environment variables data',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  env?: Record<string, unknown>;
 }

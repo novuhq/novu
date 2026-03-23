@@ -52,7 +52,7 @@ const DEFAULT_SUGGESTIONS: SuggestionItem[] = [
     icon: RiRouteFill,
     title: 'Understand Novu',
     description: 'Learn what Novu is and how it simplifies notification delivery across channels.',
-    url: docsUrl('platform/what-is-novu'),
+    url: docsUrl('/platform/what-is-novu'),
   },
   {
     icon: RiCodeLine,

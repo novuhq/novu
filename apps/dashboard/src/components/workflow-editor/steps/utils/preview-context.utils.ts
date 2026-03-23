@@ -11,6 +11,7 @@ export function parseJsonValue(value: string): ParsedData {
       subscriber: parsed.subscriber || {},
       steps: parsed.steps || {},
       context: parsed.context || {},
+      env: parsed.env || {},
     };
   } catch {
     return {
@@ -18,6 +19,7 @@ export function parseJsonValue(value: string): ParsedData {
       subscriber: {},
       steps: {},
       context: {},
+      env: {},
     };
   }
 }
