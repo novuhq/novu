@@ -256,7 +256,10 @@
       "cross-spawn@<6.0.6": "^6.0.6",
       "path-to-regexp@>=0.2.0 <1.9.0": "^1.9.0",
       "path-to-regexp@>=3.0.0 <3.3.0": "^3.3.0",
-      "path-to-regexp@>=6.0.0 <6.3.0": "^6.3.0"
+      "path-to-regexp@>=6.0.0 <6.3.0": "^6.3.0",
+      "svelte@<5.53.5": "5.53.5",
+      "langsmith@>=0.3.0 <0.4.6": "^0.4.6",
+      "devalue@<5.6.4": "5.6.4"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
