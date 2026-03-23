@@ -37,9 +37,17 @@ export type WorkflowRunStepsDetailsDto = {
    */
   stepRunId: string;
   /**
+   * Step identifier
+   */
+  stepId: string;
+  /**
    * Step type
    */
   stepType: string;
+  /**
+   * Provider identifier
+   */
+  providerId?: string | undefined;
   /**
    * Step status
    */
@@ -55,7 +63,9 @@ export const WorkflowRunStepsDetailsDto$inboundSchema: z.ZodType<WorkflowRunStep
   z.object({
     id: z.string(),
     stepRunId: z.string(),
+    stepId: z.string(),
     stepType: z.string(),
+    providerId: z.string().optional(),
     status: WorkflowRunStepsDetailsDtoStatus$inboundSchema,
   });
 

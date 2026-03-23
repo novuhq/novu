@@ -44,6 +44,10 @@ export type TriggerEventResponseDto = {
    * The returned transaction ID of the trigger
    */
   transactionId?: string | undefined;
+  /**
+   * Link to the activity feed for this trigger event
+   */
+  activityFeedLink?: string | undefined;
   jobData?: JobData | undefined;
 };
 
@@ -69,6 +73,7 @@ export const TriggerEventResponseDto$inboundSchema: z.ZodType<TriggerEventRespon
     status: TriggerEventResponseDtoStatus$inboundSchema,
     error: z.array(z.string()).optional(),
     transactionId: z.string().optional(),
+    activityFeedLink: z.string().optional(),
     jobData: z.lazy(() => JobData$inboundSchema).optional(),
   });
 

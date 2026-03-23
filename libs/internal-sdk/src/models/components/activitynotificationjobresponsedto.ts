@@ -33,6 +33,7 @@ export const ActivityNotificationJobResponseDtoType = {
   Delay: 'delay',
   Throttle: 'throttle',
   Custom: 'custom',
+  HttpRequest: 'http_request',
 } as const;
 /**
  * Type of the job
