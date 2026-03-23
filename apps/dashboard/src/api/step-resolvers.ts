@@ -1,5 +1,15 @@
 import { IEnvironment, StepTypeEnum } from '@novu/shared';
-import { delV2 } from './api.client';
+import { delV2, getV2 } from './api.client';
+
+export const getStepResolversCount = async ({
+  environment,
+}: {
+  environment: IEnvironment;
+}): Promise<{ count: number }> => {
+  const { data } = await getV2<{ data: { count: number } }>('/step-resolvers/count', { environment });
+
+  return data;
+};
 
 export const disconnectStepResolver = async ({
   environment,

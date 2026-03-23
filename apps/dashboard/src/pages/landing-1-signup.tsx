@@ -84,7 +84,11 @@ function LeftPanel() {
 
       <div className="relative z-10 flex flex-col gap-6 lg:gap-10">
         <a href="https://novu.co" target="_blank" rel="noopener noreferrer">
-          <img src="/images/novu-logo-color.svg" className="h-[36px] w-[116px] object-contain object-left lg:h-[44px] lg:w-[142px]" alt="Novu" />
+          <img
+            src="/images/novu-logo-color.svg"
+            className="h-[36px] w-[116px] object-contain object-left lg:h-[44px] lg:w-[142px]"
+            alt="Novu"
+          />
         </a>
 
         <div className="flex flex-col gap-4 lg:mt-10 lg:gap-7">
@@ -144,7 +148,11 @@ function FeatureBullet({
 function Testimonial() {
   return (
     <div className="relative flex flex-col gap-5">
-      <img src="/images/auth/quote-mark.svg" className="absolute -top-[30px] left-0 h-[45px] w-[65px] lg:-top-[35px] lg:left-[-16px] lg:h-[55px] lg:w-[80px]" alt="" />
+      <img
+        src="/images/auth/quote-mark.svg"
+        className="absolute -top-[30px] left-0 h-[45px] w-[65px] lg:-top-[35px] lg:left-[-16px] lg:h-[55px] lg:w-[80px]"
+        alt=""
+      />
       <p className="relative z-10 text-lg leading-normal tracking-[-0.36px] text-white lg:text-xl lg:tracking-[-0.4px]">
         Novu&apos;s UI lets us handle configuration without reinventing the wheel, that&apos;s a huge savings on
         development and maintenance.

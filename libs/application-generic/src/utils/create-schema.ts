@@ -111,6 +111,22 @@ export const buildWorkflowSchema = () => {
   };
 };
 
+export const buildEnvSchema = (envVars: Record<string, string>): JSONSchemaDto => {
+  const properties: Record<string, JSONSchemaDto> = {};
+
+  for (const key of Object.keys(envVars)) {
+    properties[key] = { type: JsonSchemaTypeEnum.STRING, description: `Environment variable: ${key}` };
+  }
+
+  return {
+    type: JsonSchemaTypeEnum.OBJECT,
+    description: 'Environment variables accessible in workflow templates',
+    properties,
+    required: [],
+    additionalProperties: false,
+  };
+};
+
 export const buildContextSchema = (context?: unknown) => {
   const baseSchema = {
     type: JsonSchemaTypeEnum.OBJECT,

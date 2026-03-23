@@ -6,6 +6,7 @@ export * from './entities/actor';
 export * from './entities/apiKeys';
 export * from './entities/change';
 export * from './entities/environment';
+export * from './entities/environment-variable';
 export * from './entities/execution-details';
 export * from './entities/feed/feed.interface';
 export * from './entities/integration';

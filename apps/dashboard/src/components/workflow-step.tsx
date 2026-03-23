@@ -24,10 +24,16 @@ const stepRenderData: Record<StepTypeEnum, { variant: ComponentProps<typeof Step
 
 export const WorkflowStep = (props: WorkflowStepProps) => {
   const { step, ...rest } = props;
-  const Icon = stepRenderData[step].icon;
+  const renderData = stepRenderData[step];
+
+  if (!renderData) {
+    return null;
+  }
+
+  const Icon = renderData.icon;
 
   return (
-    <Step variant={stepRenderData[step].variant} {...rest}>
+    <Step variant={renderData.variant} {...rest}>
       <Icon />
     </Step>
   );

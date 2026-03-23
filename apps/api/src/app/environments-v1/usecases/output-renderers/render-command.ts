@@ -14,6 +14,7 @@ export class FullPayloadForRender {
   payload: Record<string, unknown>;
   context?: ContextResolved;
   steps: Record<string, unknown>; // step.stepId.unknown
+  env?: Record<string, string>;
   // this variable is used to pass the layout content to the renderer
   [LAYOUT_CONTENT_VARIABLE]?: string;
 }

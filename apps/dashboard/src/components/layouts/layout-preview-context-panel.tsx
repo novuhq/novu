@@ -1,13 +1,16 @@
-import { FeatureFlagsKeysEnum, ISubscriberResponseDto } from '@novu/shared';
-import { useCallback } from 'react';
+import { ISubscriberResponseDto } from '@novu/shared';
+import { JSONSchema7 } from 'json-schema';
+import { useCallback, useMemo } from 'react';
 
 import { Accordion } from '@/components/primitives/accordion';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useDynamicPreviewSchema } from '@/hooks/use-dynamic-preview-schema';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { PreviewContextSection } from '../preview-context-section';
+import { PreviewEnvSection } from '../preview-env-section';
 import { PreviewSubscriberSection } from '../preview-subscriber-section';
+import { ACCORDION_STYLES } from '../workflow-editor/steps/constants/preview-context.constants';
 import { createSubscriberData } from '../workflow-editor/steps/utils/preview-context.utils';
 import { useLayoutEditor } from './layout-editor-provider';
 
@@ -27,6 +30,8 @@ export const LayoutPreviewContextPanel = () => {
   const { data: organizationSettings } = useFetchOrganizationSettings();
   const { currentEnvironment } = useEnvironment();
   const createDefaultSubscriberData = useDefaultSubscriberData(undefined, organizationSettings?.data?.defaultLocale);
+  const previewSchema = useDynamicPreviewSchema(true);
+  const envSchema = useMemo(() => previewSchema?.properties?.env as JSONSchema7 | undefined, [previewSchema]);
 
   const handleSubscriberSelection = useCallback(
     (subscriber: ISubscriberResponseDto) => {
@@ -69,7 +74,10 @@ export const LayoutPreviewContextPanel = () => {
         context={previewContext.context}
         onUpdate={updatePreviewSection}
         onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+        className={ACCORDION_STYLES.item}
       />
+
+      <PreviewEnvSection schema={envSchema} env={previewContext.env ?? {}} onUpdate={updatePreviewSection} />
     </Accordion>
   );
 };

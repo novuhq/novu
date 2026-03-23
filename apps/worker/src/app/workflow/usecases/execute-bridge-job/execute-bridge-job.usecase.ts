@@ -13,10 +13,12 @@ import {
   Instrument,
   InstrumentUsecase,
   PinoLogger,
+  resolveEnvironmentVariables,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
   EnvironmentRepository,
+  EnvironmentVariableRepository,
   JobEntity,
   JobRepository,
   MessageRepository,
@@ -51,6 +53,7 @@ export class ExecuteBridgeJob {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageRepository: MessageRepository,
     private environmentRepository: EnvironmentRepository,
+    private environmentVariableRepository: EnvironmentVariableRepository,
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
@@ -117,12 +120,19 @@ export class ExecuteBridgeJob {
     const variablesStores = controlValuesResult.controls;
     const { stepResolverHash } = controlValuesResult;
 
+    const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
+      command.organizationId,
+      command.environmentId
+    );
+    const envVars = resolveEnvironmentVariables(rawEnvVars);
+
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
       payload: payload ?? {},
       controls: variablesStores ?? {},
       state,
       subscriber: subscriber ?? {},
       context: context ?? {},
+      env: envVars,
     };
 
     const workflowId = isStateful
@@ -169,7 +179,7 @@ export class ExecuteBridgeJob {
     const stepResolverHash = command.job.step.template?.stepResolverHash ?? undefined;
 
     let sanitizedControls: Record<string, unknown> = {};
-    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && rawControls) {
+    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && rawControls && !stepResolverHash) {
       const result = dashboardSanitizeControlValues(this.logger, rawControls, command.job?.step?.template?.type);
       sanitizedControls = result ?? {};
     } else {

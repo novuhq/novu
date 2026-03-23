@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
   BuildStepIssuesUsecase,
@@ -8,6 +9,7 @@ import {
   InstrumentUsecase,
   isChannelStepType,
   PinoLogger,
+  ResourceValidatorService,
   reconcileStepResolverControlValues,
 } from '@novu/application-generic';
 import {
@@ -17,9 +19,8 @@ import {
   MessageTemplateRepository,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
-import { createHash } from 'crypto';
-import { DeployStepResolverResponseDto } from '../../dtos';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum, UNLIMITED_VALUE } from '@novu/shared';
+import { DeployStepResolverResponseDto, SkippedStepDto } from '../../dtos';
 import { CloudflareStepResolverDeployService } from '../../services/cloudflare-step-resolver-deploy.service';
 import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver-worker-id';
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
@@ -50,6 +51,7 @@ export class DeployStepResolverUsecase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private featureFlagsService: FeatureFlagsService,
+    private resourceValidatorService: ResourceValidatorService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -71,6 +73,25 @@ export class DeployStepResolverUsecase {
 
     const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
 
+    const availableSlots = await this.resourceValidatorService.getStepResolversAvailableSlots(
+      command.user.environmentId,
+      command.user.organizationId
+    );
+
+    const redeploySteps = resolvedManifestSteps.filter((s) => s.existingStepResolverHash);
+    const newSteps = resolvedManifestSteps.filter((s) => !s.existingStepResolverHash);
+
+    const stepsToActivate = availableSlots >= UNLIMITED_VALUE ? newSteps : newSteps.slice(0, availableSlots);
+    const skippedNewSteps = availableSlots >= UNLIMITED_VALUE ? [] : newSteps.slice(availableSlots);
+
+    const stepsToProcess = [...redeploySteps, ...stepsToActivate];
+
+    const skippedSteps: SkippedStepDto[] = skippedNewSteps.map((step) => ({
+      workflowId: step.workflowId,
+      stepId: step.stepId,
+      reason: 'Code steps limit reached. Upgrade your plan to deploy more code steps.',
+    }));
+
     const stepResolverHash = this.generateStepResolverHash(command.bundleBuffer);
     const workerId = generateStepResolverWorkerId(command.user.organizationId, stepResolverHash);
 
@@ -78,7 +99,8 @@ export class DeployStepResolverUsecase {
       {
         workerId,
         stepResolverHash,
-        selectedStepsCount: resolvedManifestSteps.length,
+        deployedStepsCount: stepsToProcess.length,
+        skippedStepsCount: skippedSteps.length,
         bundleSizeBytes: command.bundleBuffer.byteLength,
         userId: command.user._id,
         organizationId: command.user.organizationId,
@@ -95,17 +117,18 @@ export class DeployStepResolverUsecase {
     });
 
     await this.controlValuesRepository.withTransaction(async (session) => {
-      await this.writeHashToMessageTemplates(command, resolvedManifestSteps, stepResolverHash, session);
-      await this.upsertControlValues(command, resolvedManifestSteps, session);
-      await this.updateStepControlSchemas(command, resolvedManifestSteps, session);
+      await this.writeHashToMessageTemplates(command, stepsToProcess, stepResolverHash, session);
+      await this.upsertControlValues(command, stepsToProcess, session);
+      await this.updateStepControlSchemas(command, stepsToProcess, session);
     });
 
-    await this.recalculateAndPersistStepIssues(command, resolvedManifestSteps);
+    await this.recalculateAndPersistStepIssues(command, stepsToProcess);
 
     return {
       stepResolverHash,
       workerId,
-      selectedStepsCount: resolvedManifestSteps.length,
+      deployedStepsCount: stepsToProcess.length,
+      skippedSteps,
       deployedAt: new Date().toISOString(),
     };
   }
@@ -172,7 +195,7 @@ export class DeployStepResolverUsecase {
 
     const existingControlValuesResults = await Promise.all(
       partialSteps.map((step) =>
-        this.controlValuesRepository.findFirst({
+        this.controlValuesRepository.findOne({
           _environmentId: command.user.environmentId,
           _organizationId: command.user.organizationId,
           _workflowId: step.workflowInternalId,

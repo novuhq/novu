@@ -26,6 +26,7 @@ export const useDisconnectStepResolver = (
         queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] }),
         queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] }),
         queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] }),
+        queryClient.invalidateQueries({ queryKey: [QueryKeys.stepResolversCount] }),
       ]);
       options?.onSuccess?.(data, variables, ctx);
     },

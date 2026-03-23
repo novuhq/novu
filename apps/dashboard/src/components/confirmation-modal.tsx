@@ -54,9 +54,9 @@ export const ConfirmationModal = ({
             </DialogClose>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1 overflow-hidden">
             <DialogTitle className="text-md font-medium tracking-normal">{title}</DialogTitle>
-            <DialogDescription className="text-foreground-600">{description}</DialogDescription>
+            <DialogDescription className="text-foreground-600 min-w-0 overflow-hidden">{description}</DialogDescription>
           </div>
 
           {/* <div className="flex justify-end gap-3"> */}

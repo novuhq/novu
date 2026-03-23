@@ -714,6 +714,7 @@ export class Client {
         subscriber: event.subscriber,
         context: event.context,
         steps: buildSteps(event.state),
+        env: event.env ?? {},
       };
 
       const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);

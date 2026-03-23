@@ -5,6 +5,7 @@ import { Toast, ToastIcon } from '@/components/primitives/sonner';
 const DETAILED_ERROR_MESSAGES = [
   'Workflow steps limit exceeded',
   'Workflow limit exceeded',
+  'Code steps limit exceeded',
   'Insufficient permissions',
 ] as const;
 

@@ -7,9 +7,16 @@ import { ExternalLink } from './shared/external-link';
 import { ACCORDION_STYLES } from './workflow-editor/steps/constants/preview-context.constants';
 import { ContextSectionProps } from './workflow-editor/steps/types/preview-context.types';
 
-export function PreviewContextSection({ error, context, schema, onUpdate, onClearPersisted }: ContextSectionProps) {
+export function PreviewContextSection({
+  error,
+  context,
+  schema,
+  onUpdate,
+  onClearPersisted,
+  className,
+}: ContextSectionProps) {
   return (
-    <AccordionItem value="context" className={ACCORDION_STYLES.itemLast}>
+    <AccordionItem value="context" className={className ?? ACCORDION_STYLES.itemLast}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2">

@@ -22,6 +22,7 @@ export enum FeatureNameEnum {
   PLATFORM_SUBSCRIBERS = 'platformSubscribers',
   PLATFORM_MAX_WORKFLOWS = 'platformMaxWorkflows',
   PLATFORM_MAX_LAYOUTS = 'platformMaxLayouts',
+  PLATFORM_MAX_STEP_RESOLVERS = 'platformMaxStepResolvers',
   PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN = 'platformGuiBasedWorkflowManagementBoolean',
   PLATFORM_CODE_BASED_WORKFLOW_MANAGEMENT_BOOLEAN = 'platformCodeBasedWorkflowManagementBoolean',
   PLATFORM_SUBSCRIBER_MANAGEMENT_BOOLEAN = 'platformSubscriberManagementBoolean',
@@ -62,6 +63,9 @@ export enum FeatureNameEnum {
 
   // Webhooks Features
   WEBHOOKS = 'webhooks',
+
+  // Environment Variables Features
+  ENVIRONMENT_VARIABLES = 'environmentVariables',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -235,6 +239,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
   },
+  [FeatureNameEnum.PLATFORM_MAX_STEP_RESOLVERS]: {
+    [ApiServiceLevelEnum.FREE]: { label: '1 code step', value: 1 },
+    [ApiServiceLevelEnum.PRO]: { label: '10 code steps', value: 10 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited code steps', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited code steps', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited code steps', value: UNLIMITED_VALUE },
+  },
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
     [ApiServiceLevelEnum.PRO]: 1,
@@ -276,6 +287,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Translations', value: true },
+  },
+  [FeatureNameEnum.ENVIRONMENT_VARIABLES]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'Environment Variables', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'Environment Variables', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Environment Variables', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Environment Variables', value: true },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Environment Variables', value: true },
   },
   [FeatureNameEnum.PLATFORM_MULTI_ORG_MULTI_TENANCY]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No', value: 0 },
@@ -549,7 +567,11 @@ function getConvertToMs(conversionToMs: boolean | undefined) {
 }
 
 export function getFeatureForTierAsBoolean(featureName: FeatureNameEnum, tier: ApiServiceLevelEnum): boolean {
-  const feature: FeatureValue = novuServiceTiers[featureName][tier];
+  const featureTiers = novuServiceTiers[featureName];
+
+  if (!featureTiers) return false;
+
+  const feature: FeatureValue = featureTiers[tier];
 
   // Handle DetailedPriceListItem
   if (isDetailedPriceListItem(feature)) {

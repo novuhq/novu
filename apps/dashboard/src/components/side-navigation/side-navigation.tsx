@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
   RiBuildingLine,
+  RiCodeSSlashLine,
   RiDatabase2Line,
   RiDiscussLine,
   RiGroup2Line,
@@ -90,6 +91,7 @@ export const SideNavigation = () => {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
+  const isVariablesPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_VARIABLES_PAGE_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -272,6 +274,18 @@ export const SideNavigation = () => {
                   <RiDatabase2Line className="size-4" />
                   <span>Environments</span>
                 </NavigationLink>
+                {isVariablesPageEnabled && (
+                  <NavigationLink
+                    to={
+                      currentEnvironment?.slug
+                        ? buildRoute(ROUTES.VARIABLES, { environmentSlug: currentEnvironment?.slug ?? '' })
+                        : undefined
+                    }
+                  >
+                    <RiCodeSSlashLine className="size-4" />
+                    <span>Variables</span>
+                  </NavigationLink>
+                )}
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink
                     to={

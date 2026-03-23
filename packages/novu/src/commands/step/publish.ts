@@ -680,7 +680,15 @@ async function deployRelease(
   manifestSteps: StepResolverManifestStep[]
 ): Promise<DeploymentResult> {
   return withSpinner('Publishing...', () => client.deployRelease(releaseBundle, manifestSteps), {
-    successMessage: 'Published',
+    successMessage: (result) => {
+      const skippedCount = result.skippedSteps.length;
+
+      if (skippedCount > 0) {
+        return `Published (${skippedCount} ${skippedCount === 1 ? 'step' : 'steps'} skipped — plan limit)`;
+      }
+
+      return 'Published';
+    },
     failMessage: 'Publishing failed',
   });
 }
@@ -721,25 +729,56 @@ function printSuccessSummary(
   startTime: number,
   rootDir: string
 ): void {
-  const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
-  const stepText = steps.length === 1 ? 'step' : 'steps';
-  const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
+  const skippedSet = new Set(deployment.skippedSteps.map((s) => `${s.workflowId}::${s.stepId}`));
+  const hasSkipped = skippedSet.size > 0;
   const elapsed = formatElapsed(Date.now() - startTime);
 
   console.log('');
-  renderTable(
-    steps,
-    [
-      { header: 'Step', getValue: (s) => s.stepId },
-      { header: 'Workflow', getValue: (s) => s.workflowId },
-      { header: 'File', getValue: (s) => path.relative(rootDir, s.filePath) },
-    ],
-    '   '
-  );
-  console.log('');
-  console.log(
-    `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
-  );
+
+  if (hasSkipped) {
+    renderTable(
+      steps,
+      [
+        { header: 'Step', getValue: (s) => s.stepId },
+        { header: 'Workflow', getValue: (s) => s.workflowId },
+        { header: 'File', getValue: (s) => path.relative(rootDir, s.filePath) },
+        {
+          header: 'Status',
+          getValue: (s) => (skippedSet.has(`${s.workflowId}::${s.stepId}`) ? yellow('⚠ skipped') : green('✓ deployed')),
+        },
+      ],
+      '   '
+    );
+    console.log('');
+    const attemptedCount = steps.length;
+    const deployedCount = deployment.deployedStepsCount;
+    const skippedCount = deployment.skippedSteps.length;
+    console.log(
+      `   ${attemptedCount} attempted · ${green(`${deployedCount} deployed`)} · ${yellow(`${skippedCount} skipped`)} (plan limit)${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
+    );
+    console.log('');
+    console.log(
+      `   ${yellow('ℹ')}  Upgrade your plan to deploy more code steps: https://dashboard.novu.co/settings/billing`
+    );
+  } else {
+    const workflowCount = new Set(steps.map((step) => step.workflowId)).size;
+    const stepText = steps.length === 1 ? 'step' : 'steps';
+    const workflowText = workflowCount === 1 ? 'workflow' : 'workflows';
+    renderTable(
+      steps,
+      [
+        { header: 'Step', getValue: (s) => s.stepId },
+        { header: 'Workflow', getValue: (s) => s.workflowId },
+        { header: 'File', getValue: (s) => path.relative(rootDir, s.filePath) },
+      ],
+      '   '
+    );
+    console.log('');
+    console.log(
+      `   ${green(`${steps.length} ${stepText}`)} live in ${workflowCount} ${workflowText}${dim(` · Version ${deployment.stepResolverHash} · ${elapsed}`)}`
+    );
+  }
+
   console.log('');
 }
 

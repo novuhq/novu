@@ -45,6 +45,7 @@ export class PreviewStep {
       stepId: command.stepId,
       workflowId: command.workflowId,
       action: PostActionEnum.PREVIEW,
+      env: command.env ?? {},
     };
   }
 }
