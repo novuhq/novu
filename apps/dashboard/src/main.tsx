@@ -4,7 +4,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import './index.css';
-
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
 import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step';
@@ -88,10 +87,6 @@ const router = createBrowserRouter([
           {
             path: `${ROUTES.SIGN_IN}/*`,
             element: <SignInPage />,
-          },
-          {
-            path: `${ROUTES.SIGN_UP}/*`,
-            element: <SignUpPage />,
           },
           {
             path: ROUTES.SIGNUP_ORGANIZATION_LIST,

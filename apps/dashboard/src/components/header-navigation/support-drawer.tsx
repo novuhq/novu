@@ -176,7 +176,7 @@ function SupportDrawerContent({
               {GETTING_STARTED.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-foreground-600 px-1 text-sm font-medium leading-5 tracking-[-0.084px]">
-                    Getting started
+                    Informações úteis para começar
                   </span>
                   <div className="flex flex-col gap-2">
                     {GETTING_STARTED.map((item) => (

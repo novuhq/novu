@@ -11,3 +11,7 @@ services:
     build:
       dockerfile: "./apps/ws/Dockerfile"
       context: "../../.."
+  dashboard:
+    build:
+      dockerfile: "./apps/dashboard/Dockerfile"
+      context: "../../.."

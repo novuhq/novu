@@ -35,7 +35,7 @@ import { UsageCard } from './usage-card';
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
     <div className="flex flex-col last:mt-auto">
-      {!!label && <span className="text-foreground-400 px-2 py-1 text-sm">{label}</span>}
+      {!!label && <span className="text-white px-2 py-1 text-sm">{label}</span>}
       {children}
     </div>
   );
@@ -99,7 +99,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] shrink-0 flex-col">
+    <aside className="bg-[#113721] relative flex h-full w-[275px] shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -118,8 +118,8 @@ export const SideNavigation = () => {
                       : undefined
                   }
                 >
-                  <RiRouteFill className="size-4" />
-                  <span>Workflows</span>
+                  <RiRouteFill className="size-4 text-gray-300" />
+                  <span className="text-gray-300">Workflows</span>
                 </NavigationLink>
               </Protect>
 
@@ -131,8 +131,8 @@ export const SideNavigation = () => {
                       : undefined
                   }
                 >
-                  <RiLayout5Line className="size-4" />
-                  <span>Email Layouts</span>
+                  <RiLayout5Line className="size-4 text-gray-300" />
+                  <span className="text-gray-300">Email Layouts</span>
                 </NavigationLink>
               </Protect>
 
@@ -143,11 +143,11 @@ export const SideNavigation = () => {
                     : undefined
                 }
               >
-                <RiTranslate2 className="size-4" />
-                <span>Translations</span>
+                <RiTranslate2 className="size-4 text-gray-300" />
+                <span className="text-gray-300">Traduções</span>
               </NavigationLink>
             </NavigationGroup>
-            <NavigationGroup label="Data">
+            <NavigationGroup label="Dados">
               <Protect permission={PermissionsEnum.SUBSCRIBER_READ}>
                 <NavigationLink
                   to={
@@ -156,8 +156,8 @@ export const SideNavigation = () => {
                       : undefined
                   }
                 >
-                  <RiGroup2Line className="size-4" />
-                  <span>Subscribers</span>
+                  <RiGroup2Line className="size-4 text-gray-300" />
+                  <span className='text-gray-300'>Assinaturas</span>
                 </NavigationLink>
               </Protect>
               <Protect permission={PermissionsEnum.TOPIC_READ}>
@@ -168,8 +168,8 @@ export const SideNavigation = () => {
                       : undefined
                   }
                 >
-                  <RiDiscussLine className="size-4" />
-                  <span>Topics</span>
+                  <RiDiscussLine className="size-4 text-gray-300" />
+                  <span className='text-gray-300'>Tópicos</span>
                 </NavigationLink>
               </Protect>
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
@@ -180,8 +180,8 @@ export const SideNavigation = () => {
                       : undefined
                   }
                 >
-                  <RiBuildingLine className="size-4" />
-                  <span>
+                  <RiBuildingLine className="size-4 text-gray-300" />
+                  <span className='text-gray-300'>
                     Contexts{' '}
                     <Badge variant="lighter" className="text-xs">
                       BETA
@@ -191,7 +191,7 @@ export const SideNavigation = () => {
               </Protect>
             </NavigationGroup>
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
-              <NavigationGroup label="Monitor">
+              <NavigationGroup label="Monitoramento">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                   <NavigationLink
                     to={
@@ -202,8 +202,8 @@ export const SideNavigation = () => {
                         : undefined
                     }
                   >
-                    <RiBarChartBoxLine className="size-4" />
-                    <span>Activity Feed</span>
+                    <RiBarChartBoxLine className="size-4 text-gray-300" />
+                    <span className='text-gray-300'>Atividades</span>
                   </NavigationLink>
                 </Protect>
                 {isAnalyticsPageEnabled && (
@@ -215,8 +215,8 @@ export const SideNavigation = () => {
                           : undefined
                       }
                     >
-                      <RiLineChartLine className="size-4" />
-                      <span>Usage</span>
+                      <RiLineChartLine className="size-4 text-gray-300" />
+                      <span className='text-gray-300'>Usage</span>
                     </NavigationLink>
                   </Protect>
                 )}
@@ -230,7 +230,7 @@ export const SideNavigation = () => {
                 has({ permission: PermissionsEnum.WEBHOOK_WRITE })
               }
             >
-              <NavigationGroup label="Developer">
+              <NavigationGroup label="Desenvolvedores">
                 <Protect permission={PermissionsEnum.API_KEY_READ}>
                   <NavigationLink
                     to={
@@ -239,8 +239,8 @@ export const SideNavigation = () => {
                         : undefined
                     }
                   >
-                    <RiKey2Line className="size-4" />
-                    <span>API Keys</span>
+                    <RiKey2Line className="size-4 text-gray-300" />
+                    <span className='text-gray-300'>API Keys</span>
                   </NavigationLink>
                 </Protect>
                 {isWebhooksManagementEnabled && (
@@ -257,8 +257,8 @@ export const SideNavigation = () => {
                           : undefined
                       }
                     >
-                      <RiSignalTowerLine className="size-4" />
-                      <span className="flex items-center gap-2">Webhooks</span>
+                      <RiSignalTowerLine className="size-4 text-gray-300" />
+                      <span className="flex items-center gap-2 text-gray-300">Webhooks</span>
                     </NavigationLink>
                   </Protect>
                 )}
@@ -269,8 +269,8 @@ export const SideNavigation = () => {
                       : undefined
                   }
                 >
-                  <RiDatabase2Line className="size-4" />
-                  <span>Environments</span>
+                  <RiDatabase2Line className="size-4 text-gray-300" />
+                  <span className="text-gray-300">Environments</span>
                 </NavigationLink>
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink
@@ -280,8 +280,8 @@ export const SideNavigation = () => {
                         : undefined
                     }
                   >
-                    <RiStore3Line className="size-4" />
-                    <span>Integration Store</span>
+                    <RiStore3Line className="size-4 text-gray-300" />
+                    <span className="text-gray-300">Integrações</span>
                   </NavigationLink>
                 </Protect>
               </NavigationGroup>
@@ -289,8 +289,8 @@ export const SideNavigation = () => {
             {!IS_SELF_HOSTED || IS_ENTERPRISE ? (
               <NavigationGroup label="Application">
                 <NavigationLink to={ROUTES.SETTINGS}>
-                  <RiSettings4Line className="size-4" />
-                  <span>Settings</span>
+                  <RiSettings4Line className="size-4 text-gray-300" />
+                  <span className="text-gray-300">Settings</span>
                 </NavigationLink>
               </NavigationGroup>
             ) : null}

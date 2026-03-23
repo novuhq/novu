@@ -3,12 +3,12 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cn } from '@/utils/ui';
 
 const linkVariants = cva(
-  `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer`,
+  `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-hidden focus-visible:ring-ring cursor-pointer`,
   {
     variants: {
       variant: {
-        default: 'text-foreground-600/95 transition ease-out duration-300 hover:bg-accent',
-        selected: 'text-foreground-950 bg-neutral-alpha-100 transition ease-out duration-300 hover:bg-accent',
+        default: 'text-foreground-600/95 transition ease-out duration-300 hover:bg-[rgba(255,255,255,0.1)] hover:text-foreground-900',
+        selected: 'text-foreground-950 bg-neutral-alpha-100 transition ease-out duration-300',
         disabled: 'text-foreground-300 cursor-help',
       },
     },

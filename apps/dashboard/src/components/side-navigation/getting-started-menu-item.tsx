@@ -53,8 +53,8 @@ export function HomeMenuItem() {
             : undefined
         }
       >
-        <RiQuestionLine className="size-4" />
-        <span>Getting started</span>
+        <RiQuestionLine className="size-4 text-gray-300" />
+        <span className='text-gray-300'>Informações úteis</span>
 
         {!allStepsCompleted && (
           <Badge className="ml-auto" color="red" size="md" variant="lighter">

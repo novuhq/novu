@@ -34,12 +34,12 @@ export class Login {
         setTimeout(resolve, randomWaitTime);
       }); // will wait randomly for the chosen time to sync response time
 
-      throw new UnauthorizedException('Incorrect email or password provided.');
+      throw new UnauthorizedException('Email ou senha inválidos.');
     }
 
     if (this.isAccountBlocked(user) && user.failedLogin) {
       const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
-      throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
+      throw new UnauthorizedException(`Conta bloqueada, tente novamente após ${blockedMinutesLeft} minutos`);
     }
 
     // TODO: Trigger a password reset flow automatically for existing OAuth users instead of throwing an error
@@ -52,14 +52,14 @@ export class Login {
 
       if (remainingAttempts === 0 && user.failedLogin) {
         const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
-        throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
+        throw new UnauthorizedException(`Conta bloqueada, tente novamente após ${blockedMinutesLeft} minutos`);
       }
 
       if (remainingAttempts < 3) {
-        throw new UnauthorizedException(`Incorrect email or password provided. ${remainingAttempts} Attempts left`);
+        throw new UnauthorizedException(`Email ou senha inválidos. ${remainingAttempts} tentativas restantes.`);
       }
 
-      throw new UnauthorizedException(`Incorrect email or password provided.`);
+      throw new UnauthorizedException(`Email ou senha inválidos.`);
     }
 
     this.analyticsService.upsertUser(user, user._id);

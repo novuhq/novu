@@ -179,10 +179,7 @@ export function OrganizationDropdown() {
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm'
           )}
         >
-          <OrganizationAvatar imageUrl={''} name={currentOrganization.name} showShimmer />
-          <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground-950">
-            {currentOrganization.name}
-          </span>
+          <img src="/logo-transparent.png" className="h-6" alt="logo" />
           <RiArrowDownSLine className="ml-auto size-4 shrink-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus:opacity-100" />
         </button>
       </DropdownMenuTrigger>

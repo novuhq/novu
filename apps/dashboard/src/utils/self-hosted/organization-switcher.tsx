@@ -22,9 +22,6 @@ function OrganizationSwitcherComponent() {
   return (
     <div className="relative flex w-full items-center justify-start gap-2 rounded-lg px-1.5 py-1.5">
       <OrganizationAvatar shining={false} />
-      <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground-950">
-        {organization.name}
-      </span>
     </div>
   );
 }
@@ -33,11 +30,6 @@ export { OrganizationSwitcherComponent as OrganizationDropdown, OrganizationSwit
 
 const OrganizationAvatar = ({ shining = false }: { shining?: boolean }) => {
   return (
-    <Avatar className="relative h-6 w-6 overflow-hidden border-gray-200">
       <NovuLogoBlackBg />
-      {shining && (
-        <div className="absolute inset-0 before:absolute before:-left-full before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[10000ms] before:ease-in-out group-hover:before:left-full"></div>
-      )}
-    </Avatar>
   );
 };

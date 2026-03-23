@@ -1,0 +1,39 @@
+FROM node:22.22.1-alpine3.22 AS builder
+RUN apk add --no-cache g++ make py3-pip bash
+ENV NX_DAEMON=false
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm@10.16.1 pm2 --loglevel notice
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml nx.json tsconfig.json ./
+COPY .npmrc* ./
+COPY apps/worker ./apps/worker
+COPY libs ./libs
+COPY packages ./packages
+COPY enterprise ./enterprise
+
+RUN pnpm install --frozen-lockfile --unsafe-perm
+
+RUN NODE_ENV=production NX_DAEMON=false pnpm build:worker
+
+RUN cp apps/worker/src/dotenvcreate.mjs apps/worker/dist/dotenvcreate.mjs 2>/dev/null || true
+RUN cp apps/worker/src/.example.env apps/worker/dist/.env 2>/dev/null || true
+RUN cp apps/worker/src/.env.development apps/worker/dist/.env.development 2>/dev/null || true
+RUN cp apps/worker/src/.env.production apps/worker/dist/.env.production 2>/dev/null || true
+
+RUN pnpm recursive exec -- rm -rf ./src
+
+FROM node:22.22.1-alpine3.22
+RUN apk add --no-cache curl
+RUN npm install -g pm2 pnpm@10.16.1 --loglevel notice
+
+USER 1000
+WORKDIR /usr/src/app
+
+ENV NEW_RELIC_NO_CONFIG_FILE=true
+
+COPY --chown=1000:1000 --from=builder /usr/src/app .
+
+WORKDIR /usr/src/app/apps/worker
+CMD ["pm2-runtime", "start", "dist/main.js", "-i", "max"]

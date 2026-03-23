@@ -61,11 +61,10 @@ export function SignIn() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md pt-12">
-      <h2 className="mb-6 text-center text-xl font-semibold">Sign In</h2>
+    <div className="mx-auto w-full max-w-md pt-12 bg-[#0a0a0a] p-8 rounded-md shadow-md">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-[#ffb900]">
             Email
           </label>
           <Input
@@ -79,7 +78,7 @@ export function SignIn() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-[#ffb900]">
             Password
           </label>
           <Input
@@ -93,23 +92,9 @@ export function SignIn() {
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
-          {isLoading ? 'Signing In...' : 'Sign In'}
+        <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full bg-[#ffb900] text-black font-semibold">
+          {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
         </Button>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <span
-            role="button"
-            tabIndex={0}
-            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-hidden focus:ring-2"
-            onClick={() => navigate('/auth/sign-up')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') navigate('/auth/sign-up');
-            }}
-          >
-            Sign Up
-          </span>
-        </p>
       </form>
     </div>
   );
