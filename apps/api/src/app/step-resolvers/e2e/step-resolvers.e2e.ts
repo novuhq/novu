@@ -130,7 +130,7 @@ describe('Step Resolvers #novu-v2', () => {
       });
       expect(template?.stepResolverHash).to.equal(body.data.stepResolverHash);
 
-      const controlValues = await controlValuesRepository.findFirst({
+      const controlValues = await controlValuesRepository.findOne({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _stepId: stepInternalId,
@@ -170,7 +170,7 @@ describe('Step Resolvers #novu-v2', () => {
 
       await deployStep({ workflowId, stepId, controlSchema });
 
-      const allControlValues = await controlValuesRepository.findMany({
+      const allControlValues = await controlValuesRepository.find({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _stepId: stepInternalId,
@@ -191,7 +191,7 @@ describe('Step Resolvers #novu-v2', () => {
 
       await deployStep({ workflowId, stepId, controlSchema });
 
-      const allControlValues = await controlValuesRepository.findMany({
+      const allControlValues = await controlValuesRepository.find({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _stepId: stepInternalId,
@@ -207,7 +207,7 @@ describe('Step Resolvers #novu-v2', () => {
       // No controlSchema → FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA (additionalProperties: false)
       await deployStep({ workflowId, stepId });
 
-      const allControlValues = await controlValuesRepository.findMany({
+      const allControlValues = await controlValuesRepository.find({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _stepId: stepInternalId,
@@ -298,7 +298,7 @@ describe('Step Resolvers #novu-v2', () => {
       });
       expect(template?.stepResolverHash).to.not.exist;
 
-      const controlValues = await controlValuesRepository.findFirst({
+      const controlValues = await controlValuesRepository.findOne({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _stepId: stepInternalId,
