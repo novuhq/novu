@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/commo
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { applyDiff } from 'recursive-diff';
+import { applyDiff, rdiffResult } from 'recursive-diff';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 import { PromoteLayoutChange } from '../promote-layout-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
@@ -12,6 +12,12 @@ import { PromoteTranslationGroupChange } from '../promote-translation-group-chan
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { INotificationTemplateChangeService } from '../shared';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
+
+function sanitizeDiff(diff: unknown): rdiffResult[] {
+  if (!Array.isArray(diff)) return [];
+
+  return diff.filter((item) => item && Array.isArray(item.path));
+}
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -36,7 +42,10 @@ export class PromoteChangeToEnvironment {
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {
-        return applyDiff(prev, change.change);
+        const sanitized = sanitizeDiff(change.change);
+        if (sanitized.length === 0) return prev;
+
+        return applyDiff(prev, sanitized);
       }, {});
 
     const environment = await this.environmentRepository.findOne({
