@@ -7,7 +7,7 @@ import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
-export type SubscriberNotificationCountItemDto = {
+export type GetSubscriberNotificationsCountResponseDto = {
   /**
    * The count of notifications matching the filter
    */
@@ -19,8 +19,8 @@ export type SubscriberNotificationCountItemDto = {
 };
 
 /** @internal */
-export const SubscriberNotificationCountItemDto$inboundSchema: z.ZodType<
-  SubscriberNotificationCountItemDto,
+export const GetSubscriberNotificationsCountResponseDto$inboundSchema: z.ZodType<
+  GetSubscriberNotificationsCountResponseDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
@@ -28,12 +28,12 @@ export const SubscriberNotificationCountItemDto$inboundSchema: z.ZodType<
   filter: z.record(z.any()),
 });
 
-export function subscriberNotificationCountItemDtoFromJSON(
+export function getSubscriberNotificationsCountResponseDtoFromJSON(
   jsonString: string
-): SafeParseResult<SubscriberNotificationCountItemDto, SDKValidationError> {
+): SafeParseResult<GetSubscriberNotificationsCountResponseDto, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => SubscriberNotificationCountItemDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscriberNotificationCountItemDto' from JSON`
+    (x) => GetSubscriberNotificationsCountResponseDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'GetSubscriberNotificationsCountResponseDto' from JSON`
   );
 }

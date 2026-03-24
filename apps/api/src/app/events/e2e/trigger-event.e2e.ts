@@ -1373,7 +1373,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         },
       });
       const body = response.result;
-      expect(body).to.have.all.keys('acknowledged', 'status', 'transactionId');
+      expect(body).to.have.all.keys('acknowledged', 'status', 'transactionId', 'activityFeedLink');
       expect(body.acknowledged).to.equal(true);
       expect(body.status).to.equal('processed');
       expect(body.transactionId).to.be.a.string;

@@ -26,7 +26,7 @@ export type SubscribersControllerGetSubscriberNotificationsCountRequest = {
 
 export type SubscribersControllerGetSubscriberNotificationsCountResponse = {
   headers: { [k: string]: Array<string> };
-  result: Array<components.SubscriberNotificationCountItemDto>;
+  result: Array<components.GetSubscriberNotificationsCountResponseDto>;
 };
 
 /** @internal */
@@ -71,7 +71,7 @@ export const SubscribersControllerGetSubscriberNotificationsCountResponse$inboun
 > = z
   .object({
     Headers: z.record(z.array(z.string())).default({}),
-    Result: z.array(components.SubscriberNotificationCountItemDto$inboundSchema),
+    Result: z.array(components.GetSubscriberNotificationsCountResponseDto$inboundSchema),
   })
   .transform((v) => {
     return remap$(v, {

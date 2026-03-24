@@ -153,6 +153,7 @@ export class CreateIntegration {
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
         conditions: command.conditions,
+        // configurations: command.configurations ?? {},
         configurations: command.configurations,
       };
 
