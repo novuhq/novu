@@ -489,7 +489,7 @@ export class SubscribersController {
     Supports multiple filters to count notifications by different criteria, including context keys.`,
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
-  @ApiResponse(GetSubscriberNotificationsCountResponseDto)
+  @ApiResponse(GetSubscriberNotificationsCountResponseDto, 200, true)
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('count')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
@@ -497,7 +497,7 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Query() query: GetSubscriberNotificationsCountQueryDto
-  ): Promise<{ data: Array<{ count: number; filter: GetSubscriberNotificationsCountQueryDto['filters'][0] }> }> {
+  ): Promise<{ data: GetSubscriberNotificationsCountResponseDto[] }> {
     return await this.notificationsCountUsecase.execute(
       NotificationsCountCommand.create({
         organizationId: user.organizationId,

@@ -22,11 +22,11 @@ export type SubscriberResponseDtoOptional = {
   /**
    * The first name of the subscriber.
    */
-  firstName: string | null;
+  firstName?: string | null | undefined;
   /**
    * The last name of the subscriber.
    */
-  lastName: string | null;
+  lastName?: string | null | undefined;
   /**
    * The email address of the subscriber.
    */
@@ -56,11 +56,11 @@ export type SubscriberResponseDtoOptional = {
   /**
    * Indicates whether the subscriber is currently online.
    */
-  isOnline: boolean | null;
+  isOnline?: boolean | null | undefined;
   /**
    * The timestamp indicating when the subscriber was last online, in ISO 8601 format.
    */
-  lastOnlineAt: string | null;
+  lastOnlineAt?: string | null | undefined;
   /**
    * The version of the subscriber document.
    */
@@ -83,16 +83,16 @@ export const SubscriberResponseDtoOptional$inboundSchema: z.ZodType<
 > = z
   .object({
     _id: z.string().optional(),
-    firstName: z.nullable(z.string()),
-    lastName: z.nullable(z.string()),
+    firstName: z.nullable(z.string()).optional(),
+    lastName: z.nullable(z.string()).optional(),
     email: z.nullable(z.string()).optional(),
     phone: z.nullable(z.string()).optional(),
     avatar: z.nullable(z.string()).optional(),
     locale: z.nullable(z.string()).optional(),
     channels: z.array(ChannelSettingsDto$inboundSchema).optional(),
     topics: z.array(z.string()).optional(),
-    isOnline: z.nullable(z.boolean()),
-    lastOnlineAt: z.nullable(z.string()),
+    isOnline: z.nullable(z.boolean()).optional(),
+    lastOnlineAt: z.nullable(z.string()).optional(),
     __v: z.number().optional(),
     data: z.nullable(z.record(z.any())).optional(),
     timezone: z.nullable(z.string()).optional(),
@@ -106,16 +106,16 @@ export const SubscriberResponseDtoOptional$inboundSchema: z.ZodType<
 /** @internal */
 export type SubscriberResponseDtoOptional$Outbound = {
   _id?: string | undefined;
-  firstName: string | null;
-  lastName: string | null;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
   email?: string | null | undefined;
   phone?: string | null | undefined;
   avatar?: string | null | undefined;
   locale?: string | null | undefined;
   channels?: Array<ChannelSettingsDto$Outbound> | undefined;
   topics?: Array<string> | undefined;
-  isOnline: boolean | null;
-  lastOnlineAt: string | null;
+  isOnline?: boolean | null | undefined;
+  lastOnlineAt?: string | null | undefined;
   __v?: number | undefined;
   data?: { [k: string]: any } | null | undefined;
   timezone?: string | null | undefined;
@@ -129,16 +129,16 @@ export const SubscriberResponseDtoOptional$outboundSchema: z.ZodType<
 > = z
   .object({
     id: z.string().optional(),
-    firstName: z.nullable(z.string()),
-    lastName: z.nullable(z.string()),
+    firstName: z.nullable(z.string()).optional(),
+    lastName: z.nullable(z.string()).optional(),
     email: z.nullable(z.string()).optional(),
     phone: z.nullable(z.string()).optional(),
     avatar: z.nullable(z.string()).optional(),
     locale: z.nullable(z.string()).optional(),
     channels: z.array(ChannelSettingsDto$outboundSchema).optional(),
     topics: z.array(z.string()).optional(),
-    isOnline: z.nullable(z.boolean()),
-    lastOnlineAt: z.nullable(z.string()),
+    isOnline: z.nullable(z.boolean()).optional(),
+    lastOnlineAt: z.nullable(z.string()).optional(),
     v: z.number().optional(),
     data: z.nullable(z.record(z.any())).optional(),
     timezone: z.nullable(z.string()).optional(),

@@ -27,7 +27,7 @@ const mapSingleItem = ({
   transactionId,
 }: MessageEntity): InboxNotificationDto => {
   const to: SubscriberDto = {
-    id: subscriber?._id ?? '',
+    _id: subscriber?._id ?? '',
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
     avatar: subscriber?.avatar,

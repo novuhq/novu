@@ -4,8 +4,8 @@ import { SubscriberEntity } from '@novu/dal';
 export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): SubscriberResponseDto {
   return {
     _id: subscriber._id,
-    firstName: subscriber.firstName,
-    lastName: subscriber.lastName,
+    firstName: subscriber.firstName ?? null,
+    lastName: subscriber.lastName ?? null,
     email: subscriber.email,
     phone: subscriber.phone,
     avatar: subscriber.avatar,
@@ -16,8 +16,8 @@ export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): Subscrib
     _organizationId: subscriber._organizationId,
     deleted: subscriber.deleted,
     data: subscriber.data,
-    lastOnlineAt: subscriber.lastOnlineAt,
-    isOnline: subscriber.isOnline,
+    lastOnlineAt: subscriber.lastOnlineAt ?? null,
+    isOnline: subscriber.isOnline ?? null,
     topics: subscriber.topics,
     channels: subscriber.channels,
     locale: subscriber.locale,

@@ -15,11 +15,11 @@ export type SubscriberResponseDtoData = {
   /**
    * The first name of the subscriber.
    */
-  firstName: string | null;
+  firstName?: string | null | undefined;
   /**
    * The last name of the subscriber.
    */
-  lastName: string | null;
+  lastName?: string | null | undefined;
   /**
    * The email address of the subscriber.
    */
@@ -49,11 +49,11 @@ export type SubscriberResponseDtoData = {
   /**
    * Indicates whether the subscriber is currently online.
    */
-  isOnline: boolean | null;
+  isOnline?: boolean | null | undefined;
   /**
    * The timestamp indicating when the subscriber was last online, in ISO 8601 format.
    */
-  lastOnlineAt: string | null;
+  lastOnlineAt?: string | null | undefined;
   /**
    * The version of the subscriber document.
    */
@@ -100,11 +100,11 @@ export class SubscriberResponseDto extends NovuError {
   /**
    * The first name of the subscriber.
    */
-  firstName: string | null;
+  firstName?: string | null | undefined;
   /**
    * The last name of the subscriber.
    */
-  lastName: string | null;
+  lastName?: string | null | undefined;
   /**
    * The email address of the subscriber.
    */
@@ -134,11 +134,11 @@ export class SubscriberResponseDto extends NovuError {
   /**
    * Indicates whether the subscriber is currently online.
    */
-  isOnline: boolean | null;
+  isOnline?: boolean | null | undefined;
   /**
    * The timestamp indicating when the subscriber was last online, in ISO 8601 format.
    */
-  lastOnlineAt: string | null;
+  lastOnlineAt?: string | null | undefined;
   /**
    * The version of the subscriber document.
    */
@@ -185,16 +185,16 @@ export class SubscriberResponseDto extends NovuError {
     super(message, httpMeta);
     this.data$ = err;
     if (err.id != null) this.id = err.id;
-    this.firstName = err.firstName;
-    this.lastName = err.lastName;
+    if (err.firstName != null) this.firstName = err.firstName;
+    if (err.lastName != null) this.lastName = err.lastName;
     if (err.email != null) this.email = err.email;
     if (err.phone != null) this.phone = err.phone;
     if (err.avatar != null) this.avatar = err.avatar;
     if (err.locale != null) this.locale = err.locale;
     if (err.channels != null) this.channels = err.channels;
     if (err.topics != null) this.topics = err.topics;
-    this.isOnline = err.isOnline;
-    this.lastOnlineAt = err.lastOnlineAt;
+    if (err.isOnline != null) this.isOnline = err.isOnline;
+    if (err.lastOnlineAt != null) this.lastOnlineAt = err.lastOnlineAt;
     if (err.v != null) this.v = err.v;
     if (err.data != null) this.data = err.data;
     if (err.timezone != null) this.timezone = err.timezone;
@@ -213,16 +213,16 @@ export class SubscriberResponseDto extends NovuError {
 export const SubscriberResponseDto$inboundSchema: z.ZodType<SubscriberResponseDto, z.ZodTypeDef, unknown> = z
   .object({
     _id: z.string().optional(),
-    firstName: z.nullable(z.string()),
-    lastName: z.nullable(z.string()),
+    firstName: z.nullable(z.string()).optional(),
+    lastName: z.nullable(z.string()).optional(),
     email: z.nullable(z.string()).optional(),
     phone: z.nullable(z.string()).optional(),
     avatar: z.nullable(z.string()).optional(),
     locale: z.nullable(z.string()).optional(),
     channels: z.array(components.ChannelSettingsDto$inboundSchema).optional(),
     topics: z.array(z.string()).optional(),
-    isOnline: z.nullable(z.boolean()),
-    lastOnlineAt: z.nullable(z.string()),
+    isOnline: z.nullable(z.boolean()).optional(),
+    lastOnlineAt: z.nullable(z.string()).optional(),
     __v: z.number().optional(),
     data: z.nullable(z.record(z.any())).optional(),
     timezone: z.nullable(z.string()).optional(),

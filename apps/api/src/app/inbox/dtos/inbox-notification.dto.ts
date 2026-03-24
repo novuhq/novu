@@ -3,7 +3,7 @@ import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 
 export class SubscriberDto {
   @ApiProperty({ type: String, description: 'Unique identifier of the subscriber' })
-  id: string;
+  _id: string;
 
   @ApiPropertyOptional({ type: String, description: 'First name of the subscriber' })
   firstName?: string;

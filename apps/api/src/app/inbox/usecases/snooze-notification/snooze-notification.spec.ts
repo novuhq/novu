@@ -75,7 +75,7 @@ describe('SnoozeNotification', () => {
     body: 'Test notification',
     to: {
       subscriberId: validSubscriberId,
-      id: validSubscriberId,
+      _id: validSubscriberId,
     },
     isSeen: false,
     isRead: false,

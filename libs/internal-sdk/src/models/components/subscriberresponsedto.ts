@@ -17,11 +17,11 @@ export type SubscriberResponseDto = {
   /**
    * The first name of the subscriber.
    */
-  firstName: string | null;
+  firstName?: string | null | undefined;
   /**
    * The last name of the subscriber.
    */
-  lastName: string | null;
+  lastName?: string | null | undefined;
   /**
    * The email address of the subscriber.
    */
@@ -51,11 +51,11 @@ export type SubscriberResponseDto = {
   /**
    * Indicates whether the subscriber is currently online.
    */
-  isOnline: boolean | null;
+  isOnline?: boolean | null | undefined;
   /**
    * The timestamp indicating when the subscriber was last online, in ISO 8601 format.
    */
-  lastOnlineAt: string | null;
+  lastOnlineAt?: string | null | undefined;
   /**
    * The version of the subscriber document.
    */
@@ -98,16 +98,16 @@ export type SubscriberResponseDto = {
 export const SubscriberResponseDto$inboundSchema: z.ZodType<SubscriberResponseDto, z.ZodTypeDef, unknown> = z
   .object({
     _id: z.string().optional(),
-    firstName: z.nullable(z.string()),
-    lastName: z.nullable(z.string()),
+    firstName: z.nullable(z.string()).optional(),
+    lastName: z.nullable(z.string()).optional(),
     email: z.nullable(z.string()).optional(),
     phone: z.nullable(z.string()).optional(),
     avatar: z.nullable(z.string()).optional(),
     locale: z.nullable(z.string()).optional(),
     channels: z.array(ChannelSettingsDto$inboundSchema).optional(),
     topics: z.array(z.string()).optional(),
-    isOnline: z.nullable(z.boolean()),
-    lastOnlineAt: z.nullable(z.string()),
+    isOnline: z.nullable(z.boolean()).optional(),
+    lastOnlineAt: z.nullable(z.string()).optional(),
     __v: z.number().optional(),
     data: z.nullable(z.record(z.any())).optional(),
     timezone: z.nullable(z.string()).optional(),
