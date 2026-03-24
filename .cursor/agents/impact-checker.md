@@ -17,7 +17,7 @@ When invoked with a set of changed files or symbols:
 
 2. Trace downstream consumers using this dependency graph:
    - `libs/dal` → `libs/application-generic` → `apps/api`, `apps/worker`, `apps/ws`
-   - `packages/shared` → `apps/api`, `apps/worker`, `libs/application-generic`, `packages/js`
+   - `packages/shared` → `apps/api`, `apps/worker`, `libs/application-generic`
    - `packages/js` → `packages/react` → `apps/dashboard`
    - `packages/framework` → `apps/dashboard`
 
