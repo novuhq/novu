@@ -1,4 +1,4 @@
-import { IActivity, IEnvironment } from '@novu/shared';
+import { type ContextPayload, IActivity } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { RiCloseLine, RiRouteFill } from 'react-icons/ri';
@@ -11,6 +11,27 @@ import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { triggerWorkflow } from '../../api/workflows';
 import { RepeatPlay } from '../icons/repeat-play';
+
+function contextKeysToContextPayload(contextKeys: string[] | undefined): ContextPayload | undefined {
+  if (!contextKeys?.length) {
+    return undefined;
+  }
+
+  const payload: ContextPayload = {};
+
+  for (const key of contextKeys) {
+    const [type, ...idParts] = key.split(':');
+    const id = idParts.join(':');
+
+    if (!type || !id) {
+      continue;
+    }
+
+    payload[type] = id;
+  }
+
+  return Object.keys(payload).length > 0 ? payload : undefined;
+}
 
 type ActivityHeaderProps = {
   className?: string;
@@ -37,13 +58,18 @@ export const ActivityHeader = ({ className, activity, onTransactionIdChange, onC
     mutationFn: async () => {
       if (!activity) throw new Error('No activity data available');
 
+      if (!currentEnvironment) {
+        throw new Error('No environment selected');
+      }
+
       const {
         data: { transactionId: newTransactionId },
       } = await triggerWorkflow({
         name: activity.template?.triggers[0].identifier ?? '',
         to: activity.subscriber?.subscriberId,
         payload: resentPayload,
-        environment: currentEnvironment!,
+        environment: currentEnvironment,
+        context: contextKeysToContextPayload(activity.contextKeys),
       });
 
       if (!newTransactionId) {
