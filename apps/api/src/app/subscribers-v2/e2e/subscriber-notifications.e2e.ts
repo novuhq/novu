@@ -51,7 +51,7 @@ function validateInboxNotificationDto(notification: InboxNotificationDto): void 
   }
 }
 
-describe.only('Subscriber notifications - /v2/subscribers/:subscriberId/notifications (SDK) #novu-v2', () => {
+describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications (SDK) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   let subscriberId: string;
@@ -131,9 +131,9 @@ describe.only('Subscriber notifications - /v2/subscribers/:subscriberId/notifica
   it('should return notification counts via SDK', async () => {
     const countRes = await novuClient.subscribers.notifications.count(subscriberId, JSON.stringify([{}]));
 
-    expect(countRes.result.data).to.be.an('array').with.lengthOf(1);
-    expect(countRes.result.data[0].count).to.be.a('number').that.is.at.least(1);
-    expect(countRes.result.data[0].filter).to.be.an('object');
+    expect(countRes.result).to.be.an('array').with.lengthOf(1);
+    expect(countRes.result[0].count).to.be.a('number').that.is.at.least(1);
+    expect(countRes.result[0].filter).to.be.an('object');
   });
 
   it('should mark notification as read and unread via SDK', async () => {
