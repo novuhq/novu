@@ -480,7 +480,12 @@ export class SendMessage {
           );
 
           return resolveEnvironmentVariables(rawEnvVars);
-        } catch {
+        } catch (error) {
+          Logger.warn(
+            { err: error, organizationId: command.organizationId, environmentId: command.environmentId },
+            'Failed to fetch environment variables, falling back to empty object'
+          );
+
           return {};
         }
       },
