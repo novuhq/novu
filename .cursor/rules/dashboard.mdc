@@ -21,7 +21,13 @@ apps/dashboard/src/api/          # API client and query definitions
 apps/dashboard/src/ee/           # Enterprise-only features
 ```
 
-**Browser automation (new user setup):** Create org when prompted → navigate to `http://localhost:4201` → skip onboarding unless asked.
+**Agent sign-in:** A default user and org are pre-seeded — sign in at `http://localhost:4201/auth/sign-in`, do not go through onboarding unless asked.
+
+| Field | Value |
+|-------|-------|
+| Email | `agent@novu.co` |
+| Password | `Agent123!@#` |
+| Organization | `Agent Organization` |
 
 ---
 

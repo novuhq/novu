@@ -12,6 +12,9 @@ alwaysApply: false
 
 **Start all services:** `docker compose -f docker/local/docker-compose.yml up -d`
 
+**Agent environments** use a separate compose file — restart after a reboot with:
+`docker compose -f docker/local/docker-compose.agent.yml up -d`
+
 | Service | Port | Purpose |
 |---------|------|---------|
 | MongoDB | 27017 | Primary database |
@@ -25,3 +28,5 @@ alwaysApply: false
 - Notification flows: API + `pnpm start:worker`
 - Real-time features: API + Worker + `pnpm start:ws`
 - Full stack: `docker compose` + all of the above
+
+Run `pnpm build` before starting services only if changes were made to `libs/`, `packages/`, or `enterprise/`.
