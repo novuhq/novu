@@ -1,11 +1,9 @@
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
-import { AnimatePresence, motion } from 'motion/react';
 import { RiInsertRowTop } from 'react-icons/ri';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { fadeIn } from '@/utils/animation';
 import { AddStepMenu } from './add-step-menu';
 import { NODE_WIDTH } from './base-node';
 import { useCanvasContext } from './drag-context';
@@ -48,26 +46,20 @@ export function AddNodeEdge({
 
   return (
     <>
-      <AnimatePresence>
-        <motion.path
-          {...fadeIn}
-          markerEnd={markerEnd}
-          style={style}
-          d={edgePath}
-          fill="none"
-          className="react-flow__edge-path color-neutral-alpha-200"
-          key={`${id}-path`}
-        />
-        <motion.path
-          {...fadeIn}
-          d={edgePath}
-          fill="none"
-          strokeOpacity={0}
-          strokeWidth={20}
-          className="react-flow__edge-interaction color-neutral-alpha-200"
-          key={`${id}-interaction`}
-        />
-      </AnimatePresence>
+      <path
+        markerEnd={markerEnd}
+        style={style}
+        d={edgePath}
+        fill="none"
+        className="react-flow__edge-path color-neutral-alpha-200"
+      />
+      <path
+        d={edgePath}
+        fill="none"
+        strokeOpacity={0}
+        strokeWidth={20}
+        className="react-flow__edge-interaction color-neutral-alpha-200"
+      />
       {!data.isLast && (
         <EdgeLabelRenderer>
           <div
@@ -110,31 +102,19 @@ export function AddNodeEdge({
   );
 }
 
-export const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: EdgeProps) => {
+export const DefaultEdge = ({ sourceX, sourceY, targetX, targetY, style }: EdgeProps) => {
   const edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
+
   return (
-    <AnimatePresence>
-      <motion.path
-        {...fadeIn}
-        layout
-        layoutId={id}
-        style={style}
-        d={edgePath}
-        fill="none"
-        className="react-flow__edge-path color-neutral-alpha-200"
-        key={`${id}-path`}
-      />
-      <motion.path
-        {...fadeIn}
-        layout
-        layoutId={id}
+    <>
+      <path style={style} d={edgePath} fill="none" className="react-flow__edge-path color-neutral-alpha-200" />
+      <path
         d={edgePath}
         fill="none"
         strokeOpacity={0}
         strokeWidth={20}
         className="react-flow__edge-interaction color-neutral-alpha-200"
-        key={`${id}-interaction`}
       />
-    </AnimatePresence>
+    </>
   );
 };
