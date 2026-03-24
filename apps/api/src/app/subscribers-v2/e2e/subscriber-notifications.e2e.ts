@@ -15,8 +15,6 @@ import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const JOB_COMPLETION_TIMEOUT_MS = 120000;
-
 function validateInboxNotificationDto(notification: InboxNotificationDto): void {
   expect(notification.id).to.be.a('string').that.is.not.empty;
   expect(notification.transactionId).to.be.a('string').that.is.not.empty;
@@ -66,9 +64,7 @@ describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications
     novuClient = initNovuClassSdk(session);
 
     subscriberId = `test-sub-notif-${randomBytes(6).toString('hex')}`;
-    const createRes = await session.testAgent.post('/v2/subscribers').send({ subscriberId });
-
-    expect(createRes.status).to.equal(201);
+    await novuClient.subscribers.create({ subscriberId });
 
     template = await session.createTemplate({
       noFeedId: true,
@@ -108,7 +104,7 @@ describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications
       workflowId: template.triggers[0].identifier,
       to: { subscriberId },
     });
-    await session.waitForJobCompletion(template._id, undefined, JOB_COMPLETION_TIMEOUT_MS);
+    await session.waitForJobCompletion(template._id, undefined);
 
     const listRes = await novuClient.subscribers.notifications.list({
       subscriberId,
@@ -132,15 +128,11 @@ describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications
     validateInboxNotificationDto(listRes.result.data[0]);
   });
 
-  it('should return notification counts (HTTP: API returns data[]; SDK schema is single DTO until OpenAPI is aligned)', async () => {
-    const { body, status } = await session.testAgent
-      .get(`/v2/subscribers/${encodeURIComponent(subscriberId)}/notifications/count`)
-      .query({ filters: JSON.stringify([{}]) });
+  it('should return notification counts via SDK', async () => {
+    const countRes = await novuClient.subscribers.notifications.count(subscriberId, JSON.stringify([{}]));
 
-    expect(status).to.equal(200);
-    expect(body.data).to.be.an('array');
-    expect(body.data[0].count).to.be.a('number').that.is.at.least(1);
-    expect(body.data[0].filter).to.be.an('object');
+    expect(countRes.result.count).to.be.a('number').that.is.at.least(1);
+    expect(countRes.result.filter).to.be.an('object');
   });
 
   it('should mark notification as read and unread via SDK', async () => {
@@ -224,6 +216,27 @@ describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications
     expect(revertedRes.result.primaryAction?.isCompleted).to.equal(false);
   });
 
+  it('should complete and revert secondary action via SDK', async () => {
+    const completedRes = await novuClient.subscribers.notifications.completeAction({
+      subscriberId,
+      notificationId,
+      actionType: 'secondary',
+    });
+
+    validateInboxNotificationDto(completedRes.result);
+    expect(completedRes.result.secondaryAction).to.be.an('object');
+    expect(completedRes.result.secondaryAction?.isCompleted).to.equal(true);
+
+    const revertedRes = await novuClient.subscribers.notifications.revertAction({
+      subscriberId,
+      notificationId,
+      actionType: 'secondary',
+    });
+
+    validateInboxNotificationDto(revertedRes.result);
+    expect(revertedRes.result.secondaryAction?.isCompleted).to.equal(false);
+  });
+
   it('should mark notifications as seen via SDK', async () => {
     await novuClient.subscribers.notifications.markAsSeen({ notificationIds: [notificationId] }, subscriberId);
 
@@ -272,6 +285,24 @@ describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications
     }
   });
 
+  it('should archive all read notifications via SDK', async () => {
+    await novuClient.subscribers.notifications.markAllAsRead({}, subscriberId);
+    await novuClient.subscribers.notifications.archiveAllRead({}, subscriberId);
+
+    const listRes = await novuClient.subscribers.notifications.list({
+      subscriberId,
+      archived: true,
+      limit: 10,
+    });
+
+    expect(listRes.result.data.length).to.be.at.least(1);
+
+    for (const n of listRes.result.data) {
+      validateInboxNotificationDto(n);
+      expect(n.isArchived).to.equal(true);
+    }
+  });
+
   it('should delete all notifications via SDK', async () => {
     await novuClient.subscribers.notifications.deleteAll({}, subscriberId);
 
@@ -288,7 +319,7 @@ describe('Subscriber notifications - /v2/subscribers/:subscriberId/notifications
       workflowId: template.triggers[0].identifier,
       to: { subscriberId },
     });
-    await session.waitForJobCompletion(template._id, undefined, JOB_COMPLETION_TIMEOUT_MS);
+    await session.waitForJobCompletion(template._id, undefined);
 
     const listBefore = await novuClient.subscribers.notifications.list({
       subscriberId,
