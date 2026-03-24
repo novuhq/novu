@@ -68,7 +68,10 @@ export interface GetWorkflowRunsResponseDto {
 }
 
 function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkflowRunsDto): IActivity {
-  const resolvedOverrides = 'overrides' in workflowRun ? (workflowRun.overrides ?? {}) : {};
+  const resolvedOverrides = ('overrides' in workflowRun ? (workflowRun.overrides ?? {}) : {}) as Record<
+    string,
+    Record<string, unknown>
+  >;
 
   return {
     _id: workflowRun.id,
