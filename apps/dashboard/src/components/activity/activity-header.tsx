@@ -52,6 +52,7 @@ export const ActivityHeader = ({ className, activity, onTransactionIdChange, onC
     : {};
 
   const resentPayload = activity?.payload ? { ...activity.payload, ...resentMetadata } : resentMetadata;
+  const resentOverrides = activity?.jobs?.[0]?.overrides as Record<string, unknown> | undefined;
   const workflowExists = !!activity?.template;
 
   const { mutate: handleResend, isPending } = useMutation({
@@ -70,6 +71,7 @@ export const ActivityHeader = ({ className, activity, onTransactionIdChange, onC
         payload: resentPayload,
         environment: currentEnvironment,
         context: contextKeysToContextPayload(activity.contextKeys),
+        overrides: resentOverrides,
       });
 
       if (!newTransactionId) {
