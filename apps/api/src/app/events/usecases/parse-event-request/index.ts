@@ -3,4 +3,4 @@ export {
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
-export { ParseEventRequest } from './parse-event-request.usecase';
+export { ParseEventRequest, ParseEventRequestResult } from './parse-event-request.usecase';

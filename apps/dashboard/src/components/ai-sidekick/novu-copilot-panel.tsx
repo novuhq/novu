@@ -3,7 +3,7 @@ import { Badge } from '../primitives/badge';
 import { useAiChat } from './ai-chat-context';
 import { ChatBody, ChatBodySkeleton } from './chat-body';
 
-export function NovuCopilotPanel() {
+export function NovuCopilotPanel({ hideHeader }: { hideHeader?: boolean }) {
   const {
     hasNoChatHistory,
     messages,
@@ -27,27 +27,29 @@ export function NovuCopilotPanel() {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3 py-2">
-        <div className="flex items-center gap-0.5 rounded px-0.5 py-1">
-          <div className="flex size-5 items-center justify-center">
-            <BroomSparkle className="size-3" isAnimating={isGenerating} />
+      {!hideHeader && (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3 py-2">
+          <div className="flex items-center gap-0.5 rounded px-0.5 py-1">
+            <div className="flex size-5 items-center justify-center">
+              <BroomSparkle className="size-3" isAnimating={isGenerating} />
+            </div>
+            <span
+              className="text-label-sm font-medium"
+              style={{
+                background: 'linear-gradient(90deg, #939292 0%, #646464 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Novu Copilot
+            </span>
+            <Badge variant="lighter" color="gray" className="ml-1">
+              BETA
+            </Badge>
           </div>
-          <span
-            className="text-label-sm font-medium"
-            style={{
-              background: 'linear-gradient(90deg, #939292 0%, #646464 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            Novu Copilot
-          </span>
-          <Badge variant="lighter" color="gray" className="ml-1">
-            BETA
-          </Badge>
         </div>
-      </div>
+      )}
       {isLoading ? (
         <ChatBodySkeleton />
       ) : (

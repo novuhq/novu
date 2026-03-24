@@ -65,10 +65,12 @@ function JsonBody({ body }: { body: unknown }) {
     (typeof body === 'object' && !Array.isArray(body) && Object.keys(body as object).length === 0) ||
     body === '';
 
-  const code = isEmpty ? '{}' : JSON.stringify(body, null, 2);
+  const isPlainText = typeof body === 'string';
+  const code = isEmpty ? '{}' : isPlainText ? (body as string) : JSON.stringify(body, null, 2);
+  const language = isPlainText ? 'text' : 'json';
 
   return (
-    <Highlight code={code} language="json" theme={JSON_THEME}>
+    <Highlight code={code} language={language} theme={JSON_THEME}>
       {({ tokens, getLineProps, getTokenProps }) => (
         <pre className="m-0 whitespace-pre-wrap font-mono text-xs leading-[1.5]">
           {tokens.map((line, i) => (

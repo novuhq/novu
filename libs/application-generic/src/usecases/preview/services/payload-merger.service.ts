@@ -321,7 +321,7 @@ export class PayloadMergerService {
 
     const httpControlValuesMap: Record<string, Record<string, unknown>> = {};
     if (httpRequestStepIds.length > 0) {
-      const controlValues = await this.controlValuesRepository.findMany({
+      const controlValues = await this.controlValuesRepository.find({
         _environmentId: workflow._environmentId,
         _organizationId: workflow._organizationId,
         _workflowId: workflow._id,

@@ -32,6 +32,7 @@ import {
 } from '@/pages';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
+import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
@@ -61,6 +62,8 @@ import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
+import { UpsertVariablePage } from './pages/upsert-variable';
+import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
@@ -77,6 +80,10 @@ const router = createBrowserRouter([
     element: <RootRoute />,
     errorElement: <ErrorPage />,
     children: [
+      {
+        path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
+        element: <Landing1SignUpPage />,
+      },
       {
         element: <AuthRoute />,
         children: [
@@ -348,6 +355,20 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.ENVIRONMENTS,
                 element: <EnvironmentsPage />,
+              },
+              {
+                path: ROUTES.VARIABLES,
+                element: <VariablesPage />,
+                children: [
+                  {
+                    path: ROUTES.VARIABLES_CREATE,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.ORG_SETTINGS_WRITE} isDrawerRoute>
+                        <UpsertVariablePage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.ACTIVITY_FEED,

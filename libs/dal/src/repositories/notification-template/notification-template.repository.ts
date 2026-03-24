@@ -63,17 +63,51 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntities(items);
   }
 
-  async findByTriggerIdentifierBulk(environmentId: string, identifiers: string[], session?: ClientSession | null) {
+  async findNameAndTriggersByIds(
+    organizationId: string,
+    workflowIds: string[]
+  ): Promise<Pick<NotificationTemplateEntity, 'name' | 'triggers' | '_environmentId'>[]> {
+    return this.find(
+      {
+        _id: { $in: workflowIds },
+        _organizationId: organizationId,
+      },
+      { _id: 0, name: 1, triggers: 1, _environmentId: 1 }
+    );
+  }
+
+  async findByTriggerIdentifierBulk(
+    environmentId: string,
+    identifiers: string[],
+    options?: { session?: ClientSession | null }
+  ): Promise<NotificationTemplateEntity[]>;
+
+  async findByTriggerIdentifierBulk<K extends keyof NotificationTemplateEntity>(
+    environmentId: string,
+    identifiers: string[],
+    options: { session?: ClientSession | null; select: K[] }
+  ): Promise<Pick<NotificationTemplateEntity, K>[]>;
+
+  async findByTriggerIdentifierBulk<K extends keyof NotificationTemplateEntity>(
+    environmentId: string,
+    identifiers: string[],
+    options: { session?: ClientSession | null; select?: K[] } = {}
+  ): Promise<NotificationTemplateEntity[] | Pick<NotificationTemplateEntity, K>[]> {
+    const { session, select } = options;
+
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       'triggers.identifier': { $in: identifiers },
     };
 
-    const query = this.MongooseModel.find(requestQuery, undefined, { session }).populate('steps.template');
+    const projection = select ? Object.fromEntries(select.map((field) => [field, 1])) : undefined;
+
+    const baseQuery = this.MongooseModel.find(requestQuery, projection, { session });
+    const query = !select || select.includes('steps' as K) ? baseQuery.populate('steps.template') : baseQuery;
 
     const items = await query;
 
-    return this.mapEntities(items);
+    return this.mapEntities(items) as NotificationTemplateEntity[] | Pick<NotificationTemplateEntity, K>[];
   }
 
   async findByTriggerIdentifier(

@@ -19,17 +19,34 @@ export function EditStepTemplateV2Page() {
     shouldFocusError: false,
   });
 
-  // Initialize the form exactly once when step data first becomes available.
-  // We deliberately avoid the `values` prop on useForm because it calls form.reset()
-  // on every render where `values` has a new reference — which regenerates all
-  // useFieldArray field IDs and causes visible row flicker on every save round-trip.
+  // Avoid the `values` prop on useForm: a new object reference each render triggers
+  // form.reset() constantly and regenerates useFieldArray field IDs (visible flicker).
+  // Instead reset when the step identity or server-sourced controls actually change
+  // (navigation, resolver hash, autosave response, or refetch e.g. Copilot).
   const hasInitializedRef = useRef(false);
-  const prevHashRef = useRef(step?.stepResolverHash);
+  const prevStepIdRef = useRef<string | undefined>(undefined);
+  const prevHashRef = useRef<string | undefined>(undefined);
+  const prevControlsFingerprintRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!step) return;
+
+    const fingerprint = JSON.stringify({
+      v: step.controls?.values,
+      ui: step.controls?.uiSchema,
+      ds: step.controls?.dataSchema,
+    });
+
+    const isFirstBind = prevStepIdRef.current === undefined;
+    const stepIdChanged = !isFirstBind && prevStepIdRef.current !== step.stepId;
     const hashChanged = step.stepResolverHash !== prevHashRef.current;
-    prevHashRef.current = step.stepResolverHash;
-    if (!hasInitializedRef.current || hashChanged) {
+    const controlsChanged =
+      prevControlsFingerprintRef.current !== null && fingerprint !== prevControlsFingerprintRef.current;
+
+    if (isFirstBind || stepIdChanged || hashChanged || controlsChanged) {
+      prevStepIdRef.current = step.stepId;
+      prevHashRef.current = step.stepResolverHash;
+      prevControlsFingerprintRef.current = fingerprint;
       hasInitializedRef.current = true;
       form.reset(getControlsDefaultValues(step), { keepErrors: true });
     }
@@ -59,23 +76,22 @@ export function EditStepTemplateV2Page() {
   const setIssuesFromStep = useCallback(() => {
     if (!step) return;
 
-    const stepIssues = flattenIssues(step.issues?.controls);
-    const currentErrors = form.formState.errors;
+    // @ts-expect-error - isNew is set by useUpdateWorkflow, see that file for details
+    if (step.isNew) {
+      form.clearErrors();
+      return;
+    }
 
-    // Clear errors that are not in stepIssues
-    Object.keys(currentErrors).forEach((key) => {
-      if (!stepIssues[key]) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        form.clearErrors(key as any);
-      }
-    });
+    const issues = flattenIssues(step.issues?.controls);
+    const values = form.getValues() as Record<string, unknown>;
+    const setError = form.setError as (key: string, error: { message: string }) => void;
+    const clearError = form.clearErrors as (key: string) => void;
 
-    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
-    if (!step.isNew) {
-      Object.entries(stepIssues).forEach(([key, value]) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        form.setError(key as any, { message: value });
-      });
+    for (const key of new Set([...Object.keys(form.formState.errors), ...Object.keys(issues)])) {
+      const hasValue = values[key] != null && values[key] !== '';
+
+      if (issues[key] && !hasValue) setError(key, { message: issues[key] });
+      else clearError(key);
     }
   }, [form, step]);
 

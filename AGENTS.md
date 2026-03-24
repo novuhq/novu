@@ -2,13 +2,11 @@
 
 ## Cursor Cloud specific instructions
 
-When running in the cloud environment `pnpm setup:agent` was already run — env files, build, and enterprise packages are already set up.
+`pnpm setup:agent` has already been run. Do not run it again. The environment is fully configured: dependencies installed, enterprise packages linked, project built, `.env` files in place, Docker services running, and a default user/org seeded.
 
 ## Build
 
 Run `pnpm build:with-ee` after changes to `packages/` or `enterprise/`. Direct changes to `apps/` do not require a rebuild.
-
-`pnpm check` runs Biome across the monorepo. Pre-existing warnings are expected.
 
 ## AI Boundaries
 
@@ -28,6 +26,8 @@ Run `pnpm build:with-ee` after changes to `packages/` or `enterprise/`. Direct c
 - Read-only dirs: `.idea/`, `playground/`, `.github/`, `scripts/`, `docker/`
 - UI: reuse existing Radix/shadcn components only; do not copy patterns from `playground/` into production
 
+<!-- Infrastructure & services: see .cursor/rules/infrastructure.mdc -->
 <!-- Dependency graph: see .cursor/rules/dependency-graph.mdc -->
-<!-- Infrastructure setup: see .cursor/rules/infrastructure.mdc -->
+<!-- Testing: see .cursor/rules/testing.mdc -->
 <!-- PR format: see .cursor/rules/pullrequest.mdc -->
+<!-- Enterprise submodule: see .cursor/skills/enterprise-submodule/SKILL.md -->

@@ -16,4 +16,5 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   skipLayoutRendering?: boolean;
   layoutId?: string;
   stepResolverHash?: string;
+  env?: Record<string, string>;
 }

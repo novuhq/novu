@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { EnvironmentVariableRepository } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { PinoLogger } from 'nestjs-pino';
 import { GeneratePreviewResponseDto } from '../../dtos/workflow/generate-preview-response.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
+import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
 import { shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
@@ -31,7 +34,9 @@ export class PreviewUsecase {
     private readonly payloadMerger: PayloadMergerService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
     private readonly errorHandler: PreviewErrorHandler,
-    private readonly getDecryptedSecretKey: GetDecryptedSecretKey
+    private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
+    private readonly logger: PinoLogger,
+    private readonly environmentVariableRepository: EnvironmentVariableRepository
   ) {}
 
   @InstrumentUsecase()
@@ -41,6 +46,8 @@ export class PreviewUsecase {
       const stepResolverHash =
         typeof context.stepData.stepResolverHash === 'string' ? context.stepData.stepResolverHash : undefined;
       const isStepResolver = isStepResolverActive(stepResolverHash);
+
+      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
 
       const sanitizedControls = isStepResolver
         ? context.controlValues
@@ -68,15 +75,14 @@ export class PreviewUsecase {
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
-      const isHttpRequestStep = context.stepData.type === StepTypeEnum.HTTP_REQUEST;
-
       try {
         const executeOutput = await this.executePreviewUsecase(
           command,
           context.stepData,
           payloadExample,
           previewTemplateData.controlValues,
-          stepResolverHash
+          stepResolverHash,
+          context.envVars
         );
 
         const novuSignature = isHttpRequestStep
@@ -149,7 +155,21 @@ export class PreviewUsecase {
       })
     );
 
-    return { stepData, controlValues, variableSchema: stepData.variables, variablesObject, workflow };
+    let envVars: Record<string, string> = {};
+    try {
+      const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
+        command.user.organizationId,
+        command.user.environmentId
+      );
+      envVars = resolveEnvironmentVariables(rawEnvVars);
+    } catch (error) {
+      this.logger.error(
+        { error },
+        'Failed to fetch or resolve environment variables for preview; falling back to empty env vars'
+      );
+    }
+
+    return { stepData, controlValues, variableSchema: stepData.variables, variablesObject, workflow, envVars };
   }
 
   @Instrument()
@@ -199,7 +219,8 @@ export class PreviewUsecase {
     stepData: StepResponseDto,
     previewPayloadExample: PreviewPayloadDto,
     controlValues: Record<string, unknown>,
-    stepResolverHash: string | undefined
+    stepResolverHash: string | undefined,
+    envVars: Record<string, string>
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
 
@@ -218,6 +239,7 @@ export class PreviewUsecase {
         state,
         skipLayoutRendering: command.skipLayoutRendering,
         stepResolverHash,
+        env: envVars,
       })
     );
   }

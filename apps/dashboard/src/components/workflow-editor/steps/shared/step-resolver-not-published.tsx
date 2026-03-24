@@ -2,6 +2,7 @@ import { FileCode2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { RiCheckLine, RiCloseLine, RiFileCopyLine, RiLoaderLine } from 'react-icons/ri';
+import { Badge } from '@/components/primitives/badge';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
@@ -322,7 +323,7 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
                 viewBox="0 0 300 300"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="pointer-events-none absolute size-[169px] opacity-[0.35]"
+                className="pointer-events-none absolute size-[169px] opacity-[0.15]"
                 style={{ bottom: -71, right: 19 }}
                 aria-hidden="true"
               >
@@ -336,15 +337,18 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
               <button
                 type="button"
                 onClick={handleDismissInfoCard}
-                className="absolute right-3 top-3 flex size-5 items-center justify-center rounded text-[#99a0ae] transition-colors hover:bg-[#f4f5f6] hover:text-[#525866]"
+                className="absolute right-3 top-3 z-10 flex size-5 items-center justify-center rounded text-[#99a0ae] transition-colors hover:bg-[#f4f5f6] hover:text-[#525866]"
               >
                 <RiCloseLine className="size-4" />
               </button>
-              <div className="flex flex-col gap-3 p-3">
+              <div className="relative z-0 flex flex-col gap-3 p-3">
                 <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <FileCode2 className="size-[14px] shrink-0 text-[#525866]" strokeWidth={1.5} />
                     <span className="text-label-sm text-[#525866]">Resolve this step from your code</span>
+                    <Badge variant="lighter" color="gray" size="sm">
+                      BETA
+                    </Badge>
                   </div>
                   <p className="text-label-xs text-[#99a0ae]">
                     Instead of defining content in the editor, your application generates the output for this step.

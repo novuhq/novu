@@ -212,6 +212,13 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               additionalProperties: false,
             },
           },
+          env: {
+            type: 'object',
+            description: 'Environment variables accessible in workflow templates',
+            properties: {},
+            required: [],
+            additionalProperties: false,
+          },
         },
         additionalProperties: false,
       },
@@ -486,6 +493,13 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               required: [],
               additionalProperties: false,
             },
+          },
+          env: {
+            type: 'object',
+            description: 'Environment variables accessible in workflow templates',
+            properties: {},
+            required: [],
+            additionalProperties: false,
           },
         },
         type: 'object',
@@ -1216,7 +1230,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse.result.result.preview.body).to.contain('Paragraph static link');
     expect(previewResponse.result.result.preview.body).to.contain('href="https://paragraph.static.link"');
 
-    console.log('Blockquote');
     // blockquote
     expect(previewResponse.result.result.preview.body).to.contain('Just the blockquote');
     expect(previewResponse.result.result.preview.body).to.contain('Blockquote variable link');

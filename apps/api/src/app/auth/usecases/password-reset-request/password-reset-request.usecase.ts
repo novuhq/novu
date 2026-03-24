@@ -49,7 +49,7 @@ export class PasswordResetRequest {
   private static getResetRedirectLink(token: string, user: UserEntity, src?: PasswordResetFlowEnum): string {
     // ensure that only users without passwords are allowed to reset
     if (src === PasswordResetFlowEnum.USER_PROFILE && !user.password) {
-      return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
+      return `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
     }
 
     /**
@@ -58,7 +58,7 @@ export class PasswordResetRequest {
      * 2. When src is explicitly FORGOT_PASSWORD
      * 3. User already has a password
      */
-    return `${process.env.FRONT_BASE_URL}/auth/reset/${token}`;
+    return `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/auth/reset/${token}`;
   }
 
   private isRequestBlocked(user: UserEntity) {

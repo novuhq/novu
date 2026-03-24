@@ -31,10 +31,17 @@ export interface StepResolverManifestStep {
   controlSchema?: Record<string, unknown>;
 }
 
+export interface SkippedStep {
+  workflowId: string;
+  stepId: string;
+  reason: string;
+}
+
 export interface DeploymentResult {
   stepResolverHash: string;
   workerId: string;
-  selectedStepsCount: number;
+  deployedStepsCount: number;
+  skippedSteps: SkippedStep[];
   deployedAt: string;
 }
 

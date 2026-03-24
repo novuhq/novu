@@ -2,7 +2,7 @@ import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-const dashboardOrigin = process.env.FRONT_BASE_URL;
+const dashboardOrigin = process.env.DASHBOARD_URL;
 const checkoutSessionCreateParamsMock = {
   mode: 'subscription',
   customer: 'customer_id',

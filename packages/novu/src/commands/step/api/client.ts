@@ -127,7 +127,8 @@ export class StepResolverClient {
       return {
         stepResolverHash: data.stepResolverHash,
         workerId: data.workerId,
-        selectedStepsCount: data.selectedStepsCount ?? manifestSteps.length,
+        deployedStepsCount: data.deployedStepsCount ?? manifestSteps.length,
+        skippedSteps: Array.isArray(data.skippedSteps) ? data.skippedSteps : [],
         deployedAt: data.deployedAt,
       };
     } catch (error) {

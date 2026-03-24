@@ -4,6 +4,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   UploadedFile,
@@ -28,8 +29,10 @@ import {
   DeployStepResolverRequestDto,
   DeployStepResolverResponseDto,
   DisconnectStepResolverRequestDto,
+  StepResolversCountResponseDto,
 } from './dtos';
 import { DeployStepResolverCommand, DeployStepResolverUsecase } from './usecases/deploy-step-resolver';
+import { GetStepResolversCountUsecase } from './usecases/get-step-resolvers-count';
 
 interface UploadedBundleFile {
   buffer: Buffer;
@@ -46,8 +49,16 @@ interface UploadedBundleFile {
 export class StepResolversController {
   constructor(
     private deployStepResolverUsecase: DeployStepResolverUsecase,
-    private disconnectStepResolverUsecase: DisconnectStepResolverUsecase
+    private disconnectStepResolverUsecase: DisconnectStepResolverUsecase,
+    private getStepResolversCountUsecase: GetStepResolversCountUsecase
   ) {}
+
+  @Get('/count')
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  async getCount(@UserSession() user: UserSessionData): Promise<StepResolversCountResponseDto> {
+    return this.getStepResolversCountUsecase.execute(user.environmentId);
+  }
 
   @Post('/deploy')
   @ExternalApiAccessible()

@@ -61,7 +61,7 @@ jobs:
           NEW_RELIC_ENABLED: true
         run: |
           # Start the worker service using pre-built code for deterministic startup
-          cd apps/worker && NODE_ENV=test LOG_LEVEL=debug node dist/main.js &
+          cd apps/worker && NODE_ENV=test LOG_LEVEL=warn node dist/main.js &
 
       - name: Wait on worker
         shell: bash
@@ -78,6 +78,7 @@ jobs:
         env:
           NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
           NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
+          NOVU_V2_MOCHA_REPORTER: dot
         run: |
           set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2

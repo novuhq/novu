@@ -49,7 +49,7 @@ export class ResendInvite {
           inviteeName: capitalize(foundInvitee.invite.email.split('@')[0]),
           organizationName: capitalize(organization.name),
           inviterName: capitalize(inviterUser.firstName ?? ''),
-          acceptInviteUrl: `${process.env.FRONT_BASE_URL}/auth/invitation/${token}`,
+          acceptInviteUrl: `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/auth/invitation/${token}`,
         },
       });
     }

@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { AiAgentTypeEnum, AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
+import * as Sentry from '@sentry/react';
 import { ChatOnDataCallback, generateId, UIMessage } from 'ai';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -44,13 +45,16 @@ import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { Badge } from './primitives/badge';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormRoot } from './primitives/form/form';
 import { showErrorToast } from './primitives/sonner-helpers';
 
 export type WorkflowCreatedEvent = {
   type: 'workflow-created';
+  workflowId: string;
   workflowSlug: string;
   chatId: string;
 };
@@ -67,8 +71,11 @@ const WORKFLOW_SUGGESTIONS = [
 export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'duplicate'; workflowId?: string }) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const track = useTelemetry();
   const [open, setOpen] = useState(true);
   const createdWorkflowSlugRef = useRef<string | null>(null);
+  const chatId = useMemo(() => generateId(), []);
+  const persistedChatIdRef = useRef<string | null>(null);
   const [tab, setTab] = useState<CreateWorkflowTab>('guided');
 
   const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
@@ -105,6 +112,12 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
       ) {
         const workflowCreatedEvent = data.data as unknown as WorkflowCreatedEvent;
         createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
+
+        track(TelemetryEvent.COPILOT_WORKFLOW_GENERATED, {
+          workflowId: workflowCreatedEvent.workflowId,
+          chatId: workflowCreatedEvent.chatId,
+        });
+
         navigate(
           buildRoute(ROUTES.EDIT_WORKFLOW, {
             environmentSlug: currentEnvironment?.slug ?? '',
@@ -114,10 +127,9 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
         );
       }
     },
-    [currentEnvironment?.slug, navigate]
+    [currentEnvironment?.slug, navigate, track]
   );
 
-  const chatId = useMemo(() => generateId(), []);
   const { sendPrompt, stop, isGenerating, error } = useAiChatStream({
     id: chatId,
     agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
@@ -126,9 +138,17 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
 
   useEffect(() => {
     if (error) {
-      showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
+      const errorMessage = error.message || 'There was an error starting the stream.';
+      showErrorToast(errorMessage, 'Failed to start stream');
+      // ignore errors from the input guard middleware
+      if (!errorMessage.includes('Novu Copilot')) {
+        Sentry.captureException(error, {
+          tags: { feature: 'ai-copilot', action: 'stream-start-error' },
+          extra: { chatId: persistedChatIdRef.current ?? chatId },
+        });
+      }
     }
-  }, [error]);
+  }, [error, chatId]);
 
   useEffect(() => {
     return () => {
@@ -161,18 +181,37 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
       return;
     }
 
+    track(TelemetryEvent.COPILOT_GUIDED_SUBMIT, {
+      promptLength: clearedPrompt.length,
+    });
+
+    if (persistedChatIdRef.current) {
+      sendPrompt({ chatId: persistedChatIdRef.current, prompt: clearedPrompt });
+      return;
+    }
+
     await createAiChat(
       { resourceType: AiResourceTypeEnum.WORKFLOW },
       {
-        onError: (error) => {
-          showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
+        onError: (err) => {
+          showErrorToast(err.message || 'There was an error creating the chat.', 'Failed to create chat');
+          Sentry.captureException(err, {
+            tags: { feature: 'ai-copilot', action: 'create-ai-chat' },
+          });
         },
         onSuccess: async (chat) => {
+          persistedChatIdRef.current = chat._id;
           sendPrompt({ chatId: chat._id, prompt: clearedPrompt });
         },
       }
     );
   }
+
+  const handleTabChange = (value: string) => {
+    const newTab = value as CreateWorkflowTab;
+    setTab(newTab);
+    track(TelemetryEvent.COPILOT_TAB_SWITCHED, { tab: newTab });
+  };
 
   const isDuplicateMode = mode === 'duplicate';
   const showTabs = !isDuplicateMode;
@@ -220,7 +259,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
             {showTabs && (
               <>
                 <div className="flex flex-col gap-2 p-3">
-                  <SegmentedControl value={tab} onValueChange={(value) => setTab(value as CreateWorkflowTab)}>
+                  <SegmentedControl value={tab} onValueChange={handleTabChange}>
                     <SegmentedControlList>
                       <SegmentedControlTrigger value="guided">
                         Guided{' '}
@@ -322,6 +361,7 @@ type GenerationStep = {
 };
 
 function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentProps) {
+  const track = useTelemetry();
   const form = useForm({
     resolver: standardSchemaResolver(schema),
     defaultValues: {
@@ -355,6 +395,7 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
   }, [error]);
 
   function handleSuggestionClick(suggestion: string) {
+    track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion });
     form.setValue('prompt', suggestion);
   }
 

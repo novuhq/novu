@@ -34,7 +34,7 @@ export const SignInPage = () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1100px] md:flex-row md:gap-36">
-      <PageMeta title="Sign in" />
+      <PageMeta title="Sign in to Novu" />
       <div className="w-full md:w-auto">
         <AuthSideBanner />
       </div>

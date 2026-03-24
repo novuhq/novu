@@ -54,12 +54,14 @@ export function usePreviewDataInitialization({
             subscriber: {},
             steps: {},
             context: {},
+            env: {},
           },
           {
             payload: workflow.payloadExample as PayloadData,
             subscriber: {},
             steps: {},
             context: {},
+            env: {},
           }
         );
         finalData.payload = mergedData.payload;

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-const dashboardOrigin = process.env.FRONT_BASE_URL;
+const dashboardOrigin = process.env.DASHBOARD_URL;
 
 describe('Get portal link #novu-v2', async () => {
   it('Get portal link', async () => {

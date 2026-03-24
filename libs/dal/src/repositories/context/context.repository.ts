@@ -1,6 +1,6 @@
 import { ContextData, ContextId, ContextPayload, ContextType, createContextKey } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import type { EnforceEnvOrOrgIds } from '../../types';
+import { type EnforceEnvOrOrgIds, ErrorCodesEnum } from '../../types';
 import { BaseRepository } from '../base-repository';
 import { ContextDBModel, ContextEntity } from './context.entity';
 import { Context } from './context.schema';
@@ -63,7 +63,8 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
     try {
       return await this.create(newContext);
     } catch (error) {
-      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+      const isDuplicateKeyError =
+        error && typeof error === 'object' && 'code' in error && error.code === ErrorCodesEnum.DUPLICATE_KEY;
 
       if (isDuplicateKeyError) {
         const context = await this.findOne(query);

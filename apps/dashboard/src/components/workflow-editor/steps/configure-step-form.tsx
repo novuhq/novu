@@ -193,26 +193,24 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   );
 
   const setControlValuesIssues = useCallback(() => {
-    const stepIssues = flattenIssues(step.issues?.controls);
-    const currentErrors = form.formState.errors;
+    // @ts-expect-error - isNew is set by useUpdateWorkflow, see that file for details
+    if (step.isNew) {
+      form.clearErrors();
+      return;
+    }
 
-    // Clear errors that are not in stepIssues
-    Object.values(currentErrors).forEach((controlValues) => {
-      Object.keys(controlValues).forEach((key) => {
-        if (!stepIssues[`${key}`]) {
-          // @ts-expect-error - dynamic key
-          form.clearErrors(`controlValues.${key}`);
-        }
-      });
-    });
+    const issues = flattenIssues(step.issues?.controls);
+    const formValues = form.getValues() as unknown as Record<string, Record<string, unknown>>;
+    const controlValues = formValues.controlValues ?? {};
+    const formErrors = form.formState.errors as Record<string, Record<string, unknown>>;
+    const setError = form.setError as (key: string, error: { message: string }) => void;
+    const clearError = form.clearErrors as (key: string) => void;
 
-    // @ts-expect-error - isNew doesn't exist on StepResponseDto and it's too much work to override the @novu/shared types now. See useUpdateWorkflow.ts for more details
-    if (!step.isNew) {
-      // Set new errors from stepIssues
-      Object.entries(stepIssues).forEach(([key, value]) => {
-        // @ts-expect-error - dynamic key
-        form.setError(`controlValues.${key}`, { message: value });
-      });
+    for (const key of new Set([...Object.keys(formErrors.controlValues ?? {}), ...Object.keys(issues)])) {
+      const hasValue = controlValues[key] != null && controlValues[key] !== '';
+
+      if (issues[key] && !hasValue) setError(`controlValues.${key}`, { message: issues[key] });
+      else clearError(`controlValues.${key}`);
     }
   }, [form, step]);
 

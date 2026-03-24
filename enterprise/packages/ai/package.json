@@ -28,6 +28,7 @@
     "@novu/shared": "workspace:*",
     "@novu/testing": "workspace:*",
     "@types/express": "4.17.17",
+    "@sentry/node": "^8.33.1",
     "ai": "6.0.50",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",

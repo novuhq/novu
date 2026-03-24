@@ -26,6 +26,7 @@ import {
   storageService,
   TraceLogRepository,
   TraceRollupRepository,
+  WorkflowRunCountRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -36,6 +37,7 @@ import {
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
+  EnvironmentVariableRepository,
   ExecutionDetailsRepository,
   FeedRepository,
   IntegrationRepository,
@@ -108,6 +110,7 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   ControlValuesRepository,
   PreferencesRepository,
+  EnvironmentVariableRepository,
 ];
 
 const dalService = {
@@ -126,6 +129,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  WorkflowRunCountRepository,
   TraceRollupRepository,
   DeliveryTrendCountsRepository,
 
@@ -166,6 +170,7 @@ const IMPORTS = [
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
       version: packageJson.version,
+      silent: !!process.env.CI,
     })
   ),
 ];
