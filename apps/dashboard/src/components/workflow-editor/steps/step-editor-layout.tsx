@@ -1,11 +1,25 @@
-import { ContentIssueEnum, PermissionsEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
+import {
+  AiAgentTypeEnum,
+  AiResourceTypeEnum,
+  ContentIssueEnum,
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  StepResponseDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiPlayCircleLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
+import { AiChatProvider } from '@/components/ai-sidekick';
+import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { LocaleSelect } from '@/components/primitives/locale-select';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
@@ -19,6 +33,9 @@ import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
 import { TranslationStatus } from '@/components/workflow-editor/translation-status';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
@@ -36,6 +53,12 @@ function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
     useStepEditor();
   const stepResolverHint = useStepResolverHint();
+  const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
+  const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+  const showCopilot = isAiEnabled && isDevEnvironment;
+
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
@@ -82,30 +105,107 @@ function StepEditorContent() {
     };
   }, [step.issues, controlValues]);
 
+  const aiChatConfig = useMemo(
+    () => ({
+      resourceType: AiResourceTypeEnum.WORKFLOW,
+      resourceId: workflow?._id,
+      agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
+      metadata: { stepId: step.stepId },
+      isResourceLoading: isWorkflowPending,
+      onRefetchResource: () => {
+        refetchWorkflow({ cancelRefetch: true });
+      },
+      onKeepSuccess: () => showSuccessToast('Changes are successfully applied'),
+      onKeepError: () => showErrorToast('Failed to apply changes'),
+      onData: (data: { type: string }) => {
+        if (
+          data.type === 'data-step-added' ||
+          data.type === 'data-workflow-completed' ||
+          data.type === 'data-step-updated' ||
+          data.type === 'data-step-removed' ||
+          data.type === 'data-step-moved' ||
+          data.type === 'data-workflow-metadata-updated'
+        ) {
+          refetchWorkflow({ cancelRefetch: true });
+        }
+      },
+    }),
+    [workflow?._id, step.stepId, isWorkflowPending, refetchWorkflow]
+  );
+
   const currentPayload = parseJsonValue(editorValue).payload;
 
-  return (
-    <ResizableLayout autoSaveId="step-editor-main-layout">
-      <ResizableLayout.ContextPanel>
-        <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
-          <Protect permission={PermissionsEnum.EVENT_WRITE}>
-            <Button
-              variant="secondary"
-              size="2xs"
-              mode="gradient"
-              leadingIcon={RiPlayCircleLine}
-              onClick={handleTestWorkflowClick}
-            >
-              Test workflow
-            </Button>
-          </Protect>
-        </PanelHeader>
+  const contextPanelContent = showCopilot ? (
+    <Tabs defaultValue="copilot" className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-neutral-200 pr-3">
+        <TabsList variant="regular" className="border-b-0 border-t-0 px-3 py-2">
+          <TabsTrigger value="copilot" size="xs" variant="regular">
+            <span className="flex items-center gap-1">
+              <BroomSparkle className="size-3" isAnimating />
+              <span className="text-label-sm">Novu Copilot</span>
+              <Badge variant="lighter" color="gray" className="ml-1">
+                BETA
+              </Badge>
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="preview" size="xs" variant="regular">
+            <span className="flex items-center gap-1">
+              <RiCodeBlock className="size-3" />
+              <span className="text-label-sm">Preview sandbox</span>
+            </span>
+          </TabsTrigger>
+        </TabsList>
+        <Protect permission={PermissionsEnum.EVENT_WRITE}>
+          <Button
+            variant="secondary"
+            size="2xs"
+            mode="outline"
+            className="p-1.5"
+            leadingIcon={RiPlayCircleLine}
+            onClick={handleTestWorkflowClick}
+            aria-label="Test workflow"
+          />
+        </Protect>
+      </div>
+      <TabsContent value="preview" className="flex min-h-0 flex-1 flex-col">
         <div className="bg-bg-weak flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto">
             <PreviewContextContainer />
           </div>
         </div>
-      </ResizableLayout.ContextPanel>
+      </TabsContent>
+      <TabsContent value="copilot" className="flex min-h-0 flex-1 flex-col">
+        <AiChatProvider config={aiChatConfig}>
+          <NovuCopilotPanel hideHeader />
+        </AiChatProvider>
+      </TabsContent>
+    </Tabs>
+  ) : (
+    <>
+      <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
+        <Protect permission={PermissionsEnum.EVENT_WRITE}>
+          <Button
+            variant="secondary"
+            size="2xs"
+            mode="outline"
+            className="p-1.5"
+            leadingIcon={RiPlayCircleLine}
+            onClick={handleTestWorkflowClick}
+            aria-label="Test workflow"
+          />
+        </Protect>
+      </PanelHeader>
+      <div className="bg-bg-weak flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          <PreviewContextContainer />
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <ResizableLayout autoSaveId="step-editor-main-layout">
+      <ResizableLayout.ContextPanel>{contextPanelContent}</ResizableLayout.ContextPanel>
 
       <ResizableLayout.Handle />
 
