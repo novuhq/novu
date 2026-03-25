@@ -4,10 +4,20 @@
 
 import * as z from "zod/v3";
 import {
-  LayoutControlValuesDto,
-  LayoutControlValuesDto$Outbound,
-  LayoutControlValuesDto$outboundSchema,
-} from "./layoutcontrolvaluesdto.js";
+  EmailControlsDto,
+  EmailControlsDto$Outbound,
+  EmailControlsDto$outboundSchema,
+} from "./emailcontrolsdto.js";
+
+/**
+ * Control values for the layout. Omit to leave unchanged, or set to null to clear stored control values.
+ */
+export type ControlValues = {
+  /**
+   * Email layout controls
+   */
+  email: EmailControlsDto;
+};
 
 export type UpdateLayoutDto = {
   /**
@@ -19,16 +29,34 @@ export type UpdateLayoutDto = {
    */
   isTranslationEnabled?: boolean | undefined;
   /**
-   * Control values for the layout
+   * Control values for the layout. Omit to leave unchanged, or set to null to clear stored control values.
    */
-  controlValues: LayoutControlValuesDto;
+  controlValues?: ControlValues | null | undefined;
 };
+
+/** @internal */
+export type ControlValues$Outbound = {
+  email: EmailControlsDto$Outbound;
+};
+
+/** @internal */
+export const ControlValues$outboundSchema: z.ZodType<
+  ControlValues$Outbound,
+  z.ZodTypeDef,
+  ControlValues
+> = z.object({
+  email: EmailControlsDto$outboundSchema,
+});
+
+export function controlValuesToJSON(controlValues: ControlValues): string {
+  return JSON.stringify(ControlValues$outboundSchema.parse(controlValues));
+}
 
 /** @internal */
 export type UpdateLayoutDto$Outbound = {
   name: string;
   isTranslationEnabled: boolean;
-  controlValues: LayoutControlValuesDto$Outbound;
+  controlValues?: ControlValues$Outbound | null | undefined;
 };
 
 /** @internal */
@@ -39,7 +67,8 @@ export const UpdateLayoutDto$outboundSchema: z.ZodType<
 > = z.object({
   name: z.string(),
   isTranslationEnabled: z.boolean().default(false),
-  controlValues: LayoutControlValuesDto$outboundSchema,
+  controlValues: z.nullable(z.lazy(() => ControlValues$outboundSchema))
+    .optional(),
 });
 
 export function updateLayoutDtoToJSON(
