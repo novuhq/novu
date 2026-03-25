@@ -16,6 +16,10 @@ describe('normalizeTagGroups', () => {
       ['c'],
     ]);
   });
+
+  it('rejects non-array values', () => {
+    expect(() => normalizeTagGroups('not-an-array' as never)).toThrow();
+  });
 });
 
 describe('checkNotificationTagFilter', () => {

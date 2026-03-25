@@ -27,6 +27,10 @@ export function normalizeTagGroups(tags: TagsFilter | undefined): string[][] {
     return [];
   }
 
+  if (!Array.isArray(tags)) {
+    throw new TagsFilterValidationError('Tags must be an array');
+  }
+
   const isNested = Array.isArray(tags[0]);
 
   if (isNested) {
