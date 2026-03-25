@@ -8,11 +8,17 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
 
 function isPrivateIp(ip: string): boolean {
   const privateRanges = [
+    /^0\.0\.0\.0$/i,
     /^127\./,
     /^10\./,
     /^172\.(1[6-9]|2[0-9]|3[01])\./,
     /^192\.168\./,
     /^169\.254\./,
+    /^::ffff:127\./i,
+    /^::ffff:10\./i,
+    /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
+    /^::ffff:192\.168\./i,
+    /^::ffff:169\.254\./i,
     /^::1$/,
     /^fc00:/i,
     /^fe80:/i,
