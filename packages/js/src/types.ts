@@ -136,6 +136,9 @@ export type Workflow = {
   severity: SeverityLevelEnum;
 };
 
+/** Inbox filter: flat `string[]` = single OR-group (legacy); `string[][]` = AND of OR-groups (CNF). */
+export type TagsFilter = string[] | string[][];
+
 export type InboxNotification = {
   id: string;
   transactionId: string;
@@ -164,7 +167,7 @@ export type InboxNotification = {
 };
 
 export type NotificationFilter = {
-  tags?: string[];
+  tags?: TagsFilter;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;

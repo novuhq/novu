@@ -1,15 +1,15 @@
 import { SubscriberEntity } from '@novu/dal';
-import { SeverityLevelEnum } from '@novu/shared';
-import { IsArray, IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
+import { type TagsFilter, SeverityLevelEnum } from '@novu/shared';
+import { IsArray, IsBoolean, IsDefined, IsOptional } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { IsEnumOrArray } from '../../../shared/validators/is-enum-or-array';
+import { IsTagsFilter } from '../../validators/is-tags-filter.validator';
 import { NotificationFilter } from '../../utils/types';
 
 class NotificationsFilter implements NotificationFilter {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()

@@ -1,9 +1,10 @@
-import { SeverityLevelEnum } from '@novu/shared';
-import { IsArray, IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
+import { type TagsFilter, SeverityLevelEnum } from '@novu/shared';
+import { IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { CursorPaginationParams } from '../../../shared/types';
 import { IsEnumOrArray } from '../../../shared/validators/is-enum-or-array';
+import { IsTagsFilter } from '../../validators/is-tags-filter.validator';
 
 export class GetNotificationsCommand extends EnvironmentWithSubscriber implements CursorPaginationParams {
   @IsInt()
@@ -21,9 +22,8 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   readonly offset: number;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  readonly tags?: string[];
+  @IsTagsFilter()
+  readonly tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()

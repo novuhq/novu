@@ -43,6 +43,7 @@ export {
   SocketTypeOption,
   StandardNovuOptions,
   Subscriber,
+  TagsFilter,
   TimeRange,
   UnreadCount,
   WebSocketEvent,
@@ -56,4 +57,5 @@ export {
   checkNotificationDataFilter,
   checkNotificationMatchesFilter,
   isSameFilter,
+  normalizeTagGroups,
 } from './utils/notification-utils';

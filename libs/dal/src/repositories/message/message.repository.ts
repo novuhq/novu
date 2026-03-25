@@ -1,10 +1,12 @@
 import {
   ActorTypeEnum,
   ButtonTypeEnum,
+  buildTagsQuery,
   ChannelTypeEnum,
   MessageActionStatusEnum,
   MessagesStatusEnum,
   SeverityLevelEnum,
+  type TagsMongoFragment,
 } from '@novu/shared';
 import { FilterQuery, ProjectionType, Types } from 'mongoose';
 
@@ -55,6 +57,28 @@ const getEntries = (obj: object, prefix = '', currentDepth = 0, maxDepth: number
 const getFlatObject = (obj: object) => {
   return Object.fromEntries(getEntries(obj, '', 0, MAX_PAYLOAD_QUERY_DEPTH));
 };
+
+function mergeTagsMongoFragment<MessageQueryT extends MessageQuery & EnforceEnvId>(
+  query: MessageQueryT,
+  fragment: TagsMongoFragment
+): MessageQueryT {
+  if (!fragment || Object.keys(fragment).length === 0) {
+    return query;
+  }
+
+  if ('tags' in fragment && fragment.tags) {
+    return { ...query, tags: fragment.tags };
+  }
+
+  if ('$and' in fragment && fragment.$and) {
+    return {
+      ...query,
+      $and: [...(query.$and ?? []), ...fragment.$and],
+    };
+  }
+
+  return query;
+}
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
   private static readonly BATCH_SIZE = 100;
@@ -116,7 +140,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     channel: ChannelTypeEnum,
     query: {
       feedId?: string[];
-      tags?: string[];
+      /** Normalized CNF: AND of OR-groups; omit or empty = no tag filter */
+      tagGroups?: string[][];
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
@@ -168,8 +193,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = { $in: [true, false] };
     }
 
-    if (query.tags && query.tags?.length > 0) {
-      requestQuery.tags = { $in: query.tags };
+    if (query.tagGroups && query.tagGroups.length > 0) {
+      requestQuery = mergeTagsMongoFragment(requestQuery, buildTagsQuery(query.tagGroups));
     }
 
     if (query.archived != null) {
@@ -270,7 +295,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       environmentId,
       channel,
       subscriberId,
-      tags,
+      tagGroups,
       read,
       archived,
       snoozed,
@@ -284,7 +309,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       environmentId: string;
       subscriberId: string;
       channel: ChannelTypeEnum;
-      tags?: string[];
+      tagGroups?: string[][];
       read?: boolean;
       archived?: boolean;
       snoozed?: boolean;
@@ -318,8 +343,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.$and = [...(query.$and ?? []), contextQuery];
     }
 
-    if (tags && tags?.length > 0) {
-      query.tags = { $in: tags };
+    if (tagGroups && tagGroups.length > 0) {
+      query = mergeTagsMongoFragment(query, buildTagsQuery(tagGroups));
     }
 
     if (typeof read === 'boolean') {
@@ -406,7 +431,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     channel: ChannelTypeEnum,
     query: {
       feedId?: string[];
-      tags?: string[];
+      tagGroups?: string[][];
       seen?: boolean;
       read?: boolean;
       archived?: boolean;
@@ -429,7 +454,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       {
         feedId: query.feedId,
         seen: query.seen,
-        tags: query.tags,
+        tagGroups: query.tagGroups,
         read: query.read,
         archived: query.archived,
         payload: query.payload,
@@ -773,7 +798,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     contextKeys?: string[];
     from: {
-      tags?: string[];
+      tagGroups?: string[][];
       data?: Record<string, unknown>;
       seen?: boolean;
       read?: boolean;
@@ -790,13 +815,16 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     const isFromArchived = from.archived !== undefined;
     const flatData = from.data ? getFlatObject({ data: from.data }) : {};
 
-    const query: MessageQuery & EnforceEnvId = {
+    let query: MessageQuery & EnforceEnvId = {
       ...flatData,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
-      ...(from.tags && from.tags?.length > 0 && { tags: { $in: from.tags } }),
       ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
     };
+
+    if (from.tagGroups && from.tagGroups.length > 0) {
+      query = mergeTagsMongoFragment(query, buildTagsQuery(from.tagGroups));
+    }
 
     if (isFromArchived) {
       if (!from.archived) {
@@ -1143,7 +1171,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string;
     subscriberId: string;
     filters: {
-      tags?: string[];
+      tagGroups?: string[][];
       data?: Record<string, unknown>;
       read?: boolean;
       archived?: boolean;
@@ -1152,13 +1180,16 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }): Promise<MessageEntity[]> {
     const flatData = filters.data ? getFlatObject({ data: filters.data }) : {};
 
-    const query: MessageQuery & EnforceEnvId = {
+    let query: MessageQuery & EnforceEnvId = {
       ...flatData,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
-      ...(filters.tags && filters.tags?.length > 0 && { tags: { $in: filters.tags } }),
       ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
     };
+
+    if (filters.tagGroups && filters.tagGroups.length > 0) {
+      query = mergeTagsMongoFragment(query, buildTagsQuery(filters.tagGroups));
+    }
 
     const isReadFiltered = filters.read !== undefined;
     const isArchivedFiltered = filters.archived !== undefined;

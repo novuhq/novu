@@ -6,6 +6,7 @@ import type {
   Redirect,
   Schedule,
   SeverityLevelEnum,
+  TagsFilter,
 } from '@novu/shared';
 import type { RulesLogic } from 'json-logic-js';
 
@@ -59,7 +60,7 @@ export type InboxNotification = {
 };
 
 export type NotificationFilter = {
-  tags?: string[];
+  tags?: TagsFilter;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;

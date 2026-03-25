@@ -1,0 +1,50 @@
+import type { TagsFilter } from '@novu/shared';
+
+/**
+ * Coerce Express query / mixed shapes into `TagsFilter` for validation + normalization.
+ */
+export function parseTagsQueryValue(value: unknown): TagsFilter | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return [];
+    }
+
+    const first = value[0];
+    if (Array.isArray(first)) {
+      return value as string[][];
+    }
+
+    return value as string[];
+  }
+
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const keys = Object.keys(record).sort((a, b) => Number(a) - Number(b));
+    const groups: string[][] = [];
+
+    for (const key of keys) {
+      const group = record[key];
+      if (Array.isArray(group)) {
+        groups.push(group.map((t) => String(t)));
+      } else if (group !== undefined && group !== null) {
+        groups.push([String(group)]);
+      }
+    }
+
+    if (groups.length === 0) {
+      return undefined;
+    }
+
+    return groups;
+  }
+
+  return undefined;
+}

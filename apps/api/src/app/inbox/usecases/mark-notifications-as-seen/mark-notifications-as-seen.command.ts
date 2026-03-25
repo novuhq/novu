@@ -1,6 +1,8 @@
+import { type TagsFilter } from '@novu/shared';
 import { IsArray, IsMongoId, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { IsTagsFilter } from '../../validators/is-tags-filter.validator';
 
 export class MarkNotificationsAsSeenCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -9,9 +11,8 @@ export class MarkNotificationsAsSeenCommand extends EnvironmentWithSubscriber {
   readonly notificationIds?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  readonly tags?: string[];
+  @IsTagsFilter()
+  readonly tags?: TagsFilter;
 
   @IsOptional()
   @IsString()

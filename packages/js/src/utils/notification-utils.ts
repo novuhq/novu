@@ -1,12 +1,89 @@
 import { Notification } from '../notifications/notification';
-import { NotificationFilter, NotificationStatus, SeverityLevelEnum } from '../types';
+import { NotificationFilter, NotificationStatus, SeverityLevelEnum, type TagsFilter } from '../types';
 import { arrayValuesEqual } from './arrays';
 
 export const SEEN_OR_UNSEEN = [NotificationStatus.SEEN, NotificationStatus.UNSEEN];
 export const READ_OR_UNREAD = [NotificationStatus.READ, NotificationStatus.UNREAD];
 
-export const areTagsEqual = (tags1?: string[], tags2?: string[]) => {
-  return arrayValuesEqual(tags1, tags2) || (!tags1 && tags2?.length === 0) || (tags1?.length === 0 && !tags2);
+const MAX_TAG_GROUPS = 30;
+const MAX_TAGS_PER_GROUP = 100;
+const MAX_TOTAL_TAGS = 200;
+
+class TagsFilterValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TagsFilterValidationError';
+  }
+}
+
+/** Normalizes legacy flat tags or CNF nested tags to `string[][]` (AND of OR-groups). */
+export function normalizeTagGroups(tags: TagsFilter | undefined): string[][] {
+  if (!tags || tags.length === 0) {
+    return [];
+  }
+
+  const isNested = Array.isArray(tags[0]);
+
+  if (isNested) {
+    const groups = tags as string[][];
+    if (groups.length > MAX_TAG_GROUPS) {
+      throw new TagsFilterValidationError(`At most ${MAX_TAG_GROUPS} tag groups are allowed`);
+    }
+
+    let total = 0;
+    for (const group of groups) {
+      if (!Array.isArray(group) || group.length === 0) {
+        throw new TagsFilterValidationError('Each tag group must be a non-empty array of strings');
+      }
+      if (group.length > MAX_TAGS_PER_GROUP) {
+        throw new TagsFilterValidationError(`At most ${MAX_TAGS_PER_GROUP} tags per group are allowed`);
+      }
+      for (const t of group) {
+        if (typeof t !== 'string') {
+          throw new TagsFilterValidationError('Tags must be strings');
+        }
+      }
+      total += group.length;
+    }
+    if (total > MAX_TOTAL_TAGS) {
+      throw new TagsFilterValidationError(`At most ${MAX_TOTAL_TAGS} total tag values are allowed`);
+    }
+
+    return groups;
+  }
+
+  const flat = tags as string[];
+  if (flat.length > MAX_TAGS_PER_GROUP) {
+    throw new TagsFilterValidationError(`At most ${MAX_TAGS_PER_GROUP} tags are allowed in a single OR-group`);
+  }
+  for (const t of flat) {
+    if (typeof t !== 'string') {
+      throw new TagsFilterValidationError('Tags must be strings');
+    }
+  }
+
+  return [flat];
+}
+
+function tagsFilterComparableString(tags?: TagsFilter): string {
+  if (!tags || tags.length === 0) {
+    return '';
+  }
+
+  const groups = normalizeTagGroups(tags);
+  const sortedGroups = groups
+    .map((g) => [...g].sort((a, b) => a.localeCompare(b)))
+    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+
+  return JSON.stringify(sortedGroups);
+}
+
+export const areTagsEqual = (tags1?: TagsFilter, tags2?: TagsFilter) => {
+  try {
+    return tagsFilterComparableString(tags1) === tagsFilterComparableString(tags2);
+  } catch {
+    return false;
+  }
 };
 
 export const areSeveritiesEqual = (
@@ -105,7 +182,7 @@ export function checkNotificationDataFilter(
  */
 export function checkNotificationTagFilter(
   notificationTags: string[] | undefined,
-  filterTags: string[] | undefined
+  filterTags: TagsFilter | undefined
 ): boolean {
   if (!filterTags || filterTags.length === 0) {
     // No tag filter specified, so it matches
@@ -117,8 +194,14 @@ export function checkNotificationTagFilter(
     return false;
   }
 
-  // Check if notification has any of the required tags
-  return filterTags.some((tag) => notificationTags.includes(tag));
+  let groups: string[][];
+  try {
+    groups = normalizeTagGroups(filterTags);
+  } catch {
+    return false;
+  }
+
+  return groups.every((group) => group.some((tag) => notificationTags.includes(tag)));
 }
 
 /**
