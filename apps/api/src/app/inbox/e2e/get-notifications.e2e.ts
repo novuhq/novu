@@ -268,22 +268,28 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
   it('should filter notifications by CNF tag groups (AND of OR-groups)', async () => {
     await triggerEvent(template, 1);
 
-    const { data: messagesBefore } = await messageRepository.paginate(
+    const target = await messageRepository.findOne(
       {
-        environmentId: session.environment._id,
-        subscriberId: subscriber?._id ?? '',
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        _templateId: template._id,
         channel: ChannelTypeEnum.IN_APP,
+        deleted: { $exists: false },
       },
-      { limit: 10, offset: 0 }
+      { _id: 1 },
+      { query: { sort: { createdAt: -1 } } }
     );
 
-    const target = messagesBefore[0];
     if (!target?._id) {
-      throw new Error('Expected at least one message');
+      throw new Error('Expected at least one message for this template');
     }
 
     await messageRepository.update(
-      { _id: target._id, _environmentId: session.environment._id },
+      {
+        _id: target._id,
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+      },
       { $set: { tags: ['product:pay', 'category:reminder'] } }
     );
 
