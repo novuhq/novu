@@ -133,6 +133,7 @@ export class PreviewPayload {
   payload?: Record<string, unknown>;
   context?: ContextPayload;
   steps?: Record<string, unknown>; // step.stepId.unknown
+  env?: Record<string, unknown>;
 }
 
 export class GeneratePreviewResponseDto {

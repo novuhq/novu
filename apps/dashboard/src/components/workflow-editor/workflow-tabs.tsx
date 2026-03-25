@@ -323,6 +323,7 @@ export const WorkflowTabs = () => {
       resourceType: AiResourceTypeEnum.WORKFLOW,
       resourceId: workflow?._id,
       agentType: AiAgentTypeEnum.GENERATE_WORKFLOW,
+      metadata: { workflowId: workflow?._id },
       isResourceLoading: isWorkflowPending,
       onRefetchResource: () => refetchWorkflow({ cancelRefetch: true }),
       onData: (data: { type: string }) => {
@@ -494,11 +495,7 @@ export const WorkflowTabs = () => {
         to={subscriberData}
         payload={JSON.stringify(integrationPayload, null, 2)}
       />
-      <TestWorkflowDrawer
-        isOpen={isTriggerDrawerOpen}
-        onOpenChange={setIsTriggerDrawerOpen}
-        testData={testData}
-      />
+      <TestWorkflowDrawer isOpen={isTriggerDrawerOpen} onOpenChange={setIsTriggerDrawerOpen} testData={testData} />
     </div>
   );
 

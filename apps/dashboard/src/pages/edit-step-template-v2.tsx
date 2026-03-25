@@ -19,17 +19,34 @@ export function EditStepTemplateV2Page() {
     shouldFocusError: false,
   });
 
-  // Initialize the form exactly once when step data first becomes available.
-  // We deliberately avoid the `values` prop on useForm because it calls form.reset()
-  // on every render where `values` has a new reference — which regenerates all
-  // useFieldArray field IDs and causes visible row flicker on every save round-trip.
+  // Avoid the `values` prop on useForm: a new object reference each render triggers
+  // form.reset() constantly and regenerates useFieldArray field IDs (visible flicker).
+  // Instead reset when the step identity or server-sourced controls actually change
+  // (navigation, resolver hash, autosave response, or refetch e.g. Copilot).
   const hasInitializedRef = useRef(false);
-  const prevHashRef = useRef(step?.stepResolverHash);
+  const prevStepIdRef = useRef<string | undefined>(undefined);
+  const prevHashRef = useRef<string | undefined>(undefined);
+  const prevControlsFingerprintRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!step) return;
+
+    const fingerprint = JSON.stringify({
+      v: step.controls?.values,
+      ui: step.controls?.uiSchema,
+      ds: step.controls?.dataSchema,
+    });
+
+    const isFirstBind = prevStepIdRef.current === undefined;
+    const stepIdChanged = !isFirstBind && prevStepIdRef.current !== step.stepId;
     const hashChanged = step.stepResolverHash !== prevHashRef.current;
-    prevHashRef.current = step.stepResolverHash;
-    if (!hasInitializedRef.current || hashChanged) {
+    const controlsChanged =
+      prevControlsFingerprintRef.current !== null && fingerprint !== prevControlsFingerprintRef.current;
+
+    if (isFirstBind || stepIdChanged || hashChanged || controlsChanged) {
+      prevStepIdRef.current = step.stepId;
+      prevHashRef.current = step.stepResolverHash;
+      prevControlsFingerprintRef.current = fingerprint;
       hasInitializedRef.current = true;
       form.reset(getControlsDefaultValues(step), { keepErrors: true });
     }

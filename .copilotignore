@@ -1,5 +1,4 @@
-# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
-apps/api/src/metadata.ts
+# GitHub Copilot ignore file — same exclusions as .cursorignore
 
 # IDE configs — includes stale run configs for removed projects (apps/web, libs/embed, widget)
 .idea/

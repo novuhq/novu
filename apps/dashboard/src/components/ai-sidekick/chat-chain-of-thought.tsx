@@ -11,8 +11,11 @@ import {
   RiEdit2Line,
   RiLoader3Line,
 } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { useEnvironment } from '@/context/environment/hooks';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ChainOfThought, ChainOfThoughtContent, ChainOfThoughtStep } from '../ai-elements/chain-of-thought';
 import { Shimmer } from '../ai-elements/shimmer';
@@ -22,6 +25,7 @@ import { Badge } from '../primitives/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../primitives/collapsible';
 import { Skeleton } from '../primitives/skeleton';
 import { Tag } from '../primitives/tag';
+import { useWorkflow } from '../workflow-editor/workflow-provider';
 import { StyledMessageResponse } from './chat-message-response';
 import { isCancelledToolCall, unwrapToolResult } from './message-utils';
 
@@ -175,10 +179,39 @@ function WorkflowStepItem({
   isStreaming: boolean;
   action: 'add' | 'edit' | 'remove';
 }) {
+  const navigate = useNavigate();
+  const { workflow } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
   const showStreaming = isStreaming || !output;
   const stepType = (output?.type ?? StepTypeEnum.IN_APP) as StepTypeEnum;
   const Icon = STEP_TYPE_TO_ICON[stepType] ?? STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP];
   const color = STEP_TYPE_TO_COLOR[stepType] ?? STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP];
+
+  const matchedStep = useMemo(
+    () => workflow?.steps.find((s) => s.stepId === output?.stepId),
+    [workflow?.steps, output?.stepId]
+  );
+  const isClickable = !!matchedStep && action !== 'remove';
+  const routeStepType = (matchedStep?.type ?? stepType) as StepTypeEnum;
+
+  const handleClick = () => {
+    if (!isClickable || !matchedStep) return;
+
+    const baseParams = {
+      environmentSlug: currentEnvironment?.slug ?? '',
+      workflowSlug: workflow?.slug ?? '',
+    };
+
+    const stepRoute =
+      routeStepType === StepTypeEnum.DELAY ||
+      routeStepType === StepTypeEnum.DIGEST ||
+      routeStepType === StepTypeEnum.THROTTLE
+        ? ROUTES.EDIT_STEP
+        : ROUTES.EDIT_STEP_TEMPLATE;
+
+    const absolutePath = `${buildRoute(ROUTES.EDIT_WORKFLOW, baseParams)}/${buildRoute(stepRoute, { stepSlug: matchedStep.slug })}`;
+    navigate(absolutePath);
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -201,10 +234,11 @@ function WorkflowStepItem({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={stepTransition}
-          className={cn(stepItemBaseClasses, 'bg-bg-weak')}
+          className={cn(stepItemBaseClasses, 'bg-bg-weak', isClickable && 'cursor-pointer hover:bg-bg-weak/80')}
+          onClick={isClickable ? handleClick : undefined}
         >
           <div
-            className="flex size-5 items-center justify-center border opacity-40 rounded-full"
+            className="flex size-5 min-w-5 items-center justify-center border opacity-40 rounded-full"
             style={{ borderColor: `hsl(var(--${color}))`, color: `hsl(var(--${color}))` }}
           >
             <Icon className="size-3" />

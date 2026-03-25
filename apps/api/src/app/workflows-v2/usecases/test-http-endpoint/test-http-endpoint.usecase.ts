@@ -131,6 +131,7 @@ export class TestHttpEndpointUsecase {
       subscriber: previewPayload.subscriber ?? {},
       payload: previewPayload.payload ?? {},
       steps: previewPayload.steps ?? {},
+      env: previewPayload.env ?? {},
       ...(previewPayload.context ? { context: previewPayload.context } : {}),
     };
   }

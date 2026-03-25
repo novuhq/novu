@@ -45,6 +45,7 @@ export type AiChatResourceConfig = {
   resourceType: AiResourceTypeEnum;
   resourceId?: string;
   agentType: AiAgentTypeEnum;
+  metadata?: Record<string, unknown>;
   isResourceLoading?: boolean;
   onRefetchResource?: () => void;
   onData?: (data: { type: string }) => void;
@@ -118,6 +119,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
     resourceType,
     resourceId,
     agentType,
+    metadata,
     isResourceLoading = false,
     onRefetchResource,
     onData,
@@ -200,7 +202,16 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
         });
       },
     });
-  const dataRef = useDataRef({ isGenerating, resourceType, resourceId, agentType, isAborted, latestChat, messages });
+  const dataRef = useDataRef({
+    isGenerating,
+    resourceType,
+    resourceId,
+    agentType,
+    isAborted,
+    latestChat,
+    messages,
+    metadata,
+  });
 
   const { keepChanges, isPending: isKeepPending } = useKeepAiChanges();
   const { revertMessage, isPending: isRevertPending } = useRevertMessage();
@@ -267,7 +278,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
   const handleSendMessage = useCallback(
     async (message: string) => {
-      const { resourceType, resourceId, agentType, latestChat, messages } = dataRef.current;
+      const { resourceType, resourceId, agentType, latestChat, messages, metadata } = dataRef.current;
       const isLastUserMessage = messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
 
       const messageToSend = message.trim();
@@ -280,12 +291,17 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
           resourceType,
           agentType,
         });
-        sendPrompt({ chatId: newChat._id, prompt: messageToSend });
+        sendPrompt({ chatId: newChat._id, prompt: messageToSend, metadata: { ...metadata } });
       } else if (isLastUserMessage) {
         const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
-        sendPrompt({ messageId: lastUserMessage?.id, chatId: latestChat._id, prompt: messageToSend });
+        sendPrompt({
+          messageId: lastUserMessage?.id,
+          chatId: latestChat._id,
+          prompt: messageToSend,
+          metadata: { ...metadata },
+        });
       } else if (messageToSend) {
-        sendPrompt({ chatId: latestChat._id, prompt: messageToSend });
+        sendPrompt({ chatId: latestChat._id, prompt: messageToSend, metadata: { ...metadata } });
       }
 
       track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
