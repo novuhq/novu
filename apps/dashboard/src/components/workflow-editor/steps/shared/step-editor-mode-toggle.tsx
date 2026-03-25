@@ -194,7 +194,7 @@ export function StepEditorModeToggle() {
                   <span className="text-paragraph-xs text-text-soft">You can switch back anytime</span>
                 </div>
                 <a
-                  href="https://docs.novu.co/framework/overview"
+                  href="https://docs.novu.co/platform/workflow/add-and-configure-steps/code-steps"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-0.5 text-label-xs text-text-strong hover:underline"
