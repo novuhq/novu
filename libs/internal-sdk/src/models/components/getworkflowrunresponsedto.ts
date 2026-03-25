@@ -146,6 +146,10 @@ export type GetWorkflowRunResponseDto = {
    * Trigger payload
    */
   payload: Payload;
+  /**
+   * Trigger overrides passed to the original workflow trigger
+   */
+  overrides?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -203,6 +207,7 @@ export const GetWorkflowRunResponseDto$inboundSchema: z.ZodType<
   topics: z.array(TopicResponseDto$inboundSchema).optional(),
   steps: z.array(StepRunDto$inboundSchema),
   payload: z.lazy(() => Payload$inboundSchema),
+  overrides: z.record(z.any()).optional(),
 });
 
 export function getWorkflowRunResponseDtoFromJSON(
