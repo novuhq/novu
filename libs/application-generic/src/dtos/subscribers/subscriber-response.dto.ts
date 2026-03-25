@@ -10,14 +10,14 @@ export class SubscriberResponseDtoOptional {
   })
   _id?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The first name of the subscriber.',
     type: String,
     nullable: true,
   })
   firstName?: string | null;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The last name of the subscriber.',
     type: String,
     nullable: true,

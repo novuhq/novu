@@ -22,11 +22,11 @@ export type SubscriberResponseDtoOptional = {
   /**
    * The first name of the subscriber.
    */
-  firstName: string | null;
+  firstName?: string | null | undefined;
   /**
    * The last name of the subscriber.
    */
-  lastName: string | null;
+  lastName?: string | null | undefined;
   /**
    * The email address of the subscriber.
    */
@@ -82,8 +82,8 @@ export const SubscriberResponseDtoOptional$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   _id: z.string().optional(),
-  firstName: z.nullable(z.string()),
-  lastName: z.nullable(z.string()),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
   email: z.nullable(z.string()).optional(),
   phone: z.nullable(z.string()).optional(),
   avatar: z.nullable(z.string()).optional(),
@@ -104,8 +104,8 @@ export const SubscriberResponseDtoOptional$inboundSchema: z.ZodType<
 /** @internal */
 export type SubscriberResponseDtoOptional$Outbound = {
   _id?: string | undefined;
-  firstName: string | null;
-  lastName: string | null;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
   email?: string | null | undefined;
   phone?: string | null | undefined;
   avatar?: string | null | undefined;
@@ -126,8 +126,8 @@ export const SubscriberResponseDtoOptional$outboundSchema: z.ZodType<
   SubscriberResponseDtoOptional
 > = z.object({
   id: z.string().optional(),
-  firstName: z.nullable(z.string()),
-  lastName: z.nullable(z.string()),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
   email: z.nullable(z.string()).optional(),
   phone: z.nullable(z.string()).optional(),
   avatar: z.nullable(z.string()).optional(),
