@@ -58,6 +58,7 @@ export interface GetWorkflowRunsDto {
 
 export type GetWorkflowRunResponse = GetWorkflowRunsDto & {
   payload: Record<string, unknown>;
+  overrides?: Record<string, unknown>;
 };
 
 export interface GetWorkflowRunsResponseDto {
@@ -67,6 +68,11 @@ export interface GetWorkflowRunsResponseDto {
 }
 
 function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkflowRunsDto): IActivity {
+  const resolvedOverrides = ('overrides' in workflowRun ? (workflowRun.overrides ?? {}) : {}) as Record<
+    string,
+    Record<string, unknown>
+  >;
+
   return {
     _id: workflowRun.id,
     severity: workflowRun.severity,
@@ -151,7 +157,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       _templateId: workflowRun.workflowId,
       payload: 'payload' in workflowRun ? workflowRun.payload : {},
       providerId: step.providerId,
-      overrides: {},
+      overrides: resolvedOverrides,
       transactionId: workflowRun.transactionId,
       createdAt: workflowRun.createdAt,
       updatedAt: workflowRun.updatedAt,

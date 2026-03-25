@@ -112,8 +112,11 @@ export class GetWorkflowRun {
       }
 
       const workflowRun = workflowRunResult.data;
-      const stepRuns = await this.getStepRunsForWorkflowRun(command, workflowRun);
-      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns);
+      const [stepRuns, overrides] = await Promise.all([
+        this.getStepRunsForWorkflowRun(command, workflowRun),
+        this.getOverridesByTransactionId(workflowRun.transaction_id, command),
+      ]);
+      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns, overrides);
 
       return workflowRunDto;
     } catch (error) {
@@ -167,6 +170,29 @@ export class GetWorkflowRun {
       );
 
       return new Map();
+    }
+  }
+
+  private async getOverridesByTransactionId(
+    transactionId: string,
+    command: GetWorkflowRunCommand
+  ): Promise<Record<string, unknown>> {
+    try {
+      const jobs: Pick<JobEntity, 'overrides'>[] = await this.jobRepository.find(
+        {
+          transactionId,
+          _environmentId: command.environmentId,
+        },
+        'overrides'
+      );
+
+      const firstWithOverrides = jobs.find((job) => job.overrides && Object.keys(job.overrides).length > 0);
+
+      return firstWithOverrides?.overrides ?? {};
+    } catch (error) {
+      this.logger.warn({ error: error.message, transactionId }, 'Failed to get job overrides data');
+
+      return {};
     }
   }
 
@@ -298,7 +324,8 @@ export class GetWorkflowRun {
 
   private mapWorkflowRunToDto(
     workflowRun: WorkflowRunFetchResult,
-    stepRuns: IStepRunWithDetails[]
+    stepRuns: IStepRunWithDetails[],
+    overrides: Record<string, unknown>
   ): GetWorkflowRunResponseDto {
     return {
       id: workflowRun.workflow_run_id,
@@ -320,6 +347,7 @@ export class GetWorkflowRun {
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,
       topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : [],
+      overrides,
     };
   }
 }

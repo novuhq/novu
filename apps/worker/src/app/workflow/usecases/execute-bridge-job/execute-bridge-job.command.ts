@@ -1,4 +1,4 @@
-import { EnvironmentWithUserCommand, IFilterVariables } from '@novu/application-generic';
+import { EnvironmentWithUserCommand, ICompileContext } from '@novu/application-generic';
 
 import { JobEntity, NotificationTemplateEntity } from '@novu/dal';
 import { IsDefined, IsOptional, IsString } from 'class-validator';
@@ -27,7 +27,7 @@ export class ExecuteBridgeJobCommand extends EnvironmentWithUserCommand {
   job: JobEntity;
 
   @IsDefined()
-  variables?: IFilterVariables;
+  variables?: Partial<ICompileContext>;
 
   @IsOptional()
   workflow?: NotificationTemplateEntity;

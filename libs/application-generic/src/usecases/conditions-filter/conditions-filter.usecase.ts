@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   EnvironmentRepository,
-  ExecutionDetailsRepository,
   JobEntity,
   JobRepository,
   MessageRepository,
@@ -10,7 +9,6 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import {
-  ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FILTER_TO_LABEL,
