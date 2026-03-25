@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -56,12 +56,15 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     };
   }, [toggleCommandPalette]);
 
-  const value = {
-    isOpen,
-    openCommandPalette,
-    closeCommandPalette,
-    toggleCommandPalette,
-  };
+  const value = useMemo(
+    () => ({
+      isOpen,
+      openCommandPalette,
+      closeCommandPalette,
+      toggleCommandPalette,
+    }),
+    [isOpen, openCommandPalette, closeCommandPalette, toggleCommandPalette]
+  );
 
   return <CommandPaletteContext.Provider value={value}>{children}</CommandPaletteContext.Provider>;
 }

@@ -19,6 +19,7 @@ import { ChannelConnectionsModule } from './app/channel-connections/channel-conn
 import { ChannelEndpointsModule } from './app/channel-endpoints/channel-endpoints.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { ContextsModule } from './app/contexts/contexts.module';
+import { EnvironmentVariablesModule } from './app/environment-variables/environment-variables.module';
 import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
 import { EnvironmentsModule } from './app/environments-v2/environments.module';
 import { EventsModule } from './app/events/events.module';
@@ -131,6 +132,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TopicsV2Module,
   BlueprintModule,
   TenantModule,
+  EnvironmentVariablesModule,
   StorageModule,
   WorkflowOverridesModule,
   RateLimitingModule,

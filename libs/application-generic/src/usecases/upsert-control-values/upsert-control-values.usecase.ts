@@ -8,7 +8,7 @@ export class UpsertControlValuesUseCase {
   constructor(private controlValuesRepository: ControlValuesRepository) {}
 
   async execute(command: UpsertControlValuesCommand) {
-    const existingControlValues = await this.controlValuesRepository.findFirst({
+    const existingControlValues = await this.controlValuesRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _workflowId: command.workflowId,

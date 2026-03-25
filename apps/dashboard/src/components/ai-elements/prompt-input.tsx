@@ -608,6 +608,7 @@ export const PromptInput = ({
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
+    event.stopPropagation();
 
     const form = event.currentTarget;
     const text = usingProvider

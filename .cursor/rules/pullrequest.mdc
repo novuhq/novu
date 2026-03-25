@@ -1,10 +1,17 @@
 ---
-description: When creating a new pull request on GitHub, use this to specifiy the contents
+description: When creating a new pull request on GitHub, use this to specify the contents
 alwaysApply: false
 ---
 
 ### Pull Request Rules
-- When creating a pull request, use the following format semantic format for semantic pr title:
-  - Title: fix([scope]): [description] (e.g. feat(dashboard): add new feature)
-  - Description: A detailed description of the changes made in the pull request
-- If working on a linear issue, add fixes NV-<issue-number> to the title end
+
+**Title format**: `type(scope): Description fixes NOV-<ticket-id>`
+
+- Examples: `feat(dashboard): add workflow trigger button fixes NOV-123`, `fix(api-service): handle null subscriber case fixes NOV-456`
+- Omit the `fixes NOV-XXX` suffix when no Linear ticket is in context
+
+**Scopes**: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`
+
+**Description**: Summarize what changed and why. List breaking changes. Add screenshots for UI changes. For non-trivial logic or architecture changes, include a concise Mermaid diagram (flow, sequence, or component) so reviewers can grasp the change at a glance.
+
+**Enterprise packages**: When changes touch `enterprise/`, also open a matching PR in `novuhq/packages-enterprise` on a branch from `next`.

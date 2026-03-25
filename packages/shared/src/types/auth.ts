@@ -65,6 +65,8 @@ export enum PermissionsEnum {
   BRIDGE_WRITE = 'org:bridge:write',
   ORG_SETTINGS_WRITE = 'org:settings:write',
   ORG_SETTINGS_READ = 'org:settings:read',
+  ENVIRONMENT_VARIABLE_READ = 'org:environmentvariable:read',
+  ENVIRONMENT_VARIABLE_WRITE = 'org:environmentvariable:write',
 }
 
 export const ALL_PERMISSIONS = Object.values(PermissionsEnum);
@@ -95,6 +97,8 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
     PermissionsEnum.BRIDGE_WRITE,
     PermissionsEnum.ORG_SETTINGS_WRITE,
     PermissionsEnum.ORG_SETTINGS_READ,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_READ,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE,
   ],
   [MemberRoleEnum.ADMIN]: [
     PermissionsEnum.WORKFLOW_READ,
@@ -120,6 +124,8 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
     PermissionsEnum.BRIDGE_WRITE,
     PermissionsEnum.ORG_SETTINGS_WRITE,
     PermissionsEnum.ORG_SETTINGS_READ,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_READ,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE,
   ],
   [MemberRoleEnum.AUTHOR]: [
     PermissionsEnum.WORKFLOW_READ,
@@ -134,6 +140,8 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
     PermissionsEnum.TOPIC_WRITE,
     PermissionsEnum.NOTIFICATION_READ,
     PermissionsEnum.BRIDGE_WRITE,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_READ,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE,
   ],
   [MemberRoleEnum.VIEWER]: [
     PermissionsEnum.WORKFLOW_READ,
@@ -142,6 +150,7 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
     PermissionsEnum.SUBSCRIBER_READ,
     PermissionsEnum.TOPIC_READ,
     PermissionsEnum.NOTIFICATION_READ,
+    PermissionsEnum.ENVIRONMENT_VARIABLE_READ,
   ],
   [MemberRoleEnum.OSS_MEMBER]: [],
   [MemberRoleEnum.OSS_ADMIN]: [],

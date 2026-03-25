@@ -36,6 +36,7 @@ export const VALID_DYNAMIC_PATHS = [
   'subscriber.data.',
   'payload.',
   'context.',
+  'env.',
   /^steps\.[^.]+\.events\[\d+\]\.payload\./,
 ] as const;
 

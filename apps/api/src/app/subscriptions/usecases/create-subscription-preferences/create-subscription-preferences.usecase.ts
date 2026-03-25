@@ -6,7 +6,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
-import { NotificationTemplateEntity, PreferencesRepository, TopicSubscribersEntity } from '@novu/dal';
+import { ErrorCodesEnum, NotificationTemplateEntity, PreferencesRepository, TopicSubscribersEntity } from '@novu/dal';
 import {
   buildWorkflowPreferences,
   PreferencesTypeEnum,
@@ -61,7 +61,8 @@ export class CreateSubscriptionPreferencesUsecase {
           contextKeys: command.contextKeys,
         });
       } catch (error) {
-        const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+        const isDuplicateKeyError =
+          error && typeof error === 'object' && 'code' in error && error.code === ErrorCodesEnum.DUPLICATE_KEY;
 
         if (isDuplicateKeyError) {
           createdPreference = await this.preferencesRepository.findOne({

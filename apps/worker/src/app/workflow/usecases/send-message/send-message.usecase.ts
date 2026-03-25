@@ -11,14 +11,18 @@ import {
   GetSubscriberTemplatePreferenceCommand,
   IConditionsFilterResponse,
   IFilterVariables,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   NormalizeVariables,
   NormalizeVariablesCommand,
   PlatformException,
+  resolveEnvironmentVariables,
 } from '@novu/application-generic';
 import {
   ContextRepository,
+  EnvironmentVariableRepository,
   JobEntity,
   NotificationTemplateRepository,
   SubscriberRepository,
@@ -76,7 +80,9 @@ export class SendMessage {
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
     private contextRepository: ContextRepository,
-    private executeBridgeJob: ExecuteBridgeJob
+    private environmentVariableRepository: EnvironmentVariableRepository,
+    private executeBridgeJob: ExecuteBridgeJob,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @InstrumentUsecase()
@@ -427,7 +433,7 @@ export class SendMessage {
 
   @Instrument()
   private async buildCompileContext(command: SendMessageCommand): Promise<SendMessageChannelCommand['compileContext']> {
-    const [subscriber, actor, tenant, context] = await Promise.all([
+    const [subscriber, actor, tenant, context, envVars] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -439,6 +445,7 @@ export class SendMessage {
         }),
       this.handleTenantExecution(command.job),
       this.resolveContext(command),
+      this.getEnvironmentVariables(command),
     ]);
 
     if (!subscriber) throw new PlatformException('Subscriber not found');
@@ -454,7 +461,39 @@ export class SendMessage {
       ...(tenant && { tenant }),
       ...(actor && { actor }),
       ...(context && { context }),
+      ...(Object.keys(envVars).length > 0 && { env: envVars }),
     };
+  }
+
+  @Instrument()
+  private async getEnvironmentVariables(command: SendMessageCommand): Promise<Record<string, string>> {
+    const cacheKey = `${command.organizationId}:${command.environmentId}`;
+
+    return this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.ENVIRONMENT_VARIABLES,
+      cacheKey,
+      async () => {
+        try {
+          const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
+            command.organizationId,
+            command.environmentId
+          );
+
+          return resolveEnvironmentVariables(rawEnvVars);
+        } catch (error) {
+          Logger.warn(
+            { err: error, organizationId: command.organizationId, environmentId: command.environmentId },
+            'Failed to fetch environment variables, falling back to empty object'
+          );
+
+          return {};
+        }
+      },
+      {
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }
+    );
   }
 
   @Instrument()

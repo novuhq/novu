@@ -1,0 +1,32 @@
+---
+description: Infrastructure setup, Docker services, and environment configuration
+globs:
+  - "docker/**/*"
+  - "*.env*"
+  - ".env*"
+  - "**/docker-compose*"
+alwaysApply: false
+---
+
+## Infrastructure
+
+**Start all services:** `docker compose -f docker/local/docker-compose.yml up -d`
+
+**Agent environments** use a separate compose file — restart after a reboot with:
+`docker compose -f docker/local/docker-compose.agent.yml up -d`
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| MongoDB | 27017 | Primary database |
+| Redis | 6379 | Caching + Bull queues |
+| ClickHouse | 8123 (HTTP) / 9000 (native) | Analytics, activity feed, traces |
+| LocalStack | 4566 | S3 emulation (optional) |
+
+**Services needed per task:**
+- Dashboard UI only: nothing (user has it running on port 4201)
+- API endpoints: `pnpm start:api:dev`
+- Notification flows: API + `pnpm start:worker`
+- Real-time features: API + Worker + `pnpm start:ws`
+- Full stack: `docker compose` + all of the above
+
+Run `pnpm build` before starting services only if changes were made to `libs/`, `packages/`, or `enterprise/`.

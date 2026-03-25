@@ -151,7 +151,6 @@ export function EditableJsonViewer({
         'max-h-[400px] min-h-[100px] overflow-hidden',
         'font-mono text-xs',
         'flex flex-col',
-        isReadOnly && 'pointer-events-none',
         className
       )}
     >
@@ -193,9 +192,9 @@ export function EditableJsonViewer({
           icons={JSON_EDITOR_ICONS}
           showErrorMessages={false}
           showStringQuotes={true}
-          showCollectionCount={!isReadOnly}
+          showCollectionCount={true}
           showArrayIndices={false}
-          enableClipboard={!isReadOnly}
+          enableClipboard={true}
           restrictEdit={isReadOnly}
           restrictDelete
           restrictAdd
