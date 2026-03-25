@@ -43,12 +43,20 @@ Novu uses a git submodule at `.source` pointing to `git@github.com:novuhq/packag
 ## Making Changes in the Submodule
 
 1. Pull latest from both repos.
-2. Create branches in both the main repo and submodule. **Start from a branch in the submodule, not a detached HEAD.**
+2. Create branches in both the main repo and submodule using the same Conventional Commits name (e.g., `feat/scope-description-fixes-NOV-123`). **Start from a branch in the submodule, not a detached HEAD.**
 3. Implement changes.
 4. Commit in the **submodule first**, then the main repo.
-5. Push both repos: `git push --recurse-submodules=on-demand` or push each manually.
-6. Create PRs in both repos with links to each other.
-7. **Merge the submodule PR first**, then the main repo PR (to avoid broken builds for teammates).
+5. Push the submodule branch from inside `.source/`: `git push`
+6. Create the enterprise PR from the workspace root (do NOT `cd` into the submodule):
+   ```bash
+   gh pr create --repo novuhq/packages-enterprise --head <branch-name> --base next --title "..." --body "..."
+   ```
+   If this fails due to permissions, give the user this link instead:
+   ```
+   https://github.com/novuhq/packages-enterprise/compare/next...<branch-name>
+   ```
+7. Push the main repo branch and create its PR with `gh pr create`. Mention the enterprise PR link in the body.
+8. **Merge the submodule PR first**, then the main repo PR (to avoid broken builds for teammates).
 
 ## Troubleshooting
 

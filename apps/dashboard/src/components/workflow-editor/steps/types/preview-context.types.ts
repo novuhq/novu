@@ -15,11 +15,14 @@ export type PreviewContextPanelProps = {
   onLocaleChange?: (locale: string) => void;
 };
 
+export type EnvData = Record<string, string>;
+
 export type ParsedData = {
   payload: PayloadData;
   subscriber: PreviewSubscriberData;
   steps: StepsData;
   context: ContextPayload;
+  env: EnvData;
 };
 
 export type ValidationErrors = {
@@ -27,6 +30,7 @@ export type ValidationErrors = {
   subscriber: string | null;
   steps: string | null;
   context: string | null;
+  env: string | null;
 };
 
 export type AccordionSectionProps = {
@@ -62,4 +66,11 @@ export type ContextSectionProps = Omit<AccordionSectionProps, 'errors' | 'localP
   schema?: JSONSchema7;
   onUpdate: (section: 'context', data: ContextPayload) => void;
   onClearPersisted?: () => void;
+  className?: string;
+};
+
+export type EnvSectionProps = {
+  schema?: JSONSchema7;
+  env: EnvData;
+  onUpdate: (section: 'env', data: EnvData) => void;
 };

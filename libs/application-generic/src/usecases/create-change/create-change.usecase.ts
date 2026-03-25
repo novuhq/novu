@@ -1,8 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
-import { applyDiff, getDiff } from 'recursive-diff';
+import { applyDiff, getDiff, rdiffResult } from 'recursive-diff';
 
 import { CreateChangeCommand } from './create-change.command';
+
+function sanitizeDiff(diff: unknown): rdiffResult[] {
+  if (!Array.isArray(diff)) return [];
+
+  return diff.filter((item) => item && Array.isArray(item.path));
+}
 
 @Injectable()
 export class CreateChange {
@@ -18,7 +24,10 @@ export class CreateChange {
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {
-        return applyDiff(prev, change.change);
+        const sanitized = sanitizeDiff(change.change);
+        if (sanitized.length === 0) return prev;
+
+        return applyDiff(prev, sanitized);
       }, {});
 
     const changePayload = getDiff(aggregatedItem, command.item, true);

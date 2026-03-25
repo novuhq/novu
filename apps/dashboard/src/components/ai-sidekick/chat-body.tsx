@@ -1,5 +1,5 @@
 import { ChatStatus, UIMessage } from 'ai';
-import { useMemo } from 'react';
+import { FormEvent, useMemo } from 'react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
 import { Message } from '../ai-elements/message';
 import {
@@ -106,7 +106,10 @@ export const ChatBody = ({
   const isSubmitGuard = !inputText.trim() || isGenerating || isSubmitDisabled;
   const isSubmitButtonDisabled = (!inputText.trim() && !isGenerating) || isSubmitDisabled;
 
-  const onSubmitHandler = (message: PromptInputMessage) => {
+  const onSubmitHandler = (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (isSubmitGuard) return;
 
     onSubmit(message.text);
@@ -193,6 +196,15 @@ export const ChatBody = ({
             <PromptInputTextarea
               onChange={(event) => onInputChange(event.target.value)}
               value={inputText}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+
+                  if (!isSubmitGuard) {
+                    onSubmit(inputText);
+                  }
+                }
+              }}
               placeholder="Ask for changes… eg: Make the workflow high severity.."
             />
           </PromptInputBody>

@@ -12,6 +12,7 @@ export type Event = {
   action: Exclude<PostActionEnum, PostActionEnum.TRIGGER>;
   subscriber: Subscriber;
   context: ContextResolved;
+  env?: Record<string, string>;
 };
 
 export type State = {

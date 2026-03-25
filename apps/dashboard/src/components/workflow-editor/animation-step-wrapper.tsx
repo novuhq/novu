@@ -12,9 +12,9 @@ export function AnimationStepWrapper({ children, isPending, isRemoving, classNam
   return (
     <div
       className={cn(
-        'transition-all duration-1000 scale-100 ease-in-out',
+        'transition-all duration-500 scale-100 ease-in-out',
         {
-          'opacity-70 scale-95 animate-[pulse_5s_ease-in-out_infinite]': isPending,
+          'opacity-70 scale-[0.97] animate-[pulse_5s_ease-in-out_infinite]': isPending,
           'opacity-40 scale-95': isRemoving,
         },
         className

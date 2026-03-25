@@ -58,6 +58,14 @@ const baseModuleConfig: Options = {
   ...baseConfig,
   treeshake: true,
   dts: true,
+  // Bundle all Solid ecosystem packages so consumers in any framework (React, Vue, Solid, vanilla)
+  // don't need to resolve raw Solid JSX from node_modules. Packages like solid-motionone and
+  // @kobalte/core export raw .jsx under the "solid" export condition, which consumer bundlers
+  // may not compile correctly, causing "React is not defined" errors.
+  noExternal: [/^solid-/, /^@kobalte\//, /^@solid-primitives\//, /^@motionone\//],
+  esbuildOptions(options) {
+    options.conditions = [...(options.conditions || []), 'browser'];
+  },
   entry: {
     index: './src/index.ts',
     'ui/index': './src/ui/index.ts',

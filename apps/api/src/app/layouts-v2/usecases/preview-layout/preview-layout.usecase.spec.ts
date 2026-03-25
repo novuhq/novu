@@ -7,6 +7,7 @@ import {
   PreviewPayloadProcessorService,
   PreviewStep,
 } from '@novu/application-generic';
+import { EnvironmentVariableRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   LAYOUT_PREVIEW_EMAIL_STEP,
@@ -26,6 +27,7 @@ describe('PreviewLayoutUsecase', () => {
   let payloadProcessorMock: sinon.SinonStubbedInstance<PreviewPayloadProcessorService>;
   let payloadMergerMock: sinon.SinonStubbedInstance<PayloadMergerService>;
   let previewStepUsecaseMock: sinon.SinonStubbedInstance<PreviewStep>;
+  let environmentVariableRepositoryMock: sinon.SinonStubbedInstance<EnvironmentVariableRepository>;
 
   let previewLayoutUsecase: PreviewLayoutUsecase;
 
@@ -116,6 +118,7 @@ describe('PreviewLayoutUsecase', () => {
     payloadProcessorMock = sinon.createStubInstance(PreviewPayloadProcessorService);
     payloadMergerMock = sinon.createStubInstance(PayloadMergerService);
     previewStepUsecaseMock = sinon.createStubInstance(PreviewStep);
+    environmentVariableRepositoryMock = sinon.createStubInstance(EnvironmentVariableRepository);
 
     previewLayoutUsecase = new PreviewLayoutUsecase(
       getLayoutUseCaseMock as any,
@@ -123,7 +126,8 @@ describe('PreviewLayoutUsecase', () => {
       controlValueSanitizerMock as any,
       payloadProcessorMock as any,
       payloadMergerMock as any,
-      previewStepUsecaseMock as any
+      previewStepUsecaseMock as any,
+      environmentVariableRepositoryMock as any
     );
 
     // Default mocks setup
@@ -137,6 +141,7 @@ describe('PreviewLayoutUsecase', () => {
     payloadMergerMock.mergePayloadExample.resolves(mockPayloadExample);
     payloadProcessorMock.cleanPreviewExamplePayload.returns(mockCleanedPayloadExample);
     previewStepUsecaseMock.execute.resolves(mockPreviewStepOutput as any);
+    environmentVariableRepositoryMock.findByEnvironment.resolves([]);
   });
 
   afterEach(() => {

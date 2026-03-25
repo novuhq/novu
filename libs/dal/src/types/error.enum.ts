@@ -1,3 +1,3 @@
 export enum ErrorCodesEnum {
-  DUPLICATE_KEY = '11000',
+  DUPLICATE_KEY = 11000,
 }
