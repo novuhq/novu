@@ -16,7 +16,7 @@ export type ControlValues = {
   /**
    * Email layout controls
    */
-  email: EmailControlsDto;
+  email?: EmailControlsDto | undefined;
 };
 
 export type UpdateLayoutDto = {
@@ -36,7 +36,7 @@ export type UpdateLayoutDto = {
 
 /** @internal */
 export type ControlValues$Outbound = {
-  email: EmailControlsDto$Outbound;
+  email?: EmailControlsDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -45,7 +45,7 @@ export const ControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlValues
 > = z.object({
-  email: EmailControlsDto$outboundSchema,
+  email: EmailControlsDto$outboundSchema.optional(),
 });
 
 export function controlValuesToJSON(controlValues: ControlValues): string {

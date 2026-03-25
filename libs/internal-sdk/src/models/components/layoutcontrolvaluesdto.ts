@@ -15,7 +15,7 @@ export type LayoutControlValuesDto = {
   /**
    * Email layout controls
    */
-  email: EmailControlsDto;
+  email?: EmailControlsDto | undefined;
 };
 
 /** @internal */
@@ -24,7 +24,7 @@ export const LayoutControlValuesDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  email: EmailControlsDto$inboundSchema,
+  email: EmailControlsDto$inboundSchema.optional(),
 });
 
 export function layoutControlValuesDtoFromJSON(
