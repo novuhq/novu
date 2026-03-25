@@ -107,7 +107,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc("/v1/environments/{environmentId}")(pathParams);
 
   const headers = new Headers(compactMap({

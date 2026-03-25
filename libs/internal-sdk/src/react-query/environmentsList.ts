@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyEnvironmentsList,
 };
 
+export type EnvironmentsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List all environments
  *
@@ -38,8 +61,11 @@ export {
  */
 export function useEnvironmentsList(
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentsListQueryData>,
-): UseQueryResult<EnvironmentsListQueryData, Error> {
+  options?: QueryHookOptions<
+    EnvironmentsListQueryData,
+    EnvironmentsListQueryError
+  >,
+): UseQueryResult<EnvironmentsListQueryData, EnvironmentsListQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildEnvironmentsListQuery(
@@ -60,8 +86,14 @@ export function useEnvironmentsList(
  */
 export function useEnvironmentsListSuspense(
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentsListQueryData>,
-): UseSuspenseQueryResult<EnvironmentsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    EnvironmentsListQueryData,
+    EnvironmentsListQueryError
+  >,
+): UseSuspenseQueryResult<
+  EnvironmentsListQueryData,
+  EnvironmentsListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildEnvironmentsListQuery(

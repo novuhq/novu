@@ -115,7 +115,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc("/v1/channel-endpoints/{identifier}")(pathParams);
 
   const headers = new Headers(compactMap({

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class EmailControlsDto {
@@ -18,7 +18,7 @@ export class EmailControlsDto {
 }
 
 export class LayoutControlValuesDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Email layout controls',
   })
   @IsOptional()

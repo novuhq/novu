@@ -10,6 +10,16 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +39,16 @@ export {
   queryKeyActivityWorkflowRunsRetrieve,
 };
 
+export type ActivityWorkflowRunsRetrieveQueryError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve workflow run
  *
@@ -38,8 +58,14 @@ export {
 export function useActivityWorkflowRunsRetrieve(
   workflowRunId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ActivityWorkflowRunsRetrieveQueryData>,
-): UseQueryResult<ActivityWorkflowRunsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    ActivityWorkflowRunsRetrieveQueryData,
+    ActivityWorkflowRunsRetrieveQueryError
+  >,
+): UseQueryResult<
+  ActivityWorkflowRunsRetrieveQueryData,
+  ActivityWorkflowRunsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildActivityWorkflowRunsRetrieveQuery(
@@ -61,8 +87,14 @@ export function useActivityWorkflowRunsRetrieve(
 export function useActivityWorkflowRunsRetrieveSuspense(
   workflowRunId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ActivityWorkflowRunsRetrieveQueryData>,
-): UseSuspenseQueryResult<ActivityWorkflowRunsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ActivityWorkflowRunsRetrieveQueryData,
+    ActivityWorkflowRunsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  ActivityWorkflowRunsRetrieveQueryData,
+  ActivityWorkflowRunsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildActivityWorkflowRunsRetrieveQuery(

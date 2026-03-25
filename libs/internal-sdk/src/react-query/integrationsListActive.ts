@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyIntegrationsListActive,
 };
 
+export type IntegrationsListActiveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List active integrations
  *
@@ -37,8 +60,14 @@ export {
  */
 export function useIntegrationsListActive(
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<IntegrationsListActiveQueryData>,
-): UseQueryResult<IntegrationsListActiveQueryData, Error> {
+  options?: QueryHookOptions<
+    IntegrationsListActiveQueryData,
+    IntegrationsListActiveQueryError
+  >,
+): UseQueryResult<
+  IntegrationsListActiveQueryData,
+  IntegrationsListActiveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildIntegrationsListActiveQuery(
@@ -58,8 +87,14 @@ export function useIntegrationsListActive(
  */
 export function useIntegrationsListActiveSuspense(
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<IntegrationsListActiveQueryData>,
-): UseSuspenseQueryResult<IntegrationsListActiveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    IntegrationsListActiveQueryData,
+    IntegrationsListActiveQueryError
+  >,
+): UseSuspenseQueryResult<
+  IntegrationsListActiveQueryData,
+  IntegrationsListActiveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildIntegrationsListActiveQuery(

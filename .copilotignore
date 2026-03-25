@@ -1,0 +1,28 @@
+# GitHub Copilot ignore file — same exclusions as .cursorignore
+
+# IDE configs — includes stale run configs for removed projects (apps/web, libs/embed, widget)
+.idea/
+
+# Playground / demo apps — not production code
+playground/
+
+# CI/CD, build infrastructure, and Docker configs
+.github/
+scripts/
+docker/
+.source/
+
+# Inactive apps — no longer under active development
+apps/inbound-mail/
+apps/webhook/
+
+# Auto-generated code — do not read or modify directly
+libs/internal-sdk/
+
+# Generated / large files that add noise without signal
+pnpm-lock.yaml
+**/dist/
+**/*.min.js
+
+# Generator templates — not production code
+libs/automation/

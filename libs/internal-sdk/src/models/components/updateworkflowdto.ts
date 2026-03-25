@@ -29,6 +29,11 @@ import {
   EmailStepUpsertDto$outboundSchema,
 } from "./emailstepupsertdto.js";
 import {
+  HttpRequestStepUpsertDto,
+  HttpRequestStepUpsertDto$Outbound,
+  HttpRequestStepUpsertDto$outboundSchema,
+} from "./httprequeststepupsertdto.js";
+import {
   InAppStepUpsertDto,
   InAppStepUpsertDto$Outbound,
   InAppStepUpsertDto$outboundSchema,
@@ -65,7 +70,8 @@ export type UpdateWorkflowDtoSteps =
   | ChatStepUpsertDto
   | DelayStepUpsertDto
   | DigestStepUpsertDto
-  | CustomStepUpsertDto;
+  | CustomStepUpsertDto
+  | HttpRequestStepUpsertDto;
 
 export type UpdateWorkflowDto = {
   /**
@@ -112,6 +118,7 @@ export type UpdateWorkflowDto = {
     | DelayStepUpsertDto
     | DigestStepUpsertDto
     | CustomStepUpsertDto
+    | HttpRequestStepUpsertDto
   >;
   /**
    * Workflow preferences
@@ -136,7 +143,8 @@ export type UpdateWorkflowDtoSteps$Outbound =
   | ChatStepUpsertDto$Outbound
   | DelayStepUpsertDto$Outbound
   | DigestStepUpsertDto$Outbound
-  | CustomStepUpsertDto$Outbound;
+  | CustomStepUpsertDto$Outbound
+  | HttpRequestStepUpsertDto$Outbound;
 
 /** @internal */
 export const UpdateWorkflowDtoSteps$outboundSchema: z.ZodType<
@@ -152,6 +160,7 @@ export const UpdateWorkflowDtoSteps$outboundSchema: z.ZodType<
   DelayStepUpsertDto$outboundSchema,
   DigestStepUpsertDto$outboundSchema,
   CustomStepUpsertDto$outboundSchema,
+  HttpRequestStepUpsertDto$outboundSchema,
 ]);
 
 export function updateWorkflowDtoStepsToJSON(
@@ -181,6 +190,7 @@ export type UpdateWorkflowDto$Outbound = {
     | DelayStepUpsertDto$Outbound
     | DigestStepUpsertDto$Outbound
     | CustomStepUpsertDto$Outbound
+    | HttpRequestStepUpsertDto$Outbound
   >;
   preferences: PreferencesRequestDto$Outbound;
   origin: string;
@@ -211,6 +221,7 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
       DelayStepUpsertDto$outboundSchema,
       DigestStepUpsertDto$outboundSchema,
       CustomStepUpsertDto$outboundSchema,
+      HttpRequestStepUpsertDto$outboundSchema,
     ]),
   ),
   preferences: PreferencesRequestDto$outboundSchema,

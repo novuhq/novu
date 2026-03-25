@@ -15,6 +15,7 @@ import {
   shouldIncludeBody,
   toBodyRecord,
   toHeadersRecord,
+  validateUrlSsrf,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -28,17 +29,10 @@ import {
 } from '@novu/shared';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import * as dns from 'dns';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import { LRUCache } from 'lru-cache';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
-
-const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
-  max: 500,
-  ttl: 1000 * 60 * 5, // 5 minutes
-});
 
 const MAX_RAW_SIZE = 10_240;
 
@@ -308,6 +302,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       context: compileContext.context ?? {},
       step: compileContext.step,
       webhook: compileContext.webhook ?? {},
+      env: compileContext.env ?? {},
     };
   }
 
@@ -379,60 +374,4 @@ function truncateRaw(obj: unknown, maxSize: number = MAX_RAW_SIZE): string {
   const suffix = '... [truncated]';
 
   return serialized.slice(0, maxSize - suffix.length) + suffix;
-}
-
-function isPrivateIp(ip: string): boolean {
-  const privateRanges = [
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2[0-9]|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,
-    /^::1$/,
-    /^fc00:/i,
-    /^fe80:/i,
-  ];
-
-  return privateRanges.some((range) => range.test(ip));
-}
-
-async function validateUrlSsrf(url: string): Promise<string | null> {
-  let parsed: URL;
-
-  try {
-    parsed = new URL(url);
-  } catch {
-    return 'Invalid URL format.';
-  }
-
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    return `URL scheme "${parsed.protocol}" is not allowed. Only http and https are permitted.`;
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
-
-  const blockedHostnames = ['localhost', 'metadata.google.internal'];
-
-  if (blockedHostnames.includes(hostname)) {
-    return `Requests to "${hostname}" are not allowed.`;
-  }
-
-  let addresses = DNS_CACHE.get(hostname);
-
-  if (!addresses) {
-    try {
-      addresses = await dns.promises.lookup(hostname, { all: true });
-      DNS_CACHE.set(hostname, addresses);
-    } catch {
-      return `Unable to resolve hostname "${hostname}".`;
-    }
-  }
-
-  for (const { address } of addresses) {
-    if (isPrivateIp(address)) {
-      return `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`;
-    }
-  }
-
-  return null;
 }

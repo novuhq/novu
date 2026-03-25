@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyChannelEndpointsRetrieve,
 };
 
+export type ChannelEndpointsRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a channel endpoint
  *
@@ -38,8 +61,14 @@ export {
 export function useChannelEndpointsRetrieve(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ChannelEndpointsRetrieveQueryData>,
-): UseQueryResult<ChannelEndpointsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    ChannelEndpointsRetrieveQueryData,
+    ChannelEndpointsRetrieveQueryError
+  >,
+): UseQueryResult<
+  ChannelEndpointsRetrieveQueryData,
+  ChannelEndpointsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildChannelEndpointsRetrieveQuery(
@@ -61,8 +90,14 @@ export function useChannelEndpointsRetrieve(
 export function useChannelEndpointsRetrieveSuspense(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ChannelEndpointsRetrieveQueryData>,
-): UseSuspenseQueryResult<ChannelEndpointsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ChannelEndpointsRetrieveQueryData,
+    ChannelEndpointsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  ChannelEndpointsRetrieveQueryData,
+  ChannelEndpointsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildChannelEndpointsRetrieveQuery(

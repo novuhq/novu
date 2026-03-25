@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   EnvironmentRepository,
-  ExecutionDetailsRepository,
   JobEntity,
   JobRepository,
   MessageRepository,
@@ -10,7 +9,6 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import {
-  ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FILTER_TO_LABEL,
@@ -30,7 +28,14 @@ import axios from 'axios';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { decryptApiKey } from '../../encryption';
 import { buildSubscriberKey, CachedResponse } from '../../services';
-import { createHash, Filter, FilterProcessingDetails, IFilterVariables, PlatformException } from '../../utils';
+import {
+  createHash,
+  Filter,
+  FilterProcessingDetails,
+  IFilterVariables,
+  PlatformException,
+  validateUrlSsrf,
+} from '../../utils';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
 import { ConditionsFilterCommand } from './conditions-filter.command';
@@ -255,6 +260,17 @@ export class ConditionsFilter extends Filter {
 
     if (hmac) {
       config.headers['nv-hmac-256'] = hmac;
+    }
+
+    const ssrfError = await validateUrlSsrf(child.webhookUrl);
+
+    if (ssrfError) {
+      throw new Error(
+        JSON.stringify({
+          message: ssrfError,
+          data: 'Webhook URL blocked by SSRF protection.',
+        })
+      );
     }
 
     try {

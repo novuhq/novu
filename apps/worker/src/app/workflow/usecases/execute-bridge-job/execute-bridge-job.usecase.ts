@@ -13,12 +13,10 @@ import {
   Instrument,
   InstrumentUsecase,
   PinoLogger,
-  resolveEnvironmentVariables,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
   EnvironmentRepository,
-  EnvironmentVariableRepository,
   JobEntity,
   JobRepository,
   MessageRepository,
@@ -53,7 +51,6 @@ export class ExecuteBridgeJob {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageRepository: MessageRepository,
     private environmentRepository: EnvironmentRepository,
-    private environmentVariableRepository: EnvironmentVariableRepository,
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
@@ -108,23 +105,14 @@ export class ExecuteBridgeJob {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
-    const { subscriber, payload: originalPayload, context } = command.variables || {};
+    const { subscriber, payload: originalPayload, context, env } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
-
     const state = await this.generateState(command);
 
     const controlValuesResult = isStateful
       ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
       : { controls: command.job.step.controlVariables, stepResolverHash: undefined };
-
     const variablesStores = controlValuesResult.controls;
-    const { stepResolverHash } = controlValuesResult;
-
-    const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
-      command.organizationId,
-      command.environmentId
-    );
-    const envVars = resolveEnvironmentVariables(rawEnvVars);
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
       payload: payload ?? {},
@@ -132,12 +120,13 @@ export class ExecuteBridgeJob {
       state,
       subscriber: subscriber ?? {},
       context: context ?? {},
-      env: envVars,
+      env,
     };
 
     const workflowId = isStateful
       ? (workflow as NotificationTemplateEntity).triggers[0].identifier
       : command.identifier;
+    const { stepResolverHash } = controlValuesResult;
 
     const bridgeResponse = await this.sendBridgeRequest({
       environmentId: command.environmentId,

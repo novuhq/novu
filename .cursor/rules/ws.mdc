@@ -1,0 +1,24 @@
+---
+description: Rules for working in the WebSocket service (real-time delivery)
+globs: apps/ws/**/*
+alwaysApply: false
+---
+
+## WebSocket Service
+
+**Stack:** NestJS · Socket.io with Redis adapter (horizontal scaling)
+
+**Run:** `pnpm start:ws` — only needed for real-time features (live inbox, read/unread sync). Skip for most tasks.
+
+**Key directories:**
+```
+apps/ws/src/   # Socket gateways, guards, and event handlers
+```
+
+### WebSocket Conventions
+
+**Authentication:** Clients authenticate via JWT on the Socket.io handshake.
+
+**Scaling:** The Redis adapter is required in production — multiple ws instances share socket state through it.
+
+**Client packages:** Events emitted here are consumed by `@novu/js` and `@novu/react`. New Socket.io event types require matching updates in both packages.

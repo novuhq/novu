@@ -12,6 +12,17 @@ import { subscribersMessagesMarkAllAs } from "../funcs/subscribersMessagesMarkAl
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -27,6 +38,18 @@ export type SubscribersMessagesMarkAllAsMutationVariables = {
 export type SubscribersMessagesMarkAllAsMutationData =
   operations.SubscribersV1ControllerMarkMessagesAsResponse;
 
+export type SubscribersMessagesMarkAllAsMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Update notifications state
  *
@@ -37,12 +60,12 @@ export type SubscribersMessagesMarkAllAsMutationData =
 export function useSubscribersMessagesMarkAllAsMutation(
   options?: MutationHookOptions<
     SubscribersMessagesMarkAllAsMutationData,
-    Error,
+    SubscribersMessagesMarkAllAsMutationError,
     SubscribersMessagesMarkAllAsMutationVariables
   >,
 ): UseMutationResult<
   SubscribersMessagesMarkAllAsMutationData,
-  Error,
+  SubscribersMessagesMarkAllAsMutationError,
   SubscribersMessagesMarkAllAsMutationVariables
 > {
   const client = useNovuContext();

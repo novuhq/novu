@@ -3,7 +3,7 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
-const STEP_RESOLVER_DOCS_LINK = 'https://docs.novu.co/framework/content/step-resolvers';
+const STEP_RESOLVER_DOCS_LINK = 'https://docs.novu.co/platform/workflow/add-and-configure-steps/code-steps';
 
 export function useStepResolverHint(): React.ReactNode {
   const { step } = useStepEditor();

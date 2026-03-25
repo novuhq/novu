@@ -862,12 +862,13 @@ export class RunJob {
 
   private shouldSkipScheduleCheck(job: JobEntity, critical: boolean | undefined): boolean {
     // always deliver in-app messages or critical messages
-    // let trigger,digest and delay finish their execution
+    // let trigger, digest, delay and http-request finish their execution
     if (
       job.type === StepTypeEnum.TRIGGER ||
       job.type === StepTypeEnum.IN_APP ||
       job.type === StepTypeEnum.DELAY ||
       job.type === StepTypeEnum.DIGEST ||
+      job.type === StepTypeEnum.HTTP_REQUEST ||
       critical
     ) {
       return true;

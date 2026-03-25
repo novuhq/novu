@@ -7,7 +7,7 @@ settings:
 overrides:
   minimist: 1.2.6
   body-parser@<1.20.3: ^1.20.3
-  braces@<2.3.1: ^2.3.1
+  braces@<3.0.3: ^3.0.3
   file-type@>=13.0.0 <16.5.4: ^16.5.4
   get-func-name@<2.0.1: ^2.0.1
   glob-parent@<5.1.2: ^5.1.2
@@ -46,7 +46,7 @@ overrides:
   ws@>=8.0.0 <8.17.1: ^8.17.1
   next@>=13.0.0 <14.2.32: ^14.2.35
   next@>=15.0.0 <15.5.14: ^15.5.14
-  fast-xml-parser@>=4.1.3 <4.5.4: 4.5.4
+  fast-xml-parser@>=4.0.0 <5.0.0: 5.5.8
   fast-xml-parser@>=5.0.0 <5.5.7: 5.5.8
   basic-ftp@<5.2.0: 5.2.0
   axios@>=1.0.0 <1.13.5: ^1.13.5
@@ -82,6 +82,9 @@ overrides:
   send@<0.19.0: ^0.19.0
   dompurify@>=3.1.3 <=3.3.1: ^3.3.2
   '@octokit/endpoint@>=9.0.5 <9.0.6': ^9.0.6
+  '@octokit/request-error@<5.1.1': ^5.1.1
+  '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
+  '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.14: 0.28.14
   undici@>=5.0.0 <5.29.0: ^5.29.0
   markdown-it@>=13.0.0 <14.1.1: ^14.1.1
@@ -103,6 +106,9 @@ overrides:
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
   path-to-regexp@>=6.0.0 <6.3.0: ^6.3.0
+  svelte@<5.53.5: 5.53.5
+  langsmith@>=0.3.0 <0.4.6: ^0.4.6
+  devalue@<5.6.4: 5.6.4
 
 importers:
 
@@ -138,7 +144,7 @@ importers:
         version: 21.3.11(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))
       '@octokit/core':
         specifier: ^4.0.0
-        version: 4.2.0(encoding@0.1.13)
+        version: 4.2.0
       '@pnpm/filter-workspace-packages':
         specifier: ^7.0.6
         version: 7.0.6(@pnpm/logger@5.0.0)
@@ -653,7 +659,7 @@ importers:
         version: 3.0.51(react@19.2.3)(zod@4.3.5)
       '@better-auth/sso':
         specifier: ^1.3.0
-        version: 1.4.7(better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19))
+        version: 1.4.7(better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6))
       '@calcom/embed-react':
         specifier: 1.5.2
         version: 1.5.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -860,7 +866,7 @@ importers:
         version: 6.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       better-auth:
         specifier: ^1.3.0
-        version: 1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19)
+        version: 1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -1996,7 +2002,7 @@ importers:
     dependencies:
       '@better-auth/sso':
         specifier: ^1.3.0
-        version: 1.4.7(better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19))
+        version: 1.4.7(better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6))
       '@clerk/backend':
         specifier: ^1.25.2
         version: 1.25.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2035,7 +2041,7 @@ importers:
         version: link:../../../packages/stateless
       better-auth:
         specifier: ^1.3.0
-        version: 1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19)
+        version: 1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -2796,7 +2802,7 @@ importers:
         version: 3.25.20
     devDependencies:
       '@eslint/js':
-        specifier: ^9.19.0
+        specifier: ^9.26.0
         version: 9.39.4
       '@tanstack/react-query':
         specifier: ^5.61.4
@@ -2805,7 +2811,7 @@ importers:
         specifier: ^18.3.12
         version: 18.3.18
       eslint:
-        specifier: ^9.19.0
+        specifier: ^9.26.0
         version: 9.39.4(jiti@2.6.1)
       globals:
         specifier: ^15.14.0
@@ -9061,13 +9067,6 @@ packages:
     resolution: {integrity: sha512-1LFfa/qnMQvEOAdzlQymH0ulepxbxnCYAKJZfMci/5XJyIHWgEYnDmgnKakbTh7CH2tFQ5O60oYDvns4i9RAIg==}
     engines: {node: '>= 18'}
 
-  '@octokit/endpoint@6.0.12':
-    resolution: {integrity: sha512-lF3puPwkQWGfkMClXb4k/eUT/nZKQfxinRWJrdZaJO85Dqwo/G0yOC434Jr2ojwafWJMYqFGFa5ms4jJUgujdA==}
-
-  '@octokit/endpoint@7.0.5':
-    resolution: {integrity: sha512-LG4o4HMY1Xoaec87IqQ41TQ+glvIeTKqfjkCEmt5AIwDZJwQeVZFIEYXrYY6yLwK+pAScb9Gj4q+Nz2qSw1roA==}
-    engines: {node: '>= 14'}
-
   '@octokit/endpoint@9.0.6':
     resolution: {integrity: sha512-H1fNTMA57HbkFESSt3Y9+FBICv+0jFceJFPWDePYlR/iMGrwM5ph+Dd4XRQs+8X+PUFURLQgX9ChPfhJ/1uNQw==}
     engines: {node: '>= 18'}
@@ -9098,13 +9097,8 @@ packages:
   '@octokit/plugin-enterprise-compatibility@1.3.0':
     resolution: {integrity: sha512-h34sMGdEOER/OKrZJ55v26ntdHb9OPfR1fwOx6Q4qYyyhWA104o11h9tFxnS/l41gED6WEI41Vu2G2zHDVC5lQ==}
 
-  '@octokit/plugin-paginate-rest@2.21.3':
-    resolution: {integrity: sha512-aCZTEf0y2h3OLbrgKkrfFdjRL6eSOo8komneVQJnYecAxIej7Bafor2xhuDJOIFau4pk0i/P28/XgtbyPF0ZHw==}
-    peerDependencies:
-      '@octokit/core': '>=2'
-
-  '@octokit/plugin-paginate-rest@9.2.1':
-    resolution: {integrity: sha512-wfGhE/TAkXZRLjksFXuDZdmGnJQHvtU/joFQdweXUgzo1XwvBCD4o4+75NtFfjfLK5IwLf9vHTfSiU3sLRYpRw==}
+  '@octokit/plugin-paginate-rest@9.2.2':
+    resolution: {integrity: sha512-u3KYkGF7GcZnSD/3UP0S7K5XUFT2FkOQdcfXZGZQPGv3lm4F2Xbf71lvjldr8c1H3nNbF+33cLEkWYbokGWqiQ==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@octokit/core': '5'
@@ -9133,26 +9127,12 @@ packages:
     peerDependencies:
       '@octokit/core': ^3.5.0
 
-  '@octokit/request-error@2.1.0':
-    resolution: {integrity: sha512-1VIvgXxs9WHSjicsRwq8PlR2LR2x6DwsJAaFgzdi0JfJoGSO8mYI/cHJQ+9FbN21aa+DrgNLnwObmyeSC8Rmpg==}
-
-  '@octokit/request-error@3.0.3':
-    resolution: {integrity: sha512-crqw3V5Iy2uOU5Np+8M/YexTlT8zxCfI+qu+LxUB7SZpje4Qmx3mub5DfEKSO8Ylyk0aogi6TYdf6kxzh2BguQ==}
-    engines: {node: '>= 14'}
-
-  '@octokit/request-error@5.1.0':
-    resolution: {integrity: sha512-GETXfE05J0+7H2STzekpKObFe765O5dlAKUTLNGeH+x47z7JjXHfsHKo5z21D/o/IOZTUEI6nyWyR+bZVP/n5Q==}
+  '@octokit/request-error@5.1.1':
+    resolution: {integrity: sha512-v9iyEQJH6ZntoENr9/yXxjuezh4My67CBSu9r6Ve/05Iu5gNgnisNWOsoJHTP6k0Rr0+HQIpnH+kyammu90q/g==}
     engines: {node: '>= 18'}
 
-  '@octokit/request@5.6.3':
-    resolution: {integrity: sha512-bFJl0I1KVc9jYTe9tdGGpAMPy32dLBXXo1dS/YwSCTL/2nd9XeHsY616RE3HPXDVk+a+dBuzyz5YdlXwcDTr2A==}
-
-  '@octokit/request@6.2.3':
-    resolution: {integrity: sha512-TNAodj5yNzrrZ/VxP+H5HiYaZep0H3GU0O7PaF+fhDrt8FPrnkei9Aal/txsN/1P7V3CPiThG0tIvpPDYUsyAA==}
-    engines: {node: '>= 14'}
-
-  '@octokit/request@8.4.0':
-    resolution: {integrity: sha512-9Bb014e+m2TgBeEJGEbdplMVWwPmL1FPtggHQRkV+WVsMggPtEkLKPlcVYm/o8xKLkpJ7B+6N8WfQMtDLX2Dpw==}
+  '@octokit/request@8.4.1':
+    resolution: {integrity: sha512-qnB2+SY3hkCmBxZsR/MPCybNmbJe4KAlfWErXq+rBKkQJlbjdJeS85VI9r8UqeLYLvnAenU8Q1okM/0MBsAGXw==}
     engines: {node: '>= 18'}
 
   '@octokit/rest@18.12.0':
@@ -13230,7 +13210,7 @@ packages:
     engines: {node: ^16.14 || >=18}
     hasBin: true
     peerDependencies:
-      svelte: ^3.54.0 || ^4.0.0-next.0 || ^5.0.0-next.0
+      svelte: 5.53.5
       vite: ^4.5.10
 
   '@sveltejs/vite-plugin-svelte-inspector@1.0.4':
@@ -13238,14 +13218,14 @@ packages:
     engines: {node: ^14.18.0 || >= 16}
     peerDependencies:
       '@sveltejs/vite-plugin-svelte': ^2.2.0
-      svelte: ^3.54.0 || ^4.0.0
+      svelte: 5.53.5
       vite: ^4.5.10
 
   '@sveltejs/vite-plugin-svelte@2.5.3':
     resolution: {integrity: sha512-erhNtXxE5/6xGZz/M9eXsmI7Pxa6MS7jyTy06zN3Ck++ldrppOnOlJwHHTsMC7DHDQdgUp4NAc4cDNQ9eGdB/w==}
     engines: {node: ^14.18.0 || >= 16}
     peerDependencies:
-      svelte: ^3.54.0 || ^4.0.0 || ^5.0.0-next.0
+      svelte: 5.53.5
       vite: ^4.5.10
 
   '@swc-node/core@1.13.3':
@@ -15948,7 +15928,7 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
       solid-js: ^1.0.0
-      svelte: ^4.0.0 || ^5.0.0
+      svelte: 5.53.5
       vitest: ^4.0.15
       vue: ^3.0.0
     peerDependenciesMeta:
@@ -16087,10 +16067,6 @@ packages:
   brace-expansion@5.0.4:
     resolution: {integrity: sha512-h+DEnpVvxmfVefa4jFbCf5HdH5YMDXRsmKflpf1pILZWRFlTbJpxeU55nJl4Smt5HQaGzg1o6RHFPJaOqnmBDg==}
     engines: {node: 18 || 20 || >=22}
-
-  braces@2.3.2:
-    resolution: {integrity: sha512-aNdbnj9P8PjdXU4ybaWLK2IF3jc/EoDYbC7AazW6to3TRsfXxscC9UXOB5iDiEQrkyIbWp2SLQda4+QAa7nc3w==}
-    engines: {node: '>=0.10.0'}
 
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
@@ -17629,8 +17605,8 @@ packages:
     peerDependencies:
       typescript: ^5.4.4
 
-  devalue@4.3.3:
-    resolution: {integrity: sha512-UH8EL6H2ifcY8TbD2QsxwCC/pr5xSwPvv85LrLXVihmHVC3T3YqTCIwnR5ak0yO1KYqlxrPVOA/JVZJYPy2ATg==}
+  devalue@5.6.4:
+    resolution: {integrity: sha512-Gp6rDldRsFh/7XuouDbxMH3Mx8GMCcgzIb1pDTvNyn8pZGQ22u+Wa+lGV9dQCltFQ7uVw0MhRyb8XDskNFOReA==}
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
@@ -18525,10 +18501,6 @@ packages:
   fast-xml-builder@1.1.4:
     resolution: {integrity: sha512-f2jhpN4Eccy0/Uz9csxh3Nu6q4ErKxf0XIsasomfOihuSUa3/xw6w8dnOtCDgEItQFJG8KyXPzQXzcODDrrbOg==}
 
-  fast-xml-parser@4.5.4:
-    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
-    hasBin: true
-
   fast-xml-parser@5.5.8:
     resolution: {integrity: sha512-Z7Fh2nVQSb2d+poDViM063ix2ZGt9jmY1nWhPfHBOK2Hgnb/OW3P4Et3P/81SEej0J7QbWtJqxO05h8QYfK7LQ==}
     hasBin: true
@@ -18628,10 +18600,6 @@ packages:
     resolution: {integrity: sha512-RZlFj8lzyu6jqtFBeXNqUjjNG6xm+gwXue3T70pRxw1W40kJwlgq0PSWAmh0nAnn5DHuBIecLXk9+1VKS9ICXA==}
     engines: {node: '>=18'}
     hasBin: true
-
-  fill-range@4.0.0:
-    resolution: {integrity: sha512-VcpLTWqWDiTerugjj8e3+esbg+skS3M9e54UuR3iCeIDMXCLTsAH8hTSzDQU/X6/6t3eYkOKoZSef2PlU6U1XQ==}
-    engines: {node: '>=0.10.0'}
 
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
@@ -20997,23 +20965,6 @@ packages:
   langium@3.3.1:
     resolution: {integrity: sha512-QJv/h939gDpvT+9SiLVlY7tZC3xB2qK57v0J04Sh9wpMb6MP1q8gB21L3WIo8T5P1MSMg3Ep14L7KkDCFG3y4w==}
     engines: {node: '>=16.0.0'}
-
-  langsmith@0.3.87:
-    resolution: {integrity: sha512-XXR1+9INH8YX96FKWc5tie0QixWz6tOqAsAKfcJyPkE0xPep+NDz0IQLR32q4bn10QK3LqD2HN6T3n6z1YLW7Q==}
-    peerDependencies:
-      '@opentelemetry/api': '*'
-      '@opentelemetry/exporter-trace-otlp-proto': '*'
-      '@opentelemetry/sdk-trace-base': '*'
-      openai: '*'
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-      '@opentelemetry/exporter-trace-otlp-proto':
-        optional: true
-      '@opentelemetry/sdk-trace-base':
-        optional: true
-      openai:
-        optional: true
 
   langsmith@0.4.12:
     resolution: {integrity: sha512-YWt0jcGvKqjUgIvd78rd4QcdMss0lUkeUaqp0UpVRq7H2yNDx8H5jOUO/laWUmaPtWGgcip0qturykXe1g9Gqw==}
@@ -24794,10 +24745,6 @@ packages:
   remove-trailing-separator@1.1.0:
     resolution: {integrity: sha512-/hS+Y0u3aOfIETiaiirUFwDBDzmXPvO+jAfKTitUngIPzdKc6Z0LoFjM/CK5PL4C+eKwHohlHAb6H0VFfmmUsw==}
 
-  repeat-element@1.1.4:
-    resolution: {integrity: sha512-LFiNfRcSu7KK3evMyYOuCzv3L10TW7yC1G2/+StMjK8Y6Vqd2MG7r/Qjw4ghtuCOjFvlnms/iMmLqpvW/ES/WQ==}
-    engines: {node: '>=0.10.0'}
-
   repeat-string@1.6.1:
     resolution: {integrity: sha512-PV0dzCYDNfRi1jCDbJzpW7jNNDRuCOG/jI5ctQcGKt/clZD+YcPS3yIlWuTJMmESC8aevCFmWJy5wjAFgNqN6w==}
     engines: {node: '>=0.10'}
@@ -25447,14 +25394,6 @@ packages:
     resolution: {integrity: sha512-Sj51kE1zC7zh6TDlNNz0/Jn1n5HiHdoQErxO8jLtnyrkJW/M5PrI7x05uDgY3BO7OUQYKCvmeMurW6BPUdwEOw==}
     engines: {node: '>=18'}
 
-  snapdragon-node@2.1.1:
-    resolution: {integrity: sha512-O27l4xaMYt/RSQ5TR3vpWCAB5Kb/czIcqUFOM/C4fYcLnbZUc1PkjTAMjof2pBWaSTwOUd6qUHcFGVGj7aIwnw==}
-    engines: {node: '>=0.10.0'}
-
-  snapdragon-util@3.0.1:
-    resolution: {integrity: sha512-mbKkMdQKsjX4BAL4bRYTj21edOf8cN7XHdYUJEe+Zn99hVEYcMvKPct1IqNe7+AZPirn8BCDOQBHQZknqmKlZQ==}
-    engines: {node: '>=0.10.0'}
-
   snapdragon@0.8.2:
     resolution: {integrity: sha512-FtyOnWN/wCHTVXOMwvSv26d+ko5vWlIDD6zoUJ7LW8vh+ZBC8QdljveRP+crNrtBwioEUWy/4dMtbBjA4ioNlg==}
     engines: {node: '>=0.10.0'}
@@ -25898,9 +25837,6 @@ packages:
     resolution: {integrity: sha512-OUA32uhNoSoM6wOodyFbV+3IBCoO140uzdXmBArQ0S88D4EbH91xl2v+Ml1sKalcFKUBadHLeHfU/p9AbsOfGw==}
     engines: {node: '>=12.*'}
 
-  strnum@1.0.5:
-    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
-
   strnum@2.2.1:
     resolution: {integrity: sha512-BwRvNd5/QoAtyW1na1y1LsJGQNvRlkde6Q/ipqqEaivoMdV+B1OMOTVdwR+N/cwVUcIt9PYyHmV8HyexCZSupg==}
 
@@ -26071,7 +26007,7 @@ packages:
     resolution: {integrity: sha512-41snaPswvSf8TJUhlkoJBekRrABDXDMdpNpT2tfHIv4JuhgvHqLMhEPGtaQn0BmbNSTkuz2Ed20DF2eHw0SmBQ==}
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
     peerDependencies:
-      svelte: ^3.19.0 || ^4.0.0
+      svelte: 5.53.5
 
   svelte@4.2.19:
     resolution: {integrity: sha512-IY1rnGr6izd10B0A8LqsBfmlT5OILVuZ7XsI0vdGPEvuonFV7NYEUK4dAkm9Zg2q0Um92kYjTpS1CAP3Nh/KWw==}
@@ -26401,10 +26337,6 @@ packages:
 
   to-pascal-case@1.0.0:
     resolution: {integrity: sha512-QGMWHqM6xPrcQW57S23c5/3BbYb0Tbe9p+ur98ckRnGDwD4wbbtDiYI38CfmMKNB5Iv0REjs5SNDntTwvDxzZA==}
-
-  to-regex-range@2.1.1:
-    resolution: {integrity: sha512-ZZWNfCjUokXXDGXFpZehJIkZqq91BcULFq/Pi7M5i4JnxXdhMKAK682z8bCW3o8Hj1wuuzoKcW3DfVzaP6VuNg==}
-    engines: {node: '>=0.10.0'}
 
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
@@ -28297,11 +28229,11 @@ snapshots:
     dependencies:
       '@auto-it/bot-list': 10.44.0
       '@endemolshinegroup/cosmiconfig-typescript-loader': 3.0.2(cosmiconfig@7.0.0)(typescript@5.6.2)
-      '@octokit/core': 3.6.0(encoding@0.1.13)
+      '@octokit/core': 3.6.0
       '@octokit/plugin-enterprise-compatibility': 1.3.0
       '@octokit/plugin-retry': 3.0.9
-      '@octokit/plugin-throttling': 3.7.0(@octokit/core@3.6.0(encoding@0.1.13))
-      '@octokit/rest': 18.12.0(encoding@0.1.13)
+      '@octokit/plugin-throttling': 3.7.0(@octokit/core@3.6.0)
+      '@octokit/rest': 18.12.0
       await-to-js: 3.0.0
       chalk: 4.1.2
       cosmiconfig: 7.0.0
@@ -28556,8 +28488,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -28756,7 +28688,7 @@ snapshots:
       '@smithy/util-retry': 2.1.1
       '@smithy/util-utf8': 2.1.1
       '@smithy/util-waiter': 2.0.15
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
@@ -28798,7 +28730,7 @@ snapshots:
       '@smithy/util-defaults-mode-node': 2.1.1
       '@smithy/util-retry': 2.1.1
       '@smithy/util-utf8': 2.1.1
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
@@ -28887,11 +28819,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.575.0':
+  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -28930,6 +28862,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)':
@@ -29221,7 +29154,7 @@ snapshots:
       '@smithy/util-defaults-mode-node': 2.1.1
       '@smithy/util-retry': 2.1.1
       '@smithy/util-utf8': 2.3.0
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
@@ -29263,16 +29196,16 @@ snapshots:
       '@smithy/util-defaults-mode-node': 2.1.1
       '@smithy/util-retry': 2.1.1
       '@smithy/util-utf8': 2.3.0
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
+  '@aws-sdk/client-sts@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -29311,7 +29244,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.637.0':
@@ -29367,7 +29299,7 @@ snapshots:
       '@smithy/signature-v4': 3.0.0
       '@smithy/smithy-client': 3.2.0
       '@smithy/types': 3.3.0
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       tslib: 2.8.1
 
   '@aws-sdk/core@3.635.0':
@@ -29380,7 +29312,7 @@ snapshots:
       '@smithy/smithy-client': 3.2.0
       '@smithy/types': 3.3.0
       '@smithy/util-middleware': 3.0.3
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       tslib: 2.8.1
     optional: true
 
@@ -29523,7 +29455,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -29852,7 +29784,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -30403,7 +30335,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -30412,7 +30344,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.614.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.609.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -31856,10 +31788,10 @@ snapshots:
       nanostores: 1.1.0
       zod: 4.3.5
 
-  '@better-auth/sso@1.4.7(better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19))':
+  '@better-auth/sso@1.4.7(better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6))':
     dependencies:
       '@better-fetch/fetch': 1.1.21
-      better-auth: 1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19)
+      better-auth: 1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)
       fast-xml-parser: 5.5.8
       jose: 6.1.3
       samlify: 2.10.2
@@ -33393,7 +33325,7 @@ snapshots:
       duplexify: 4.1.2
       ent: 2.2.0
       extend: 3.0.2
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       gaxios: 5.1.3(encoding@0.1.13)
       google-auth-library: 8.9.0(encoding@0.1.13)
       mime: 3.0.0
@@ -33414,7 +33346,7 @@ snapshots:
       abort-controller: 3.0.0
       async-retry: 1.3.3
       duplexify: 4.1.3
-      fast-xml-parser: 4.5.4
+      fast-xml-parser: 5.5.8
       gaxios: 6.1.1(encoding@0.1.13)
       google-auth-library: 9.15.1(encoding@0.1.13)
       html-entities: 2.5.2
@@ -34381,7 +34313,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.87(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))
+      langsmith: 0.4.12(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -35520,7 +35452,7 @@ snapshots:
     dependencies:
       '@octokit/auth-action': 4.1.0
       '@octokit/core': 5.2.0
-      '@octokit/plugin-paginate-rest': 9.2.1(@octokit/core@5.2.0)
+      '@octokit/plugin-paginate-rest': 9.2.2(@octokit/core@5.2.0)
       '@octokit/plugin-rest-endpoint-methods': 10.4.1(@octokit/core@5.2.0)
       '@octokit/types': 12.6.0
       undici: 6.24.1
@@ -35540,50 +35472,34 @@ snapshots:
 
   '@octokit/auth-token@4.0.0': {}
 
-  '@octokit/core@3.6.0(encoding@0.1.13)':
+  '@octokit/core@3.6.0':
     dependencies:
       '@octokit/auth-token': 2.5.0
-      '@octokit/graphql': 4.8.0(encoding@0.1.13)
-      '@octokit/request': 5.6.3(encoding@0.1.13)
-      '@octokit/request-error': 2.1.0
+      '@octokit/graphql': 4.8.0
+      '@octokit/request': 8.4.1
+      '@octokit/request-error': 5.1.1
       '@octokit/types': 6.41.0
       before-after-hook: 2.2.3
       universal-user-agent: 6.0.0
-    transitivePeerDependencies:
-      - encoding
 
-  '@octokit/core@4.2.0(encoding@0.1.13)':
+  '@octokit/core@4.2.0':
     dependencies:
       '@octokit/auth-token': 3.0.3
-      '@octokit/graphql': 5.0.5(encoding@0.1.13)
-      '@octokit/request': 6.2.3(encoding@0.1.13)
-      '@octokit/request-error': 3.0.3
+      '@octokit/graphql': 5.0.5
+      '@octokit/request': 8.4.1
+      '@octokit/request-error': 5.1.1
       '@octokit/types': 9.0.0
       before-after-hook: 2.2.3
       universal-user-agent: 6.0.0
-    transitivePeerDependencies:
-      - encoding
 
   '@octokit/core@5.2.0':
     dependencies:
       '@octokit/auth-token': 4.0.0
       '@octokit/graphql': 7.1.0
-      '@octokit/request': 8.4.0
-      '@octokit/request-error': 5.1.0
+      '@octokit/request': 8.4.1
+      '@octokit/request-error': 5.1.1
       '@octokit/types': 13.5.0
       before-after-hook: 2.2.3
-      universal-user-agent: 6.0.0
-
-  '@octokit/endpoint@6.0.12':
-    dependencies:
-      '@octokit/types': 6.41.0
-      is-plain-object: 5.0.0
-      universal-user-agent: 6.0.0
-
-  '@octokit/endpoint@7.0.5':
-    dependencies:
-      '@octokit/types': 9.0.0
-      is-plain-object: 5.0.0
       universal-user-agent: 6.0.0
 
   '@octokit/endpoint@9.0.6':
@@ -35591,25 +35507,21 @@ snapshots:
       '@octokit/types': 13.5.0
       universal-user-agent: 6.0.0
 
-  '@octokit/graphql@4.8.0(encoding@0.1.13)':
+  '@octokit/graphql@4.8.0':
     dependencies:
-      '@octokit/request': 5.6.3(encoding@0.1.13)
+      '@octokit/request': 8.4.1
       '@octokit/types': 6.41.0
       universal-user-agent: 6.0.0
-    transitivePeerDependencies:
-      - encoding
 
-  '@octokit/graphql@5.0.5(encoding@0.1.13)':
+  '@octokit/graphql@5.0.5':
     dependencies:
-      '@octokit/request': 6.2.3(encoding@0.1.13)
+      '@octokit/request': 8.4.1
       '@octokit/types': 9.0.0
       universal-user-agent: 6.0.0
-    transitivePeerDependencies:
-      - encoding
 
   '@octokit/graphql@7.1.0':
     dependencies:
-      '@octokit/request': 8.4.0
+      '@octokit/request': 8.4.1
       '@octokit/types': 13.5.0
       universal-user-agent: 6.0.0
 
@@ -35623,31 +35535,31 @@ snapshots:
 
   '@octokit/plugin-enterprise-compatibility@1.3.0':
     dependencies:
-      '@octokit/request-error': 2.1.0
+      '@octokit/request-error': 5.1.1
       '@octokit/types': 6.41.0
 
-  '@octokit/plugin-paginate-rest@2.21.3(@octokit/core@3.6.0(encoding@0.1.13))':
+  '@octokit/plugin-paginate-rest@9.2.2(@octokit/core@3.6.0)':
     dependencies:
-      '@octokit/core': 3.6.0(encoding@0.1.13)
-      '@octokit/types': 6.41.0
+      '@octokit/core': 3.6.0
+      '@octokit/types': 12.6.0
 
-  '@octokit/plugin-paginate-rest@9.2.1(@octokit/core@5.2.0)':
+  '@octokit/plugin-paginate-rest@9.2.2(@octokit/core@5.2.0)':
     dependencies:
       '@octokit/core': 5.2.0
       '@octokit/types': 12.6.0
 
-  '@octokit/plugin-request-log@1.0.4(@octokit/core@3.6.0(encoding@0.1.13))':
+  '@octokit/plugin-request-log@1.0.4(@octokit/core@3.6.0)':
     dependencies:
-      '@octokit/core': 3.6.0(encoding@0.1.13)
+      '@octokit/core': 3.6.0
 
   '@octokit/plugin-rest-endpoint-methods@10.4.1(@octokit/core@5.2.0)':
     dependencies:
       '@octokit/core': 5.2.0
       '@octokit/types': 12.6.0
 
-  '@octokit/plugin-rest-endpoint-methods@5.16.2(@octokit/core@3.6.0(encoding@0.1.13))':
+  '@octokit/plugin-rest-endpoint-methods@5.16.2(@octokit/core@3.6.0)':
     dependencies:
-      '@octokit/core': 3.6.0(encoding@0.1.13)
+      '@octokit/core': 3.6.0
       '@octokit/types': 6.41.0
       deprecation: 2.3.1
 
@@ -35656,67 +35568,31 @@ snapshots:
       '@octokit/types': 6.41.0
       bottleneck: 2.19.5
 
-  '@octokit/plugin-throttling@3.7.0(@octokit/core@3.6.0(encoding@0.1.13))':
+  '@octokit/plugin-throttling@3.7.0(@octokit/core@3.6.0)':
     dependencies:
-      '@octokit/core': 3.6.0(encoding@0.1.13)
+      '@octokit/core': 3.6.0
       '@octokit/types': 6.41.0
       bottleneck: 2.19.5
 
-  '@octokit/request-error@2.1.0':
-    dependencies:
-      '@octokit/types': 6.41.0
-      deprecation: 2.3.1
-      once: 1.4.0
-
-  '@octokit/request-error@3.0.3':
-    dependencies:
-      '@octokit/types': 9.0.0
-      deprecation: 2.3.1
-      once: 1.4.0
-
-  '@octokit/request-error@5.1.0':
+  '@octokit/request-error@5.1.1':
     dependencies:
       '@octokit/types': 13.5.0
       deprecation: 2.3.1
       once: 1.4.0
 
-  '@octokit/request@5.6.3(encoding@0.1.13)':
-    dependencies:
-      '@octokit/endpoint': 6.0.12
-      '@octokit/request-error': 2.1.0
-      '@octokit/types': 6.41.0
-      is-plain-object: 5.0.0
-      node-fetch: 2.7.0(encoding@0.1.13)
-      universal-user-agent: 6.0.0
-    transitivePeerDependencies:
-      - encoding
-
-  '@octokit/request@6.2.3(encoding@0.1.13)':
-    dependencies:
-      '@octokit/endpoint': 7.0.5
-      '@octokit/request-error': 3.0.3
-      '@octokit/types': 9.0.0
-      is-plain-object: 5.0.0
-      node-fetch: 2.7.0(encoding@0.1.13)
-      universal-user-agent: 6.0.0
-    transitivePeerDependencies:
-      - encoding
-
-  '@octokit/request@8.4.0':
+  '@octokit/request@8.4.1':
     dependencies:
       '@octokit/endpoint': 9.0.6
-      '@octokit/request-error': 5.1.0
+      '@octokit/request-error': 5.1.1
       '@octokit/types': 13.5.0
       universal-user-agent: 6.0.0
 
-  '@octokit/rest@18.12.0(encoding@0.1.13)':
+  '@octokit/rest@18.12.0':
     dependencies:
-      '@octokit/core': 3.6.0(encoding@0.1.13)
-      '@octokit/plugin-paginate-rest': 2.21.3(@octokit/core@3.6.0(encoding@0.1.13))
-      '@octokit/plugin-request-log': 1.0.4(@octokit/core@3.6.0(encoding@0.1.13))
-      '@octokit/plugin-rest-endpoint-methods': 5.16.2(@octokit/core@3.6.0(encoding@0.1.13))
-    transitivePeerDependencies:
-      - encoding
+      '@octokit/core': 3.6.0
+      '@octokit/plugin-paginate-rest': 9.2.2(@octokit/core@3.6.0)
+      '@octokit/plugin-request-log': 1.0.4(@octokit/core@3.6.0)
+      '@octokit/plugin-rest-endpoint-methods': 5.16.2(@octokit/core@3.6.0)
 
   '@octokit/types@12.6.0':
     dependencies:
@@ -42351,7 +42227,7 @@ snapshots:
       '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@4.2.19)(vite@5.4.21(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))
       '@types/cookie': 0.5.4
       cookie: 0.7.2
-      devalue: 4.3.3
+      devalue: 5.6.4
       esm-env: 1.0.0
       kleur: 4.1.5
       magic-string: 0.30.10
@@ -44958,8 +44834,6 @@ snapshots:
     dependencies:
       micromatch: 2.3.11
       normalize-path: 2.1.1
-    transitivePeerDependencies:
-      - supports-color
 
   anymatch@3.1.3:
     dependencies:
@@ -45603,7 +45477,7 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@4.2.19):
+  better-auth@1.4.7(mongodb@6.21.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.7.1))(next@14.2.35(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.77.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6):
     dependencies:
       '@better-auth/core': 1.4.7(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.5(zod@4.3.5))(jose@6.1.3)(kysely@0.28.14)(nanostores@1.1.0)
       '@better-auth/telemetry': 1.4.7(@better-auth/core@1.4.7(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.5(zod@4.3.5))(jose@6.1.3)(kysely@0.28.14)(nanostores@1.1.0))
@@ -45623,7 +45497,6 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       solid-js: 1.9.6
-      svelte: 4.2.19
 
   better-call@1.1.5(zod@4.3.5):
     dependencies:
@@ -45752,21 +45625,6 @@ snapshots:
   brace-expansion@5.0.4:
     dependencies:
       balanced-match: 4.0.4
-
-  braces@2.3.2:
-    dependencies:
-      arr-flatten: 1.1.0
-      array-unique: 0.3.2
-      extend-shallow: 2.0.1
-      fill-range: 4.0.0
-      isobject: 3.0.1
-      repeat-element: 1.1.4
-      snapdragon: 0.8.2
-      snapdragon-node: 2.1.1
-      split-string: 3.1.0
-      to-regex: 3.0.2
-    transitivePeerDependencies:
-      - supports-color
 
   braces@3.0.3:
     dependencies:
@@ -47296,6 +47154,7 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+    optional: true
 
   debug@4.3.1(supports-color@8.1.1):
     dependencies:
@@ -47535,7 +47394,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  devalue@4.3.3: {}
+  devalue@5.6.4: {}
 
   devlop@1.1.0:
     dependencies:
@@ -48277,7 +48136,7 @@ snapshots:
       '@humanfs/node': 0.16.6
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.3
-      '@types/estree': 1.0.6
+      '@types/estree': 1.0.8
       ajv: 6.14.0
       chalk: 4.1.2
       cross-spawn: 7.0.6
@@ -48728,10 +48587,6 @@ snapshots:
     dependencies:
       path-expression-matcher: 1.2.0
 
-  fast-xml-parser@4.5.4:
-    dependencies:
-      strnum: 1.0.5
-
   fast-xml-parser@5.5.8:
     dependencies:
       fast-xml-builder: 1.1.4
@@ -48846,13 +48701,6 @@ snapshots:
       stylus-lookup: 6.0.0
       tsconfig-paths: 4.2.0
       typescript: 5.8.3
-
-  fill-range@4.0.0:
-    dependencies:
-      extend-shallow: 2.0.1
-      is-number: 3.0.0
-      repeat-string: 1.6.1
-      to-regex-range: 2.1.1
 
   fill-range@7.1.1:
     dependencies:
@@ -52267,7 +52115,7 @@ snapshots:
       vscode-languageserver-textdocument: 1.0.12
       vscode-uri: 3.0.8
 
-  langsmith@0.3.87(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5)):
+  langsmith@0.4.12(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -53530,7 +53378,7 @@ snapshots:
     dependencies:
       arr-diff: 2.0.0
       array-unique: 0.2.1
-      braces: 2.3.2
+      braces: 3.0.3
       expand-brackets: 0.1.5
       extglob: 0.3.2
       filename-regex: 2.0.1
@@ -53541,14 +53389,12 @@ snapshots:
       object.omit: 2.0.1
       parse-glob: 3.0.4
       regex-cache: 0.4.4
-    transitivePeerDependencies:
-      - supports-color
 
   micromatch@3.1.10:
     dependencies:
       arr-diff: 4.0.0
       array-unique: 0.3.2
-      braces: 2.3.2
+      braces: 3.0.3
       define-property: 2.0.2
       extend-shallow: 3.0.2
       extglob: 2.0.4
@@ -54029,7 +53875,7 @@ snapshots:
 
   needle@2.4.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.4.24
       sax: 1.4.1
     transitivePeerDependencies:
@@ -54037,7 +53883,7 @@ snapshots:
 
   needle@3.2.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.6.3
       sax: 1.5.0
     transitivePeerDependencies:
@@ -55453,7 +55299,7 @@ snapshots:
   portfinder@1.0.32:
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
@@ -57000,8 +56846,6 @@ snapshots:
 
   remove-trailing-separator@1.1.0: {}
 
-  repeat-element@1.1.4: {}
-
   repeat-string@1.6.1: {}
 
   request-ip@3.3.0: {}
@@ -57746,16 +57590,6 @@ snapshots:
       snake-case: 3.0.4
       type-fest: 4.41.0
 
-  snapdragon-node@2.1.1:
-    dependencies:
-      define-property: 1.0.0
-      isobject: 3.0.1
-      snapdragon-util: 3.0.1
-
-  snapdragon-util@3.0.1:
-    dependencies:
-      kind-of: 3.2.2
-
   snapdragon@0.8.2:
     dependencies:
       base: 0.11.2
@@ -58289,8 +58123,6 @@ snapshots:
     dependencies:
       '@types/node': 22.15.13
       qs: 6.15.0
-
-  strnum@1.0.5: {}
 
   strnum@2.2.1: {}
 
@@ -58956,11 +58788,6 @@ snapshots:
   to-pascal-case@1.0.0:
     dependencies:
       to-space-case: 1.0.0
-
-  to-regex-range@2.1.1:
-    dependencies:
-      is-number: 3.0.0
-      repeat-string: 1.6.1
 
   to-regex-range@5.0.1:
     dependencies:

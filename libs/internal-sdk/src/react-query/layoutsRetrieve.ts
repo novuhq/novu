@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyLayoutsRetrieve,
 };
 
+export type LayoutsRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a layout
  *
@@ -38,8 +61,11 @@ export {
 export function useLayoutsRetrieve(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<LayoutsRetrieveQueryData>,
-): UseQueryResult<LayoutsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    LayoutsRetrieveQueryData,
+    LayoutsRetrieveQueryError
+  >,
+): UseQueryResult<LayoutsRetrieveQueryData, LayoutsRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildLayoutsRetrieveQuery(
@@ -61,8 +87,11 @@ export function useLayoutsRetrieve(
 export function useLayoutsRetrieveSuspense(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<LayoutsRetrieveQueryData>,
-): UseSuspenseQueryResult<LayoutsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    LayoutsRetrieveQueryData,
+    LayoutsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<LayoutsRetrieveQueryData, LayoutsRetrieveQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildLayoutsRetrieveQuery(

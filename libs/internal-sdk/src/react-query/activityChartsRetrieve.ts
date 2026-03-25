@@ -10,6 +10,16 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +40,16 @@ export {
   queryKeyActivityChartsRetrieve,
 };
 
+export type ActivityChartsRetrieveQueryError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve activity charts
  *
@@ -38,8 +58,14 @@ export {
  */
 export function useActivityChartsRetrieve(
   request: operations.ActivityControllerGetChartsRequest,
-  options?: QueryHookOptions<ActivityChartsRetrieveQueryData>,
-): UseQueryResult<ActivityChartsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    ActivityChartsRetrieveQueryData,
+    ActivityChartsRetrieveQueryError
+  >,
+): UseQueryResult<
+  ActivityChartsRetrieveQueryData,
+  ActivityChartsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildActivityChartsRetrieveQuery(
@@ -59,8 +85,14 @@ export function useActivityChartsRetrieve(
  */
 export function useActivityChartsRetrieveSuspense(
   request: operations.ActivityControllerGetChartsRequest,
-  options?: SuspenseQueryHookOptions<ActivityChartsRetrieveQueryData>,
-): UseSuspenseQueryResult<ActivityChartsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ActivityChartsRetrieveQueryData,
+    ActivityChartsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  ActivityChartsRetrieveQueryData,
+  ActivityChartsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildActivityChartsRetrieveQuery(

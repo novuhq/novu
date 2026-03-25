@@ -23,7 +23,7 @@ export class NormalizeVariables {
     private tenantRepository: TenantRepository
   ) {}
 
-  public async execute(command: ConditionsFilterCommand) {
+  public async execute(command: ConditionsFilterCommand): Promise<IFilterVariables> {
     const filterVariables: IFilterVariables = {};
 
     const combinedFilters = [command.step, ...(command.step?.variants || [])].flatMap((variant) =>

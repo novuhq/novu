@@ -14,6 +14,7 @@ type PropertyActionsProps = {
   isNullablePath: string;
   onDeleteProperty: () => void;
   isDisabled?: boolean;
+  isDeleteDisabled?: boolean;
   variableUsageInfo?: VariableUsageInfo;
 };
 
@@ -24,6 +25,7 @@ export function PropertyActions({
   isNullablePath,
   onDeleteProperty,
   isDisabled = false,
+  isDeleteDisabled = false,
   variableUsageInfo,
 }: PropertyActionsProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -58,10 +60,10 @@ export function PropertyActions({
         mode="ghost"
         size="2xs"
         leadingIcon={RiDeleteBin2Line}
-        onClick={isDisabled ? undefined : onDeleteProperty}
+        onClick={isDeleteDisabled ? undefined : onDeleteProperty}
         aria-label="Delete property"
         className={cn('border ml-0! h-7 w-7 border-neutral-200')}
-        disabled={isDisabled}
+        disabled={isDeleteDisabled}
       />
     </>
   );

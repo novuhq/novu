@@ -1,0 +1,34 @@
+---
+description: Novu monorepo dependency graph — use when assessing blast radius before changing shared code
+globs:
+alwaysApply: false
+---
+
+## Dependency Graph
+
+```mermaid
+graph TD
+    subgraph apps [Apps]
+        api[api]
+        dashboard[dashboard]
+        worker[worker]
+        ws[ws]
+    end
+    subgraph libs [Libs - internal only]
+        dal[dal]
+        appGeneric[application-generic]
+    end
+    subgraph pkgs [Packages - published to NPM]
+        shared[shared]
+        framework[framework]
+        jsSDK[js]
+        reactSDK[react]
+    end
+    api --> appGeneric --> dal
+    worker --> appGeneric
+    ws --> appGeneric
+    api --> shared
+    worker --> shared
+    dashboard --> reactSDK --> jsSDK --> shared
+    dashboard --> framework
+```

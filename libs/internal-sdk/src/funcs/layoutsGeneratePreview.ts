@@ -114,7 +114,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc("/v2/layouts/{layoutId}/preview")(pathParams);
 
   const headers = new Headers(compactMap({

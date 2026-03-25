@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   type TopicsGetQueryData,
 };
 
+export type TopicsGetQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a topic
  *
@@ -38,8 +61,8 @@ export {
 export function useTopicsGet(
   topicKey: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TopicsGetQueryData>,
-): UseQueryResult<TopicsGetQueryData, Error> {
+  options?: QueryHookOptions<TopicsGetQueryData, TopicsGetQueryError>,
+): UseQueryResult<TopicsGetQueryData, TopicsGetQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildTopicsGetQuery(
@@ -61,8 +84,8 @@ export function useTopicsGet(
 export function useTopicsGetSuspense(
   topicKey: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TopicsGetQueryData>,
-): UseSuspenseQueryResult<TopicsGetQueryData, Error> {
+  options?: SuspenseQueryHookOptions<TopicsGetQueryData, TopicsGetQueryError>,
+): UseSuspenseQueryResult<TopicsGetQueryData, TopicsGetQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildTopicsGetQuery(

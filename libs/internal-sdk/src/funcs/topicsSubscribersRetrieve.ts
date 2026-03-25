@@ -115,7 +115,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc(
     "/v1/topics/{topicKey}/subscribers/{externalSubscriberId}",
   )(pathParams);
