@@ -6,7 +6,7 @@
 
 ## Build
 
-Run `pnpm build:with-ee` after changes to `packages/` or `enterprise/`. Direct changes to `apps/` do not require a rebuild.
+Run `pnpm build` after changes to `packages/` or `enterprise/`. Direct changes to `apps/` do not require a rebuild.
 
 ## AI Boundaries
 
