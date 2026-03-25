@@ -73,6 +73,9 @@ const mapAjvErrorToIssueType = (error: ErrorObject): ContentIssueEnum => {
       return ContentIssueEnum.MISSING_VALUE;
     case 'type':
       return ContentIssueEnum.MISSING_VALUE;
+    case 'pattern':
+    case 'anyOf':
+      return ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE;
     default:
       return ContentIssueEnum.MISSING_VALUE;
   }
