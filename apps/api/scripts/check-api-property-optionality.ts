@@ -4,6 +4,7 @@
  * explicit `required: true | false` in decorator options.
  *
  * Run: pnpm check:api-property-optionality (from repo root) or pnpm run check:api-property-optionality in apps/api
+ * Run: pnpm  pnpm --filter @novu/api-service run check:api-property-optionality --format json --write-report .cursor/api-property-optionality-report.json
  *
  * Options:
  *   --format text|json   Human text (default) or JSON on stdout for automation
