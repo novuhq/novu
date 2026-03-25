@@ -3362,6 +3362,9 @@ importers:
       '@floating-ui/dom':
         specifier: ^1.6.13
         version: 1.6.13
+      '@kobalte/core':
+        specifier: ^0.13.10
+        version: 0.13.10(solid-js@1.9.6)
       '@types/json-logic-js':
         specifier: ^2.0.8
         version: 2.0.8
@@ -3383,9 +3386,15 @@ importers:
       socket.io-client:
         specifier: 4.7.2
         version: 4.7.2
+      solid-floating-ui:
+        specifier: ^0.3.1
+        version: 0.3.1(@floating-ui/dom@1.6.13)(solid-js@1.9.6)
       solid-js:
         specifier: ^1.9.4
         version: 1.9.6
+      solid-motionone:
+        specifier: ^1.0.3
+        version: 1.0.3(solid-js@1.9.6)
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.6.0
@@ -3393,9 +3402,6 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.17.4
         version: 0.17.4
-      '@kobalte/core':
-        specifier: ^0.13.10
-        version: 0.13.10(solid-js@1.9.6)
       '@types/jest':
         specifier: ^29.2.3
         version: 29.5.2
@@ -3450,12 +3456,6 @@ importers:
       solid-devtools:
         specifier: ^0.29.2
         version: 0.29.2(solid-js@1.9.6)(vite@4.5.14(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))
-      solid-floating-ui:
-        specifier: ^0.3.1
-        version: 0.3.1(@floating-ui/dom@1.6.13)(solid-js@1.9.6)
-      solid-motionone:
-        specifier: ^1.0.3
-        version: 1.0.3(solid-js@1.9.6)
       tailwindcss:
         specifier: ^3.4.4
         version: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
@@ -47154,6 +47154,7 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+    optional: true
 
   debug@4.3.1(supports-color@8.1.1):
     dependencies:
@@ -53874,7 +53875,7 @@ snapshots:
 
   needle@2.4.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.4.24
       sax: 1.4.1
     transitivePeerDependencies:
@@ -53882,7 +53883,7 @@ snapshots:
 
   needle@3.2.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.6.3
       sax: 1.5.0
     transitivePeerDependencies:
@@ -55298,7 +55299,7 @@ snapshots:
   portfinder@1.0.32:
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
