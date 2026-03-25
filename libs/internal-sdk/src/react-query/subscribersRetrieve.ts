@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   type SubscribersRetrieveQueryData,
 };
 
+export type SubscribersRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a subscriber
  *
@@ -39,8 +62,11 @@ export {
 export function useSubscribersRetrieve(
   subscriberId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<SubscribersRetrieveQueryData>,
-): UseQueryResult<SubscribersRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    SubscribersRetrieveQueryData,
+    SubscribersRetrieveQueryError
+  >,
+): UseQueryResult<SubscribersRetrieveQueryData, SubscribersRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildSubscribersRetrieveQuery(
@@ -63,8 +89,14 @@ export function useSubscribersRetrieve(
 export function useSubscribersRetrieveSuspense(
   subscriberId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<SubscribersRetrieveQueryData>,
-): UseSuspenseQueryResult<SubscribersRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersRetrieveQueryData,
+    SubscribersRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersRetrieveQueryData,
+  SubscribersRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildSubscribersRetrieveQuery(

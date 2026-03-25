@@ -20,10 +20,10 @@
     "react-dom": {"optional":true}
   },
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
+    "@eslint/js": "^9.26.0",
     "@tanstack/react-query": "^5.61.4",
     "@types/react": "^18.3.12",
-    "eslint": "^9.19.0",
+    "eslint": "^9.26.0",
     "globals": "^15.14.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.26.0"

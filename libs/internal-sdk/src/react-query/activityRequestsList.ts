@@ -10,6 +10,16 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +40,16 @@ export {
   queryKeyActivityRequestsList,
 };
 
+export type ActivityRequestsListQueryError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List activity requests
  *
@@ -38,8 +58,14 @@ export {
  */
 export function useActivityRequestsList(
   request: operations.ActivityControllerGetLogsRequest,
-  options?: QueryHookOptions<ActivityRequestsListQueryData>,
-): UseQueryResult<ActivityRequestsListQueryData, Error> {
+  options?: QueryHookOptions<
+    ActivityRequestsListQueryData,
+    ActivityRequestsListQueryError
+  >,
+): UseQueryResult<
+  ActivityRequestsListQueryData,
+  ActivityRequestsListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildActivityRequestsListQuery(
@@ -59,8 +85,14 @@ export function useActivityRequestsList(
  */
 export function useActivityRequestsListSuspense(
   request: operations.ActivityControllerGetLogsRequest,
-  options?: SuspenseQueryHookOptions<ActivityRequestsListQueryData>,
-): UseSuspenseQueryResult<ActivityRequestsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ActivityRequestsListQueryData,
+    ActivityRequestsListQueryError
+  >,
+): UseSuspenseQueryResult<
+  ActivityRequestsListQueryData,
+  ActivityRequestsListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildActivityRequestsListQuery(

@@ -11,6 +11,17 @@ import { NovuCore } from "../core.js";
 import { topicsDelete } from "../funcs/topicsDelete.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -25,6 +36,18 @@ export type TopicsDeleteMutationVariables = {
 export type TopicsDeleteMutationData =
   operations.TopicsControllerDeleteTopicResponse;
 
+export type TopicsDeleteMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Delete a topic
  *
@@ -35,12 +58,12 @@ export type TopicsDeleteMutationData =
 export function useTopicsDeleteMutation(
   options?: MutationHookOptions<
     TopicsDeleteMutationData,
-    Error,
+    TopicsDeleteMutationError,
     TopicsDeleteMutationVariables
   >,
 ): UseMutationResult<
   TopicsDeleteMutationData,
-  Error,
+  TopicsDeleteMutationError,
   TopicsDeleteMutationVariables
 > {
   const client = useNovuContext();

@@ -10,6 +10,16 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +40,16 @@ export {
   type TranslationsRetrieveQueryData,
 };
 
+export type TranslationsRetrieveQueryError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a translation
  *
@@ -38,8 +58,14 @@ export {
  */
 export function useTranslationsRetrieve(
   request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: QueryHookOptions<TranslationsRetrieveQueryData>,
-): UseQueryResult<TranslationsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    TranslationsRetrieveQueryData,
+    TranslationsRetrieveQueryError
+  >,
+): UseQueryResult<
+  TranslationsRetrieveQueryData,
+  TranslationsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildTranslationsRetrieveQuery(
@@ -59,8 +85,14 @@ export function useTranslationsRetrieve(
  */
 export function useTranslationsRetrieveSuspense(
   request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: SuspenseQueryHookOptions<TranslationsRetrieveQueryData>,
-): UseSuspenseQueryResult<TranslationsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    TranslationsRetrieveQueryData,
+    TranslationsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  TranslationsRetrieveQueryData,
+  TranslationsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildTranslationsRetrieveQuery(

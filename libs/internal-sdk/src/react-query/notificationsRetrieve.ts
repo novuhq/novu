@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyNotificationsRetrieve,
 };
 
+export type NotificationsRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve an event
  *
@@ -40,8 +63,14 @@ export {
 export function useNotificationsRetrieve(
   notificationId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<NotificationsRetrieveQueryData>,
-): UseQueryResult<NotificationsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    NotificationsRetrieveQueryData,
+    NotificationsRetrieveQueryError
+  >,
+): UseQueryResult<
+  NotificationsRetrieveQueryData,
+  NotificationsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildNotificationsRetrieveQuery(
@@ -65,8 +94,14 @@ export function useNotificationsRetrieve(
 export function useNotificationsRetrieveSuspense(
   notificationId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<NotificationsRetrieveQueryData>,
-): UseSuspenseQueryResult<NotificationsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    NotificationsRetrieveQueryData,
+    NotificationsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  NotificationsRetrieveQueryData,
+  NotificationsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildNotificationsRetrieveQuery(

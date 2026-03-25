@@ -114,7 +114,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc("/v2/translations/group/{resourceType}/{resourceId}")(
     pathParams,
   );

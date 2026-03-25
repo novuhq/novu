@@ -10,6 +10,16 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +40,16 @@ export {
   type TranslationsGroupsRetrieveQueryData,
 };
 
+export type TranslationsGroupsRetrieveQueryError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a translation group
  *
@@ -41,8 +61,14 @@ export function useTranslationsGroupsRetrieve(
     operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
   resourceId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TranslationsGroupsRetrieveQueryData>,
-): UseQueryResult<TranslationsGroupsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    TranslationsGroupsRetrieveQueryData,
+    TranslationsGroupsRetrieveQueryError
+  >,
+): UseQueryResult<
+  TranslationsGroupsRetrieveQueryData,
+  TranslationsGroupsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildTranslationsGroupsRetrieveQuery(
@@ -67,8 +93,14 @@ export function useTranslationsGroupsRetrieveSuspense(
     operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
   resourceId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TranslationsGroupsRetrieveQueryData>,
-): UseSuspenseQueryResult<TranslationsGroupsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    TranslationsGroupsRetrieveQueryData,
+    TranslationsGroupsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  TranslationsGroupsRetrieveQueryData,
+  TranslationsGroupsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildTranslationsGroupsRetrieveQuery(

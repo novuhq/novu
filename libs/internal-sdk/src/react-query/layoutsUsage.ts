@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyLayoutsUsage,
 };
 
+export type LayoutsUsageQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Get layout usage
  *
@@ -38,8 +61,8 @@ export {
 export function useLayoutsUsage(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<LayoutsUsageQueryData>,
-): UseQueryResult<LayoutsUsageQueryData, Error> {
+  options?: QueryHookOptions<LayoutsUsageQueryData, LayoutsUsageQueryError>,
+): UseQueryResult<LayoutsUsageQueryData, LayoutsUsageQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildLayoutsUsageQuery(
@@ -61,8 +84,11 @@ export function useLayoutsUsage(
 export function useLayoutsUsageSuspense(
   layoutId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<LayoutsUsageQueryData>,
-): UseSuspenseQueryResult<LayoutsUsageQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    LayoutsUsageQueryData,
+    LayoutsUsageQueryError
+  >,
+): UseSuspenseQueryResult<LayoutsUsageQueryData, LayoutsUsageQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildLayoutsUsageQuery(

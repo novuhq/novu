@@ -12,6 +12,16 @@ import { translationsCreate } from "../funcs/translationsCreate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
@@ -24,6 +34,16 @@ export type TranslationsCreateMutationVariables = {
 
 export type TranslationsCreateMutationData = components.TranslationResponseDto;
 
+export type TranslationsCreateMutationError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Create a translation
  *
@@ -33,12 +53,12 @@ export type TranslationsCreateMutationData = components.TranslationResponseDto;
 export function useTranslationsCreateMutation(
   options?: MutationHookOptions<
     TranslationsCreateMutationData,
-    Error,
+    TranslationsCreateMutationError,
     TranslationsCreateMutationVariables
   >,
 ): UseMutationResult<
   TranslationsCreateMutationData,
-  Error,
+  TranslationsCreateMutationError,
   TranslationsCreateMutationVariables
 > {
   const client = useNovuContext();

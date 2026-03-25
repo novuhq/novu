@@ -112,7 +112,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc("/v2/layouts/{layoutId}/duplicate")(pathParams);
 
   const headers = new Headers(compactMap({

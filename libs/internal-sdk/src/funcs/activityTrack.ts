@@ -99,7 +99,6 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-
   const path = pathToFunc(
     "/v2/inbound-webhooks/delivery-providers/{environmentId}/{integrationId}",
   )(pathParams);

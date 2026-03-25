@@ -92,27 +92,28 @@ export type TupleToPrefixes<T extends any[]> = T extends [...infer Prefix, any]
   ? TupleToPrefixes<Prefix> | T
   : never;
 
-export type QueryHookOptions<Data> =
+export type QueryHookOptions<Data, Err = Error> =
   & Omit<
-    UseQueryOptions<Data, Error>,
+    UseQueryOptions<Data, Err>,
     "queryKey" | "queryFn" | "select" | keyof RequestOptions
   >
   & RequestOptions;
 
-export type SuspenseQueryHookOptions<Data> =
+export type SuspenseQueryHookOptions<Data, Err = Error> =
   & Omit<
-    UseSuspenseQueryOptions<Data, Error>,
+    UseSuspenseQueryOptions<Data, Err>,
     "queryKey" | "queryFn" | "select" | keyof RequestOptions
   >
   & RequestOptions;
 
 export type InfiniteQueryHookOptions<
   Data extends PageIterator<unknown, unknown>,
+  Err = Error,
 > =
   & Omit<
     UseInfiniteQueryOptions<
       Data,
-      Error,
+      Err,
       InfiniteData<Data, Data["~next"]>,
       QueryKey,
       Data["~next"]
@@ -130,11 +131,12 @@ export type InfiniteQueryHookOptions<
 
 export type SuspenseInfiniteQueryHookOptions<
   Data extends PageIterator<unknown, unknown>,
+  Err = Error,
 > =
   & Omit<
     UseSuspenseInfiniteQueryOptions<
       Data,
-      Error,
+      Err,
       InfiniteData<Data, Data["~next"]>,
       QueryKey,
       Data["~next"]

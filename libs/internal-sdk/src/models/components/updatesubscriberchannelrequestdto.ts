@@ -21,7 +21,7 @@ export type UpdateSubscriberChannelRequestDto = {
   /**
    * The integration identifier
    */
-  integrationIdentifier?: string | undefined;
+  integrationIdentifier: string;
   /**
    * Credentials payload for the specified provider
    */
@@ -31,7 +31,7 @@ export type UpdateSubscriberChannelRequestDto = {
 /** @internal */
 export type UpdateSubscriberChannelRequestDto$Outbound = {
   providerId: string;
-  integrationIdentifier?: string | undefined;
+  integrationIdentifier: string;
   credentials: ChannelCredentials$Outbound;
 };
 
@@ -42,7 +42,7 @@ export const UpdateSubscriberChannelRequestDto$outboundSchema: z.ZodType<
   UpdateSubscriberChannelRequestDto
 > = z.object({
   providerId: ChatOrPushProviderEnum$outboundSchema,
-  integrationIdentifier: z.string().optional(),
+  integrationIdentifier: z.string(),
   credentials: ChannelCredentials$outboundSchema,
 });
 

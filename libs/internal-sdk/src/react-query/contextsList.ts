@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +41,18 @@ export {
   queryKeyContextsList,
 };
 
+export type ContextsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List all contexts
  *
@@ -41,8 +64,8 @@ export {
  */
 export function useContextsList(
   request: operations.ContextsControllerListContextsRequest,
-  options?: QueryHookOptions<ContextsListQueryData>,
-): UseQueryResult<ContextsListQueryData, Error> {
+  options?: QueryHookOptions<ContextsListQueryData, ContextsListQueryError>,
+): UseQueryResult<ContextsListQueryData, ContextsListQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildContextsListQuery(
@@ -65,8 +88,11 @@ export function useContextsList(
  */
 export function useContextsListSuspense(
   request: operations.ContextsControllerListContextsRequest,
-  options?: SuspenseQueryHookOptions<ContextsListQueryData>,
-): UseSuspenseQueryResult<ContextsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ContextsListQueryData,
+    ContextsListQueryError
+  >,
+): UseSuspenseQueryResult<ContextsListQueryData, ContextsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildContextsListQuery(

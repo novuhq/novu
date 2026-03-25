@@ -9,13 +9,15 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
   EmailControlsDto,
   EmailControlsDto$inboundSchema,
+  EmailControlsDto$Outbound,
+  EmailControlsDto$outboundSchema,
 } from "./emailcontrolsdto.js";
 
 export type LayoutControlValuesDto = {
   /**
    * Email layout controls
    */
-  email?: EmailControlsDto | undefined;
+  email: EmailControlsDto;
 };
 
 /** @internal */
@@ -24,9 +26,29 @@ export const LayoutControlValuesDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  email: EmailControlsDto$inboundSchema.optional(),
+  email: EmailControlsDto$inboundSchema,
+});
+/** @internal */
+export type LayoutControlValuesDto$Outbound = {
+  email: EmailControlsDto$Outbound;
+};
+
+/** @internal */
+export const LayoutControlValuesDto$outboundSchema: z.ZodType<
+  LayoutControlValuesDto$Outbound,
+  z.ZodTypeDef,
+  LayoutControlValuesDto
+> = z.object({
+  email: EmailControlsDto$outboundSchema,
 });
 
+export function layoutControlValuesDtoToJSON(
+  layoutControlValuesDto: LayoutControlValuesDto,
+): string {
+  return JSON.stringify(
+    LayoutControlValuesDto$outboundSchema.parse(layoutControlValuesDto),
+  );
+}
 export function layoutControlValuesDtoFromJSON(
   jsonString: string,
 ): SafeParseResult<LayoutControlValuesDto, SDKValidationError> {

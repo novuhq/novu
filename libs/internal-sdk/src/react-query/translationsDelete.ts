@@ -11,6 +11,16 @@ import { NovuCore } from "../core.js";
 import { translationsDelete } from "../funcs/translationsDelete.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -23,6 +33,16 @@ export type TranslationsDeleteMutationVariables = {
 
 export type TranslationsDeleteMutationData = void;
 
+export type TranslationsDeleteMutationError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Delete a translation
  *
@@ -32,12 +52,12 @@ export type TranslationsDeleteMutationData = void;
 export function useTranslationsDeleteMutation(
   options?: MutationHookOptions<
     TranslationsDeleteMutationData,
-    Error,
+    TranslationsDeleteMutationError,
     TranslationsDeleteMutationVariables
   >,
 ): UseMutationResult<
   TranslationsDeleteMutationData,
-  Error,
+  TranslationsDeleteMutationError,
   TranslationsDeleteMutationVariables
 > {
   const client = useNovuContext();

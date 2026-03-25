@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +41,18 @@ export {
   type TopicsListQueryData,
 };
 
+export type TopicsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List all topics
  *
@@ -40,8 +63,8 @@ export {
  */
 export function useTopicsList(
   request: operations.TopicsControllerListTopicsRequest,
-  options?: QueryHookOptions<TopicsListQueryData>,
-): UseQueryResult<TopicsListQueryData, Error> {
+  options?: QueryHookOptions<TopicsListQueryData, TopicsListQueryError>,
+): UseQueryResult<TopicsListQueryData, TopicsListQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildTopicsListQuery(
@@ -63,8 +86,8 @@ export function useTopicsList(
  */
 export function useTopicsListSuspense(
   request: operations.TopicsControllerListTopicsRequest,
-  options?: SuspenseQueryHookOptions<TopicsListQueryData>,
-): UseSuspenseQueryResult<TopicsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<TopicsListQueryData, TopicsListQueryError>,
+): UseSuspenseQueryResult<TopicsListQueryData, TopicsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildTopicsListQuery(

@@ -15,11 +15,11 @@ export type SubscriberResponseDtoData = {
   /**
    * The first name of the subscriber.
    */
-  firstName?: string | null | undefined;
+  firstName: string | null;
   /**
    * The last name of the subscriber.
    */
-  lastName?: string | null | undefined;
+  lastName: string | null;
   /**
    * The email address of the subscriber.
    */
@@ -100,11 +100,11 @@ export class SubscriberResponseDto extends NovuError {
   /**
    * The first name of the subscriber.
    */
-  firstName?: string | null | undefined;
+  firstName: string | null;
   /**
    * The last name of the subscriber.
    */
-  lastName?: string | null | undefined;
+  lastName: string | null;
   /**
    * The email address of the subscriber.
    */
@@ -189,8 +189,8 @@ export class SubscriberResponseDto extends NovuError {
     super(message, httpMeta);
     this.data$ = err;
     if (err.id != null) this.id = err.id;
-    if (err.firstName != null) this.firstName = err.firstName;
-    if (err.lastName != null) this.lastName = err.lastName;
+    this.firstName = err.firstName;
+    this.lastName = err.lastName;
     if (err.email != null) this.email = err.email;
     if (err.phone != null) this.phone = err.phone;
     if (err.avatar != null) this.avatar = err.avatar;
@@ -220,8 +220,8 @@ export const SubscriberResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   _id: z.string().optional(),
-  firstName: z.nullable(z.string()).optional(),
-  lastName: z.nullable(z.string()).optional(),
+  firstName: z.nullable(z.string()),
+  lastName: z.nullable(z.string()),
   email: z.nullable(z.string()).optional(),
   phone: z.nullable(z.string()).optional(),
   avatar: z.nullable(z.string()).optional(),

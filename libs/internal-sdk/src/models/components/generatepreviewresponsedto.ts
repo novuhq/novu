@@ -24,6 +24,10 @@ import {
   InAppRenderOutput$inboundSchema,
 } from "./inapprenderoutput.js";
 import {
+  PreviewErrorDto,
+  PreviewErrorDto$inboundSchema,
+} from "./previewerrordto.js";
+import {
   PreviewPayloadDto,
   PreviewPayloadDto$inboundSchema,
 } from "./previewpayloaddto.js";
@@ -70,6 +74,7 @@ export type GeneratePreviewResponseDtoResult7Type = ClosedEnum<
 export type Seven = {
   type?: GeneratePreviewResponseDtoResult7Type | undefined;
   preview?: ChatRenderOutput | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 export const GeneratePreviewResponseDtoResult6Type = {
@@ -82,6 +87,7 @@ export type GeneratePreviewResponseDtoResult6Type = ClosedEnum<
 export type Six = {
   type?: GeneratePreviewResponseDtoResult6Type | undefined;
   preview?: PushRenderOutput | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 export const GeneratePreviewResponseDtoResult5Type = {
@@ -94,6 +100,7 @@ export type GeneratePreviewResponseDtoResult5Type = ClosedEnum<
 export type Result5 = {
   type?: GeneratePreviewResponseDtoResult5Type | undefined;
   preview?: SmsRenderOutput | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 export const GeneratePreviewResponseDtoResult4Type = {
@@ -106,6 +113,7 @@ export type GeneratePreviewResponseDtoResult4Type = ClosedEnum<
 export type Result4 = {
   type?: GeneratePreviewResponseDtoResult4Type | undefined;
   preview?: InAppRenderOutput | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 export const GeneratePreviewResponseDtoResult3Type = {
@@ -118,6 +126,7 @@ export type GeneratePreviewResponseDtoResult3Type = ClosedEnum<
 export type Three = {
   type?: GeneratePreviewResponseDtoResult3Type | undefined;
   preview?: EmailRenderOutput | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 export const GeneratePreviewResponseDtoResultType = {
@@ -130,6 +139,7 @@ export type GeneratePreviewResponseDtoResultType = ClosedEnum<
 export type Result2 = {
   type?: GeneratePreviewResponseDtoResultType | undefined;
   preview?: EmailRenderOutput | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 /**
@@ -155,6 +165,10 @@ export type GeneratePreviewResponseDto = {
    * The payload schema that was used to generate the preview payload example
    */
   schema?: { [k: string]: any } | null | undefined;
+  /**
+   * Sample novu-signature header value for HTTP request steps
+   */
+  novuSignature?: string | undefined;
   /**
    * Preview result
    */
@@ -227,6 +241,7 @@ export const Seven$inboundSchema: z.ZodType<Seven, z.ZodTypeDef, unknown> = z
   .object({
     type: GeneratePreviewResponseDtoResult7Type$inboundSchema.optional(),
     preview: ChatRenderOutput$inboundSchema.optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function sevenFromJSON(
@@ -250,6 +265,7 @@ export const Six$inboundSchema: z.ZodType<Six, z.ZodTypeDef, unknown> = z
   .object({
     type: GeneratePreviewResponseDtoResult6Type$inboundSchema.optional(),
     preview: PushRenderOutput$inboundSchema.optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function sixFromJSON(
@@ -273,6 +289,7 @@ export const Result5$inboundSchema: z.ZodType<Result5, z.ZodTypeDef, unknown> =
   z.object({
     type: GeneratePreviewResponseDtoResult5Type$inboundSchema.optional(),
     preview: SmsRenderOutput$inboundSchema.optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function result5FromJSON(
@@ -296,6 +313,7 @@ export const Result4$inboundSchema: z.ZodType<Result4, z.ZodTypeDef, unknown> =
   z.object({
     type: GeneratePreviewResponseDtoResult4Type$inboundSchema.optional(),
     preview: InAppRenderOutput$inboundSchema.optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function result4FromJSON(
@@ -319,6 +337,7 @@ export const Three$inboundSchema: z.ZodType<Three, z.ZodTypeDef, unknown> = z
   .object({
     type: GeneratePreviewResponseDtoResult3Type$inboundSchema.optional(),
     preview: EmailRenderOutput$inboundSchema.optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function threeFromJSON(
@@ -342,6 +361,7 @@ export const Result2$inboundSchema: z.ZodType<Result2, z.ZodTypeDef, unknown> =
   z.object({
     type: GeneratePreviewResponseDtoResultType$inboundSchema.optional(),
     preview: EmailRenderOutput$inboundSchema.optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function result2FromJSON(
@@ -389,6 +409,7 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   previewPayloadExample: PreviewPayloadDto$inboundSchema,
   schema: z.nullable(z.record(z.any())).optional(),
+  novuSignature: z.string().optional(),
   result: z.union([
     z.record(z.any()),
     z.lazy(() => Result2$inboundSchema),
