@@ -23,6 +23,11 @@ describe('normalizeTagGroups', () => {
 });
 
 describe('checkNotificationTagFilter', () => {
+  it('returns false for non-array filter values', () => {
+    expect(checkNotificationTagFilter(['x'], '' as never)).toBe(false);
+    expect(checkNotificationTagFilter(['x'], null as never)).toBe(false);
+  });
+
   it('matches OR for flat filter', () => {
     expect(checkNotificationTagFilter(['x', 'y'], ['y'])).toBe(true);
     expect(checkNotificationTagFilter(['x'], ['y'])).toBe(false);
@@ -48,6 +53,22 @@ describe('checkNotificationTagFilter', () => {
 describe('areTagsEqual', () => {
   it('treats equivalent flat and single-group CNF as equal', () => {
     expect(areTagsEqual(['a', 'b'], [['a', 'b']])).toBe(true);
+  });
+
+  it('treats duplicate tags in a group as equivalent', () => {
+    expect(areTagsEqual(['a', 'a'], ['a'])).toBe(true);
+  });
+
+  it('treats duplicate OR-groups as equivalent', () => {
+    expect(
+      areTagsEqual(
+        [
+          ['a'],
+          ['a'],
+        ],
+        [['a']]
+      )
+    ).toBe(true);
   });
 
   it('compares CNF order-independently within groups', () => {

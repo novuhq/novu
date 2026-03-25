@@ -19,10 +19,12 @@ export function parseTagsQueryValue(value: unknown): TagsFilter | undefined {
 
     const first = value[0];
     if (Array.isArray(first)) {
-      return value as string[][];
+      return (value as unknown[][]).map((group) =>
+        Array.isArray(group) ? group.map((t) => String(t)) : [String(group)]
+      );
     }
 
-    return value as string[];
+    return (value as unknown[]).map((t) => String(t));
   }
 
   if (typeof value === 'object') {

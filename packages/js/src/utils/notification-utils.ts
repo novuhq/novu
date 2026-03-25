@@ -18,12 +18,16 @@ class TagsFilterValidationError extends Error {
 
 /** Normalizes legacy flat tags or CNF nested tags to `string[][]` (AND of OR-groups). */
 export function normalizeTagGroups(tags: TagsFilter | undefined): string[][] {
-  if (!tags || tags.length === 0) {
+  if (tags === undefined) {
     return [];
   }
 
   if (!Array.isArray(tags)) {
     throw new TagsFilterValidationError('Tags must be an array');
+  }
+
+  if (tags.length === 0) {
+    return [];
   }
 
   const isNested = Array.isArray(tags[0]);
@@ -70,14 +74,24 @@ export function normalizeTagGroups(tags: TagsFilter | undefined): string[][] {
 }
 
 function tagsFilterComparableString(tags?: TagsFilter): string {
-  if (!tags || tags.length === 0) {
+  if (tags === undefined) {
     return '';
   }
 
   const groups = normalizeTagGroups(tags);
-  const sortedGroups = groups
-    .map((g) => [...g].sort((a, b) => a.localeCompare(b)))
-    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  if (groups.length === 0) {
+    return '';
+  }
+
+  const sortedGroups = Array.from(
+    new Map(
+      groups.map((group) => {
+        const canonicalGroup = Array.from(new Set(group)).sort((a, b) => a.localeCompare(b));
+
+        return [JSON.stringify(canonicalGroup), canonicalGroup] as const;
+      })
+    ).values()
+  ).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 
   return JSON.stringify(sortedGroups);
 }
@@ -188,20 +202,18 @@ export function checkNotificationTagFilter(
   notificationTags: string[] | undefined,
   filterTags: TagsFilter | undefined
 ): boolean {
-  if (!filterTags || filterTags.length === 0) {
-    // No tag filter specified, so it matches
-    return true;
-  }
-
-  if (!notificationTags || notificationTags.length === 0) {
-    // Filter has tags but notification has none
-    return false;
-  }
-
   let groups: string[][];
   try {
     groups = normalizeTagGroups(filterTags);
   } catch {
+    return false;
+  }
+
+  if (groups.length === 0) {
+    return true;
+  }
+
+  if (!notificationTags || notificationTags.length === 0) {
     return false;
   }
 

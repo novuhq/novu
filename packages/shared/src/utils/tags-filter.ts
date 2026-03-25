@@ -23,12 +23,16 @@ export class TagsFilterValidationError extends Error {
  * Legacy `['a','b']` → `[['a','b']]`. Empty input → `[]` (no tag filter).
  */
 export function normalizeTagGroups(tags: TagsFilter | undefined): string[][] {
-  if (!tags || tags.length === 0) {
+  if (tags === undefined) {
     return [];
   }
 
   if (!Array.isArray(tags)) {
     throw new TagsFilterValidationError('Tags must be an array');
+  }
+
+  if (tags.length === 0) {
+    return [];
   }
 
   const isNested = Array.isArray(tags[0]);

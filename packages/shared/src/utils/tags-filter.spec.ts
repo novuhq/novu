@@ -31,6 +31,10 @@ describe('normalizeTagGroups', () => {
   it('rejects non-array values (e.g. string is iterable and must not be treated as tag list)', () => {
     expect(() => normalizeTagGroups('not-an-array' as never)).toThrow(TagsFilterValidationError);
   });
+
+  it('rejects null', () => {
+    expect(() => normalizeTagGroups(null as never)).toThrow(TagsFilterValidationError);
+  });
 });
 
 describe('buildTagsQuery', () => {

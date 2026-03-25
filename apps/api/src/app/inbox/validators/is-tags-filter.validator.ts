@@ -10,7 +10,11 @@ import {
 @ValidatorConstraint({ name: 'isTagsFilter', async: false })
 export class IsTagsFilterConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (value === undefined || value === null) {
+    if (value === null) {
+      return false;
+    }
+
+    if (value === undefined) {
       return true;
     }
 

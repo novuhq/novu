@@ -88,7 +88,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
         .map((group, i) => group.map((tag) => `&tags[${i}][]=${encodeURIComponent(tag)}`).join(''))
         .join('');
     } else if (tags) {
-      query += tags.map((tag) => `&tags[]=${tag}`).join('');
+      query += tags.map((tag) => `&tags[]=${encodeURIComponent(tag)}`).join('');
     }
     if (typeof read !== 'undefined') {
       query += `&read=${read}`;
