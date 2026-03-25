@@ -65,14 +65,14 @@ export class SubscriberResponseDtoOptional {
   })
   topics?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Indicates whether the subscriber is currently online.',
     type: Boolean,
     nullable: true,
   })
   isOnline?: boolean | null;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The timestamp indicating when the subscriber was last online, in ISO 8601 format.',
     type: String,
     nullable: true,
