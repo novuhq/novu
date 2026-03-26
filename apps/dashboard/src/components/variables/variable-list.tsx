@@ -83,7 +83,7 @@ export const VariableList = () => {
           placeholder="Search variables..."
         />
         <PermissionButton
-          permission={PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE}
+          permission={PermissionsEnum.WORKFLOW_WRITE}
           variant="primary"
           mode="gradient"
           size="xs"
