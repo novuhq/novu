@@ -14,18 +14,17 @@ import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiPlayCircleLine 
 import { useParams } from 'react-router-dom';
 import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
-import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http-request/http-request-test-provider';
+import { CopilotSidebar } from '@/components/workflow-editor/steps/layout/copilot-sidebar';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
@@ -140,146 +139,133 @@ function StepEditorContent() {
 
   const currentPayload = parseJsonValue(editorValue).payload;
 
-  const contextPanelContent = showCopilot ? (
-    <Tabs defaultValue="preview" className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-neutral-200 pr-3">
-        <TabsList variant="regular" className="border-b-0 border-t-0 px-3 py-2">
-          <TabsTrigger value="copilot" size="xs" variant="regular">
-            <span className="flex items-center gap-1">
-              <BroomSparkle className="size-3" isAnimating />
-              <span className="text-label-sm">Novu Copilot</span>
-              <Badge variant="lighter" color="gray" className="ml-1">
-                BETA
-              </Badge>
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="preview" size="xs" variant="regular">
-            <span className="flex items-center gap-1">
-              <RiCodeBlock className="size-3" />
-              <span className="text-label-sm">Preview sandbox</span>
-            </span>
-          </TabsTrigger>
-        </TabsList>
-        <Protect permission={PermissionsEnum.EVENT_WRITE}>
-          <Button
-            variant="secondary"
-            size="2xs"
-            mode="outline"
-            className="p-1.5"
-            leadingIcon={RiPlayCircleLine}
-            onClick={handleTestWorkflowClick}
-            aria-label="Test workflow"
-          />
-        </Protect>
+  const testWorkflowButton = (
+    <Protect permission={PermissionsEnum.EVENT_WRITE}>
+      <Button
+        variant="secondary"
+        size="2xs"
+        mode="outline"
+        className="p-1.5"
+        leadingIcon={RiPlayCircleLine}
+        onClick={handleTestWorkflowClick}
+        aria-label="Test workflow"
+      />
+    </Protect>
+  );
+
+  const previewContent = (
+    <div className="bg-bg-weak flex-1 overflow-hidden">
+      <div className="h-full overflow-y-auto">
+        <PreviewContextContainer />
       </div>
-      <TabsContent value="preview" className={`flex min-h-0 flex-1 flex-col data-[state="inactive"]:hidden`} forceMount>
-        <div className="bg-bg-weak flex-1 overflow-hidden ">
-          <div className="h-full overflow-y-auto">
-            <PreviewContextContainer />
-          </div>
-        </div>
-      </TabsContent>
-      <TabsContent value="copilot" className={`flex min-h-0 flex-1 flex-col data-[state="inactive"]:hidden`} forceMount>
-        <AiChatProvider config={aiChatConfig}>
-          <NovuCopilotPanel hideHeader />
-        </AiChatProvider>
-      </TabsContent>
-    </Tabs>
-  ) : (
+    </div>
+  );
+
+  const mainContent = (
     <>
-      <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
-        <Protect permission={PermissionsEnum.EVENT_WRITE}>
-          <Button
-            variant="secondary"
-            size="2xs"
-            mode="outline"
-            className="p-1.5"
-            leadingIcon={RiPlayCircleLine}
-            onClick={handleTestWorkflowClick}
-            aria-label="Test workflow"
-          />
-        </Protect>
-      </PanelHeader>
-      <div className="bg-bg-weak flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto">
-          <PreviewContextContainer />
-        </div>
-      </div>
+      <FormRoot className="flex min-h-0 flex-1 flex-col" onBlur={onBlur} onSubmit={(e) => e.preventDefault()}>
+        <ResizableLayout autoSaveId="step-editor-content-layout">
+          <ResizableLayout.EditorPanel>
+            <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="min-h-[45px] py-2">
+              <div className="flex items-center gap-2">
+                <TranslationStatus
+                  resourceId={workflow.workflowId}
+                  resourceType={LocalizationResourceEnum.WORKFLOW}
+                  isTranslationEnabled={isTranslationsEnabled}
+                  className="h-7 text-xs"
+                />
+                {step.stepResolverHash && (
+                  <Badge variant="lighter" color="gray" size="md" className="font-mono tracking-wide">
+                    <BadgeIcon as={RiGitCommitFill} className="rotate-90" />
+                    {step.stepResolverHash}
+                  </Badge>
+                )}
+                {!isExternalWorkflow && <StepEditorModeToggle />}
+              </div>
+            </PanelHeader>
+            <div className="flex-1 overflow-y-auto">
+              <div className="h-full p-3">
+                <StepEditorFactory />
+              </div>
+            </div>
+          </ResizableLayout.EditorPanel>
+
+          <ResizableLayout.Handle />
+
+          <ResizableLayout.PreviewPanel>
+            <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} className="min-h-[45px] py-2">
+              {isTranslationsEnabled && availableLocales.length > 0 && (
+                <LocaleSelect
+                  value={selectedLocale}
+                  onChange={setSelectedLocale}
+                  placeholder="Select locale"
+                  availableLocales={availableLocales}
+                  className="h-7 w-auto min-w-[120px] text-xs"
+                />
+              )}
+            </PanelHeader>
+            <div className="flex-1 overflow-hidden">
+              <div
+                className="bg-bg-weak relative h-full overflow-y-auto p-3"
+                style={{
+                  backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
+                  backgroundSize: '20px 20px',
+                }}
+              >
+                <StepPreviewFactory />
+              </div>
+            </div>
+          </ResizableLayout.PreviewPanel>
+        </ResizableLayout>
+      </FormRoot>
+
+      <IssuesPanel
+        issues={filteredIssues}
+        isTranslationEnabled={workflow.isTranslationEnabled}
+        hintMessage={stepResolverHint}
+      />
     </>
   );
 
+  if (showCopilot) {
+    return (
+      <>
+        <CopilotSidebar
+          copilotContent={
+            <AiChatProvider config={aiChatConfig}>
+              <NovuCopilotPanel hideHeader />
+            </AiChatProvider>
+          }
+          previewContent={previewContent}
+          testWorkflowButton={testWorkflowButton}
+          autoSaveId="step-editor-copilot-layout"
+          hideCollapseButton
+          maxSize="40%"
+        >
+          <div className="flex h-full min-w-0 flex-1 flex-col">{mainContent}</div>
+        </CopilotSidebar>
+        <TestWorkflowDrawer
+          isOpen={isTestDrawerOpen}
+          onOpenChange={setIsTestDrawerOpen}
+          testData={testData}
+          initialPayload={currentPayload}
+        />
+      </>
+    );
+  }
+
   return (
     <ResizableLayout autoSaveId="step-editor-main-layout">
-      <ResizableLayout.ContextPanel defaultSize={27} minSize={27} maxSize={80}>
-        {contextPanelContent}
+      <ResizableLayout.ContextPanel defaultSize="27%" minSize="27%" maxSize="80%">
+        <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
+          {testWorkflowButton}
+        </PanelHeader>
+        {previewContent}
       </ResizableLayout.ContextPanel>
 
       <ResizableLayout.Handle />
 
-      <ResizableLayout.MainContentPanel>
-        {/* The form root is set on this level to avoid the issues with Copilot panel and form, because forms cannot be nested inside each other */}
-        <FormRoot className="flex min-h-0 flex-1 flex-col" onBlur={onBlur} onSubmit={(e) => e.preventDefault()}>
-          <ResizableLayout autoSaveId="step-editor-content-layout">
-            <ResizableLayout.EditorPanel>
-              <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="min-h-[45px] py-2">
-                <div className="flex items-center gap-2">
-                  <TranslationStatus
-                    resourceId={workflow.workflowId}
-                    resourceType={LocalizationResourceEnum.WORKFLOW}
-                    isTranslationEnabled={isTranslationsEnabled}
-                    className="h-7 text-xs"
-                  />
-                  {step.stepResolverHash && (
-                    <Badge variant="lighter" color="gray" size="md" className="font-mono tracking-wide">
-                      <BadgeIcon as={RiGitCommitFill} className="rotate-90" />
-                      {step.stepResolverHash}
-                    </Badge>
-                  )}
-                  {!isExternalWorkflow && <StepEditorModeToggle />}
-                </div>
-              </PanelHeader>
-              <div className="flex-1 overflow-y-auto">
-                <div className="h-full p-3">
-                  <StepEditorFactory />
-                </div>
-              </div>
-            </ResizableLayout.EditorPanel>
-
-            <ResizableLayout.Handle />
-
-            <ResizableLayout.PreviewPanel>
-              <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} className="min-h-[45px] py-2">
-                {isTranslationsEnabled && availableLocales.length > 0 && (
-                  <LocaleSelect
-                    value={selectedLocale}
-                    onChange={setSelectedLocale}
-                    placeholder="Select locale"
-                    availableLocales={availableLocales}
-                    className="h-7 w-auto min-w-[120px] text-xs"
-                  />
-                )}
-              </PanelHeader>
-              <div className="flex-1 overflow-hidden">
-                <div
-                  className="bg-bg-weak relative h-full overflow-y-auto p-3"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                  }}
-                >
-                  <StepPreviewFactory />
-                </div>
-              </div>
-            </ResizableLayout.PreviewPanel>
-          </ResizableLayout>
-        </FormRoot>
-
-        <IssuesPanel
-          issues={filteredIssues}
-          isTranslationEnabled={workflow.isTranslationEnabled}
-          hintMessage={stepResolverHint}
-        />
-      </ResizableLayout.MainContentPanel>
+      <ResizableLayout.MainContentPanel>{mainContent}</ResizableLayout.MainContentPanel>
 
       <TestWorkflowDrawer
         isOpen={isTestDrawerOpen}
