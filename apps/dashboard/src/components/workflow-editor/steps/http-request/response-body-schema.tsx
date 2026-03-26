@@ -57,8 +57,8 @@ export function ResponseBodySchema() {
         </div>
         <p className="text-xs leading-4 text-[#525866]">
           <span className="font-medium text-[#0e121b]">Note: </span>
-          {'These values can be accessed in the subsequent steps via '}
-          <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${step.stepId}.KEY_NAME}}`}</span>
+          {'These values can be accessed in subsequent steps via '}
+          <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${step.stepId}.<key>}}`}</span>
         </p>
       </div>
     </div>
