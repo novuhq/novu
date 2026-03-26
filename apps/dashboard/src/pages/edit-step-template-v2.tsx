@@ -2,7 +2,7 @@ import { StepUpdateDto } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageMeta } from '@/components/page-meta';
-import { Form, FormRoot } from '@/components/primitives/form/form';
+import { Form } from '@/components/primitives/form/form';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
@@ -99,7 +99,7 @@ export function EditStepTemplateV2Page() {
     setIssuesFromStep();
   }, [setIssuesFromStep]);
 
-  const value = useMemo(() => ({ saveForm, saveFormDebounced }), [saveForm, saveFormDebounced]);
+  const value = useMemo(() => ({ saveForm, saveFormDebounced, onBlur }), [saveForm, saveFormDebounced, onBlur]);
 
   if (!workflow || !step) {
     return null;
@@ -116,11 +116,11 @@ export function EditStepTemplateV2Page() {
     <>
       <PageMeta title={`Edit ${step.name} Template`} />
       <Form {...form}>
-        <FormRoot className="flex h-full w-full flex-col" onBlur={onBlur}>
+        <div className="flex h-full w-full flex-col">
           <SaveFormContext.Provider value={value}>
             <StepEditorLayout workflow={workflow} step={step} />
           </SaveFormContext.Provider>
-        </FormRoot>
+        </div>
       </Form>
     </>
   );

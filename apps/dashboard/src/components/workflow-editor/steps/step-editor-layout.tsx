@@ -5,6 +5,7 @@ import {
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   PermissionsEnum,
+  ResourceOriginEnum,
   StepResponseDto,
   WorkflowResponseDto,
 } from '@novu/shared';
@@ -17,6 +18,7 @@ import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
+import { FormRoot } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
@@ -27,6 +29,7 @@ import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
@@ -55,9 +58,11 @@ function StepEditorContent() {
   const stepResolverHint = useStepResolverHint();
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
+  const { onBlur } = useSaveForm();
   const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
   const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
-  const showCopilot = isAiEnabled && isDevEnvironment;
+  const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
+  const showCopilot = isAiEnabled && isDevEnvironment && !isExternalWorkflow;
 
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
@@ -136,7 +141,7 @@ function StepEditorContent() {
   const currentPayload = parseJsonValue(editorValue).payload;
 
   const contextPanelContent = showCopilot ? (
-    <Tabs defaultValue="copilot" className="flex h-full flex-col">
+    <Tabs defaultValue="preview" className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-neutral-200 pr-3">
         <TabsList variant="regular" className="border-b-0 border-t-0 px-3 py-2">
           <TabsTrigger value="copilot" size="xs" variant="regular">
@@ -167,14 +172,14 @@ function StepEditorContent() {
           />
         </Protect>
       </div>
-      <TabsContent value="preview" className="flex min-h-0 flex-1 flex-col">
-        <div className="bg-bg-weak flex-1 overflow-hidden">
+      <TabsContent value="preview" className={`flex min-h-0 flex-1 flex-col data-[state="inactive"]:hidden`} forceMount>
+        <div className="bg-bg-weak flex-1 overflow-hidden ">
           <div className="h-full overflow-y-auto">
             <PreviewContextContainer />
           </div>
         </div>
       </TabsContent>
-      <TabsContent value="copilot" className="flex min-h-0 flex-1 flex-col">
+      <TabsContent value="copilot" className={`flex min-h-0 flex-1 flex-col data-[state="inactive"]:hidden`} forceMount>
         <AiChatProvider config={aiChatConfig}>
           <NovuCopilotPanel hideHeader />
         </AiChatProvider>
@@ -205,12 +210,15 @@ function StepEditorContent() {
 
   return (
     <ResizableLayout autoSaveId="step-editor-main-layout">
-      <ResizableLayout.ContextPanel>{contextPanelContent}</ResizableLayout.ContextPanel>
+      <ResizableLayout.ContextPanel defaultSize={27} minSize={27} maxSize={80}>
+        {contextPanelContent}
+      </ResizableLayout.ContextPanel>
 
       <ResizableLayout.Handle />
 
       <ResizableLayout.MainContentPanel>
-        <div className="flex min-h-0 flex-1 flex-col">
+        {/* The form root is set on this level to avoid the issues with Copilot panel and form, because forms cannot be nested inside each other */}
+        <FormRoot className="flex min-h-0 flex-1 flex-col" onBlur={onBlur} onSubmit={(e) => e.preventDefault()}>
           <ResizableLayout autoSaveId="step-editor-content-layout">
             <ResizableLayout.EditorPanel>
               <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="min-h-[45px] py-2">
@@ -227,7 +235,7 @@ function StepEditorContent() {
                       {step.stepResolverHash}
                     </Badge>
                   )}
-                  <StepEditorModeToggle />
+                  {!isExternalWorkflow && <StepEditorModeToggle />}
                 </div>
               </PanelHeader>
               <div className="flex-1 overflow-y-auto">
@@ -264,7 +272,7 @@ function StepEditorContent() {
               </div>
             </ResizableLayout.PreviewPanel>
           </ResizableLayout>
-        </div>
+        </FormRoot>
 
         <IssuesPanel
           issues={filteredIssues}
