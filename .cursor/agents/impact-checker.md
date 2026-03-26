@@ -25,7 +25,7 @@ When invoked with a set of changed files or symbols:
 
 4. Flag any callers that may break due to the change (type changes, removed exports, renamed functions)
 
-5. Note if `pnpm build:with-ee` is required before changes take effect (yes — any change to `packages/`)
+5. Note if `pnpm build` is required before changes take effect (yes — any change to `packages/`)
 
 Report:
 - Affected apps and packages
