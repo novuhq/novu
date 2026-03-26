@@ -25,8 +25,8 @@ export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls e
   payload: T_Payload;
   /** The subscriber for the event, provided during trigger. */
   subscriber: Prettify<Subscriber>;
-  /** The environment the workflow is running in. */
-  environment: Record<string, unknown>;
+  /** The environment variables, defined in the Novu Dashboard. */
+  env: Record<string, unknown>;
   /** The controls for the event. Provided via the Dashboard. */
   controls: T_Controls;
   /** The resolved context for the event. */

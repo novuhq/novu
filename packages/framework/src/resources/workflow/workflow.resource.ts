@@ -108,7 +108,7 @@ export function workflow<
     await execute({
       payload: {} as T_PayloadValidated,
       subscriber: {},
-      environment: {},
+      env: {},
       controls: {} as T_Controls,
       context: {},
       step: {
