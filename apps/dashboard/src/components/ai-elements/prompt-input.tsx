@@ -9,6 +9,7 @@ import {
   Children,
   type ClipboardEventHandler,
   type ComponentProps,
+  ComponentPropsWithRef,
   createContext,
   type FormEvent,
   type FormEventHandler,
@@ -274,7 +275,7 @@ export interface PromptInputMessage {
   files: FileUIPart[];
 }
 
-export type PromptInputProps = Omit<HTMLAttributes<HTMLFormElement>, 'onSubmit' | 'onError'> & {
+export type PromptInputProps = Omit<ComponentPropsWithRef<'form'>, 'onSubmit' | 'onError'> & {
   accept?: string; // e.g., "image/*" or leave undefined for any
   multiple?: boolean;
   // When true, accepts drops anywhere on document. Default false (opt-in).

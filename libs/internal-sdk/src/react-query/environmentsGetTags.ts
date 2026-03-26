@@ -5,34 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from "../models/errors/httpclienterrors.js";
-import * as errors from "../models/errors/index.js";
-import { NovuError } from "../models/errors/novuerror.js";
-import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
-import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+} from '../models/errors/httpclienterrors.js';
+import * as errors from '../models/errors/index.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildEnvironmentsGetTagsQuery,
   EnvironmentsGetTagsQueryData,
   prefetchEnvironmentsGetTags,
   queryKeyEnvironmentsGetTags,
-} from "./environmentsGetTags.core.js";
+} from './environmentsGetTags.core.js';
 export {
   buildEnvironmentsGetTagsQuery,
   type EnvironmentsGetTagsQueryData,
@@ -61,19 +57,11 @@ export type EnvironmentsGetTagsQueryError =
 export function useEnvironmentsGetTags(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<
-    EnvironmentsGetTagsQueryData,
-    EnvironmentsGetTagsQueryError
-  >,
+  options?: QueryHookOptions<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError>
 ): UseQueryResult<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
     ...options,
   });
 }
@@ -87,33 +75,19 @@ export function useEnvironmentsGetTags(
 export function useEnvironmentsGetTagsSuspense(
   environmentId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<
-    EnvironmentsGetTagsQueryData,
-    EnvironmentsGetTagsQueryError
-  >,
-): UseSuspenseQueryResult<
-  EnvironmentsGetTagsQueryData,
-  EnvironmentsGetTagsQueryError
-> {
+  options?: SuspenseQueryHookOptions<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError>
+): UseSuspenseQueryResult<EnvironmentsGetTagsQueryData, EnvironmentsGetTagsQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsGetTagsQuery(client, environmentId, idempotencyKey, options),
     ...options,
   });
 }
 
 export function setEnvironmentsGetTagsData(
   client: QueryClient,
-  queryKeyBase: [
-    environmentId: string,
-    parameters: { idempotencyKey?: string | undefined },
-  ],
-  data: EnvironmentsGetTagsQueryData,
+  queryKeyBase: [environmentId: string, parameters: { idempotencyKey?: string | undefined }],
+  data: EnvironmentsGetTagsQueryData
 ): EnvironmentsGetTagsQueryData | undefined {
   const key = queryKeyEnvironmentsGetTags(...queryKeyBase);
 
@@ -122,23 +96,21 @@ export function setEnvironmentsGetTagsData(
 
 export function invalidateEnvironmentsGetTags(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<
-    [environmentId: string, parameters: { idempotencyKey?: string | undefined }]
-  >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  queryKeyBase: TupleToPrefixes<[environmentId: string, parameters: { idempotencyKey?: string | undefined }]>,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "getTags", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Environments', 'getTags', ...queryKeyBase],
   });
 }
 
 export function invalidateAllEnvironmentsGetTags(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "getTags"],
+    queryKey: ['@novu/api', 'Environments', 'getTags'],
   });
 }
