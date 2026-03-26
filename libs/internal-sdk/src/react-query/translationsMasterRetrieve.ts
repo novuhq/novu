@@ -5,33 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from "../models/errors/httpclienterrors.js";
-import { NovuError } from "../models/errors/novuerror.js";
-import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
-import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+} from '../models/errors/httpclienterrors.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildTranslationsMasterRetrieveQuery,
   prefetchTranslationsMasterRetrieve,
   queryKeyTranslationsMasterRetrieve,
   TranslationsMasterRetrieveQueryData,
-} from "./translationsMasterRetrieve.core.js";
+} from './translationsMasterRetrieve.core.js';
 export {
   buildTranslationsMasterRetrieveQuery,
   prefetchTranslationsMasterRetrieve,
@@ -58,22 +54,11 @@ export type TranslationsMasterRetrieveQueryError =
 export function useTranslationsMasterRetrieve(
   locale?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<
-    TranslationsMasterRetrieveQueryData,
-    TranslationsMasterRetrieveQueryError
-  >,
-): UseQueryResult<
-  TranslationsMasterRetrieveQueryData,
-  TranslationsMasterRetrieveQueryError
-> {
+  options?: QueryHookOptions<TranslationsMasterRetrieveQueryData, TranslationsMasterRetrieveQueryError>
+): UseQueryResult<TranslationsMasterRetrieveQueryData, TranslationsMasterRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTranslationsMasterRetrieveQuery(
-      client,
-      locale,
-      idempotencyKey,
-      options,
-    ),
+    ...buildTranslationsMasterRetrieveQuery(client, locale, idempotencyKey, options),
     ...options,
   });
 }
@@ -87,22 +72,11 @@ export function useTranslationsMasterRetrieve(
 export function useTranslationsMasterRetrieveSuspense(
   locale?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<
-    TranslationsMasterRetrieveQueryData,
-    TranslationsMasterRetrieveQueryError
-  >,
-): UseSuspenseQueryResult<
-  TranslationsMasterRetrieveQueryData,
-  TranslationsMasterRetrieveQueryError
-> {
+  options?: SuspenseQueryHookOptions<TranslationsMasterRetrieveQueryData, TranslationsMasterRetrieveQueryError>
+): UseSuspenseQueryResult<TranslationsMasterRetrieveQueryData, TranslationsMasterRetrieveQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTranslationsMasterRetrieveQuery(
-      client,
-      locale,
-      idempotencyKey,
-      options,
-    ),
+    ...buildTranslationsMasterRetrieveQuery(client, locale, idempotencyKey, options),
     ...options,
   });
 }
@@ -115,7 +89,7 @@ export function setTranslationsMasterRetrieveData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: TranslationsMasterRetrieveQueryData,
+  data: TranslationsMasterRetrieveQueryData
 ): TranslationsMasterRetrieveQueryData | undefined {
   const key = queryKeyTranslationsMasterRetrieve(...queryKeyBase);
 
@@ -125,25 +99,27 @@ export function setTranslationsMasterRetrieveData(
 export function invalidateTranslationsMasterRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [parameters: {
-      locale?: string | undefined;
-      idempotencyKey?: string | undefined;
-    }]
+    [
+      parameters: {
+        locale?: string | undefined;
+        idempotencyKey?: string | undefined;
+      },
+    ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "master", "retrieve", ...queryKeyBase],
+    queryKey: ['@novu/api', 'master', 'retrieve', ...queryKeyBase],
   });
 }
 
 export function invalidateAllTranslationsMasterRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "master", "retrieve"],
+    queryKey: ['@novu/api', 'master', 'retrieve'],
   });
 }
