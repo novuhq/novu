@@ -17,6 +17,7 @@ export type StepResolverContext<TPayload extends Record<string, unknown> = Recor
   subscriber: Subscriber;
   context: ContextResolved;
   steps: Record<string, unknown>;
+  env: Record<string, string>;
 };
 
 type ResolveControls<T extends Schema | undefined> = T extends Schema ? FromSchema<T> : Record<string, unknown>;

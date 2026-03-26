@@ -115,7 +115,7 @@ function generateRequestHandler(): string {
 
       ${generateSkipCheck()}
 
-      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
+      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
 
       ${generateOutputValidation()}
 
@@ -158,6 +158,7 @@ function generateBodyValidation(): string {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
+      const env = isObject(body.env) ? body.env : {};
       const stateArray = Array.isArray(body.state) ? body.state : [];
       const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
@@ -187,7 +188,7 @@ function generateSchemaValidation(): string {
 
 function generateSkipCheck(): string {
   return `if (!isPreview && step.skip) {
-        const shouldSkip = await step.skip(validatedControls, { payload, subscriber, context, steps: stepOutputs });
+        const shouldSkip = await step.skip(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
         if (shouldSkip) {
           return jsonResponse(
             {
@@ -226,7 +227,7 @@ function generateOutputValidation(): string {
 function generateProviderExecution(): string {
   return `const providers = {};
       if (step.providers) {
-        const ctx = { payload, subscriber, context, steps: stepOutputs };
+        const ctx = { payload, subscriber, context, steps: stepOutputs, env };
         for (const [providerKey, providerResolve] of Object.entries(step.providers)) {
           const providerResult = await providerResolve({ controls: validatedControls, outputs: validatedResult }, ctx);
           const providerOutputSchema = providerSchemas[step.type]?.[providerKey]?.output;
