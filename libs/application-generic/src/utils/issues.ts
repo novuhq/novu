@@ -74,7 +74,7 @@ const mapAjvErrorToIssueType = (error: ErrorObject, isUrlField = false): Content
       return ContentIssueEnum.MISSING_VALUE;
     case 'pattern':
     case 'anyOf':
-      return isUrlField ? ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE : ContentIssueEnum.MISSING_VALUE;
+      return isUrlField ? ContentIssueEnum.INVALID_URL : ContentIssueEnum.MISSING_VALUE;
     default:
       return ContentIssueEnum.MISSING_VALUE;
   }
