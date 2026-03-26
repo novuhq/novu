@@ -170,7 +170,7 @@ export class UpsertLayout {
     );
 
     if (Object.keys(issues).length > 0) {
-      throw new BadRequestException(issues);
+      throw new BadRequestException({ message: 'Layout has validation issues', ...issues });
     }
   }
 

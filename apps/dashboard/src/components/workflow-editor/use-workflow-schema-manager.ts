@@ -154,20 +154,20 @@ export function useWorkflowSchemaManager({
 
   const handleSaveChanges = useCallback(async () => {
     if (!workflow?.slug) {
-      console.error('Workflow slug is missing. Cannot save.');
       setSaveError(new Error('Workflow slug is missing.'));
+
       return;
     }
 
     if (!environment || !environment._id) {
-      console.error('Environment is missing or invalid. Cannot save.');
       setSaveError(new Error('Environment is missing or invalid.'));
+
       return;
     }
 
     if (!isSchemaValid) {
-      console.error('Schema is invalid. Cannot save.');
       setSaveError(new Error('Schema is invalid.'));
+
       return;
     }
 
@@ -198,7 +198,6 @@ export function useWorkflowSchemaManager({
 
       onSaveSuccess?.(schemaToSave);
     } catch (error: any) {
-      console.error('Failed to save payload schema due to API error:', error);
       setSaveError(error);
     } finally {
       setIsSaving(false);

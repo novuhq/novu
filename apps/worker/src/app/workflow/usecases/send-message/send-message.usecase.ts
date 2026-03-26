@@ -9,14 +9,12 @@ import {
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  ICompileContext,
   IConditionsFilterResponse,
-  IFilterVariables,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
-  NormalizeVariables,
-  NormalizeVariablesCommand,
   PlatformException,
   resolveEnvironmentVariables,
 } from '@novu/application-generic';
@@ -78,7 +76,6 @@ export class SendMessage {
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
-    private normalizeVariablesUsecase: NormalizeVariables,
     private contextRepository: ContextRepository,
     private environmentVariableRepository: EnvironmentVariableRepository,
     private executeBridgeJob: ExecuteBridgeJob,
@@ -87,19 +84,7 @@ export class SendMessage {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
-    const payload = await this.buildCompileContext(command);
-
-    const variables = await this.normalizeVariablesUsecase.execute(
-      NormalizeVariablesCommand.create({
-        filters: command.job.step.filters || [],
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-        step: command.step,
-        job: command.job,
-        variables: payload,
-      })
-    );
+    const variables = await this.buildVariables(command);
 
     const stepType = command.step?.template?.type;
 
@@ -127,7 +112,7 @@ export class SendMessage {
       );
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables, payload);
+    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -177,7 +162,7 @@ export class SendMessage {
 
     const sendMessageChannelCommand = SendMessageChannelCommand.create({
       ...command,
-      compileContext: payload,
+      compileContext: variables,
       bridgeData: bridgeResponse,
       severity,
     });
@@ -224,21 +209,20 @@ export class SendMessage {
 
   private async evaluateFilters(
     command: SendMessageCommand,
-    variables: IFilterVariables,
-    compileContext: SendMessageChannelCommand['compileContext']
+    variables: ICompileContext
   ): Promise<{
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),
-      this.evaluateChannelPreference(command, compileContext),
+      this.evaluateChannelPreference(command, variables),
     ]);
 
     return { stepCondition, channelPreference };
   }
 
-  private async evaluateStepCondition(command: SendMessageCommand, variables: IFilterVariables) {
+  private async evaluateStepCondition(command: SendMessageCommand, variables: ICompileContext) {
     const stepCondition = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: command.job.step.filters || [],
@@ -334,7 +318,7 @@ export class SendMessage {
   @Instrument()
   private async evaluateChannelPreference(
     command: SendMessageCommand,
-    compileContext: SendMessageChannelCommand['compileContext']
+    compileContext: ICompileContext
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
@@ -432,7 +416,7 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async buildCompileContext(command: SendMessageCommand): Promise<SendMessageChannelCommand['compileContext']> {
+  private async buildVariables(command: SendMessageCommand): Promise<ICompileContext> {
     const [subscriber, actor, tenant, context, envVars] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,

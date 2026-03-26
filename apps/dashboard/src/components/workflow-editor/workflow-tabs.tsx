@@ -66,11 +66,13 @@ export const WorkflowTabs = () => {
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
+  const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
   const isReadOnly =
     isNewWorkflowSlug ||
-    workflow?.origin === ResourceOriginEnum.EXTERNAL ||
+    isExternalWorkflow ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
+  const showCopilot = isAiWorkflowGenerationEnabled && isDevEnvironment && !isExternalWorkflow;
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
@@ -464,7 +466,7 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-          {isAiWorkflowGenerationEnabled && isDevEnvironment ? (
+          {showCopilot ? (
             <ResizableLayout autoSaveId="workflow-editor-ai-sidekick-layout" className="flex-1 min-w-0">
               <ResizableLayout.ContextPanel defaultSize={26} minSize={20} maxSize={80}>
                 <NovuCopilotPanel />
@@ -499,7 +501,7 @@ export const WorkflowTabs = () => {
     </div>
   );
 
-  return isAiWorkflowGenerationEnabled ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
+  return showCopilot ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
 };
 
 function WorkflowCanvasToast() {

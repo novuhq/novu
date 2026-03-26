@@ -4,14 +4,30 @@
 
 import { environmentVariablesCreate } from '../funcs/environmentVariablesCreate.js';
 import { environmentVariablesDelete } from '../funcs/environmentVariablesDelete.js';
+import { environmentVariablesList } from '../funcs/environmentVariablesList.js';
 import { environmentVariablesRetrieve } from '../funcs/environmentVariablesRetrieve.js';
 import { environmentVariablesUpdate } from '../funcs/environmentVariablesUpdate.js';
+import { environmentVariablesUsage } from '../funcs/environmentVariablesUsage.js';
 import { ClientSDK, RequestOptions } from '../lib/sdks.js';
 import * as components from '../models/components/index.js';
 import * as operations from '../models/operations/index.js';
 import { unwrapAsync } from '../types/fp.js';
 
 export class EnvironmentVariables extends ClientSDK {
+  /**
+   * List environment variables
+   *
+   * @remarks
+   * Returns all environment variables for the current organization. Secret values are masked.
+   */
+  async list(
+    search?: string | undefined,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions
+  ): Promise<operations.EnvironmentVariablesControllerListEnvironmentVariablesResponse> {
+    return unwrapAsync(environmentVariablesList(this, search, idempotencyKey, options));
+  }
+
   /**
    * Create environment variable
    *
@@ -69,5 +85,19 @@ export class EnvironmentVariables extends ClientSDK {
     options?: RequestOptions
   ): Promise<operations.EnvironmentVariablesControllerDeleteEnvironmentVariableResponse | undefined> {
     return unwrapAsync(environmentVariablesDelete(this, variableId, idempotencyKey, options));
+  }
+
+  /**
+   * Get environment variable usage
+   *
+   * @remarks
+   * Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.
+   */
+  async usage(
+    variableId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions
+  ): Promise<operations.EnvironmentVariablesControllerGetEnvironmentVariableUsageResponse> {
+    return unwrapAsync(environmentVariablesUsage(this, variableId, idempotencyKey, options));
   }
 }

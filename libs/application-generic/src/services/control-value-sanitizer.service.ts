@@ -99,7 +99,7 @@ export class ControlValueSanitizerService {
       return controlValues;
     }
 
-    const ajv = new Ajv({ allErrors: true });
+    const ajv = new Ajv({ allErrors: true, strict: false });
     addFormats(ajv);
     const validate = ajv.compile(outputSchema);
     const isValid = validate(controlValues);

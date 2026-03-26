@@ -93,7 +93,9 @@ async function $do(
   const body = new FormData();
 
   if (isBlobLike(payload.RequestBody.file)) {
-    appendForm(body, 'file', payload.RequestBody.file);
+    const blob = payload.RequestBody.file;
+    const name = 'name' in blob ? (blob.name as string) : undefined;
+    appendForm(body, 'file', blob, name);
   } else if (isReadableStream(payload.RequestBody.file.content)) {
     const buffer = await readableStreamToArrayBuffer(payload.RequestBody.file.content);
     const contentType = getContentTypeFromFileName(payload.RequestBody.file.fileName) || 'application/octet-stream';

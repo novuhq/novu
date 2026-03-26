@@ -11,8 +11,7 @@ interface CanvasContextType {
   draggedNodeId: string | null;
   intersectingNodeId: string | null;
   intersectingEdgeId: string | null;
-  updateEdges: () => void;
-  removeEdges: () => void;
+  animatingNodeIds: Set<string>;
   copyNode: (copyIndex: number) => void;
   addNode: (insertIndex: number, selection: AddStepMenuSelection | keyof typeof NODE_TYPE_TO_STEP_TYPE) => void;
   removeNode: (removeIndex: number, options?: { onSuccess?: () => void; onError?: () => void }) => void;

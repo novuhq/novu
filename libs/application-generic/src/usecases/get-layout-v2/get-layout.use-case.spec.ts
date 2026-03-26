@@ -2,7 +2,6 @@ import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AnalyticsService } from '../../services';
 import { GetLayoutUseCaseV0 } from '../get-layout-v0';
 import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
 import { GetLayoutCommand } from './get-layout.command';
@@ -12,7 +11,6 @@ describe('GetLayoutUseCase', () => {
   let getLayoutUseCaseV1Mock: sinon.SinonStubbedInstance<GetLayoutUseCaseV0>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let layoutVariablesSchemaUseCaseMock: sinon.SinonStubbedInstance<LayoutVariablesSchemaUseCase>;
-  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getLayoutUseCase: GetLayoutUseCase;
 
   const mockUser = {
@@ -65,13 +63,11 @@ describe('GetLayoutUseCase', () => {
     getLayoutUseCaseV1Mock = sinon.createStubInstance(GetLayoutUseCaseV0);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     layoutVariablesSchemaUseCaseMock = sinon.createStubInstance(LayoutVariablesSchemaUseCase);
-    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
 
     getLayoutUseCase = new GetLayoutUseCase(
       getLayoutUseCaseV1Mock as any,
       controlValuesRepositoryMock as any,
-      layoutVariablesSchemaUseCaseMock as any,
-      analyticsServiceMock as any
+      layoutVariablesSchemaUseCaseMock as any
     );
 
     // Default mocks
@@ -157,26 +153,6 @@ describe('GetLayoutUseCase', () => {
       const schemaCommand = layoutVariablesSchemaUseCaseMock.execute.firstCall.args[0];
       expect(schemaCommand.environmentId).to.equal('env_id');
       expect(schemaCommand.organizationId).to.equal('org_id');
-    });
-
-    it('should track analytics event', async () => {
-      const command = GetLayoutCommand.create({
-        layoutIdOrInternalId: 'layout_identifier',
-        environmentId: 'env_id',
-        organizationId: 'org_id',
-        userId: 'user_id',
-      });
-
-      await getLayoutUseCase.execute(command);
-
-      expect(analyticsServiceMock.track.calledOnce).to.be.true;
-      expect(analyticsServiceMock.track.firstCall.args[0]).to.equal('Get layout - [Layouts]');
-      expect(analyticsServiceMock.track.firstCall.args[1]).to.equal('user_id');
-      expect(analyticsServiceMock.track.firstCall.args[2]).to.deep.equal({
-        _organizationId: 'org_id',
-        _environmentId: 'env_id',
-        layoutId: 'layout_id',
-      });
     });
 
     it('should handle empty control values controls', async () => {

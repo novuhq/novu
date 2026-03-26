@@ -1,6 +1,6 @@
 ---
 description: Rules for working with DAL repositories in the Novu monorepo
-globs: libs/dal/**/*.ts, apps/api/**/*.ts
+globs: libs/dal/**/*.ts, **/repositories/**/*.ts
 alwaysApply: false
 ---
 
@@ -28,3 +28,4 @@ alwaysApply: false
 - All query methods must include `_environmentId` or `_organizationId` in their filter to satisfy the enforcement type constraint.
 - When adding new repository methods that need `$push`, `$pull`, or other update operators, pass the `environmentId` as a parameter and use `this.update()` with the enforcement fields.
 - For bulk operations, use `this.bulkWrite()` instead of `this._model.updateMany()`.
+- **Transactions**: start via `repository.withTransaction(async (session) => { ... })` and pass `session` to every repo call inside it (e.g. `repo.findOne(query, select, { session })`). Run all operations sequentially — parallel execution (`Promise.all`, etc.) inside a transaction is undefined behaviour in Mongoose.
