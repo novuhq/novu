@@ -1214,10 +1214,15 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             { message: 'Subject or body is required', issueType: 'MISSING_VALUE', variableName: 'body' },
           ]);
 
-          // TODO: This should return a different type such as 'INVALID_URL'
-          expect(stepData.issues!.controls!['redirect.url'][0].issueType).to.equal('MISSING_VALUE');
-          expect(stepData.issues!.controls!['primaryAction.redirect.url'][0].issueType).to.equal('MISSING_VALUE');
-          expect(stepData.issues!.controls!['secondaryAction.redirect.url'][0].issueType).to.equal('MISSING_VALUE');
+          expect(stepData.issues!.controls!['redirect.url'][0].issueType, 'redirect.url').to.equal('INVALID_URL');
+          expect(
+            stepData.issues!.controls!['primaryAction.redirect.url'][0].issueType,
+            'primaryAction.redirect.url'
+          ).to.equal('INVALID_URL');
+          expect(
+            stepData.issues!.controls!['secondaryAction.redirect.url'][0].issueType,
+            'secondaryAction.redirect.url'
+          ).to.equal('INVALID_URL');
         });
 
         it('should always show digest control value issues when illegal value provided', async () => {

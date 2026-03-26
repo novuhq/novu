@@ -5,34 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from "../models/errors/httpclienterrors.js";
-import { NovuError } from "../models/errors/novuerror.js";
-import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
-import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
-import * as operations from "../models/operations/index.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+} from '../models/errors/httpclienterrors.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import * as operations from '../models/operations/index.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildTranslationsRetrieveQuery,
   prefetchTranslationsRetrieve,
   queryKeyTranslationsRetrieve,
   TranslationsRetrieveQueryData,
-} from "./translationsRetrieve.core.js";
+} from './translationsRetrieve.core.js';
 export {
   buildTranslationsRetrieveQuery,
   prefetchTranslationsRetrieve,
@@ -58,21 +54,11 @@ export type TranslationsRetrieveQueryError =
  */
 export function useTranslationsRetrieve(
   request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: QueryHookOptions<
-    TranslationsRetrieveQueryData,
-    TranslationsRetrieveQueryError
-  >,
-): UseQueryResult<
-  TranslationsRetrieveQueryData,
-  TranslationsRetrieveQueryError
-> {
+  options?: QueryHookOptions<TranslationsRetrieveQueryData, TranslationsRetrieveQueryError>
+): UseQueryResult<TranslationsRetrieveQueryData, TranslationsRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTranslationsRetrieveQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildTranslationsRetrieveQuery(client, request, options),
     ...options,
   });
 }
@@ -85,21 +71,11 @@ export function useTranslationsRetrieve(
  */
 export function useTranslationsRetrieveSuspense(
   request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: SuspenseQueryHookOptions<
-    TranslationsRetrieveQueryData,
-    TranslationsRetrieveQueryError
-  >,
-): UseSuspenseQueryResult<
-  TranslationsRetrieveQueryData,
-  TranslationsRetrieveQueryError
-> {
+  options?: SuspenseQueryHookOptions<TranslationsRetrieveQueryData, TranslationsRetrieveQueryError>
+): UseSuspenseQueryResult<TranslationsRetrieveQueryData, TranslationsRetrieveQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTranslationsRetrieveQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildTranslationsRetrieveQuery(client, request, options),
     ...options,
   });
 }
@@ -112,7 +88,7 @@ export function setTranslationsRetrieveData(
     locale: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
-  data: TranslationsRetrieveQueryData,
+  data: TranslationsRetrieveQueryData
 ): TranslationsRetrieveQueryData | undefined {
   const key = queryKeyTranslationsRetrieve(...queryKeyBase);
 
@@ -129,20 +105,20 @@ export function invalidateTranslationsRetrieve(
       parameters: { idempotencyKey?: string | undefined },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Translations", "retrieve", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Translations', 'retrieve', ...queryKeyBase],
   });
 }
 
 export function invalidateAllTranslationsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Translations", "retrieve"],
+    queryKey: ['@novu/api', 'Translations', 'retrieve'],
   });
 }
