@@ -11,7 +11,6 @@ playground/
 .github/
 scripts/
 docker/
-.source/
 
 # Inactive apps — no longer under active development
 apps/inbound-mail/

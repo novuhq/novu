@@ -25,6 +25,7 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   CreateEnvironmentVariableRequestDto,
@@ -88,6 +89,7 @@ export class EnvironmentVariablesController {
   @Get('/:variableId/usage')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_READ)
+  @SdkMethodName('usage')
   @ApiResponse(GetEnvironmentVariableUsageResponseDto)
   @ApiOperation({
     summary: 'Get environment variable usage',
@@ -111,6 +113,7 @@ export class EnvironmentVariablesController {
   @Get('/:variableId')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_READ)
+  @SdkMethodName('retrieve')
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Get environment variable',

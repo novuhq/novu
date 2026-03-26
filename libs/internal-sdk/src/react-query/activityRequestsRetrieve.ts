@@ -5,29 +5,45 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from '../models/errors/httpclienterrors.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   ActivityRequestsRetrieveQueryData,
   buildActivityRequestsRetrieveQuery,
   prefetchActivityRequestsRetrieve,
   queryKeyActivityRequestsRetrieve,
-} from "./activityRequestsRetrieve.core.js";
+} from './activityRequestsRetrieve.core.js';
 export {
   type ActivityRequestsRetrieveQueryData,
   buildActivityRequestsRetrieveQuery,
   prefetchActivityRequestsRetrieve,
   queryKeyActivityRequestsRetrieve,
 };
+
+export type ActivityRequestsRetrieveQueryError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * Retrieve activity request
@@ -38,16 +54,11 @@ export {
 export function useActivityRequestsRetrieve(
   requestId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ActivityRequestsRetrieveQueryData>,
-): UseQueryResult<ActivityRequestsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<ActivityRequestsRetrieveQueryData, ActivityRequestsRetrieveQueryError>
+): UseQueryResult<ActivityRequestsRetrieveQueryData, ActivityRequestsRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildActivityRequestsRetrieveQuery(
-      client,
-      requestId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildActivityRequestsRetrieveQuery(client, requestId, idempotencyKey, options),
     ...options,
   });
 }
@@ -61,27 +72,19 @@ export function useActivityRequestsRetrieve(
 export function useActivityRequestsRetrieveSuspense(
   requestId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ActivityRequestsRetrieveQueryData>,
-): UseSuspenseQueryResult<ActivityRequestsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<ActivityRequestsRetrieveQueryData, ActivityRequestsRetrieveQueryError>
+): UseSuspenseQueryResult<ActivityRequestsRetrieveQueryData, ActivityRequestsRetrieveQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildActivityRequestsRetrieveQuery(
-      client,
-      requestId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildActivityRequestsRetrieveQuery(client, requestId, idempotencyKey, options),
     ...options,
   });
 }
 
 export function setActivityRequestsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [
-    requestId: string,
-    parameters: { idempotencyKey?: string | undefined },
-  ],
-  data: ActivityRequestsRetrieveQueryData,
+  queryKeyBase: [requestId: string, parameters: { idempotencyKey?: string | undefined }],
+  data: ActivityRequestsRetrieveQueryData
 ): ActivityRequestsRetrieveQueryData | undefined {
   const key = queryKeyActivityRequestsRetrieve(...queryKeyBase);
 
@@ -90,23 +93,21 @@ export function setActivityRequestsRetrieveData(
 
 export function invalidateActivityRequestsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<
-    [requestId: string, parameters: { idempotencyKey?: string | undefined }]
-  >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  queryKeyBase: TupleToPrefixes<[requestId: string, parameters: { idempotencyKey?: string | undefined }]>,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Requests", "retrieve", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Requests', 'retrieve', ...queryKeyBase],
   });
 }
 
 export function invalidateAllActivityRequestsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Requests", "retrieve"],
+    queryKey: ['@novu/api', 'Requests', 'retrieve'],
   });
 }

@@ -5,29 +5,48 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from '../models/errors/httpclienterrors.js';
+import * as errors from '../models/errors/index.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildEnvironmentsListQuery,
   EnvironmentsListQueryData,
   prefetchEnvironmentsList,
   queryKeyEnvironmentsList,
-} from "./environmentsList.core.js";
+} from './environmentsList.core.js';
 export {
   buildEnvironmentsListQuery,
   type EnvironmentsListQueryData,
   prefetchEnvironmentsList,
   queryKeyEnvironmentsList,
 };
+
+export type EnvironmentsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * List all environments
@@ -38,15 +57,11 @@ export {
  */
 export function useEnvironmentsList(
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentsListQueryData>,
-): UseQueryResult<EnvironmentsListQueryData, Error> {
+  options?: QueryHookOptions<EnvironmentsListQueryData, EnvironmentsListQueryError>
+): UseQueryResult<EnvironmentsListQueryData, EnvironmentsListQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentsListQuery(
-      client,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsListQuery(client, idempotencyKey, options),
     ...options,
   });
 }
@@ -60,15 +75,11 @@ export function useEnvironmentsList(
  */
 export function useEnvironmentsListSuspense(
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentsListQueryData>,
-): UseSuspenseQueryResult<EnvironmentsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<EnvironmentsListQueryData, EnvironmentsListQueryError>
+): UseSuspenseQueryResult<EnvironmentsListQueryData, EnvironmentsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentsListQuery(
-      client,
-      idempotencyKey,
-      options,
-    ),
+    ...buildEnvironmentsListQuery(client, idempotencyKey, options),
     ...options,
   });
 }
@@ -76,7 +87,7 @@ export function useEnvironmentsListSuspense(
 export function setEnvironmentsListData(
   client: QueryClient,
   queryKeyBase: [parameters: { idempotencyKey?: string | undefined }],
-  data: EnvironmentsListQueryData,
+  data: EnvironmentsListQueryData
 ): EnvironmentsListQueryData | undefined {
   const key = queryKeyEnvironmentsList(...queryKeyBase);
 
@@ -85,23 +96,21 @@ export function setEnvironmentsListData(
 
 export function invalidateEnvironmentsList(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<
-    [parameters: { idempotencyKey?: string | undefined }]
-  >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  queryKeyBase: TupleToPrefixes<[parameters: { idempotencyKey?: string | undefined }]>,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "list", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Environments', 'list', ...queryKeyBase],
   });
 }
 
 export function invalidateAllEnvironmentsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Environments", "list"],
+    queryKey: ['@novu/api', 'Environments', 'list'],
   });
 }

@@ -20,3 +20,5 @@ export type ResourceTypeEnum = ClosedEnum<typeof ResourceTypeEnum>;
 
 /** @internal */
 export const ResourceTypeEnum$inboundSchema: z.ZodNativeEnum<typeof ResourceTypeEnum> = z.nativeEnum(ResourceTypeEnum);
+/** @internal */
+export const ResourceTypeEnum$outboundSchema: z.ZodNativeEnum<typeof ResourceTypeEnum> = ResourceTypeEnum$inboundSchema;

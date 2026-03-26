@@ -12,7 +12,6 @@ import { OpenEnum } from '../../types/enums.js';
 export const UiComponentEnum = {
   EmailEditorSelect: 'EMAIL_EDITOR_SELECT',
   LayoutSelect: 'LAYOUT_SELECT',
-  EmailRendererSelect: 'EMAIL_RENDERER_SELECT',
   BlockEditor: 'BLOCK_EDITOR',
   EmailBody: 'EMAIL_BODY',
   TextFullLine: 'TEXT_FULL_LINE',
@@ -48,6 +47,14 @@ export const UiComponentEnum = {
   QueryEditor: 'QUERY_EDITOR',
   Data: 'DATA',
   LayoutEmail: 'LAYOUT_EMAIL',
+  DestinationMethod: 'DESTINATION_METHOD',
+  DestinationUrl: 'DESTINATION_URL',
+  DestinationHeaders: 'DESTINATION_HEADERS',
+  DestinationBody: 'DESTINATION_BODY',
+  DestinationResponseBodySchema: 'DESTINATION_RESPONSE_BODY_SCHEMA',
+  DestinationEnforceSchemaValidation: 'DESTINATION_ENFORCE_SCHEMA_VALIDATION',
+  DestinationContinueOnFailure: 'DESTINATION_CONTINUE_ON_FAILURE',
+  DestinationTimeout: 'DESTINATION_TIMEOUT',
 } as const;
 /**
  * Component type for the UI Schema Property

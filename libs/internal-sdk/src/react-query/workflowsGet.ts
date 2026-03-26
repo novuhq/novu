@@ -5,29 +5,43 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from '../models/errors/httpclienterrors.js';
+import * as errors from '../models/errors/index.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildWorkflowsGetQuery,
   prefetchWorkflowsGet,
   queryKeyWorkflowsGet,
   WorkflowsGetQueryData,
-} from "./workflowsGet.core.js";
-export {
-  buildWorkflowsGetQuery,
-  prefetchWorkflowsGet,
-  queryKeyWorkflowsGet,
-  type WorkflowsGetQueryData,
-};
+} from './workflowsGet.core.js';
+export { buildWorkflowsGetQuery, prefetchWorkflowsGet, queryKeyWorkflowsGet, type WorkflowsGetQueryData };
+
+export type WorkflowsGetQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * Retrieve a workflow
@@ -39,17 +53,11 @@ export function useWorkflowsGet(
   workflowId: string,
   environmentId?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<WorkflowsGetQueryData>,
-): UseQueryResult<WorkflowsGetQueryData, Error> {
+  options?: QueryHookOptions<WorkflowsGetQueryData, WorkflowsGetQueryError>
+): UseQueryResult<WorkflowsGetQueryData, WorkflowsGetQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildWorkflowsGetQuery(
-      client,
-      workflowId,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildWorkflowsGetQuery(client, workflowId, environmentId, idempotencyKey, options),
     ...options,
   });
 }
@@ -64,17 +72,11 @@ export function useWorkflowsGetSuspense(
   workflowId: string,
   environmentId?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<WorkflowsGetQueryData>,
-): UseSuspenseQueryResult<WorkflowsGetQueryData, Error> {
+  options?: SuspenseQueryHookOptions<WorkflowsGetQueryData, WorkflowsGetQueryError>
+): UseSuspenseQueryResult<WorkflowsGetQueryData, WorkflowsGetQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildWorkflowsGetQuery(
-      client,
-      workflowId,
-      environmentId,
-      idempotencyKey,
-      options,
-    ),
+    ...buildWorkflowsGetQuery(client, workflowId, environmentId, idempotencyKey, options),
     ...options,
   });
 }
@@ -88,7 +90,7 @@ export function setWorkflowsGetData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: WorkflowsGetQueryData,
+  data: WorkflowsGetQueryData
 ): WorkflowsGetQueryData | undefined {
   const key = queryKeyWorkflowsGet(...queryKeyBase);
 
@@ -106,20 +108,20 @@ export function invalidateWorkflowsGet(
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Workflows", "get", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Workflows', 'get', ...queryKeyBase],
   });
 }
 
 export function invalidateAllWorkflowsGet(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Workflows", "get"],
+    queryKey: ['@novu/api', 'Workflows', 'get'],
   });
 }

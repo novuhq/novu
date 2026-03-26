@@ -5,31 +5,45 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import * as components from "../models/components/index.js";
-import * as operations from "../models/operations/index.js";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import * as components from '../models/components/index.js';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from '../models/errors/httpclienterrors.js';
+import * as errors from '../models/errors/index.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import * as operations from '../models/operations/index.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildWorkflowsListQuery,
   prefetchWorkflowsList,
   queryKeyWorkflowsList,
   WorkflowsListQueryData,
-} from "./workflowsList.core.js";
-export {
-  buildWorkflowsListQuery,
-  prefetchWorkflowsList,
-  queryKeyWorkflowsList,
-  type WorkflowsListQueryData,
-};
+} from './workflowsList.core.js';
+export { buildWorkflowsListQuery, prefetchWorkflowsList, queryKeyWorkflowsList, type WorkflowsListQueryData };
+
+export type WorkflowsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * List all workflows
@@ -39,15 +53,11 @@ export {
  */
 export function useWorkflowsList(
   request: operations.WorkflowControllerSearchWorkflowsRequest,
-  options?: QueryHookOptions<WorkflowsListQueryData>,
-): UseQueryResult<WorkflowsListQueryData, Error> {
+  options?: QueryHookOptions<WorkflowsListQueryData, WorkflowsListQueryError>
+): UseQueryResult<WorkflowsListQueryData, WorkflowsListQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildWorkflowsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildWorkflowsListQuery(client, request, options),
     ...options,
   });
 }
@@ -60,15 +70,11 @@ export function useWorkflowsList(
  */
 export function useWorkflowsListSuspense(
   request: operations.WorkflowControllerSearchWorkflowsRequest,
-  options?: SuspenseQueryHookOptions<WorkflowsListQueryData>,
-): UseSuspenseQueryResult<WorkflowsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<WorkflowsListQueryData, WorkflowsListQueryError>
+): UseSuspenseQueryResult<WorkflowsListQueryData, WorkflowsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildWorkflowsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildWorkflowsListQuery(client, request, options),
     ...options,
   });
 }
@@ -87,7 +93,7 @@ export function setWorkflowsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: WorkflowsListQueryData,
+  data: WorkflowsListQueryData
 ): WorkflowsListQueryData | undefined {
   const key = queryKeyWorkflowsList(...queryKeyBase);
 
@@ -97,31 +103,33 @@ export function setWorkflowsListData(
 export function invalidateWorkflowsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [parameters: {
-      limit?: number | undefined;
-      offset?: number | undefined;
-      orderDirection?: components.DirectionEnum | undefined;
-      orderBy?: components.WorkflowResponseDtoSortField | undefined;
-      query?: string | undefined;
-      tags?: Array<string> | undefined;
-      status?: Array<components.WorkflowStatusEnum> | undefined;
-      idempotencyKey?: string | undefined;
-    }]
+    [
+      parameters: {
+        limit?: number | undefined;
+        offset?: number | undefined;
+        orderDirection?: components.DirectionEnum | undefined;
+        orderBy?: components.WorkflowResponseDtoSortField | undefined;
+        query?: string | undefined;
+        tags?: Array<string> | undefined;
+        status?: Array<components.WorkflowStatusEnum> | undefined;
+        idempotencyKey?: string | undefined;
+      },
+    ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Workflows", "list", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Workflows', 'list', ...queryKeyBase],
   });
 }
 
 export function invalidateAllWorkflowsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Workflows", "list"],
+    queryKey: ['@novu/api', 'Workflows', 'list'],
   });
 }
