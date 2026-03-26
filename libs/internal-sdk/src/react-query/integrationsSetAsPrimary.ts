@@ -11,6 +11,17 @@ import { NovuCore } from "../core.js";
 import { integrationsSetAsPrimary } from "../funcs/integrationsSetAsPrimary.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -25,6 +36,18 @@ export type IntegrationsSetAsPrimaryMutationVariables = {
 export type IntegrationsSetAsPrimaryMutationData =
   operations.IntegrationsControllerSetIntegrationAsPrimaryResponse;
 
+export type IntegrationsSetAsPrimaryMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Update integration as primary
  *
@@ -36,12 +59,12 @@ export type IntegrationsSetAsPrimaryMutationData =
 export function useIntegrationsSetAsPrimaryMutation(
   options?: MutationHookOptions<
     IntegrationsSetAsPrimaryMutationData,
-    Error,
+    IntegrationsSetAsPrimaryMutationError,
     IntegrationsSetAsPrimaryMutationVariables
   >,
 ): UseMutationResult<
   IntegrationsSetAsPrimaryMutationData,
-  Error,
+  IntegrationsSetAsPrimaryMutationError,
   IntegrationsSetAsPrimaryMutationVariables
 > {
   const client = useNovuContext();

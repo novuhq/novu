@@ -17,7 +17,12 @@ export class UpdateLayoutDto {
   @IsBoolean()
   isTranslationEnabled?: boolean;
 
-  @ApiProperty({ type: LayoutControlValuesDto, description: 'Control values for the layout' })
+  @ApiPropertyOptional({
+    type: LayoutControlValuesDto,
+    nullable: true,
+    description:
+      'Control values for the layout. Omit to leave unchanged, or set to null to clear stored control values.',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => LayoutControlValuesDto)

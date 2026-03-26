@@ -15,6 +15,7 @@ import { ChannelConnections } from "./channelconnections.js";
 import { ChannelEndpoints } from "./channelendpoints.js";
 import { Contexts } from "./contexts.js";
 import { Environments } from "./environments.js";
+import { EnvironmentVariables } from "./environmentvariables.js";
 import { Integrations } from "./integrations.js";
 import { Layouts } from "./layouts.js";
 import { Messages } from "./messages.js";
@@ -73,6 +74,13 @@ export class Novu extends ClientSDK {
   private _channelEndpoints?: ChannelEndpoints;
   get channelEndpoints(): ChannelEndpoints {
     return (this._channelEndpoints ??= new ChannelEndpoints(this._options));
+  }
+
+  private _environmentVariables?: EnvironmentVariables;
+  get environmentVariables(): EnvironmentVariables {
+    return (this._environmentVariables ??= new EnvironmentVariables(
+      this._options,
+    ));
   }
 
   private _integrations?: Integrations;

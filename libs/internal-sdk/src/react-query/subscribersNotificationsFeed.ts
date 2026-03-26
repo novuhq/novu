@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +41,18 @@ export {
   type SubscribersNotificationsFeedQueryData,
 };
 
+export type SubscribersNotificationsFeedQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve subscriber notifications
  *
@@ -38,8 +61,14 @@ export {
  */
 export function useSubscribersNotificationsFeed(
   request: operations.SubscribersV1ControllerGetNotificationsFeedRequest,
-  options?: QueryHookOptions<SubscribersNotificationsFeedQueryData>,
-): UseQueryResult<SubscribersNotificationsFeedQueryData, Error> {
+  options?: QueryHookOptions<
+    SubscribersNotificationsFeedQueryData,
+    SubscribersNotificationsFeedQueryError
+  >,
+): UseQueryResult<
+  SubscribersNotificationsFeedQueryData,
+  SubscribersNotificationsFeedQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildSubscribersNotificationsFeedQuery(
@@ -59,8 +88,14 @@ export function useSubscribersNotificationsFeed(
  */
 export function useSubscribersNotificationsFeedSuspense(
   request: operations.SubscribersV1ControllerGetNotificationsFeedRequest,
-  options?: SuspenseQueryHookOptions<SubscribersNotificationsFeedQueryData>,
-): UseSuspenseQueryResult<SubscribersNotificationsFeedQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersNotificationsFeedQueryData,
+    SubscribersNotificationsFeedQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersNotificationsFeedQueryData,
+  SubscribersNotificationsFeedQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildSubscribersNotificationsFeedQuery(

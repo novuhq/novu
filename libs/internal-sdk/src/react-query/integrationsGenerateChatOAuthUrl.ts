@@ -12,6 +12,17 @@ import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateC
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -26,6 +37,18 @@ export type IntegrationsGenerateChatOAuthUrlMutationVariables = {
 export type IntegrationsGenerateChatOAuthUrlMutationData =
   operations.IntegrationsControllerGetChatOAuthUrlResponse;
 
+export type IntegrationsGenerateChatOAuthUrlMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Generate chat OAuth URL
  *
@@ -37,12 +60,12 @@ export type IntegrationsGenerateChatOAuthUrlMutationData =
 export function useIntegrationsGenerateChatOAuthUrlMutation(
   options?: MutationHookOptions<
     IntegrationsGenerateChatOAuthUrlMutationData,
-    Error,
+    IntegrationsGenerateChatOAuthUrlMutationError,
     IntegrationsGenerateChatOAuthUrlMutationVariables
   >,
 ): UseMutationResult<
   IntegrationsGenerateChatOAuthUrlMutationData,
-  Error,
+  IntegrationsGenerateChatOAuthUrlMutationError,
   IntegrationsGenerateChatOAuthUrlMutationVariables
 > {
   const client = useNovuContext();

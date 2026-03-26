@@ -12,6 +12,17 @@ import { topicsSubscriptionsDelete } from "../funcs/topicsSubscriptionsDelete.js
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -28,6 +39,18 @@ export type TopicsSubscriptionsDeleteMutationVariables = {
 export type TopicsSubscriptionsDeleteMutationData =
   operations.TopicsControllerDeleteTopicSubscriptionsResponse;
 
+export type TopicsSubscriptionsDeleteMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Delete topic subscriptions
  *
@@ -37,12 +60,12 @@ export type TopicsSubscriptionsDeleteMutationData =
 export function useTopicsSubscriptionsDeleteMutation(
   options?: MutationHookOptions<
     TopicsSubscriptionsDeleteMutationData,
-    Error,
+    TopicsSubscriptionsDeleteMutationError,
     TopicsSubscriptionsDeleteMutationVariables
   >,
 ): UseMutationResult<
   TopicsSubscriptionsDeleteMutationData,
-  Error,
+  TopicsSubscriptionsDeleteMutationError,
   TopicsSubscriptionsDeleteMutationVariables
 > {
   const client = useNovuContext();

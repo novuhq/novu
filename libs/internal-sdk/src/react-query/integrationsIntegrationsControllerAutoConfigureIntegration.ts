@@ -11,6 +11,17 @@ import { NovuCore } from "../core.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -26,6 +37,18 @@ export type IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationVa
 export type IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationData =
   operations.IntegrationsControllerAutoConfigureIntegrationResponse;
 
+export type IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Auto-configure an integration for inbound webhooks
  *
@@ -36,12 +59,12 @@ export type IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationDa
 export function useIntegrationsIntegrationsControllerAutoConfigureIntegrationMutation(
   options?: MutationHookOptions<
     IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationData,
-    Error,
+    IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationError,
     IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationVariables
   >,
 ): UseMutationResult<
   IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationData,
-  Error,
+  IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationError,
   IntegrationsIntegrationsControllerAutoConfigureIntegrationMutationVariables
 > {
   const client = useNovuContext();

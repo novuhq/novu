@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   type WorkflowsStepsRetrieveQueryData,
 };
 
+export type WorkflowsStepsRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve workflow step
  *
@@ -39,8 +62,14 @@ export function useWorkflowsStepsRetrieve(
   workflowId: string,
   stepId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<WorkflowsStepsRetrieveQueryData>,
-): UseQueryResult<WorkflowsStepsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    WorkflowsStepsRetrieveQueryData,
+    WorkflowsStepsRetrieveQueryError
+  >,
+): UseQueryResult<
+  WorkflowsStepsRetrieveQueryData,
+  WorkflowsStepsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildWorkflowsStepsRetrieveQuery(
@@ -64,8 +93,14 @@ export function useWorkflowsStepsRetrieveSuspense(
   workflowId: string,
   stepId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<WorkflowsStepsRetrieveQueryData>,
-): UseSuspenseQueryResult<WorkflowsStepsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    WorkflowsStepsRetrieveQueryData,
+    WorkflowsStepsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  WorkflowsStepsRetrieveQueryData,
+  WorkflowsStepsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildWorkflowsStepsRetrieveQuery(

@@ -19,6 +19,7 @@ export const WorkflowCreationSourceEnum = {
   OnboardingGetStarted: "onboarding_get_started",
   Bridge: "bridge",
   Dashboard: "dashboard",
+  Ai: "ai",
 } as const;
 /**
  * Source of workflow creation

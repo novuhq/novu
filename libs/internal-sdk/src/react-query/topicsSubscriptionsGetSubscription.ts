@@ -5,25 +5,52 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildTopicsSubscriptionsGetSubscriptionQuery,
   prefetchTopicsSubscriptionsGetSubscription,
   queryKeyTopicsSubscriptionsGetSubscription,
   TopicsSubscriptionsGetSubscriptionQueryData,
-} from './topicsSubscriptionsGetSubscription.core.js';
+} from "./topicsSubscriptionsGetSubscription.core.js";
 export {
   buildTopicsSubscriptionsGetSubscriptionQuery,
   prefetchTopicsSubscriptionsGetSubscription,
   queryKeyTopicsSubscriptionsGetSubscription,
   type TopicsSubscriptionsGetSubscriptionQueryData,
 };
+
+export type TopicsSubscriptionsGetSubscriptionQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * Retrieve a topic subscription
@@ -35,11 +62,23 @@ export function useTopicsSubscriptionsGetSubscription(
   topicKey: string,
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>
-): UseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, Error> {
+  options?: QueryHookOptions<
+    TopicsSubscriptionsGetSubscriptionQueryData,
+    TopicsSubscriptionsGetSubscriptionQueryError
+  >,
+): UseQueryResult<
+  TopicsSubscriptionsGetSubscriptionQueryData,
+  TopicsSubscriptionsGetSubscriptionQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTopicsSubscriptionsGetSubscriptionQuery(client, topicKey, identifier, idempotencyKey, options),
+    ...buildTopicsSubscriptionsGetSubscriptionQuery(
+      client,
+      topicKey,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -54,44 +93,72 @@ export function useTopicsSubscriptionsGetSubscriptionSuspense(
   topicKey: string,
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TopicsSubscriptionsGetSubscriptionQueryData>
-): UseSuspenseQueryResult<TopicsSubscriptionsGetSubscriptionQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    TopicsSubscriptionsGetSubscriptionQueryData,
+    TopicsSubscriptionsGetSubscriptionQueryError
+  >,
+): UseSuspenseQueryResult<
+  TopicsSubscriptionsGetSubscriptionQueryData,
+  TopicsSubscriptionsGetSubscriptionQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTopicsSubscriptionsGetSubscriptionQuery(client, topicKey, identifier, idempotencyKey, options),
+    ...buildTopicsSubscriptionsGetSubscriptionQuery(
+      client,
+      topicKey,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setTopicsSubscriptionsGetSubscriptionData(
   client: QueryClient,
-  queryKeyBase: [topicKey: string, identifier: string, parameters: { idempotencyKey?: string | undefined }],
-  data: TopicsSubscriptionsGetSubscriptionQueryData
+  queryKeyBase: [
+    topicKey: string,
+    identifier: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: TopicsSubscriptionsGetSubscriptionQueryData,
 ): TopicsSubscriptionsGetSubscriptionQueryData | undefined {
   const key = queryKeyTopicsSubscriptionsGetSubscription(...queryKeyBase);
 
-  return client.setQueryData<TopicsSubscriptionsGetSubscriptionQueryData>(key, data);
+  return client.setQueryData<TopicsSubscriptionsGetSubscriptionQueryData>(
+    key,
+    data,
+  );
 }
 
 export function invalidateTopicsSubscriptionsGetSubscription(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [topicKey: string, identifier: string, parameters: { idempotencyKey?: string | undefined }]
+    [
+      topicKey: string,
+      identifier: string,
+      parameters: { idempotencyKey?: string | undefined },
+    ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Subscriptions', 'getSubscription', ...queryKeyBase],
+    queryKey: [
+      "@novu/api",
+      "Subscriptions",
+      "getSubscription",
+      ...queryKeyBase,
+    ],
   });
 }
 
 export function invalidateAllTopicsSubscriptionsGetSubscription(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Subscriptions', 'getSubscription'],
+    queryKey: ["@novu/api", "Subscriptions", "getSubscription"],
   });
 }

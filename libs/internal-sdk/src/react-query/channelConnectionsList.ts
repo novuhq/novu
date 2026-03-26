@@ -11,6 +11,17 @@ import {
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -31,6 +42,18 @@ export {
   queryKeyChannelConnectionsList,
 };
 
+export type ChannelConnectionsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List all channel connections
  *
@@ -39,8 +62,14 @@ export {
  */
 export function useChannelConnectionsList(
   request: operations.ChannelConnectionsControllerListChannelConnectionsRequest,
-  options?: QueryHookOptions<ChannelConnectionsListQueryData>,
-): UseQueryResult<ChannelConnectionsListQueryData, Error> {
+  options?: QueryHookOptions<
+    ChannelConnectionsListQueryData,
+    ChannelConnectionsListQueryError
+  >,
+): UseQueryResult<
+  ChannelConnectionsListQueryData,
+  ChannelConnectionsListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
     ...buildChannelConnectionsListQuery(
@@ -60,8 +89,14 @@ export function useChannelConnectionsList(
  */
 export function useChannelConnectionsListSuspense(
   request: operations.ChannelConnectionsControllerListChannelConnectionsRequest,
-  options?: SuspenseQueryHookOptions<ChannelConnectionsListQueryData>,
-): UseSuspenseQueryResult<ChannelConnectionsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ChannelConnectionsListQueryData,
+    ChannelConnectionsListQueryError
+  >,
+): UseSuspenseQueryResult<
+  ChannelConnectionsListQueryData,
+  ChannelConnectionsListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildChannelConnectionsListQuery(
