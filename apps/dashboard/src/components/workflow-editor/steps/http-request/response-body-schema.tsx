@@ -45,20 +45,20 @@ export function ResponseBodySchema() {
         methods={methods}
       />
 
-      <Separator className="mt-1.5 mb-2 bg-neutral-50" />
+      <Separator className="mt-1.5 mb-1.5 bg-neutral-50" />
 
       <div>
         <EnforceSchemaValidation onSchemaGenerated={resetToSchema} />
       </div>
 
-      <div className="flex items-center gap-2 overflow-clip rounded-md border border-neutral-100 bg-white p-2">
+      <div className="mt-1.5 flex items-center gap-2 overflow-clip rounded-md border border-neutral-100 bg-white p-2">
         <div className="flex h-full shrink-0 items-stretch">
           <div className="w-1 rounded-full bg-[#717784]" />
         </div>
         <p className="text-xs leading-4 text-[#525866]">
           <span className="font-medium text-[#0e121b]">Note: </span>
           {'These values can be accessed in the subsequent steps via '}
-          <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${step.stepId}.`}</span>
+          <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${step.stepId}.KEY_NAME}}`}</span>
         </p>
       </div>
     </div>

@@ -228,7 +228,7 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
           <p className="text-xs leading-4 text-[#525866]">
             <span className="font-medium text-[#0e121b]">Note: </span>
             {'These values can be accessed in the subsequent steps via '}
-            <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${stepName}.`}</span>
+            <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${stepName}.KEY_NAME}}`}</span>
           </p>
         </div>
       )}
