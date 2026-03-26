@@ -1,5 +1,3 @@
-import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
-import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
@@ -21,9 +19,4 @@ export class BulkUpdatePreferencesRequestDto {
   @Type(() => BulkUpdatePreferenceItemDto)
   @ValidateNested({ each: true })
   readonly preferences: BulkUpdatePreferenceItemDto[];
-
-  @ApiContextPayload()
-  @IsOptional()
-  @IsValidContextPayload({ maxCount: 5 })
-  readonly context?: ContextPayload;
 }

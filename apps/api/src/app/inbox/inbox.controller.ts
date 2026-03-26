@@ -411,7 +411,6 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         contextKeys: subscriberSession.contextKeys,
-        context: body.context,
         preferences: body.preferences,
       })
     );
