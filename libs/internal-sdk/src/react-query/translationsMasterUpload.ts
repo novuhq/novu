@@ -12,6 +12,16 @@ import { translationsMasterUpload } from "../funcs/translationsMasterUpload.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -27,6 +37,16 @@ export type TranslationsMasterUploadMutationVariables = {
 export type TranslationsMasterUploadMutationData =
   components.ImportMasterJsonResponseDto;
 
+export type TranslationsMasterUploadMutationError =
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Upload master translations JSON file
  *
@@ -36,12 +56,12 @@ export type TranslationsMasterUploadMutationData =
 export function useTranslationsMasterUploadMutation(
   options?: MutationHookOptions<
     TranslationsMasterUploadMutationData,
-    Error,
+    TranslationsMasterUploadMutationError,
     TranslationsMasterUploadMutationVariables
   >,
 ): UseMutationResult<
   TranslationsMasterUploadMutationData,
-  Error,
+  TranslationsMasterUploadMutationError,
   TranslationsMasterUploadMutationVariables
 > {
   const client = useNovuContext();

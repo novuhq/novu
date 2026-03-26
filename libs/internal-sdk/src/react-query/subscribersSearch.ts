@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -30,6 +41,18 @@ export {
   type SubscribersSearchQueryData,
 };
 
+export type SubscribersSearchQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Search subscribers
  *
@@ -39,8 +62,11 @@ export {
  */
 export function useSubscribersSearch(
   request: operations.SubscribersControllerSearchSubscribersRequest,
-  options?: QueryHookOptions<SubscribersSearchQueryData>,
-): UseQueryResult<SubscribersSearchQueryData, Error> {
+  options?: QueryHookOptions<
+    SubscribersSearchQueryData,
+    SubscribersSearchQueryError
+  >,
+): UseQueryResult<SubscribersSearchQueryData, SubscribersSearchQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildSubscribersSearchQuery(
@@ -61,8 +87,14 @@ export function useSubscribersSearch(
  */
 export function useSubscribersSearchSuspense(
   request: operations.SubscribersControllerSearchSubscribersRequest,
-  options?: SuspenseQueryHookOptions<SubscribersSearchQueryData>,
-): UseSuspenseQueryResult<SubscribersSearchQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersSearchQueryData,
+    SubscribersSearchQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersSearchQueryData,
+  SubscribersSearchQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildSubscribersSearchQuery(

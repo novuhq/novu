@@ -5,6 +5,7 @@
 import { NovuCore } from "../core.js";
 import { appendForm, encodeSimple } from "../lib/encodings.js";
 import {
+  bytesToBlob,
   getContentTypeFromFileName,
   readableStreamToArrayBuffer,
 } from "../lib/files.js";
@@ -105,22 +106,28 @@ async function $do(
   const payload = parsed.value;
   const body = new FormData();
 
-  for (const fileItem of payload.RequestBody.files) {
+  for (const fileItem of payload.RequestBody.files ?? []) {
     if (isBlobLike(fileItem)) {
-      appendForm(body, "files", fileItem);
+      const blob = fileItem;
+      const name = "name" in blob ? (blob.name as string) : undefined;
+      appendForm(body, "files", blob, name);
     } else if (isReadableStream(fileItem.content)) {
       const buffer = await readableStreamToArrayBuffer(fileItem.content);
       const contentType = getContentTypeFromFileName(fileItem.fileName)
         || "application/octet-stream";
-      const blob = new Blob([buffer], { type: contentType });
-      appendForm(body, "files", blob, fileItem.fileName);
+      appendForm(
+        body,
+        "files",
+        bytesToBlob(buffer, contentType),
+        fileItem.fileName,
+      );
     } else {
       const contentType = getContentTypeFromFileName(fileItem.fileName)
         || "application/octet-stream";
       appendForm(
         body,
         "files",
-        new Blob([fileItem.content], { type: contentType }),
+        bytesToBlob(fileItem.content, contentType),
         fileItem.fileName,
       );
     }

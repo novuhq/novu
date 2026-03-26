@@ -31139,10 +31139,7 @@
         "required": [
           "firstName",
           "lastName",
-          "email",
           "subscriberId",
-          "isOnline",
-          "lastOnlineAt",
           "_organizationId",
           "_environmentId",
           "deleted",

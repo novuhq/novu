@@ -21,7 +21,7 @@ export type InboundWebhooksControllerHandleWebhookRequest = {
   /**
    * Webhook event payload from the delivery provider
    */
-  requestBody?: any | undefined;
+  requestBody: { [k: string]: any };
 };
 
 /** @internal */
@@ -29,7 +29,7 @@ export type InboundWebhooksControllerHandleWebhookRequest$Outbound = {
   environmentId: string;
   integrationId: string;
   "idempotency-key"?: string | undefined;
-  RequestBody?: any | undefined;
+  RequestBody: { [k: string]: any };
 };
 
 /** @internal */
@@ -42,7 +42,7 @@ export const InboundWebhooksControllerHandleWebhookRequest$outboundSchema:
     environmentId: z.string(),
     integrationId: z.string(),
     idempotencyKey: z.string().optional(),
-    requestBody: z.any().optional(),
+    requestBody: z.record(z.any()),
   }).transform((v) => {
     return remap$(v, {
       idempotencyKey: "idempotency-key",

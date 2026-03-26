@@ -10,6 +10,17 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
@@ -29,6 +40,18 @@ export {
   queryKeyContextsRetrieve,
 };
 
+export type ContextsRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Retrieve a context
  *
@@ -40,8 +63,11 @@ export function useContextsRetrieve(
   type: string,
   id: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ContextsRetrieveQueryData>,
-): UseQueryResult<ContextsRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    ContextsRetrieveQueryData,
+    ContextsRetrieveQueryError
+  >,
+): UseQueryResult<ContextsRetrieveQueryData, ContextsRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildContextsRetrieveQuery(
@@ -66,8 +92,14 @@ export function useContextsRetrieveSuspense(
   type: string,
   id: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ContextsRetrieveQueryData>,
-): UseSuspenseQueryResult<ContextsRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    ContextsRetrieveQueryData,
+    ContextsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  ContextsRetrieveQueryData,
+  ContextsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildContextsRetrieveQuery(

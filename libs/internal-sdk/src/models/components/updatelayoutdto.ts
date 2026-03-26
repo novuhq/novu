@@ -10,7 +10,7 @@ import {
 } from "./emailcontrolsdto.js";
 
 /**
- * Control values for the layout
+ * Control values for the layout. Omit to leave unchanged, or set to null to clear stored control values.
  */
 export type ControlValues = {
   /**
@@ -29,7 +29,7 @@ export type UpdateLayoutDto = {
    */
   isTranslationEnabled?: boolean | undefined;
   /**
-   * Control values for the layout
+   * Control values for the layout. Omit to leave unchanged, or set to null to clear stored control values.
    */
   controlValues?: ControlValues | null | undefined;
 };

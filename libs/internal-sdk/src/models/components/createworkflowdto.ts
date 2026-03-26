@@ -30,6 +30,11 @@ import {
   EmailStepUpsertDto$outboundSchema,
 } from "./emailstepupsertdto.js";
 import {
+  HttpRequestStepUpsertDto,
+  HttpRequestStepUpsertDto$Outbound,
+  HttpRequestStepUpsertDto$outboundSchema,
+} from "./httprequeststepupsertdto.js";
+import {
   InAppStepUpsertDto,
   InAppStepUpsertDto$Outbound,
   InAppStepUpsertDto$outboundSchema,
@@ -72,7 +77,8 @@ export type Steps =
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
-  | CustomStepUpsertDto;
+  | CustomStepUpsertDto
+  | HttpRequestStepUpsertDto;
 
 export type CreateWorkflowDto = {
   /**
@@ -120,6 +126,7 @@ export type CreateWorkflowDto = {
     | DigestStepUpsertDto
     | ThrottleStepUpsertDto
     | CustomStepUpsertDto
+    | HttpRequestStepUpsertDto
   >;
   /**
    * Source of workflow creation
@@ -145,7 +152,8 @@ export type Steps$Outbound =
   | DelayStepUpsertDto$Outbound
   | DigestStepUpsertDto$Outbound
   | ThrottleStepUpsertDto$Outbound
-  | CustomStepUpsertDto$Outbound;
+  | CustomStepUpsertDto$Outbound
+  | HttpRequestStepUpsertDto$Outbound;
 
 /** @internal */
 export const Steps$outboundSchema: z.ZodType<
@@ -162,6 +170,7 @@ export const Steps$outboundSchema: z.ZodType<
   DigestStepUpsertDto$outboundSchema,
   ThrottleStepUpsertDto$outboundSchema,
   CustomStepUpsertDto$outboundSchema,
+  HttpRequestStepUpsertDto$outboundSchema,
 ]);
 
 export function stepsToJSON(steps: Steps): string {
@@ -188,6 +197,7 @@ export type CreateWorkflowDto$Outbound = {
     | DigestStepUpsertDto$Outbound
     | ThrottleStepUpsertDto$Outbound
     | CustomStepUpsertDto$Outbound
+    | HttpRequestStepUpsertDto$Outbound
   >;
   __source: string;
   preferences?: PreferencesRequestDto$Outbound | undefined;
@@ -219,6 +229,7 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
       DigestStepUpsertDto$outboundSchema,
       ThrottleStepUpsertDto$outboundSchema,
       CustomStepUpsertDto$outboundSchema,
+      HttpRequestStepUpsertDto$outboundSchema,
     ]),
   ),
   source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),

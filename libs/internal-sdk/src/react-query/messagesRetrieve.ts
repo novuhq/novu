@@ -11,6 +11,17 @@ import {
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { useNovuContext } from "./_context.js";
 import {
@@ -31,6 +42,18 @@ export {
   queryKeyMessagesRetrieve,
 };
 
+export type MessagesRetrieveQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * List all messages
  *
@@ -41,8 +64,11 @@ export {
  */
 export function useMessagesRetrieve(
   request: operations.MessagesControllerGetMessagesRequest,
-  options?: QueryHookOptions<MessagesRetrieveQueryData>,
-): UseQueryResult<MessagesRetrieveQueryData, Error> {
+  options?: QueryHookOptions<
+    MessagesRetrieveQueryData,
+    MessagesRetrieveQueryError
+  >,
+): UseQueryResult<MessagesRetrieveQueryData, MessagesRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
     ...buildMessagesRetrieveQuery(
@@ -64,8 +90,14 @@ export function useMessagesRetrieve(
  */
 export function useMessagesRetrieveSuspense(
   request: operations.MessagesControllerGetMessagesRequest,
-  options?: SuspenseQueryHookOptions<MessagesRetrieveQueryData>,
-): UseSuspenseQueryResult<MessagesRetrieveQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    MessagesRetrieveQueryData,
+    MessagesRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  MessagesRetrieveQueryData,
+  MessagesRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
     ...buildMessagesRetrieveQuery(

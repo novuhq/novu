@@ -12,6 +12,17 @@ import { workflowsDuplicate } from "../funcs/workflowsDuplicate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
@@ -27,6 +38,18 @@ export type WorkflowsDuplicateMutationVariables = {
 export type WorkflowsDuplicateMutationData =
   operations.WorkflowControllerDuplicateWorkflowResponse;
 
+export type WorkflowsDuplicateMutationError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
+
 /**
  * Duplicate a workflow
  *
@@ -36,12 +59,12 @@ export type WorkflowsDuplicateMutationData =
 export function useWorkflowsDuplicateMutation(
   options?: MutationHookOptions<
     WorkflowsDuplicateMutationData,
-    Error,
+    WorkflowsDuplicateMutationError,
     WorkflowsDuplicateMutationVariables
   >,
 ): UseMutationResult<
   WorkflowsDuplicateMutationData,
-  Error,
+  WorkflowsDuplicateMutationError,
   WorkflowsDuplicateMutationVariables
 > {
   const client = useNovuContext();

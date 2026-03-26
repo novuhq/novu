@@ -5,26 +5,53 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import {
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildSubscribersTopicsListQuery,
   prefetchSubscribersTopicsList,
   queryKeySubscribersTopicsList,
   SubscribersTopicsListQueryData,
-} from './subscribersTopicsList.core.js';
+} from "./subscribersTopicsList.core.js";
 export {
   buildSubscribersTopicsListQuery,
   prefetchSubscribersTopicsList,
   queryKeySubscribersTopicsList,
   type SubscribersTopicsListQueryData,
 };
+
+export type SubscribersTopicsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * Retrieve subscriber subscriptions
@@ -35,11 +62,21 @@ export {
  */
 export function useSubscribersTopicsList(
   request: operations.SubscribersControllerListSubscriberTopicsRequest,
-  options?: QueryHookOptions<SubscribersTopicsListQueryData>
-): UseQueryResult<SubscribersTopicsListQueryData, Error> {
+  options?: QueryHookOptions<
+    SubscribersTopicsListQueryData,
+    SubscribersTopicsListQueryError
+  >,
+): UseQueryResult<
+  SubscribersTopicsListQueryData,
+  SubscribersTopicsListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersTopicsListQuery(client, request, options),
+    ...buildSubscribersTopicsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -53,11 +90,21 @@ export function useSubscribersTopicsList(
  */
 export function useSubscribersTopicsListSuspense(
   request: operations.SubscribersControllerListSubscriberTopicsRequest,
-  options?: SuspenseQueryHookOptions<SubscribersTopicsListQueryData>
-): UseSuspenseQueryResult<SubscribersTopicsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersTopicsListQueryData,
+    SubscribersTopicsListQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersTopicsListQueryData,
+  SubscribersTopicsListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersTopicsListQuery(client, request, options),
+    ...buildSubscribersTopicsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -70,7 +117,9 @@ export function setSubscribersTopicsListData(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?: operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection | undefined;
+      orderDirection?:
+        | operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+        | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       key?: string | undefined;
@@ -78,7 +127,7 @@ export function setSubscribersTopicsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: SubscribersTopicsListQueryData
+  data: SubscribersTopicsListQueryData,
 ): SubscribersTopicsListQueryData | undefined {
   const key = queryKeySubscribersTopicsList(...queryKeyBase);
 
@@ -94,7 +143,9 @@ export function invalidateSubscribersTopicsList(
         after?: string | undefined;
         before?: string | undefined;
         limit?: number | undefined;
-        orderDirection?: operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection | undefined;
+        orderDirection?:
+          | operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+          | undefined;
         orderBy?: string | undefined;
         includeCursor?: boolean | undefined;
         key?: string | undefined;
@@ -103,20 +154,20 @@ export function invalidateSubscribersTopicsList(
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Topics', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Topics", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersTopicsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Topics', 'list'],
+    queryKey: ["@novu/api", "Topics", "list"],
   });
 }

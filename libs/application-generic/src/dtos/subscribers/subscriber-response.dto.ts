@@ -10,14 +10,14 @@ export class SubscriberResponseDtoOptional {
   })
   _id?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The first name of the subscriber.',
     type: String,
     nullable: true,
   })
   firstName?: string | null;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The last name of the subscriber.',
     type: String,
     nullable: true,
@@ -65,14 +65,14 @@ export class SubscriberResponseDtoOptional {
   })
   topics?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Indicates whether the subscriber is currently online.',
     type: Boolean,
     nullable: true,
   })
   isOnline?: boolean | null;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The timestamp indicating when the subscriber was last online, in ISO 8601 format.',
     type: String,
     nullable: true,
