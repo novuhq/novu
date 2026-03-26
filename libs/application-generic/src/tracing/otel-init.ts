@@ -14,7 +14,42 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 
+import type { RequestOptions } from 'http';
+
 let sdk: NodeSDK | undefined;
+
+const DEFAULT_INTERNAL_HOSTS = ['localhost', '127.0.0.1', '::1', '*.novu.co', '*.novu-staging.co'];
+
+type HostMatcher = (hostname: string) => boolean;
+
+function buildInternalHostMatchers(): HostMatcher[] {
+  const raw = process.env.OTEL_INTERNAL_HOSTS;
+  const entries = raw
+    ? raw
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : DEFAULT_INTERNAL_HOSTS;
+
+  return entries.map((pattern): HostMatcher => {
+    if (pattern.startsWith('*.')) {
+      const suffix = pattern.slice(1);
+
+      return (hostname) => hostname === pattern.slice(2) || hostname.endsWith(suffix);
+    }
+
+    return (hostname) => hostname === pattern;
+  });
+}
+
+function isExternalHost(req: RequestOptions): boolean {
+  const hostname = (req.hostname ?? req.host ?? '').replace(/:\d+$/, '');
+  if (!hostname) {
+    return false;
+  }
+
+  return !buildInternalHostMatchers().some((matcher) => matcher(hostname));
+}
 
 /**
  * Build the base resource.
@@ -71,6 +106,12 @@ function buildResource(serviceName: string, version: string) {
  *   OTEL_CAPTURE_DB_STATEMENTS=true|false    (default: false — opt-in; serialises query/command
  *                                             payloads into db.statement spans. Disable in
  *                                             production if queries contain sensitive data.)
+ *   OTEL_INTERNAL_HOSTS=host1,host2,...     (default: localhost,127.0.0.1,::1,*.novu.co,*.novu-staging.co
+ *                                             — only outgoing HTTP requests to these hosts carry
+ *                                             trace-propagation headers. Requests to all other hosts
+ *                                             are excluded from HTTP instrumentation to prevent leaking
+ *                                             traceparent/baggage/B3 to third-party services.
+ *                                             Supports wildcard prefixes like *.example.com.)
  */
 export function startOtel(serviceName: string, version: string): NodeSDK | undefined {
   if (process.env.ENABLE_OTEL !== 'true') {
@@ -214,8 +255,14 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
         },
 
         /*
-         * HTTP: suppress internal health-check / Prometheus-scrape noise so APM
-         * dashboards don't get swamped with irrelevant root spans.
+         * HTTP:
+         * - Incoming: suppress health-check / Prometheus-scrape noise.
+         * - Outgoing: suppress instrumentation for requests to external (non-Novu)
+         *   hosts so traceparent/baggage/B3 headers are never leaked to third-party
+         *   APIs (notification providers, user-configured HTTP step endpoints, etc.).
+         *   Internal service calls keep full propagation.
+         *   Override the default host list via OTEL_INTERNAL_HOSTS (comma-separated,
+         *   supports wildcard prefixes like *.novu.co).
          */
         '@opentelemetry/instrumentation-http': {
           ignoreIncomingRequestHook: (req) => {
@@ -223,6 +270,7 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
 
             return url === '/favicon.ico' || url.startsWith('/health') || url.startsWith('/metrics');
           },
+          ignoreOutgoingRequestHook: isExternalHost,
         },
 
         /*
