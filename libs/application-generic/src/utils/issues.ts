@@ -67,12 +67,14 @@ const mapAjvErrorToMessage = (
   return error.message || 'Invalid value';
 };
 
-const mapAjvErrorToIssueType = (error: ErrorObject): ContentIssueEnum => {
+const mapAjvErrorToIssueType = (error: ErrorObject, isUrlField = false): ContentIssueEnum => {
   switch (error.keyword) {
     case 'required':
-      return ContentIssueEnum.MISSING_VALUE;
     case 'type':
       return ContentIssueEnum.MISSING_VALUE;
+    case 'pattern':
+    case 'anyOf':
+      return isUrlField ? ContentIssueEnum.INVALID_URL : ContentIssueEnum.MISSING_VALUE;
     default:
       return ContentIssueEnum.MISSING_VALUE;
   }
@@ -139,7 +141,7 @@ export const processControlValuesBySchema = ({
       controls[path] = [
         {
           message: mappedMessage,
-          issueType: mapAjvErrorToIssueType(errorToUse),
+          issueType: mapAjvErrorToIssueType(errorToUse, true),
           variableName: path,
         },
       ];

@@ -88,7 +88,7 @@
     "date-fns-tz": "^3.2.0",
     "es-toolkit": "^1.39.10",
     "got": "^11.8.6",
-    "handlebars": "^4.7.7",
+    "handlebars": "4.7.9",
     "i18next": "^23.7.6",
     "ioredis": "^5.2.4",
     "json-logic-js": "^2.0.5",

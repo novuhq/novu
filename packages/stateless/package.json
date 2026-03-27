@@ -48,7 +48,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "handlebars": "^4.7.7",
+    "handlebars": "4.7.9",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
   },
