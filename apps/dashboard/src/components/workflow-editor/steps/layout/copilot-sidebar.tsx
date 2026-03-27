@@ -48,6 +48,8 @@ function RailIconButton({
             'mt-px text-text-soft hover:bg-bg-weak flex size-11 items-center justify-center transition-colors border-b border-neutral-200',
             isActive && 'bg-bg-white text-text-strong'
           )}
+          aria-label={tooltip}
+          aria-pressed={isActive}
         >
           {children}
         </button>
@@ -106,6 +108,7 @@ function CollapsedRail({
             <button
               type="button"
               onClick={() => onExpand()}
+              aria-label="Expand sidebar"
               className="text-text-soft hover:bg-bg-weak flex size-7 items-center justify-center rounded transition-colors"
             >
               <RiSidebarUnfoldLine className="size-4 text-icon-soft" />
