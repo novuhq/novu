@@ -126,7 +126,7 @@ export class DeployStepResolverUsecase {
 
     await this.recalculateAndPersistStepIssues(command, stepsToProcess);
 
-    this.analyticsService.track('Step resolver deployed - [Step Resolvers]', command.user._id, {
+    this.analyticsService.mixpanelTrack('Step resolver deployed - [Step Resolvers]', command.user._id, {
       deployedStepsCount: stepsToProcess.length,
       stepTypes: stepsToProcess.map((s) => s.stepType),
       _organization: command.user.organizationId,
