@@ -8,7 +8,7 @@ import {
   GetWorkflowByIdsUseCase,
   getStepResolverControlSchema,
   InstrumentUsecase,
-  isChannelStepType,
+  isStepResolverSupportedType,
   PinoLogger,
   ResourceValidatorService,
   reconcileStepResolverControlValues,
@@ -176,9 +176,9 @@ export class DeployStepResolverUsecase {
 
       const actualStepType = step.template?.type;
 
-      if (!actualStepType || !isChannelStepType(actualStepType)) {
+      if (!actualStepType || !isStepResolverSupportedType(actualStepType)) {
         throw new BadRequestException({
-          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers. Only channel steps (email, SMS, chat, push, in-app) support step resolvers.`,
+          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers. Trigger steps cannot use step resolvers.`,
           workflowId: manifestStep.workflowId,
           stepId: manifestStep.stepId,
         });
