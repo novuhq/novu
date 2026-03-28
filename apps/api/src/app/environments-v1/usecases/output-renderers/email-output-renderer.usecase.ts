@@ -560,7 +560,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
           organization,
         });
 
-    return JSON.parse(translatedContent);
+    try {
+      return JSON.parse(translatedContent);
+    } catch {
+      return mailyContent;
+    }
   }
 
   private async processTextTranslations({
@@ -613,7 +617,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   ): Promise<MailyJSONContent> {
     const parsedString = await this.liquidEngine.parseAndRender(JSON.stringify(mailyContent), variables);
 
-    return JSON.parse(parsedString);
+    try {
+      return JSON.parse(parsedString);
+    } catch {
+      return mailyContent;
+    }
   }
 
   private async transformMailyContent(
