@@ -1,5 +1,5 @@
 export {
-  ActionDto,
+  InboxActionDto,
   InboxNotificationDto,
   InboxSubscriberResponseDto,
   NotificationWorkflowDto,

@@ -30,7 +30,7 @@ export class RedirectDto {
   target?: '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
 }
 
-export class ActionDto {
+export class InboxActionDto {
   @ApiProperty({ type: String, description: 'Label of the action button' })
   label: string;
 
@@ -133,11 +133,11 @@ export class InboxNotificationDto {
   @ApiPropertyOptional({ type: String, description: 'Avatar URL for the notification' })
   avatar?: string;
 
-  @ApiPropertyOptional({ type: ActionDto, description: 'Primary action button for the notification' })
-  primaryAction?: ActionDto;
+  @ApiPropertyOptional({ type: InboxActionDto, description: 'Primary action button for the notification' })
+  primaryAction?: InboxActionDto;
 
-  @ApiPropertyOptional({ type: ActionDto, description: 'Secondary action button for the notification' })
-  secondaryAction?: ActionDto;
+  @ApiPropertyOptional({ type: InboxActionDto, description: 'Secondary action button for the notification' })
+  secondaryAction?: InboxActionDto;
 
   @ApiProperty({ enum: ChannelTypeEnum, enumName: 'ChannelTypeEnum', description: 'Channel type of the notification' })
   channelType: ChannelTypeEnum;
