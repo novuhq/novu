@@ -24,9 +24,5 @@ pnpm-lock.yaml
 **/dist/
 **/*.min.js
 
-# Ask-first zones — read only when explicitly working on them
-enterprise/
-packages/providers/
-
 # Generator templates — not production code
 libs/automation/

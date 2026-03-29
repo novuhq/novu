@@ -575,8 +575,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       : 'Are you sure you want to revert the message?';
   const revertConfirmationDescription =
     pendingRevertAction?.type === 'tryAgain'
-      ? 'This will undo the AI response and resend your message. The AI will generate a new response.'
-      : 'This will undo the AI response and remove the changes from this message.';
+      ? 'This will undo the Novu Copilot response and discard all workflow changes made after it. The new response will be generated.'
+      : 'This will undo the Novu Copilot response and discard all workflow changes made after it.';
 
   return (
     <AiChatContext.Provider value={value}>

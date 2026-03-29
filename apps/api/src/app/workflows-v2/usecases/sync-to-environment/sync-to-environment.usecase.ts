@@ -197,7 +197,7 @@ export class SyncToEnvironmentUseCase {
           stepId: step.stepId,
           stepType: step.type,
           stepResolverHash: step.stepResolverHash,
-          controlSchema: (step.controls.dataSchema as Record<string, unknown>) ?? null,
+          controlSchema: (step.controls?.dataSchema as Record<string, unknown>) ?? null,
         })),
         targetSteps: upsertedWorkflow.steps.map((step) => ({
           stepId: step.stepId,
@@ -331,7 +331,7 @@ export class SyncToEnvironmentUseCase {
       stepId: sourceStep.stepId,
       name: sourceStep.name ?? '',
       type: sourceStep.type,
-      controlValues: sourceStep.controls.values ?? {},
+      controlValues: sourceStep.controls?.values ?? {},
     };
   }
 

@@ -336,7 +336,11 @@ export class GetWorkflowRuns {
   }
 
   private decodeCursor(cursor: string): CursorData {
-    return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'));
+    try {
+      return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'));
+    } catch {
+      throw new BadRequestException('Invalid cursor format');
+    }
   }
 
   /**

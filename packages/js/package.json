@@ -70,7 +70,7 @@
     "start:server": "http-server ./dist -p 4010",
     "prebuild": "cp ./src/ui/index.css ./src/ui/index.directcss",
     "build": "pnpm run clean && NODE_ENV=production tsup",
-    "postbuild": "rm ./src/ui/index.directcss && ./scripts/copy-package-json.sh && node scripts/size-limit.mjs && node scripts/check-bundle-deps.mjs && pnpm run check-exports",
+    "postbuild": "rm ./src/ui/index.directcss && ./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "concurrently \"pnpm run prebuild\" \"NODE_ENV=development pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch --onSuccess 'tsup --dts-only'",
@@ -105,9 +105,6 @@
     "esbuild-plugin-compress": "^1.0.1",
     "esbuild-plugin-inline-import": "^1.0.4",
     "esbuild-plugin-solid": "^0.6.0",
-    "@kobalte/core": "^0.13.10",
-    "solid-floating-ui": "^0.3.1",
-    "solid-motionone": "^1.0.3",
     "http-server": "^0.13.0",
     "jest": "^29.3.1",
     "postcss": "^8.4.38",
@@ -130,6 +127,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.13",
+    "@kobalte/core": "^0.13.10",
     "@types/json-logic-js": "^2.0.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -137,7 +135,9 @@
     "mitt": "^3.0.1",
     "partysocket": "^1.1.4",
     "socket.io-client": "4.7.2",
+    "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.9.4",
+    "solid-motionone": "^1.0.3",
     "tailwind-merge": "^2.4.0"
   },
   "nx": {

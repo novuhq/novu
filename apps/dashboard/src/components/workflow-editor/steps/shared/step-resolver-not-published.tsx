@@ -365,7 +365,7 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
                 <div className="w-fit">
                   <ExternalLink
                     variant="documentation"
-                    href="https://docs.novu.co/platform/concepts/step-resolvers"
+                    href="https://docs.novu.co/platform/workflow/add-and-configure-steps/code-steps"
                     underline={false}
                     className="cursor-pointer"
                   >

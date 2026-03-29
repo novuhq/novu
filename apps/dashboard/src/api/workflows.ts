@@ -100,12 +100,14 @@ export async function triggerWorkflow({
   payload,
   to,
   context,
+  overrides,
 }: {
   environment: IEnvironment;
   name: string;
   payload: unknown;
   to: unknown;
   context?: unknown;
+  overrides?: Record<string, unknown>;
 }) {
   return post<{ data: { transactionId?: string } }>(`/events/trigger`, {
     environment,
@@ -114,6 +116,7 @@ export async function triggerWorkflow({
       to,
       payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
       context: context ?? undefined,
+      ...(overrides && Object.keys(overrides).length > 0 ? { overrides } : {}),
     },
   });
 }
