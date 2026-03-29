@@ -213,7 +213,7 @@ export abstract class SendMessageBase extends SendMessageType {
                 return format(new Date(value), formatting);
               }
 
-              return value.toString();
+              return String(value ?? '');
             },
           },
         });

@@ -1,7 +1,6 @@
 import { Slug } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { FileCode2 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
 import { ComponentProps, ComponentType, KeyboardEventHandler, useCallback, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
@@ -122,14 +121,14 @@ const StepNode = (props: StepNodeProps) => {
     onNodeDragStart,
     draggedNodeId,
     intersectingNodeId,
-    updateEdges,
-    removeEdges,
+    animatingNodeIds,
     copyNode,
     removeNode,
     selectedNodeId,
     selectNode,
   } = useCanvasContext();
   const isAnyNodeDragging = draggedNodeId !== null;
+  const isAnimating = id ? animatingNodeIds.has(id) : false;
   const areActionsVisible = !isAnyNodeDragging && isHovered && !showStepPreview && !!type;
   const hasConditions = conditionsCount > 0;
   const isDraggable = !isReadOnly && !showStepPreview;
@@ -172,61 +171,52 @@ const StepNode = (props: StepNodeProps) => {
   }, [onNodeDragEnd]);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        layout
-        layoutId={id} // should be a stable id for the animation
-        className={cn('relative pt-1 pl-6 -ml-6')}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onLayoutAnimationStart={() => removeEdges()}
-        onLayoutAnimationComplete={() => updateEdges()}
-      >
-        <AnimationStepWrapper isPending={data.isPending} isRemoving={isRemoving}>
-          <Node
-            aria-selected={selectedNodeId === id}
-            className={cn(
-              'group transition-all',
-              {
-                'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
-                'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:bg-none':
-                  isAnyNodeDragging && id === intersectingNodeId,
-              },
-              className
-            )}
-            nodeId={id}
-            isDraggable={isDraggable}
-            isDragHandleVisible={areActionsVisible}
-            onNodeDragStart={onNodeDragStart}
-            onNodeDragMove={onNodeDragMove}
-            onNodeDragEnd={handleNodeDragEnd}
-            {...rest}
-          >
-            {rest.children}
-          </Node>
-        </AnimationStepWrapper>
-        {hasConditions && (
-          <ConditionBadge
-            conditionsCount={conditionsCount}
-            stepSlug={data.stepSlug ?? ''}
-            conditionsData={data.controlValues?.skip as RQBJsonLogic}
-            className={cn('ml-6 transition-all', {
+    <div className={cn('relative pt-1 pl-6 -ml-6')} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <AnimationStepWrapper isPending={data.isPending} isRemoving={isRemoving}>
+        <Node
+          aria-selected={selectedNodeId === id}
+          className={cn(
+            'group transition-all duration-500 ease-in-out',
+            {
               'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
-              'pointer-events-none scale-95 -mt-[2px]': isAnyNodeDragging && id === intersectingNodeId,
-            })}
-          />
-        )}
-        <WorkflowNodeActionBar
-          isVisible={areActionsVisible}
-          stepType={type}
-          stepName={data.name || 'Untitled Step'}
-          onRemoveClick={handleRemoveStep}
-          onEditContentClick={handleEditContent}
-          onCopyClick={handleCopyStep}
-          isReadOnly={isReadOnly}
+              'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:bg-none':
+                isAnyNodeDragging && id === intersectingNodeId,
+              'scale-[0.97]': isAnimating && !isAnyNodeDragging,
+            },
+            className
+          )}
+          nodeId={id}
+          isDraggable={isDraggable}
+          isDragHandleVisible={areActionsVisible}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDragMove={onNodeDragMove}
+          onNodeDragEnd={handleNodeDragEnd}
+          {...rest}
+        >
+          {rest.children}
+        </Node>
+      </AnimationStepWrapper>
+      {hasConditions && (
+        <ConditionBadge
+          conditionsCount={conditionsCount}
+          stepSlug={data.stepSlug ?? ''}
+          conditionsData={data.controlValues?.skip as RQBJsonLogic}
+          className={cn('ml-6 transition-all', {
+            'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
+            'pointer-events-none scale-95 -mt-[2px]': isAnyNodeDragging && id === intersectingNodeId,
+          })}
         />
-      </motion.div>
-    </AnimatePresence>
+      )}
+      <WorkflowNodeActionBar
+        isVisible={areActionsVisible}
+        stepType={type}
+        stepName={data.name || 'Untitled Step'}
+        onRemoveClick={handleRemoveStep}
+        onEditContentClick={handleEditContent}
+        onCopyClick={handleCopyStep}
+        isReadOnly={isReadOnly}
+      />
+    </div>
   );
 };
 
@@ -559,42 +549,36 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
 };
 
 export const AddNode = (props: NodeProps<NodeType>) => {
-  const { isReadOnly, intersectingNodeId, addNode, removeEdges, updateEdges } = useCanvasContext();
+  const { isReadOnly, intersectingNodeId, addNode } = useCanvasContext();
   const { id, data } = props;
   const isIntersecting = intersectingNodeId === id;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        layout
-        layoutId={id} // should be a stable id for the animation
-        className="flex cursor-pointer justify-center items-center"
-        style={{ width: NODE_WIDTH, height: 32 }}
-        data-droppable-add-node-id={id}
-        onLayoutAnimationStart={() => removeEdges()}
-        onLayoutAnimationComplete={() => updateEdges()}
+    <div
+      className="flex cursor-pointer justify-center items-center"
+      style={{ width: NODE_WIDTH, height: 32 }}
+      data-droppable-add-node-id={id}
+    >
+      {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+      <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
+      <div
+        className="bg-background rounded-lg border border-dashed border-bg-soft flex items-center justify-center gap-1"
+        style={{
+          position: 'absolute',
+          transition: 'opacity 0.2s ease-in-out',
+          fontSize: 12,
+          pointerEvents: 'all',
+          width: NODE_WIDTH,
+          height: 32,
+          opacity: isIntersecting ? 1 : 0,
+        }}
       >
-        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
-        <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
-        <div
-          className="bg-background rounded-lg border border-dashed border-bg-soft flex items-center justify-center gap-1"
-          style={{
-            position: 'absolute',
-            transition: 'opacity 0.2s ease-in-out',
-            fontSize: 12,
-            pointerEvents: 'all',
-            width: NODE_WIDTH,
-            height: 32,
-            opacity: isIntersecting ? 1 : 0,
-          }}
-        >
-          <RiInsertRowTop className="size-3.5 text-text-soft" />
-          <span className="text-label-xs text-text-soft">Drop here</span>
-        </div>
-        {!isIntersecting && !isReadOnly && (
-          <AddStepMenu visible className="-mt-1" onMenuItemClick={(selection) => addNode(data.index, selection)} />
-        )}
-      </motion.div>
-    </AnimatePresence>
+        <RiInsertRowTop className="size-3.5 text-text-soft" />
+        <span className="text-label-xs text-text-soft">Drop here</span>
+      </div>
+      {!isIntersecting && !isReadOnly && (
+        <AddStepMenu visible className="-mt-1" onMenuItemClick={(selection) => addNode(data.index, selection)} />
+      )}
+    </div>
   );
 };

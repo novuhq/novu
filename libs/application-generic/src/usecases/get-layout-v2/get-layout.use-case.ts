@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ControlValuesRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { LayoutResponseDto } from '../../dtos/layout/layout-response.dto';
-import { AnalyticsService } from '../../services';
 import { GetLayoutCommandV0, GetLayoutUseCaseV0 } from '../get-layout-v0';
 import { LayoutVariablesSchemaCommand, LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
 import { GetLayoutCommand } from './get-layout.command';
@@ -13,8 +12,7 @@ export class GetLayoutUseCase {
   constructor(
     private getLayoutUseCaseV1: GetLayoutUseCaseV0,
     private controlValuesRepository: ControlValuesRepository,
-    private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
-    private analyticsService: AnalyticsService
+    private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase
   ) {}
 
   async execute(command: GetLayoutCommand): Promise<LayoutResponseDto> {
@@ -27,12 +25,6 @@ export class GetLayoutUseCase {
         origin: ResourceOriginEnum.NOVU_CLOUD,
       })
     );
-
-    this.analyticsService.track('Get layout - [Layouts]', command.userId, {
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      layoutId: layout._id!,
-    });
 
     if (command.skipAdditionalFields) {
       return mapLayoutToResponseDto({

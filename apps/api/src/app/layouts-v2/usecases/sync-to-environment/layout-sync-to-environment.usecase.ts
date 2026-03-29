@@ -82,7 +82,7 @@ export class LayoutSyncToEnvironmentUseCase {
       layoutId: sourceLayout.layoutId,
       name: sourceLayout.name,
       isTranslationEnabled: sourceLayout.isTranslationEnabled,
-      controlValues: sourceLayout.controls.values,
+      controlValues: sourceLayout.controls?.values,
     };
   }
 

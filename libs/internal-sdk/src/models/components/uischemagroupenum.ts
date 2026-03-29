@@ -19,6 +19,7 @@ export const UiSchemaGroupEnum = {
   Push: 'PUSH',
   Skip: 'SKIP',
   Layout: 'LAYOUT',
+  HttpRequest: 'HTTP_REQUEST',
 } as const;
 /**
  * Group of the UI Schema

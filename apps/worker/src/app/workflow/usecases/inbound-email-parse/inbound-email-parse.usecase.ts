@@ -36,7 +36,7 @@ export class InboundEmailParse {
       this.throwMiddleware('Domain is not in environment white list');
     }
 
-    const currentParseWebhook = template.steps.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
+    const currentParseWebhook = template?.steps?.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
       ?.url;
 
     if (!currentParseWebhook) {
@@ -69,6 +69,9 @@ export class InboundEmailParse {
 
     const [user, domain] = address.split('@');
     const toMetaIds = user.split('+')[1];
+    if (!toMetaIds) {
+      this.throwMiddleware(`Missing metadata segment in address ${address}`);
+    }
     const [transactionId, environmentId] = toMetaIds.split(userNameDelimiter);
 
     if (!transactionId) {

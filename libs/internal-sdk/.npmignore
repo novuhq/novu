@@ -5,10 +5,14 @@
 !/**/*.ts
 !/**/*.js
 !/**/*.mjs
-!/**/*.json
+!/package.json
+!/jsr.json
+!/dist/**/*.json
+!/esm/**/*.json
 !/**/*.map
 
 /eslint.config.mjs
+/.oxlintrc.json
 /cjs
 /.tshy
 /.tshy-*

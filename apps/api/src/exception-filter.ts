@@ -10,7 +10,6 @@ import { ZodError } from 'zod';
 import { RequestWithReqId } from './app/shared/middleware/request-id.middleware';
 import { buildLog } from './app/shared/utils/mappers';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
-import { retryWithBackoff } from './utils/payload-sanitizer';
 
 export const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
 
