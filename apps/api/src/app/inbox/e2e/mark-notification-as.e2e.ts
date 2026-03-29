@@ -281,7 +281,7 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     expect(body.data.workflow.severity).to.exist;
 
     expect(body.data.to).to.exist;
-    expect(body.data.to._id).to.equal(subscriber?._id ? String(subscriber._id) : '');
+    expect(body.data.to.id).to.equal(subscriber?._id ? String(subscriber._id) : '');
     expect(body.data.to.subscriberId).to.equal(subscriber?.subscriberId ?? '');
     expect(body.data.to.firstName).to.equal(subscriber?.firstName);
     expect(body.data.to.lastName).to.equal(subscriber?.lastName);
