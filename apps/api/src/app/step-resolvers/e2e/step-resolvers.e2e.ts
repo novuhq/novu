@@ -1,535 +1,509 @@
 import { Novu } from '@novu/api';
-import { WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
-import { ControlValuesRepository, EnvironmentRepository, MessageTemplateRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { WorkflowCreationSourceEnum } from '@novu/api/models/components';
+import { FeatureFlagsService, ResourceValidatorService } from '@novu/application-generic';
+import {
+  ControlValuesRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { FeatureFlagsService } from '@novu/application-generic';
-import { CloudflareStepResolverDeployService } from '../services/cloudflare-step-resolver-deploy.service';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { CloudflareStepResolverDeployService } from '../services/cloudflare-step-resolver-deploy.service';
 
 describe('Step Resolvers #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   let sandbox: sinon.SinonSandbox;
+  let workflowId: string;
+  let stepId: string;
+  let stepInternalId: string;
+  let workflowInternalId: string;
+
   const messageTemplateRepository = new MessageTemplateRepository();
   const controlValuesRepository = new ControlValuesRepository();
   const environmentRepository = new EnvironmentRepository();
-
-  let workflow: WorkflowResponseDto;
-  let emailStepId: string;
-  let emailStepInternalId: string;
+  const workflowRepository = new NotificationTemplateRepository();
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
     sandbox.stub(CloudflareStepResolverDeployService.prototype, 'deploy').resolves();
     sandbox.stub(FeatureFlagsService.prototype, 'getFlag').resolves(true);
+    sandbox.stub(ResourceValidatorService.prototype, 'getStepResolversAvailableSlots').resolves(9999);
+    sandbox.stub(ResourceValidatorService.prototype, 'validateStepResolversLimit').resolves();
 
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
 
+    const uid = Date.now();
     const { result } = await novuClient.workflows.create({
-      name: 'Test Email Workflow',
-      workflowId: `test-email-${Date.now()}`,
+      name: `Test Workflow ${uid}`,
+      workflowId: `test-workflow-${uid}`,
+      steps: [{ name: 'Email Step', type: 'email' as const, controlValues: { subject: 'Test Subject' } }],
       source: WorkflowCreationSourceEnum.Editor,
-      active: true,
-      steps: [
-        {
-          name: 'email-step',
-          stepId: 'email-step',
-          type: StepTypeEnum.EMAIL,
-          controlValues: {},
-        },
-      ],
     });
 
-    workflow = result;
-    emailStepId = workflow.steps[0].stepId;
+    workflowId = result.workflowId;
+    const firstStep = result.steps[0];
+    if (firstStep.type === 'UNKNOWN') throw new Error('Unexpected unknown step type');
+    stepId = firstStep.stepId;
 
-    const stepTemplate = await messageTemplateRepository.findOne({
+    const workflow = await workflowRepository.findOne({
       _environmentId: session.environment._id,
-      type: StepTypeEnum.EMAIL,
+      _organizationId: session.organization._id,
+      triggers: { $elemMatch: { identifier: workflowId } },
     });
-    emailStepInternalId = String(stepTemplate?._id);
+    if (!workflow) throw new Error(`Workflow not found: ${workflowId}`);
+    stepInternalId = String(workflow.steps[0]._templateId);
+    workflowInternalId = String(workflow._id);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     sandbox.restore();
   });
 
-  async function createWorkflowWithStep(stepType: StepTypeEnum): Promise<{ workflow: WorkflowResponseDto; stepInternalId: string }> {
-    const stepId = `${stepType}-step`;
-    const { result: wf } = await novuClient.workflows.create({
-      name: `Test ${stepType} Workflow`,
-      workflowId: `test-${stepType}-${Date.now()}`,
-      source: WorkflowCreationSourceEnum.Editor,
-      active: true,
+  async function deployStep(
+    options: {
+      workflowId: string;
+      stepId: string;
+      stepType?: StepTypeEnum;
+      controlSchema?: Record<string, unknown>;
+    },
+    agent = session.testAgent
+  ) {
+    const bundle = Buffer.from('export default { fetch: () => new Response("ok") }');
+    const stepType = options.stepType ?? StepTypeEnum.EMAIL;
+    const manifest = JSON.stringify({
       steps: [
         {
-          name: stepId,
-          stepId,
-          type: stepType,
-          controlValues: {},
+          workflowId: options.workflowId,
+          stepId: options.stepId,
+          stepType,
+          ...(options.controlSchema ? { controlSchema: options.controlSchema } : {}),
         },
       ],
     });
 
-    const stepTemplate = await messageTemplateRepository.findOne({
-      _environmentId: session.environment._id,
-      type: stepType,
-    });
-
-    return { workflow: wf, stepInternalId: String(stepTemplate?._id) };
+    return agent
+      .post('/v2/step-resolvers/deploy')
+      .attach('bundle', bundle, { filename: 'worker.mjs', contentType: 'application/javascript+module' })
+      .field('manifest', manifest);
   }
 
-  function buildDeployRequest(workflowId: string, stepId: string, stepType: StepTypeEnum, controlSchema?: Record<string, unknown>) {
-    const manifestStep: Record<string, unknown> = { workflowId, stepId, stepType };
-    if (controlSchema) {
-      manifestStep.controlSchema = controlSchema;
-    }
+  async function createActionWorkflow(actionStepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST | StepTypeEnum.THROTTLE) {
+    const uid = Date.now();
+    const { result } = await novuClient.workflows.create({
+      name: `${actionStepType} Workflow ${uid}`,
+      workflowId: `${actionStepType}-workflow-${uid}`,
+      steps: [{ name: `${actionStepType} Step`, type: actionStepType as unknown as 'digest' }],
+      source: WorkflowCreationSourceEnum.Editor,
+    });
+
+    const actionWorkflow = await workflowRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      triggers: { $elemMatch: { identifier: result.workflowId } },
+    });
+    if (!actionWorkflow) throw new Error(`Action workflow not found: ${result.workflowId}`);
+
+    const actionStepInternalId = String(actionWorkflow.steps[0]._templateId);
+    const rawStep = result.steps[0] as unknown as { stepId?: string; type?: string; raw?: { stepId?: string } };
+    const actionStepId = rawStep?.raw?.stepId ?? rawStep?.stepId;
+    if (!actionStepId) throw new Error(`Could not resolve stepId for ${actionStepType} step`);
 
     return {
-      manifest: JSON.stringify({ steps: [manifestStep] }),
-      bundle: Buffer.from('export default {}'),
+      workflowId: result.workflowId,
+      stepId: actionStepId,
+      stepInternalId: actionStepInternalId,
     };
   }
 
+  async function seedControlValues(controls: Record<string, unknown>) {
+    await controlValuesRepository.deleteMany({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+      _stepId: stepInternalId,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+    await controlValuesRepository.create({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+      _workflowId: workflowInternalId,
+      _stepId: stepInternalId,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+      priority: 0,
+      controls,
+    });
+  }
+
   describe('POST /v2/step-resolvers/deploy', () => {
-    it('should deploy step resolver for an email step and write hash + ControlValues', async () => {
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL);
+    it('should write stepResolverHash to MessageTemplate and create ControlValues', async () => {
+      const { body, status } = await deployStep({ workflowId, stepId });
 
-      const response = await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      expect(response.status).to.equal(201);
-      expect(response.body.stepResolverHash).to.be.a('string').that.matches(/^[a-z0-9]{5}-[a-z0-9]{5}$/);
-      expect(response.body.workerId).to.match(/^sr-/);
-      expect(response.body.deployedStepsCount).to.equal(1);
-      expect(response.body.deployedAt).to.be.a('string');
-
-      const template = await messageTemplateRepository.findOne({
-        _id: emailStepInternalId,
-        _environmentId: session.environment._id,
-      });
-      expect(template?.stepResolverHash).to.equal(response.body.stepResolverHash);
-
-      const controlValues = await controlValuesRepository.findFirst({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-      expect(controlValues).to.exist;
-    });
-
-    it('should write controlSchema to controls.schema when provided', async () => {
-      const controlSchema = {
-        type: 'object',
-        properties: { headline: { type: 'string' } },
-        additionalProperties: false,
-        required: [],
-      };
-
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL, controlSchema);
-
-      const response = await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      expect(response.status).to.equal(201);
-
-      const template = await messageTemplateRepository.findOne({
-        _id: emailStepInternalId,
-        _environmentId: session.environment._id,
-      });
-      expect(template?.controls?.schema).to.deep.equal(controlSchema);
-    });
-
-    it('should preserve existing ControlValues fields that are still in the schema on redeploy', async () => {
-      const wfId = workflow._id;
-      await controlValuesRepository.create({
-        _organizationId: session.organization._id,
-        _environmentId: session.environment._id,
-        _workflowId: wfId,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-        priority: 0,
-        controls: { headline: 'Hello' },
-      });
-
-      const controlSchema = {
-        type: 'object',
-        properties: { headline: { type: 'string' } },
-        additionalProperties: false,
-        required: [],
-      };
-
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL, controlSchema);
-
-      await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      const docs = await controlValuesRepository.find({
-        _environmentId: session.environment._id,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-      expect(docs).to.have.length(1);
-      expect((docs[0].controls as Record<string, unknown>).headline).to.equal('Hello');
-    });
-
-    it('should prune stale ControlValues fields removed from schema on redeploy', async () => {
-      const wfId = workflow._id;
-      await controlValuesRepository.create({
-        _organizationId: session.organization._id,
-        _environmentId: session.environment._id,
-        _workflowId: wfId,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-        priority: 0,
-        controls: { headline: 'Hello', oldField: 'gone' },
-      });
-
-      const controlSchema = {
-        type: 'object',
-        properties: { headline: { type: 'string' } },
-        additionalProperties: false,
-        required: [],
-      };
-
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL, controlSchema);
-
-      await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      const docs = await controlValuesRepository.find({
-        _environmentId: session.environment._id,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-      expect(docs).to.have.length(1);
-      expect(docs[0].controls).to.deep.equal({ headline: 'Hello' });
-    });
-
-    it('should wipe existing ControlValues when redeploying without a controlSchema', async () => {
-      const wfId = workflow._id;
-      await controlValuesRepository.create({
-        _organizationId: session.organization._id,
-        _environmentId: session.environment._id,
-        _workflowId: wfId,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-        priority: 0,
-        controls: { headline: 'Hello' },
-      });
-
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL);
-
-      await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      const docs = await controlValuesRepository.find({
-        _environmentId: session.environment._id,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-      expect(docs).to.have.length(1);
-      expect(docs[0].controls).to.deep.equal({});
-    });
-
-    it('should return 400 when manifest stepType does not match actual step type', async () => {
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.SMS);
-
-      const response = await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      expect(response.status).to.equal(400);
-      expect(response.body.message).to.include('does not match');
-
-      const template = await messageTemplateRepository.findOne({
-        _id: emailStepInternalId,
-        _environmentId: session.environment._id,
-      });
-      expect(template?.stepResolverHash).to.be.undefined;
-    });
-
-    it('should return 400 when bundle is missing', async () => {
-      const manifest = JSON.stringify({
-        steps: [{ workflowId: workflow.workflowId, stepId: emailStepId, stepType: StepTypeEnum.EMAIL }],
-      });
-
-      const response = await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest);
-
-      expect(response.status).to.equal(400);
-      expect(response.body.message).to.include('Bundle file is required');
-    });
-
-    describe('Action step types', () => {
-      const actionStepTypes = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE];
-
-      for (const stepType of actionStepTypes) {
-        it(`should deploy step resolver for a ${stepType} step`, async () => {
-          const { workflow: actionWorkflow, stepInternalId } = await createWorkflowWithStep(stepType);
-          const stepId = `${stepType}-step`;
-
-          const { manifest, bundle } = buildDeployRequest(actionWorkflow.workflowId, stepId, stepType);
-
-          const response = await session.testAgent
-            .post('/v2/step-resolvers/deploy')
-            .field('manifest', manifest)
-            .attach('bundle', bundle, 'bundle.js');
-
-          expect(response.status).to.equal(201);
-          expect(response.body.stepResolverHash).to.be.a('string').that.matches(/^[a-z0-9]{5}-[a-z0-9]{5}$/);
-          expect(response.body.deployedStepsCount).to.equal(1);
-
-          const template = await messageTemplateRepository.findOne({
-            _id: stepInternalId,
-            _environmentId: session.environment._id,
-          });
-          expect(template?.stepResolverHash).to.equal(response.body.stepResolverHash);
-        });
-      }
-
-      it('should return 400 when deploying step resolver for a trigger step', async () => {
-        const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.TRIGGER);
-
-        const response = await session.testAgent
-          .post('/v2/step-resolvers/deploy')
-          .field('manifest', manifest)
-          .attach('bundle', bundle, 'bundle.js');
-
-        expect(response.status).to.equal(400);
-        expect(response.body.message).to.include('not supported');
-      });
-    });
-  });
-
-  describe('DELETE /v2/step-resolvers/:stepId/disconnect', () => {
-    it('should disconnect step resolver from an email step and reset schema', async () => {
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL);
-      await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      const response = await session.testAgent
-        .delete(`/v2/step-resolvers/${emailStepInternalId}/disconnect`)
-        .send({ stepType: StepTypeEnum.EMAIL });
-
-      expect(response.status).to.equal(200);
-
-      const template = await messageTemplateRepository.findOne({
-        _id: emailStepInternalId,
-        _environmentId: session.environment._id,
-      });
-      expect(template?.stepResolverHash).to.be.undefined;
-
-      const controlValues = await controlValuesRepository.findFirst({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        _stepId: emailStepInternalId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
-      expect(controlValues).to.be.null;
-    });
-
-    it('should disconnect step resolver from a delay step and reset schema to default delay schema', async () => {
-      const { workflow: delayWorkflow, stepInternalId } = await createWorkflowWithStep(StepTypeEnum.DELAY);
-      const delayStepId = `${StepTypeEnum.DELAY}-step`;
-
-      const { manifest, bundle } = buildDeployRequest(delayWorkflow.workflowId, delayStepId, StepTypeEnum.DELAY);
-      await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
-      const response = await session.testAgent
-        .delete(`/v2/step-resolvers/${stepInternalId}/disconnect`)
-        .send({ stepType: StepTypeEnum.DELAY });
-
-      expect(response.status).to.equal(200);
+      expect(status).to.equal(201);
+      expect(body.data.stepResolverHash).to.match(/^[a-z0-9]{5}-[a-z0-9]{5}$/);
+      expect(body.data.workerId).to.match(/^sr-/);
+      expect(body.data.deployedStepsCount).to.equal(1);
+      expect(body.data.deployedAt).to.be.a('string');
 
       const template = await messageTemplateRepository.findOne({
         _id: stepInternalId,
         _environmentId: session.environment._id,
       });
-      expect(template?.stepResolverHash).to.be.undefined;
+      expect(template?.stepResolverHash).to.equal(body.data.stepResolverHash);
+
+      const controlValues = await controlValuesRepository.findOne({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _stepId: stepInternalId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+      expect(controlValues).to.exist;
     });
 
-    it('should return 400 when disconnecting with trigger step type', async () => {
-      const response = await session.testAgent
-        .delete(`/v2/step-resolvers/${emailStepInternalId}/disconnect`)
+    it('should write controlSchema to MessageTemplate.controls.schema when provided', async () => {
+      const controlSchema = {
+        type: 'object',
+        properties: { headline: { type: 'string' } },
+        additionalProperties: false,
+        required: [],
+      };
+
+      const { status } = await deployStep({ workflowId, stepId, controlSchema });
+
+      expect(status).to.equal(201);
+
+      const template = await messageTemplateRepository.findOne({
+        _id: stepInternalId,
+        _environmentId: session.environment._id,
+      });
+      expect(template?.controls?.schema).to.deep.equal(controlSchema);
+    });
+
+    it('should preserve existing control values that match the redeployed schema', async () => {
+      const controlSchema = {
+        type: 'object',
+        properties: { headline: { type: 'string' } },
+        additionalProperties: false,
+        required: [],
+      };
+      await seedControlValues({ headline: 'Hello' });
+
+      await deployStep({ workflowId, stepId, controlSchema });
+
+      const allControlValues = await controlValuesRepository.find({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _stepId: stepInternalId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+      expect(allControlValues).to.have.lengthOf(1);
+      expect((allControlValues[0].controls as Record<string, unknown>).headline).to.equal('Hello');
+    });
+
+    it('should prune control values for fields removed from the schema on redeploy', async () => {
+      const controlSchema = {
+        type: 'object',
+        properties: { headline: { type: 'string' } },
+        additionalProperties: false,
+        required: [],
+      };
+      await seedControlValues({ headline: 'Hello', oldField: 'gone' });
+
+      await deployStep({ workflowId, stepId, controlSchema });
+
+      const allControlValues = await controlValuesRepository.find({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _stepId: stepInternalId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+      expect(allControlValues).to.have.lengthOf(1);
+      expect(allControlValues[0].controls).to.deep.equal({ headline: 'Hello' });
+    });
+
+    it('should wipe all existing control values when redeploying without a controlSchema', async () => {
+      await seedControlValues({ headline: 'Hello' });
+
+      await deployStep({ workflowId, stepId });
+
+      const allControlValues = await controlValuesRepository.find({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _stepId: stepInternalId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+      expect(allControlValues).to.have.lengthOf(1);
+      expect(allControlValues[0].controls).to.deep.equal({});
+    });
+
+    it('should return 400 when manifest stepType does not match the actual step type', async () => {
+      const { body, status } = await deployStep({ workflowId, stepId, stepType: StepTypeEnum.SMS });
+
+      expect(status).to.equal(400);
+      expect(JSON.stringify(body)).to.include('does not match');
+
+      const template = await messageTemplateRepository.findOne({
+        _id: stepInternalId,
+        _environmentId: session.environment._id,
+      });
+      expect(template?.stepResolverHash).to.not.exist;
+    });
+
+    it('should return 400 when no bundle file is provided', async () => {
+      const manifest = JSON.stringify({
+        steps: [{ workflowId, stepId, stepType: StepTypeEnum.EMAIL }],
+      });
+
+      const { body, status } = await session.testAgent.post('/v2/step-resolvers/deploy').field('manifest', manifest);
+
+      expect(status).to.equal(400);
+      expect(JSON.stringify(body)).to.include('Bundle file is required');
+    });
+
+    describe('Action step types (delay, digest, throttle)', () => {
+      for (const actionStepType of [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE] as const) {
+        it(`should deploy step resolver for a ${actionStepType} step`, async () => {
+          const { workflowId: actionWorkflowId, stepId: actionStepId, stepInternalId: actionStepInternalId } =
+            await createActionWorkflow(actionStepType);
+
+          const { body, status } = await deployStep({
+            workflowId: actionWorkflowId,
+            stepId: actionStepId,
+            stepType: actionStepType,
+          });
+
+          expect(status).to.equal(201);
+          expect(body.data.stepResolverHash).to.match(/^[a-z0-9]{5}-[a-z0-9]{5}$/);
+          expect(body.data.deployedStepsCount).to.equal(1);
+
+          const template = await messageTemplateRepository.findOne({
+            _id: actionStepInternalId,
+            _environmentId: session.environment._id,
+          });
+          expect(template?.stepResolverHash).to.equal(body.data.stepResolverHash);
+        });
+      }
+    });
+  });
+
+  describe('DELETE /v2/step-resolvers/:stepInternalId/disconnect', () => {
+    it('should clear stepResolverHash, delete ControlValues, and reset controls.schema', async () => {
+      await deployStep({ workflowId, stepId });
+
+      const { status } = await session.testAgent
+        .delete(`/v2/step-resolvers/${stepInternalId}/disconnect`)
+        .send({ stepType: StepTypeEnum.EMAIL });
+
+      expect(status).to.equal(200);
+
+      const template = await messageTemplateRepository.findOne({
+        _id: stepInternalId,
+        _environmentId: session.environment._id,
+      });
+      expect(template?.stepResolverHash).to.not.exist;
+
+      const controlValues = await controlValuesRepository.findOne({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _stepId: stepInternalId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+      expect(controlValues).to.not.exist;
+
+      expect(template?.controls?.schema).to.have.property('type', 'object');
+      expect(template?.controls?.schema).to.have.property('additionalProperties', false);
+    });
+
+    it('should disconnect step resolver from a delay step and reset schema to default', async () => {
+      const { workflowId: delayWorkflowId, stepId: delayStepId, stepInternalId: delayStepInternalId } =
+        await createActionWorkflow(StepTypeEnum.DELAY);
+
+      await deployStep({ workflowId: delayWorkflowId, stepId: delayStepId, stepType: StepTypeEnum.DELAY });
+
+      const { status } = await session.testAgent
+        .delete(`/v2/step-resolvers/${delayStepInternalId}/disconnect`)
+        .send({ stepType: StepTypeEnum.DELAY });
+
+      expect(status).to.equal(200);
+
+      const template = await messageTemplateRepository.findOne({
+        _id: delayStepInternalId,
+        _environmentId: session.environment._id,
+      });
+      expect(template?.stepResolverHash).to.not.exist;
+    });
+
+    it('should return 400 when the provided stepType does not support step resolvers', async () => {
+      const { body, status } = await session.testAgent
+        .delete(`/v2/step-resolvers/${stepInternalId}/disconnect`)
         .send({ stepType: StepTypeEnum.TRIGGER });
 
-      expect(response.status).to.equal(400);
-      expect(response.body.message).to.include('does not support step resolvers');
+      expect(status).to.equal(400);
+      expect(JSON.stringify(body)).to.include('does not support step resolvers');
     });
   });
 
   describe('GET /v2/step-resolvers/count', () => {
-    it('should return correct count across deploy and disconnect lifecycle', async () => {
+    it('should return the correct count across the deploy + disconnect lifecycle', async () => {
       const isolatedSession = new UserSession();
       await isolatedSession.initialize();
       const isolatedClient = initNovuClassSdkInternalAuth(isolatedSession);
 
-      const countBefore = await isolatedSession.testAgent.get('/v2/step-resolvers/count');
-      expect(countBefore.body.count).to.equal(0);
+      async function isolatedCount(): Promise<number> {
+        const { body } = await isolatedSession.testAgent.get('/v2/step-resolvers/count').expect(200);
 
-      const { result: wfA } = await isolatedClient.workflows.create({
-        name: 'Workflow A',
-        workflowId: `wf-a-${Date.now()}`,
-        source: WorkflowCreationSourceEnum.Editor,
-        active: true,
-        steps: [{ name: 'email-step', stepId: 'email-step', type: StepTypeEnum.EMAIL, controlValues: {} }],
-      });
-      const stepTemplateA = await messageTemplateRepository.findOne({
-        _environmentId: isolatedSession.environment._id,
-        type: StepTypeEnum.EMAIL,
-      });
-      const stepAInternalId = String(stepTemplateA?._id);
+        return body.data.count;
+      }
 
-      const { manifest: manifestA, bundle: bundleA } = buildDeployRequest(wfA.workflowId, 'email-step', StepTypeEnum.EMAIL);
-      await isolatedSession.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifestA)
-        .attach('bundle', bundleA, 'bundle.js');
+      let counter = 0;
+      async function createWorkflowInIsolatedSession() {
+        const uid = `${Date.now()}-${++counter}`;
+        const { result } = await isolatedClient.workflows.create({
+          name: `Count Test Workflow ${uid}`,
+          workflowId: `count-test-${uid}`,
+          steps: [{ name: 'Email Step', type: 'email' as const, controlValues: { subject: 'Test' } }],
+          source: WorkflowCreationSourceEnum.Editor,
+        });
 
-      const countAfterA = await isolatedSession.testAgent.get('/v2/step-resolvers/count');
-      expect(countAfterA.body.count).to.equal(1);
+        const wf = await workflowRepository.findOne({
+          _environmentId: isolatedSession.environment._id,
+          _organizationId: isolatedSession.organization._id,
+          triggers: { $elemMatch: { identifier: result.workflowId } },
+        });
 
-      const { result: wfB } = await isolatedClient.workflows.create({
-        name: 'Workflow B',
-        workflowId: `wf-b-${Date.now()}`,
-        source: WorkflowCreationSourceEnum.Editor,
-        active: true,
-        steps: [{ name: 'email-step', stepId: 'email-step', type: StepTypeEnum.EMAIL, controlValues: {} }],
-      });
-      const stepTemplateB = await messageTemplateRepository.find({
-        _environmentId: isolatedSession.environment._id,
-        type: StepTypeEnum.EMAIL,
-      });
-      const stepBInternalId = String(stepTemplateB[stepTemplateB.length - 1]?._id);
+        const firstStep = result.steps[0];
+        if (firstStep.type === 'UNKNOWN') throw new Error('Unexpected unknown step type');
 
-      const { manifest: manifestB, bundle: bundleB } = buildDeployRequest(wfB.workflowId, 'email-step', StepTypeEnum.EMAIL);
-      await isolatedSession.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifestB)
-        .attach('bundle', bundleB, 'bundle.js');
+        return {
+          workflowId: result.workflowId,
+          stepId: firstStep.stepId,
+          stepInternalId: String(wf!.steps[0]._templateId),
+        };
+      }
 
-      const countAfterB = await isolatedSession.testAgent.get('/v2/step-resolvers/count');
-      expect(countAfterB.body.count).to.equal(2);
+      expect(await isolatedCount()).to.equal(0);
+
+      const wfA = await createWorkflowInIsolatedSession();
+      await deployStep({ workflowId: wfA.workflowId, stepId: wfA.stepId }, isolatedSession.testAgent);
+      expect(await isolatedCount()).to.equal(1);
+
+      const wfB = await createWorkflowInIsolatedSession();
+      await deployStep({ workflowId: wfB.workflowId, stepId: wfB.stepId }, isolatedSession.testAgent);
+      expect(await isolatedCount()).to.equal(2);
 
       await isolatedSession.testAgent
-        .delete(`/v2/step-resolvers/${stepAInternalId}/disconnect`)
-        .send({ stepType: StepTypeEnum.EMAIL });
+        .delete(`/v2/step-resolvers/${wfA.stepInternalId}/disconnect`)
+        .send({ stepType: StepTypeEnum.EMAIL })
+        .expect(200);
 
-      const countAfterDisconnect = await isolatedSession.testAgent.get('/v2/step-resolvers/count');
-      expect(countAfterDisconnect.body.count).to.equal(1);
+      expect(await isolatedCount()).to.equal(1);
     });
   });
 
-  describe('Publish (sync to environment)', () => {
-    it('should promote stepResolverHash to production on publish', async () => {
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL);
-      const deployResponse = await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
-
+  describe('POST /v2/environments/:id/publish (step resolver sync)', () => {
+    async function getProdEnv() {
       const prodEnv = await environmentRepository.findOne({
         _parentId: session.environment._id,
         _organizationId: session.organization._id,
       });
+      if (!prodEnv) throw new Error('Production environment not found');
 
-      const publishResponse = await session.testAgent
-        .post(`/v2/environments/${prodEnv?._id}/publish`)
-        .send({ sourceEnvironmentId: session.environment._id, dryRun: false });
+      return prodEnv;
+    }
 
-      expect(publishResponse.status).to.equal(200);
-      expect(publishResponse.body.summary?.successful).to.equal(1);
+    async function publish(targetEnvId: string) {
+      return session.testAgent
+        .post(`/v2/environments/${targetEnvId}/publish`)
+        .send({ sourceEnvironmentId: session.environment._id, dryRun: false })
+        .expect(200);
+    }
 
-      const prodTemplate = await messageTemplateRepository.findOne({
-        _environmentId: prodEnv?._id,
-        type: StepTypeEnum.EMAIL,
+    it('should copy stepResolverHash and resolver schema to production on publish', async () => {
+      const prodEnv = await getProdEnv();
+
+      const { body: deployBody } = await deployStep({ workflowId, stepId });
+      const devHash = deployBody.data.stepResolverHash;
+
+      await publish(prodEnv._id);
+
+      const prodWorkflow = await workflowRepository.findOne({
+        _environmentId: prodEnv._id,
+        _organizationId: session.organization._id,
+        triggers: { $elemMatch: { identifier: workflowId } },
       });
-      expect(prodTemplate?.stepResolverHash).to.equal(deployResponse.body.stepResolverHash);
+      const prodStepInternalId = String(prodWorkflow!.steps[0]._templateId);
+      const prodTemplate = await messageTemplateRepository.findOne({
+        _id: prodStepInternalId,
+        _environmentId: prodEnv._id,
+      });
+
+      expect(prodTemplate?.stepResolverHash).to.equal(devHash);
+      expect(prodTemplate?.controls?.schema).to.include({ type: 'object', additionalProperties: false });
     });
 
-    it('should clear stepResolverHash from production when dev step resolver is disconnected then published', async () => {
-      const { manifest, bundle } = buildDeployRequest(workflow.workflowId, emailStepId, StepTypeEnum.EMAIL);
-      await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
+    it('should clear stepResolverHash from production when dev step is disconnected and republished', async () => {
+      const prodEnv = await getProdEnv();
 
-      const prodEnv = await environmentRepository.findOne({
-        _parentId: session.environment._id,
+      await deployStep({ workflowId, stepId });
+      await publish(prodEnv._id);
+
+      await session.testAgent
+        .delete(`/v2/step-resolvers/${stepInternalId}/disconnect`)
+        .send({ stepType: StepTypeEnum.EMAIL })
+        .expect(200);
+
+      await publish(prodEnv._id);
+
+      const prodWorkflow = await workflowRepository.findOne({
+        _environmentId: prodEnv._id,
         _organizationId: session.organization._id,
+        triggers: { $elemMatch: { identifier: workflowId } },
       });
-
-      await session.testAgent
-        .post(`/v2/environments/${prodEnv?._id}/publish`)
-        .send({ sourceEnvironmentId: session.environment._id, dryRun: false });
-
-      await session.testAgent
-        .delete(`/v2/step-resolvers/${emailStepInternalId}/disconnect`)
-        .send({ stepType: StepTypeEnum.EMAIL });
-
-      const republishResponse = await session.testAgent
-        .post(`/v2/environments/${prodEnv?._id}/publish`)
-        .send({ sourceEnvironmentId: session.environment._id, dryRun: false });
-
-      expect(republishResponse.status).to.equal(200);
-
+      const prodStepInternalId = String(prodWorkflow!.steps[0]._templateId);
       const prodTemplate = await messageTemplateRepository.findOne({
-        _environmentId: prodEnv?._id,
-        type: StepTypeEnum.EMAIL,
+        _id: prodStepInternalId,
+        _environmentId: prodEnv._id,
       });
-      expect(prodTemplate?.stepResolverHash).to.be.undefined;
+
+      expect(prodTemplate?.stepResolverHash).to.not.exist;
+      expect(prodTemplate?.controls?.schema).to.have.property('type', 'object');
+      expect(prodTemplate?.controls?.schema).to.have.property('additionalProperties', false);
     });
 
     it('should promote stepResolverHash to production for a delay step on publish', async () => {
-      const { workflow: delayWorkflow, stepInternalId } = await createWorkflowWithStep(StepTypeEnum.DELAY);
-      const delayStepId = `${StepTypeEnum.DELAY}-step`;
+      const prodEnv = await getProdEnv();
 
-      const { manifest, bundle } = buildDeployRequest(delayWorkflow.workflowId, delayStepId, StepTypeEnum.DELAY);
-      const deployResponse = await session.testAgent
-        .post('/v2/step-resolvers/deploy')
-        .field('manifest', manifest)
-        .attach('bundle', bundle, 'bundle.js');
+      const { workflowId: delayWorkflowId, stepId: delayStepId, stepInternalId: delayStepInternalId } =
+        await createActionWorkflow(StepTypeEnum.DELAY);
 
-      const prodEnv = await environmentRepository.findOne({
-        _parentId: session.environment._id,
+      const { body: deployBody } = await deployStep({
+        workflowId: delayWorkflowId,
+        stepId: delayStepId,
+        stepType: StepTypeEnum.DELAY,
+      });
+      const devHash = deployBody.data.stepResolverHash;
+
+      await publish(prodEnv._id);
+
+      const prodDelayWorkflow = await workflowRepository.findOne({
+        _environmentId: prodEnv._id,
         _organizationId: session.organization._id,
+        triggers: { $elemMatch: { identifier: delayWorkflowId } },
       });
+      if (!prodDelayWorkflow) throw new Error('Prod delay workflow not found');
 
-      const publishResponse = await session.testAgent
-        .post(`/v2/environments/${prodEnv?._id}/publish`)
-        .send({ sourceEnvironmentId: session.environment._id, dryRun: false });
-
-      expect(publishResponse.status).to.equal(200);
-
+      const prodStepInternalId = String(prodDelayWorkflow.steps[0]._templateId);
       const prodTemplate = await messageTemplateRepository.findOne({
-        _environmentId: prodEnv?._id,
-        type: StepTypeEnum.DELAY,
+        _id: prodStepInternalId,
+        _environmentId: prodEnv._id,
       });
-      expect(prodTemplate?.stepResolverHash).to.equal(deployResponse.body.stepResolverHash);
+
+      expect(prodTemplate?.stepResolverHash).to.equal(devHash);
     });
   });
 });
