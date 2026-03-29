@@ -11,7 +11,7 @@ import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema } from './channeltypeenu
 import { NotificationWorkflowDto, NotificationWorkflowDto$inboundSchema } from './notificationworkflowdto.js';
 import { RedirectDto, RedirectDto$inboundSchema } from './redirectdto.js';
 import { SeverityLevelEnum, SeverityLevelEnum$inboundSchema } from './severitylevelenum.js';
-import { SubscriberDto, SubscriberDto$inboundSchema } from './subscriberdto.js';
+import { SubscriberResponseDto, SubscriberResponseDto$inboundSchema } from './subscriberresponsedto.js';
 
 export type InboxNotificationDto = {
   /**
@@ -33,7 +33,7 @@ export type InboxNotificationDto = {
   /**
    * Subscriber this notification was sent to
    */
-  to: SubscriberDto;
+  to: SubscriberResponseDto;
   /**
    * Whether the notification has been read
    */
@@ -118,7 +118,7 @@ export const InboxNotificationDto$inboundSchema: z.ZodType<InboxNotificationDto,
   transactionId: z.string(),
   subject: z.string().optional(),
   body: z.string(),
-  to: SubscriberDto$inboundSchema,
+  to: SubscriberResponseDto$inboundSchema,
   isRead: z.boolean(),
   isSeen: z.boolean(),
   isArchived: z.boolean(),

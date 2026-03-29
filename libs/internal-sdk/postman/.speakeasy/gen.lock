@@ -1,7 +1,7 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: 6755fe6fafea397f6627c61bed3db93b
+  docChecksum: a4c6dbf44eeefd5c584a56e91d2a1551
   docVersion: 3.14.0
   speakeasyVersion: 1.759.3
   generationVersion: 2.869.25
@@ -2091,7 +2091,7 @@ examples:
           createdLte: 1735689599999
       responses:
         "200":
-          application/json: {"data": [{"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": true, "isArchived": true, "isSnoozed": true, "createdAt": "1718005196143", "channelType": "in_app", "severity": "low"}], "hasMore": true, "filter": {}}
+          application/json: {"data": [{"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "firstName": "John", "lastName": "Doe", "email": "john@example.com", "avatar": "https://example.com/avatar.png", "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1733547431783", "updatedAt": "1735644520404"}, "isRead": false, "isSeen": true, "isArchived": true, "isSnoozed": true, "createdAt": "1718005196143", "channelType": "in_app", "severity": "low"}], "hasMore": true, "filter": {}}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2132,7 +2132,7 @@ examples:
           actionType: "secondary"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": false, "isArchived": true, "isSnoozed": false, "createdAt": "1720937619557", "channelType": "push", "severity": "none"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "apns", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1735499324913", "updatedAt": "1735620421235"}, "isRead": false, "isSeen": false, "isArchived": true, "isSnoozed": false, "createdAt": "1720937619557", "channelType": "push", "severity": "none"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2154,7 +2154,7 @@ examples:
           actionType: "primary"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": true, "createdAt": "1732319296776", "channelType": "email", "severity": "medium"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "rocket-chat", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1728877707705", "updatedAt": "1735676844260"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": true, "createdAt": "1732319296776", "channelType": "email", "severity": "medium"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2175,7 +2175,7 @@ examples:
           notificationId: "<id>"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": true, "isArchived": true, "isSnoozed": true, "createdAt": "1722007690839", "channelType": "in_app", "severity": "low"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "push-webhook", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": true, "createdAt": "1706527975670", "updatedAt": "1735612067451"}, "isRead": false, "isSeen": true, "isArchived": true, "isSnoozed": true, "createdAt": "1722007690839", "channelType": "in_app", "severity": "low"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2196,7 +2196,7 @@ examples:
           notificationId: "<id>"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": false, "isArchived": true, "isSnoozed": true, "createdAt": "1730112582938", "channelType": "push", "severity": "high"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "apns", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1709331866203", "updatedAt": "1735621226601"}, "isRead": false, "isSeen": false, "isArchived": true, "isSnoozed": true, "createdAt": "1730112582938", "channelType": "push", "severity": "high"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2219,7 +2219,7 @@ examples:
         application/json: {"snoozeUntil": "2026-03-01T10:00:00Z"}
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": true, "isSeen": false, "isArchived": true, "isSnoozed": true, "createdAt": "1733991021454", "channelType": "chat", "severity": "medium"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "grafana-on-call", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1715332364350", "updatedAt": "1735629931362"}, "isRead": true, "isSeen": false, "isArchived": true, "isSnoozed": true, "createdAt": "1733991021454", "channelType": "chat", "severity": "medium"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2240,7 +2240,7 @@ examples:
           notificationId: "<id>"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": true, "createdAt": "1711880035185", "channelType": "email", "severity": "high"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "chat-webhook", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1726031239767", "updatedAt": "1735618538366"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": true, "createdAt": "1711880035185", "channelType": "email", "severity": "high"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2261,7 +2261,7 @@ examples:
           notificationId: "<id>"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": false, "createdAt": "1709953113134", "channelType": "sms", "severity": "low"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "apns", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1724293784735", "updatedAt": "1735676394995"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": false, "createdAt": "1709953113134", "channelType": "sms", "severity": "low"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2282,7 +2282,7 @@ examples:
           notificationId: "<id>"
       responses:
         "200":
-          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": false, "createdAt": "1706480856288", "channelType": "chat", "severity": "low"}
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"channels": [{"providerId": "appio", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "user-123", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1727367105892", "updatedAt": "1735669391691"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": false, "createdAt": "1706480856288", "channelType": "chat", "severity": "low"}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
