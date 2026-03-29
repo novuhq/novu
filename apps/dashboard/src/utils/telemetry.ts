@@ -108,4 +108,6 @@ export enum TelemetryEvent {
   COPILOT_GUIDED_SUBMIT = 'Copilot guided submit - [AI Copilot]',
   COPILOT_SUGGESTION_CLICKED = 'Copilot suggestion clicked - [AI Copilot]',
   COPILOT_TAB_SWITCHED = 'Copilot tab switched - [AI Copilot]',
+
+  STEP_RESOLVER_CUSTOM_CODE_CLICKED = 'Custom code clicked - [Workflow Editor]',
 }

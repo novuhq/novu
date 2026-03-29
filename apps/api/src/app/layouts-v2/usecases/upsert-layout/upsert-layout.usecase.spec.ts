@@ -718,8 +718,7 @@ describe('UpsertLayoutUseCase', () => {
           expect.fail('Should have thrown BadRequestException');
         } catch (error) {
           expect(error).to.be.instanceOf(BadRequestException);
-          // The BadRequestException constructor converts the issues object to a string message
-          expect(error.response).to.deep.equal(mockIssues);
+          expect(error.response).to.deep.equal({ message: 'Layout has validation issues', ...mockIssues });
         }
       });
     });

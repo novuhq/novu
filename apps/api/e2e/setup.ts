@@ -265,6 +265,7 @@ function isResponseValidationError(error: unknown): error is {
   name: string;
   statusCode: number;
   body: string;
+  rawValue?: unknown;
   rawResponse?: { url?: string };
   pretty: () => string;
 } {
@@ -309,9 +310,12 @@ function logE2EFailure(error: unknown): void {
     console.error('\n[Response validation error]');
     console.error(`Status: ${error.statusCode} ${url}`);
     console.error(error.pretty());
-    if (error.body) {
-      // uncomment for more detailed error messages
-      // console.error(`Response body: ${error.body}`);
+    if (error.rawValue !== undefined) {
+      // if more context is needed, we can uncomment
+      // console.error('Raw response value:');
+      // console.error(JSON.stringify(error.rawValue, null, 2));
+    } else if (error.body) {
+      console.error(`Raw response body: ${error.body}`);
     }
 
     return;
@@ -378,9 +382,24 @@ after(async () => {
   await closeClickHouseConnection();
 });
 
+function getFailedHookError(test: Mocha.Test | undefined): unknown {
+  if (!test) return undefined;
+  const suite = test.parent as any;
+  if (!suite) return undefined;
+  const hooks: Array<{ err?: unknown }> = suite._beforeEach ?? [];
+
+  for (const hook of hooks) {
+    if (hook.err) return hook.err;
+  }
+
+  return undefined;
+}
+
 afterEach(async function () {
-  if (this.currentTest?.state === 'failed' && this.currentTest.err) {
-    logE2EFailure(this.currentTest.err);
+  const testErr = this.currentTest?.err ?? getFailedHookError(this.currentTest);
+
+  if (testErr) {
+    logE2EFailure(testErr);
   }
 
   sinon.restore();

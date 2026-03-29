@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -32,10 +32,17 @@ export class ProcessVercelWebhook {
       return true;
     }
 
-    const teamId = command.body.payload.team.id;
-    const projectId = command.body.payload.project.id;
-    const deploymentUrl = command.body.payload.deployment.url;
-    const vercelEnvironment = command.body.payload.target || 'preview';
+    this.verifySignature(command.signatureHeader, command.body);
+
+    const payload = command.body.payload;
+    if (!payload?.team?.id || !payload?.project?.id || !payload?.deployment?.url) {
+      throw new BadRequestException('Invalid webhook payload: missing required fields');
+    }
+
+    const teamId = payload.team.id;
+    const projectId = payload.project.id;
+    const deploymentUrl = payload.deployment.url;
+    const vercelEnvironment = payload.target || 'preview';
 
     this.logger.info(
       {
@@ -46,8 +53,6 @@ export class ProcessVercelWebhook {
       },
       `Processing vercel webhook for ${vercelEnvironment}`
     );
-
-    this.verifySignature(command.signatureHeader, command.body);
 
     const organizations = await this.organizationRepository.find(
       {
@@ -81,24 +86,44 @@ export class ProcessVercelWebhook {
         throw new BadRequestException('Environment Not Found');
       }
 
-      const orgOwner = await this.memberRepository.getOrganizationOwnerAccount(environment._organizationId);
-      if (!orgOwner) {
-        throw new BadRequestException('Organization owner not found');
+      try {
+        const orgOwner = await this.memberRepository.getOrganizationOwnerAccount(environment._organizationId);
+        if (!orgOwner) {
+          throw new BadRequestException('Organization owner not found');
+        }
+
+        const internalUser = await this.communityUserRepository.findOne({ externalId: orgOwner?._userId });
+
+        if (!internalUser) {
+          throw new BadRequestException('User not found');
+        }
+
+        await this.syncUsecase.execute({
+          organizationId: environment._organizationId,
+          userId: internalUser?._id as string,
+          environmentId: environment._id,
+          bridgeUrl: `https://${deploymentUrl}/api/novu`,
+          source: 'vercel',
+        });
+      } catch (error) {
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        this.logger.error(
+          {
+            err: error,
+            organizationId: organization._id,
+            teamId,
+            projectId,
+          },
+          'Failed to process Vercel webhook for organization'
+        );
+
+        throw new InternalServerErrorException(
+          `Failed to process Vercel webhook: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
-
-      const internalUser = await this.communityUserRepository.findOne({ externalId: orgOwner?._userId });
-
-      if (!internalUser) {
-        throw new BadRequestException('User not found');
-      }
-
-      await this.syncUsecase.execute({
-        organizationId: environment._organizationId,
-        userId: internalUser?._id as string,
-        environmentId: environment._id,
-        bridgeUrl: `https://${deploymentUrl}/api/novu`,
-        source: 'vercel',
-      });
     }
 
     return true;

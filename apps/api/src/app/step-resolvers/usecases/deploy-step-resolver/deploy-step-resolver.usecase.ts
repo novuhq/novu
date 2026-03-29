@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
+  AnalyticsService,
   BuildStepIssuesUsecase,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
@@ -52,6 +53,7 @@ export class DeployStepResolverUsecase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private featureFlagsService: FeatureFlagsService,
     private resourceValidatorService: ResourceValidatorService,
+    private analyticsService: AnalyticsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -123,6 +125,14 @@ export class DeployStepResolverUsecase {
     });
 
     await this.recalculateAndPersistStepIssues(command, stepsToProcess);
+
+    this.analyticsService.mixpanelTrack('Step resolver deployed - [Step Resolvers]', command.user._id, {
+      deployedStepsCount: stepsToProcess.length,
+      stepTypes: stepsToProcess.map((s) => s.stepType),
+      _organization: command.user.organizationId,
+      _environment: command.user.environmentId,
+      workerId,
+    });
 
     return {
       stepResolverHash,

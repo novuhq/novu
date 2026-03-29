@@ -124,6 +124,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           isNullablePath={paths.isNullable}
           onDeleteProperty={onDeleteProperty}
           isDisabled={isKeyNameEmpty || readOnly}
+          isDeleteDisabled={readOnly}
           variableUsageInfo={variableUsageInfo}
         />
       </div>

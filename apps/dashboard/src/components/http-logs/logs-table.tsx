@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
@@ -112,8 +113,8 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
       </div>
 
       <div className="relative flex h-full min-h-full flex-1 pt-2.5">
-        <ResizablePanelGroup direction="horizontal" className="gap-2">
-          <ResizablePanel defaultSize={50} minSize={50}>
+        <ResizablePanelGroup orientation="horizontal" className="gap-2" autoSaveId="logs-table-panel-group">
+          <ResizablePanel defaultSize="50%" minSize="50%" id="logs-table-panel">
             <div className="flex h-full flex-col overflow-hidden">
               <div className="flex-1 overflow-auto">
                 <Table isLoading={isLoading} loadingRow={<LogsTableSkeletonRow />} loadingRowsCount={8}>
@@ -175,7 +176,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
             </div>
           </ResizablePanel>
 
-          <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
+          <ResizablePanel defaultSize="50%" minSize="35%" maxSize="50%" id="logs-detail-panel">
             <motion.div
               key={selectedLogId || 'empty'}
               initial={{ opacity: 0 }}

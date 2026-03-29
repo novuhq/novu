@@ -6,7 +6,7 @@ import {
   NotificationTemplateRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { PreferenceLevelEnum, TriggerTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PreferenceLevelEnum, TriggerTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
@@ -339,6 +339,43 @@ describe('BulkUpdatePreferences', () => {
       expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.include(`Critical workflows with ids: ${criticalWorkflow._id} cannot be updated`);
     }
+  });
+
+  it('should pass session context keys to workflow updates when context preferences are enabled and body has no context', async () => {
+    const sessionContextKeys = ['tenant:first-tenant'];
+
+    const command = BulkUpdatePreferencesCommand.create({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      subscriberId: 'test-mockSubscriber',
+      contextKeys: sessionContextKeys,
+      preferences: [
+        {
+          workflowId: mockedWorkflow1._id,
+          in_app: true,
+        },
+      ],
+    });
+
+    featureFlagsServiceMock.getFlag.callsFake(async ({ key }) => {
+      if (key === FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED) {
+        return true;
+      }
+
+      return false;
+    });
+
+    subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([mockedWorkflow1]);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
+    updatePreferencesUsecaseMock.execute.resolves(mockedInboxPreference1);
+
+    await bulkUpdatePreferences.execute(command);
+
+    expect(contextRepositoryMock.findOrCreateContextsFromPayload.called).to.be.false;
+
+    const updateArgs = updatePreferencesUsecaseMock.execute.firstCall.args[0];
+    expect(updateArgs.contextKeys).to.deep.equal(sessionContextKeys);
   });
 
   it('should update multiple workflow preferences in parallel', async () => {

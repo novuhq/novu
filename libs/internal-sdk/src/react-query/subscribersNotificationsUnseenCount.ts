@@ -5,30 +5,49 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import * as operations from "../models/operations/index.js";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from '../models/errors/httpclienterrors.js';
+import * as errors from '../models/errors/index.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import * as operations from '../models/operations/index.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildSubscribersNotificationsUnseenCountQuery,
   prefetchSubscribersNotificationsUnseenCount,
   queryKeySubscribersNotificationsUnseenCount,
   SubscribersNotificationsUnseenCountQueryData,
-} from "./subscribersNotificationsUnseenCount.core.js";
+} from './subscribersNotificationsUnseenCount.core.js';
 export {
   buildSubscribersNotificationsUnseenCountQuery,
   prefetchSubscribersNotificationsUnseenCount,
   queryKeySubscribersNotificationsUnseenCount,
   type SubscribersNotificationsUnseenCountQueryData,
 };
+
+export type SubscribersNotificationsUnseenCountQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * Retrieve unseen notifications count
@@ -38,15 +57,14 @@ export {
  */
 export function useSubscribersNotificationsUnseenCount(
   request: operations.SubscribersV1ControllerGetUnseenCountRequest,
-  options?: QueryHookOptions<SubscribersNotificationsUnseenCountQueryData>,
-): UseQueryResult<SubscribersNotificationsUnseenCountQueryData, Error> {
+  options?: QueryHookOptions<
+    SubscribersNotificationsUnseenCountQueryData,
+    SubscribersNotificationsUnseenCountQueryError
+  >
+): UseQueryResult<SubscribersNotificationsUnseenCountQueryData, SubscribersNotificationsUnseenCountQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersNotificationsUnseenCountQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildSubscribersNotificationsUnseenCountQuery(client, request, options),
     ...options,
   });
 }
@@ -60,16 +78,13 @@ export function useSubscribersNotificationsUnseenCount(
 export function useSubscribersNotificationsUnseenCountSuspense(
   request: operations.SubscribersV1ControllerGetUnseenCountRequest,
   options?: SuspenseQueryHookOptions<
-    SubscribersNotificationsUnseenCountQueryData
-  >,
-): UseSuspenseQueryResult<SubscribersNotificationsUnseenCountQueryData, Error> {
+    SubscribersNotificationsUnseenCountQueryData,
+    SubscribersNotificationsUnseenCountQueryError
+  >
+): UseSuspenseQueryResult<SubscribersNotificationsUnseenCountQueryData, SubscribersNotificationsUnseenCountQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersNotificationsUnseenCountQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildSubscribersNotificationsUnseenCountQuery(client, request, options),
     ...options,
   });
 }
@@ -84,14 +99,11 @@ export function setSubscribersNotificationsUnseenCountData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: SubscribersNotificationsUnseenCountQueryData,
+  data: SubscribersNotificationsUnseenCountQueryData
 ): SubscribersNotificationsUnseenCountQueryData | undefined {
   const key = queryKeySubscribersNotificationsUnseenCount(...queryKeyBase);
 
-  return client.setQueryData<SubscribersNotificationsUnseenCountQueryData>(
-    key,
-    data,
-  );
+  return client.setQueryData<SubscribersNotificationsUnseenCountQueryData>(key, data);
 }
 
 export function invalidateSubscribersNotificationsUnseenCount(
@@ -106,20 +118,20 @@ export function invalidateSubscribersNotificationsUnseenCount(
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Notifications", "unseenCount", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Notifications', 'unseenCount', ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersNotificationsUnseenCount(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Notifications", "unseenCount"],
+    queryKey: ['@novu/api', 'Notifications', 'unseenCount'],
   });
 }

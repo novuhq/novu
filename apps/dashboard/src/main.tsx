@@ -65,7 +65,7 @@ import { TopicsPage } from './pages/topics';
 import { UpsertVariablePage } from './pages/upsert-variable';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
-import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
+import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
@@ -96,14 +96,6 @@ const router = createBrowserRouter([
             element: <SignUpPage />,
           },
           {
-            path: ROUTES.SIGNUP_ORGANIZATION_LIST,
-            element: <OrganizationListPage />,
-          },
-          {
-            path: ROUTES.INVITATION_ACCEPT,
-            element: <InvitationAcceptPage />,
-          },
-          {
             path: ROUTES.FORGOT_PASSWORD,
             element: <ForgotPasswordPage />,
           },
@@ -118,6 +110,19 @@ const router = createBrowserRouter([
           {
             path: ROUTES.VERIFY_EMAIL,
             element: <VerifyEmailPage />,
+          },
+        ],
+      },
+      {
+        element: <ProtectedAuthRoute />,
+        children: [
+          {
+            path: ROUTES.SIGNUP_ORGANIZATION_LIST,
+            element: <OrganizationListPage />,
+          },
+          {
+            path: ROUTES.INVITATION_ACCEPT,
+            element: <InvitationAcceptPage />,
           },
         ],
       },

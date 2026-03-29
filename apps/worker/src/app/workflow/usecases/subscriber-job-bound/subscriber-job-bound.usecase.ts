@@ -111,7 +111,7 @@ export class SubscriberJobBound {
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
      */
     const segmentUserId = ['test-workflow', 'digest-playground', 'dashboard', 'inbox-onboarding'].includes(
-      command.payload.__source
+      command.payload?.__source
     )
       ? userId
       : '';
@@ -123,8 +123,8 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       _template: template._id,
       _organization: command.organizationId,
-      channels: template?.steps.map((step) => step.template?.type),
-      source: command.payload.__source || 'api',
+      channels: template?.steps?.map((step) => step.template?.type),
+      source: command.payload?.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
       statelessWorkflow: !!command.bridge?.url,
@@ -264,7 +264,7 @@ export class SubscriberJobBound {
       ...bridgeWorkflow,
       type: ResourceTypeEnum.BRIDGE,
       _id: syncedWorkflowId,
-      steps: bridgeWorkflow.steps.map((step) => {
+      steps: (bridgeWorkflow.steps || []).map((step) => {
         const stepControlVariables = command.controls?.steps?.[step.stepId];
 
         return {

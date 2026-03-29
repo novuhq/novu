@@ -25,6 +25,9 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   CreateEnvironmentVariableRequestDto,
@@ -66,7 +69,7 @@ export class EnvironmentVariablesController {
 
   @Get('/')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ApiResponse(EnvironmentVariableResponseDto, 200, true)
   @ApiOperation({
     summary: 'List environment variables',
@@ -87,7 +90,8 @@ export class EnvironmentVariablesController {
 
   @Get('/:variableId/usage')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @SdkMethodName('usage')
   @ApiResponse(GetEnvironmentVariableUsageResponseDto)
   @ApiOperation({
     summary: 'Get environment variable usage',
@@ -110,7 +114,8 @@ export class EnvironmentVariablesController {
 
   @Get('/:variableId')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @SdkMethodName('retrieve')
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Get environment variable',
@@ -132,7 +137,7 @@ export class EnvironmentVariablesController {
 
   @Post('/')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Create environment variable',
@@ -159,7 +164,7 @@ export class EnvironmentVariablesController {
 
   @Patch('/:variableId')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Update environment variable',
@@ -187,7 +192,7 @@ export class EnvironmentVariablesController {
 
   @Delete('/:variableId')
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_VARIABLE_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiOperation({
     summary: 'Delete environment variable',
     description: 'Deletes an environment variable by id.',

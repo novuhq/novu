@@ -6,7 +6,7 @@ import {
   PermissionsEnum,
   ResourceOriginEnum,
 } from '@novu/shared';
-import { useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -32,7 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
-import { ResizableLayout } from './steps/layout/resizable-layout';
+import { CopilotSidebar } from './steps/layout/copilot-sidebar';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
@@ -66,11 +66,13 @@ export const WorkflowTabs = () => {
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
+  const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
   const isReadOnly =
     isNewWorkflowSlug ||
-    workflow?.origin === ResourceOriginEnum.EXTERNAL ||
+    isExternalWorkflow ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
+  const showCopilot = isAiWorkflowGenerationEnabled && isDevEnvironment && !isExternalWorkflow;
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
@@ -464,19 +466,13 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-          {isAiWorkflowGenerationEnabled && isDevEnvironment ? (
-            <ResizableLayout autoSaveId="workflow-editor-ai-sidekick-layout" className="flex-1 min-w-0">
-              <ResizableLayout.ContextPanel defaultSize={26} minSize={20} maxSize={80}>
-                <NovuCopilotPanel />
-              </ResizableLayout.ContextPanel>
-              <ResizableLayout.Handle />
-              <ResizableLayout.MainContentPanel>
-                <div className="relative flex-1">
-                  <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
-                  <WorkflowCanvasToast />
-                </div>
-              </ResizableLayout.MainContentPanel>
-            </ResizableLayout>
+          {showCopilot ? (
+            <WorkflowCopilotSidebar>
+              <div className="relative h-full min-w-0 flex-1">
+                <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
+                <WorkflowCanvasToast />
+              </div>
+            </WorkflowCopilotSidebar>
           ) : (
             <div className="relative flex-1">
               <WorkflowCanvas isReadOnly={isReadOnly} steps={workflow?.steps || []} />
@@ -499,8 +495,22 @@ export const WorkflowTabs = () => {
     </div>
   );
 
-  return isAiWorkflowGenerationEnabled ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
+  return showCopilot ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
 };
+
+function WorkflowCopilotSidebar({ children }: { children: ReactNode }) {
+  const { isGenerating } = useAiChat();
+
+  return (
+    <CopilotSidebar
+      copilotContent={<NovuCopilotPanel hideHeader />}
+      isGenerating={isGenerating}
+      autoSaveId="workflow-editor-copilot-layout"
+    >
+      {children}
+    </CopilotSidebar>
+  );
+}
 
 function WorkflowCanvasToast() {
   const {

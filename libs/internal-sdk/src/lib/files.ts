@@ -8,9 +8,7 @@
  * larger payload containing other fields, and we can't modify the underlying
  * request structure.
  */
-export async function readableStreamToArrayBuffer(
-  readable: ReadableStream<Uint8Array>,
-): Promise<ArrayBuffer> {
+export async function readableStreamToArrayBuffer(readable: ReadableStream<Uint8Array>): Promise<ArrayBuffer> {
   const reader = readable.getReader();
   const chunks: Uint8Array[] = [];
 
@@ -46,37 +44,59 @@ export async function readableStreamToArrayBuffer(
 export function getContentTypeFromFileName(fileName: string): string | null {
   if (!fileName) return null;
 
-  const ext = fileName.toLowerCase().split(".").pop();
+  const ext = fileName.toLowerCase().split('.').pop();
   if (!ext) return null;
 
   const mimeTypes: Record<string, string> = {
-    json: "application/json",
-    xml: "application/xml",
-    html: "text/html",
-    htm: "text/html",
-    txt: "text/plain",
-    csv: "text/csv",
-    pdf: "application/pdf",
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    gif: "image/gif",
-    svg: "image/svg+xml",
-    js: "application/javascript",
-    css: "text/css",
-    zip: "application/zip",
-    tar: "application/x-tar",
-    gz: "application/gzip",
-    mp4: "video/mp4",
-    mp3: "audio/mpeg",
-    wav: "audio/wav",
-    webp: "image/webp",
-    ico: "image/x-icon",
-    woff: "font/woff",
-    woff2: "font/woff2",
-    ttf: "font/ttf",
-    otf: "font/otf",
+    json: 'application/json',
+    xml: 'application/xml',
+    html: 'text/html',
+    htm: 'text/html',
+    txt: 'text/plain',
+    csv: 'text/csv',
+    pdf: 'application/pdf',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    svg: 'image/svg+xml',
+    js: 'application/javascript',
+    css: 'text/css',
+    zip: 'application/zip',
+    tar: 'application/x-tar',
+    gz: 'application/gzip',
+    mp4: 'video/mp4',
+    mp3: 'audio/mpeg',
+    wav: 'audio/wav',
+    webp: 'image/webp',
+    ico: 'image/x-icon',
+    woff: 'font/woff',
+    woff2: 'font/woff2',
+    ttf: 'font/ttf',
+    otf: 'font/otf',
   };
 
   return mimeTypes[ext] || null;
+}
+
+/**
+ * Creates a Blob from file content with the given MIME type.
+ *
+ * Node.js Buffers are Uint8Array subclasses that may share a pooled
+ * ArrayBuffer (byteOffset > 0, byteLength < buffer.byteLength). Passing
+ * such a Buffer directly to `new Blob([buf])` can include the entire
+ * underlying pool on some runtimes, producing a Blob with extra bytes
+ * that corrupts multipart uploads.
+ *
+ * Copying into a standalone Uint8Array ensures the Blob receives only the
+ * intended bytes regardless of runtime behaviour.
+ */
+export function bytesToBlob(
+  content: Uint8Array<ArrayBufferLike> | ArrayBuffer | Blob | string,
+  contentType: string
+): Blob {
+  if (content instanceof Uint8Array) {
+    return new Blob([new Uint8Array(content)], { type: contentType });
+  }
+  return new Blob([content as BlobPart], { type: contentType });
 }
