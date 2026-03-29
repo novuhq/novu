@@ -1,27 +1,60 @@
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
-import * as ResizablePrimitive from 'react-resizable-panels';
+import React, { useCallback, useMemo } from 'react';
+import { Group, type GroupProps, type Layout, Panel, Separator, type SeparatorProps } from 'react-resizable-panels';
 
 import { cn } from '@/utils/ui';
 
-const ResizablePanelGroup = ({ className, ...props }: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) => (
-  <ResizablePrimitive.PanelGroup
-    className={cn('flex h-full w-full data-[panel-group-direction=vertical]:flex-col', className)}
-    {...props}
-  />
+type ResizablePanelGroupProps = GroupProps & {
+  autoSaveId?: string;
+};
+
+const ResizablePanelGroup = React.forwardRef<HTMLDivElement, ResizablePanelGroupProps>(
+  ({ className, autoSaveId, onLayoutChanged, ...props }, ref) => {
+    const defaultLayout = useMemo(() => {
+      if (!autoSaveId) return undefined;
+      try {
+        const stored = localStorage.getItem(`resizable-panels:${autoSaveId}`);
+
+        return stored ? (JSON.parse(stored) as Layout) : undefined;
+      } catch {
+        return undefined;
+      }
+    }, [autoSaveId]);
+
+    const handleLayoutChanged = useCallback(
+      (layout: Layout) => {
+        if (autoSaveId) {
+          try {
+            localStorage.setItem(`resizable-panels:${autoSaveId}`, JSON.stringify(layout));
+          } catch {
+            // storage full or unavailable
+          }
+        }
+        onLayoutChanged?.(layout);
+      },
+      [autoSaveId, onLayoutChanged]
+    );
+
+    return (
+      <Group
+        elementRef={ref}
+        className={cn('flex h-full w-full', className)}
+        defaultLayout={defaultLayout ?? props.defaultLayout}
+        onLayoutChanged={handleLayoutChanged}
+        {...props}
+      />
+    );
+  }
 );
 
-const ResizablePanel = ResizablePrimitive.Panel;
+const ResizablePanel = Panel;
 
-const ResizableHandle = ({
-  withHandle,
-  className,
-  ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
-  withHandle?: boolean;
-}) => (
-  <ResizablePrimitive.PanelResizeHandle
+const ResizableHandle = ({ withHandle, className, ...props }: SeparatorProps & { withHandle?: boolean }) => (
+  <Separator
     className={cn(
-      'group relative flex w-px items-center justify-center bg-neutral-200 after:absolute after:inset-y-0 after:left-1/2 after:w-4 after:-translate-x-1/2 hover:after:bg-transparent focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-neutral-950 focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-4 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90',
+      'group relative flex w-px items-center justify-center bg-neutral-200',
+      'after:absolute after:inset-y-0 after:left-1/2 after:w-4 after:-translate-x-1/2',
+      'hover:after:bg-transparent focus-visible:outline-hidden z-50',
       className
     )}
     {...props}
@@ -31,7 +64,9 @@ const ResizableHandle = ({
         <DragHandleDots2Icon className="h-2.5 w-2.5" />
       </div>
     )}
-  </ResizablePrimitive.PanelResizeHandle>
+  </Separator>
 );
 
 export { ResizableHandle, ResizablePanel, ResizablePanelGroup };
+
+export type { Layout };

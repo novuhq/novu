@@ -1,4 +1,4 @@
-import { StepUpdateDto } from '@novu/shared';
+import { ContentIssueEnum, StepUpdateDto } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageMeta } from '@/components/page-meta';
@@ -83,15 +83,22 @@ export function EditStepTemplateV2Page() {
     }
 
     const issues = flattenIssues(step.issues?.controls);
+    const rawControlIssues = step.issues?.controls ?? {};
     const values = form.getValues() as Record<string, unknown>;
     const setError = form.setError as (key: string, error: { message: string }) => void;
     const clearError = form.clearErrors as (key: string) => void;
 
     for (const key of new Set([...Object.keys(form.formState.errors), ...Object.keys(issues)])) {
       const hasValue = values[key] != null && values[key] !== '';
+      const keyIssues = rawControlIssues[key] ?? [];
+      const isMissingValueOnly =
+        keyIssues.length > 0 && keyIssues.every((i) => i.issueType === ContentIssueEnum.MISSING_VALUE);
 
-      if (issues[key] && !hasValue) setError(key, { message: issues[key] });
-      else clearError(key);
+      if (issues[key] && (!hasValue || !isMissingValueOnly)) {
+        setError(key, { message: issues[key] });
+      } else {
+        clearError(key);
+      }
     }
   }, [form, step]);
 

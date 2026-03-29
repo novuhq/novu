@@ -67,9 +67,9 @@ export function SidekickToast({
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 overflow-hidden">
                   <RiEyeLine className="size-3.5 shrink-0 text-[#99A0AE]" />
-                  <span className="text-label-xs whitespace-nowrap text-[#525866]">
+                  <span className="text-label-xs text-[#525866] truncate">
                     Reviewing changes. Discard will revert them.
                   </span>
                 </div>

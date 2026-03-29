@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -148,11 +149,12 @@ export function ActivityFeedContent({
         <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
       </div>
       <div className={`relative flex ${contentHeight}`}>
-        <ResizablePanelGroup direction="horizontal" className="gap-2">
+        <ResizablePanelGroup orientation="horizontal" className="gap-2" autoSaveId="activity-feed-panel-group">
           <ResizablePanel
-            defaultSize={50}
-            minSize={35}
+            defaultSize="50%"
+            minSize="35%"
             className="h-full transition-[flex-basis] duration-300 ease-out"
+            id="activity-table-panel"
           >
             <ActivityTable
               selectedActivityId={activityItemId}
@@ -166,7 +168,13 @@ export function ActivityFeedContent({
           </ResizablePanel>
 
           {showDetailPanel && (
-            <ResizablePanel defaultSize={50} minSize={35} maxSize={50} className="overflow-hidden">
+            <ResizablePanel
+              defaultSize="50%"
+              minSize="35%"
+              maxSize="50%"
+              className="overflow-hidden"
+              id="activity-detail-panel"
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activityItemId}

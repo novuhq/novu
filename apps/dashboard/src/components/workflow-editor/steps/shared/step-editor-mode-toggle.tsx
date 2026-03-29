@@ -20,17 +20,20 @@ import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver'
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useStepResolversCount } from '@/hooks/use-step-resolvers-count';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
 export function StepEditorModeToggle() {
-  const { step, isPendingResolverActivation, setIsPendingResolverActivation } = useStepEditor();
+  const { step, workflow, isPendingResolverActivation, setIsPendingResolverActivation } = useStepEditor();
   const { currentEnvironment, readOnly } = useEnvironment();
   const { disconnectStepResolver, isPending: isDisconnecting } = useDisconnectStepResolver();
   const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
   const { subscription, isLoading: isSubscriptionLoading } = useFetchSubscription();
   const { data: stepResolversCountData, isLoading: isCountLoading } = useStepResolversCount();
   const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+  const telemetry = useTelemetry();
 
   if (
     !isStepResolverEnabled ||
@@ -69,6 +72,11 @@ export function StepEditorModeToggle() {
     }
 
     if (checked) {
+      telemetry(TelemetryEvent.STEP_RESOLVER_CUSTOM_CODE_CLICKED, {
+        stepType: step.type,
+        stepId: step.stepId,
+        workflowId: workflow.workflowId,
+      });
       setIsPendingResolverActivation(true);
     } else if (isActive) {
       setIsDisconnectModalOpen(true);
