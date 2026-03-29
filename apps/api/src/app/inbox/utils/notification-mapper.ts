@@ -1,7 +1,7 @@
 import type { MessageEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum, SeverityLevelEnum } from '@novu/shared';
 
-import { InboxNotificationDto, SubscriberResponseDto } from '../dtos/inbox-notification.dto';
+import { InboxNotificationDto, InboxSubscriberResponseDto } from '../dtos/inbox-notification.dto';
 
 const mapSingleItem = ({
   _id,
@@ -26,7 +26,7 @@ const mapSingleItem = ({
   template,
   transactionId,
 }: MessageEntity): InboxNotificationDto => {
-  const to: SubscriberResponseDto = {
+  const to: InboxSubscriberResponseDto = {
     id: subscriber?._id ?? '',
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,

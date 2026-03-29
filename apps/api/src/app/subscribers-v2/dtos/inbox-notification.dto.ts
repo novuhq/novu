@@ -1,7 +1,7 @@
 export {
   ActionDto,
   InboxNotificationDto,
+  InboxSubscriberResponseDto,
   NotificationWorkflowDto,
   RedirectDto,
-  SubscriberResponseDto,
 } from '../../inbox/dtos/inbox-notification.dto';

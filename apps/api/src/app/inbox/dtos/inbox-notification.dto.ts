@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 
-export class SubscriberResponseDto {
+export class InboxSubscriberResponseDto {
   @ApiProperty({ type: String, description: 'Unique identifier of the subscriber' })
   id: string;
 
@@ -85,8 +85,8 @@ export class InboxNotificationDto {
   @ApiProperty({ type: String, description: 'Body content of the notification' })
   body: string;
 
-  @ApiProperty({ type: SubscriberResponseDto, description: 'Subscriber this notification was sent to' })
-  to: SubscriberResponseDto;
+  @ApiProperty({ type: InboxSubscriberResponseDto, description: 'Subscriber this notification was sent to' })
+  to: InboxSubscriberResponseDto;
 
   @ApiProperty({ type: Boolean, description: 'Whether the notification has been read' })
   isRead: boolean;
