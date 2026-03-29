@@ -9,7 +9,11 @@ import { InAppControlDto, InAppControlDto$Outbound, InAppControlDto$outboundSche
 /**
  * Control values for the In-App step.
  */
-export type ControlValues = InAppControlDto | { [k: string]: any };
+export type InAppStepUpsertDtoControlValues =
+  | InAppControlDto
+  | {
+      [k: string]: any;
+    };
 
 export type InAppStepUpsertDto = {
   /**
@@ -35,20 +39,19 @@ export type InAppStepUpsertDto = {
 };
 
 /** @internal */
-export type ControlValues$Outbound =
-  | InAppControlDto$Outbound
-  | {
-      [k: string]: any;
-    };
+export type InAppStepUpsertDtoControlValues$Outbound = InAppControlDto$Outbound | { [k: string]: any };
 
 /** @internal */
-export const ControlValues$outboundSchema: z.ZodType<ControlValues$Outbound, z.ZodTypeDef, ControlValues> = z.union([
-  InAppControlDto$outboundSchema,
-  z.record(z.any()),
-]);
+export const InAppStepUpsertDtoControlValues$outboundSchema: z.ZodType<
+  InAppStepUpsertDtoControlValues$Outbound,
+  z.ZodTypeDef,
+  InAppStepUpsertDtoControlValues
+> = z.union([InAppControlDto$outboundSchema, z.record(z.any())]);
 
-export function controlValuesToJSON(controlValues: ControlValues): string {
-  return JSON.stringify(ControlValues$outboundSchema.parse(controlValues));
+export function inAppStepUpsertDtoControlValuesToJSON(
+  inAppStepUpsertDtoControlValues: InAppStepUpsertDtoControlValues
+): string {
+  return JSON.stringify(InAppStepUpsertDtoControlValues$outboundSchema.parse(inAppStepUpsertDtoControlValues));
 }
 
 /** @internal */

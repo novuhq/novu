@@ -2249,6 +2249,37 @@
       "name": "Environment Variables",
       "item": [
         {
+          "name": "List environment variables",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "idempotency-key",
+                "value": "<value>",
+                "type": "string"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "string"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/environment-variables",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "environment-variables"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "<value>",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Returns all environment variables for the current organization. Secret values are masked."
+          }
+        },
+        {
           "name": "Create environment variable",
           "request": {
             "method": "POST",
@@ -2381,6 +2412,37 @@
               ]
             },
             "description": "Deletes an environment variable by id."
+          }
+        },
+        {
+          "name": "Get environment variable usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "idempotency-key",
+                "value": "<value>",
+                "type": "string"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "string"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/environment-variables/{variableId}/usage",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "environment-variables", ":variableId", "usage"],
+              "variable": [
+                {
+                  "key": "variableId",
+                  "value": "<value>",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls."
           }
         }
       ]
