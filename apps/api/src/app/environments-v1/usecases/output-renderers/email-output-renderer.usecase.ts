@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CreateExecutionDetails,
@@ -562,8 +562,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     try {
       return JSON.parse(translatedContent);
-    } catch {
-      return mailyContent;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Translated Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -619,8 +621,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     try {
       return JSON.parse(parsedString);
-    } catch {
-      return mailyContent;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Liquid-rendered Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
