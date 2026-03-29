@@ -155,7 +155,7 @@
     "pirates": "^4.0.7",
     "sinon": "^9.2.4",
     "ts-loader": "~9.4.0",
-    "ts-morph": "^25.0.0",
+    "ts-morph": "^24.0.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "5.6.2"
