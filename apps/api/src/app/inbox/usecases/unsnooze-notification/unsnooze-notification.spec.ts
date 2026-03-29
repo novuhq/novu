@@ -59,7 +59,7 @@ describe('UnsnoozeNotification', () => {
     body: 'Test notification content',
     to: {
       subscriberId: validSubscriberId,
-      _id: validSubscriberId,
+      id: validSubscriberId,
     },
     isSeen: false,
     isRead: false,
