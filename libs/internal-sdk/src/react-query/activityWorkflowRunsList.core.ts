@@ -73,7 +73,7 @@ export function queryKeyActivityWorkflowRunsList(parameters: {
   subscriptionId?: string | undefined;
   createdGte?: string | undefined;
   createdLte?: string | undefined;
-  severity?: Array<operations.Severity> | undefined;
+  severity?: Array<operations.QueryParamSeverity> | undefined;
   contextKeys?: Array<string> | undefined;
   idempotencyKey?: string | undefined;
 }): QueryKey {

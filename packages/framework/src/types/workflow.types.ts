@@ -18,15 +18,19 @@ export enum SeverityLevelEnum {
 /**
  * The parameters for the workflow function.
  */
-export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = {
+export type ExecuteInput<
+  T_Payload extends Record<string, unknown>,
+  T_Controls extends Record<string, unknown>,
+  T_Env extends Record<string, unknown> = Record<string, unknown>,
+> = {
   /** Define a step in your workflow. */
   step: Step;
   /** The payload for the event, provided during trigger. */
   payload: T_Payload;
   /** The subscriber for the event, provided during trigger. */
   subscriber: Prettify<Subscriber>;
-  /** The environment the workflow is running in. */
-  environment: Record<string, unknown>;
+  /** The environment variables, defined in the Novu Dashboard. */
+  env: T_Env;
   /** The controls for the event. Provided via the Dashboard. */
   controls: T_Controls;
   /** The resolved context for the event. */
@@ -36,9 +40,11 @@ export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls e
 /**
  * The function to execute the workflow.
  */
-export type Execute<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = (
-  event: ExecuteInput<T_Payload, T_Controls>
-) => Promise<void>;
+export type Execute<
+  T_Payload extends Record<string, unknown>,
+  T_Controls extends Record<string, unknown>,
+  T_Env extends Record<string, unknown> = Record<string, unknown>,
+> = (event: ExecuteInput<T_Payload, T_Controls, T_Env>) => Promise<void>;
 
 /**
  * A preference for a notification delivery workflow.
@@ -99,11 +105,17 @@ export type WorkflowPreferences = DeepPartial<{
 /**
  * The options for the workflow.
  */
-export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema extends Schema> = {
+export type WorkflowOptions<
+  T_PayloadSchema extends Schema,
+  T_ControlSchema extends Schema,
+  T_EnvSchema extends Schema = Schema,
+> = {
   /** The schema for the payload. */
   payloadSchema?: T_PayloadSchema;
   /** The schema for the controls. */
   controlSchema?: T_ControlSchema;
+  /** The schema for the environment variables. */
+  envSchema?: T_EnvSchema;
   /**
    * The preferences for the notification workflow.
    *

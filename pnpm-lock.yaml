@@ -14047,9 +14047,6 @@ packages:
   '@types/estree@0.0.39':
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
 
-  '@types/estree@1.0.6':
-    resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
-
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
@@ -43128,8 +43125,6 @@ snapshots:
 
   '@types/estree@0.0.39': {}
 
-  '@types/estree@1.0.6': {}
-
   '@types/estree@1.0.8': {}
 
   '@types/express-serve-static-core@4.17.33':
@@ -49760,7 +49755,7 @@ snapshots:
 
   hast-util-to-jsx-runtime@2.3.6:
     dependencies:
-      '@types/estree': 1.0.6
+      '@types/estree': 1.0.8
       '@types/hast': 3.0.4
       '@types/unist': 3.0.3
       comma-separated-tokens: 2.0.3
