@@ -81,8 +81,8 @@ export class BridgeController {
       PreviewStepCommand.create({
         workflowId,
         stepId,
-        controls: data.controls,
-        payload: data.payload,
+        controls: data?.controls,
+        payload: data?.payload,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -205,7 +205,7 @@ export class BridgeController {
       StoreControlValuesCommand.create({
         stepId,
         workflowId,
-        controlValues: body.variables,
+        controlValues: body?.variables,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

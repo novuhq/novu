@@ -290,7 +290,11 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   ): Promise<unknown> {
     const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
 
-    return JSON.parse(compiled);
+    try {
+      return JSON.parse(compiled);
+    } catch {
+      return values;
+    }
   }
 
   private buildCompileContect(compileContext: ICompileContext): Record<string, unknown> {

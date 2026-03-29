@@ -142,7 +142,11 @@ export class TestHttpEndpointUsecase {
   ): Promise<unknown> {
     const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
 
-    return JSON.parse(compiled);
+    try {
+      return JSON.parse(compiled);
+    } catch {
+      return values;
+    }
   }
 }
 

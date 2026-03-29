@@ -44,6 +44,7 @@ import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto
 import { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
 import { GetPreferencesRequestDto } from './dtos/get-preferences-request.dto';
 import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
+import { InboxNotificationDto } from './dtos/inbox-notification.dto';
 import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
 import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
 import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
@@ -79,7 +80,7 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
-import type { InboxNotification, InboxPreference } from './utils/types';
+import type { InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -210,7 +211,7 @@ export class InboxController {
   async markNotificationAsRead(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -228,7 +229,7 @@ export class InboxController {
   async markNotificationAsUnread(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -246,7 +247,7 @@ export class InboxController {
   async markNotificationAsArchived(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -264,7 +265,7 @@ export class InboxController {
   async markNotificationAsUnarchived(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.markNotificationAsUsecase.execute(
       MarkNotificationAsCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -283,7 +284,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string,
     @Body() body: SnoozeNotificationRequestDto
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.snoozeNotificationUsecase.execute(
       SnoozeNotificationCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -301,7 +302,7 @@ export class InboxController {
   async unsnoozeNotification(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.unsnoozeNotificationUsecase.execute(
       UnsnoozeNotificationCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -337,7 +338,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string,
     @Body() body: ActionTypeRequestDto
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -357,7 +358,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string,
     @Body() body: ActionTypeRequestDto
-  ): Promise<InboxNotification> {
+  ): Promise<InboxNotificationDto> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
         organizationId: subscriberSession._organizationId,

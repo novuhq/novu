@@ -311,7 +311,7 @@ export class SendMessage {
       preferencesPassed: preferredResult,
       isBridgeSkipped,
       ...(usedFilters || {}),
-      source: command.payload.__source || 'api',
+      source: command.payload?.__source || 'api',
     });
   }
 
@@ -520,8 +520,8 @@ export class SendMessage {
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
     const workflowPreferred = preference.enabled;
 
-    const channelPreferred = Object.keys(preference.channels).some(
-      (channelKey) => channelKey === job.type && preference.channels[job.type]
+    const channelPreferred = Object.keys(preference.channels || {}).some(
+      (channelKey) => channelKey === job.type && preference.channels?.[job.type]
     );
 
     return workflowPreferred && channelPreferred;

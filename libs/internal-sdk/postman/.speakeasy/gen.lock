@@ -1,7 +1,7 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: b6eb1dbd8767c3b0c81232f2491c8ef6
+  docChecksum: d5035ea9a54578d83c06a7b5dce6b0f0
   docVersion: 3.14.0
   speakeasyVersion: 1.759.3
   generationVersion: 2.869.25
@@ -2067,6 +2067,344 @@ examples:
       responses:
         "200":
           application/json: {"workflows": [{"name": "Welcome Email", "workflowId": "welcome-email"}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_getSubscriberNotifications:
+    speakeasy-default-subscribers-controller-get-subscriber-notifications:
+      parameters:
+        path:
+          subscriberId: "<id>"
+        query:
+          limit: 10
+          offset: 0
+          createdGte: 1704067200000
+          createdLte: 1735689599999
+      responses:
+        "200":
+          application/json: {"data": [{"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "firstName": "John", "lastName": "Doe", "avatar": "https://example.com/avatar.png", "subscriberId": "user-123"}, "isRead": false, "isSeen": true, "isArchived": true, "isSnoozed": true, "createdAt": "1718005196143", "channelType": "in_app", "severity": "low"}], "hasMore": true, "filter": {}}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_deleteNotification:
+    speakeasy-default-subscribers-controller-delete-notification:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_completeNotificationAction:
+    speakeasy-default-subscribers-controller-complete-notification-action:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+          actionType: "secondary"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": false, "isArchived": true, "isSnoozed": false, "createdAt": "1720937619557", "channelType": "push", "severity": "none"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_revertNotificationAction:
+    speakeasy-default-subscribers-controller-revert-notification-action:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+          actionType: "primary"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": true, "createdAt": "1732319296776", "channelType": "email", "severity": "medium"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_archiveNotification:
+    speakeasy-default-subscribers-controller-archive-notification:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": true, "isArchived": true, "isSnoozed": true, "createdAt": "1722007690839", "channelType": "in_app", "severity": "low"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_markNotificationAsRead:
+    speakeasy-default-subscribers-controller-mark-notification-as-read:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": false, "isArchived": true, "isSnoozed": true, "createdAt": "1730112582938", "channelType": "push", "severity": "high"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_snoozeNotification:
+    speakeasy-default-subscribers-controller-snooze-notification:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      requestBody:
+        application/json: {"snoozeUntil": "2026-03-01T10:00:00Z"}
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": true, "isSeen": false, "isArchived": true, "isSnoozed": true, "createdAt": "1733991021454", "channelType": "chat", "severity": "medium"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_unarchiveNotification:
+    speakeasy-default-subscribers-controller-unarchive-notification:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": true, "createdAt": "1711880035185", "channelType": "email", "severity": "high"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_markNotificationAsUnread:
+    speakeasy-default-subscribers-controller-mark-notification-as-unread:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": false, "createdAt": "1709953113134", "channelType": "sms", "severity": "low"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_unsnoozeNotification:
+    speakeasy-default-subscribers-controller-unsnooze-notification:
+      parameters:
+        path:
+          subscriberId: "<id>"
+          notificationId: "<id>"
+      responses:
+        "200":
+          application/json: {"id": "<id>", "transactionId": "<id>", "body": "<value>", "to": {"id": "<id>", "subscriberId": "user-123"}, "isRead": false, "isSeen": false, "isArchived": false, "isSnoozed": false, "createdAt": "1706480856288", "channelType": "chat", "severity": "low"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_archiveAllNotifications:
+    speakeasy-default-subscribers-controller-archive-all-notifications:
+      parameters:
+        path:
+          subscriberId: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_getSubscriberNotificationsCount:
+    speakeasy-default-subscribers-controller-get-subscriber-notifications-count:
+      parameters:
+        path:
+          subscriberId: "<id>"
+        query:
+          filters: "[{\"read\":false,\"archived\":false},{\"tags\":[\"important\"]}]"
+      responses:
+        "200":
+          application/json: [{"count": 8917.76, "filter": {"key": "<value>"}}]
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_deleteAllNotifications:
+    speakeasy-default-subscribers-controller-delete-all-notifications:
+      parameters:
+        path:
+          subscriberId: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_markAllNotificationsAsRead:
+    speakeasy-default-subscribers-controller-mark-all-notifications-as-read:
+      parameters:
+        path:
+          subscriberId: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_archiveAllReadNotifications:
+    speakeasy-default-subscribers-controller-archive-all-read-notifications:
+      parameters:
+        path:
+          subscriberId: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  SubscribersController_markNotificationsAsSeen:
+    speakeasy-default-subscribers-controller-mark-notifications-as-seen:
+      parameters:
+        path:
+          subscriberId: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":

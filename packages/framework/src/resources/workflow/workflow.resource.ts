@@ -32,13 +32,15 @@ import { mapPreferences } from './map-preferences';
 export function workflow<
   T_PayloadSchema extends Schema,
   T_ControlSchema extends Schema,
+  T_EnvSchema extends Schema,
   T_PayloadValidated extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
   T_PayloadUnvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_PayloadSchema>,
   T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
+  T_Env extends Record<string, unknown> = FromSchema<T_EnvSchema>,
 >(
   workflowId: string,
-  execute: Execute<T_PayloadValidated, T_Controls>,
-  workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema>
+  execute: Execute<T_PayloadValidated, T_Controls, T_Env>,
+  workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema, T_EnvSchema>
 ): Workflow<T_PayloadUnvalidated> {
   const options = workflowOptions || {};
 
@@ -98,6 +100,10 @@ export function workflow<
         schema: await transformSchema(options.controlSchema || emptySchema),
         unknownSchema: options.controlSchema || emptySchema,
       },
+      env: {
+        schema: await transformSchema(options.envSchema || emptySchema),
+        unknownSchema: options.envSchema || emptySchema,
+      },
       tags: options.tags || [],
       preferences: mapPreferences(options.preferences),
       name: options.name,
@@ -108,7 +114,7 @@ export function workflow<
     await execute({
       payload: {} as T_PayloadValidated,
       subscriber: {},
-      environment: {},
+      env: {} as T_Env,
       controls: {} as T_Controls,
       context: {},
       step: {
