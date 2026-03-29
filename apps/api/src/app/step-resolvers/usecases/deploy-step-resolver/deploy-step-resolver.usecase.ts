@@ -27,6 +27,7 @@ import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
 
 const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
+const ACTION_STEP_TYPES = new Set([StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE]);
 // cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
@@ -61,19 +62,29 @@ export class DeployStepResolverUsecase {
 
   @InstrumentUsecase()
   async execute(command: DeployStepResolverCommand): Promise<DeployStepResolverResponseDto> {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.user.organizationId },
-    });
+    const [isStepResolverEnabled, isActionStepResolverEnabled] = await Promise.all([
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.user.organizationId },
+      }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.user.organizationId },
+      }),
+    ]);
 
-    if (!isEnabled) {
+    if (!isStepResolverEnabled && !isActionStepResolverEnabled) {
       throw new ForbiddenException('Step resolver feature is not enabled for this organization');
     }
 
     this.assertBundleSize(command.bundleBuffer);
 
-    const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
+    const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps, {
+      isStepResolverEnabled,
+      isActionStepResolverEnabled,
+    });
 
     const availableSlots = await this.resourceValidatorService.getStepResolversAvailableSlots(
       command.user.environmentId,
@@ -145,7 +156,8 @@ export class DeployStepResolverUsecase {
 
   private async resolveManifestSteps(
     command: DeployStepResolverCommand,
-    manifestSteps: DeployStepResolverManifestStepCommand[]
+    manifestSteps: DeployStepResolverManifestStepCommand[],
+    flags: { isStepResolverEnabled: boolean; isActionStepResolverEnabled: boolean }
   ): Promise<ResolvedManifestStep[]> {
     const workflowCache = new Map<string, Awaited<ReturnType<GetWorkflowByIdsUseCase['execute']>>>();
 
@@ -182,6 +194,15 @@ export class DeployStepResolverUsecase {
           workflowId: manifestStep.workflowId,
           stepId: manifestStep.stepId,
         });
+      }
+
+      const isActionStep = ACTION_STEP_TYPES.has(actualStepType);
+      const isFlagEnabled = isActionStep ? flags.isActionStepResolverEnabled : flags.isStepResolverEnabled;
+
+      if (!isFlagEnabled) {
+        throw new ForbiddenException(
+          `Step resolver feature is not enabled for step type '${actualStepType}' in this organization`
+        );
       }
 
       if (actualStepType !== manifestStep.stepType) {
