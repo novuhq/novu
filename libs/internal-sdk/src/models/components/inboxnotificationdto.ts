@@ -8,10 +8,10 @@ import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import { ActionDto, ActionDto$inboundSchema } from './actiondto.js';
 import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema } from './channeltypeenum.js';
+import { InboxSubscriberResponseDto, InboxSubscriberResponseDto$inboundSchema } from './inboxsubscriberresponsedto.js';
 import { NotificationWorkflowDto, NotificationWorkflowDto$inboundSchema } from './notificationworkflowdto.js';
 import { RedirectDto, RedirectDto$inboundSchema } from './redirectdto.js';
 import { SeverityLevelEnum, SeverityLevelEnum$inboundSchema } from './severitylevelenum.js';
-import { SubscriberResponseDto, SubscriberResponseDto$inboundSchema } from './subscriberresponsedto.js';
 
 export type InboxNotificationDto = {
   /**
@@ -33,7 +33,7 @@ export type InboxNotificationDto = {
   /**
    * Subscriber this notification was sent to
    */
-  to: SubscriberResponseDto;
+  to: InboxSubscriberResponseDto;
   /**
    * Whether the notification has been read
    */
@@ -118,7 +118,7 @@ export const InboxNotificationDto$inboundSchema: z.ZodType<InboxNotificationDto,
   transactionId: z.string(),
   subject: z.string().optional(),
   body: z.string(),
-  to: SubscriberResponseDto$inboundSchema,
+  to: InboxSubscriberResponseDto$inboundSchema,
   isRead: z.boolean(),
   isSeen: z.boolean(),
   isArchived: z.boolean(),
