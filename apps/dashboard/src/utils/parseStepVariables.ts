@@ -2,6 +2,7 @@ import { Completion } from '@codemirror/autocomplete';
 import type { JSONSchemaDefinition } from '@novu/shared';
 import { JSONSchema7 } from 'json-schema';
 import { isAllowedAlias } from '@/components/maily/repeat-block-aliases';
+import { SYSTEM_VARIABLE_DEFINITIONS } from '@/components/variables/system-variable-definitions';
 import {
   DIGEST_VARIABLES,
   DIGEST_VARIABLES_ENUM,
@@ -191,6 +192,11 @@ export function parseStepVariables(
     // Check for namespace-only variables (invalid)
     if (isNamespaceOnlyVariable(variable.name)) {
       return false;
+    }
+
+    // Built-in env system variables are always valid — injected at runtime, not in schema
+    if (SYSTEM_VARIABLE_DEFINITIONS.some(({ key }) => variable.name === key)) {
+      return true;
     }
 
     if (isPayloadSchemaEnabled && variable.name.startsWith('payload.')) {
