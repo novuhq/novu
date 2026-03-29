@@ -15,36 +15,29 @@ import {
 
 export type ActionDto = {
   /**
-   * Label of the action button
+   * Label for the action button.
    */
-  label: string;
+  label?: string | undefined;
   /**
-   * Whether the action has been completed
-   */
-  isCompleted: boolean;
-  /**
-   * Redirect configuration for the action
+   * Redirect configuration for the action.
    */
   redirect?: RedirectDto | undefined;
 };
 
 /** @internal */
 export const ActionDto$inboundSchema: z.ZodType<ActionDto, z.ZodTypeDef, unknown> = z.object({
-  label: z.string(),
-  isCompleted: z.boolean(),
+  label: z.string().optional(),
   redirect: RedirectDto$inboundSchema.optional(),
 });
 /** @internal */
 export type ActionDto$Outbound = {
-  label: string;
-  isCompleted: boolean;
+  label?: string | undefined;
   redirect?: RedirectDto$Outbound | undefined;
 };
 
 /** @internal */
 export const ActionDto$outboundSchema: z.ZodType<ActionDto$Outbound, z.ZodTypeDef, ActionDto> = z.object({
-  label: z.string(),
-  isCompleted: z.boolean(),
+  label: z.string().optional(),
   redirect: RedirectDto$outboundSchema.optional(),
 });
 

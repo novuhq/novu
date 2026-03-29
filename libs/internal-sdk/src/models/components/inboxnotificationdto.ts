@@ -6,8 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ActionDto, ActionDto$inboundSchema } from './actiondto.js';
 import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema } from './channeltypeenum.js';
+import { InboxActionDto, InboxActionDto$inboundSchema } from './inboxactiondto.js';
 import { InboxSubscriberResponseDto, InboxSubscriberResponseDto$inboundSchema } from './inboxsubscriberresponsedto.js';
 import { NotificationWorkflowDto, NotificationWorkflowDto$inboundSchema } from './notificationworkflowdto.js';
 import { RedirectDto, RedirectDto$inboundSchema } from './redirectdto.js';
@@ -81,11 +81,11 @@ export type InboxNotificationDto = {
   /**
    * Primary action button for the notification
    */
-  primaryAction?: ActionDto | undefined;
+  primaryAction?: InboxActionDto | undefined;
   /**
    * Secondary action button for the notification
    */
-  secondaryAction?: ActionDto | undefined;
+  secondaryAction?: InboxActionDto | undefined;
   /**
    * Channel type through which the message is sent
    */
@@ -130,8 +130,8 @@ export const InboxNotificationDto$inboundSchema: z.ZodType<InboxNotificationDto,
   firstSeenAt: z.nullable(z.string()).optional(),
   archivedAt: z.nullable(z.string()).optional(),
   avatar: z.string().optional(),
-  primaryAction: ActionDto$inboundSchema.optional(),
-  secondaryAction: ActionDto$inboundSchema.optional(),
+  primaryAction: InboxActionDto$inboundSchema.optional(),
+  secondaryAction: InboxActionDto$inboundSchema.optional(),
   channelType: ChannelTypeEnum$inboundSchema,
   tags: z.array(z.string()).optional(),
   data: z.record(z.any()).optional(),

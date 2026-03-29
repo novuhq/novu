@@ -156,6 +156,7 @@ export * from './inapprenderoutput.js';
 export * from './inappstepresponsedto.js';
 export * from './inappstepupsertdto.js';
 export * from './inboundparsedomaindto.js';
+export * from './inboxactiondto.js';
 export * from './inboxnotificationdto.js';
 export * from './inboxsubscriberresponsedto.js';
 export * from './integrationissueenum.js';
