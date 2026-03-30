@@ -13,7 +13,7 @@ import {
 import { workflow } from './resources';
 import { Event, Step } from './types';
 
-const testEventEnv = { name: 'Test', type: 'development' };
+const testEventEnv = { name: 'Test', type: 'dev' } as const;
 
 describe('Novu Client', () => {
   let client: Client;

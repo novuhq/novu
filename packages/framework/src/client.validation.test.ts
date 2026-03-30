@@ -71,7 +71,7 @@ describe('validation', () => {
         state: [],
         subscriber: {},
         context: {},
-        env: { name: 'Test', type: 'development' },
+        env: { name: 'Test', type: 'dev' } as const,
       });
     } catch (error) {
       expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
