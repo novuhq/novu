@@ -265,10 +265,10 @@ export default step.throttle(
   async (controls, { payload, subscriber }) => ({
     type: 'fixed',
     amount: Number(controls.amount),
-    unit: controls.unit as 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months',
+    unit: controls.unit as 'minutes' | 'hours' | 'days',
     threshold: Number(controls.threshold),
-    // Throttle per a custom key — defaults to subscriberId when omitted
-    // throttleKey: payload.teamId as string,
+    // throttleKey: payload.teamId as string, // optional: throttle per custom key (defaults to subscriberId)
+    // Or use a dynamic window from your payload: { type: 'dynamic', dynamicKey: 'payload.windowEnd', threshold: 5 }
   }),
   {
     controlSchema: ${controlSchema(throttleFields, useZod)},
