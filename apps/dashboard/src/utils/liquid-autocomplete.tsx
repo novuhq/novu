@@ -11,7 +11,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { getFilters } from '@/components/variable/constants';
-import { SYSTEM_VARIABLE_DEFINITIONS } from '@/components/variables/system-variable-definitions';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 import { isValidContextVariable } from './context-variable-utils';
 import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
@@ -29,13 +28,6 @@ const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
 const CONTEXT_NAMESPACE = 'context';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
-
-// Built-in environment system variables injected into env.* — always available regardless of schema
-const ENVIRONMENT_SYSTEM_VARIABLES: LiquidVariable[] = SYSTEM_VARIABLE_DEFINITIONS.map(({ key }) => ({
-  name: key,
-  type: 'variable' as const,
-  displayLabel: key,
-}));
 
 /**
  * Creates JIT (Just-In-Time) variable suggestions based on search text and namespaces
@@ -287,7 +279,7 @@ export const completions =
       };
     }
 
-    const allVariables = [...scopedVariables, ...variables, ...ENVIRONMENT_SYSTEM_VARIABLES];
+    const allVariables = [...scopedVariables, ...variables];
     const matchingVariables = getMatchingVariables(
       searchText,
       scopedVariables,
@@ -366,7 +358,7 @@ function getMatchingVariables(
   isPayloadSchemaEnabled?: boolean,
   isContextEnabled?: boolean
 ): LiquidVariable[] {
-  const allVariables = [...scopedVariables, ...variables, ...ENVIRONMENT_SYSTEM_VARIABLES];
+  const allVariables = [...scopedVariables, ...variables];
   if (!searchText) return allVariables;
 
   const searchTextTrimmed = searchText.trim();
