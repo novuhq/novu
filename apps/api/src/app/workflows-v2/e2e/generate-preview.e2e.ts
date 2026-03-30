@@ -215,7 +215,16 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           env: {
             type: 'object',
             description: 'Environment variables accessible in workflow templates',
-            properties: {},
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Environment variable: name',
+              },
+              type: {
+                type: 'string',
+                description: 'Environment variable: type',
+              },
+            },
             required: [],
             additionalProperties: false,
           },
@@ -497,7 +506,16 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           env: {
             type: 'object',
             description: 'Environment variables accessible in workflow templates',
-            properties: {},
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Environment variable: name',
+              },
+              type: {
+                type: 'string',
+                description: 'Environment variable: type',
+              },
+            },
             required: [],
             additionalProperties: false,
           },

@@ -1,6 +1,7 @@
 import { providerSchemas } from '../../schemas/providers';
 import type { FromSchema, Schema } from '../../types';
 import type { ContextResolved } from '../../types/context.types';
+import type { EnvironmentSystemVariables } from '../../types/environment.types';
 import type { WithPassthrough } from '../../types/provider.types';
 import type {
   ChatOutputUnvalidated,
@@ -23,7 +24,15 @@ export type StepResolverContext<
   subscriber: Subscriber;
   context: ContextResolved;
   steps: Record<string, unknown>;
-  env: TEnv;
+  /**
+   * Environment variables defined in the Novu Dashboard, merged with built-in
+   * environment system variables (`name`, `type`).
+   *
+   * @example `env.name` — name of the current Novu environment
+   * @example `env.type` — type of the current Novu environment ("dev" | "prod")
+   * @example `env.MY_SECRET` — a user-defined environment variable
+   */
+  env: TEnv & EnvironmentSystemVariables;
 };
 
 type ResolveControls<T extends Schema | undefined> = T extends Schema ? FromSchema<T> : Record<string, unknown>;
