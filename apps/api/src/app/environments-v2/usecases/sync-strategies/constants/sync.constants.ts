@@ -1,9 +1,5 @@
 import { SyncActionEnum } from '../../../types/sync.types';
 
-export const SYNC_CONSTANTS = {
-  BATCH_SIZE: 100,
-} as const;
-
 export const SYNC_ACTIONS = {
   CREATED: SyncActionEnum.CREATED,
   UPDATED: SyncActionEnum.UPDATED,
