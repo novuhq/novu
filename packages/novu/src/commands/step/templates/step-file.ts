@@ -237,13 +237,25 @@ export function generateDigestStepFile(stepId: string, useZod: boolean): string 
 
 export default step.digest(
   '${escapeString(stepId)}',
-  async (controls, { payload, subscriber }) => ({
-    type: 'regular',
-    amount: Number(controls.amount),
-    unit: controls.unit as 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months',
-    // Group events by a custom key — defaults to subscriberId when omitted
-    // digestKey: payload.teamId as string,
-  }),
+  async (controls, { payload, subscriber }) => {
+    // --- Scheduled digest (cron-based window) ---
+    // return {
+    //   type: 'timed',
+    //   cron: '0 9 * * MON',           // every Monday at 09:00
+    //   digestKey: payload.teamId as string, // optional: group by custom key
+    //   extendToSchedule: true,         // optional: align to subscriber's timezone schedule
+    // };
+
+    // --- Regular digest (time-window) ---
+    return {
+      type: 'regular',
+      amount: Number(controls.amount),
+      unit: controls.unit as 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months',
+      // digestKey: payload.teamId as string, // optional: group by custom key (defaults to subscriberId)
+      // lookBackWindow: { amount: 1, unit: 'hours' }, // optional: only include events from the past N time
+      // extendToSchedule: false,         // optional: align window to subscriber's timezone schedule
+    };
+  },
   {
     controlSchema: ${controlSchema(digestFields, useZod)},
   }
