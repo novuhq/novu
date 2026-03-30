@@ -6,5 +6,5 @@ export type EnvironmentSystemVariables = {
   /** The name of the environment (e.g. "Development", "Production"). */
   name: string;
   /** The type of the environment (e.g. "dev", "prod"). */
-  type: string;
+  type: 'dev' | 'prod';
 };
