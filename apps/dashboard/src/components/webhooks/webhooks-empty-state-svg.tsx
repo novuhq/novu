@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-export function WebhooksEmptyStateSvg() {
+function WebhooksEmptyStateSvg() {
   const id = useId();
   const paint0 = `${id}-paint0`;
   const paint1 = `${id}-paint1`;

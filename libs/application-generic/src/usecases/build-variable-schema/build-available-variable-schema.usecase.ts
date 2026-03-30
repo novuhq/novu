@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import {
   ControlValuesEntity,
   ControlValuesRepository,
+  EnvironmentRepository,
   EnvironmentVariableRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, EnvironmentSystemVariables, StepTypeEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
@@ -38,7 +39,8 @@ export class BuildVariableSchemaUsecase {
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
     private readonly controlValuesRepository: ControlValuesRepository,
-    private readonly environmentVariableRepository: EnvironmentVariableRepository
+    private readonly environmentVariableRepository: EnvironmentVariableRepository,
+    private readonly environmentRepository: EnvironmentRepository
   ) {}
 
   @InstrumentUsecase()
@@ -93,11 +95,14 @@ export class BuildVariableSchemaUsecase {
 
     const effectivePayloadSchema = optimisticPayloadSchema ?? workflow?.payloadSchema;
 
-    const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
-      command.organizationId,
-      command.environmentId
-    );
-    const envVars = resolveEnvironmentVariables(rawEnvVars);
+    const [rawEnvVars, environmentEntity] = await Promise.all([
+      this.environmentVariableRepository.findByEnvironment(command.organizationId, command.environmentId),
+      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
+    ]);
+    const systemVars: EnvironmentSystemVariables | Record<string, never> = environmentEntity
+      ? { name: environmentEntity.name, type: environmentEntity.type }
+      : {};
+    const envVars = { ...resolveEnvironmentVariables(rawEnvVars), ...systemVars };
     const controlValuesMap: Record<string, Record<string, unknown>> = {};
     for (const cv of controls) {
       if (cv._stepId) {

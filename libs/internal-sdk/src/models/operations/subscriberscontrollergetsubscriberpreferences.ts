@@ -18,6 +18,9 @@ export const Criticality = {
 export type Criticality = ClosedEnum<typeof Criticality>;
 
 export type SubscribersControllerGetSubscriberPreferencesRequest = {
+  /**
+   * The identifier of the subscriber
+   */
   subscriberId: string;
   criticality?: Criticality | undefined;
   /**

@@ -17,7 +17,7 @@ function generateImports(steps: DiscoveredStep[], rootDir: string): string {
     .join('\n');
 
   return `import { validateData } from '@novu/framework/validators';
-import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
+import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
 }
 
 function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
@@ -29,6 +29,9 @@ function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {})
+  ),
+  ...Object.values(actionStepSchemas).map(({ output }) =>
     validateData(output, {})
   ),
   ...[${handlerRefs}].flatMap(handler => {
@@ -115,7 +118,7 @@ function generateRequestHandler(): string {
 
       ${generateSkipCheck()}
 
-      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs });
+      const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
 
       ${generateOutputValidation()}
 
@@ -158,6 +161,7 @@ function generateBodyValidation(): string {
       const payload = body.payload ?? {};
       const subscriber = body.subscriber ?? {};
       const context = body.context ?? {};
+      const env = isObject(body.env) ? body.env : {};
       const stateArray = Array.isArray(body.state) ? body.state : [];
       const stepOutputs = stateArray.reduce((acc, s) => { if (s && typeof s.stepId === 'string') acc[s.stepId] = s.outputs ?? {}; return acc; }, {});
       const controls = body.controls ?? {};
@@ -187,7 +191,7 @@ function generateSchemaValidation(): string {
 
 function generateSkipCheck(): string {
   return `if (!isPreview && step.skip) {
-        const shouldSkip = await step.skip(validatedControls, { payload, subscriber, context, steps: stepOutputs });
+        const shouldSkip = await step.skip(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
         if (shouldSkip) {
           return jsonResponse(
             {
@@ -209,7 +213,7 @@ function generateSkipCheck(): string {
 }
 
 function generateOutputValidation(): string {
-  return `const outputSchema = channelStepSchemas[step.type]?.output;
+  return `const outputSchema = channelStepSchemas[step.type]?.output ?? actionStepSchemas[step.type]?.output;
       let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
@@ -226,7 +230,7 @@ function generateOutputValidation(): string {
 function generateProviderExecution(): string {
   return `const providers = {};
       if (step.providers) {
-        const ctx = { payload, subscriber, context, steps: stepOutputs };
+        const ctx = { payload, subscriber, context, steps: stepOutputs, env };
         for (const [providerKey, providerResolve] of Object.entries(step.providers)) {
           const providerResult = await providerResolve({ controls: validatedControls, outputs: validatedResult }, ctx);
           const providerOutputSchema = providerSchemas[step.type]?.[providerKey]?.output;

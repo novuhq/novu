@@ -178,7 +178,7 @@ export class ContentTemplatesController {
                 return format(new Date(value), formatting);
               }
 
-              return value.toString();
+              return String(value ?? '');
             },
           },
         });

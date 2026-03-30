@@ -25,8 +25,8 @@ import {
   JobStatusEnum,
 } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
+import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { InboxNotification } from '../../utils/types';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { SnoozeNotificationCommand } from './snooze-notification.command';
@@ -46,14 +46,14 @@ export class SnoozeNotification {
     private analyticsService: AnalyticsService
   ) {}
 
-  public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
+  public async execute(command: SnoozeNotificationCommand): Promise<InboxNotificationDto> {
     const snoozeDurationMs = this.calculateDelayInMs(command.snoozeUntil);
     await this.validateSnoozeDuration(command, snoozeDurationMs);
     const notification = await this.findNotification(command);
 
     try {
       let scheduledJob = {} as JobEntity;
-      let snoozedNotification = {} as InboxNotification;
+      let snoozedNotification = {} as InboxNotificationDto;
 
       await this.messageRepository.withTransaction(async () => {
         scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);

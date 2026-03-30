@@ -120,7 +120,8 @@ export class ExecuteBridgeJob {
       state,
       subscriber: subscriber ?? {},
       context: context ?? {},
-      env,
+      // biome-ignore lint/style/noNonNullAssertion: <explanation> we always have env.type and env.name
+      env: env!,
     };
 
     const workflowId = isStateful

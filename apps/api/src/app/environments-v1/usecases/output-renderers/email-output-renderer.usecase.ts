@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CreateExecutionDetails,
@@ -560,7 +560,13 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
           organization,
         });
 
-    return JSON.parse(translatedContent);
+    try {
+      return JSON.parse(translatedContent);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Translated Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   private async processTextTranslations({
@@ -613,7 +619,13 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   ): Promise<MailyJSONContent> {
     const parsedString = await this.liquidEngine.parseAndRender(JSON.stringify(mailyContent), variables);
 
-    return JSON.parse(parsedString);
+    try {
+      return JSON.parse(parsedString);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Liquid-rendered Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   private async transformMailyContent(

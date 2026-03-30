@@ -27,6 +27,9 @@ const METHOD_NAME_TO_TYPE: Record<string, string> = {
   chat: 'chat',
   push: 'push',
   inApp: 'in_app',
+  delay: 'delay',
+  digest: 'digest',
+  throttle: 'throttle',
 };
 
 const VALID_STEP_TYPES = new Set(Object.values(METHOD_NAME_TO_TYPE));

@@ -218,6 +218,7 @@ export class ExecuteStepResolverRequest {
         subscriber: (event.subscriber ?? {}) as Record<string, unknown>,
         context: (event.context ?? {}) as Record<string, unknown>,
         steps: stepsMap,
+        env: (event.env ?? {}) as Record<string, string>,
       };
 
       const compiledString = await liquidEngine.render(parsedTemplate, renderVariables);

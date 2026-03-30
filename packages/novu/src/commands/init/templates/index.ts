@@ -165,7 +165,7 @@ export const installTemplate = async ({
   });
 
   /** Copy the version from package.json or override for tests. */
-  const version = '14.2.3';
+  const version = '16.2.1';
 
   /** Create a package.json for the new project and write it to disk. */
   const packageJson: any = {
@@ -182,8 +182,8 @@ export const installTemplate = async ({
      * Default dependencies.
      */
     dependencies: {
-      react: '^18',
-      'react-dom': '^18',
+      react: '^19',
+      'react-dom': '^19',
       next: version,
       '@novu/framework': 'latest',
       '@novu/nextjs': '^2.5.0',
@@ -198,9 +198,9 @@ export const installTemplate = async ({
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
       typescript: '^5',
-      '@types/node': '^20',
-      '@types/react': '^18',
-      '@types/react-dom': '^18',
+      '@types/node': '^22',
+      '@types/react': '^19',
+      '@types/react-dom': '^19',
     };
   }
 
