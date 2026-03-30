@@ -461,7 +461,7 @@ export class Client {
         concludeExecutionPromise,
         workflow.execute({
           payload: executionData,
-          environment: {},
+          env: event.env ?? {},
           controls: {},
           subscriber: event.subscriber,
           context: event.context,

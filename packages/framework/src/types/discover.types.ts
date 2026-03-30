@@ -59,6 +59,10 @@ export type DiscoverWorkflowOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  env: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
   preferences: WorkflowPreferencesPartial;
   tags: string[];
   name?: string;

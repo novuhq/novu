@@ -9,7 +9,7 @@ import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 /**
- * Target window for the redirection.
+ * Target attribute for the redirect link
  */
 export const Target = {
   Self: '_self',
@@ -19,17 +19,17 @@ export const Target = {
   UnfencedTop: '_unfencedTop',
 } as const;
 /**
- * Target window for the redirection.
+ * Target attribute for the redirect link
  */
 export type Target = ClosedEnum<typeof Target>;
 
 export type RedirectDto = {
   /**
-   * URL for redirection. Must be a valid URL or start with / or {{ variable }}.
+   * URL to redirect to
    */
-  url?: string | undefined;
+  url: string;
   /**
-   * Target window for the redirection.
+   * Target attribute for the redirect link
    */
   target?: Target | undefined;
 };
@@ -41,19 +41,19 @@ export const Target$outboundSchema: z.ZodNativeEnum<typeof Target> = Target$inbo
 
 /** @internal */
 export const RedirectDto$inboundSchema: z.ZodType<RedirectDto, z.ZodTypeDef, unknown> = z.object({
-  url: z.string().optional(),
-  target: Target$inboundSchema.default('_self'),
+  url: z.string(),
+  target: Target$inboundSchema.optional(),
 });
 /** @internal */
 export type RedirectDto$Outbound = {
-  url?: string | undefined;
-  target: string;
+  url: string;
+  target?: string | undefined;
 };
 
 /** @internal */
 export const RedirectDto$outboundSchema: z.ZodType<RedirectDto$Outbound, z.ZodTypeDef, RedirectDto> = z.object({
-  url: z.string().optional(),
-  target: Target$outboundSchema.default('_self'),
+  url: z.string(),
+  target: Target$outboundSchema.optional(),
 });
 
 export function redirectDtoToJSON(redirectDto: RedirectDto): string {

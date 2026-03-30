@@ -1,0 +1,50 @@
+---
+description: Fix ApiProperty/ApiPropertyOptional optionality mismatches in DTO files; use for scheduled batch fixes or DTO edits
+globs: apps/api/**/*.dto.ts, libs/application-generic/**/*.dto.ts
+alwaysApply: false
+---
+
+## ApiProperty optionality hygiene
+
+Align `@ApiProperty` / `@ApiPropertyOptional` with TypeScript `?` on DTO properties. Detection script: `apps/api/scripts/check-api-property-optionality.ts`.
+
+### Report
+
+Read `.cursor/api-property-optionality-report.json` — only the first ~20 entries to select a batch. If the file is missing or stale, regenerate:
+
+```bash
+pnpm --filter @novu/api-service run check:api-property-optionality -- \
+  --format json --write-report .cursor/api-property-optionality-report.json
+```
+
+Branch on `kind`, not `message` text:
+
+| `kind` | Fix |
+|--------|-----|
+| `ts_optional_openapi_required` | Change to `@ApiPropertyOptional` (or add `required: false` to existing options) |
+| `ts_required_openapi_optional` | Change to `@ApiProperty` (or add `required: true` to existing options) |
+
+Merge into the existing options object — preserve `description`, `example`, `type`, `enum`, etc.
+
+Example — `ts_optional_openapi_required`:
+
+```ts
+// Before
+@ApiProperty({ description: 'User email' })
+email?: string;
+
+// After
+@ApiPropertyOptional({ description: 'User email' })
+email?: string;
+```
+
+### Workflow
+
+1. Fix all issues in the next **1–2 files** from the report (cap ~8 issues). Edit each file once. Skip ambiguous cases (multiple optionality decorators on one property); note skips in the commit message.
+2. Verify changed files: `pnpm check:api-property-optionality` exits 0.
+3. Regenerate SDK: `pnpm --filter @novu/api-service build:generate`
+4. Run e2e: `pnpm --filter @novu/api-service test:e2e:novu-v2`
+5. If step 3 or 4 fails, fix the root cause (do not revert the decorator changes - address the downstream breakage). Re-run the failing step before committing.
+
+
+Batch is complete when steps 3 and 4 succeed. When `issueCount` reaches 0, the task is done — no further commits needed.

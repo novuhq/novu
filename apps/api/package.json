@@ -22,6 +22,8 @@
     "lint:fix": "biome lint --write .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
+    "check:api-property-optionality": "cross-env ts-node --transpileOnly scripts/check-api-property-optionality.ts",
+    "check:api-property-optionality:json": "cross-env ts-node --transpileOnly scripts/check-api-property-optionality.ts --format json",
     "format": "biome format .",
     "format:fix": "biome format --write .",
     "lint:openapi": "spectral lint http://127.0.0.1:${PORT:-3000}/openapi.yaml",
@@ -153,6 +155,7 @@
     "pirates": "^4.0.7",
     "sinon": "^9.2.4",
     "ts-loader": "~9.4.0",
+    "ts-morph": "^24.0.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "5.6.2"
