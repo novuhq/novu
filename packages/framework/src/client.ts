@@ -200,6 +200,7 @@ export class Client {
     } catch (error) {
       // If JSONSchemaFaker fails, return an empty object as fallback
       // This prevents the preview from crashing on complex schemas
+      console.warn('Failed to mock schema, returning empty object:', error);
       return {};
     }
   }
