@@ -70,7 +70,7 @@ function ConditionsPreferences({ isDark }: { isDark: boolean }) {
 
     return (
       <div className="p-4 space-y-3">
-        {subscription.preferences.map((pref: SubscriptionPreference) => {
+        {(subscription.preferences ?? []).map((pref: SubscriptionPreference) => {
           const isEnabled = isEnabledCondition(pref);
 
           return (

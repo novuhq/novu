@@ -11,7 +11,7 @@ export default function CustomPopoverPage() {
           <Bell
             renderBell={(unreadCount) => (
               <div>
-                <span>{unreadCount}</span>
+                <span>{String(unreadCount)}</span>
                 <BellIcon />
               </div>
             )}

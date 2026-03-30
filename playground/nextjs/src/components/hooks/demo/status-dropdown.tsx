@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '../../../utils/tw';
-import { Archive, ArrowDropDown, Check, InboxIcon, Unread } from './icons';
+import { Archive, ArrowDropDown, Check, InboxIcon, Unread } from '@/components/hooks/icons';
 import { Show } from './show';
 import { useStatus } from './status-context';
 
