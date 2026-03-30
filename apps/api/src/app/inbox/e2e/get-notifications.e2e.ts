@@ -265,7 +265,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     expect(body.hasMore).to.be.false;
   });
 
-  it('should filter notifications by CNF tag groups (AND of OR-groups)', async () => {
+  it('should filter notifications by explicit AND of OR tag groups', async () => {
     await triggerEvent(template, 1);
 
     const target = await messageRepository.findOne(

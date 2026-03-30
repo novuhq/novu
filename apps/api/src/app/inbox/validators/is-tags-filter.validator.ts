@@ -1,4 +1,4 @@
-import { normalizeTagGroups, TagsFilterValidationError } from '@novu/shared';
+import { normalizeTagGroups } from '@novu/shared';
 import {
   registerDecorator,
   ValidationArguments,
@@ -22,17 +22,13 @@ export class IsTagsFilterConstraint implements ValidatorConstraintInterface {
       normalizeTagGroups(value as never);
 
       return true;
-    } catch (e) {
-      if (e instanceof TagsFilterValidationError) {
-        return false;
-      }
-
+    } catch {
       return false;
     }
   }
 
   defaultMessage(args: ValidationArguments) {
-    return `${args.property} must be a flat string[] (OR) or nested string[][] (AND of OR-groups) with non-empty inner arrays`;
+    return `${args.property} must be string[] (OR), { or: string[] }, or { and: [{ or: string[] }, ...] } (AND of OR-groups)`;
   }
 }
 

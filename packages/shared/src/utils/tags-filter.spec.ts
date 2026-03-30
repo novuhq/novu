@@ -8,24 +8,50 @@ describe('normalizeTagGroups', () => {
     expect(normalizeTagGroups([])).toEqual([]);
   });
 
-  it('wraps legacy flat list as one OR-group', () => {
+  it('wraps flat string[] as one OR-group', () => {
     expect(normalizeTagGroups(['a', 'b'])).toEqual([['a', 'b']]);
   });
 
-  it('preserves CNF nested form', () => {
+  it('normalizes explicit { or }', () => {
+    expect(normalizeTagGroups({ or: ['a', 'b'] })).toEqual([['a', 'b']]);
+  });
+
+  it('returns empty for { or: [] }', () => {
+    expect(normalizeTagGroups({ or: [] })).toEqual([]);
+  });
+
+  it('normalizes explicit { and: [{ or }, ...] }', () => {
     expect(
-      normalizeTagGroups([
-        ['a', 'b'],
-        ['c'],
-      ])
+      normalizeTagGroups({
+        and: [{ or: ['a', 'b'] }, { or: ['c'] }],
+      })
     ).toEqual([
       ['a', 'b'],
       ['c'],
     ]);
   });
 
-  it('rejects empty inner groups', () => {
-    expect(() => normalizeTagGroups([[], ['a']])).toThrow(TagsFilterValidationError);
+  it('returns empty for { and: [] }', () => {
+    expect(normalizeTagGroups({ and: [] })).toEqual([]);
+  });
+
+  it('rejects nested string[][]', () => {
+    expect(() =>
+      normalizeTagGroups([
+        ['a', 'b'],
+        ['c'],
+      ] as never)
+    ).toThrow(TagsFilterValidationError);
+  });
+
+  it('rejects both or and and on the same object', () => {
+    expect(() => normalizeTagGroups({ or: ['a'], and: [{ or: ['b'] }] } as never)).toThrow(
+      TagsFilterValidationError
+    );
+  });
+
+  it('rejects empty inner group in and', () => {
+    expect(() => normalizeTagGroups({ and: [{ or: ['a'] }, { or: [] }] })).toThrow(TagsFilterValidationError);
   });
 
   it('rejects non-array values (e.g. string is iterable and must not be treated as tag list)', () => {

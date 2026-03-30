@@ -25,23 +25,44 @@ const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 
 function appendTagsToSearchParams(searchParams: URLSearchParams, tags: TagsFilter | undefined): void {
-  if (!tags || tags.length === 0) {
+  if (tags === undefined) {
     return;
   }
 
-  if (tags.length > 0 && Array.isArray(tags[0])) {
-    const groups = tags as string[][];
-    groups.forEach((group, groupIndex) => {
-      for (const tag of group) {
+  if (Array.isArray(tags)) {
+    if (tags.length === 0) {
+      return;
+    }
+
+    for (const tag of tags) {
+      searchParams.append('tags[]', tag);
+    }
+
+    return;
+  }
+
+  if ('or' in tags) {
+    if (tags.or.length === 0) {
+      return;
+    }
+
+    for (const tag of tags.or) {
+      searchParams.append('tags[]', tag);
+    }
+
+    return;
+  }
+
+  if ('and' in tags) {
+    if (tags.and.length === 0) {
+      return;
+    }
+
+    tags.and.forEach((group, groupIndex) => {
+      for (const tag of group.or) {
         searchParams.append(`tags[${groupIndex}][]`, tag);
       }
     });
-
-    return;
-  }
-
-  for (const tag of tags as string[]) {
-    searchParams.append('tags[]', tag);
   }
 }
 

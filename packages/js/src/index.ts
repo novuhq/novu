@@ -44,6 +44,8 @@ export {
   StandardNovuOptions,
   Subscriber,
   TagsFilter,
+  TagsFilterAndForm,
+  TagsFilterOrGroup,
   TimeRange,
   UnreadCount,
   WebSocketEvent,
