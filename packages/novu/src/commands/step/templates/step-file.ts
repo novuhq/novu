@@ -207,9 +207,10 @@ export function generateDelayStepFile(stepId: string, useZod: boolean): string {
 export default step.delay(
   '${escapeString(stepId)}',
   async (controls, { payload, subscriber }) => {
-    // Use a scheduled send-time from your payload when available (ISO string or Unix ms)
+    // Use a scheduled send-time from your payload when available (ISO string or Unix ms).
+    // dynamicKey is a dot-notation path into { payload, subscriber } — e.g. 'payload.sendAt'
     if (payload.sendAt) {
-      return { type: 'dynamic', dynamicKey: payload.sendAt as string };
+      return { type: 'dynamic', dynamicKey: 'payload.sendAt' };
     }
 
     return {
