@@ -21,7 +21,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useStepResolversCount } from '@/hooks/use-step-resolvers-count';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
+import { STEP_RESOLVER_SUPPORTED_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
@@ -101,7 +101,7 @@ export function StepEditorModeToggle() {
           }
         }}
         title="Switch back to Novu editor?"
-        description="This will remove the link to your deployed step resolver and restore native editing for this step."
+        description="This will disconnect your custom code step and restore native editing for this step."
         confirmButtonText="Disconnect"
         isLoading={isDisconnecting}
       />
@@ -181,11 +181,18 @@ export function StepEditorModeToggle() {
                   Write and deploy this step as a serverless function from your repository.
                 </p>
                 <ul className="flex flex-col gap-1.5">
-                  {[
-                    { label: 'Use any template engine', detail: 'React Email, MJML...' },
-                    { label: 'Code-first', detail: 'define content and logic in TypeScript' },
-                    { label: 'Version controlled', detail: 'your handler lives in your repo' },
-                  ].map(({ label, detail }) => (
+                  {(TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type)
+                    ? [
+                        { label: 'Use any template engine', detail: 'React Email, MJML...' },
+                        { label: 'Code-first', detail: 'define content and logic in TypeScript' },
+                        { label: 'Version controlled', detail: 'your handler lives in your repo' },
+                      ]
+                    : [
+                        { label: 'Override step logic in TypeScript', detail: 'custom delay, digest, or routing rules' },
+                        { label: 'Code-first', detail: 'define behavior and conditions in your repo' },
+                        { label: 'Version controlled', detail: 'your handler lives in your codebase' },
+                      ]
+                  ).map(({ label, detail }) => (
                     <li key={label} className="flex items-center gap-1">
                       <Check className="size-3 shrink-0 text-text-sub" />
                       <span className="text-paragraph-xs">

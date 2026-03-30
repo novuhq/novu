@@ -4,10 +4,13 @@ import type { ContextResolved } from '../../types/context.types';
 import type { WithPassthrough } from '../../types/provider.types';
 import type {
   ChatOutputUnvalidated,
+  DelayOutputUnvalidated,
+  DigestOutputUnvalidated,
   EmailOutputUnvalidated,
   InAppOutputUnvalidated,
   PushOutputUnvalidated,
   SmsOutputUnvalidated,
+  ThrottleOutputUnvalidated,
 } from '../../types/step.types';
 import type { Subscriber } from '../../types/subscriber.types';
 import type { Awaitable } from '../../types/util.types';
@@ -196,12 +199,66 @@ export type InAppStepResolver<
   disableOutputSanitization?: boolean;
 };
 
+export type DelayStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+> = {
+  type: 'delay';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<DelayOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
+  envSchema?: TEnvSchema;
+  skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>['skip'];
+};
+
+export type DigestStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+> = {
+  type: 'digest';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<DigestOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
+  envSchema?: TEnvSchema;
+  skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>['skip'];
+};
+
+export type ThrottleStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+> = {
+  type: 'throttle';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<ThrottleOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
+  envSchema?: TEnvSchema;
+  skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>['skip'];
+};
+
 export type AnyStepResolver =
   | EmailStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | SmsStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | ChatStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | PushStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
-  | InAppStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>;
+  | InAppStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
+  | DelayStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
+  | DigestStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
+  | ThrottleStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>;
 
 function email<
   TControlSchema extends Schema | undefined = undefined,
@@ -328,4 +385,73 @@ function inApp<
   };
 }
 
-export const step = { email, sms, chat, push, inApp };
+function delay<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<DelayOutputUnvalidated>,
+  options?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>
+): DelayStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
+  return {
+    type: 'delay',
+    stepId,
+    resolve: resolve as DelayStepResolver<TControlSchema, TPayloadSchema, TEnvSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
+    envSchema: options?.envSchema,
+    skip: options?.skip,
+  };
+}
+
+function digest<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<DigestOutputUnvalidated>,
+  options?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>
+): DigestStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
+  return {
+    type: 'digest',
+    stepId,
+    resolve: resolve as DigestStepResolver<TControlSchema, TPayloadSchema, TEnvSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
+    envSchema: options?.envSchema,
+    skip: options?.skip,
+  };
+}
+
+function throttle<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<ThrottleOutputUnvalidated>,
+  options?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>
+): ThrottleStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
+  return {
+    type: 'throttle',
+    stepId,
+    resolve: resolve as ThrottleStepResolver<TControlSchema, TPayloadSchema, TEnvSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
+    envSchema: options?.envSchema,
+    skip: options?.skip,
+  };
+}
+
+export const step = { email, sms, chat, push, inApp, delay, digest, throttle };
