@@ -2,7 +2,7 @@ type DateBasedChartData = {
   timestamp: string;
 };
 
-export function hasMinimumDateRange<T extends DateBasedChartData>(data: T[], minimumDays: number = 5): boolean {
+function hasMinimumDateRange<T extends DateBasedChartData>(data: T[], minimumDays: number = 5): boolean {
   if (!data || data.length === 0) {
     return false;
   }
@@ -17,7 +17,7 @@ export function hasMinimumDateRange<T extends DateBasedChartData>(data: T[], min
   return uniqueDates.size >= minimumDays;
 }
 
-export function hasMinimumDaysWithData<T extends DateBasedChartData>(
+function hasMinimumDaysWithData<T extends DateBasedChartData>(
   data: T[],
   hasDataForItem: (item: T) => boolean,
   minimumDays: number = 5
@@ -60,7 +60,7 @@ export function createDateBasedHasDataChecker<T extends DateBasedChartData>(
   };
 }
 
-export function hasMinimumEntries<T>(
+function hasMinimumEntries<T>(
   data: T[],
   hasDataForItem: (item: T) => boolean,
   minimumEntries: number = 2
