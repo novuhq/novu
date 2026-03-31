@@ -9,7 +9,7 @@ export class CmTelecomSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.CmTelecom;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
-  private readonly BASE_URL = 'https://gw.cmtelecom.com/v1.0/message';
+  private readonly BASE_URL = 'https://gw.messaging.cm.com/v1.0/message';
 
   constructor(
     private config: {
