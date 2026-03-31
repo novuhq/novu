@@ -34,7 +34,7 @@ export const PropertyNameInput = memo(function PropertyNameInput({
           return (
             <InputRoot hasError={!!fieldState.error} size="2xs" className={cn('font-mono')}>
               <InputWrapper>
-                <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+                <Code2 className="text-feature h-4 w-4 shrink-0" />
                 <InputPure
                   value={field.value}
                   onChange={field.onChange}

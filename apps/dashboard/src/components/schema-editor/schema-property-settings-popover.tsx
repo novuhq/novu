@@ -212,7 +212,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
                   <FormControl>
                     <InputRoot hasError={!!fieldState.error} size="2xs" className={cn('font-mono')}>
                       <InputWrapper>
-                        <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+                        <Code2 className="h-4 w-4 shrink-0 text-feature" />
                         <InputPure
                           {...field}
                           value={
