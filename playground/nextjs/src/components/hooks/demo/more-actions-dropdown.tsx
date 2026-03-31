@@ -1,9 +1,9 @@
 'use-client';
 
 import { useNovu } from '@novu/nextjs/hooks';
-import { Archive, ArchiveRead, Dots, ReadAll } from './icons';
-import { StatusItem } from './status-dropdown';
+import { Archive, ArchiveRead, Dots, ReadAll } from '@/components/hooks/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { StatusItem } from './status-dropdown';
 
 export const MoreActionsDropdown = () => {
   const novu = useNovu();

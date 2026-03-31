@@ -195,7 +195,14 @@ export class Client {
    * @returns mocked data
    */
   private mock(schema: Schema): Record<string, unknown> {
-    return mockSchema(schema) as Record<string, unknown>;
+    try {
+      return mockSchema(schema) as Record<string, unknown>;
+    } catch (error) {
+      // If JSONSchemaFaker fails, return an empty object as fallback
+      // This prevents the preview from crashing on complex schemas
+      console.warn('Failed to mock schema, returning empty object:', error);
+      return {};
+    }
   }
 
   private async validate<T extends Record<string, unknown>>(
