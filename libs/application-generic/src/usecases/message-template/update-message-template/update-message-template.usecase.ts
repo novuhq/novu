@@ -36,8 +36,14 @@ export class UpdateMessageTemplate {
       updatePayload.name = command.name;
     }
 
+    const effectiveTemplateType = command.type !== undefined ? command.type : existingTemplate.type;
+
+    if (command.type !== undefined && command.type !== existingTemplate.type) {
+      updatePayload.type = command.type;
+    }
+
     if (command.content !== null || command.content !== undefined) {
-      updatePayload.content = shouldSanitize(existingTemplate.type, command.contentType)
+      updatePayload.content = shouldSanitize(effectiveTemplateType, command.contentType)
         ? sanitizeMessageContentV0(command.content)
         : command.content;
     }
