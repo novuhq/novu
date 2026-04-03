@@ -75,8 +75,8 @@ overrides:
   smol-toml@<1.6.1: ^1.6.1
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
-  lodash-es@<=4.17.22: ^4.17.23
-  lodash@<4.17.23: ^4.17.23
+  lodash-es@<=4.17.23: ^4.18.0
+  lodash@<=4.17.23: ^4.18.0
   ajv@>=8.0.0 <8.18.0: ^8.18.0
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
@@ -479,8 +479,8 @@ importers:
         specifier: ^10.25.0
         version: 10.25.0
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       lru-cache:
         specifier: ^11.2.4
         version: 11.2.4
@@ -1190,8 +1190,8 @@ importers:
         specifier: ^1.1.1
         version: 1.3.0
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       mailparser:
         specifier: ^0.6.0
         version: 0.6.2
@@ -1341,8 +1341,8 @@ importers:
         specifier: 9.0.3
         version: 9.0.3
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       nest-raven:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.1)(ts-morph@24.0.0)
@@ -1543,8 +1543,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       lru-cache:
         specifier: ^11.2.4
         version: 11.2.4
@@ -1746,8 +1746,8 @@ importers:
         specifier: 9.0.3
         version: 9.0.3
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       nest-raven:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.1)(ts-morph@24.0.0)
@@ -2289,8 +2289,8 @@ importers:
         specifier: ^23.7.11
         version: 23.7.11
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       multer:
         specifier: ^2.1.1
         version: 2.1.1
@@ -2545,8 +2545,8 @@ importers:
         specifier: ^10.25.0
         version: 10.25.0
       lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
+        specifier: ^4.18.0
+        version: 4.18.1
       lru-cache:
         specifier: ^11.2.4
         version: 11.2.4
@@ -21385,8 +21385,8 @@ packages:
   lockfile@1.0.4:
     resolution: {integrity: sha512-cvbTwETRfsFh4nHsL1eGWapU1XFi5Ot9E85sWAwia7Y7EgB7vfqcZhTKZ+l7hCGxSPoushMv5GKhT5PdLv03WA==}
 
-  lodash-es@4.17.23:
-    resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
+  lodash-es@4.18.1:
+    resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
   lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
@@ -21478,8 +21478,8 @@ packages:
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   log-symbols@1.0.2:
     resolution: {integrity: sha512-mmPrW0Fh2fxOzdBbFv4g1m6pR72haFLPJ2G5SJEELf1y+iaQrDG6cWCPjy54RHYbZAt7X+ls690Kw62AdWXBzQ==}
@@ -32006,12 +32006,12 @@ snapshots:
     dependencies:
       '@chevrotain/gast': 11.0.3
       '@chevrotain/types': 11.0.3
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   '@chevrotain/gast@11.0.3':
     dependencies:
       '@chevrotain/types': 11.0.3
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   '@chevrotain/regexp-to-ast@11.0.3': {}
 
@@ -33587,7 +33587,7 @@ snapshots:
       '@emotion/styled': 11.10.6(@emotion/react@11.10.6(@types/react@19.2.8)(react@19.2.3))(@types/react@19.2.8)(react@19.2.3)
       '@types/lodash': 4.14.192
       little-state-machine: 4.8.0(react@19.2.3)
-      lodash: 4.17.23
+      lodash: 4.18.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       react-simple-animate: 3.5.2(react-dom@19.2.3(react@19.2.3))
@@ -34758,7 +34758,7 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.14.0(@types/node@20.19.10)
       '@rushstack/ts-command-line': 4.22.6(@types/node@20.19.10)
-      lodash: 4.17.23
+      lodash: 4.18.1
       minimatch: 3.1.5
       resolve: 1.22.8
       semver: 7.5.4
@@ -34777,7 +34777,7 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.14.0(@types/node@22.15.13)
       '@rushstack/ts-command-line': 4.22.6(@types/node@22.15.13)
-      lodash: 4.17.23
+      lodash: 4.18.1
       minimatch: 3.1.5
       resolve: 1.22.8
       semver: 7.5.4
@@ -34943,7 +34943,7 @@ snapshots:
       '@nestjs/common': 10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       dotenv: 16.4.5
       dotenv-expand: 10.0.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       rxjs: 7.8.1
 
   '@nestjs/core@10.4.18(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.18)(@nestjs/websockets@10.4.18)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1)':
@@ -34976,7 +34976,7 @@ snapshots:
       graphql: 16.9.0
       graphql-tag: 2.12.6(graphql@16.9.0)
       graphql-ws: 5.14.0(graphql@16.9.0)
-      lodash: 4.17.23
+      lodash: 4.18.1
       normalize-path: 3.0.0
       reflect-metadata: 0.2.2
       subscriptions-transport-ws: 0.11.0(graphql@16.9.0)
@@ -35088,7 +35088,7 @@ snapshots:
       '@nestjs/core': 10.4.18(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.18)(@nestjs/websockets@10.4.18)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/mapped-types': 2.0.5(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)
       js-yaml: 4.1.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       path-to-regexp: 3.3.0
       reflect-metadata: 0.2.2
       swagger-ui-dist: 5.17.14
@@ -35167,7 +35167,7 @@ snapshots:
       is-invalid-path: 1.0.2
       js-yaml: 4.1.1
       jsonschema: 1.4.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       log4js: 6.9.1
       pretty-bytes: 5.6.0
       request-ip: 3.3.0
@@ -39904,8 +39904,8 @@ snapshots:
   '@rjsf/core@5.22.3(@rjsf/utils@5.20.1(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@rjsf/utils': 5.20.1(react@19.2.3)
-      lodash: 4.17.23
-      lodash-es: 4.17.23
+      lodash: 4.18.1
+      lodash-es: 4.18.1
       markdown-to-jsx: 7.4.1(react@19.2.3)
       nanoid: 3.3.8
       prop-types: 15.8.1
@@ -39915,8 +39915,8 @@ snapshots:
     dependencies:
       json-schema-merge-allof: 0.8.1
       jsonpointer: 5.0.1
-      lodash: 4.17.23
-      lodash-es: 4.17.23
+      lodash: 4.18.1
+      lodash-es: 4.18.1
       react: 19.2.3
       react-is: 18.3.1
 
@@ -39925,8 +39925,8 @@ snapshots:
       '@rjsf/utils': 5.20.1(react@19.2.3)
       ajv: 8.18.0
       ajv-formats: 2.1.1(ajv@8.18.0)
-      lodash: 4.17.23
-      lodash-es: 4.17.23
+      lodash: 4.18.1
+      lodash-es: 4.18.1
 
   '@rollup/plugin-commonjs@22.0.2(rollup@2.80.0)':
     dependencies:
@@ -41683,7 +41683,7 @@ snapshots:
       dependency-graph: 0.11.0
       fast-memoize: 2.5.2
       immer: 9.0.21
-      lodash: 4.17.23
+      lodash: 4.18.1
       tslib: 2.8.1
       urijs: 1.19.11
 
@@ -41693,7 +41693,7 @@ snapshots:
       '@stoplight/path': 1.3.2
       '@stoplight/types': 13.20.0
       jsonc-parser: 2.2.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       safe-stable-stringify: 1.1.1
 
   '@stoplight/ordered-object-literal@1.0.5': {}
@@ -41716,7 +41716,7 @@ snapshots:
       chalk: 4.1.2
       fast-glob: 3.2.12
       hpagent: 1.2.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       pony-cause: 1.1.1
       stacktracey: 2.1.8
       tslib: 2.8.1
@@ -41740,7 +41740,7 @@ snapshots:
       ajv-formats: 2.1.1(ajv@8.18.0)
       es-aggregate-error: 1.0.11
       jsonpath-plus: 10.3.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       lodash.topath: 4.5.2
       minimatch: 3.1.5
       nimma: 0.2.3
@@ -41777,7 +41777,7 @@ snapshots:
       '@types/markdown-escape': 1.1.3
       chalk: 4.1.2
       cliui: 7.0.4
-      lodash: 4.17.23
+      lodash: 4.18.1
       markdown-escape: 2.0.0
       node-sarif-builder: 2.0.3
       strip-ansi: 6.0.1
@@ -41797,7 +41797,7 @@ snapshots:
       ajv-draft-04: 1.0.0(ajv@8.18.0)
       ajv-errors: 3.0.0(ajv@8.18.0)
       ajv-formats: 2.1.1(ajv@8.18.0)
-      lodash: 4.17.23
+      lodash: 4.18.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
@@ -41813,7 +41813,7 @@ snapshots:
       ajv-draft-04: 1.0.0(ajv@8.18.0)
       ajv-errors: 3.0.0(ajv@8.18.0)
       ajv-formats: 2.1.1(ajv@8.18.0)
-      lodash: 4.17.23
+      lodash: 4.18.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
@@ -41889,7 +41889,7 @@ snapshots:
       ajv: 8.18.0
       ajv-formats: 2.1.1(ajv@8.18.0)
       json-schema-traverse: 1.0.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
@@ -41900,7 +41900,7 @@ snapshots:
       '@stoplight/path': 1.3.2
       '@stoplight/types': 12.5.0
       abort-controller: 3.0.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       node-fetch: 2.7.0(encoding@0.1.13)
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -43724,7 +43724,7 @@ snapshots:
       '@verdaccio/signature': 7.0.0-next-7.5
       '@verdaccio/utils': 7.0.0-next-7.15
       debug: 4.3.4(supports-color@8.1.1)
-      lodash: 4.17.23
+      lodash: 4.18.1
       verdaccio-htpasswd: 12.0.0-next-7.15
     transitivePeerDependencies:
       - supports-color
@@ -43740,7 +43740,7 @@ snapshots:
       '@verdaccio/utils': 7.0.0-next-7.15
       debug: 4.3.4(supports-color@8.1.1)
       js-yaml: 4.1.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       minimatch: 7.4.9
       yup: 0.32.11
     transitivePeerDependencies:
@@ -43767,7 +43767,7 @@ snapshots:
     dependencies:
       '@verdaccio/logger': 7.0.0-next-7.15
       debug: 4.3.4(supports-color@8.1.1)
-      lodash: 4.17.23
+      lodash: 4.18.1
     transitivePeerDependencies:
       - supports-color
 
@@ -43778,7 +43778,7 @@ snapshots:
       '@verdaccio/streams': 10.2.1
       async: 3.2.4
       debug: 4.3.4(supports-color@8.1.1)
-      lodash: 4.17.23
+      lodash: 4.18.1
       lowdb: 1.0.0
       mkdirp: 1.0.4
     transitivePeerDependencies:
@@ -43804,7 +43804,7 @@ snapshots:
     dependencies:
       colorette: 2.0.20
       dayjs: 1.11.10
-      lodash: 4.17.23
+      lodash: 4.18.1
       pino-abstract-transport: 1.1.0
       sonic-boom: 3.8.0
 
@@ -43824,7 +43824,7 @@ snapshots:
       debug: 4.3.4(supports-color@8.1.1)
       express: 4.21.2
       express-rate-limit: 5.5.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       lru-cache: 7.18.3
       mime: 2.6.0
     transitivePeerDependencies:
@@ -43847,7 +43847,7 @@ snapshots:
       '@verdaccio/url': 12.0.0-next-7.15
       '@verdaccio/utils': 7.0.0-next-7.15
       debug: 4.3.4(supports-color@8.1.1)
-      lodash: 4.17.23
+      lodash: 4.18.1
     transitivePeerDependencies:
       - supports-color
 
@@ -43857,7 +43857,7 @@ snapshots:
     dependencies:
       '@verdaccio/core': 7.0.0-next-7.15
       debug: 4.3.4(supports-color@8.1.1)
-      lodash: 4.17.23
+      lodash: 4.18.1
       validator: 13.15.26
     transitivePeerDependencies:
       - supports-color
@@ -43865,7 +43865,7 @@ snapshots:
   '@verdaccio/utils@7.0.0-next-7.15':
     dependencies:
       '@verdaccio/core': 7.0.0-next-7.15
-      lodash: 4.17.23
+      lodash: 4.18.1
       minimatch: 7.4.9
       semver: 7.6.0
 
@@ -44420,7 +44420,7 @@ snapshots:
       '@hapi/joi': 16.1.8
       axios: 1.13.6
       body-parser: 1.20.3
-      lodash: 4.17.23
+      lodash: 4.18.1
       phone: 3.1.37
       querystring: 0.2.1
       validate.js: 0.13.1
@@ -44854,7 +44854,7 @@ snapshots:
 
   async@2.6.4:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   async@3.2.4: {}
 
@@ -45514,7 +45514,7 @@ snapshots:
       debuglog: 1.0.1
       get-port: 5.1.1
       ioredis: 5.3.2
-      lodash: 4.17.23
+      lodash: 4.18.1
       msgpackr: 1.11.9
       semver: 7.5.4
       uuid: 8.3.2
@@ -45526,7 +45526,7 @@ snapshots:
       cron-parser: 4.9.0
       glob: 8.1.0
       ioredis: 5.3.2
-      lodash: 4.17.23
+      lodash: 4.18.1
       msgpackr: 1.11.9
       semver: 7.5.4
       tslib: 2.8.1
@@ -45815,7 +45815,7 @@ snapshots:
   chevrotain-allstar@0.3.1(chevrotain@11.0.3):
     dependencies:
       chevrotain: 11.0.3
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   chevrotain@11.0.3:
     dependencies:
@@ -45824,7 +45824,7 @@ snapshots:
       '@chevrotain/regexp-to-ast': 11.0.3
       '@chevrotain/types': 11.0.3
       '@chevrotain/utils': 11.0.3
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   chokidar@1.7.0:
     dependencies:
@@ -46253,7 +46253,7 @@ snapshots:
     dependencies:
       chalk: 2.4.2
       date-fns: 2.29.3
-      lodash: 4.17.23
+      lodash: 4.18.1
       read-pkg: 4.0.1
       rxjs: 6.6.7
       spawn-command: 0.0.2-1
@@ -46648,7 +46648,7 @@ snapshots:
       is-installed-globally: 0.4.0
       lazy-ass: 1.6.0
       listr2: 3.14.0(enquirer@2.3.6)
-      lodash: 4.17.23
+      lodash: 4.18.1
       log-symbols: 4.1.0
       minimist: 1.2.6
       ospath: 1.2.2
@@ -46845,7 +46845,7 @@ snapshots:
   dagre-d3-es@7.0.13:
     dependencies:
       d3: 7.9.0
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   dashdash@1.14.1:
     dependencies:
@@ -50022,7 +50022,7 @@ snapshots:
       cli-width: 3.0.0
       external-editor: 3.1.0
       figures: 3.2.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       mute-stream: 0.0.8
       ora: 5.4.1
       run-async: 2.4.1
@@ -50041,7 +50041,7 @@ snapshots:
       cli-width: 4.1.0
       external-editor: 3.1.0
       figures: 3.2.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       mute-stream: 1.0.0
       ora: 5.4.1
       run-async: 3.0.0
@@ -51673,7 +51673,7 @@ snapshots:
 
   json-schema-compare@0.2.2:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   json-schema-faker@0.5.9:
     dependencies:
@@ -51684,7 +51684,7 @@ snapshots:
     dependencies:
       compute-lcm: 1.1.2
       json-schema-compare: 0.2.2
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   json-schema-ref-parser@6.1.0:
     dependencies:
@@ -51756,7 +51756,7 @@ snapshots:
   jsonwebtoken@9.0.0:
     dependencies:
       jws: 3.2.3
-      lodash: 4.17.23
+      lodash: 4.18.1
       ms: 2.1.3
       semver: 7.7.4
 
@@ -52272,7 +52272,7 @@ snapshots:
     dependencies:
       signal-exit: 3.0.7
 
-  lodash-es@4.17.23: {}
+  lodash-es@4.18.1: {}
 
   lodash.camelcase@4.3.0: {}
 
@@ -52333,7 +52333,7 @@ snapshots:
   lodash@4.17.21:
     optional: true
 
-  lodash@4.17.23: {}
+  lodash@4.18.1: {}
 
   log-symbols@1.0.2:
     dependencies:
@@ -52403,7 +52403,7 @@ snapshots:
     dependencies:
       graceful-fs: 4.2.11
       is-promise: 2.2.2
-      lodash: 4.17.23
+      lodash: 4.18.1
       pify: 3.0.0
       steno: 0.4.4
 
@@ -52913,7 +52913,7 @@ snapshots:
       dompurify: 3.3.3
       katex: 0.16.28
       khroma: 2.1.0
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
       marked: 16.4.2
       roughjs: 4.6.6
       stylis: 4.3.6
@@ -53900,7 +53900,7 @@ snapshots:
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       propagate: 2.0.1
     transitivePeerDependencies:
       - supports-color
@@ -53917,7 +53917,7 @@ snapshots:
 
   node-emoji@1.11.0:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   node-emoji@2.1.3:
     dependencies:
@@ -54711,7 +54711,7 @@ snapshots:
 
   passport-headerapikey@1.2.2:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
       passport-strategy: 1.0.0
 
   passport-jwt@4.0.1:
@@ -54994,7 +54994,7 @@ snapshots:
       https-proxy-agent: 5.0.1
       joi: 17.11.0
       jsonwebtoken: 9.0.3
-      lodash: 4.17.23
+      lodash: 4.18.1
       querystring: 0.2.1
       uri-parser: 1.0.1
       utf8: 2.1.2
@@ -56402,7 +56402,7 @@ snapshots:
     dependencies:
       clsx: 2.1.1
       eventemitter3: 4.0.7
-      lodash: 4.17.23
+      lodash: 4.18.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       react-is: 18.3.1
@@ -59654,7 +59654,7 @@ snapshots:
       js-yaml: 4.1.1
       jsonwebtoken: 9.0.2
       kleur: 4.1.5
-      lodash: 4.17.23
+      lodash: 4.18.1
       lru-cache: 7.18.3
       mime: 3.0.0
       mkdirp: 1.0.4
@@ -59985,7 +59985,7 @@ snapshots:
       chalk: 4.1.2
       commander: 7.2.0
       gzip-size: 6.0.0
-      lodash: 4.17.23
+      lodash: 4.18.1
       opener: 1.5.2
       sirv: 1.0.19
       ws: 7.5.10
@@ -60150,7 +60150,7 @@ snapshots:
 
   whatwg-url@8.7.0:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
       tr46: 2.1.0
       webidl-conversions: 6.1.0
 
@@ -60502,8 +60502,8 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.28.3
       '@types/lodash': 4.17.20
-      lodash: 4.17.23
-      lodash-es: 4.17.23
+      lodash: 4.18.1
+      lodash-es: 4.18.1
       nanoclone: 0.2.1
       property-expr: 2.0.6
       toposort: 2.0.2
