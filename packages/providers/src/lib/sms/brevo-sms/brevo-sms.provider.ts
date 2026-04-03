@@ -1,5 +1,5 @@
+import type { Agent } from 'node:http';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -7,7 +7,7 @@ import { WithPassthrough } from '../../../utils/types';
 
 declare global {
   interface RequestInit {
-    agent: ProxyAgent;
+    agent?: Agent;
   }
 }
 
@@ -36,6 +36,8 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
       content: options.content,
     });
 
+    const { ProxyAgent: ProxyAgentCtor } = await import('proxy-agent');
+
     const response = await fetch(`${this.BASE_URL}/transactionalSMS/sms`, {
       method: 'POST',
       headers: {
@@ -44,7 +46,7 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
         Accept: 'application/json',
         ...sms.headers,
       },
-      agent: new ProxyAgent(),
+      agent: new ProxyAgentCtor(),
       body: JSON.stringify(sms.body),
     });
 

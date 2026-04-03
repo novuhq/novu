@@ -180,7 +180,6 @@
     "globals": "^15.9.0",
     "http-proxy-middleware": "^3.0.5",
     "http-server": "^0.13.0",
-    "pm2": "^6.0.6",
     "postcss": "^8.4.47",
     "rimraf": "^3.0.2",
     "tailwindcss": "^4.1.18",
