@@ -7,7 +7,7 @@ import { FiChevronDown, FiHome, FiInbox, FiSearch, FiSettings } from 'react-icon
 import { BsFillFileTextFill, BsTrash } from 'react-icons/bs';
 import { AiOutlineCalendar } from 'react-icons/ai';
 import { FaUserFriends } from 'react-icons/fa';
-import { EmptyIcon, NotionIcon } from './icons';
+import { EmptyIcon, NotionIcon } from '@/components/hooks/icons';
 import { StatusDropdown } from './status-dropdown';
 import { MoreActionsDropdown } from './more-actions-dropdown';
 import { Show } from './show';

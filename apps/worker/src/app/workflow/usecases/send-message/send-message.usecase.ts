@@ -20,6 +20,7 @@ import {
 } from '@novu/application-generic';
 import {
   ContextRepository,
+  EnvironmentRepository,
   EnvironmentVariableRepository,
   JobEntity,
   NotificationTemplateRepository,
@@ -32,6 +33,7 @@ import {
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
   DigestTypeEnum,
+  EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestRegularMetadata,
@@ -78,6 +80,7 @@ export class SendMessage {
     private analyticsService: AnalyticsService,
     private contextRepository: ContextRepository,
     private environmentVariableRepository: EnvironmentVariableRepository,
+    private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
@@ -417,7 +420,7 @@ export class SendMessage {
 
   @Instrument()
   private async buildVariables(command: SendMessageCommand): Promise<ICompileContext> {
-    const [subscriber, actor, tenant, context, envVars] = await Promise.all([
+    const [subscriber, actor, tenant, context, envVars, environmentEntity] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -430,9 +433,22 @@ export class SendMessage {
       this.handleTenantExecution(command.job),
       this.resolveContext(command),
       this.getEnvironmentVariables(command),
+      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
     ]);
 
     if (!subscriber) throw new PlatformException('Subscriber not found');
+    if (!environmentEntity) throw new PlatformException('EnvironmentEntity not found');
+
+    // Compile-safe: adding a required field to EnvironmentSystemVariables will cause a TS error here
+    const environmentSystemVars: EnvironmentSystemVariables = {
+      name: environmentEntity.name,
+      type: environmentEntity.type,
+    };
+
+    const env: EnvironmentSystemVariables & Record<string, string> = {
+      ...envVars,
+      ...environmentSystemVars,
+    };
 
     return {
       subscriber,
@@ -445,7 +461,7 @@ export class SendMessage {
       ...(tenant && { tenant }),
       ...(actor && { actor }),
       ...(context && { context }),
-      ...(Object.keys(envVars).length > 0 && { env: envVars }),
+      env,
     };
   }
 

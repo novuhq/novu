@@ -33,8 +33,8 @@ enum ReqStatusEnum {
   ERROR = 'error',
 }
 
-export const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
-export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
+const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
+const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
 const ALLOWED_METHODS = ['post', 'patch'];
 
 @Injectable()

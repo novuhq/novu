@@ -27,10 +27,8 @@ export function isActionStepType(type: StepTypeEnum) {
   return channels.find((channel) => channel === type);
 }
 
-export function isChannelStepType(type: StepTypeEnum) {
-  const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
-
-  return channels.find((channel) => channel === type);
+export function isStepResolverSupportedType(type: StepTypeEnum): boolean {
+  return ![StepTypeEnum.TRIGGER, StepTypeEnum.CUSTOM, StepTypeEnum.HTTP_REQUEST].includes(type);
 }
 
 export function getJobDigest(job: JobEntity): {

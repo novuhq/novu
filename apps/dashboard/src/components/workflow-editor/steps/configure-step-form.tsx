@@ -1,12 +1,18 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
+  ApiServiceLevelEnum,
   EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
   IEnvironment,
   ResourceOriginEnum,
   StepResponseDto,
   StepUpdateDto,
+  UNLIMITED_VALUE,
   WorkflowResponseDto,
+  getFeatureForTierAsNumber,
 } from '@novu/shared';
+import { FileCode2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -49,9 +55,19 @@ import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
+import { IS_SELF_HOSTED } from '@/config';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
-import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { useStepResolversCount } from '@/hooks/use-step-resolvers-count';
+import {
+  INLINE_CONFIGURABLE_STEP_TYPES,
+  STEP_RESOLVER_SUPPORTED_STEP_TYPES,
+  STEP_TYPE_LABELS,
+  TEMPLATE_CONFIGURABLE_STEP_TYPES,
+} from '@/utils/constants';
 import { getControlsDefaultValues } from '@/utils/default-values';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -94,7 +110,10 @@ type ConfigureStepFormProps = {
 export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
+  const isActionStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { subscription, isLoading: isSubscriptionLoading } = useFetchSubscription();
+  const { data: stepResolversCountData, isLoading: isCountLoading } = useStepResolversCount();
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
     StepTypeEnum.SMS,
@@ -113,6 +132,27 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
   const isTemplateConfigurableStep = isSupportedStep && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type);
   const isInlineConfigurableStep = isSupportedStep && INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type);
+  const isInlineResolverSupportedStep =
+    isActionStepResolverEnabled && isInlineConfigurableStep && STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type);
+  const isInlineResolverActive = isInlineConfigurableStep && Boolean(step.stepResolverHash);
+
+  const tier = subscription?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
+  const codeStepLimit = getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_STEP_RESOLVERS, tier, false);
+  const isUnlimited = codeStepLimit >= UNLIMITED_VALUE;
+  const stepResolversCount = stepResolversCountData?.count;
+  const isAtCodeStepLimit =
+    !IS_SELF_HOSTED &&
+    !isSubscriptionLoading &&
+    !isCountLoading &&
+    !isUnlimited &&
+    !step.stepResolverHash &&
+    stepResolversCount !== undefined &&
+    stepResolversCount >= codeStepLimit;
+  const codeStepLimitDescription =
+    tier === ApiServiceLevelEnum.FREE
+      ? `You've reached the ${codeStepLimit} code step limit on your Free plan. Upgrade to Pro for 10 code steps, or Business for unlimited.`
+      : `You've reached the ${codeStepLimit} code step limit on your ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan. Upgrade to Business for unlimited code steps.`;
+
   const hasCustomControls = Object.keys(step.controls.dataSchema ?? {}).length > 0 && !step.controls.uiSchema;
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
 
@@ -313,7 +353,43 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 </SidebarContent>
                 <Separator />
 
-                {isInlineConfigurableStep && !hasCustomControls && <InlineControlValues />}
+                {isInlineConfigurableStep && !hasCustomControls && !isInlineResolverActive && <InlineControlValues />}
+
+                {isInlineResolverSupportedStep && !isInlineResolverActive && !isReadOnly && (
+                  <SidebarContent>
+                    {isAtCodeStepLimit ? (
+                      <UpgradeCTATooltip description={codeStepLimitDescription} utmCampaign="code_steps_limit">
+                        <span className="inline-flex w-full cursor-not-allowed">
+                          <Button
+                            variant="secondary"
+                            mode="outline"
+                            className="flex w-full cursor-not-allowed justify-start gap-1.5 text-xs font-medium opacity-60"
+                            type="button"
+                            disabled
+                          >
+                            <FileCode2 className="h-4 w-4 text-neutral-600" />
+                            Resolve with custom code
+                            <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                          </Button>
+                        </span>
+                      </UpgradeCTATooltip>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        mode="outline"
+                        className="flex w-full justify-start gap-1.5 text-xs font-medium"
+                        type="button"
+                        onClick={() =>
+                          navigate('./editor', { relative: 'path', state: { isPendingResolverActivation: true } })
+                        }
+                      >
+                        <FileCode2 className="h-4 w-4 text-neutral-600" />
+                        Resolve with custom code
+                        <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                      </Button>
+                    )}
+                  </SidebarContent>
+                )}
 
                 {step.type === StepTypeEnum.HTTP_REQUEST && (
                   <SidebarContent>
@@ -324,7 +400,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </FormRoot>
           </Form>
 
-          {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
+          {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls || isInlineResolverActive) && (
             <>
               <SidebarContent>
                 <Link to="./editor" relative="path" state={{ stepType: step.type }}>
@@ -428,6 +504,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           )}
         </motion.div>
       </AnimatePresence>
+
     </>
   );
 };

@@ -10,6 +10,8 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchEnvironmentVariables } from '@/hooks/use-fetch-environment-variables';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { SYSTEM_VARIABLE_DEFINITIONS } from './system-variable-definitions';
+import { SystemVariableRow } from './system-variable-row';
 import { VariableListUpgradeCta } from './variable-list-upgrade-cta';
 import { VariableRow, VariableRowSkeleton } from './variable-row';
 
@@ -71,6 +73,18 @@ export const VariableList = () => {
     }
   };
 
+  const filteredSystemVariables = SYSTEM_VARIABLE_DEFINITIONS.filter((def) => {
+    if (!debouncedSearch) return true;
+    const lowerSearch = debouncedSearch.toLowerCase();
+
+    return (
+      def.key.toLowerCase().includes(lowerSearch) ||
+      (environments ?? []).some((env) => def.resolve(env).toLowerCase().includes(lowerSearch))
+    );
+  });
+
+  const hasNoResults = filteredSystemVariables.length === 0 && (variables?.length ?? 0) === 0;
+
   return (
     <div className="flex flex-col gap-2 py-2">
       <div className="flex items-center justify-between">
@@ -104,13 +118,21 @@ export const VariableList = () => {
         </TableHeader>
         {!isLoadingVariables && (
           <TableBody>
-            {variables?.length === 0 && (
+            {hasNoResults && (
               <TableRow>
                 <TableCell colSpan={4} className="text-text-soft py-10 text-center text-sm">
                   {debouncedSearch ? 'No variables match your search.' : 'No variables yet. Create your first one.'}
                 </TableCell>
               </TableRow>
             )}
+            {filteredSystemVariables.map((def) => (
+              <SystemVariableRow
+                key={def.key}
+                variableKey={def.key}
+                resolve={def.resolve}
+                environments={environments ?? []}
+              />
+            ))}
             {variables?.map((variable) => (
               <VariableRow
                 key={variable._id}

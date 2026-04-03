@@ -94,9 +94,35 @@ describe('Step Resolvers #novu-v2', () => {
       .field('manifest', manifest);
   }
 
+  async function createActionWorkflow(actionStepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST | StepTypeEnum.THROTTLE) {
+    const uid = Date.now();
+    const { result } = await novuClient.workflows.create({
+      name: `${actionStepType} Workflow ${uid}`,
+      workflowId: `${actionStepType}-workflow-${uid}`,
+      steps: [{ name: `${actionStepType} Step`, type: actionStepType as unknown as 'digest' }],
+      source: WorkflowCreationSourceEnum.Editor,
+    });
+
+    const actionWorkflow = await workflowRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      triggers: { $elemMatch: { identifier: result.workflowId } },
+    });
+    if (!actionWorkflow) throw new Error(`Action workflow not found: ${result.workflowId}`);
+
+    const actionStepInternalId = String(actionWorkflow.steps[0]._templateId);
+    const rawStep = result.steps[0] as unknown as { stepId?: string; type?: string; raw?: { stepId?: string } };
+    const actionStepId = rawStep?.raw?.stepId ?? rawStep?.stepId;
+    if (!actionStepId) throw new Error(`Could not resolve stepId for ${actionStepType} step`);
+
+    return {
+      workflowId: result.workflowId,
+      stepId: actionStepId,
+      stepInternalId: actionStepInternalId,
+    };
+  }
+
   async function seedControlValues(controls: Record<string, unknown>) {
-    // Delete any ControlValues the workflow creation may have auto-created for this step,
-    // then create exactly the record we want to seed.
     await controlValuesRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -151,7 +177,6 @@ describe('Step Resolvers #novu-v2', () => {
 
       expect(status).to.equal(201);
 
-      // DB assertion — reads directly from MongoDB, not from the response body
       const template = await messageTemplateRepository.findOne({
         _id: stepInternalId,
         _environmentId: session.environment._id,
@@ -204,7 +229,6 @@ describe('Step Resolvers #novu-v2', () => {
     it('should wipe all existing control values when redeploying without a controlSchema', async () => {
       await seedControlValues({ headline: 'Hello' });
 
-      // No controlSchema → FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA (additionalProperties: false)
       await deployStep({ workflowId, stepId });
 
       const allControlValues = await controlValuesRepository.find({
@@ -227,46 +251,6 @@ describe('Step Resolvers #novu-v2', () => {
         _id: stepInternalId,
         _environmentId: session.environment._id,
       });
-      // The deploy was rejected before any DB writes — hash must remain unset.
-      // Note: a ControlValues record may exist from workflow creation, but we
-      // assert only that the deploy did not write a stepResolverHash.
-      expect(template?.stepResolverHash).to.not.exist;
-    });
-
-    it('should return 4xx when attempting to deploy an unsupported step type (digest)', async () => {
-      const uid = Date.now();
-      const { result } = await novuClient.workflows.create({
-        name: `Digest Workflow ${uid}`,
-        workflowId: `digest-workflow-${uid}`,
-        steps: [{ name: 'Digest Step', type: 'digest' as const }],
-        source: WorkflowCreationSourceEnum.Editor,
-      });
-
-      const digestWorkflowId = result.workflowId;
-      const digestFirstStep = result.steps[0];
-      if (digestFirstStep.type === 'UNKNOWN') throw new Error('Unexpected unknown step type');
-      const digestStepId = digestFirstStep.stepId;
-
-      const digestWorkflow = await workflowRepository.findOne({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        triggers: { $elemMatch: { identifier: digestWorkflowId } },
-      });
-      const digestStepInternalId = String(digestWorkflow!.steps[0]._templateId);
-
-      const { body, status } = await deployStep({
-        workflowId: digestWorkflowId,
-        stepId: digestStepId,
-        stepType: StepTypeEnum.DIGEST,
-      });
-
-      expect(status).to.be.oneOf([400, 422]);
-      expect(JSON.stringify(body)).to.satisfy((s: string) => s.includes('not supported') || s.includes('Validation'));
-
-      const template = await messageTemplateRepository.findOne({
-        _id: digestStepInternalId,
-        _environmentId: session.environment._id,
-      });
       expect(template?.stepResolverHash).to.not.exist;
     });
 
@@ -279,6 +263,31 @@ describe('Step Resolvers #novu-v2', () => {
 
       expect(status).to.equal(400);
       expect(JSON.stringify(body)).to.include('Bundle file is required');
+    });
+
+    describe('Action step types (delay, digest, throttle)', () => {
+      for (const actionStepType of [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE] as const) {
+        it(`should deploy step resolver for a ${actionStepType} step`, async () => {
+          const { workflowId: actionWorkflowId, stepId: actionStepId, stepInternalId: actionStepInternalId } =
+            await createActionWorkflow(actionStepType);
+
+          const { body, status } = await deployStep({
+            workflowId: actionWorkflowId,
+            stepId: actionStepId,
+            stepType: actionStepType,
+          });
+
+          expect(status).to.equal(201);
+          expect(body.data.stepResolverHash).to.match(/^[a-z0-9]{5}-[a-z0-9]{5}$/);
+          expect(body.data.deployedStepsCount).to.equal(1);
+
+          const template = await messageTemplateRepository.findOne({
+            _id: actionStepInternalId,
+            _environmentId: session.environment._id,
+          });
+          expect(template?.stepResolverHash).to.equal(body.data.stepResolverHash);
+        });
+      }
     });
   });
 
@@ -306,16 +315,33 @@ describe('Step Resolvers #novu-v2', () => {
       });
       expect(controlValues).to.not.exist;
 
-      // Verify schema was reset to channel defaults (check key structural properties
-      // rather than deep-equal to avoid Zod serialization differences in nested fields).
       expect(template?.controls?.schema).to.have.property('type', 'object');
       expect(template?.controls?.schema).to.have.property('additionalProperties', false);
     });
 
-    it('should return 400 when the provided stepType is not a channel step type', async () => {
+    it('should disconnect step resolver from a delay step and reset schema to default', async () => {
+      const { workflowId: delayWorkflowId, stepId: delayStepId, stepInternalId: delayStepInternalId } =
+        await createActionWorkflow(StepTypeEnum.DELAY);
+
+      await deployStep({ workflowId: delayWorkflowId, stepId: delayStepId, stepType: StepTypeEnum.DELAY });
+
+      const { status } = await session.testAgent
+        .delete(`/v2/step-resolvers/${delayStepInternalId}/disconnect`)
+        .send({ stepType: StepTypeEnum.DELAY });
+
+      expect(status).to.equal(200);
+
+      const template = await messageTemplateRepository.findOne({
+        _id: delayStepInternalId,
+        _environmentId: session.environment._id,
+      });
+      expect(template?.stepResolverHash).to.not.exist;
+    });
+
+    it('should return 400 when the provided stepType does not support step resolvers', async () => {
       const { body, status } = await session.testAgent
         .delete(`/v2/step-resolvers/${stepInternalId}/disconnect`)
-        .send({ stepType: StepTypeEnum.DIGEST });
+        .send({ stepType: StepTypeEnum.TRIGGER });
 
       expect(status).to.equal(400);
       expect(JSON.stringify(body)).to.include('does not support step resolvers');
@@ -328,8 +354,6 @@ describe('Step Resolvers #novu-v2', () => {
       await isolatedSession.initialize();
       const isolatedClient = initNovuClassSdkInternalAuth(isolatedSession);
 
-      // IMPORTANT: uses isolatedSession.testAgent — not the outer session.testAgent —
-      // so the count is scoped to the isolated environment, not the shared one.
       async function isolatedCount(): Promise<number> {
         const { body } = await isolatedSession.testAgent.get('/v2/step-resolvers/count').expect(200);
 
@@ -419,7 +443,6 @@ describe('Step Resolvers #novu-v2', () => {
       });
 
       expect(prodTemplate?.stepResolverHash).to.equal(devHash);
-      // FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA — MongoDB may not persist empty 'properties: {}'
       expect(prodTemplate?.controls?.schema).to.include({ type: 'object', additionalProperties: false });
     });
 
@@ -448,10 +471,39 @@ describe('Step Resolvers #novu-v2', () => {
       });
 
       expect(prodTemplate?.stepResolverHash).to.not.exist;
-
-      // Verify schema was reset to channel defaults (key structural properties only).
       expect(prodTemplate?.controls?.schema).to.have.property('type', 'object');
       expect(prodTemplate?.controls?.schema).to.have.property('additionalProperties', false);
+    });
+
+    it('should promote stepResolverHash to production for a delay step on publish', async () => {
+      const prodEnv = await getProdEnv();
+
+      const { workflowId: delayWorkflowId, stepId: delayStepId, stepInternalId: delayStepInternalId } =
+        await createActionWorkflow(StepTypeEnum.DELAY);
+
+      const { body: deployBody } = await deployStep({
+        workflowId: delayWorkflowId,
+        stepId: delayStepId,
+        stepType: StepTypeEnum.DELAY,
+      });
+      const devHash = deployBody.data.stepResolverHash;
+
+      await publish(prodEnv._id);
+
+      const prodDelayWorkflow = await workflowRepository.findOne({
+        _environmentId: prodEnv._id,
+        _organizationId: session.organization._id,
+        triggers: { $elemMatch: { identifier: delayWorkflowId } },
+      });
+      if (!prodDelayWorkflow) throw new Error('Prod delay workflow not found');
+
+      const prodStepInternalId = String(prodDelayWorkflow.steps[0]._templateId);
+      const prodTemplate = await messageTemplateRepository.findOne({
+        _id: prodStepInternalId,
+        _environmentId: prodEnv._id,
+      });
+
+      expect(prodTemplate?.stepResolverHash).to.equal(devHash);
     });
   });
 });

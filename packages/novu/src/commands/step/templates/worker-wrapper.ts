@@ -17,7 +17,7 @@ function generateImports(steps: DiscoveredStep[], rootDir: string): string {
     .join('\n');
 
   return `import { validateData } from '@novu/framework/validators';
-import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
+import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';\n${stepImports}`;
 }
 
 function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
@@ -29,6 +29,9 @@ function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {})
+  ),
+  ...Object.values(actionStepSchemas).map(({ output }) =>
     validateData(output, {})
   ),
   ...[${handlerRefs}].flatMap(handler => {
@@ -210,7 +213,7 @@ function generateSkipCheck(): string {
 }
 
 function generateOutputValidation(): string {
-  return `const outputSchema = channelStepSchemas[step.type]?.output;
+  return `const outputSchema = channelStepSchemas[step.type]?.output ?? actionStepSchemas[step.type]?.output;
       let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);

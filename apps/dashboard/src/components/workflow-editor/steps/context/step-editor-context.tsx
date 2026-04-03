@@ -7,6 +7,7 @@ import {
 } from '@novu/shared';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 
@@ -40,19 +41,17 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
   const form = useFormContext();
   const controlValues = form.watch();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
+  const location = useLocation();
 
   // Only initialize selectedLocale when organization settings are loaded
   const organizationDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
   const [selectedLocale, setSelectedLocale] = useState<string>(organizationDefaultLocale);
-  const [isPendingResolverActivation, setIsPendingResolverActivationState] = useState(false);
-
+  const [isPendingResolverActivation, setIsPendingResolverActivationState] = useState(() =>
+    Boolean(location.state?.isPendingResolverActivation)
+  );
   const setIsPendingResolverActivation = useCallback((value: boolean) => {
     setIsPendingResolverActivationState(value);
   }, []);
-
-  useEffect(() => {
-    setIsPendingResolverActivationState(false);
-  }, [workflow.workflowId, step.stepId]);
 
   // Update locale when organization settings first load
   useEffect(() => {

@@ -10,10 +10,11 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { useMemo, useState } from 'react';
-import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiPlayCircleLine } from 'react-icons/ri';
-import { useParams } from 'react-router-dom';
+import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiLinkUnlinkM, RiPlayCircleLine } from 'react-icons/ri';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -31,13 +32,15 @@ import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
 import { TranslationStatus } from '@/components/workflow-editor/translation-status';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
@@ -50,6 +53,52 @@ type StepEditorLayoutProps = {
   step: StepResponseDto;
   className?: string;
 };
+
+function DisconnectResolverButton({ step }: { step: StepResponseDto }) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { disconnectStepResolver, isPending } = useDisconnectStepResolver();
+  const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
+
+  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
+    return null;
+  }
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnectStepResolver({ stepInternalId: step._id, stepType: step.type });
+      navigate('..', { relative: 'path' });
+    } catch {
+      // error handled silently; toast handled by mutation
+    } finally {
+      setIsConfirmOpen(false);
+    }
+  };
+
+  return (
+    <>
+      <ConfirmationModal
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        onConfirm={handleDisconnect}
+        title="Switch back to native controls?"
+        description="This will disconnect your custom code step and restore the native controls configured in the sidebar."
+        confirmButtonText="Disconnect"
+        isLoading={isPending}
+      />
+      <Button
+        variant="secondary"
+        mode="outline"
+        size="2xs"
+        type="button"
+        leadingIcon={RiLinkUnlinkM}
+        onClick={() => setIsConfirmOpen(true)}
+      >
+        Disconnect custom code
+      </Button>
+    </>
+  );
+}
 
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
@@ -64,6 +113,8 @@ function StepEditorContent() {
   const showCopilot = isAiEnabled && isDevEnvironment && !isExternalWorkflow;
 
   const editorTitle = getEditorTitle(step.type);
+  const isInlineResolverStep =
+    INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type) && STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
@@ -180,7 +231,11 @@ function StepEditorContent() {
                     {step.stepResolverHash}
                   </Badge>
                 )}
-                {!isExternalWorkflow && <StepEditorModeToggle />}
+                {isInlineResolverStep ? (
+                    step.stepResolverHash && <DisconnectResolverButton step={step} />
+                  ) : (
+                    !isExternalWorkflow && <StepEditorModeToggle />
+                  )}
               </div>
             </PanelHeader>
             <div className="flex-1 overflow-y-auto">

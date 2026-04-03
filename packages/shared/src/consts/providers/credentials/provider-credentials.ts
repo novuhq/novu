@@ -1406,3 +1406,14 @@ export const ISendProProviderConfig: IConfigCredential[] = [
     required: false,
   },
 ];
+
+export const cmTelecomConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'Product Token',
+    description: 'Your CM.com product token',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

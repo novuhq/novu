@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   getStepResolverControlSchema,
   InstrumentUsecase,
-  isChannelStepType,
+  isStepResolverSupportedType,
   ResourceValidatorService,
   stepTypeToControlSchema,
 } from '@novu/application-generic';
@@ -38,7 +38,7 @@ export class SyncStepResolverToEnvironmentUsecase {
         return false;
       }
 
-      if (!isChannelStepType(sourceStep.stepType)) {
+      if (!isStepResolverSupportedType(sourceStep.stepType)) {
         return false;
       }
 

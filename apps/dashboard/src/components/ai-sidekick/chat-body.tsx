@@ -124,7 +124,7 @@ export const ChatBody = ({
               <div className="flex flex-col gap-3">
                 <BroomSparkle className="size-5" />
                 <span className="text-label-md font-normal bg-linear-to-b from-[hsla(0,0%,57%,1)] to-[hsla(0,0%,39%,1)] bg-clip-text text-transparent">
-                  Novu Sidekick
+                  Novu Copilot
                 </span>
               </div>
               <span className="text-label-xs text-text-soft">

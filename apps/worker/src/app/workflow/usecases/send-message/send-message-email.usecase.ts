@@ -664,7 +664,7 @@ export class SendMessageEmail extends SendMessageBase {
   }
 }
 
-export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
+const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
 
   let to = Array.isArray(options.to) ? options.to : [options.to];
@@ -688,7 +688,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
   };
 };
 
-export function getReplyToAddress(transactionId: string, environmentId: string, inboundParseDomain: string) {
+function getReplyToAddress(transactionId: string, environmentId: string, inboundParseDomain: string) {
   const userNamePrefix = 'parse';
   const userNameDelimiter = '-nv-e=';
 

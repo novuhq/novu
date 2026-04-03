@@ -4,7 +4,7 @@ ENV NX_DAEMON=false
 
 
 RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@10.16.1
+RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
 RUN pnpm --version
 
 
@@ -57,7 +57,7 @@ ENV NX_DAEMON=false
 
 # Install only runtime dependencies (NO Python, NO build tools)
 RUN apk --update --no-cache add curl
-RUN npm i pm2 -g && npm --no-update-notifier --no-fund --global install pnpm@10.16.1
+RUN npm i pm2 -g && npm --no-update-notifier --no-fund --global install pnpm@10.33.0
 
 USER 1000
 WORKDIR /usr/src/app

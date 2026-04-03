@@ -1,5 +1,6 @@
 import { WorkflowChannelEnum } from '../constants';
 import { ContextResolved } from './context.types';
+import type { EnvironmentSystemVariables } from './environment.types';
 import type { Schema } from './schema.types';
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
@@ -29,8 +30,15 @@ export type ExecuteInput<
   payload: T_Payload;
   /** The subscriber for the event, provided during trigger. */
   subscriber: Prettify<Subscriber>;
-  /** The environment variables, defined in the Novu Dashboard. */
-  env: T_Env;
+  /**
+   * Environment variables defined in the Novu Dashboard, merged with built-in
+   * environment system variables (`name`, `type`).
+   *
+   * @example `env.name` — name of the current Novu environment
+   * @example `env.type` — type of the current Novu environment ("dev" | "prod")
+   * @example `env.MY_SECRET` — a user-defined environment variable
+   */
+  env: T_Env & EnvironmentSystemVariables;
   /** The controls for the event. Provided via the Dashboard. */
   controls: T_Controls;
   /** The resolved context for the event. */

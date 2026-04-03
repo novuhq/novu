@@ -2,7 +2,7 @@
 
 exports[`generateWorkerWrapper > should handle empty steps array > empty-steps 1`] = `
 "import { validateData } from '@novu/framework/validators';
-import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';
+import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';
 
 
 // Pre-compile all JSON Schema validators during the startup phase.
@@ -11,6 +11,9 @@ import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolv
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {})
+  ),
+  ...Object.values(actionStepSchemas).map(({ output }) =>
     validateData(output, {})
   ),
   ...[].flatMap(handler => {
@@ -137,7 +140,7 @@ export default {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
 
-      const outputSchema = channelStepSchemas[step.type]?.output;
+      const outputSchema = channelStepSchemas[step.type]?.output ?? actionStepSchemas[step.type]?.output;
       let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
@@ -202,7 +205,7 @@ export default {
 
 exports[`generateWorkerWrapper > should handle single step > single-step 1`] = `
 "import { validateData } from '@novu/framework/validators';
-import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';
+import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';
 import stepHandler0 from "./novu/welcome-email.step";
 
 // Pre-compile all JSON Schema validators during the startup phase.
@@ -211,6 +214,9 @@ import stepHandler0 from "./novu/welcome-email.step";
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {})
+  ),
+  ...Object.values(actionStepSchemas).map(({ output }) =>
     validateData(output, {})
   ),
   ...[stepHandler0].flatMap(handler => {
@@ -337,7 +343,7 @@ export default {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
 
-      const outputSchema = channelStepSchemas[step.type]?.output;
+      const outputSchema = channelStepSchemas[step.type]?.output ?? actionStepSchemas[step.type]?.output;
       let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
@@ -402,7 +408,7 @@ export default {
 
 exports[`generateWorkerWrapper > should match snapshot 1`] = `
 "import { validateData } from '@novu/framework/validators';
-import { channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';
+import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver';
 import stepHandler0 from "./novu/welcome-email.step";
 import stepHandler1 from "./novu/verify-email.step";
 
@@ -412,6 +418,9 @@ import stepHandler1 from "./novu/verify-email.step";
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>
+    validateData(output, {})
+  ),
+  ...Object.values(actionStepSchemas).map(({ output }) =>
     validateData(output, {})
   ),
   ...[stepHandler0, stepHandler1].flatMap(handler => {
@@ -539,7 +548,7 @@ export default {
 
       const result = await step.resolve(validatedControls, { payload, subscriber, context, steps: stepOutputs, env });
 
-      const outputSchema = channelStepSchemas[step.type]?.output;
+      const outputSchema = channelStepSchemas[step.type]?.output ?? actionStepSchemas[step.type]?.output;
       let validatedResult = result;
       if (outputSchema) {
         const outputResult = await validateData(outputSchema, result);
