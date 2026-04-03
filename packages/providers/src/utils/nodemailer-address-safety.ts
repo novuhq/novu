@@ -38,7 +38,10 @@ export function assertSafeNodemailerAddressHeaders(values: string[] | undefined)
   }
 }
 
-type AddressLike = { name?: string; address?: string };
+interface AddressLike {
+  name?: string;
+  address?: string;
+}
 
 function checkAddressOrStringField(value: string | AddressLike | Array<string | AddressLike> | undefined): void {
   if (value === undefined) {
@@ -89,6 +92,16 @@ function checkEnvelope(envelope: SendMailOptions['envelope']): void {
     const v = e[key];
     if (typeof v === 'string') {
       assertSafeNodemailerAddressHeader(v);
+
+      continue;
+    }
+
+    if (key !== 'from' && Array.isArray(v)) {
+      for (const item of v) {
+        if (typeof item === 'string') {
+          assertSafeNodemailerAddressHeader(item);
+        }
+      }
     }
   }
 }

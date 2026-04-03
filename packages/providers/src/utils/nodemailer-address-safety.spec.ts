@@ -41,4 +41,15 @@ describe('nodemailer-address-safety', () => {
       })
     ).toThrow(/exceeds safe complexity/);
   });
+
+  test('sendMail options: rejects attack in envelope.to as string array', () => {
+    expect(() =>
+      assertSafeSendMailOptionsForNodemailerDos({
+        envelope: {
+          from: 'bounce@example.com',
+          to: ['safe@example.com', buildDeepGroup(3000)],
+        },
+      })
+    ).toThrow(/exceeds safe complexity/);
+  });
 });
