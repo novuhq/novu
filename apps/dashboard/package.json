@@ -96,7 +96,7 @@
     "ajv": "^8.18.0",
     "ajv-formats": "^2.1.1",
     "ansi-to-react": "^6.2.6",
-    "better-auth": "^1.3.0",
+    "better-auth": "^1.4.9",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
