@@ -11,7 +11,7 @@ import { RequestWithReqId } from './app/shared/middleware/request-id.middleware'
 import { buildLog } from './app/shared/utils/mappers';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
 
-export const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
+const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
 
 class ValidationPipeError {
   response: { message: string[] | string };
