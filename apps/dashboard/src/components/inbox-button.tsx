@@ -135,20 +135,6 @@ export const InboxButton = () => {
 
   return (
     <Inbox
-      tabs={[
-        {
-          label: 'All',
-          filter: {
-            tags: {
-              and: [{ or: ['test'] }, { or: ['billing'] }],
-            },
-          },
-        },
-        {
-          label: 'Billing',
-          filter: { tags: ['billing'] },
-        },
-      ]}
       subscriber={subscriber}
       applicationIdentifier={appId}
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
