@@ -25,7 +25,7 @@ import {
 } from './nodes';
 
 // y distance = node height + space between nodes
-export const NODE_Y_OFFSET = 50;
+const NODE_Y_OFFSET = 50;
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
 export const nodeTypes = {
