@@ -79,10 +79,13 @@ const WorkflowCanvasChild = ({
     return () => observer.disconnect();
   }, [reactFlowInstance]);
 
+  const isCodeFirstWorkflow = workflow?.origin === ResourceOriginEnum.EXTERNAL;
+
   const dragContextValue = useMemo(() => {
     return {
       isReadOnly,
       showStepPreview,
+      isCodeFirstWorkflow,
       onNodeDragStart,
       onNodeDragMove,
       onNodeDragEnd,
@@ -100,6 +103,7 @@ const WorkflowCanvasChild = ({
   }, [
     isReadOnly,
     showStepPreview,
+    isCodeFirstWorkflow,
     onNodeDragStart,
     onNodeDragMove,
     onNodeDragEnd,
