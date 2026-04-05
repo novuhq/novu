@@ -393,7 +393,10 @@ export enum NotificationStatus {
   SNOOZED = 'snoozed',
 }
 
-export type PreferencesFilter = Pick<NotificationFilter, 'tags' | 'severity'> & {
+/** Preferences list API accepts a flat OR tag list only (not CNF). */
+export type PreferencesFilter = {
+  tags?: string[];
+  severity?: NotificationFilter['severity'];
   criticality?: WorkflowCriticalityEnum;
 };
 

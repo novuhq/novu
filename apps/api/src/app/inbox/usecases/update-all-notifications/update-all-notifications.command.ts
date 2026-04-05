@@ -1,14 +1,15 @@
+import { type TagsFilter } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { IsTagsFilter } from '../../validators/is-tags-filter.validator';
 import { NotificationFilter } from '../../utils/types';
 
 class Filter implements NotificationFilter {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()

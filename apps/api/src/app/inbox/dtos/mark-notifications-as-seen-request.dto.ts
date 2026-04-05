@@ -1,4 +1,7 @@
+import { type TagsFilter } from '@novu/shared';
 import { IsArray, IsMongoId, IsOptional, IsString } from 'class-validator';
+
+import { IsTagsFilter } from '../validators/is-tags-filter.validator';
 
 export class MarkNotificationsAsSeenRequestDto {
   @IsOptional()
@@ -7,9 +10,8 @@ export class MarkNotificationsAsSeenRequestDto {
   notificationIds?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsString()

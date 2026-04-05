@@ -11,8 +11,9 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { createVerify } from 'crypto';
-import nodemailer from 'nodemailer';
+import nodemailer, { SendMailOptions } from 'nodemailer';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { assertSafeSendMailOptionsForNodemailerDos } from '../../../utils/nodemailer-address-safety';
 import { WithPassthrough } from '../../../utils/types';
 import { SESConfig } from './ses.config';
 
@@ -41,25 +42,26 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
 
-    return await transporter.sendMail(
-      this.transform(bridgeProviderData, {
-        to,
-        html,
-        text,
-        subject,
-        attachments,
-        from: {
-          address: from,
-          name: senderName,
-        },
-        cc,
-        bcc,
-        replyTo,
-        ...(this.config.configurationSetName && {
-          ses: { ConfigurationSetName: this.config.configurationSetName },
-        }),
-      }).body
-    );
+    const mailOptions = this.transform(bridgeProviderData, {
+      to,
+      html,
+      text,
+      subject,
+      attachments,
+      from: {
+        address: from,
+        name: senderName,
+      },
+      cc,
+      bcc,
+      replyTo,
+      ...(this.config.configurationSetName && {
+        ses: { ConfigurationSetName: this.config.configurationSetName },
+      }),
+    }).body as SendMailOptions;
+    assertSafeSendMailOptionsForNodemailerDos(mailOptions);
+
+    return await transporter.sendMail(mailOptions);
   }
 
   async sendMessage(

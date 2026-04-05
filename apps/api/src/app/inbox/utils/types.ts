@@ -4,11 +4,12 @@ import type {
   PreferenceLevelEnum,
   Schedule,
   SeverityLevelEnum,
+  TagsFilter,
 } from '@novu/shared';
 import type { RulesLogic } from 'json-logic-js';
 
 export type NotificationFilter = {
-  tags?: string[];
+  tags?: TagsFilter;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;

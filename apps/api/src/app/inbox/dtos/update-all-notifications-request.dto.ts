@@ -1,10 +1,12 @@
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { type TagsFilter } from '@novu/shared';
+import { IsOptional, IsString } from 'class-validator';
+
+import { IsTagsFilter } from '../validators/is-tags-filter.validator';
 
 export class UpdateAllNotificationsRequestDto {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsString()

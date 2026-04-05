@@ -136,6 +136,27 @@ export type Workflow = {
   severity: SeverityLevelEnum;
 };
 
+export type TagsFilterOrGroup = { or: string[] };
+
+export type TagsFilterAndForm = { and: TagsFilterOrGroup[] };
+
+/**
+ * Inbox tag filter: a **single** OR-group as `string[]` or `{ or: string[] }`, or **multiple** OR-groups (AND of OR) as `{ and: [{ or: string[] }, ...] }`.
+ *
+ * @example Single OR-group — match notifications tagged `promo` **or** `sale`
+ * ```ts
+ * const tags: TagsFilter = ['promo', 'sale'];
+ * ```
+ *
+ * @example AND of OR-groups — match (`urgent` **or** `critical`) **and** (`billing`)
+ * ```ts
+ * const tags: TagsFilter = {
+ *   and: [{ or: ['urgent', 'critical'] }, { or: ['billing'] }],
+ * };
+ * ```
+ */
+export type TagsFilter = string[] | TagsFilterOrGroup | TagsFilterAndForm;
+
 export type InboxNotification = {
   id: string;
   transactionId: string;
@@ -164,7 +185,7 @@ export type InboxNotification = {
 };
 
 export type NotificationFilter = {
-  tags?: string[];
+  tags?: TagsFilter;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;

@@ -119,3 +119,8 @@ nx-cloud.env
 
 # Dead code analysis artifacts (generated at runtime)
 .cursor-artifacts/
+
+demos/agent-chat-demo/.next
+demos/agent-chat-demo/.env.local
+demos/agent-chat-demo/tsconfig.tsbuildinfo
+demos/agent-chat-demo/next-env.d.ts

@@ -1,11 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum, type TagsFilter } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 
 import { CursorPaginationRequestDto } from '../../shared/dtos/cursor-pagination-request';
 import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
+import { parseTagsQueryValue } from '../utils/parse-tags-query';
 import { NotificationFilter } from '../utils/types';
+import { IsTagsFilter } from '../validators/is-tags-filter.validator';
 
 const LIMIT = {
   DEFAULT: 10,
@@ -17,9 +19,9 @@ export class GetNotificationsRequestDto
   implements NotificationFilter
 {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @Transform(({ value }) => parseTagsQueryValue(value))
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()

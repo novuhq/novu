@@ -12,6 +12,7 @@ import DKIM from 'nodemailer/lib/dkim';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { ConnectionOptions } from 'tls';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { assertSafeSendMailOptionsForNodemailerDos } from '../../../utils/nodemailer-address-safety';
 import { WithPassthrough } from '../../../utils/types';
 
 interface INodemailerConfig {
@@ -98,7 +99,9 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const info = await this.transports.sendMail(this.transform(bridgeProviderData, mailData).body);
+    const merged = this.transform(bridgeProviderData, mailData);
+    assertSafeSendMailOptionsForNodemailerDos(merged.body as SendMailOptions);
+    const info = await this.transports.sendMail(merged.body);
 
     return {
       id: info?.messageId,
@@ -109,6 +112,7 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
+      assertSafeSendMailOptionsForNodemailerDos(mailData);
       await this.transports.sendMail(mailData);
 
       return {

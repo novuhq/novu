@@ -14,10 +14,12 @@ export function formatParamValue(param: string, type?: string) {
 }
 
 export function formatLiquidVariable(name: string, defaultValue: string, filters: FilterWithParam[]) {
-  const parts = [name.trim()];
+  const safeName = typeof name === 'string' ? name : String(name ?? '');
+  const parts = [safeName.trim()];
 
   if (defaultValue) {
-    parts.push(`default: '${escapeString(defaultValue.trim())}'`);
+    const safeDefault = typeof defaultValue === 'string' ? defaultValue : String(defaultValue);
+    parts.push(`default: '${escapeString(safeDefault.trim())}'`);
   }
 
   filters.forEach((t) => {

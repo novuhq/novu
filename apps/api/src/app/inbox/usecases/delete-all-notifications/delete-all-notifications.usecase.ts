@@ -9,7 +9,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
-import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { normalizeTagGroups, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -59,6 +59,11 @@ export class DeleteAllNotifications {
 
     if (parsedData) {
       filters.data = parsedData;
+    }
+
+    if (command.filters.tags !== undefined) {
+      filters.tagGroups = normalizeTagGroups(command.filters.tags);
+      delete filters.tags;
     }
 
     const deletedMessages = await this.messageRepository.deleteMessagesWithFilters({
