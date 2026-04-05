@@ -874,6 +874,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string,
     organization?: OrganizationEntity
   ): Promise<string> {
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    if (isSelfHosted) {
+      return html;
+    }
+
     try {
       const { removeNovuBranding } = await this.getOrganizationSettings.execute(
         GetOrganizationSettingsCommand.create({

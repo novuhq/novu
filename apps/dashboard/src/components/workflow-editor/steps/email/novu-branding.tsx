@@ -5,6 +5,7 @@ import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
+import { IS_SELF_HOSTED } from '@/config';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
@@ -31,7 +32,11 @@ export const NovuBranding = ({ className, resourceOrigin, isStepResolver, ...res
   const isUpdating = updateOrganizationSettings.isPending;
 
   const showBranding =
-    resourceOrigin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings && !isStepResolver;
+    resourceOrigin === ResourceOriginEnum.NOVU_CLOUD &&
+    !removeNovuBranding &&
+    !isLoadingSettings &&
+    !isStepResolver &&
+    !IS_SELF_HOSTED;
 
   if (!showBranding) return null;
 

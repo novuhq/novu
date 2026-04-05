@@ -2408,6 +2408,35 @@ describe('EmailOutputRendererUsecase', () => {
       expect(result.body).to.equal(simpleHtmlBody);
     });
 
+    it('should not add Novu branding when IS_SELF_HOSTED is true', async () => {
+      const originalValue = process.env.IS_SELF_HOSTED;
+      process.env.IS_SELF_HOSTED = 'true';
+
+      try {
+        getOrganizationSettingsMock.execute.resolves({
+          removeNovuBranding: false,
+          defaultLocale: 'en_US',
+        });
+
+        const renderCommand: EmailOutputRendererCommand = {
+          dbWorkflow: mockDbWorkflow,
+          controlValues: {
+            subject: 'Self-Hosted Branding Test',
+            body: simpleHtmlBody,
+          },
+          fullPayloadForRender: mockFullPayload,
+          stepId: 'fake_step_id',
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.equal(simpleHtmlBody);
+        expect(result.body).to.not.include('data-novu-branding');
+      } finally {
+        process.env.IS_SELF_HOSTED = originalValue;
+      }
+    });
+
     it('should properly insert branding into HTML with body tag', async () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,

@@ -43,8 +43,10 @@ export class UpdateOrganizationSettings {
   }
 
   private validateTierRestrictions(command: UpdateOrganizationSettingsCommand, organization: OrganizationEntity): void {
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+
     // Only validate branding feature access if user is trying to update it
-    if (command.removeNovuBranding !== undefined) {
+    if (command.removeNovuBranding !== undefined && !isSelfHosted) {
       const canRemoveNovuBranding = getFeatureForTierAsBoolean(
         FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN,
         organization.apiServiceLevel || ApiServiceLevelEnum.FREE
