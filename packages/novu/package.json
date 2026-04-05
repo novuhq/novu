@@ -78,7 +78,7 @@
     "configstore": "^5.0.0",
     "cross-spawn": "7.0.5",
     "dotenv": "^16.4.5",
-    "esbuild": "^0.19.0",
+    "esbuild": "^0.25.0",
     "fast-glob": "3.3.1",
     "form-data": "^4.0.5",
     "get-port": "^5.1.1",

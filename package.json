@@ -276,7 +276,8 @@
       "@xmldom/xmldom@<0.8.12": "^0.8.12",
       "micromatch@<4.0.0": "^4.0.8",
       "defu@<=6.1.4": "^6.1.5",
-      "@smithy/config-resolver@<4.4.0": "^4.4.0"
+      "@smithy/config-resolver@<4.4.0": "^4.4.0",
+      "esbuild@<0.25.0": "^0.25.0"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
