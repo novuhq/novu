@@ -13,7 +13,6 @@ import {
 import { createVerify } from 'crypto';
 import nodemailer, { SendMailOptions } from 'nodemailer';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { assertSafeSendMailOptionsForNodemailerDos } from '../../../utils/nodemailer-address-safety';
 import { WithPassthrough } from '../../../utils/types';
 import { SESConfig } from './ses.config';
 
@@ -59,7 +58,6 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         ses: { ConfigurationSetName: this.config.configurationSetName },
       }),
     }).body as SendMailOptions;
-    assertSafeSendMailOptionsForNodemailerDos(mailOptions);
 
     return await transporter.sendMail(mailOptions);
   }
