@@ -16,7 +16,7 @@ const prePopulateEnv = (apps, folderBasePath, exampleEnvFilePath = 'src/.example
       const sourcePath = path.resolve(`${folderBasePath}/${folder}/${exampleEnvFilePath}`);
       let content = fs.readFileSync(sourcePath, 'utf8');
       if (content.includes(ENCRYPTION_KEY_PLACEHOLDER) && sharedEncryptionKey) {
-        content = content.replace(ENCRYPTION_KEY_PLACEHOLDER, sharedEncryptionKey);
+        content = content.replaceAll(ENCRYPTION_KEY_PLACEHOLDER, sharedEncryptionKey);
         console.log(`  Generated STORE_ENCRYPTION_KEY for ${folder}`);
       }
       fs.writeFileSync(destPath, content);
