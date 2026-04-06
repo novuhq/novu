@@ -4,5 +4,5 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class GetEnvironmentVariableCommand extends OrganizationLevelWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  variableId: string;
+  variableKey: string;
 }
