@@ -674,6 +674,42 @@ describe('QueryValidatorService', () => {
       expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
     });
 
+    it('should handle non-string var value (number) without throwing', () => {
+      const rule: any = {
+        '==': [{ var: 123 }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
+    it('should handle non-string var value (boolean) without throwing', () => {
+      const rule: any = {
+        '==': [{ var: true }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
+    it('should handle non-string var value (array) without throwing', () => {
+      const rule: any = {
+        '==': [{ var: ['a', 'b'] }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
     it('should detect invalid prefix', () => {
       const rule: RulesLogic<AdditionalOperation> = {
         '==': [{ var: 'invalid.prefix.field' }, 'value'],

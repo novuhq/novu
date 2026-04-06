@@ -1,13 +1,14 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import {
+  AnalyticsService,
   BuildStepIssuesUsecase,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   getStepResolverControlSchema,
   InstrumentUsecase,
-  isChannelStepType,
+  isStepResolverSupportedType,
   PinoLogger,
   ResourceValidatorService,
   reconcileStepResolverControlValues,
@@ -26,6 +27,7 @@ import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
 
 const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
+const ACTION_STEP_TYPES = new Set([StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE]);
 // cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;
@@ -52,6 +54,7 @@ export class DeployStepResolverUsecase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private featureFlagsService: FeatureFlagsService,
     private resourceValidatorService: ResourceValidatorService,
+    private analyticsService: AnalyticsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -59,19 +62,29 @@ export class DeployStepResolverUsecase {
 
   @InstrumentUsecase()
   async execute(command: DeployStepResolverCommand): Promise<DeployStepResolverResponseDto> {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.user.organizationId },
-    });
+    const [isStepResolverEnabled, isActionStepResolverEnabled] = await Promise.all([
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.user.organizationId },
+      }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.user.organizationId },
+      }),
+    ]);
 
-    if (!isEnabled) {
+    if (!isStepResolverEnabled && !isActionStepResolverEnabled) {
       throw new ForbiddenException('Step resolver feature is not enabled for this organization');
     }
 
     this.assertBundleSize(command.bundleBuffer);
 
-    const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps);
+    const resolvedManifestSteps = await this.resolveManifestSteps(command, command.manifestSteps, {
+      isStepResolverEnabled,
+      isActionStepResolverEnabled,
+    });
 
     const availableSlots = await this.resourceValidatorService.getStepResolversAvailableSlots(
       command.user.environmentId,
@@ -124,6 +137,14 @@ export class DeployStepResolverUsecase {
 
     await this.recalculateAndPersistStepIssues(command, stepsToProcess);
 
+    this.analyticsService.mixpanelTrack('Step resolver deployed - [Step Resolvers]', command.user._id, {
+      deployedStepsCount: stepsToProcess.length,
+      stepTypes: stepsToProcess.map((s) => s.stepType),
+      _organization: command.user.organizationId,
+      _environment: command.user.environmentId,
+      workerId,
+    });
+
     return {
       stepResolverHash,
       workerId,
@@ -135,7 +156,8 @@ export class DeployStepResolverUsecase {
 
   private async resolveManifestSteps(
     command: DeployStepResolverCommand,
-    manifestSteps: DeployStepResolverManifestStepCommand[]
+    manifestSteps: DeployStepResolverManifestStepCommand[],
+    flags: { isStepResolverEnabled: boolean; isActionStepResolverEnabled: boolean }
   ): Promise<ResolvedManifestStep[]> {
     const workflowCache = new Map<string, Awaited<ReturnType<GetWorkflowByIdsUseCase['execute']>>>();
 
@@ -166,12 +188,21 @@ export class DeployStepResolverUsecase {
 
       const actualStepType = step.template?.type;
 
-      if (!actualStepType || !isChannelStepType(actualStepType)) {
+      if (!actualStepType || !isStepResolverSupportedType(actualStepType)) {
         throw new BadRequestException({
-          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers. Only channel steps (email, SMS, chat, push, in-app) support step resolvers.`,
+          message: `Step type '${actualStepType ?? 'unknown'}' is not supported for step resolvers. Trigger steps cannot use step resolvers.`,
           workflowId: manifestStep.workflowId,
           stepId: manifestStep.stepId,
         });
+      }
+
+      const isActionStep = ACTION_STEP_TYPES.has(actualStepType);
+      const isFlagEnabled = isActionStep ? flags.isActionStepResolverEnabled : flags.isStepResolverEnabled;
+
+      if (!isFlagEnabled) {
+        throw new ForbiddenException(
+          `Step resolver feature is not enabled for step type '${actualStepType}' in this organization`
+        );
       }
 
       if (actualStepType !== manifestStep.stepType) {

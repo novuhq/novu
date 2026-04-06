@@ -15,5 +15,6 @@ export { step } from './resources/step-resolver/step';
 export { providerSchemas } from './schemas';
 export { ClientOptions, SeverityLevelEnum, Workflow } from './types';
 export type { ContextResolved } from './types/context.types';
+export type { EnvironmentSystemVariables } from './types/environment.types';
 export type { Subscriber } from './types/subscriber.types';
 export type { ExecuteInput } from './types/workflow.types';

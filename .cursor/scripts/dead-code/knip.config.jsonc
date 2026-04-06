@@ -18,6 +18,7 @@
     "**/scripts/**",
     "**/self-hosted/**",
     "libs/internal-sdk/**",
+    "libs/maily-core/**", // cspell:ignore maily
     "packages/js/**",
     "packages/framework/**",
     ".github/**",

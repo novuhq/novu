@@ -13,3 +13,8 @@ export enum EnvironmentTypeEnum {
 export const PROTECTED_ENVIRONMENTS = [EnvironmentEnum.DEVELOPMENT, EnvironmentEnum.PRODUCTION] as const;
 
 export type EnvironmentName = EnvironmentEnum | string;
+
+export interface EnvironmentSystemVariables {
+  name: string;
+  type: EnvironmentTypeEnum;
+}

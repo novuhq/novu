@@ -253,6 +253,38 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     return result.data;
   }
 
+  async getTotalRunsCount(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number> {
+    const query = `
+      SELECT sum(count) as total
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE 
+        environment_id = {environmentId:String}
+        AND organization_id = {organizationId:String}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const result = await this.clickhouseService.query<{ total: string }>({
+      query,
+      params,
+    });
+
+    return parseInt(result.data[0]?.total || '0', 10);
+  }
+
   async getWorkflowRunsTrendData(
     environmentId: string,
     organizationId: string,

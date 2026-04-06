@@ -163,22 +163,28 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
     const onDeleteLayout = async () => {
       if (!layout) return;
 
-      await deleteLayout({
-        layoutSlug: layout.slug,
-      });
+      try {
+        await deleteLayout({
+          layoutSlug: layout.slug,
+        });
+      } catch {
+      }
     };
 
     const onSubmit = async (data: LayoutSettingsFormData) => {
       if (!layout) return;
 
-      await updateLayout({
-        layout: {
-          name: data.name,
-          isTranslationEnabled: data.isTranslationEnabled,
-          controlValues: layout.controls.values || {},
-        },
-        layoutSlug: layout.slug,
-      });
+      try {
+        await updateLayout({
+          layout: {
+            name: data.name,
+            isTranslationEnabled: data.isTranslationEnabled,
+            controlValues: layout.controls.values || {},
+          },
+          layoutSlug: layout.slug,
+        });
+      } catch {
+      }
     };
 
     const checkUnsavedChanges = useCallback(

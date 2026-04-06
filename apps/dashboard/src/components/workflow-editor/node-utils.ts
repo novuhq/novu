@@ -65,8 +65,22 @@ export const edgeTypes = {
 export const mapStepToNodeContent = (
   stepType: StepTypeEnum,
   controlValues: Record<string, unknown>,
-  workflowOrigin: ResourceOriginEnum
+  workflowOrigin: ResourceOriginEnum,
+  stepResolverHash?: string
 ): string => {
+  if (stepResolverHash) {
+    switch (stepType) {
+      case StepTypeEnum.DELAY:
+        return 'Delay duration controlled by code';
+      case StepTypeEnum.DIGEST:
+        return 'Digest window controlled by code';
+      case StepTypeEnum.THROTTLE:
+        return 'Throttle rules controlled by code';
+      default:
+        break;
+    }
+  }
+
   switch (stepType) {
     case StepTypeEnum.TRIGGER:
       return 'This step triggers this workflow';
@@ -183,7 +197,7 @@ export const mapStepToNode = ({
   step: Step;
   workflowOrigin?: ResourceOriginEnum;
 }): Node<NodeData, keyof typeof nodeTypes> => {
-  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin);
+  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin, step.stepResolverHash);
 
   const error = step.issues
     ? getFirstErrorMessage(step.issues, 'controls') || getFirstErrorMessage(step.issues, 'integration')

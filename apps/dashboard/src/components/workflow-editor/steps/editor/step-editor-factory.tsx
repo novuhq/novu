@@ -1,5 +1,5 @@
 import { FeatureFlagsKeysEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { CustomStepControls } from '@/components/workflow-editor/steps/controls/custom-step-controls';
@@ -14,7 +14,7 @@ import { ThrottleEditor } from '@/components/workflow-editor/steps/throttle/thro
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useStepResolverPolling } from '@/hooks/use-step-resolver-polling';
-import { STEP_RESOLVER_SUPPORTED_STEP_TYPES, STEP_TYPE_LABELS } from '@/utils/constants';
+import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_RESOLVER_SUPPORTED_STEP_TYPES, STEP_TYPE_LABELS } from '@/utils/constants';
 
 function NoEditorAvailable({ message }: { message: string }) {
   return <div className="flex h-full items-center justify-center text-sm text-neutral-500">{message}</div>;
@@ -24,14 +24,18 @@ export function StepEditorFactory() {
   const { workflow, step, isStepEditable, isPendingResolverActivation } = useStepEditor();
   const { refetch } = useWorkflow();
   const isStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED);
+  const isActionStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED);
   const { dataSchema, uiSchema } = step.controls || {};
 
   const onHashChange = useCallback(() => {
     refetch();
   }, [refetch]);
 
+  const isActionStep = useMemo(() => INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type), [step.type]);
+  const isPollingFlagEnabled = isActionStep ? isActionStepResolverEnabled : isStepResolverEnabled;
+
   useStepResolverPolling({
-    enabled: isStepResolverEnabled && STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type),
+    enabled: isPollingFlagEnabled && STEP_RESOLVER_SUPPORTED_STEP_TYPES.includes(step.type),
     stepResolverHash: step.stepResolverHash,
     onHashChange,
   });

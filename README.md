@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://go.novu.co/github" target="_blank" rel="noopener noreferrer"
+  <a href="https://go.novu.co/github?utm_campaign=readme-logo" target="_blank" rel="noopener noreferrer"
 >
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
@@ -36,7 +36,7 @@
 
 <p align="center">
   <br />
-  <a href="https://go.novu.co/github?utm_campaign=readme_learn_more" rel="dofollow"><strong>Learn More »</strong></a>
+  <a href="https://go.novu.co/github?utm_source=github&utm_medium=readme&utm_campaign=learn-more-link" rel="dofollow"><strong>Learn More »</strong></a>
   <br />
 
 <br/>
@@ -61,7 +61,7 @@
   <a href="https://twitter.com/novuhq" target="_blank" rel="noopener noreferrer"
 >X</a>
   ·
-  <a href="https://novu.co/contact-us/?utm_campaign=github-readme" target="_blank" rel="noopener noreferrer"
+  <a href="https://go.novu.co/contact?utm_source=github&utm_medium=readme&utm_campaign=contact-us-link" target="_blank" rel="noopener noreferrer"
 >Contact us</a>
 .
 <a href="https://www.recent.dev">Recent.dev</a>
@@ -84,7 +84,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## 🚀 Getting Started
 
-[Create a free account](https://go.novu.co/dashboard?utm_campaign=github-readme) and follow the instructions on the dashboard.
+[Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the instructions on the dashboard.
 
 ## 📚 Table of contents
 
@@ -103,12 +103,12 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## Embeddable Inbox component
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=react-starter-link), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
 
 <div align="center">
 <img width="4800" height="2700" alt="Novu's Embeddable Inbox components" src="https://github.com/user-attachments/assets/00224c75-7ed0-4e19-b6fd-2a0bdced6258" />
 
-Read more about how to add a [notification center Inbox](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme) to your app.
+Read more about how to add a [notification center Inbox](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=read-more-react-link) to your app.
 
 </div>
 
@@ -171,7 +171,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme)
+- [x] [Novu](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=repository&utm_campaign=inbox-channel-link)
 
 ## 📋 Read Our Code Of Conduct
 
@@ -183,9 +183,9 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 🔗 Links
 
-- [Home page](https://novu.co?utm_campaign=github-readme)
+- [Home page](https://novu.co?utm_source=github&utm_medium=readme&utm_campaign=main-link)
 - [Contribution guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu locally](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-readme)
+- [Run Novu locally](https://docs.novu.co/community/run-in-local-machine?utm_source=github&utm_medium=readme&utm_campaign=novu-locally-link)
 
 ## 🛡️ License
 

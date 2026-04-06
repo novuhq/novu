@@ -116,6 +116,7 @@ const StepNode = (props: StepNodeProps) => {
   const {
     isReadOnly,
     showStepPreview,
+    isCodeFirstWorkflow,
     onNodeDragEnd,
     onNodeDragMove,
     onNodeDragStart,
@@ -131,7 +132,7 @@ const StepNode = (props: StepNodeProps) => {
   const isAnimating = id ? animatingNodeIds.has(id) : false;
   const areActionsVisible = !isAnyNodeDragging && isHovered && !showStepPreview && !!type;
   const hasConditions = conditionsCount > 0;
-  const isDraggable = !isReadOnly && !showStepPreview;
+  const isDraggable = !isReadOnly && !showStepPreview && !isCodeFirstWorkflow;
 
   const handleMouseEnter = () => {
     if (!isAnyNodeDragging) {
@@ -187,7 +188,7 @@ const StepNode = (props: StepNodeProps) => {
           )}
           nodeId={id}
           isDraggable={isDraggable}
-          isDragHandleVisible={areActionsVisible}
+          isDragHandleVisible={areActionsVisible && !isCodeFirstWorkflow}
           onNodeDragStart={onNodeDragStart}
           onNodeDragMove={onNodeDragMove}
           onNodeDragEnd={handleNodeDragEnd}

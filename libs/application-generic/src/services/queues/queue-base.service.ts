@@ -6,6 +6,7 @@ import { PinoLogger } from '../../logging';
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
 import { SqsService } from '../sqs';
+import { SQS_MAX_DELAY_SECONDS } from '../sqs/types';
 
 const LOG_CONTEXT = 'QueueService';
 
@@ -106,8 +107,14 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   public async add(params: IJobParams) {
-    if (params.options?.delay > 0) {
-      Logger.log({ topic: this.topic, delay: params.options.delay }, 'Job has delay, routing to BullMQ', LOG_CONTEXT);
+    const delayMs = params.options?.delay || 0;
+
+    if (delayMs > SQS_MAX_DELAY_SECONDS * 1000) {
+      Logger.log(
+        { topic: this.topic, delay: delayMs },
+        'Job delay exceeds SQS max (15min), routing to BullMQ',
+        LOG_CONTEXT
+      );
 
       return await this.addToBullMQ(params);
     }
@@ -278,6 +285,7 @@ export class QueueBaseService implements OnModuleDestroy {
       id: `${job.groupId || job.name}-${index}`,
       body: JSON.stringify(job.data || {}),
       groupId: organizationId,
+      delaySeconds: Math.ceil((job.options?.delay || 0) / 1000),
     }));
 
     if (messages.length === 1) {
@@ -317,23 +325,27 @@ export class QueueBaseService implements OnModuleDestroy {
       return await this.bullMqService.addBulk(data);
     }
 
-    const { delayed, immediate } = this.separateByDelay(data);
+    const { longDelayed, sqsEligible } = this.separateByDelay(data);
 
-    if (delayed.length > 0) {
-      Logger.debug({ topic: this.topic, count: delayed.length }, 'Routing delayed jobs to BullMQ', LOG_CONTEXT);
-      await this.bullMqService.addBulk(delayed);
+    if (longDelayed.length > 0) {
+      Logger.debug(
+        { topic: this.topic, count: longDelayed.length },
+        'Routing long-delayed jobs (>15min) to BullMQ',
+        LOG_CONTEXT
+      );
+      await this.bullMqService.addBulk(longDelayed);
     }
 
-    if (immediate.length > 0) {
-      const organizationId = immediate[0]?.groupId;
+    if (sqsEligible.length > 0) {
+      const organizationId = sqsEligible[0]?.groupId;
 
       if (!organizationId) {
         Logger.debug(
-          { topic: this.topic, count: immediate.length },
+          { topic: this.topic, count: sqsEligible.length },
           'Jobs without organization ID, routing to BullMQ fallback',
           LOG_CONTEXT
         );
-        await this.addJobsToBullMQ(immediate);
+        await this.addJobsToBullMQ(sqsEligible);
 
         return;
       }
@@ -343,23 +355,27 @@ export class QueueBaseService implements OnModuleDestroy {
         return;
       }
 
-      await this.routeByMode(immediate, queueBackendMode, organizationId);
+      await this.routeByMode(sqsEligible, queueBackendMode, organizationId);
     }
   }
 
-  private separateByDelay(jobs: IBulkJobParams[]): { delayed: IBulkJobParams[]; immediate: IBulkJobParams[] } {
-    const delayed: IBulkJobParams[] = [];
-    const immediate: IBulkJobParams[] = [];
+  private separateByDelay(jobs: IBulkJobParams[]): {
+    longDelayed: IBulkJobParams[];
+    sqsEligible: IBulkJobParams[];
+  } {
+    const longDelayed: IBulkJobParams[] = [];
+    const sqsEligible: IBulkJobParams[] = [];
 
     for (const job of jobs) {
-      if (job.options?.delay > 0) {
-        delayed.push(job);
+      const delayMs = job.options?.delay || 0;
+      if (delayMs > SQS_MAX_DELAY_SECONDS * 1000) {
+        longDelayed.push(job);
       } else {
-        immediate.push(job);
+        sqsEligible.push(job);
       }
     }
 
-    return { delayed, immediate };
+    return { longDelayed, sqsEligible };
   }
 
   private logBulkPayloadMetrics(data: IBulkJobParams[]): void {

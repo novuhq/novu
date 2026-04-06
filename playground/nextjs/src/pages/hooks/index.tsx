@@ -1,8 +1,8 @@
 import React from 'react';
 import { NovuProvider } from '@novu/nextjs/hooks';
-import { NotionTheme } from './_components/notion-theme';
+import { NotionTheme } from '@/components/hooks/demo/notion-theme';
 import { novuConfig } from '../../utils/config';
-import { StatusProvider } from './_components/status-context';
+import { StatusProvider } from '@/components/hooks/demo/status-context';
 
 const Page = () => {
   return (

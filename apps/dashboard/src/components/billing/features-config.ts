@@ -33,6 +33,7 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
       FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
       FeatureNameEnum.AUTO_TRANSLATIONS,
       FeatureNameEnum.WEBHOOKS,
+      FeatureNameEnum.ENVIRONMENT_VARIABLES,
     ],
   },
   {

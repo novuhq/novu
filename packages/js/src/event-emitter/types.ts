@@ -19,6 +19,7 @@ import { Preference } from '../preferences/preference';
 import { Schedule } from '../preferences/schedule';
 import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
+import type { TagsFilter } from '../types';
 import type { TopicSubscription } from '../subscriptions/subscription';
 import { SubscriptionPreference } from '../subscriptions/subscription-preference';
 import type {
@@ -66,27 +67,27 @@ type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action
 type NotificationRevertActionEvents = BaseEvents<'notification.revert_action', RevertArgs, Notification>;
 type NotificationsReadAllEvents = BaseEvents<
   'notifications.read_all',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type NotificationsSeenAllEvents = BaseEvents<
   'notifications.seen_all',
-  { notificationIds: string[] } | { tags?: string[]; data?: Record<string, unknown> } | {},
+  { notificationIds: string[] } | { tags?: TagsFilter; data?: Record<string, unknown> } | {},
   Notification[]
 >;
 type NotificationsArchivedAllEvents = BaseEvents<
   'notifications.archive_all',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type NotificationsReadArchivedAllEvents = BaseEvents<
   'notifications.archive_all_read',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type NotificationsDeletedAllEvents = BaseEvents<
   'notifications.delete_all',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;

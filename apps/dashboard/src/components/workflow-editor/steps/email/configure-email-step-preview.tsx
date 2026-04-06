@@ -18,10 +18,11 @@ type MiniEmailPreviewProps = HTMLAttributes<HTMLDivElement> & {
 
 const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
   const { className, children, previewFrom, ...rest } = props;
+
   return (
     <div
       className={cn(
-        'border-neutral-alpha-200 before:to-background relative isolate rounded-lg border border-dashed before:pointer-events-none before:absolute before:inset-0 before:-m-px before:rounded-lg before:bg-linear-to-b before:from-transparent before:bg-clip-padding',
+        'border-neutral-alpha-200 before:to-background relative isolate rounded-lg border before:pointer-events-none before:absolute before:inset-0 before:-m-px before:rounded-lg before:bg-linear-to-b before:from-transparent before:bg-clip-padding',
         className
       )}
       {...rest}
@@ -29,7 +30,11 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
       <div className="flex flex-col gap-1 py-1">
         <EmailPreviewHeader className="px-2 text-sm" previewFrom={previewFrom} />
         <Separator className="before:bg-neutral-alpha-100" />
-        <div className="relative z-10 line-clamp-3 space-y-1 px-2 pt-2 text-xs">{children}</div>
+        <div
+          className="relative z-10 line-clamp-3 space-y-1 px-2 pt-2 text-xs"
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -53,21 +58,21 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
     }
 
     // Replace <br> tags with a space
-    tempDiv.querySelectorAll('br').forEach((el) => {
+    for (const el of tempDiv.querySelectorAll('br')) {
       el.replaceWith(' ');
-    });
+    }
 
     // Add spaces between all block elements
     const blockElements = tempDiv.querySelectorAll(
       'div, p, h1, h2, h3, h4, h5, h6, ul, ol, li, table, tr, blockquote, form, fieldset, section, article, aside, header, footer, nav'
     );
 
-    blockElements.forEach((el) => {
+    for (const el of blockElements) {
       // Add space before the element
       el.insertBefore(document.createTextNode(' '), el.firstChild);
       // Add space after the element
       el.appendChild(document.createTextNode(' '));
-    });
+    }
 
     let text = tempDiv.textContent?.trim() || '';
     // Replace all whitespace sequences (including newlines) with a single space

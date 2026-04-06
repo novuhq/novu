@@ -1,3 +1,27 @@
+## 2.10.0 (2026-03-27)
+
+### 🚀 Features
+
+- **framework:** export param types fixes NV-7261 ([#10407](https://github.com/novuhq/novu/pull/10407))
+- **novu,framework:** align step resolver handlers with framework steps fixes NV-7235 ([#10286](https://github.com/novuhq/novu/pull/10286))
+- **api-service,dashboard,framework:** align step resolver scaffolding with framework fixes NV-7116 ([#10136](https://github.com/novuhq/novu/pull/10136))
+
+### 🩹 Fixes
+
+- **framework:** disable AJV strict mode for user schemas and remove noisy console.error ([#10426](https://github.com/novuhq/novu/pull/10426))
+- **framework:** Liquid output escaping for special JSON characters including `"` ([#9730](https://github.com/novuhq/novu/pull/9730))
+- **framework:** repair invalid JSON strings in control data fixes NV-6904 ([#9632](https://github.com/novuhq/novu/pull/9632))
+- **framework:** fix CORS issue preventing flows from showing in local studio fixes NV-6945 ([#9626](https://github.com/novuhq/novu/pull/9626))
+- **framework:** security patch for next.js dependency ([#9753](https://github.com/novuhq/novu/pull/9753))
+- **root:** resolve high liquidjs vulnerability ([#10263](https://github.com/novuhq/novu/pull/10263))
+- **root:** resolve moderate lodash, ajv, and express vulnerabilities ([#10360](https://github.com/novuhq/novu/pull/10360))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+
 ## 2.9.0 (2025-12-02)
 
 ### 🚀 Features

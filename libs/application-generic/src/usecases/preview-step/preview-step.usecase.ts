@@ -36,6 +36,8 @@ export class PreviewStep {
   }
 
   private buildBridgeEventPayload(command: PreviewStepCommand): Event {
+    const env = command.env ?? {};
+
     return {
       controls: command.controls || {},
       payload: command.payload || {},
@@ -45,7 +47,11 @@ export class PreviewStep {
       stepId: command.stepId,
       workflowId: command.workflowId,
       action: PostActionEnum.PREVIEW,
-      env: command.env ?? {},
+      env: {
+        ...env,
+        name: env.name ?? '',
+        type: env.type === 'prod' ? 'prod' : 'dev',
+      },
     };
   }
 }

@@ -113,7 +113,7 @@ export function generateMockAnalyticsData(): GetChartsResponse {
   };
 
   const workflowRunsCountData: WorkflowRunsCountDataPoint = {
-    count: randomBetween(800, 2000),
+    count: randomBetween(500, 1500),
   };
 
   return {

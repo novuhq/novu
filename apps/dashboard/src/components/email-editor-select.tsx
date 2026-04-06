@@ -58,7 +58,7 @@ export const EmailEditorSelect = ({
                 </TabsTrigger>
                 <TabsTrigger value="html" className="gap-1.5" size="xs" disabled={disabled}>
                   <RiCodeSSlashFill className="size-3.5" />
-                  <span>Code editor</span>
+                  <span>HTML</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>

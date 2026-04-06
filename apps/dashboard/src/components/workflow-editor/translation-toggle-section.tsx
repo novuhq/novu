@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { useState } from 'react';
 import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -9,8 +8,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { Badge } from '../primitives/badge';
-import { Button } from '../primitives/button';
+import { cn } from '@/utils/ui';
 
 interface TranslationToggleSectionProps {
   value: boolean;
@@ -20,6 +18,7 @@ interface TranslationToggleSectionProps {
   showDrawer?: boolean;
   resourceId?: string;
   resourceType?: LocalizationResourceEnum;
+  className?: string;
 }
 
 export function TranslationToggleSection({
@@ -30,6 +29,7 @@ export function TranslationToggleSection({
   showDrawer = true,
   resourceId,
   resourceType,
+  className,
 }: TranslationToggleSectionProps) {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -54,20 +54,37 @@ export function TranslationToggleSection({
   };
 
   if (needsOnboarding) {
+    const handleOnboardingClick = () => {
+      navigate(translationsUrl);
+    };
+
+    const stopRowNavigation = (e: React.SyntheticEvent) => {
+      e.stopPropagation();
+    };
+
     return (
-      <div className="flex items-center justify-between border-t border-neutral-100 pt-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-label-xs text-text-strong">
-              Enable Translations{' '}
-              <Badge color="gray" size="sm" variant="lighter">
-                BETA
-              </Badge>
-            </span>
+      <button
+        type="button"
+        onClick={handleOnboardingClick}
+        className={cn(
+          'group flex w-full min-w-0 cursor-pointer flex-col gap-1.5 rounded-none bg-transparent text-left transition-colors hover:bg-bg-weak focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          className
+        )}
+      >
+        <div className="flex w-full min-w-0 items-center gap-1.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="text-label-xs text-text-strong">Enable Translations</span>
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <RiInformation2Line className="size-4 text-text-soft cursor-help" />
+                <span
+                  className="inline-flex cursor-help"
+                  onClick={stopRowNavigation}
+                  onPointerDown={stopRowNavigation}
+                  onKeyDown={stopRowNavigation}
+                >
+                  <RiInformation2Line className="size-4 text-text-soft" />
+                </span>
               </TooltipTrigger>
               <TooltipPortal>
                 <TooltipContent side="left" hideWhenDetached>
@@ -77,37 +94,30 @@ export function TranslationToggleSection({
               </TooltipPortal>
             </Tooltip>
           </div>
-          <p className="text-foreground-400 text-2xs mb-1">Set up your target locales first to enable translations</p>
-        </div>
 
-        <motion.div whileHover={{ x: 2 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-          <Button
-            variant="secondary"
-            mode="ghost"
-            size="xs"
-            onClick={() => navigate(translationsUrl)}
-            trailingIcon={RiArrowRightSLine}
-          >
+          <span className="text-text-sub group-hover:text-text-strong inline-flex shrink-0 items-center text-xs font-medium transition-color duration-200 ease-out  group-hover:translate-x-0.5">
             Setup
-          </Button>
-        </motion.div>
-      </div>
+          </span>
+          <RiArrowRightSLine
+            aria-hidden
+            className="arrow-right-hover-animation size-4 shrink-0 transition-transform duration-200 ease-out text-text-sub hover:text-text-strong group-hover:translate-x-0.5"
+          />
+        </div>
+        <span className="text-foreground-400 text-xs">
+          Set up your target locales first to enable translations
+        </span>
+      </button>
     );
   }
 
   return (
-    <div className="flex flex-col border-t border-neutral-100 pt-4">
-      <div className="flex items-center justify-between py-1">
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-label-xs text-text-strong">
-            Enable Translations{' '}
-            <Badge color="gray" size="sm" variant="lighter">
-              BETA
-            </Badge>
-          </span>
+          <span className="text-label-xs text-text-strong">Enable Translations </span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <RiInformation2Line className="size-4 text-text-soft cursor-help" />
+              <RiInformation2Line className="size-3 text-text-soft cursor-help" />
             </TooltipTrigger>
             <TooltipPortal>
               <TooltipContent side="left" hideWhenDetached>
@@ -129,7 +139,7 @@ export function TranslationToggleSection({
           <button
             type="button"
             onClick={handleManageTranslationsClick}
-            className="text-foreground-400 text-2xs hover:text-foreground-600 mb-1 cursor-pointer text-left transition-colors"
+            className="text-foreground-400 text-xs hover:text-foreground-600 cursor-pointer text-left transition-colors"
           >
             View & manage translations ↗
           </button>

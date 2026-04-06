@@ -4,8 +4,6 @@ import { GetActionEnum, HealthCheck } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';
 
-export const LOG_CONTEXT = 'GetBridgeStatusUsecase';
-
 @Injectable()
 export class GetBridgeStatus {
   constructor(private executeBridgeRequest: ExecuteBridgeRequest) {}
