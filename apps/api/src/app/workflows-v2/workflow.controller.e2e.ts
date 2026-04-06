@@ -1085,7 +1085,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       it('should respond with 400 when name is too long', async () => {
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
-          name: Array.from({ length: 129 }).join('X'),
+          name: 'X'.repeat(129),
         });
 
         await createWorkflowAndExpectValidationError(
