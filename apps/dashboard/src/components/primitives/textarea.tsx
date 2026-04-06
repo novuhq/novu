@@ -115,7 +115,7 @@ const TextareaRoot = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         className={cn(
           [
             // base
-            'group/textarea bg-bg-white shadow-regular-xs relative flex w-full flex-col rounded-xl pb-2.5',
+            'group/textarea bg-bg-white shadow-regular-xs relative flex w-full flex-col rounded-md pb-2.5',
             'ring-stroke-soft ring-1 ring-inset',
             'transition duration-200 ease-out',
             // hover

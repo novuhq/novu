@@ -1,11 +1,13 @@
 // AlignUI Badge v0.0.0
 
 import { Slot } from '@radix-ui/react-slot';
+import { motion } from 'motion/react';
 import * as React from 'react';
 
 import type { PolymorphicComponentProps } from '@/utils/polymorphic';
 import { recursiveCloneChildren } from '@/utils/recursive-clone-children';
 import { tv, type VariantProps } from '@/utils/tv';
+import { cn } from '@/utils/ui';
 
 const BADGE_ROOT_NAME = 'BadgeRoot';
 const BADGE_ICON_NAME = 'BadgeIcon';
@@ -457,4 +459,115 @@ function BadgeDot({ size, variant, color, className, ...rest }: BadgeDotProps) {
 
 BadgeDot.displayName = BADGE_DOT_NAME;
 
-export { BadgeRoot as Badge, BadgeIcon, BadgeDot as Dot, BadgeRoot as Root };
+type AnimatedBadgeDotProps = BadgeSharedProps & Omit<React.HTMLAttributes<HTMLDivElement>, 'color'>;
+
+const COLOR_TO_BASE_CLASSES: Record<
+  NonNullable<BadgeSharedProps['color']>,
+  { text: string; base25: string; base15: string }
+> = {
+  gray: {
+    text: 'text-faded-base',
+    base25: 'bg-faded-base/25',
+    base15: 'bg-faded-base/15',
+  },
+  blue: {
+    text: 'text-information-base',
+    base25: 'bg-information-base/25',
+    base15: 'bg-information-base/15',
+  },
+  orange: {
+    text: 'text-warning-base',
+    base25: 'bg-warning-base/25',
+    base15: 'bg-warning-base/15',
+  },
+  red: {
+    text: 'text-error-base',
+    base25: 'bg-error-base/25',
+    base15: 'bg-error-base/15',
+  },
+  green: {
+    text: 'text-success-base',
+    base25: 'bg-success-base/25',
+    base15: 'bg-success-base/15',
+  },
+  yellow: {
+    text: 'text-away-base',
+    base25: 'bg-away-base/25',
+    base15: 'bg-away-base/15',
+  },
+  purple: {
+    text: 'text-feature-base',
+    base25: 'bg-feature-base/25',
+    base15: 'bg-feature-base/15',
+  },
+  sky: {
+    text: 'text-verified-base',
+    base25: 'bg-verified-base/25',
+    base15: 'bg-verified-base/15',
+  },
+  pink: {
+    text: 'text-highlighted-base',
+    base25: 'bg-highlighted-base/25',
+    base15: 'bg-highlighted-base/15',
+  },
+  teal: {
+    text: 'text-stable-base',
+    base25: 'bg-stable-base/25',
+    base15: 'bg-stable-base/15',
+  },
+};
+
+function AnimatedBadgeDot({ size, variant, color = 'gray', className, ...rest }: AnimatedBadgeDotProps) {
+  const { dot } = badgeVariants({ size, variant, color });
+  const colorClasses = COLOR_TO_BASE_CLASSES[color];
+
+  return (
+    <div className={dot({ class: cn('relative', colorClasses.text, className) })} {...rest}>
+      <motion.div
+        animate={{
+          scale: [1.8, 2, 1.8],
+          opacity: [1, 0.7, 1],
+        }}
+        transition={{
+          duration: 2.4,
+          repeat: Infinity,
+          ease: [0.34, 1.56, 0.64, 1],
+        }}
+        style={{ transformOrigin: 'center' }}
+        className="absolute inset-0 flex items-center justify-center before:size-[2.5px] before:rounded-full before:bg-current"
+      />
+      <motion.div
+        animate={{
+          scale: [0.4, 1.2, 0.4],
+          opacity: [0.3, 0, 0.3],
+        }}
+        transition={{
+          duration: 2.4,
+          repeat: Infinity,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          delay: 0.1,
+        }}
+        className={cn('absolute inset-0 rounded-full', colorClasses.base25)}
+        style={{ transformOrigin: 'center' }}
+      />
+      <motion.div
+        animate={{
+          scale: [0.6, 1.2, 0.6],
+          opacity: [0.2, 0, 0.2],
+        }}
+        transition={{
+          duration: 2.4,
+          repeat: Infinity,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          delay: 0.2,
+        }}
+        className={cn('absolute inset-0 rounded-full', colorClasses.base15)}
+        style={{ transformOrigin: 'center' }}
+      />
+    </div>
+  );
+}
+
+AnimatedBadgeDot.displayName = 'AnimatedBadgeDot';
+
+export { BadgeRoot as Badge, BadgeIcon, BadgeDot as Dot, BadgeRoot as Root, AnimatedBadgeDot };

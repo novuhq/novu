@@ -1,6 +1,7 @@
+import { Copy } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { RiCheckLine, RiFileCopyLine } from 'react-icons/ri';
+import { RiCheckboxCircleFill } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
@@ -8,10 +9,17 @@ type CopyButtonProps = {
   className?: string;
   valueToCopy: string;
   size?: '2xs' | 'xs';
+  onCopySuccess?: () => void;
+  onCopyError?: (error: unknown) => void;
+};
+
+const PADDING_CLASS_BY_SIZE: Record<NonNullable<CopyButtonProps['size']>, string> = {
+  '2xs': 'p-0',
+  xs: 'p-1',
 };
 
 export const CopyButton = (props: CopyButtonProps) => {
-  const { className, valueToCopy, size, ...rest } = props;
+  const { className, valueToCopy, size, onCopySuccess, onCopyError, ...rest } = props;
 
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -20,12 +28,16 @@ export const CopyButton = (props: CopyButtonProps) => {
       await navigator.clipboard.writeText(valueToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+
+      onCopySuccess?.();
     } catch (err) {
+      onCopyError?.(err);
       console.error('Failed to copy text: ', err);
     }
   };
 
-  const sizeClass = props.size === '2xs' ? 'size-3' : 'size-4';
+  const sizeClass = size === '2xs' ? 'size-3' : 'size-3.5';
+  const paddingClass = size === undefined ? 'p-2.5' : PADDING_CLASS_BY_SIZE[size];
 
   return (
     <Tooltip>
@@ -37,7 +49,8 @@ export const CopyButton = (props: CopyButtonProps) => {
             e.preventDefault();
           }}
           className={cn(
-            'inline-flex select-none items-center justify-center whitespace-nowrap p-2.5 outline-hidden',
+            'inline-flex select-none items-center justify-center whitespace-nowrap outline-hidden',
+            paddingClass,
             // colors
             'text-text-sub',
             // transitions
@@ -58,7 +71,7 @@ export const CopyButton = (props: CopyButtonProps) => {
                 exit={{ scale: 0.5, opacity: 0 }}
                 transition={{ type: 'spring', duration: 0.1, bounce: 0.5 }}
               >
-                <RiCheckLine className={`${sizeClass} text-success`} aria-hidden="true" />
+                <RiCheckboxCircleFill className={`${sizeClass} text-success`} aria-hidden="true" />
               </motion.div>
             ) : (
               <motion.div
@@ -68,7 +81,7 @@ export const CopyButton = (props: CopyButtonProps) => {
                 exit={{ scale: 0.5, opacity: 0 }}
                 transition={{ type: 'spring', duration: 0.15, bounce: 0.5 }}
               >
-                <RiFileCopyLine className={`${sizeClass}`} />
+                <Copy className={`${sizeClass}`} />
               </motion.div>
             )}
           </AnimatePresence>

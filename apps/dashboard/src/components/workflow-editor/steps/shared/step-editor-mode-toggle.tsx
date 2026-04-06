@@ -158,9 +158,10 @@ export function StepEditorModeToggle() {
               >
                 <FileCode2 className="size-3" />
                 <span className="text-code-xs">CUSTOM CODE</span>
-                <Badge variant="lighter" color="purple" size="sm">
-                  New
-                </Badge>
+                <span className=" ml-1 mr-0.5 inline-flex shrink-0 items-center">
+                  <span aria-hidden className="size-1 rounded-full bg-purple-500/35 ring-1 ring-purple-alpha-10" />
+                  <span className="sr-only">New</span>
+                </span>
               </button>
             </TooltipTrigger>
             <TooltipContent
@@ -188,7 +189,10 @@ export function StepEditorModeToggle() {
                         { label: 'Version controlled', detail: 'your handler lives in your repo' },
                       ]
                     : [
-                        { label: 'Override step logic in TypeScript', detail: 'custom delay, digest, or routing rules' },
+                        {
+                          label: 'Override step logic in TypeScript',
+                          detail: 'custom delay, digest, or routing rules',
+                        },
                         { label: 'Code-first', detail: 'define behavior and conditions in your repo' },
                         { label: 'Version controlled', detail: 'your handler lives in your codebase' },
                       ]
