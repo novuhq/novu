@@ -213,7 +213,7 @@ export class IntegrationsController {
         return GetDecryptedIntegrations.getDecryptedCredentials(integration);
       }
 
-      const { credentials, ...integrationWithoutCredentials } = integration;
+      const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
       return integrationWithoutCredentials as unknown as IntegrationResponseDto;
     } catch (e) {
@@ -266,7 +266,7 @@ export class IntegrationsController {
         return GetDecryptedIntegrations.getDecryptedCredentials(integration);
       }
 
-      const { credentials, ...integrationWithoutCredentials } = integration;
+      const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
       return integrationWithoutCredentials as unknown as IntegrationResponseDto;
     } catch (e) {
@@ -339,7 +339,7 @@ export class IntegrationsController {
       return GetDecryptedIntegrations.getDecryptedCredentials(integration);
     }
 
-    const { credentials, ...integrationWithoutCredentials } = integration;
+    const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
     return integrationWithoutCredentials as unknown as IntegrationResponseDto;
   }

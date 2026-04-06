@@ -116,6 +116,7 @@ export class GetCharts {
         | MessagesDeliveredDataPointDto
         | ActiveSubscribersDataPointDto
         | AvgMessagesPerSubscriberDataPointDto
+        | WorkflowRunsCountDataPointDto
         | WorkflowRunsMetricDataPointDto
         | TotalInteractionsDataPointDto
         | WorkflowRunsTrendDataPointDto[]
@@ -244,20 +245,23 @@ export class GetCharts {
     }
 
     if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_COUNT)) {
-      data[ReportTypeEnum.WORKFLOW_RUNS_COUNT] = await this.buildWorkflowRunsCountChart.execute(
-        Object.assign(new BuildWorkflowRunsCountChartCommand(), {
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-          workflowIds,
-          subscriberIds,
-          transactionIds,
-          statuses,
-          channels,
-          topicKey,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.WORKFLOW_RUNS_COUNT,
+        promise: this.buildWorkflowRunsCountChart.execute(
+          Object.assign(new BuildWorkflowRunsCountChartCommand(), {
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+            workflowIds,
+            subscriberIds,
+            transactionIds,
+            statuses,
+            channels,
+            topicKey,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.TOTAL_INTERACTIONS)) {

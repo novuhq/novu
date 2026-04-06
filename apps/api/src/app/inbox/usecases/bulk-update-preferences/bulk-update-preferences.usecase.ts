@@ -32,7 +32,12 @@ export class BulkUpdatePreferences {
 
   @InstrumentUsecase()
   async execute(command: BulkUpdatePreferencesCommand): Promise<InboxPreference[]> {
-    const contextKeys = await this.resolveContexts(command.environmentId, command.organizationId, command.context);
+    const contextKeys = await this.resolveContexts(
+      command.environmentId,
+      command.organizationId,
+      command.context,
+      command.contextKeys
+    );
 
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
@@ -140,9 +145,9 @@ export class BulkUpdatePreferences {
   private async resolveContexts(
     environmentId: string,
     organizationId: string,
-    context?: ContextPayload
+    context?: ContextPayload,
+    sessionContextKeys?: string[]
   ): Promise<string[] | undefined> {
-    // Check if context preferences feature is enabled
     const isEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
       defaultValue: false,
@@ -150,10 +155,14 @@ export class BulkUpdatePreferences {
     });
 
     if (!isEnabled) {
-      return undefined; // Ignore context when FF is off
+      return undefined;
     }
 
     if (!context) {
+      if (sessionContextKeys?.length) {
+        return sessionContextKeys;
+      }
+
       return [];
     }
 

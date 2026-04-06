@@ -4,7 +4,7 @@ import { JobEntity, JobRepository, MessageEntity, MessageRepository } from '@nov
 import { ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { InboxNotification } from '../../utils/types';
+import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
@@ -53,7 +53,7 @@ describe('UnsnoozeNotification', () => {
     delay: 3600000,
   } as JobEntity;
 
-  const mockNotification: InboxNotification = {
+  const mockNotification: InboxNotificationDto = {
     id: validNotificationId,
     transactionId: 'transaction-id',
     body: 'Test notification content',

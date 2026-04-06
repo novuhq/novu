@@ -20,7 +20,7 @@ export function ContinueOnFailure() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button type="button" className="flex items-center">
-                  <RiInformation2Line className="text-text-soft size-5" />
+                  <RiInformation2Line className="text-text-soft size-3" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>

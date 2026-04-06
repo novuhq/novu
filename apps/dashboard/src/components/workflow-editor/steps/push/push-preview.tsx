@@ -47,7 +47,7 @@ type PushSubjectPreviewProps = HTMLAttributes<HTMLDivElement> & {
   isPending: boolean;
 };
 
-export const PushSubjectPreview = ({ subject, isPending, className, ...rest }: PushSubjectPreviewProps) => {
+const PushSubjectPreview = ({ subject, isPending, className, ...rest }: PushSubjectPreviewProps) => {
   if (isPending) {
     return <Skeleton className="h-3 w-2/3" />;
   }
@@ -67,7 +67,7 @@ type PushBodyPreviewProps = HTMLAttributes<HTMLDivElement> & {
   isPending: boolean;
 };
 
-export const PushBodyPreview = ({ body, isPending, className, ...rest }: PushBodyPreviewProps) => {
+const PushBodyPreview = ({ body, isPending, className, ...rest }: PushBodyPreviewProps) => {
   if (isPending) {
     return (
       <div className="flex flex-col gap-1 whitespace-pre-wrap" {...rest}>
@@ -84,7 +84,7 @@ export const PushBodyPreview = ({ body, isPending, className, ...rest }: PushBod
   );
 };
 
-export const PushContentContainerPreview = ({ children, className, ...rest }: HTMLMotionProps<'div'>) => {
+const PushContentContainerPreview = ({ children, className, ...rest }: HTMLMotionProps<'div'>) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -99,7 +99,7 @@ export const PushContentContainerPreview = ({ children, className, ...rest }: HT
   );
 };
 
-export const PushBackgroundWithPhone = ({ children, className, ...rest }: HTMLAttributes<HTMLDivElement>) => {
+const PushBackgroundWithPhone = ({ children, className, ...rest }: HTMLAttributes<HTMLDivElement>) => {
   return (
     <div className="flex items-center justify-center w-full">
       <div
@@ -112,7 +112,7 @@ export const PushBackgroundWithPhone = ({ children, className, ...rest }: HTMLAt
   );
 };
 
-export const PushNotificationContainer = ({ children, className, ...rest }: HTMLAttributes<HTMLDivElement>) => {
+const PushNotificationContainer = ({ children, className, ...rest }: HTMLAttributes<HTMLDivElement>) => {
   return (
     <div className={cn('absolute bottom-5 left-1/2 z-10 w-11/12 -translate-x-1/2 p-2', className)} {...rest}>
       {children}

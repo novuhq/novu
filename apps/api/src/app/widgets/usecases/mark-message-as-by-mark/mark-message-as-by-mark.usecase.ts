@@ -147,7 +147,7 @@ export class MarkMessageAsByMark {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }
-export function mapMessageEntityToResponseDto(entity: MessageEntity): MessageResponseDto {
+function mapMessageEntityToResponseDto(entity: MessageEntity): MessageResponseDto {
   const responseDto = new MessageResponseDto();
 
   responseDto._id = entity._id;

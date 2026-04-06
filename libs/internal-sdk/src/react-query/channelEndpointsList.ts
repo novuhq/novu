@@ -5,31 +5,50 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import * as components from "../models/components/index.js";
-import * as operations from "../models/operations/index.js";
-import { useNovuContext } from "./_context.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import * as components from '../models/components/index.js';
 import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  ConnectionError,
+  InvalidRequestError,
+  RequestAbortedError,
+  RequestTimeoutError,
+  UnexpectedClientError,
+} from '../models/errors/httpclienterrors.js';
+import * as errors from '../models/errors/index.js';
+import { NovuError } from '../models/errors/novuerror.js';
+import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
+import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
+import * as operations from '../models/operations/index.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildChannelEndpointsListQuery,
   ChannelEndpointsListQueryData,
   prefetchChannelEndpointsList,
   queryKeyChannelEndpointsList,
-} from "./channelEndpointsList.core.js";
+} from './channelEndpointsList.core.js';
 export {
   buildChannelEndpointsListQuery,
   type ChannelEndpointsListQueryData,
   prefetchChannelEndpointsList,
   queryKeyChannelEndpointsList,
 };
+
+export type ChannelEndpointsListQueryError =
+  | errors.ErrorDto
+  | errors.ValidationErrorDto
+  | NovuError
+  | ResponseValidationError
+  | ConnectionError
+  | RequestAbortedError
+  | RequestTimeoutError
+  | InvalidRequestError
+  | UnexpectedClientError
+  | SDKValidationError;
 
 /**
  * List all channel endpoints
@@ -39,15 +58,11 @@ export {
  */
 export function useChannelEndpointsList(
   request: operations.ChannelEndpointsControllerListChannelEndpointsRequest,
-  options?: QueryHookOptions<ChannelEndpointsListQueryData>,
-): UseQueryResult<ChannelEndpointsListQueryData, Error> {
+  options?: QueryHookOptions<ChannelEndpointsListQueryData, ChannelEndpointsListQueryError>
+): UseQueryResult<ChannelEndpointsListQueryData, ChannelEndpointsListQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildChannelEndpointsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildChannelEndpointsListQuery(client, request, options),
     ...options,
   });
 }
@@ -60,15 +75,11 @@ export function useChannelEndpointsList(
  */
 export function useChannelEndpointsListSuspense(
   request: operations.ChannelEndpointsControllerListChannelEndpointsRequest,
-  options?: SuspenseQueryHookOptions<ChannelEndpointsListQueryData>,
-): UseSuspenseQueryResult<ChannelEndpointsListQueryData, Error> {
+  options?: SuspenseQueryHookOptions<ChannelEndpointsListQueryData, ChannelEndpointsListQueryError>
+): UseSuspenseQueryResult<ChannelEndpointsListQueryData, ChannelEndpointsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildChannelEndpointsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildChannelEndpointsListQuery(client, request, options),
     ...options,
   });
 }
@@ -80,9 +91,7 @@ export function setChannelEndpointsListData(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?:
-        | operations.ChannelEndpointsControllerListChannelEndpointsQueryParamOrderDirection
-        | undefined;
+      orderDirection?: operations.ChannelEndpointsControllerListChannelEndpointsQueryParamOrderDirection | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       subscriberId?: string | undefined;
@@ -94,7 +103,7 @@ export function setChannelEndpointsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ChannelEndpointsListQueryData,
+  data: ChannelEndpointsListQueryData
 ): ChannelEndpointsListQueryData | undefined {
   const key = queryKeyChannelEndpointsList(...queryKeyBase);
 
@@ -104,38 +113,38 @@ export function setChannelEndpointsListData(
 export function invalidateChannelEndpointsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [parameters: {
-      after?: string | undefined;
-      before?: string | undefined;
-      limit?: number | undefined;
-      orderDirection?:
-        | operations.ChannelEndpointsControllerListChannelEndpointsQueryParamOrderDirection
-        | undefined;
-      orderBy?: string | undefined;
-      includeCursor?: boolean | undefined;
-      subscriberId?: string | undefined;
-      contextKeys?: Array<string> | undefined;
-      channel?: operations.QueryParamChannel | undefined;
-      providerId?: components.ProvidersIdEnum | undefined;
-      integrationIdentifier?: string | undefined;
-      connectionIdentifier?: string | undefined;
-      idempotencyKey?: string | undefined;
-    }]
+    [
+      parameters: {
+        after?: string | undefined;
+        before?: string | undefined;
+        limit?: number | undefined;
+        orderDirection?: operations.ChannelEndpointsControllerListChannelEndpointsQueryParamOrderDirection | undefined;
+        orderBy?: string | undefined;
+        includeCursor?: boolean | undefined;
+        subscriberId?: string | undefined;
+        contextKeys?: Array<string> | undefined;
+        channel?: operations.QueryParamChannel | undefined;
+        providerId?: components.ProvidersIdEnum | undefined;
+        integrationIdentifier?: string | undefined;
+        connectionIdentifier?: string | undefined;
+        idempotencyKey?: string | undefined;
+      },
+    ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Channel Endpoints", "list", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Channel Endpoints', 'list', ...queryKeyBase],
   });
 }
 
 export function invalidateAllChannelEndpointsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Channel Endpoints", "list"],
+    queryKey: ['@novu/api', 'Channel Endpoints', 'list'],
   });
 }

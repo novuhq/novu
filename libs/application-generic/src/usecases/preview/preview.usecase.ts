@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { EnvironmentVariableRepository } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
-import { ChannelTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentSystemVariables, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { GeneratePreviewResponseDto } from '../../dtos/workflow/generate-preview-response.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
@@ -36,7 +36,8 @@ export class PreviewUsecase {
     private readonly errorHandler: PreviewErrorHandler,
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
-    private readonly environmentVariableRepository: EnvironmentVariableRepository
+    private readonly environmentVariableRepository: EnvironmentVariableRepository,
+    private readonly environmentRepository: EnvironmentRepository
   ) {}
 
   @InstrumentUsecase()
@@ -155,13 +156,22 @@ export class PreviewUsecase {
       })
     );
 
-    let envVars: Record<string, string> = {};
+    let envVars: EnvironmentSystemVariables & Record<string, string>;
     try {
-      const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
-        command.user.organizationId,
-        command.user.environmentId
-      );
-      envVars = resolveEnvironmentVariables(rawEnvVars);
+      const [rawEnvVars, environmentEntity] = await Promise.all([
+        this.environmentVariableRepository.findByEnvironment(command.user.organizationId, command.user.environmentId),
+        this.environmentRepository.findByIdAndOrganization(command.user.environmentId, command.user.organizationId),
+      ]);
+
+      const environmentSystemVars: EnvironmentSystemVariables = {
+        name: environmentEntity.name,
+        type: environmentEntity?.type,
+      };
+
+      envVars = {
+        ...resolveEnvironmentVariables(rawEnvVars),
+        ...environmentSystemVars,
+      };
     } catch (error) {
       this.logger.error(
         { error },
@@ -220,7 +230,7 @@ export class PreviewUsecase {
     previewPayloadExample: PreviewPayloadDto,
     controlValues: Record<string, unknown>,
     stepResolverHash: string | undefined,
-    envVars: Record<string, string>
+    envVars: EnvironmentSystemVariables & Record<string, string>
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
 

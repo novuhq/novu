@@ -1,0 +1,32 @@
+---
+description: Rules for writing and running tests
+globs:
+  - "**/*.spec.ts"
+  - "**/*.test.ts"
+  - "**/e2e/**"
+alwaysApply: false
+---
+
+### Testing Conventions
+
+**General**
+- Match the test style and tooling already used in the same app (Mocha for API/worker, Playwright for dashboard).
+- Shared test utilities and setup helpers live in `libs/testing` — use them instead of rolling custom harnesses.
+- Never mock MongoDB models directly; use the test harness in `libs/testing` which manages real database state.
+
+**API (`apps/api`)**
+- Unit tests: `cd apps/api && pnpm test` (Mocha + ts-node, matches `src/**/*.spec.ts`)
+- Lint: `cd apps/api && pnpm check`
+- OpenAPI validation: `npm run lint:openapi` (requires API running)
+- E2E tests: see `.cursor/skills/run-api-e2e-tests/SKILL.md`
+- Bootstrap a NestJS testing module for integration-style unit tests rather than mocking the entire DI container.
+
+**Dashboard (`apps/dashboard`)**
+- E2E tests: `cd apps/dashboard && pnpm test:e2e` (Playwright — start dashboard first)
+- Lint: `cd apps/dashboard && pnpm check`
+- Tests live in `apps/dashboard/tests/` (or `e2e/`).
+
+**Worker (`apps/worker`)**
+- Unit tests: `cd apps/worker && pnpm test` (Mocha + ts-node, matches `src/**/**/*.spec.ts`)
+- Lint: `cd apps/worker && pnpm check`
+- The worker must be running (`pnpm start:worker`) when testing end-to-end notification flows.

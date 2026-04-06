@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService, buildFeedKey, CachedQuery } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { normalizeTagGroups } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { GetNotificationsResponseDto } from '../../dtos/get-notifications-response.dto';
@@ -51,13 +52,15 @@ export class GetNotifications {
         ? command.severity
         : [command.severity]
       : undefined;
+    const tagGroups = command.tags !== undefined ? normalizeTagGroups(command.tags) : undefined;
+
     const { data: feed, hasMore } = await this.messageRepository.paginate(
       {
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
         channel: ChannelTypeEnum.IN_APP,
         contextKeys: command.contextKeys,
-        tags: command.tags,
+        tagGroups,
         read: command.read,
         archived: command.archived,
         snoozed: command.snoozed,

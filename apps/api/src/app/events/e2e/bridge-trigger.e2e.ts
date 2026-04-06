@@ -157,6 +157,143 @@ contexts.forEach((context: Context) => {
       expect(smsMessage?.content).to.include('sms result test_name');
     });
 
+    it(`should update message template type when replacing a step with the same stepId after re-sync [${context.name}]`, async () => {
+      const workflowId = `step-type-replace-${context.name}`;
+      const middleStepId = 'shared-middle-step';
+
+      const workflowWithCustomMiddle = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.inApp(
+            'first-in-app',
+            async () => ({
+              body: `first ${payload.name}`,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {},
+              } as const,
+            }
+          );
+
+          await step.custom(
+            middleStepId,
+            async () => ({
+              data: 'custom',
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {},
+              } as const,
+            }
+          );
+
+          await step.inApp(
+            'last-in-app',
+            async () => ({
+              body: `last ${payload.name}`,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {},
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: 'default_name' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      const workflowWithChatMiddle = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.inApp(
+            'first-in-app',
+            async () => ({
+              body: `first ${payload.name}`,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {},
+              } as const,
+            }
+          );
+
+          await step.chat(middleStepId, async () => ({
+            body: 'chat body',
+          }));
+
+          await step.inApp(
+            'last-in-app',
+            async () => ({
+              body: `last ${payload.name}`,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {},
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: 'default_name' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await bridgeServer.start({ workflows: [workflowWithCustomMiddle] });
+
+      if (context.isStateful) {
+        await syncWorkflow(session, workflowsRepository, workflowId, bridgeServer);
+
+        const afterCustom = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+        expect(afterCustom?.steps?.length).to.be.eq(3);
+        const middleAfterCustom = afterCustom?.steps?.find((s) => s.stepId === middleStepId);
+        expect(middleAfterCustom?.template?.type).to.eql(StepTypeEnum.CUSTOM);
+      }
+
+      await bridgeServer.stop();
+
+      /*
+       * The framework Client caches discovery per workflow id. Reusing the same TestBridgeServer
+       * after start/stop would still serve the first discovered definition, so use a fresh server
+       * (fresh Client) for the updated workflow.
+       */
+      const chatBridgePort = await getPort();
+      const bridgeServerChat = new TestBridgeServer(chatBridgePort);
+      await bridgeServerChat.start({ workflows: [workflowWithChatMiddle] });
+
+      if (context.isStateful) {
+        await syncWorkflow(session, workflowsRepository, workflowId, bridgeServerChat);
+
+        const afterChat = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+        expect(afterChat?.steps?.length).to.be.eq(3);
+        const middleAfterChat = afterChat?.steps?.find((s) => s.stepId === middleStepId);
+        expect(middleAfterChat?.template?.type).to.eql(StepTypeEnum.CHAT);
+      }
+
+      await bridgeServerChat.stop();
+    });
+
     it(`should skip by static value [${context.name}]`, async () => {
       const workflowIdSkipByStatic = `skip-by-static-value-workflow-${`${context.name}`}`;
       const newWorkflow = workflow(

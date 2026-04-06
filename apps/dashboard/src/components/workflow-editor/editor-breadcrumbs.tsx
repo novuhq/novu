@@ -1,7 +1,7 @@
 import { ResourceOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import React from 'react';
 import { FaCode } from 'react-icons/fa6';
-import { RiArrowLeftSLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiCheckLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { RouteFill } from '@/components/icons';
@@ -194,14 +194,12 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
       <BreadcrumbPage className="flex items-center gap-1">
         {hasMultipleSteps ? (
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 rounded-md border border-transparent px-1 py-[1px] hover:border-neutral-alpha-200 hover:bg-neutral-50">
-              <Icon className="text-foreground-950 size-3" />
-              <span className="text-foreground-950 max-w-[32ch] truncate text-sm font-medium">
-                {step.name || STEP_TYPE_LABELS[step.type]}
-              </span>
-              <RiExpandUpDownLine className="text-foreground-400 size-3" />
+            <DropdownMenuTrigger className="flex h-6 max-w-[34ch] cursor-pointer items-center gap-1 rounded-md border border-transparent px-1.5 text-xs transition-colors hover:border-neutral-alpha-200 hover:bg-neutral-alpha-50 data-[state=open]:border-neutral-alpha-200 data-[state=open]:bg-neutral-alpha-50">
+              <Icon className="text-foreground-950 size-3.5 shrink-0" />
+              <span className="text-foreground-950 truncate font-medium">{step.name || STEP_TYPE_LABELS[step.type]}</span>
+              <RiExpandUpDownLine className="text-foreground-400 size-3 shrink-0" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[144px]">
+            <DropdownMenuContent align="start" className="min-w-[220px] max-w-[280px] p-1">
               {steps.map((s) => {
                 const StepIcon = STEP_TYPE_TO_ICON[s.type];
                 const isCurrentStep = s.slug === step.slug;
@@ -211,12 +209,13 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
                     key={s._id}
                     onSelect={() => handleStepSwitch(s)}
                     className={cn(
-                      'flex cursor-pointer items-center gap-1 px-1 py-1 text-xs',
-                      isCurrentStep && 'bg-neutral-alpha-50'
+                      'flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0 text-xs leading-none',
+                      isCurrentStep && 'bg-bg-weak'
                     )}
                   >
-                    <StepIcon className={cn('size-4 shrink-0', COLOR_TOKEN_TO_TEXT[STEP_TYPE_TO_COLOR[s.type]])} />
+                    <StepIcon className={cn('size-3.5 shrink-0', COLOR_TOKEN_TO_TEXT[STEP_TYPE_TO_COLOR[s.type]])} />
                     <span className="truncate">{s.name || STEP_TYPE_LABELS[s.type]}</span>
+                    {isCurrentStep ? <RiCheckLine className="text-foreground-600 ml-auto size-3.5 shrink-0" /> : null}
                   </DropdownMenuItem>
                 );
               })}

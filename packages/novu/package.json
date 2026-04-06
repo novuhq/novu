@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -28,7 +28,7 @@
     "check:fix": "biome check --write .",
     "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon init",
     "start:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon",
-    "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon dev --dashboard-url http://localhost:4200",
+    "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon dev --dashboard-url http://localhost:4201",
     "start:init:mode": "cross-env NODE_ENV=dev nodemon init",
     "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon sync",
     "start:test": "cross-env NODE_ENV=test PORT=1336 nodemon init",
@@ -68,7 +68,7 @@
   "dependencies": {
     "@babel/parser": "^7.29.0",
     "@novu/framework": "workspace:*",
-    "@novu/ntfr-client": "^0.0.4",
+    "@novu/ntfr-client": "^0.0.5",
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "async-sema": "3.0.1",
@@ -78,7 +78,7 @@
     "configstore": "^5.0.0",
     "cross-spawn": "7.0.5",
     "dotenv": "^16.4.5",
-    "esbuild": "^0.19.0",
+    "esbuild": "^0.25.0",
     "fast-glob": "3.3.1",
     "form-data": "^4.0.5",
     "get-port": "^5.1.1",

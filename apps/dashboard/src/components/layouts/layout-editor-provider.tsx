@@ -459,7 +459,7 @@ export const LayoutEditorProvider = ({
         },
       },
       layoutSlug: layout?.slug ?? '',
-    });
+    }).catch(() => {});
   };
 
   return (

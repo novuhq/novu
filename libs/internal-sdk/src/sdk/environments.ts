@@ -4,8 +4,10 @@
 
 import { environmentsCreate } from '../funcs/environmentsCreate.js';
 import { environmentsDelete } from '../funcs/environmentsDelete.js';
+import { environmentsDiff } from '../funcs/environmentsDiff.js';
 import { environmentsGetTags } from '../funcs/environmentsGetTags.js';
 import { environmentsList } from '../funcs/environmentsList.js';
+import { environmentsPublish } from '../funcs/environmentsPublish.js';
 import { environmentsUpdate } from '../funcs/environmentsUpdate.js';
 import { ClientSDK, RequestOptions } from '../lib/sdks.js';
 import * as components from '../models/components/index.js';
@@ -25,6 +27,38 @@ export class Environments extends ClientSDK {
     options?: RequestOptions
   ): Promise<operations.EnvironmentsControllerGetEnvironmentTagsResponse> {
     return unwrapAsync(environmentsGetTags(this, environmentId, idempotencyKey, options));
+  }
+
+  /**
+   * Compare resources between environments
+   *
+   * @remarks
+   * Compares workflows and other resources between the source and target environments, returning detailed diff information including additions, modifications, and deletions.
+   */
+  async diff(
+    diffEnvironmentRequestDto: components.DiffEnvironmentRequestDto,
+    targetEnvironmentId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions
+  ): Promise<operations.EnvironmentsControllerDiffEnvironmentResponse> {
+    return unwrapAsync(environmentsDiff(this, diffEnvironmentRequestDto, targetEnvironmentId, idempotencyKey, options));
+  }
+
+  /**
+   * Publish resources to target environment
+   *
+   * @remarks
+   * Publishes all workflows and resources from the source environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes.
+   */
+  async publish(
+    publishEnvironmentRequestDto: components.PublishEnvironmentRequestDto,
+    targetEnvironmentId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions
+  ): Promise<operations.EnvironmentsControllerPublishEnvironmentResponse> {
+    return unwrapAsync(
+      environmentsPublish(this, publishEnvironmentRequestDto, targetEnvironmentId, idempotencyKey, options)
+    );
   }
 
   /**

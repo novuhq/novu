@@ -56,7 +56,7 @@ export class IntegrationResponseDto {
   })
   credentials: CredentialsDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The configurations required for enabling the additional configurations of the integration.',
     type: () => ConfigurationsDto,
   })

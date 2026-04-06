@@ -65,8 +65,22 @@ export const edgeTypes = {
 export const mapStepToNodeContent = (
   stepType: StepTypeEnum,
   controlValues: Record<string, unknown>,
-  workflowOrigin: ResourceOriginEnum
+  workflowOrigin: ResourceOriginEnum,
+  stepResolverHash?: string
 ): string => {
+  if (stepResolverHash) {
+    switch (stepType) {
+      case StepTypeEnum.DELAY:
+        return 'Delay duration controlled by code';
+      case StepTypeEnum.DIGEST:
+        return 'Digest window controlled by code';
+      case StepTypeEnum.THROTTLE:
+        return 'Throttle rules controlled by code';
+      default:
+        break;
+    }
+  }
+
   switch (stepType) {
     case StepTypeEnum.TRIGGER:
       return 'This step triggers this workflow';
@@ -154,9 +168,10 @@ export const createNode = ({
   stepResolverHash?: string;
 }): Node<NodeData, keyof typeof nodeTypes> => {
   return {
-    // the random id is used to identify the node and to be able to re-render the nodes and edges
     id: generateUUID(),
     position: { x, y: y + Y_DISTANCE },
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
     data: {
       name,
       content,
@@ -182,7 +197,7 @@ export const mapStepToNode = ({
   step: Step;
   workflowOrigin?: ResourceOriginEnum;
 }): Node<NodeData, keyof typeof nodeTypes> => {
-  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin);
+  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin, step.stepResolverHash);
 
   const error = step.issues
     ? getFirstErrorMessage(step.issues, 'controls') || getFirstErrorMessage(step.issues, 'integration')
@@ -244,6 +259,8 @@ export const createTriggerNode = (
   const triggerNode: Node<NodeData, 'trigger'> = {
     id,
     position: { x: middleX, y: 50 },
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
     data: {
       index: 0,
       triggerLink: buildRoute(ROUTES.TRIGGER_WORKFLOW, {
@@ -264,6 +281,8 @@ export const createAddNode = (
   const addNode: Node<NodeData, 'add'> = {
     id: addNodeId,
     position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
     data: {
       index: allNodes.length,
     },
@@ -294,15 +313,7 @@ export const createNodes = (
 
   const allNodes: Node<NodeData, keyof typeof nodeTypes>[] = [triggerNode, ...createdNodes];
 
-  const addNodeId = generateUUID();
-  const addNode: Node<NodeData, 'add'> = {
-    id: addNodeId,
-    position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
-    data: {
-      index: allNodes.length,
-    },
-    type: 'add',
-  };
+  const addNode = createAddNode(previousPosition, allNodes);
 
   return [...allNodes, addNode];
 };

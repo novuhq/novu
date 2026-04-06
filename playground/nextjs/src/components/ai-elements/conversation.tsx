@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon, DownloadIcon } from "lucide-react";
 import { useCallback } from "react";
-import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
+import {
+  StickToBottom,
+  useStickToBottomContext,
+  type StickToBottomProps,
+} from "use-stick-to-bottom";
 
-export type ConversationProps = ComponentProps<typeof StickToBottom>;
+export type ConversationProps = StickToBottomProps;
+
+export type ConversationContentProps = StickToBottom.ContentProps;
 
 export const Conversation = ({ className, ...props }: ConversationProps) => (
   <StickToBottom
@@ -19,10 +25,6 @@ export const Conversation = ({ className, ...props }: ConversationProps) => (
     {...props}
   />
 );
-
-export type ConversationContentProps = ComponentProps<
-  typeof StickToBottom.Content
->;
 
 export const ConversationContent = ({
   className,

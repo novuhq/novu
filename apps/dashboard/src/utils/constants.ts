@@ -27,6 +27,9 @@ export const STEP_RESOLVER_SUPPORTED_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.DELAY,
+  StepTypeEnum.DIGEST,
+  StepTypeEnum.THROTTLE,
 ];
 
 export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {

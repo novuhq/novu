@@ -4,6 +4,7 @@ import { RiAddCircleLine } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { PermissionButton } from '@/components/primitives/permission-button';
+import { IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -43,7 +44,7 @@ export const CreateLayoutButton = ({
     navigate(`${buildRoute(ROUTES.LAYOUTS_CREATE, { environmentSlug: currentEnvironment?.slug ?? '' })}${search}`);
   };
 
-  if (tier === ApiServiceLevelEnum.FREE && data?.layouts && data?.layouts?.length >= 1) {
+  if (!IS_SELF_HOSTED && tier === ApiServiceLevelEnum.FREE && data?.layouts && data?.layouts?.length >= 1) {
     return (
       <Tooltip>
         <TooltipTrigger className="cursor-not-allowed">

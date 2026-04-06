@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { createMockObjectFromSchema, type WorkflowTestDataResponseDto } from '@novu/shared';
 import { useMemo, useState } from 'react';
@@ -87,8 +88,8 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
     <div className="h-full w-full">
       <Form {...form}>
         <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-1">
-          <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel defaultSize={70} minSize={40} className="h-full">
+          <ResizablePanelGroup orientation="horizontal" autoSaveId="test-workflow-panel-group">
+            <ResizablePanel defaultSize="70%" minSize="40%" className="h-full" id="test-workflow-panel">
               <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value="trigger">
                 <TabsList variant="regular" className="items-center">
                   <TabsTrigger value="workflow" asChild variant="regular" size="xl">
@@ -130,7 +131,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
               </Tabs>
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={30} minSize={30} maxSize={50}>
+            <ResizablePanel defaultSize="30%" minSize="30%" maxSize="50%" id="test-workflow-logs-sidebar-panel">
               <TestWorkflowLogsSidebar transactionId={transactionId} workflow={workflow} />
             </ResizablePanel>
           </ResizablePanelGroup>

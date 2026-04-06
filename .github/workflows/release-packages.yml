@@ -59,7 +59,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.16.1
+          version: 10.33.0
           run_install: false
 
       - name: Setup Node Version
@@ -218,7 +218,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.16.1
+          version: 10.33.0
           run_install: false
 
       - name: Setup Node Version

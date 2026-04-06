@@ -196,12 +196,96 @@ export default step.inApp(
 `;
 }
 
+const delayFields: ControlFields = {
+  amount: { default: '1' },
+  unit: { default: 'hours' },
+};
+
+export function generateDelayStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
+
+export default step.delay(
+  '${escapeString(stepId)}',
+  async (controls, { payload, subscriber }) => {
+    // Use a scheduled send-time from your payload when available (ISO string or Unix ms).
+    // dynamicKey is a dot-notation path into { payload, subscriber } — e.g. 'payload.sendAt'
+    if (payload.sendAt) {
+      return { type: 'dynamic', dynamicKey: 'payload.sendAt' };
+    }
+
+    return {
+      type: 'regular',
+      amount: Number(controls.amount),
+      unit: controls.unit as 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months',
+      // Or use a cron expression: { type: 'scheduled', cron: '0 9 * * MON' }
+    };
+  },
+  {
+    controlSchema: ${controlSchema(delayFields, useZod)},
+  }
+);
+`;
+}
+
+const digestFields: ControlFields = {
+  amount: { default: '1' },
+  unit: { default: 'hours' },
+};
+
+export function generateDigestStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
+
+export default step.digest(
+  '${escapeString(stepId)}',
+  async (controls, { payload, subscriber }) => ({
+    type: 'regular',
+    amount: Number(controls.amount),
+    unit: controls.unit as 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months',
+    // Group events by a custom key — defaults to subscriberId when omitted
+    // digestKey: payload.teamId as string,
+  }),
+  {
+    controlSchema: ${controlSchema(digestFields, useZod)},
+  }
+);
+`;
+}
+
+const throttleFields: ControlFields = {
+  amount: { default: '1' },
+  unit: { default: 'hours' },
+  threshold: { default: '1' },
+};
+
+export function generateThrottleStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
+
+export default step.throttle(
+  '${escapeString(stepId)}',
+  async (controls, { payload, subscriber }) => ({
+    type: 'fixed',
+    amount: Number(controls.amount),
+    unit: controls.unit as 'minutes' | 'hours' | 'days',
+    threshold: Number(controls.threshold),
+    // throttleKey: payload.teamId as string, // optional: throttle per custom key (defaults to subscriberId)
+    // Or use a dynamic window from your payload: { type: 'dynamic', dynamicKey: 'payload.windowEnd', threshold: 5 }
+  }),
+  {
+    controlSchema: ${controlSchema(throttleFields, useZod)},
+  }
+);
+`;
+}
+
 const STEP_GENERATORS: Record<string, (stepId: string, useZod: boolean) => string> = {
   email: generateEmailStepFile,
   sms: generateSmsStepFile,
   push: generatePushStepFile,
   chat: generateChatStepFile,
   in_app: generateInAppStepFile,
+  delay: generateDelayStepFile,
+  digest: generateDigestStepFile,
+  throttle: generateThrottleStepFile,
 };
 
 export function generateStepFileForType(stepId: string, stepType: string, useZod: boolean): string {

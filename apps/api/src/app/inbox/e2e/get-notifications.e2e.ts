@@ -60,6 +60,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     offset = 0,
     after,
     tags,
+    tagGroups,
     read,
     archived,
     snoozed,
@@ -69,6 +70,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     after?: string;
     offset?: number;
     tags?: string[];
+    tagGroups?: string[][];
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
@@ -81,8 +83,12 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     if (offset) {
       query += `&offset=${offset}`;
     }
-    if (tags) {
-      query += tags.map((tag) => `&tags[]=${tag}`).join('');
+    if (tagGroups && tagGroups.length > 0) {
+      query += tagGroups
+        .map((group, i) => group.map((tag) => `&tags[${i}][]=${encodeURIComponent(tag)}`).join(''))
+        .join('');
+    } else if (tags) {
+      query += tags.map((tag) => `&tags[]=${encodeURIComponent(tag)}`).join('');
     }
     if (typeof read !== 'undefined') {
       query += `&read=${read}`;
@@ -257,6 +263,59 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
       new Date(body.data[1].createdAt).getTime()
     );
     expect(body.hasMore).to.be.false;
+  });
+
+  it('should filter notifications by explicit AND of OR tag groups', async () => {
+    await triggerEvent(template, 1);
+
+    const target = await messageRepository.findOne(
+      {
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+        deleted: { $exists: false },
+      },
+      { _id: 1 },
+      { query: { sort: { createdAt: -1 } } }
+    );
+
+    if (!target?._id) {
+      throw new Error('Expected at least one message for this template');
+    }
+
+    await messageRepository.update(
+      {
+        _id: target._id,
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+      },
+      { $set: { tags: ['product:pay', 'category:reminder'] } }
+    );
+
+    const { body: orOnly, status: orStatus } = await getNotifications({
+      limit: 10,
+      tags: ['product:pay', 'product:select'],
+    });
+    expect(orStatus).to.equal(200);
+    expect(orOnly.data.length).to.eq(1);
+
+    const { body: cnfMatch, status: cnfOk } = await getNotifications({
+      limit: 10,
+      tagGroups: [
+        ['product:pay', 'product:select'],
+        ['category:reminder', 'category:alert'],
+      ],
+    });
+    expect(cnfOk).to.equal(200);
+    expect(cnfMatch.data.length).to.eq(1);
+
+    const { body: cnfNoMatch, status: cnfNoOk } = await getNotifications({
+      limit: 10,
+      tagGroups: [['product:select'], ['category:alert']],
+    });
+    expect(cnfNoOk).to.equal(200);
+    expect(cnfNoMatch.data.length).to.eq(0);
   });
 
   it('should filter by read', async () => {

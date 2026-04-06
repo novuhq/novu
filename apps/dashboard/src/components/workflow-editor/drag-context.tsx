@@ -5,14 +5,15 @@ import { NODE_TYPE_TO_STEP_TYPE } from './node-utils';
 interface CanvasContextType {
   isReadOnly?: boolean;
   showStepPreview?: boolean;
+  /** Code-first (bridge) workflows synced from the framework — canvas reordering is not supported */
+  isCodeFirstWorkflow?: boolean;
   onNodeDragStart: (nodeId: string, position: { x: number; y: number }) => void;
   onNodeDragMove: (position: { x: number; y: number }) => void;
   onNodeDragEnd: () => void;
   draggedNodeId: string | null;
   intersectingNodeId: string | null;
   intersectingEdgeId: string | null;
-  updateEdges: () => void;
-  removeEdges: () => void;
+  animatingNodeIds: Set<string>;
   copyNode: (copyIndex: number) => void;
   addNode: (insertIndex: number, selection: AddStepMenuSelection | keyof typeof NODE_TYPE_TO_STEP_TYPE) => void;
   removeNode: (removeIndex: number, options?: { onSuccess?: () => void; onError?: () => void }) => void;

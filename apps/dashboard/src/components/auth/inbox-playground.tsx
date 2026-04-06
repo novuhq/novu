@@ -159,26 +159,17 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
       <div className="bg-muted">
         <div className="flex items-center justify-center gap-2 p-3">
           {!hasNotificationBeenSent ? (
-            <>
-              <button
-                type="button"
-                onClick={handleSkipClick}
-                className="text-text-soft hover:text-text-sub cursor-pointer text-xs transition-colors mr-3"
-              >
-                Skip
-              </button>
-              <Button
-                variant="secondary"
-                size="xs"
-                trailingIcon={Notification5Fill}
-                isLoading={isPending}
-                onClick={handleSendNotification}
-                disabled={isPending}
-                className="px-2"
-              >
-                Send notification
-              </Button>
-            </>
+            <Button
+              variant="secondary"
+              size="xs"
+              trailingIcon={Notification5Fill}
+              isLoading={isPending}
+              onClick={handleSendNotification}
+              disabled={isPending}
+              className="px-2"
+            >
+              Send test notification
+            </Button>
           ) : (
             <>
               <button

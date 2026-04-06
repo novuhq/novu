@@ -10,6 +10,7 @@ import {
   burstSmsConfig,
   clickatellConfig,
   clickSendConfig,
+  cmTelecomConfig,
   eazySmsConfig,
   firetextConfig,
   fortySixElksConfig,
@@ -340,5 +341,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: ISendProProviderConfig,
     docReference: 'https://www.isendpro.com/sms-api.php',
     logoFileName: { light: 'isendpro.svg', dark: 'isendpro.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.CmTelecom,
+    displayName: 'CM.com',
+    channel: ChannelTypeEnum.SMS,
+    credentials: cmTelecomConfig,
+    docReference: 'https://developers.cm.com/messaging/docs/sms',
+    logoFileName: { light: 'cm-telecom.svg', dark: 'cm-telecom.svg' },
   },
 ];

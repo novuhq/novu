@@ -40,6 +40,10 @@ export type PreviewPayloadDto = {
    */
   steps?: { [k: string]: any } | undefined;
   context?: { [k: string]: PreviewPayloadDtoContext2 | string } | undefined;
+  /**
+   * Environment variables data
+   */
+  env?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -109,6 +113,7 @@ export const PreviewPayloadDto$inboundSchema: z.ZodType<PreviewPayloadDto, z.Zod
   payload: z.record(z.any()).optional(),
   steps: z.record(z.any()).optional(),
   context: z.record(z.union([z.lazy(() => PreviewPayloadDtoContext2$inboundSchema), z.string()])).optional(),
+  env: z.record(z.any()).optional(),
 });
 /** @internal */
 export type PreviewPayloadDto$Outbound = {
@@ -116,6 +121,7 @@ export type PreviewPayloadDto$Outbound = {
   payload?: { [k: string]: any } | undefined;
   steps?: { [k: string]: any } | undefined;
   context?: { [k: string]: PreviewPayloadDtoContext2$Outbound | string } | undefined;
+  env?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -125,6 +131,7 @@ export const PreviewPayloadDto$outboundSchema: z.ZodType<PreviewPayloadDto$Outbo
     payload: z.record(z.any()).optional(),
     steps: z.record(z.any()).optional(),
     context: z.record(z.union([z.lazy(() => PreviewPayloadDtoContext2$outboundSchema), z.string()])).optional(),
+    env: z.record(z.any()).optional(),
   });
 
 export function previewPayloadDtoToJSON(previewPayloadDto: PreviewPayloadDto): string {

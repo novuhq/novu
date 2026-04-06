@@ -1,8 +1,8 @@
-import type { ActionTypeEnum, NotificationFilter, SeverityLevelEnum } from '../types';
+import type { ActionTypeEnum, NotificationFilter, SeverityLevelEnum, TagsFilter } from '../types';
 import { Notification } from './notification';
 
 export type ListNotificationsArgs = {
-  tags?: string[];
+  tags?: TagsFilter;
   read?: boolean;
   data?: Record<string, unknown>;
   archived?: boolean;
@@ -20,7 +20,7 @@ export type ListNotificationsArgs = {
 export type ListNotificationsResponse = { notifications: Notification[]; hasMore: boolean; filter: NotificationFilter };
 
 export type FilterCountArgs = {
-  tags?: string[];
+  tags?: TagsFilter;
   data?: Record<string, unknown>;
   read?: boolean;
   archived?: boolean;
@@ -33,7 +33,7 @@ export type FilterCountArgs = {
 
 export type FiltersCountArgs = {
   filters: Array<{
-    tags?: string[];
+    tags?: TagsFilter;
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;

@@ -45,7 +45,7 @@ const RELEASE_ARTIFACT_BASENAME = 'step-resolver-release';
 
 type ScaffoldResult = { mode: 'react-email'; templatePath: string } | { mode: 'placeholder'; stepType: string };
 
-const KNOWN_STEP_TYPES = new Set(['email', 'sms', 'push', 'chat', 'in_app']);
+const KNOWN_STEP_TYPES = new Set(['email', 'sms', 'push', 'chat', 'in_app', 'delay', 'digest', 'throttle']);
 
 export async function stepPublish(options: PublishOptions): Promise<void> {
   try {
@@ -203,21 +203,24 @@ async function resolveScaffoldInteractively(
     return undefined;
   }
 
-  return promptForChannelType(rootDir);
+  return promptForStepType(rootDir);
 }
 
-async function promptForChannelType(rootDir: string): Promise<ScaffoldResult | undefined> {
+async function promptForStepType(rootDir: string): Promise<ScaffoldResult | undefined> {
   const response = await prompts(
     {
       type: 'select',
-      name: 'channelType',
-      message: 'What channel type is this step?',
+      name: 'stepType',
+      message: 'What type is this step?',
       choices: [
         { title: 'Email        — HTML email', value: 'email' },
         { title: 'SMS          — text message', value: 'sms' },
         { title: 'Push         — mobile push notification', value: 'push' },
         { title: 'Chat         — chat message (Slack, MS Teams, etc.)', value: 'chat' },
         { title: 'In-App       — in-app notification', value: 'in_app' },
+        { title: 'Delay        — pause execution for a duration', value: 'delay' },
+        { title: 'Digest       — batch events over a time window', value: 'digest' },
+        { title: 'Throttle     — limit send frequency per subscriber', value: 'throttle' },
         { title: "Skip         — I'll create the file myself", value: 'skip' },
       ],
     },
@@ -230,15 +233,15 @@ async function promptForChannelType(rootDir: string): Promise<ScaffoldResult | u
     }
   );
 
-  if (!response.channelType || response.channelType === 'skip') {
+  if (!response.stepType || response.stepType === 'skip') {
     return undefined;
   }
 
-  if (response.channelType === 'email') {
+  if (response.stepType === 'email') {
     return promptForEmailTemplate(rootDir);
   }
 
-  return { mode: 'placeholder', stepType: response.channelType };
+  return { mode: 'placeholder', stepType: response.stepType };
 }
 
 async function promptForEmailTemplate(rootDir: string): Promise<ScaffoldResult | undefined> {
