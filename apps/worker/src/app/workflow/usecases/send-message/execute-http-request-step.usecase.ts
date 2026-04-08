@@ -288,7 +288,12 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     values: Record<string, unknown>,
     context: Record<string, unknown>
   ): Promise<unknown> {
-    const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
+    let compiled: string;
+    try {
+      compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
+    } catch {
+      return values;
+    }
 
     try {
       return JSON.parse(compiled);
