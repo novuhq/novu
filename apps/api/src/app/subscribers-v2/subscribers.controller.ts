@@ -446,7 +446,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve subscriber notifications',
-    description: `Retrieve in-app notifications for a subscriber by its unique key identifier **subscriberId**. 
+    description: `Retrieve in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**. 
     Supports filtering by tags, read/archived/snoozed/seen state, data attributes, severity, date range, and context keys.`,
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
@@ -485,8 +485,8 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve subscriber notifications count',
-    description: `Retrieve count of notifications for a subscriber by its unique key identifier **subscriberId**. 
-    Supports multiple filters to count notifications by different criteria, including context keys.`,
+    description: `Retrieve count of in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**. 
+    Supports multiple filters to count in-app (inbox) notifications by different criteria, including context keys.`,
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(GetSubscriberNotificationsCountResponseDto, 200, true)
@@ -511,8 +511,8 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/read')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Mark notification as read',
-    description: 'Mark a specific notification as read by its unique identifier **notificationId**.',
+    summary: 'Mark a notification as read',
+    description: 'Mark a specific in-app (inbox) notification as read by its unique identifier **notificationId**.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -542,8 +542,8 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/unread')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Mark notification as unread',
-    description: 'Mark a specific notification as unread by its unique identifier **notificationId**.',
+    summary: 'Mark a notification as unread',
+    description: 'Mark a specific in-app (inbox) notification as unread by its unique identifier **notificationId**.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -573,8 +573,8 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/archive')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Archive notification',
-    description: 'Archive a specific notification by its unique identifier **notificationId**.',
+    summary: 'Archive a notification',
+    description: 'Archive a specific in-app (inbox) notification by its unique identifier **notificationId**.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -604,8 +604,8 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/unarchive')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Unarchive notification',
-    description: 'Unarchive a specific notification by its unique identifier **notificationId**.',
+    summary: 'Unarchive a notification',
+    description: 'Unarchive a specific in-app (inbox) notification by its unique identifier **notificationId**.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -635,8 +635,9 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/snooze')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Snooze notification',
-    description: 'Snooze a specific notification by its unique identifier **notificationId** until a specified time.',
+    summary: 'Snooze a notification',
+    description:
+      'Snooze a specific in-app (inbox) notification by its unique identifier **notificationId** until a specified time.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -667,8 +668,8 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/unsnooze')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Unsnooze notification',
-    description: 'Unsnooze a specific notification by its unique identifier **notificationId**.',
+    summary: 'Unsnooze a notification',
+    description: 'Unsnooze a specific in-app (inbox) notification by its unique identifier **notificationId**.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -697,8 +698,9 @@ export class SubscribersController {
   @Delete('/:subscriberId/notifications/:notificationId')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Delete notification',
-    description: 'Delete a specific notification by its unique identifier **notificationId**.',
+    summary: 'Delete a notification',
+    description:
+      'Delete a specific in-app (inbox) notification permanently by its unique identifier **notificationId**.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -727,9 +729,9 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/actions/:actionType/complete')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Complete notification action',
+    summary: 'Complete a notification action',
     description:
-      'Mark a notification action (primary or secondary) as completed by its unique identifier **notificationId** and action type.',
+      "Mark a single in-app (inbox) notification's action (primary or secondary) as completed by its unique identifier **notificationId** and action type **actionType**.",
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -767,9 +769,9 @@ export class SubscribersController {
   @Patch('/:subscriberId/notifications/:notificationId/actions/:actionType/revert')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Revert notification action',
+    summary: 'Revert a notification action',
     description:
-      'Revert a notification action (primary or secondary) to pending state by its unique identifier **notificationId** and action type.',
+      "Revert a single in-app (inbox) notification's action (primary or secondary) to pending state by its unique identifier **notificationId** and action type **actionType**.",
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiParam({ name: 'notificationId', description: 'The identifier of the notification', type: String })
@@ -808,8 +810,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Mark notifications as seen',
-    description:
-      'Mark specific notifications or notifications matching filters as seen. Supports context-based filtering.',
+    description: 'Mark specific and multiple in-app (inbox) notifications as seen. Supports context-based filtering.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -838,7 +839,8 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Mark all notifications as read',
-    description: 'Mark all notifications matching the specified filters as read. Supports context-based filtering.',
+    description:
+      'Mark all in-app (inbox) notifications matching the specified filters as read. Supports context-based filtering.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -871,7 +873,8 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Archive all notifications',
-    description: 'Archive all notifications matching the specified filters. Supports context-based filtering.',
+    description:
+      'Archive all in-app (inbox) notifications matching the specified filters. Supports context-based filtering.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -904,7 +907,8 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Archive all read notifications',
-    description: 'Archive all read notifications matching the specified filters. Supports context-based filtering.',
+    description:
+      'Archive all read in-app (inbox) notifications matching the specified filters. Supports context-based filtering.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -938,7 +942,8 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Delete all notifications',
-    description: 'Delete all notifications matching the specified filters. Supports context-based filtering.',
+    description:
+      'Permanently delete all in-app (inbox) notifications matching the specified filters. Supports context-based filtering.',
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @HttpCode(HttpStatus.NO_CONTENT)

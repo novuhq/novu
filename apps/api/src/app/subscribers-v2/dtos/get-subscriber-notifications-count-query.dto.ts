@@ -1,16 +1,16 @@
 import { BadRequestException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum, type TagsFilter } from '@novu/shared';
 import { plainToClass, Transform, Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { NotificationFilter } from '../../inbox/utils/types';
+import { IsTagsFilter } from '../../inbox/validators/is-tags-filter.validator';
 import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 
 export class SubscriberNotificationsFilter implements NotificationFilter {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()
@@ -59,7 +59,8 @@ export class GetSubscriberNotificationsCountQueryDto {
   @ApiProperty({
     description: 'Array of filter objects (max 30) to count notifications by different criteria',
     type: 'string',
-    example: '[{"read":false,"archived":false},{"tags":["important"]}]',
+    example:
+      '[{"read":false,"archived":false},{"tags":["important"]},{"tags":{"and":[{"or":["a","b"]},{"or":["c"]}]}}]',
   })
   filters: SubscriberNotificationsFilter[];
 }

@@ -291,7 +291,7 @@ export const createAddNode = (
   return addNode;
 };
 
-export const createNodes = (
+const createNodes = (
   steps: Step[],
   currentWorkflow?: WorkflowResponseDto,
   currentEnvironment?: IEnvironment,
@@ -318,7 +318,7 @@ export const createNodes = (
   return [...allNodes, addNode];
 };
 
-export const generateNodesAndEdges = (
+const generateNodesAndEdges = (
   steps: Step[],
   showStepPreview?: boolean,
   currentWorkflow?: WorkflowResponseDto,

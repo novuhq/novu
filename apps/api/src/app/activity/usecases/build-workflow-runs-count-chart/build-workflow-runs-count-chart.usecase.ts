@@ -1,20 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   InstrumentUsecase,
   PinoLogger,
   QueryBuilder,
   WorkflowRun,
+  WorkflowRunCountRepository,
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { WorkflowRunsCountDataPointDto } from '../../dtos/get-charts.response.dto';
-import { BuildWorkflowRunsCountChartCommand } from './build-workflow-runs-count-chart.command';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
- 
+import { BuildWorkflowRunsCountChartCommand } from './build-workflow-runs-count-chart.command';
+
 @Injectable()
 export class BuildWorkflowRunsCountChart {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
+    private workflowRunCountRepository: WorkflowRunCountRepository,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(BuildWorkflowRunsCountChart.name);
@@ -22,6 +27,41 @@ export class BuildWorkflowRunsCountChart {
 
   @InstrumentUsecase()
   async execute(command: BuildWorkflowRunsCountChartCommand): Promise<WorkflowRunsCountDataPointDto> {
+    const { environmentId, organizationId, startDate, endDate } = command;
+
+    const isWorkflowRunCountEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_COUNT_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+      environment: { _id: environmentId },
+    });
+
+    if (isWorkflowRunCountEnabled) {
+      return this.buildCountFromWorkflowRunCount(startDate, endDate, environmentId, organizationId);
+    }
+
+    return this.buildCountFromWorkflowRuns(command);
+  }
+
+  private async buildCountFromWorkflowRunCount(
+    startDate: Date,
+    endDate: Date,
+    environmentId: string,
+    organizationId: string
+  ): Promise<WorkflowRunsCountDataPointDto> {
+    const count = await this.workflowRunCountRepository.getTotalRunsCount(
+      environmentId,
+      organizationId,
+      startDate,
+      endDate
+    );
+
+    return { count };
+  }
+
+  private async buildCountFromWorkflowRuns(
+    command: BuildWorkflowRunsCountChartCommand
+  ): Promise<WorkflowRunsCountDataPointDto> {
     const {
       environmentId,
       startDate,
@@ -34,21 +74,14 @@ export class BuildWorkflowRunsCountChart {
       topicKey,
     } = command;
 
-    this.logger.debug({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-    }, 'Getting workflow runs count for chart');
-
     try {
       const queryBuilder = new QueryBuilder<WorkflowRun>({
         environmentId,
       });
 
-      // Add date range filters
       queryBuilder.whereGreaterThanOrEqual('created_at', startDate);
       queryBuilder.whereLessThanOrEqual('created_at', endDate);
 
-      // Add optional filters
       if (workflowIds?.length) {
         queryBuilder.whereIn('workflow_id', workflowIds);
       }
@@ -62,7 +95,8 @@ export class BuildWorkflowRunsCountChart {
       }
 
       if (statuses?.length) {
-        const mappedStatuses = statuses.map((status) => { //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
+        const mappedStatuses = statuses.map((status) => {
+          //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
           if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
             return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
           }
@@ -99,15 +133,16 @@ export class BuildWorkflowRunsCountChart {
         useFinal: true,
       });
 
-      return {
-        count: result,
-      };
+      return { count: result };
     } catch (error) {
-      this.logger.error({
-        error: error.message,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      }, 'Failed to get workflow runs count for chart');
+      this.logger.error(
+        {
+          error: error.message,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        },
+        'Failed to get workflow runs count for chart'
+      );
       throw error;
     }
   }

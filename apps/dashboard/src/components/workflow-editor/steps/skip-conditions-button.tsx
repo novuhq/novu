@@ -5,8 +5,18 @@ import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
+import { cn } from '@/utils/ui';
 
-export function SkipConditionsButton({ origin, step }: { origin: ResourceOriginEnum; step: StepResponseDto }) {
+const SIDEPANEL_ACTION_ROW_BASE_CLASS =
+  'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
+
+type SkipConditionsButtonProps = {
+  origin: ResourceOriginEnum;
+  step: StepResponseDto;
+  className?: string;
+};
+
+export function SkipConditionsButton({ origin, step, className }: SkipConditionsButtonProps) {
   const canEditStepConditions = origin === ResourceOriginEnum.NOVU_CLOUD;
   const uiSchema = step.controls.uiSchema;
   const skip = uiSchema?.properties?.skip;
@@ -18,16 +28,16 @@ export function SkipConditionsButton({ origin, step }: { origin: ResourceOriginE
   }
 
   return (
-    <Link to={'./conditions'} relative="path" state={{ stepType: step.type }}>
-      <Button variant="secondary" mode="outline" className="flex w-full justify-start gap-1.5 text-xs font-medium">
-        <RiGuideFill className="h-4 w-4 text-neutral-600" />
-        Step Conditions
-        {conditionsCount > 0 && (
-          <span className="ml-auto flex items-center gap-0.5">
-            <span>{conditionsCount}</span>
-            <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-          </span>
-        )}
+    <Link to={'./conditions'} relative="path" state={{ stepType: step.type }} className="block">
+      <Button
+        variant="secondary"
+        mode="ghost"
+        className={cn(SIDEPANEL_ACTION_ROW_BASE_CLASS, 'border-b border-stroke-soft', className)}
+        leadingIcon={RiGuideFill}
+        trailingIcon={RiArrowRightSLine}
+      >
+        Step conditions
+        <span className="text-text-soft ml-auto">{conditionsCount > 0 ? conditionsCount : ''}</span>
       </Button>
     </Link>
   );

@@ -1,8 +1,9 @@
 import { HttpMethodEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiCornerDownRightLine, RiFileCopyLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
+import { RiCornerDownRightLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
@@ -34,10 +35,6 @@ export function RequestEndpoint() {
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const { editorValue } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
-
-  const handleCopyUrl = useCallback((url: string) => {
-    if (url) navigator.clipboard.writeText(url);
-  }, []);
 
   const handleTestEndpoint = useCallback(async () => {
     const controlValues = getValues() as Record<string, unknown>;
@@ -78,7 +75,7 @@ export function RequestEndpoint() {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <RiCornerDownRightLine className="size-4 shrink-0 text-text-sub" />
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <FormField
               control={control}
               name="method"
@@ -148,16 +145,11 @@ export function RequestEndpoint() {
             control={control}
             name="url"
             render={({ field }) => (
-              <Button
-                type="button"
-                variant="secondary"
-                mode="ghost"
+              <CopyButton
+                valueToCopy={field.value ?? ''}
                 size="2xs"
-                className="h-7 w-7 flex-shrink-0 p-0"
-                onClick={() => handleCopyUrl(field.value ?? '')}
-              >
-                <RiFileCopyLine className="size-3" />
-              </Button>
+                className="h-7 w-7 shrink-0 p-0"
+              />
             )}
           />
         </div>
@@ -167,7 +159,7 @@ export function RequestEndpoint() {
             control={control}
             name="method"
             render={({ fieldState }) => (
-              <FormItem className="m-0 w-[72px] flex-shrink-0 space-y-0 overflow-hidden">
+              <FormItem className="m-0 w-[72px] shrink-0 space-y-0 overflow-hidden">
                 <FormMessage suppressError>
                   {fieldState.error?.message && <span className="truncate">{fieldState.error.message}</span>}
                 </FormMessage>

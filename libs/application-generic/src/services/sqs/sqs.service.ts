@@ -3,6 +3,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Producer } from 'sqs-producer';
 
+import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
+import { ISqsMessage } from './types';
+
 const LOG_CONTEXT = 'SqsService';
 
 @Injectable()
@@ -10,6 +13,7 @@ export class SqsService {
   private client?: SQSClient;
   private queueUrls: Map<JobTopicNameEnum, string>;
   private producers: Map<JobTopicNameEnum, Producer>;
+  private payloadOffload?: SqsPayloadOffloadService;
 
   constructor() {
     this.loadQueueUrls();
@@ -19,6 +23,7 @@ export class SqsService {
     if (hasConfiguredQueues) {
       this.initializeClient();
       this.initializeProducers();
+      this.initializePayloadOffload();
       Logger.log(
         { message: 'SQS service initialized', configuredTopics: Array.from(this.producers.keys()) },
         LOG_CONTEXT
@@ -44,6 +49,16 @@ export class SqsService {
     }
 
     this.client = new SQSClient(clientConfig);
+  }
+
+  private initializePayloadOffload(): void {
+    const region = process.env.AWS_REGION || process.env.NOVU_REGION || 'us-east-1';
+    const endpoint = process.env.SQS_ENDPOINT;
+    this.payloadOffload = new SqsPayloadOffloadService(region, endpoint);
+  }
+
+  public getPayloadOffloadService(): SqsPayloadOffloadService | undefined {
+    return this.payloadOffload;
   }
 
   private loadQueueUrls(): void {
@@ -106,34 +121,51 @@ export class SqsService {
   }
 
   /**
-   * Send a single message to SQS
+   * Send a single message to SQS.
+   * If payload offloading is configured and the body exceeds the size threshold,
+   * the body is transparently uploaded to S3 and replaced with an S3 reference.
    */
-  public async send(topic: JobTopicNameEnum, message: { id: string; body: string; groupId: string }): Promise<void> {
+  public async send(topic: JobTopicNameEnum, message: ISqsMessage): Promise<void> {
     const producer = this.getProducer(topic);
     if (!producer) {
       throw new Error(`No SQS producer configured for topic: ${topic}`);
     }
 
-    await producer.send(message);
+    const offloadedBody = await this.maybeOffloadBody(message.body, topic, message.id, message.groupId);
+
+    await producer.send({ ...message, body: offloadedBody });
   }
 
   /**
-   * Send multiple messages to SQS in bulk
-   * The sqs-producer will automatically batch them in groups of 10
+   * Send multiple messages to SQS in bulk.
+   * The sqs-producer will automatically batch them in groups of 10.
+   * Large payloads are individually offloaded to S3 before sending.
    */
-  public async sendBulk(
-    topic: JobTopicNameEnum,
-    messages: Array<{ id: string; body: string; groupId: string }>
-  ): Promise<void> {
+  public async sendBulk(topic: JobTopicNameEnum, messages: ISqsMessage[]): Promise<void> {
     const producer = this.getProducer(topic);
     if (!producer) {
       throw new Error(`No SQS producer configured for topic: ${topic}`);
     }
 
-    // sqs-producer will automatically batch messages (default: 10 per batch)
-    await producer.send(messages);
+    const offloadedMessages = await Promise.all(
+      messages.map(async (msg) => {
+        const offloadedBody = await this.maybeOffloadBody(msg.body, topic, msg.id, msg.groupId);
+
+        return { ...msg, body: offloadedBody };
+      })
+    );
+
+    await producer.send(offloadedMessages);
 
     Logger.debug({ message: 'Sent bulk messages to SQS', topic, count: messages.length }, LOG_CONTEXT);
+  }
+
+  private async maybeOffloadBody(body: string, topic: JobTopicNameEnum, id: string, groupId: string): Promise<string> {
+    if (!this.payloadOffload?.isConfigured()) {
+      return body;
+    }
+
+    return this.payloadOffload.maybeOffload(body, topic, id, groupId);
   }
 
   public async gracefulShutdown(): Promise<void> {

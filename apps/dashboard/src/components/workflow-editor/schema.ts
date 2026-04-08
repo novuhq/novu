@@ -18,7 +18,7 @@ export const workflowSchema = z.object({
   }),
   tags: z
     .array(z.string().min(0).max(MAX_TAG_LENGTH))
-    .max(MAX_TAG_ELEMENTS)
+    .max(MAX_TAG_ELEMENTS, { message: `Tag limit reached. A workflow can have up to ${MAX_TAG_ELEMENTS} tags.` })
     .refine((tags) => tags?.every((tag) => tag.length <= MAX_TAG_LENGTH), {
       message: `Tags must be less than ${MAX_TAG_LENGTH} characters`,
     })

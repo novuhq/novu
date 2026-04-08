@@ -26,7 +26,7 @@
     "date-fns-tz": "^3.2.0",
     "mongoose": "^8.9.5",
     "rxjs": "7.8.1",
-    "shortid": "^2.2.16",
+    "shortid": "^2.2.17",
     "stripe": "^11.18.0",
     "stripe-event-types": "^3.1.0"
   },

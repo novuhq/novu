@@ -1,7 +1,7 @@
 import { Novu } from '@novu/api';
 import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
 import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriberpayloaddto';
-import { DetailEnum } from '@novu/application-generic';
+import { ClickHouseService, DetailEnum, QueryBuilder, Trace, TraceLogRepository } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
@@ -4897,6 +4897,85 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(message).to.be.ok;
       expect(message?.subject).to.equal('Default Schedule Test');
     });
+  });
+
+  /**
+   * Regression test for duplicated `workflow_run_status_completed` entries in the
+   * `workflow_run_count` ClickHouse table. The bug occurs when `buildDeliveryLifecycle`
+   * is called while a sibling job is still RUNNING (which Priority 8 didn't cover),
+   * causing the lifecycle to fall through to ERRORED and emit an extra completed trace
+   * once the RUNNING job finishes.
+   */
+  it('should emit exactly one workflow_run_status_completed trace for a multi-step workflow', async () => {
+    const clickHouseService = new ClickHouseService();
+    await clickHouseService.init();
+    const traceLogRepository: TraceLogRepository = session.testServer?.getService(TraceLogRepository);
+    const subscribersService = new SubscribersService(session.organization._id, session.environment._id);
+    const testSubscriber = await subscribersService.createSubscriber();
+
+    const template: NotificationTemplateEntity = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Step 1',
+          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'First email step' }],
+        },
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Step 2',
+          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'Second email step' }],
+        },
+      ],
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: [testSubscriber.subscriberId],
+      payload: { test: 'duplicate-completed-check' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForStandardQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+    await session.waitForJobCompletion(template._id);
+
+    const notifications = await notificationRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+    expect(notifications.length).to.equal(1);
+    const notificationId = notifications[0]._id;
+
+    const jobs = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _notificationId: notificationId,
+    });
+    const channelJobs = jobs.filter((j) => j.type === StepTypeEnum.EMAIL);
+    expect(channelJobs.length, 'should have 2 email jobs').to.equal(2);
+
+    const databaseName = process.env.CLICK_HOUSE_DATABASE || 'test_logs';
+    await clickHouseService.exec({
+      query: `OPTIMIZE TABLE ${databaseName}.traces FINAL`,
+    });
+
+    const queryBuilder = new QueryBuilder<Trace>({
+      environmentId: session.environment._id,
+    });
+    queryBuilder.whereEquals('organization_id', session.organization._id);
+    queryBuilder.whereEquals('entity_type', 'workflow_run');
+    queryBuilder.whereEquals('event_type', 'workflow_run_status_completed');
+    queryBuilder.whereEquals('entity_id', notificationId);
+
+    const traces = await traceLogRepository.find({
+      where: queryBuilder.build(),
+      select: '*',
+      limit: 10,
+    });
+
+    expect(
+      traces.data.length,
+      `Expected exactly 1 workflow_run_status_completed trace but found ${traces.data.length}`
+    ).to.equal(1);
   });
 });
 
