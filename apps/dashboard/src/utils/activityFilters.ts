@@ -3,9 +3,9 @@ import { IS_SELF_HOSTED } from '../config';
 
 type OrganizationLike = { createdAt: Date };
 
-export const DEFAULT_ACTIVITY_FEED_RANGE = '24h';
+const DEFAULT_ACTIVITY_FEED_RANGE = '24h';
 
-export const DATE_RANGE_OPTIONS = [
+const DATE_RANGE_OPTIONS = [
   { value: DEFAULT_ACTIVITY_FEED_RANGE, label: 'Last 24 hours', ms: 24 * 60 * 60 * 1000 },
   { value: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
   { value: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },

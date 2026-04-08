@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { type TagsFilter } from '@novu/shared';
 import { IsArray, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsTagsFilter } from '../../inbox/validators/is-tags-filter.validator';
 
 export class MarkSubscriberNotificationsAsSeenDto {
   @IsOptional()
@@ -12,13 +14,12 @@ export class MarkSubscriberNotificationsAsSeenDto {
   notificationIds?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
+  @IsTagsFilter()
   @ApiPropertyOptional({
-    description: 'Filter notifications by workflow tags',
-    type: [String],
+    description:
+      'Filter notifications by workflow tags (OR for string[], or { and: [{ or: string[] }, ...] } for AND of OR-groups).',
   })
-  tags?: string[];
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsString()
