@@ -16,17 +16,3 @@ export function sanitizePayload(payload: Record<string, unknown>): string {
   }
 }
 
-export async function retryWithBackoff<T>(fn: () => Promise<T>, maxAttempts = 3, initialDelayMs = 100): Promise<T> {
-  let delay = initialDelayMs;
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt === maxAttempts - 1) throw err;
-      const currentDelay = delay;
-      await new Promise<void>((resolve) => setTimeout(resolve, currentDelay));
-      delay *= 2;
-    }
-  }
-  throw new Error('Max attempts reached');
-}

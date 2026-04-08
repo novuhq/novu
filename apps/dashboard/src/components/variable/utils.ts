@@ -57,7 +57,7 @@ export function validateEnhancedDigestFilters(filters: string[]): {
   return null;
 }
 
-export const parseParams = (input: string) => {
+const parseParams = (input: string) => {
   if (!input) return '';
   return input
     .split(',')
