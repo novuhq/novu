@@ -25,7 +25,7 @@ import {
 } from './nodes';
 
 // y distance = node height + space between nodes
-export const NODE_Y_OFFSET = 50;
+const NODE_Y_OFFSET = 50;
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
 export const nodeTypes = {
@@ -291,7 +291,7 @@ export const createAddNode = (
   return addNode;
 };
 
-export const createNodes = (
+const createNodes = (
   steps: Step[],
   currentWorkflow?: WorkflowResponseDto,
   currentEnvironment?: IEnvironment,
@@ -318,7 +318,7 @@ export const createNodes = (
   return [...allNodes, addNode];
 };
 
-export const generateNodesAndEdges = (
+const generateNodesAndEdges = (
   steps: Step[],
   showStepPreview?: boolean,
   currentWorkflow?: WorkflowResponseDto,
