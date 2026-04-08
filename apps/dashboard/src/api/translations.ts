@@ -21,12 +21,6 @@ export type TranslationsFilter = {
 
 export type SaveTranslationRequest = CreateTranslationRequestDto;
 
-export type DeleteTranslationRequest = {
-  resourceId: string;
-  resourceType: ResourceType;
-  locale: string;
-};
-
 export type DeleteTranslationGroupRequest = {
   resourceId: string;
   resourceType: ResourceType;
