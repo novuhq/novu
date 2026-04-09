@@ -600,6 +600,7 @@ export class SendMessagePush extends SendMessageBase {
         title: (bridgeOutputs as PushOutput)?.subject || title,
         content: (bridgeOutputs as PushOutput)?.body || content,
         payload: { ...command.payload, __nvMessageId: message._id },
+        messageId: message._id,
         overrides,
         subscriber,
         step,
