@@ -63,7 +63,7 @@ import { TranslationValueInputComponent } from '../workflow-editor/steps/email/t
 import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './repeat-block-aliases';
 import { CalculateVariablesProps, insertVariableToEditor } from './variables';
 
-export const VARIABLE_TRIGGER_CHARACTER = '{{';
+const VARIABLE_TRIGGER_CHARACTER = '{{';
 
 type BlockType =
   | 'blockquote'

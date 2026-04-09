@@ -21,12 +21,6 @@ export type TranslationsFilter = {
 
 export type SaveTranslationRequest = CreateTranslationRequestDto;
 
-export type DeleteTranslationRequest = {
-  resourceId: string;
-  resourceType: ResourceType;
-  locale: string;
-};
-
 export type DeleteTranslationGroupRequest = {
   resourceId: string;
   resourceType: ResourceType;
@@ -118,17 +112,6 @@ export const saveTranslation = async ({
   });
 
   return response.data;
-};
-
-export const deleteTranslation = async ({
-  environment,
-  resourceId,
-  resourceType,
-  locale,
-}: DeleteTranslationRequest & { environment: IEnvironment }): Promise<void> => {
-  const endpoint = `/translations/${resourceType}/${resourceId}/${locale}`;
-
-  await delV2(endpoint, { environment });
 };
 
 export const deleteTranslationGroup = async ({
