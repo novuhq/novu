@@ -482,8 +482,8 @@ importers:
         specifier: 9.0.3
         version: 9.0.3
       liquidjs:
-        specifier: ^10.25.0
-        version: 10.25.0
+        specifier: ^10.25.5
+        version: 10.25.5
       lodash:
         specifier: ^4.18.0
         version: 4.18.1
@@ -925,8 +925,8 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       liquidjs:
-        specifier: ^10.25.0
-        version: 10.25.0
+        specifier: ^10.25.5
+        version: 10.25.5
       lodash.debounce:
         specifier: ^4.0.8
         version: 4.0.8
@@ -2326,8 +2326,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       liquidjs:
-        specifier: ^10.25.0
-        version: 10.25.0
+        specifier: ^10.25.5
+        version: 10.25.5
       mocha:
         specifier: ^8.1.1
         version: 8.4.0
@@ -2545,8 +2545,8 @@ importers:
         specifier: 9.0.3
         version: 9.0.3
       liquidjs:
-        specifier: ^10.25.0
-        version: 10.25.0
+        specifier: ^10.25.5
+        version: 10.25.5
       lodash:
         specifier: ^4.18.0
         version: 4.18.1
@@ -3299,8 +3299,8 @@ importers:
         specifier: ^3.13.1
         version: 3.13.1
       liquidjs:
-        specifier: ^10.25.0
-        version: 10.25.0
+        specifier: ^10.25.5
+        version: 10.25.5
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
@@ -3763,7 +3763,7 @@ importers:
         version: 8.2.1
       mailtrap:
         specifier: ^3.1.1
-        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@8.0.4)
+        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@8.0.5)
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -3777,8 +3777,8 @@ importers:
         specifier: ^6.0.8
         version: 6.0.8
       nodemailer:
-        specifier: ^8.0.4
-        version: 8.0.4
+        specifier: ^8.0.5
+        version: 8.0.5
       plivo:
         specifier: ^4.70.0
         version: 4.70.0
@@ -20380,8 +20380,8 @@ packages:
     resolution: {integrity: sha512-EechC3DdFic/TdOPgj/RB3FicqE6932LTHCUm0Y2fsD9KGlLB+RwJl2q1IYBIvEsKzDOgn0D4gll+YxG5RsrKg==}
     hasBin: true
 
-  liquidjs@10.25.0:
-    resolution: {integrity: sha512-XpO7AiGULTG4xcTlwkcTI5JreFG7b6esLCLp+aUSh7YuQErJZEoUXre9u9rbdb0057pfWG4l0VursvLd5Q/eAw==}
+  liquidjs@10.25.5:
+    resolution: {integrity: sha512-GKiKeZjJDdVoQAu+S9rzkYsYnYhcep5W3WwZXgb5f+yq484P/k9JqamBbGYu+LBEixcUAXZr2jogdAIjB3ki1w==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -21729,8 +21729,8 @@ packages:
   nodemailer-shared@1.1.0:
     resolution: {integrity: sha512-68xW5LSyPWv8R0GLm6veAvm7E+XFXkVgvE3FW0FGxNMMZqMkPFeGDVALfR1DPdSfcoO36PnW7q5AAOgFImEZGg==}
 
-  nodemailer@8.0.4:
-    resolution: {integrity: sha512-k+jf6N8PfQJ0Fe8ZhJlgqU5qJU44Lpvp2yvidH3vp1lPnVQMgi4yEEMPXg5eJS1gFIJTVq1NHBk7Ia9ARdSBdQ==}
+  nodemailer@8.0.5:
+    resolution: {integrity: sha512-0PF8Yb1yZuQfQbq+5/pZJrtF6WQcjTd5/S4JOHs9PGFxuTqoB/icwuB44pOdURHJbRKX1PPoJZtY7R4VUoCC8w==}
     engines: {node: '>=6.0.0'}
 
   nodemon@3.0.1:
@@ -50003,7 +50003,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  liquidjs@10.25.0:
+  liquidjs@10.25.5:
     dependencies:
       commander: 10.0.1
 
@@ -50369,12 +50369,12 @@ snapshots:
       mimelib: 0.3.1
       uue: 3.1.2
 
-  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@8.0.4):
+  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@8.0.5):
     dependencies:
       axios: 1.13.6
     optionalDependencies:
       '@types/nodemailer': 8.0.0
-      nodemailer: 8.0.4
+      nodemailer: 8.0.5
     transitivePeerDependencies:
       - debug
 
@@ -51768,7 +51768,7 @@ snapshots:
     dependencies:
       nodemailer-fetch: 1.6.0
 
-  nodemailer@8.0.4: {}
+  nodemailer@8.0.5: {}
 
   nodemon@3.0.1:
     dependencies:
