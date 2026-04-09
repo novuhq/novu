@@ -72,7 +72,7 @@ export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaVali
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button type="button" className="flex items-center">
-                    <RiInformation2Line className="text-text-soft size-4" />
+                    <RiInformation2Line className="text-text-soft size-3" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -88,7 +88,7 @@ export function EnforceSchemaValidation({ onSchemaGenerated }: EnforceSchemaVali
         variant="secondary"
         mode="outline"
         size="2xs"
-        className="flex-shrink-0 self-center gap-1 text-xs text-text-sub"
+        className="shrink-0 self-center gap-1 text-xs text-text-sub rounded-md"
         onClick={handleGenerateFromLastTest}
         disabled={!testResult?.body}
       >

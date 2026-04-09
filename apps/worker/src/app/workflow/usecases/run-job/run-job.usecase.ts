@@ -50,13 +50,9 @@ import { calculateNextAvailableTime, isWithinSchedule } from './schedule-validat
 
 const nr = require('newrelic');
 
-export type SelectedWorkflowFields = Pick<NotificationTemplateEntity, 'steps'>;
+type SelectedWorkflowFields = Pick<NotificationTemplateEntity, 'steps'>;
 
-/**
- * MongoDB projection object for SelectedWorkflowFields.
- * This ensures the projection is always aligned with the type definition.
- */
-export const SELECTED_WORKFLOW_FIELDS_PROJECTION: Record<keyof SelectedWorkflowFields, 1> = {
+const SELECTED_WORKFLOW_FIELDS_PROJECTION: Record<keyof SelectedWorkflowFields, 1> = {
   steps: 1,
 } as const;
 
@@ -248,7 +244,9 @@ export class RunJob {
           })
         );
 
-        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow, notification);
+        // Update delivery lifecycle only — use PROCESSING so the workflow status trace
+        // is not emitted here. tryQueueNextJobs handles the single COMPLETED emission.
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
 
         return;
       }
@@ -327,8 +325,9 @@ export class RunJob {
           errorMessage: sendMessageResult.errorMessage,
         });
 
-        // Update workflow run delivery lifecycle after step failure
-        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow, notification);
+        // Update delivery lifecycle only — use PROCESSING so the workflow status trace
+        // is not emitted here. The finally block handles the single COMPLETED emission.
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
 
         if (shouldHaltOnStepFailure(job) || sendMessageResult.shouldHalt) {
           shouldQueueNextJob = false;
@@ -401,8 +400,10 @@ export class RunJob {
     } finally {
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
         await this.tryQueueNextJobs(job, notification, !!error);
-      } else if (!isJobExtendedToSubscriberSchedule) {
-        // Update workflow run status based on step runs when halting on step failure
+      } else if (!isJobExtendedToSubscriberSchedule && !error) {
+        // Update workflow run status based on step runs when halting on step failure.
+        // Skip when an unexpected exception was thrown — the Bull worker's setJobAsFailed
+        // will handle the final status to avoid duplicate traces.
         await this.workflowRunService.updateDeliveryLifecycle({
           workflowStatus: WorkflowRunStatusEnum.COMPLETED,
           notificationId: job._notificationId,

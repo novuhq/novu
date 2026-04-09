@@ -39,29 +39,47 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   );
 };
 
-const CommandInput = React.forwardRef<
-  React.ElementRef<typeof CommandPrimitive.Input>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
-    size?: 'sm' | 'md' | 'xs';
-    inputWrapperClassName?: string;
-    inputRootClassName?: string;
-    inlineLeadingNode?: React.ReactNode;
-  }
->(({ className, size = 'md', inputRootClassName, inputWrapperClassName, inlineLeadingNode, ...props }, ref) => (
-  <InputRoot className={inputRootClassName}>
-    <InputWrapper className={cn('h-9', size === 'sm' && 'h-8', size === 'xs' && 'h-7', inputWrapperClassName)}>
-      {inlineLeadingNode}
-      <CommandPrimitive.Input
-        ref={ref}
+type CommandInputProps = Omit<React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>, 'size'> & {
+  size?: 'sm' | 'md' | 'xs';
+  inputWrapperClassName?: string;
+  inputRootClassName?: string;
+  inlineLeadingNode?: React.ReactNode;
+  hasError?: boolean;
+};
+
+const CommandInput = React.forwardRef<React.ElementRef<typeof CommandPrimitive.Input>, CommandInputProps>(
+  (
+    { className, size = 'md', inputRootClassName, inputWrapperClassName, inlineLeadingNode, hasError, ...props },
+    ref
+  ) => (
+    <InputRoot className={inputRootClassName} size={size} hasError={hasError}>
+      <InputWrapper
         className={cn(
-          'text-paragraph-xs placeholder:text-text-soft h-9 w-full bg-transparent outline-hidden',
-          className
+          size === 'md' && 'h-10',
+          size === 'sm' && 'h-[2.35rem]',
+          size === 'xs' && 'h-8',
+          inputWrapperClassName
         )}
-        {...props}
-      />
-    </InputWrapper>
-  </InputRoot>
-));
+      >
+        {inlineLeadingNode}
+        <CommandPrimitive.Input
+          ref={ref}
+          className={cn(
+            'w-full bg-transparent outline-none text-text-strong',
+            'placeholder:select-none placeholder:text-text-soft placeholder:transition placeholder:duration-200 placeholder:ease-out',
+            'group-hover/input-wrapper:placeholder:text-text-sub',
+            'focus:placeholder:text-text-sub',
+            size === 'md' && 'h-10 text-paragraph-sm',
+            size === 'sm' && 'h-[2.35rem] text-paragraph-xs',
+            size === 'xs' && 'h-8 text-paragraph-xs',
+            className
+          )}
+          {...props}
+        />
+      </InputWrapper>
+    </InputRoot>
+  )
+);
 
 CommandInput.displayName = CommandPrimitive.Input.displayName;
 

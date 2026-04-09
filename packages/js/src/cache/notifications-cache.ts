@@ -15,7 +15,7 @@ import type {
   UnreadArgs,
   UnsnoozeArgs,
 } from '../notifications';
-import type { InboxNotification, NotificationFilter } from '../types';
+import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
 import { createNotification } from '../ui/internal/createNotification';
 import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
@@ -122,7 +122,7 @@ type NotificationEventArgs =
   | UnsnoozeArgs
   | CompleteArgs
   | RevertArgs
-  | { tags?: string[]; data?: Record<string, unknown> } // for bulk operations
+  | { tags?: TagsFilter; data?: Record<string, unknown> } // for bulk operations
   | { notificationIds: string[] } // for seen_all operations
   | Record<string, never>; // for empty args
 

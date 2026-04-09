@@ -7,3 +7,4 @@ export * from './locales';
 export * from './normalizeEmail';
 export { createMockObjectFromSchema } from './schema/create-mock-object-from-schema';
 export { slugify } from './slugify';
+export * from './tags-filter';

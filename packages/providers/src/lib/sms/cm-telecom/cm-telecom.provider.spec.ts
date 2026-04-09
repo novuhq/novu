@@ -34,7 +34,7 @@ describe('CmTelecomSmsProvider', () => {
       });
 
       expect(axios.post).toHaveBeenCalledWith(
-        'https://gw.cmtelecom.com/v1.0/message',
+        'https://gw.messaging.cm.com/v1.0/message',
         {
           messages: {
             msg: [

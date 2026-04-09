@@ -14,6 +14,7 @@ import {
   ISqsConsumerOptions,
   ISqsMessageMeta,
   SQS_DEFAULT_BATCH_SIZE,
+  SQS_DEFAULT_DRAIN_TIMEOUT_MS,
   SQS_DEFAULT_MAX_CONCURRENCY,
   SQS_DEFAULT_VISIBILITY_TIMEOUT,
   SQS_DEFAULT_WAIT_TIME_SECONDS,
@@ -249,12 +250,13 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   public async gracefulShutdown(): Promise<void> {
     Logger.log({ topic: this.topic }, 'Shutting down worker service', LOG_CONTEXT);
 
-    await this.bullMqService.gracefulShutdown();
+    const shutdownPromises: Promise<void>[] = [this.bullMqService.gracefulShutdown()];
 
     if (this.sqsConsumer) {
-      await this.sqsConsumer.stop();
-      Logger.debug({ topic: this.topic }, 'SQS consumer stopped during shutdown', LOG_CONTEXT);
+      shutdownPromises.push(this.sqsConsumer.stop({ drainTimeoutMs: SQS_DEFAULT_DRAIN_TIMEOUT_MS }));
     }
+
+    await Promise.all(shutdownPromises);
 
     Logger.log({ topic: this.topic }, 'Worker service shutdown complete', LOG_CONTEXT);
   }

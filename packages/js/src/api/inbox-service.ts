@@ -12,6 +12,7 @@ import type {
   Subscriber,
   SubscriptionPreferenceResponse,
   SubscriptionResponse,
+  TagsFilter,
   WeeklySchedule,
   WorkflowCriticalityEnum,
 } from '../types';
@@ -22,6 +23,48 @@ export type InboxServiceOptions = HttpClientOptions;
 
 const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
+
+function appendTagsToSearchParams(searchParams: URLSearchParams, tags: TagsFilter | undefined): void {
+  if (tags === undefined) {
+    return;
+  }
+
+  if (Array.isArray(tags)) {
+    if (tags.length === 0) {
+      return;
+    }
+
+    for (const tag of tags) {
+      searchParams.append('tags[]', tag);
+    }
+
+    return;
+  }
+
+  if ('or' in tags) {
+    if (tags.or.length === 0) {
+      return;
+    }
+
+    for (const tag of tags.or) {
+      searchParams.append('tags[]', tag);
+    }
+
+    return;
+  }
+
+  if ('and' in tags) {
+    if (tags.and.length === 0) {
+      return;
+    }
+
+    tags.and.forEach((group, groupIndex) => {
+      for (const tag of group.or) {
+        searchParams.append(`tags[${groupIndex}][]`, tag);
+      }
+    });
+  }
+}
 
 export class InboxService {
   isSessionInitialized = false;
@@ -75,7 +118,7 @@ export class InboxService {
     createdGte,
     createdLte,
   }: {
-    tags?: string[];
+    tags?: TagsFilter;
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
@@ -95,11 +138,7 @@ export class InboxService {
     if (offset) {
       searchParams.append('offset', `${offset}`);
     }
-    if (tags) {
-      for (const tag of tags) {
-        searchParams.append('tags[]', tag);
-      }
-    }
+    appendTagsToSearchParams(searchParams, tags);
     if (read !== undefined) {
       searchParams.append('read', `${read}`);
     }
@@ -136,7 +175,7 @@ export class InboxService {
     filters,
   }: {
     filters: Array<{
-      tags?: string[];
+      tags?: TagsFilter;
       read?: boolean;
       archived?: boolean;
       snoozed?: boolean;
@@ -183,21 +222,21 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
-  readAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  readAll({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  archiveAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  archiveAll({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  archiveAllRead({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
@@ -208,7 +247,7 @@ export class InboxService {
     return this.#httpClient.delete(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/delete`);
   }
 
-  deleteAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  deleteAll({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/delete`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
@@ -221,7 +260,7 @@ export class InboxService {
     data,
   }: {
     notificationIds?: string[];
-    tags?: string[];
+    tags?: TagsFilter;
     data?: Record<string, unknown>;
   }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/seen`, {

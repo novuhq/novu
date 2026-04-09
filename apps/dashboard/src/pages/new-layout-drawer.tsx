@@ -151,7 +151,8 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
                     name: formData.name,
                     isTranslationEnabled: formData.isTranslationEnabled,
                     __source: LayoutCreationSourceEnum.DASHBOARD,
-                  });
+                  }).catch(() => {});
+
                   return;
                 }
 
@@ -161,7 +162,7 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
                     isTranslationEnabled: formData.isTranslationEnabled,
                   },
                   layoutSlug: layoutId!,
-                });
+                }).catch(() => {});
               }}
               template={template}
             />

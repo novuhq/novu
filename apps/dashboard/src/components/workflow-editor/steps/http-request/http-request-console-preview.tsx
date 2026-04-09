@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Highlight } from 'prism-react-renderer';
 import { useCallback, useEffect, useRef } from 'react';
-import { RiFileCopyLine, RiGlobalLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
+import { RiGlobalLine, RiLoader4Line, RiPlayCircleLine } from 'react-icons/ri';
 import { NovuApiError } from '@/api/api.client';
 import { type TestHttpEndpointResponse } from '@/api/steps';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
@@ -36,11 +37,11 @@ function BrowserShell({
 }) {
   return (
     <div className={`overflow-clip rounded-lg border border-[#e1e4ea] ${className ?? ''}`}>
-      <div className="relative flex h-8 items-center justify-between border-b border-[#e1e4ea] bg-[#fbfbfb] px-3 py-2 shadow-[0px_1px_0px_0px_#d2d2d2]">
+      <div className="relative flex h-8 items-center justify-between border-b border-[#e1e4ea] bg-bg-weak px-3 py-2 ">
         <TrafficLights />
         <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1">
-          <RiGlobalLine className="size-[14px] text-[#525866]" />
-          <span className="font-medium text-[12px] leading-4 text-[#525866]">Console</span>
+          <RiGlobalLine className="size-[14px] text-text-sub" />
+          <span className="font-medium text-[12px] leading-4 text-text-sub">Console</span>
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
@@ -72,7 +73,7 @@ function JsonBody({ body }: { body: unknown }) {
   return (
     <Highlight code={code} language={language} theme={JSON_THEME}>
       {({ tokens, getLineProps, getTokenProps }) => (
-        <pre className="m-0 whitespace-pre-wrap font-mono text-xs leading-[1.5]">
+        <pre className="m-0 whitespace-pre-wrap font-mono text-xs leading-normal">
           {tokens.map((line, i) => (
             <div key={i} {...getLineProps({ line })}>
               {line.map((token, j) => (
@@ -96,24 +97,24 @@ function CurlRequest({
   isTestPending: boolean;
 }) {
   const { url, method, headers = {}, body } = result.resolvedRequest;
+  const curlToCopy = buildRawCurlString(url, method, headers, body);
 
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(buildRawCurlString(url, method, headers, body));
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>cURL command copied to clipboard</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
-    } catch {
-      showErrorToast('Failed to copy cURL command');
-    }
-  }, [url, method, headers, body]);
+  const handleCopySuccess = useCallback(() => {
+    showToast({
+      children: ({ close }) => (
+        <>
+          <ToastIcon variant="success" />
+          <span>cURL command copied to clipboard</span>
+          <ToastClose onClick={close} />
+        </>
+      ),
+      options: { position: 'bottom-right' },
+    });
+  }, []);
+
+  const handleCopyError = useCallback(() => {
+    showErrorToast('Failed to copy cURL command');
+  }, []);
 
   return (
     <BrowserShell
@@ -122,23 +123,22 @@ function CurlRequest({
         <>
           <button
             type="button"
-            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
+            className="flex size-3.5 cursor-pointer items-center justify-center icon-icon-sub hover:icon-icon-strong disabled:opacity-50"
             onClick={onTest}
             disabled={isTestPending}
           >
             {isTestPending ? (
-              <RiLoader4Line className="size-3 animate-spin" />
+              <RiLoader4Line className="size-3.5 animate-spin" />
             ) : (
-              <RiPlayCircleLine className="size-3" />
+              <RiPlayCircleLine className="size-3.5" />
             )}
           </button>
-          <button
-            type="button"
-            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-            onClick={handleCopy}
-          >
-            <RiFileCopyLine className="size-3" />
-          </button>
+          <CopyButton
+            valueToCopy={curlToCopy}
+            size="xs"
+            onCopySuccess={handleCopySuccess}
+            onCopyError={handleCopyError}
+          />
         </>
       }
     >
@@ -165,23 +165,24 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
   const badgeLabel = isError ? 'FAILED' : 'SUCCESS';
   const statusText = getStatusText(result.statusCode);
 
-  const handleCopyResponse = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(result.body, null, 2));
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>Response copied to clipboard</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
-    } catch {
-      showErrorToast('Failed to copy response');
-    }
-  }, [result.body]);
+  const responseToCopy = JSON.stringify(result.body, null, 2);
+
+  const handleCopyResponseSuccess = useCallback(() => {
+    showToast({
+      children: ({ close }) => (
+        <>
+          <ToastIcon variant="success" />
+          <span>Response copied to clipboard</span>
+          <ToastClose onClick={close} />
+        </>
+      ),
+      options: { position: 'bottom-right' },
+    });
+  }, []);
+
+  const handleCopyResponseError = useCallback(() => {
+    showErrorToast('Failed to copy response');
+  }, []);
 
   return (
     <div className="flex flex-col gap-3">
@@ -202,16 +203,15 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs leading-[1.5] text-[#525866]">
+            <span className="font-mono text-xs leading-normal text-text-sub">
               <span className="text-[#717784]">[{result.durationMs}ms]</span>
             </span>
-            <button
-              type="button"
-              className="flex size-5 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-              onClick={handleCopyResponse}
-            >
-              <RiFileCopyLine className="size-3" />
-            </button>
+            <CopyButton
+              valueToCopy={responseToCopy}
+              size="xs"
+              onCopySuccess={handleCopyResponseSuccess}
+              onCopyError={handleCopyResponseError}
+            />
           </div>
         </div>
 
@@ -225,8 +225,8 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
           <div className="flex h-full shrink-0 items-stretch">
             <div className="w-1 rounded-full bg-[#717784]" />
           </div>
-          <p className="text-xs leading-4 text-[#525866]">
-            <span className="font-medium text-[#0e121b]">Note: </span>
+          <p className="text-xs leading-4 text-text-sub">
+            <span className="font-medium text-text-strong">Note: </span>
             {'These values can be accessed in subsequent steps via '}
             <span className="font-mono font-medium tracking-[-0.24px]">{`{{steps.${stepName}.<key>}}`}</span>
           </p>
@@ -238,7 +238,7 @@ function ResponsePanel({ result, stepName }: { result: TestHttpEndpointResponse;
           <div className="flex h-full shrink-0 items-stretch">
             <div className="w-1 rounded-full bg-[#ff8447]" />
           </div>
-          <p className="text-xs leading-4 text-[#0e121b]">No response body returned.</p>
+          <p className="text-xs leading-4 text-text-strong">No response body returned.</p>
         </div>
       )}
     </div>
@@ -276,23 +276,22 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
   const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
   const activeHeaders = headers.filter((h) => h.key);
 
-  const handleCopyCurl = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(curlString);
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>cURL command copied to clipboard</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
-    } catch {
-      showErrorToast('Failed to copy cURL command');
-    }
-  }, [curlString]);
+  const handleCopyCurlSuccess = useCallback(() => {
+    showToast({
+      children: ({ close }) => (
+        <>
+          <ToastIcon variant="success" />
+          <span>cURL command copied to clipboard</span>
+          <ToastClose onClick={close} />
+        </>
+      ),
+      options: { position: 'bottom-right' },
+    });
+  }, []);
+
+  const handleCopyCurlError = useCallback(() => {
+    showErrorToast('Failed to copy cURL command');
+  }, []);
 
   const handleCopyPrompt = useCopyPrompt();
 
@@ -302,6 +301,7 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
         variant="tip"
         title="Tip:"
         description="Use this pre-built prompt to let LLM implement this API faster."
+        className="bg-bg-white"
         ctaLabel="Copy prompt"
         onCtaClick={handleCopyPrompt}
       />
@@ -312,50 +312,48 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
             <>
               <button
                 type="button"
-                className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
+                className="flex size-3.5 cursor-pointer items-center justify-center text-text-sub hover:text-text-strong disabled:opacity-50"
                 onClick={onTest}
                 disabled={isTestPending}
               >
                 {isTestPending ? (
-                  <RiLoader4Line className="size-3 animate-spin" />
+                  <RiLoader4Line className="size-3.5 animate-spin" />
                 ) : (
-                  <RiPlayCircleLine className="size-3" />
+                  <RiPlayCircleLine className="size-3.5" />
                 )}
               </button>
-              <button
-                type="button"
-                className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-                onClick={handleCopyCurl}
-              >
-                <RiFileCopyLine className="size-3" />
-              </button>
+              <CopyButton
+                valueToCopy={curlString}
+                size="xs"
+                onCopySuccess={handleCopyCurlSuccess}
+                onCopyError={handleCopyCurlError}
+              />
             </>
           }
         >
           <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} novuSignature={novuSignature} />
         </BrowserShell>
 
-        <div className="flex items-center justify-between overflow-clip rounded-md border border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 shadow-[0px_1px_0px_0px_#d2d2d2]">
+        <div className="flex items-center justify-between overflow-clip rounded-md border border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 ">
           <button
             type="button"
-            className="flex cursor-pointer items-center gap-1 text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1 text-text-sub hover:text-text-strong disabled:opacity-50"
             onClick={onTest}
             disabled={isTestPending}
           >
             {isTestPending ? (
-              <RiLoader4Line className="size-4 animate-spin" />
+              <RiLoader4Line className="size-3.5 animate-spin" />
             ) : (
-              <RiPlayCircleLine className="size-4" />
+              <RiPlayCircleLine className="size-3.5" />
             )}
             <span className="font-medium text-xs leading-4">{isTestPending ? 'Testing...' : 'Test endpoint'}</span>
           </button>
-          <button
-            type="button"
-            className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-            onClick={handleCopyCurl}
-          >
-            <RiFileCopyLine className="size-3" />
-          </button>
+          <CopyButton
+            valueToCopy={curlString}
+            size="xs"
+            onCopySuccess={handleCopyCurlSuccess}
+            onCopyError={handleCopyCurlError}
+          />
         </div>
       </div>
     </div>
@@ -395,42 +393,41 @@ function ErrorState({
 
   const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
 
-  const handleCopyCurl = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(curlString);
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>cURL command copied to clipboard</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
-    } catch {
-      showErrorToast('Failed to copy cURL command');
-    }
-  }, [curlString]);
+  const responseToCopy = rawBody ? JSON.stringify(rawBody, null, 2) : error.message;
 
-  const handleCopyResponse = useCallback(async () => {
-    try {
-      const content = rawBody ? JSON.stringify(rawBody, null, 2) : error.message;
-      await navigator.clipboard.writeText(content);
-      showToast({
-        children: ({ close }) => (
-          <>
-            <ToastIcon variant="success" />
-            <span>Response copied to clipboard</span>
-            <ToastClose onClick={close} />
-          </>
-        ),
-        options: { position: 'bottom-right' },
-      });
-    } catch {
-      showErrorToast('Failed to copy response');
-    }
-  }, [rawBody, error.message]);
+  const handleCopyCurlSuccess = useCallback(() => {
+    showToast({
+      children: ({ close }) => (
+        <>
+          <ToastIcon variant="success" />
+          <span>cURL command copied to clipboard</span>
+          <ToastClose onClick={close} />
+        </>
+      ),
+      options: { position: 'bottom-right' },
+    });
+  }, []);
+
+  const handleCopyResponseSuccess = useCallback(() => {
+    showToast({
+      children: ({ close }) => (
+        <>
+          <ToastIcon variant="success" />
+          <span>Response copied to clipboard</span>
+          <ToastClose onClick={close} />
+        </>
+      ),
+      options: { position: 'bottom-right' },
+    });
+  }, []);
+
+  const handleCopyCurlError = useCallback(() => {
+    showErrorToast('Failed to copy cURL command');
+  }, []);
+
+  const handleCopyResponseError = useCallback(() => {
+    showErrorToast('Failed to copy response');
+  }, []);
 
   return (
     <div className="flex flex-col gap-[6px]">
@@ -440,23 +437,22 @@ function ErrorState({
           <>
             <button
               type="button"
-              className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b] disabled:opacity-50"
+              className="flex size-3.5 cursor-pointer items-center justify-center text-text-sub hover:text-text-strong disabled:opacity-50"
               onClick={onTest}
               disabled={isTestPending}
             >
               {isTestPending ? (
-                <RiLoader4Line className="size-3 animate-spin" />
+                <RiLoader4Line className="size-3.5 animate-spin" />
               ) : (
-                <RiPlayCircleLine className="size-3" />
+                <RiPlayCircleLine className="size-3.5" />
               )}
             </button>
-            <button
-              type="button"
-              className="flex size-4 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-              onClick={handleCopyCurl}
-            >
-              <RiFileCopyLine className="size-3" />
-            </button>
+            <CopyButton
+              valueToCopy={curlString}
+              size="xs"
+              onCopySuccess={handleCopyCurlSuccess}
+              onCopyError={handleCopyCurlError}
+            />
           </>
         }
       >
@@ -478,14 +474,13 @@ function ErrorState({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs leading-[1.5] text-[#525866]">~ {statusCode}</span>
-              <button
-                type="button"
-                className="flex size-5 cursor-pointer items-center justify-center text-[#525866] hover:text-[#0e121b]"
-                onClick={handleCopyResponse}
-              >
-                <RiFileCopyLine className="size-3" />
-              </button>
+              <span className="font-mono text-xs leading-normal text-text-sub">~ {statusCode}</span>
+              <CopyButton
+                valueToCopy={responseToCopy}
+                size="xs"
+                onCopySuccess={handleCopyResponseSuccess}
+                onCopyError={handleCopyResponseError}
+              />
             </div>
           </div>
 

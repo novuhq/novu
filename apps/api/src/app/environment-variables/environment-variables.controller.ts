@@ -72,7 +72,7 @@ export class EnvironmentVariablesController {
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ApiResponse(EnvironmentVariableResponseDto, 200, true)
   @ApiOperation({
-    summary: 'List environment variables',
+    summary: 'List all variables',
     description: 'Returns all environment variables for the current organization. Secret values are masked.',
   })
   async listEnvironmentVariables(
@@ -94,9 +94,9 @@ export class EnvironmentVariablesController {
   @SdkMethodName('usage')
   @ApiResponse(GetEnvironmentVariableUsageResponseDto)
   @ApiOperation({
-    summary: 'Get environment variable usage',
+    summary: 'Retrieve a variable usage',
     description:
-      'Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.',
+      'Returns the workflows that reference this environment variable via `{{env.KEY}}` in their step controls. **variableId** is required.',
   })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
   async getEnvironmentVariableUsage(
@@ -118,7 +118,7 @@ export class EnvironmentVariablesController {
   @SdkMethodName('retrieve')
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
-    summary: 'Get environment variable',
+    summary: 'Retrieve a variable',
     description: 'Returns a single environment variable by id. Secret values are masked.',
   })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
@@ -140,7 +140,7 @@ export class EnvironmentVariablesController {
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
-    summary: 'Create environment variable',
+    summary: 'Create a variable',
     description:
       'Creates a new environment variable. Keys must be uppercase with underscores only (e.g. BASE_URL). ' +
       'Secret variables are encrypted at rest and masked in API responses.',
@@ -167,7 +167,7 @@ export class EnvironmentVariablesController {
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
-    summary: 'Update environment variable',
+    summary: 'Update a variable',
     description:
       'Updates an existing environment variable. Providing values replaces all existing per-environment values.',
   })
@@ -194,7 +194,7 @@ export class EnvironmentVariablesController {
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiOperation({
-    summary: 'Delete environment variable',
+    summary: 'Delete a variable',
     description: 'Deletes an environment variable by id.',
   })
   @ApiNoContentResponse({ description: 'The environment variable has been deleted.' })

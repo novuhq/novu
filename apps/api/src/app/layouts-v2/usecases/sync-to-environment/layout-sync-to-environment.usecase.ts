@@ -12,7 +12,7 @@ import { ResourceOriginEnum } from '@novu/shared';
 import { UpsertLayout, UpsertLayoutCommand, UpsertLayoutDataCommand } from '../upsert-layout';
 import { LayoutSyncToEnvironmentCommand } from './layout-sync-to-environment.command';
 
-export const SYNCABLE_LAYOUT_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
+const SYNCABLE_LAYOUT_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
 class LayoutNotSyncableException extends BadRequestException {
   constructor(layout: Pick<LayoutResponseDto, 'layoutId' | 'origin'>) {

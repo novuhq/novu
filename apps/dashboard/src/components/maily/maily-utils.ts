@@ -30,7 +30,7 @@ export const isMailyJson = (value: unknown): boolean => {
   }
 };
 
-export const isMailyObject = (value: any): boolean => {
+const isMailyObject = (value: any): boolean => {
   if (!value || typeof value !== 'object') return false;
   if (value.type !== 'doc' || !Array.isArray(value.content)) return false;
 

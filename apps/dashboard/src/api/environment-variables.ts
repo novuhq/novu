@@ -52,12 +52,6 @@ export const getEnvironmentVariables = async ({
   return data;
 };
 
-export const getEnvironmentVariable = async (variableId: string): Promise<EnvironmentVariableResponseDto> => {
-  const { data } = await get<{ data: EnvironmentVariableResponseDto }>(`/environment-variables/${variableId}`);
-
-  return data;
-};
-
 export const createEnvironmentVariable = async (
   body: CreateEnvironmentVariableDto
 ): Promise<EnvironmentVariableResponseDto> => {

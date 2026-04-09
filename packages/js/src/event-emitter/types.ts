@@ -29,6 +29,7 @@ import type {
   UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from '../subscriptions/types';
+import type { TagsFilter } from '../types';
 import { Session, WebSocketEvent } from '../types';
 
 type NovuPendingEvent<A, D = undefined> = {
@@ -66,27 +67,27 @@ type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action
 type NotificationRevertActionEvents = BaseEvents<'notification.revert_action', RevertArgs, Notification>;
 type NotificationsReadAllEvents = BaseEvents<
   'notifications.read_all',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type NotificationsSeenAllEvents = BaseEvents<
   'notifications.seen_all',
-  { notificationIds: string[] } | { tags?: string[]; data?: Record<string, unknown> } | {},
+  { notificationIds: string[] } | { tags?: TagsFilter; data?: Record<string, unknown> } | {},
   Notification[]
 >;
 type NotificationsArchivedAllEvents = BaseEvents<
   'notifications.archive_all',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type NotificationsReadArchivedAllEvents = BaseEvents<
   'notifications.archive_all_read',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type NotificationsDeletedAllEvents = BaseEvents<
   'notifications.delete_all',
-  { tags?: string[]; data?: Record<string, unknown> },
+  { tags?: TagsFilter; data?: Record<string, unknown> },
   Notification[]
 >;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;

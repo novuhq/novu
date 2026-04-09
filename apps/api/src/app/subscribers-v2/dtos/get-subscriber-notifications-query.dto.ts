@@ -1,8 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum, type TagsFilter } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import { parseTagsQueryValue } from '../../inbox/utils/parse-tags-query';
 import { NotificationFilter } from '../../inbox/utils/types';
+import { IsTagsFilter } from '../../inbox/validators/is-tags-filter.validator';
 import { CursorPaginationRequestDto } from '../../shared/dtos/cursor-pagination-request';
 import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 
@@ -16,13 +18,13 @@ export class GetSubscriberNotificationsQueryDto
   implements NotificationFilter
 {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
+  @Transform(({ value }) => parseTagsQueryValue(value))
+  @IsTagsFilter()
   @ApiPropertyOptional({
-    description: 'Filter by workflow tags',
-    type: [String],
+    description:
+      'Filter by workflow tags. Plain string[] is OR. Use { and: [{ or: string[] }, ...] } for AND of OR-groups (same as inbox).',
   })
-  tags?: string[];
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()
