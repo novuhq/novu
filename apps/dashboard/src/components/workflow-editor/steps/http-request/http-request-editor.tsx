@@ -6,8 +6,10 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 import { canMethodHaveBody } from './curl-utils';
 import { KeyValuePairList } from './key-value-pair-list';
+import { RawBodyEditor } from './raw-body-editor';
 import { RequestEndpoint } from './request-endpoint';
 import { ResponseBodySchema } from './response-body-schema';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 
 type HttpRequestEditorProps = {
   uiSchema: UiSchema;
@@ -15,8 +17,10 @@ type HttpRequestEditorProps = {
 
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   const { currentEnvironment } = useEnvironment();
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
+  const { saveForm } = useSaveForm();
   const method = watch('method');
+  const bodyMode = watch('bodyMode') || 'key-value';
   const hasBody = canMethodHaveBody(method);
 
   if (uiSchema.group !== UiSchemaGroupEnum.HTTP_REQUEST) {
@@ -26,6 +30,11 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return <StepEditorUnavailable />;
   }
+
+  const handleBodyModeChange = (mode: 'key-value' | 'raw') => {
+    setValue('bodyMode', mode);
+    saveForm();
+  };
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -39,11 +48,42 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
         />
 
         {hasBody && (
-          <KeyValuePairList
-            fieldName="body"
-            label="Request body"
-            tooltip="Key-value pairs to include in the request body"
-          />
+          <>
+            <div className="flex items-center gap-1 px-1">
+              <button
+                type="button"
+                className={`rounded px-2 py-0.5 text-xs font-medium ${
+                  bodyMode === 'key-value'
+                    ? 'bg-neutral-alpha-200 text-text-strong'
+                    : 'text-text-sub hover:text-text-strong'
+                }`}
+                onClick={() => handleBodyModeChange('key-value')}
+              >
+                Key-Value
+              </button>
+              <button
+                type="button"
+                className={`rounded px-2 py-0.5 text-xs font-medium ${
+                  bodyMode === 'raw'
+                    ? 'bg-neutral-alpha-200 text-text-strong'
+                    : 'text-text-sub hover:text-text-strong'
+                }`}
+                onClick={() => handleBodyModeChange('raw')}
+              >
+                Raw JSON
+              </button>
+            </div>
+
+            {bodyMode === 'key-value' ? (
+              <KeyValuePairList
+                fieldName="body"
+                label="Request body"
+                tooltip="Key-value pairs to include in the request body"
+              />
+            ) : (
+              <RawBodyEditor />
+            )}
+          </>
         )}
 
         <p className="text-text-sub px-1 text-xs">

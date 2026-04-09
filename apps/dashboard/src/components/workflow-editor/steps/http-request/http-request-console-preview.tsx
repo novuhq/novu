@@ -96,8 +96,8 @@ function CurlRequest({
   onTest: () => void;
   isTestPending: boolean;
 }) {
-  const { url, method, headers = {}, body } = result.resolvedRequest;
-  const curlToCopy = buildRawCurlString(url, method, headers, body);
+  const { url, method, headers = {}, body, rawBody: resolvedRawBody, bodyMode } = result.resolvedRequest;
+  const curlToCopy = buildRawCurlString(url, method, headers, body, undefined, resolvedRawBody, bodyMode);
 
   const handleCopySuccess = useCallback(() => {
     showToast({
@@ -272,8 +272,10 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = (controlValues?.headers as KeyValuePair[]) ?? [];
   const body = (controlValues?.body as KeyValuePair[]) ?? [];
+  const controlRawBody = (controlValues?.rawBody as string) ?? null;
+  const controlBodyMode = (controlValues?.bodyMode as string) ?? null;
 
-  const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
+  const curlString = buildRawCurlString(url, method, headers, body, novuSignature, controlRawBody, controlBodyMode);
   const activeHeaders = headers.filter((h) => h.key);
 
   const handleCopyCurlSuccess = useCallback(() => {
@@ -390,8 +392,10 @@ function ErrorState({
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = ((controlValues?.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
   const body = (controlValues?.body as KeyValuePair[]) ?? [];
+  const errorRawBody = (controlValues?.rawBody as string) ?? null;
+  const errorBodyMode = (controlValues?.bodyMode as string) ?? null;
 
-  const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
+  const curlString = buildRawCurlString(url, method, headers, body, novuSignature, errorRawBody, errorBodyMode);
 
   const responseToCopy = rawBody ? JSON.stringify(rawBody, null, 2) : error.message;
 

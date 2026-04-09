@@ -13,9 +13,11 @@ export function ConfigureHttpRequestStepPreview({ controlValues, className }: Co
   const method = (controlValues.method as string) ?? 'GET';
   const headers = ((controlValues.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
   const body = (controlValues.body as KeyValuePair[]) ?? [];
+  const rawBody = (controlValues.rawBody as string) ?? null;
+  const bodyMode = (controlValues.bodyMode as string) ?? null;
 
   const urlDisplay = getUrlDisplay(url);
-  const curlString = buildRawCurlString(url, method, headers, body);
+  const curlString = buildRawCurlString(url, method, headers, body, undefined, rawBody, bodyMode);
 
   return (
     <div className={`overflow-hidden rounded-lg border border-[#e1e4ea] ${className ?? ''}`}>

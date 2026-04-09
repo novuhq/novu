@@ -13,7 +13,9 @@ export function buildRawCurlString(
   method: string,
   headers: KeyValuePair[] | Record<string, string>,
   body: KeyValuePair[] | Record<string, unknown> | null | undefined,
-  novuSignature?: string
+  novuSignature?: string,
+  rawBody?: string | null,
+  bodyMode?: string | null
 ): string {
   const headerEntries: [string, string][] = Array.isArray(headers)
     ? headers.filter((h) => h.key).map((h) => [h.key, h.value])
@@ -28,21 +30,29 @@ export function buildRawCurlString(
   const headerArgs = headerEntries.map(([k, v]) => `--header '${k}: ${v}'`).join(' \\\n');
 
   const canHaveBody = canMethodHaveBody(method);
-  let bodyObj: Record<string, unknown> | null = null;
+  let bodyStr = '';
 
   if (canHaveBody) {
-    if (Array.isArray(body)) {
-      const pairs = body.filter((b) => b.key);
+    if (bodyMode === 'raw' && rawBody) {
+      bodyStr = `--data '${rawBody}'`;
+    } else {
+      let bodyObj: Record<string, unknown> | null = null;
 
-      if (pairs.length > 0) {
-        bodyObj = Object.fromEntries(pairs.map(({ key, value }) => [key, value]));
+      if (Array.isArray(body)) {
+        const pairs = body.filter((b) => b.key);
+
+        if (pairs.length > 0) {
+          bodyObj = Object.fromEntries(pairs.map(({ key, value }) => [key, value]));
+        }
+      } else if (body && Object.keys(body).length > 0) {
+        bodyObj = body;
       }
-    } else if (body && Object.keys(body).length > 0) {
-      bodyObj = body;
+
+      if (bodyObj) {
+        bodyStr = `--data '${JSON.stringify(bodyObj)}'`;
+      }
     }
   }
-
-  const bodyStr = bodyObj ? `--data '${JSON.stringify(bodyObj)}'` : '';
   const parts = [`novu $ curl --location '${url || 'https://api.example.com/endpoint'}'`, headerArgs, bodyStr].filter(
     Boolean
   );

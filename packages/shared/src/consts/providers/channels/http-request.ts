@@ -73,6 +73,15 @@ export const httpRequestControlSchema = {
       items: keyValuePairSchema,
       maxItems: 100,
     },
+    bodyMode: {
+      type: 'string',
+      enum: ['key-value', 'raw'],
+      default: 'key-value',
+    },
+    rawBody: {
+      type: 'string',
+      maxLength: 65536,
+    },
     responseBodySchema: {
       type: 'object',
       properties: {
@@ -118,6 +127,14 @@ export const httpRequestUiSchema: UiSchema = {
     },
     body: {
       component: UiComponentEnum.DESTINATION_BODY,
+      placeholder: null,
+    },
+    bodyMode: {
+      component: UiComponentEnum.DESTINATION_BODY_MODE,
+      placeholder: 'key-value',
+    },
+    rawBody: {
+      component: UiComponentEnum.DESTINATION_RAW_BODY,
       placeholder: null,
     },
     responseBodySchema: {

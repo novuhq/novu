@@ -7,6 +7,7 @@ import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
 import { EmailSubject } from '@/components/workflow-editor/steps/email/email-subject';
 import { EnforceSchemaValidation } from '@/components/workflow-editor/steps/http-request/enforce-schema-validation';
 import { KeyValuePairList } from '@/components/workflow-editor/steps/http-request/key-value-pair-list';
+import { RawBodyEditor } from '@/components/workflow-editor/steps/http-request/raw-body-editor';
 import { RequestEndpoint } from '@/components/workflow-editor/steps/http-request/request-endpoint';
 import { ResponseBodySchema } from '@/components/workflow-editor/steps/http-request/response-body-schema';
 import { InAppAction } from '@/components/workflow-editor/steps/in-app/in-app-action';
@@ -144,6 +145,10 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.DESTINATION_BODY:
       return <KeyValuePairList fieldName="body" label="Request body" />;
+
+    case UiComponentEnum.DESTINATION_BODY_MODE:
+    case UiComponentEnum.DESTINATION_RAW_BODY:
+      return <RawBodyEditor />;
 
     case UiComponentEnum.DESTINATION_RESPONSE_BODY_SCHEMA:
       return <ResponseBodySchema />;

@@ -12,6 +12,7 @@ import {
   ICompileContext,
   InstrumentUsecase,
   PinoLogger,
+  parseRawBody,
   shouldIncludeBody,
   toBodyRecord,
   toHeadersRecord,
@@ -96,7 +97,9 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const url = compiled.url as string | undefined;
     const method = (compiled.method as string) ?? 'POST';
     const rawHeaders = (compiled.headers as Array<{ key: string; value: string }> | undefined) ?? [];
-    const rawBody = (compiled.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const bodyPairs = (compiled.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const bodyMode = (compiled.bodyMode as string | undefined) ?? 'key-value';
+    const rawJsonBody = compiled.rawBody as string | undefined;
     const timeout = (compiled.timeout as number | undefined) ?? 5000;
 
     if (!url) {
@@ -144,7 +147,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     }
 
     const headersRecord = toHeadersRecord(rawHeaders);
-    const bodyObject = toBodyRecord(rawBody);
+    const bodyObject = bodyMode === 'raw' && rawJsonBody ? parseRawBody(rawJsonBody) : toBodyRecord(bodyPairs);
     const hasBody = shouldIncludeBody(bodyObject, method);
     const signatureHeaders = {
       'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),

@@ -49,6 +49,21 @@ export class HttpRequestControlDto {
   body?: HttpRequestKeyValuePairDto[];
 
   @ApiPropertyOptional({
+    description: 'Body input mode: key-value pairs or raw JSON',
+    enum: ['key-value', 'raw'],
+  })
+  @IsString()
+  @IsOptional()
+  bodyMode?: 'key-value' | 'raw';
+
+  @ApiPropertyOptional({
+    description: 'Raw JSON body string (used when bodyMode is raw)',
+  })
+  @IsString()
+  @IsOptional()
+  rawBody?: string;
+
+  @ApiPropertyOptional({
     description: 'JSON schema to validate response body against',
     type: 'object',
     additionalProperties: true,
