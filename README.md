@@ -20,9 +20,9 @@
 >
     <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
-  <a href="https://www.npmjs.com/package/@novu/react" target="_blank" rel="noopener noreferrer"
+  <a href="https://www.npmjs.com/package/@novu/js" target="_blank" rel="noopener noreferrer"
 >
-    <img src="https://img.shields.io/npm/dm/@novu/react" alt="npm downloads">
+    <img src="https://img.shields.io/npm/dm/@novu/js" alt="npm downloads">
   </a>
 </p>
 

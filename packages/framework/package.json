@@ -259,7 +259,7 @@
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",
-    "liquidjs": "^10.25.0",
+    "liquidjs": "^10.25.5",
     "pluralize": "^8.0.0",
     "sanitize-html": "^2.13.0"
   },
