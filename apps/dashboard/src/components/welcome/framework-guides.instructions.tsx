@@ -428,6 +428,3 @@ novu.mountComponent({
     ),
   },
 ];
-
-// Default frameworks array for backward compatibility
-const frameworks = getFrameworks('manual');
