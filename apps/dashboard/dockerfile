@@ -23,6 +23,14 @@ COPY pnpm-lock.yaml .
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
   pnpm install --frozen-lockfile --unsafe-perm
 
+ARG VITE_EE_AUTH_PROVIDER=clerk
+ARG VITE_SELF_HOSTED=true
+ARG VITE_NOVU_ENTERPRISE=false
+
+ENV VITE_EE_AUTH_PROVIDER=${VITE_EE_AUTH_PROVIDER}
+ENV VITE_SELF_HOSTED=${VITE_SELF_HOSTED}
+ENV VITE_NOVU_ENTERPRISE=${VITE_NOVU_ENTERPRISE}
+
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
 FROM node:22.22.1-alpine3.22
