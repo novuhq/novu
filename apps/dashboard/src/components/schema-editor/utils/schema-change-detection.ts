@@ -146,7 +146,7 @@ export function detectSchemaChanges(
   return changes;
 }
 
-export function getChangesSummary(changes: SchemaChanges): string {
+function getChangesSummary(changes: SchemaChanges): string {
   const parts: string[] = [];
 
   if (changes.deleted.length > 0) {

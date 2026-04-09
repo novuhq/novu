@@ -5,7 +5,7 @@ function escapeString(str: string): string {
   return String(str).replace(/'/g, "\\'");
 }
 
-export function formatParamValue(param: string, type?: string) {
+function formatParamValue(param: string, type?: string) {
   if (type === 'number') {
     return param;
   }
