@@ -4,7 +4,7 @@ import { IS_SELF_HOSTED } from '../config';
 
 type OrganizationLike = { createdAt: Date };
 
-export const LOGS_DATE_RANGE_OPTIONS = [
+const LOGS_DATE_RANGE_OPTIONS = [
   { value: '24', label: 'Last 24 Hours', ms: 24 * 60 * 60 * 1000 },
   { value: '168', label: '7 Days', ms: 7 * 24 * 60 * 60 * 1000 }, // 7 * 24
   { value: '720', label: '30 Days', ms: 30 * 24 * 60 * 60 * 1000 }, // 30 * 24

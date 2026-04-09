@@ -1,4 +1,3 @@
-import { RiLoader4Line } from 'react-icons/ri';
 import { toast } from 'sonner';
 import { Toast, ToastIcon } from '@/components/primitives/sonner';
 
@@ -19,24 +18,6 @@ function getErrorMessage(error?: unknown): string {
 
   return DETAILED_ERROR_MESSAGES.some((detailed) => messageText.includes(detailed)) ? messageText : 'Failed to save';
 }
-
-export const showSavingToast = (setToastId: (toastId: string | number) => void) => {
-  const id = toast.custom(
-    () => (
-      <Toast variant="default">
-        <RiLoader4Line className="min-w-5 size-5 p-[2px] animate-spin text-icon-soft" />
-        <span className="text-sm">Saving</span>
-      </Toast>
-    ),
-    {
-      position: 'bottom-right',
-      classNames: {
-        toast: 'right-0',
-      },
-    }
-  );
-  setToastId(id);
-};
 
 export const showSuccessToast = (toastId?: string | number) => {
   if (!toastId) return;

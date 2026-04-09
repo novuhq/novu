@@ -1085,13 +1085,13 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       it('should respond with 400 when name is too long', async () => {
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
-          name: Array.from({ length: 80 }).join('X'),
+          name: 'X'.repeat(129),
         });
 
         await createWorkflowAndExpectValidationError(
           apiClient,
           createWorkflowDto,
-          'name must be shorter than or equal to 64 characters'
+          'name must be shorter than or equal to 128 characters'
         );
       });
 

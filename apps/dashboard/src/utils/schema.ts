@@ -139,7 +139,7 @@ const getZodValueByType = (jsonSchema: JSONSchemaDefinition, key: string): ZodVa
  * The function will recursively build the schema based on the JSONSchema object.
  * It removes empty strings and objects with empty required fields during the transformation phase after parsing.
  */
-export const buildDynamicZodSchema = (obj: JSONSchemaDefinition, key = ''): ZodValue => {
+const buildDynamicZodSchema = (obj: JSONSchemaDefinition, key = ''): ZodValue => {
   if (typeof obj === 'object' && obj.type === 'object') {
     const properties = obj.properties ?? {};
     const requiredFields = obj.required ?? [];

@@ -96,18 +96,6 @@ export async function fetchLatestChat({
   return responseData;
 }
 
-export async function fetchChat({
-  environment,
-  id,
-}: {
-  environment: IEnvironment;
-  id: string;
-}): Promise<AiChatResponseDto> {
-  const { data: responseData } = await getV2<{ data: AiChatResponseDto }>(`/ai/chat/${id}`, { environment });
-
-  return responseData;
-}
-
 export function getChatStreamUrl(): string {
   return `${getApiBaseUrl()}/v2/ai/chat-stream`;
 }
