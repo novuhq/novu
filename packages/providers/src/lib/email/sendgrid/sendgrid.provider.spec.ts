@@ -1,5 +1,6 @@
 import { Client } from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
+import { EmailEventStatusEnum } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { SendgridEmailProvider } from './sendgrid.provider';
 
@@ -200,4 +201,28 @@ test('should not set data residency when region is not provided', async () => {
   new SendgridEmailProvider(mockConfig);
 
   expect(setDataResidencySpy).not.toHaveBeenCalled();
+});
+
+test('parseEventBody maps SendGrid blocked event to BLOCKED status', () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const externalId = 'sg-msg-blocked-1';
+
+  const result = provider.parseEventBody(
+    {
+      id: externalId,
+      event: 'blocked',
+      attempt: '1',
+      response: 'blocked by suppression',
+    },
+    externalId
+  );
+
+  expect(result).toEqual({
+    status: EmailEventStatusEnum.BLOCKED,
+    date: expect.any(String),
+    externalId,
+    attempts: 1,
+    response: 'blocked by suppression',
+    row: expect.any(String),
+  });
 });
