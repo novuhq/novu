@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDataRef } from './use-data-ref';
 
 type PreviewContextState<D, E extends Record<keyof D, string | null>> = {
   accordionValue: string[];
@@ -39,6 +40,8 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
   const lastSyncedValueRef = useRef(value);
   const latestValueRef = useRef(value);
   latestValueRef.current = value;
+  const onDataPersistRef = useDataRef(onDataPersist);
+  const parseJsonValueRef = useDataRef(parseJsonValue);
   const parsedData = useMemo(() => parseJsonValue(value), [parseJsonValue, value]);
 
   // Wraps onChange to synchronously track the latest value in a ref,
@@ -75,7 +78,7 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
       isUpdatingRef.current = true;
 
       try {
-        const currentData = parseJsonValue(latestValueRef.current);
+        const currentData = parseJsonValueRef.current(latestValueRef.current);
         const newData = { ...currentData, [section]: updatedData };
         const stringified = JSON.stringify(newData, null, 2);
 
@@ -87,7 +90,7 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
             errors: { ...prev.errors, [section]: error.message },
           }));
         } else {
-          onDataPersist?.(newData);
+          onDataPersistRef.current?.(newData);
           setState((prev) => ({
             ...prev,
             localParsedData: newData,
@@ -106,7 +109,7 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
         }, 0);
       }
     },
-    [trackedOnChange, onDataPersist, parseJsonValue]
+    [trackedOnChange]
   );
 
   const setAccordionValue = useCallback((value: string[]) => {
