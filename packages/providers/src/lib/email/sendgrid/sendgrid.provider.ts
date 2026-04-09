@@ -103,7 +103,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       };
 
       if (attachment?.cid) {
-        attachmentJson.contentId = attachment?.cid;
+        attachmentJson['content_id'] = attachment?.cid;
       }
 
       if (attachment?.disposition) {

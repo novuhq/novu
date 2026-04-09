@@ -103,21 +103,21 @@ export function TranslationToggleSection({
             className="arrow-right-hover-animation size-4 shrink-0 transition-transform duration-200 ease-out text-text-sub hover:text-text-strong group-hover:translate-x-0.5"
           />
         </div>
-        <span className="text-foreground-400 text-xs">
-          Set up your target locales first to enable translations
-        </span>
+        <span className="text-foreground-400 text-xs">Set up your target locales first to enable translations</span>
       </button>
     );
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-label-xs text-text-strong">Enable Translations </span>
+    <div className={cn('flex w-full min-w-0 flex-col gap-1.5', className)}>
+      <div className="flex w-full min-w-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="text-label-xs text-text-strong">Enable Translations</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <RiInformation2Line className="size-3 text-text-soft cursor-help" />
+              <span className="inline-flex cursor-help shrink-0">
+                <RiInformation2Line className="size-4 text-text-soft" />
+              </span>
             </TooltipTrigger>
             <TooltipPortal>
               <TooltipContent side="left" hideWhenDetached>
