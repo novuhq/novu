@@ -30,6 +30,8 @@ import { Result } from "../types/fp.js";
  *
  * @remarks
  * List all channel endpoints for a resource based on query filters.
+ *
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function channelEndpointsList(
   client: NovuCore,
@@ -120,7 +122,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

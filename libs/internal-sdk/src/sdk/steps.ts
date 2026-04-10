@@ -10,7 +10,7 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Steps extends ClientSDK {
   /**
-   * Generate step preview
+   * Generate a step preview
    *
    * @remarks
    * Generates a preview for a specific workflow step by its unique identifier **stepId**

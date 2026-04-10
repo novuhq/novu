@@ -5,32 +5,41 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildTopicsListQuery,
   prefetchTopicsList,
   queryKeyTopicsList,
   TopicsListQueryData,
-} from './topicsList.core.js';
-export { buildTopicsListQuery, prefetchTopicsList, queryKeyTopicsList, type TopicsListQueryData };
+} from "./topicsList.core.js";
+export {
+  buildTopicsListQuery,
+  prefetchTopicsList,
+  queryKeyTopicsList,
+  type TopicsListQueryData,
+};
 
 export type TopicsListQueryError =
   | errors.ErrorDto
@@ -54,11 +63,15 @@ export type TopicsListQueryError =
  */
 export function useTopicsList(
   request: operations.TopicsControllerListTopicsRequest,
-  options?: QueryHookOptions<TopicsListQueryData, TopicsListQueryError>
+  options?: QueryHookOptions<TopicsListQueryData, TopicsListQueryError>,
 ): UseQueryResult<TopicsListQueryData, TopicsListQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTopicsListQuery(client, request, options),
+    ...buildTopicsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -73,11 +86,15 @@ export function useTopicsList(
  */
 export function useTopicsListSuspense(
   request: operations.TopicsControllerListTopicsRequest,
-  options?: SuspenseQueryHookOptions<TopicsListQueryData, TopicsListQueryError>
+  options?: SuspenseQueryHookOptions<TopicsListQueryData, TopicsListQueryError>,
 ): UseSuspenseQueryResult<TopicsListQueryData, TopicsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTopicsListQuery(client, request, options),
+    ...buildTopicsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -89,7 +106,9 @@ export function setTopicsListData(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?: operations.TopicsControllerListTopicsQueryParamOrderDirection | undefined;
+      orderDirection?:
+        | operations.TopicsControllerListTopicsQueryParamOrderDirection
+        | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       key?: string | undefined;
@@ -97,7 +116,7 @@ export function setTopicsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: TopicsListQueryData
+  data: TopicsListQueryData,
 ): TopicsListQueryData | undefined {
   const key = queryKeyTopicsList(...queryKeyBase);
 
@@ -107,34 +126,34 @@ export function setTopicsListData(
 export function invalidateTopicsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        after?: string | undefined;
-        before?: string | undefined;
-        limit?: number | undefined;
-        orderDirection?: operations.TopicsControllerListTopicsQueryParamOrderDirection | undefined;
-        orderBy?: string | undefined;
-        includeCursor?: boolean | undefined;
-        key?: string | undefined;
-        name?: string | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      after?: string | undefined;
+      before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?:
+        | operations.TopicsControllerListTopicsQueryParamOrderDirection
+        | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
+      key?: string | undefined;
+      name?: string | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Topics', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Topics", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllTopicsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Topics', 'list'],
+    queryKey: ["@novu/api", "Topics", "list"],
   });
 }

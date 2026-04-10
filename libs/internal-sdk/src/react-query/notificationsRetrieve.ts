@@ -5,30 +5,34 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildNotificationsRetrieveQuery,
   NotificationsRetrieveQueryData,
   prefetchNotificationsRetrieve,
   queryKeyNotificationsRetrieve,
-} from './notificationsRetrieve.core.js';
+} from "./notificationsRetrieve.core.js";
 export {
   buildNotificationsRetrieveQuery,
   type NotificationsRetrieveQueryData,
@@ -59,11 +63,22 @@ export type NotificationsRetrieveQueryError =
 export function useNotificationsRetrieve(
   notificationId: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<NotificationsRetrieveQueryData, NotificationsRetrieveQueryError>
-): UseQueryResult<NotificationsRetrieveQueryData, NotificationsRetrieveQueryError> {
+  options?: QueryHookOptions<
+    NotificationsRetrieveQueryData,
+    NotificationsRetrieveQueryError
+  >,
+): UseQueryResult<
+  NotificationsRetrieveQueryData,
+  NotificationsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildNotificationsRetrieveQuery(client, notificationId, idempotencyKey, options),
+    ...buildNotificationsRetrieveQuery(
+      client,
+      notificationId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -79,19 +94,33 @@ export function useNotificationsRetrieve(
 export function useNotificationsRetrieveSuspense(
   notificationId: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<NotificationsRetrieveQueryData, NotificationsRetrieveQueryError>
-): UseSuspenseQueryResult<NotificationsRetrieveQueryData, NotificationsRetrieveQueryError> {
+  options?: SuspenseQueryHookOptions<
+    NotificationsRetrieveQueryData,
+    NotificationsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  NotificationsRetrieveQueryData,
+  NotificationsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildNotificationsRetrieveQuery(client, notificationId, idempotencyKey, options),
+    ...buildNotificationsRetrieveQuery(
+      client,
+      notificationId,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setNotificationsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [notificationId: string, parameters: { idempotencyKey?: string | undefined }],
-  data: NotificationsRetrieveQueryData
+  queryKeyBase: [
+    notificationId: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: NotificationsRetrieveQueryData,
 ): NotificationsRetrieveQueryData | undefined {
   const key = queryKeyNotificationsRetrieve(...queryKeyBase);
 
@@ -100,21 +129,26 @@ export function setNotificationsRetrieveData(
 
 export function invalidateNotificationsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[notificationId: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [
+      notificationId: string,
+      parameters: { idempotencyKey?: string | undefined },
+    ]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Notifications', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Notifications", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllNotificationsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Notifications', 'retrieve'],
+    queryKey: ["@novu/api", "Notifications", "retrieve"],
   });
 }
