@@ -40,6 +40,7 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
         'Switching to Key-Value mode will discard your raw JSON body. Continue?'
       );
       if (!confirmed) return;
+      setValue('rawBody', '');
     }
 
     setValue('bodyMode', mode);
