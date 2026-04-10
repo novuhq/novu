@@ -54,6 +54,8 @@ ENV CI=true
 ENV NX_DAEMON=false
 
 RUN apk upgrade --no-cache && \
+    # Manually upgrade libcrypto3/libssl3 from edge/main to patch CVE-2025-15467
+    # until the fix is backported to the alpine3.23 stable repo
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 && \
     npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0 && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
