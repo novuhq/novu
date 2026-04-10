@@ -5,30 +5,34 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildEnvironmentVariablesListQuery,
   EnvironmentVariablesListQueryData,
   prefetchEnvironmentVariablesList,
   queryKeyEnvironmentVariablesList,
-} from './environmentVariablesList.core.js';
+} from "./environmentVariablesList.core.js";
 export {
   buildEnvironmentVariablesListQuery,
   type EnvironmentVariablesListQueryData,
@@ -57,11 +61,22 @@ export type EnvironmentVariablesListQueryError =
 export function useEnvironmentVariablesList(
   search?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentVariablesListQueryData, EnvironmentVariablesListQueryError>
-): UseQueryResult<EnvironmentVariablesListQueryData, EnvironmentVariablesListQueryError> {
+  options?: QueryHookOptions<
+    EnvironmentVariablesListQueryData,
+    EnvironmentVariablesListQueryError
+  >,
+): UseQueryResult<
+  EnvironmentVariablesListQueryData,
+  EnvironmentVariablesListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentVariablesListQuery(client, search, idempotencyKey, options),
+    ...buildEnvironmentVariablesListQuery(
+      client,
+      search,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -75,11 +90,22 @@ export function useEnvironmentVariablesList(
 export function useEnvironmentVariablesListSuspense(
   search?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentVariablesListQueryData, EnvironmentVariablesListQueryError>
-): UseSuspenseQueryResult<EnvironmentVariablesListQueryData, EnvironmentVariablesListQueryError> {
+  options?: SuspenseQueryHookOptions<
+    EnvironmentVariablesListQueryData,
+    EnvironmentVariablesListQueryError
+  >,
+): UseSuspenseQueryResult<
+  EnvironmentVariablesListQueryData,
+  EnvironmentVariablesListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentVariablesListQuery(client, search, idempotencyKey, options),
+    ...buildEnvironmentVariablesListQuery(
+      client,
+      search,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -92,7 +118,7 @@ export function setEnvironmentVariablesListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: EnvironmentVariablesListQueryData
+  data: EnvironmentVariablesListQueryData,
 ): EnvironmentVariablesListQueryData | undefined {
   const key = queryKeyEnvironmentVariablesList(...queryKeyBase);
 
@@ -102,27 +128,25 @@ export function setEnvironmentVariablesListData(
 export function invalidateEnvironmentVariablesList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        search?: string | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      search?: string | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Environment Variables', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Environment Variables", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllEnvironmentVariablesList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Environment Variables', 'list'],
+    queryKey: ["@novu/api", "Environment Variables", "list"],
   });
 }

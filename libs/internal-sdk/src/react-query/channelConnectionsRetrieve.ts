@@ -5,30 +5,34 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildChannelConnectionsRetrieveQuery,
   ChannelConnectionsRetrieveQueryData,
   prefetchChannelConnectionsRetrieve,
   queryKeyChannelConnectionsRetrieve,
-} from './channelConnectionsRetrieve.core.js';
+} from "./channelConnectionsRetrieve.core.js";
 export {
   buildChannelConnectionsRetrieveQuery,
   type ChannelConnectionsRetrieveQueryData,
@@ -57,11 +61,22 @@ export type ChannelConnectionsRetrieveQueryError =
 export function useChannelConnectionsRetrieve(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ChannelConnectionsRetrieveQueryData, ChannelConnectionsRetrieveQueryError>
-): UseQueryResult<ChannelConnectionsRetrieveQueryData, ChannelConnectionsRetrieveQueryError> {
+  options?: QueryHookOptions<
+    ChannelConnectionsRetrieveQueryData,
+    ChannelConnectionsRetrieveQueryError
+  >,
+): UseQueryResult<
+  ChannelConnectionsRetrieveQueryData,
+  ChannelConnectionsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildChannelConnectionsRetrieveQuery(client, identifier, idempotencyKey, options),
+    ...buildChannelConnectionsRetrieveQuery(
+      client,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -75,19 +90,33 @@ export function useChannelConnectionsRetrieve(
 export function useChannelConnectionsRetrieveSuspense(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ChannelConnectionsRetrieveQueryData, ChannelConnectionsRetrieveQueryError>
-): UseSuspenseQueryResult<ChannelConnectionsRetrieveQueryData, ChannelConnectionsRetrieveQueryError> {
+  options?: SuspenseQueryHookOptions<
+    ChannelConnectionsRetrieveQueryData,
+    ChannelConnectionsRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  ChannelConnectionsRetrieveQueryData,
+  ChannelConnectionsRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildChannelConnectionsRetrieveQuery(client, identifier, idempotencyKey, options),
+    ...buildChannelConnectionsRetrieveQuery(
+      client,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setChannelConnectionsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [identifier: string, parameters: { idempotencyKey?: string | undefined }],
-  data: ChannelConnectionsRetrieveQueryData
+  queryKeyBase: [
+    identifier: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: ChannelConnectionsRetrieveQueryData,
 ): ChannelConnectionsRetrieveQueryData | undefined {
   const key = queryKeyChannelConnectionsRetrieve(...queryKeyBase);
 
@@ -96,21 +125,23 @@ export function setChannelConnectionsRetrieveData(
 
 export function invalidateChannelConnectionsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[identifier: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [identifier: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Connections', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Channel Connections", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllChannelConnectionsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Connections', 'retrieve'],
+    queryKey: ["@novu/api", "Channel Connections", "retrieve"],
   });
 }

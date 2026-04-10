@@ -5,30 +5,34 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildEnvironmentVariablesUsageQuery,
   EnvironmentVariablesUsageQueryData,
   prefetchEnvironmentVariablesUsage,
   queryKeyEnvironmentVariablesUsage,
-} from './environmentVariablesUsage.core.js';
+} from "./environmentVariablesUsage.core.js";
 export {
   buildEnvironmentVariablesUsageQuery,
   type EnvironmentVariablesUsageQueryData,
@@ -57,11 +61,22 @@ export type EnvironmentVariablesUsageQueryError =
 export function useEnvironmentVariablesUsage(
   variableKey: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError>
-): UseQueryResult<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError> {
+  options?: QueryHookOptions<
+    EnvironmentVariablesUsageQueryData,
+    EnvironmentVariablesUsageQueryError
+  >,
+): UseQueryResult<
+  EnvironmentVariablesUsageQueryData,
+  EnvironmentVariablesUsageQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentVariablesUsageQuery(client, variableKey, idempotencyKey, options),
+    ...buildEnvironmentVariablesUsageQuery(
+      client,
+      variableKey,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -75,19 +90,33 @@ export function useEnvironmentVariablesUsage(
 export function useEnvironmentVariablesUsageSuspense(
   variableKey: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError>
-): UseSuspenseQueryResult<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError> {
+  options?: SuspenseQueryHookOptions<
+    EnvironmentVariablesUsageQueryData,
+    EnvironmentVariablesUsageQueryError
+  >,
+): UseSuspenseQueryResult<
+  EnvironmentVariablesUsageQueryData,
+  EnvironmentVariablesUsageQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentVariablesUsageQuery(client, variableKey, idempotencyKey, options),
+    ...buildEnvironmentVariablesUsageQuery(
+      client,
+      variableKey,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setEnvironmentVariablesUsageData(
   client: QueryClient,
-  queryKeyBase: [variableKey: string, parameters: { idempotencyKey?: string | undefined }],
-  data: EnvironmentVariablesUsageQueryData
+  queryKeyBase: [
+    variableKey: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: EnvironmentVariablesUsageQueryData,
 ): EnvironmentVariablesUsageQueryData | undefined {
   const key = queryKeyEnvironmentVariablesUsage(...queryKeyBase);
 
@@ -96,21 +125,23 @@ export function setEnvironmentVariablesUsageData(
 
 export function invalidateEnvironmentVariablesUsage(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[variableKey: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [variableKey: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Environment Variables', 'usage', ...queryKeyBase],
+    queryKey: ["@novu/api", "Environment Variables", "usage", ...queryKeyBase],
   });
 }
 
 export function invalidateAllEnvironmentVariablesUsage(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Environment Variables', 'usage'],
+    queryKey: ["@novu/api", "Environment Variables", "usage"],
   });
 }

@@ -5,31 +5,35 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildSubscribersNotificationsListQuery,
   prefetchSubscribersNotificationsList,
   queryKeySubscribersNotificationsList,
   SubscribersNotificationsListQueryData,
-} from './subscribersNotificationsList.core.js';
+} from "./subscribersNotificationsList.core.js";
 export {
   buildSubscribersNotificationsListQuery,
   prefetchSubscribersNotificationsList,
@@ -58,11 +62,21 @@ export type SubscribersNotificationsListQueryError =
  */
 export function useSubscribersNotificationsList(
   request: operations.SubscribersControllerGetSubscriberNotificationsRequest,
-  options?: QueryHookOptions<SubscribersNotificationsListQueryData, SubscribersNotificationsListQueryError>
-): UseQueryResult<SubscribersNotificationsListQueryData, SubscribersNotificationsListQueryError> {
+  options?: QueryHookOptions<
+    SubscribersNotificationsListQueryData,
+    SubscribersNotificationsListQueryError
+  >,
+): UseQueryResult<
+  SubscribersNotificationsListQueryData,
+  SubscribersNotificationsListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersNotificationsListQuery(client, request, options),
+    ...buildSubscribersNotificationsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -76,11 +90,21 @@ export function useSubscribersNotificationsList(
  */
 export function useSubscribersNotificationsListSuspense(
   request: operations.SubscribersControllerGetSubscriberNotificationsRequest,
-  options?: SuspenseQueryHookOptions<SubscribersNotificationsListQueryData, SubscribersNotificationsListQueryError>
-): UseSuspenseQueryResult<SubscribersNotificationsListQueryData, SubscribersNotificationsListQueryError> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersNotificationsListQueryData,
+    SubscribersNotificationsListQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersNotificationsListQueryData,
+  SubscribersNotificationsListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersNotificationsListQuery(client, request, options),
+    ...buildSubscribersNotificationsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -105,7 +129,7 @@ export function setSubscribersNotificationsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: SubscribersNotificationsListQueryData
+  data: SubscribersNotificationsListQueryData,
 ): SubscribersNotificationsListQueryData | undefined {
   const key = queryKeySubscribersNotificationsList(...queryKeyBase);
 
@@ -134,20 +158,20 @@ export function invalidateSubscribersNotificationsList(
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Notifications', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Notifications", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersNotificationsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Notifications', 'list'],
+    queryKey: ["@novu/api", "Notifications", "list"],
   });
 }
