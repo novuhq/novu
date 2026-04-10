@@ -89,12 +89,12 @@ export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConf
 };
 
 export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
-  const { instances, password, username, tls } = getMemoryDbClusterProviderConfig();
+  const { instances, password, username, tls, connectTimeout } = getMemoryDbClusterProviderConfig();
 
   const redisOptions: any = {
     maxRetriesPerRequest: null,
     tls,
-    connectTimeout: 10000,
+    connectTimeout,
   };
 
   // For Redis 6+ ACL authentication (AWS MemoryDB), both username and password must be provided
