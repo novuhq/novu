@@ -206,6 +206,7 @@ jobs:
             if [[ "$AUTH_PROVIDER" == "clerk" ]]; then
               echo "Building dashboard for Clerk authentication"
               docker buildx build \
+                --load \
                 --platform=linux/amd64 \
                 --build-arg VITE_EE_AUTH_PROVIDER=clerk \
                 --build-arg VITE_SELF_HOSTED=true \
@@ -216,6 +217,7 @@ jobs:
             elif [[ "$AUTH_PROVIDER" == "better-auth" ]]; then
               echo "Building dashboard for Better Auth authentication"
               docker buildx build \
+                --load \
                 --platform=linux/amd64 \
                 --build-arg VITE_EE_AUTH_PROVIDER=better-auth \
                 --build-arg VITE_SELF_HOSTED=true \
