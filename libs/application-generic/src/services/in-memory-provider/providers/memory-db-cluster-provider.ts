@@ -97,15 +97,15 @@ export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | un
     connectTimeout,
   };
 
-  // For Redis 6+ ACL authentication (AWS MemoryDB), both username and password must be provided
-  // If only password is provided, use legacy AUTH format
   if (username && password) {
     redisOptions.username = username;
     redisOptions.password = password;
-    Logger.log(`Configuring MemoryDB with ACL authentication (username: ${username})`);
+    Logger.log('Configuring MemoryDB with ACL authentication');
   } else if (password) {
     redisOptions.password = password;
     Logger.log('Configuring MemoryDB with legacy password-only authentication');
+  } else if (username) {
+    throw new Error('MemoryDB misconfiguration: username provided without password');
   }
 
   const options: ClusterOptions = {
