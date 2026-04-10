@@ -9,6 +9,7 @@ import {
   RiCloseCircleLine,
   RiDeleteBin2Line,
   RiEdit2Line,
+  RiListView,
   RiLoader3Line,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,7 @@ import { Badge } from '../primitives/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../primitives/collapsible';
 import { Skeleton } from '../primitives/skeleton';
 import { Tag } from '../primitives/tag';
+import { PayloadSchemaDrawer } from '../workflow-editor/payload-schema-drawer';
 import { useWorkflow } from '../workflow-editor/workflow-provider';
 import { StyledMessageResponse } from './chat-message-response';
 import { isCancelledToolCall, unwrapToolResult } from './message-utils';
@@ -321,6 +323,119 @@ function StepTool({
   );
 }
 
+type PayloadSchemaOutput = { added: string[]; removed: string[] };
+
+function PayloadSchemaToolItem({ output, isStreaming }: { output?: PayloadSchemaOutput; isStreaming: boolean }) {
+  const { workflow } = useWorkflow();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const showStreaming = isStreaming || !output;
+  const isClickable = !!workflow && !showStreaming;
+
+  const addedCount = output?.added?.length ?? 0;
+  const removedCount = output?.removed?.length ?? 0;
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        {showStreaming ? (
+          <motion.div
+            key="streaming"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={stepTransition}
+            className={cn(stepItemBaseClasses, 'border-dashed bg-white')}
+          >
+            <Skeleton className="flex size-5 items-center justify-center opacity-40 rounded-full" />
+            <Skeleton className="w-20 h-4" />
+            <RiLoader3Line className="size-4 ml-auto text-[#E1E4EA] animate-spin" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="complete"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={stepTransition}
+            className={cn(stepItemBaseClasses, 'bg-bg-weak', isClickable && 'cursor-pointer hover:bg-bg-weak/80')}
+            onClick={isClickable ? () => setIsDrawerOpen(true) : undefined}
+          >
+            <div className="flex size-5 min-w-5 items-center justify-center border opacity-40 rounded-full border-text-soft text-text-soft">
+              <RiListView className="size-3" />
+            </div>
+            <span className="text-label-xs text-text-sub truncate">Payload Schema</span>
+            <span className="ml-auto flex items-center gap-1">
+              {addedCount > 0 && (
+                <Badge variant="lighter" color="green">
+                  <RiAddBoxLine className="size-3" /> {addedCount} added
+                </Badge>
+              )}
+              {removedCount > 0 && (
+                <Badge variant="lighter" color="red">
+                  <RiDeleteBin2Line className="size-3" /> {removedCount} removed
+                </Badge>
+              )}
+              {addedCount === 0 && removedCount === 0 && (
+                <Badge variant="lighter" color="orange">
+                  <RiEdit2Line className="size-3" /> Modified
+                </Badge>
+              )}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {isClickable && (
+        <PayloadSchemaDrawer isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen} workflow={workflow} readOnly />
+      )}
+    </>
+  );
+}
+
+function PayloadSchemaTool({
+  output,
+  error,
+  isStreaming,
+}: {
+  output?: PayloadSchemaOutput;
+  error?: string | null;
+  isStreaming: boolean;
+}) {
+  const hasError = !!error;
+  const status = hasError ? 'error' : isStreaming ? 'active' : 'complete';
+  const icon = hasError ? ErrorCircleIcon : isStreaming ? BroomIcon : CheckCircleIcon;
+
+  const label = isStreaming ? (
+    <Shimmer className={cn('text-label-xs font-medium')}>Updating Payload Schema</Shimmer>
+  ) : hasError ? (
+    <span className="text-label-xs font-medium">Failed to Update Payload Schema</span>
+  ) : (
+    <span className={cn('flex items-center justify-between gap-1')}>
+      <span className="text-label-xs font-medium text-text-soft">Updated Payload Schema</span>
+    </span>
+  );
+
+  return (
+    <ChainOfThoughtStep
+      label={label}
+      status={status}
+      icon={icon}
+      collapsible
+      defaultOpen={!hasError}
+      autoCollapse={hasError}
+    >
+      {hasError ? (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 my-2 px-2 py-1">
+          <span className="text-label-xs text-destructive">{error}</span>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 p-2 pl-0 pr-0">
+          <PayloadSchemaToolItem output={output} isStreaming={isStreaming} />
+        </div>
+      )}
+    </ChainOfThoughtStep>
+  );
+}
+
 const toolNameToStreamingLabel = {
   [AiWorkflowToolsEnum.ADD_STEP]: 'Drafting Workflow Step',
   [AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN]: 'Drafting Workflow Step In Between',
@@ -468,6 +583,17 @@ export function ChatChainOfThought({ message }: ChatChainOfThoughtReasoningProps
                   labelComplete={completeLabel}
                   labelError={errorLabel}
                   action={action}
+                  error={tool.state === 'output-error' ? tool.errorText : undefined}
+                />
+              );
+            }
+
+            if (tool.toolName === AiWorkflowToolsEnum.UPDATE_PAYLOAD_SCHEMA) {
+              return (
+                <PayloadSchemaTool
+                  key={`${tool.toolCallId}-${tool.toolName}`}
+                  output={unwrapToolResult<PayloadSchemaOutput>(tool.output)}
+                  isStreaming={tool.state !== 'output-available' && tool.state !== 'output-error'}
                   error={tool.state === 'output-error' ? tool.errorText : undefined}
                 />
               );

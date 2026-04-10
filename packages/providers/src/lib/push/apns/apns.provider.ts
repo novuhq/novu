@@ -48,15 +48,23 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.notificationIdentifiers;
-    const notification = new apn.Notification(
-      this.transform(bridgeProviderData, {
-        body: options.content,
-        title: options.title,
-        payload: options.payload,
-        topic: this.config.bundleId,
-        ...options.overrides,
-      }).body
-    );
+    const transformedBody = this.transform(bridgeProviderData, {
+      body: options.content,
+      title: options.title,
+      payload: options.payload,
+      topic: this.config.bundleId,
+      ...options.overrides,
+    }).body as Record<string, unknown>;
+
+    const collapseId =
+      transformedBody.collapseId != null && transformedBody.collapseId !== ''
+        ? transformedBody.collapseId
+        : options.messageId;
+
+    const notification = new apn.Notification({
+      ...transformedBody,
+      ...(collapseId != null && collapseId !== '' ? { collapseId } : {}),
+    });
     const res = await this.provider.send(notification, options.target);
 
     if (res.failed.length > 0) {

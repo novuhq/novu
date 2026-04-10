@@ -145,11 +145,7 @@ export function RequestEndpoint() {
             control={control}
             name="url"
             render={({ field }) => (
-              <CopyButton
-                valueToCopy={field.value ?? ''}
-                size="2xs"
-                className="h-7 w-7 shrink-0 p-0"
-              />
+              <CopyButton valueToCopy={field.value ?? ''} size="2xs" className="h-7 w-7 shrink-0 p-0" />
             )}
           />
         </div>

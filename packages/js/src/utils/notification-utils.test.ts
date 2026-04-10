@@ -10,19 +10,11 @@ describe('normalizeTagGroups', () => {
       normalizeTagGroups({
         and: [{ or: ['a', 'b'] }, { or: ['c'] }],
       })
-    ).toEqual([
-      ['a', 'b'],
-      ['c'],
-    ]);
+    ).toEqual([['a', 'b'], ['c']]);
   });
 
   it('rejects nested string[][]', () => {
-    expect(() =>
-      normalizeTagGroups([
-        ['a', 'b'],
-        ['c'],
-      ] as never)
-    ).toThrow();
+    expect(() => normalizeTagGroups([['a', 'b'], ['c']] as never)).toThrow();
   });
 
   it('rejects non-array values', () => {

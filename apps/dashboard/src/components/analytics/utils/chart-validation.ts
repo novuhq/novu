@@ -60,11 +60,7 @@ export function createDateBasedHasDataChecker<T extends DateBasedChartData>(
   };
 }
 
-function hasMinimumEntries<T>(
-  data: T[],
-  hasDataForItem: (item: T) => boolean,
-  minimumEntries: number = 2
-): boolean {
+function hasMinimumEntries<T>(data: T[], hasDataForItem: (item: T) => boolean, minimumEntries: number = 2): boolean {
   if (!data || data.length === 0) {
     return false;
   }

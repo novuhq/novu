@@ -119,9 +119,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
       const key = normalizeTag(newTag);
       if (!newTag || !key) return;
 
-      const existingNormalized = new Set(
-        tags.map((t) => normalizeTag(t ?? '')).filter((n) => n.length > 0)
-      );
+      const existingNormalized = new Set(tags.map((t) => normalizeTag(t ?? '')).filter((n) => n.length > 0));
       if (existingNormalized.has(key)) return;
 
       const newTags = [...tags, newTag];

@@ -5,6 +5,6 @@ export * from './env';
 export * from './issues';
 export * from './locales';
 export * from './normalizeEmail';
-export * from './tags-filter';
 export { createMockObjectFromSchema } from './schema/create-mock-object-from-schema';
 export { slugify } from './slugify';
+export * from './tags-filter';

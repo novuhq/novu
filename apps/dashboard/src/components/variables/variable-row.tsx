@@ -133,7 +133,7 @@ export const VariableRow = ({
   const totalCount = environments.length;
 
   const handleDelete = async () => {
-    await deleteEnvironmentVariable({ variableId: variable._id });
+    await deleteEnvironmentVariable({ variableKey: variable.key });
     setIsDeleteModalOpen(false);
   };
 

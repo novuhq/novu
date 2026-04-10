@@ -25,10 +25,7 @@ describe('normalizeTagGroups', () => {
       normalizeTagGroups({
         and: [{ or: ['a', 'b'] }, { or: ['c'] }],
       })
-    ).toEqual([
-      ['a', 'b'],
-      ['c'],
-    ]);
+    ).toEqual([['a', 'b'], ['c']]);
   });
 
   it('returns empty for { and: [] }', () => {
@@ -36,18 +33,11 @@ describe('normalizeTagGroups', () => {
   });
 
   it('rejects nested string[][]', () => {
-    expect(() =>
-      normalizeTagGroups([
-        ['a', 'b'],
-        ['c'],
-      ] as never)
-    ).toThrow(TagsFilterValidationError);
+    expect(() => normalizeTagGroups([['a', 'b'], ['c']] as never)).toThrow(TagsFilterValidationError);
   });
 
   it('rejects both or and and on the same object', () => {
-    expect(() => normalizeTagGroups({ or: ['a'], and: [{ or: ['b'] }] } as never)).toThrow(
-      TagsFilterValidationError
-    );
+    expect(() => normalizeTagGroups({ or: ['a'], and: [{ or: ['b'] }] } as never)).toThrow(TagsFilterValidationError);
   });
 
   it('rejects empty inner group in and', () => {
@@ -73,12 +63,7 @@ describe('buildTagsQuery', () => {
   });
 
   it('uses $and of $in for multiple groups', () => {
-    expect(
-      buildTagsQuery([
-        ['a', 'b'],
-        ['c'],
-      ])
-    ).toEqual({
+    expect(buildTagsQuery([['a', 'b'], ['c']])).toEqual({
       $and: [{ tags: { $in: ['a', 'b'] } }, { tags: { $in: ['c'] } }],
     });
   });
