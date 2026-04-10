@@ -51,7 +51,8 @@ export function CurlDisplay({ url, method, headers, body, className, novuSignatu
     <div className={cn('font-mono text-xs', className)}>
       <p className="my-0 leading-[1.5]">
         <span className="text-[#99a0ae]">{'novu $ '}</span>
-        <span className="text-[#0e121b]">{'curl --location '}</span>
+        <span className="text-[#0e121b]">{'curl --location --request '}</span>
+        <span className="text-[#fb4ba3]">{`'${escapeShellSingleQuoted(method.toUpperCase())}' `}</span>
         <span className="text-[#7d52f4]">{`'${escapeShellSingleQuoted(url || 'https://api.example.com/endpoint')}' `}</span>
       </p>
       {novuSignature && !hasNovuSignature && (
