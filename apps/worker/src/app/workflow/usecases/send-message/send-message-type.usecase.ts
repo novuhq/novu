@@ -1,5 +1,6 @@
 import { CreateExecutionDetails, DetailEnum } from '@novu/application-generic';
 import { DeliveryLifecycleState, JobEntity, MessageEntity, MessageRepository } from '@novu/dal';
+import { safeJsonStringify } from '@novu/shared';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 
 export enum SendMessageStatus {
@@ -77,7 +78,7 @@ export abstract class SendMessageType {
       return error.toString();
     }
     if (Object.keys(error)?.length > 0) {
-      return JSON.stringify(error);
+      return safeJsonStringify(error);
     }
 
     return '';
