@@ -216,8 +216,13 @@ export class PreviewUsecase {
       const bodyMode = (resolvedOutputs?.bodyMode as string) ?? 'key-value';
       const rawJsonBody = resolvedOutputs?.rawBody as string | undefined;
       const method = (resolvedOutputs?.method as string) ?? 'GET';
-      const bodyRecord =
-        bodyMode === 'raw' && rawJsonBody ? parseRawBody(rawJsonBody) : bodyPairs ? toBodyRecord(bodyPairs) : undefined;
+
+      let bodyRecord: Record<string, unknown> | undefined;
+      if (bodyMode === 'raw') {
+        bodyRecord = rawJsonBody ? parseRawBody(rawJsonBody) : undefined;
+      } else {
+        bodyRecord = bodyPairs ? toBodyRecord(bodyPairs) : undefined;
+      }
       const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
 
       return buildNovuSignatureHeader(secretKey, payload);

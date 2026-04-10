@@ -511,6 +511,8 @@ export function HttpRequestConsolePreview() {
     method: controlValues?.method,
     headers: controlValues?.headers,
     body: controlValues?.body,
+    bodyMode: controlValues?.bodyMode,
+    rawBody: controlValues?.rawBody,
   });
   const prevControlsKeyRef = useRef<string | null>(null);
 

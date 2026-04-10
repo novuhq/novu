@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine } from 'react-icons/ri';
 import { InputRoot } from '@/components/primitives/input';
@@ -30,13 +30,17 @@ function validateJson(value: string): string | undefined {
 }
 
 export function RawBodyEditor() {
-  const { control, watch } = useFormContext();
+  const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
-  const rawBodyValue = watch('rawBody') ?? '';
-  const jsonError = useMemo(() => validateJson(rawBodyValue), [rawBodyValue]);
+  // Local draft state — what the user is typing right now (may be invalid)
+  // Initialized once from the form value to avoid resetting on each render
+  const initialValueRef = useRef<string>((getValues('rawBody') as string) ?? '');
+  const [draft, setDraft] = useState<string>(initialValueRef.current);
+
+  const jsonError = useMemo(() => validateJson(draft), [draft]);
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
@@ -52,13 +56,15 @@ export function RawBodyEditor() {
                 multiline={true}
                 indentWithTab={true}
                 placeholder={'{\n  "key": "value"\n}'}
-                value={field.value ?? ''}
+                value={draft}
                 isAllowedVariable={isAllowedVariable}
                 variables={variables}
                 onChange={(val) => {
                   const newVal = typeof val === 'string' ? val : '';
-                  field.onChange(newVal);
+                  setDraft(newVal);
+                  // Only propagate to the form (and trigger preview update) when valid
                   if (!validateJson(newVal)) {
+                    field.onChange(newVal);
                     saveForm();
                   }
                 }}

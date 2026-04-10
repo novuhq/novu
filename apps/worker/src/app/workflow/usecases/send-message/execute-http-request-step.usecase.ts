@@ -147,7 +147,36 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     }
 
     const headersRecord = toHeadersRecord(rawHeaders);
-    const bodyObject = bodyMode === 'raw' && rawJsonBody ? parseRawBody(rawJsonBody) : toBodyRecord(bodyPairs);
+
+    let bodyObject: Record<string, unknown> | undefined;
+    try {
+      if (bodyMode === 'raw') {
+        bodyObject = rawJsonBody ? parseRawBody(rawJsonBody) : undefined;
+      } else {
+        bodyObject = toBodyRecord(bodyPairs);
+      }
+    } catch (parseError) {
+      const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: `Invalid raw JSON body: ${errorMessage}` }),
+        })
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+        shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
+      };
+    }
+
     const hasBody = shouldIncludeBody(bodyObject, method);
     const signatureHeaders = {
       'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),

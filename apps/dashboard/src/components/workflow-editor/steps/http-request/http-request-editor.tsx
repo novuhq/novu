@@ -1,6 +1,7 @@
 import { EnvironmentTypeEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { useFormContext } from 'react-hook-form';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
@@ -58,34 +59,23 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
 
         {hasBody && (
           <>
-            <div className="flex items-center gap-1 px-1">
-              <span
-                role="button"
-                tabIndex={0}
-                className={`cursor-pointer rounded px-2 py-0.5 text-xs font-medium ${
-                  bodyMode === 'key-value'
-                    ? 'bg-neutral-alpha-200 text-text-strong'
-                    : 'text-text-sub hover:text-text-strong'
-                }`}
-                onClick={() => handleBodyModeChange('key-value')}
-                onKeyDown={(e) => e.key === 'Enter' && handleBodyModeChange('key-value')}
-              >
+            <ToggleGroup
+              type="single"
+              value={bodyMode}
+              onValueChange={(value) => {
+                if (value === 'key-value' || value === 'raw') {
+                  handleBodyModeChange(value);
+                }
+              }}
+              className="justify-start px-1"
+            >
+              <ToggleGroupItem value="key-value" aria-label="Key-Value mode" className="text-xs">
                 Key-Value
-              </span>
-              <span
-                role="button"
-                tabIndex={0}
-                className={`cursor-pointer rounded px-2 py-0.5 text-xs font-medium ${
-                  bodyMode === 'raw'
-                    ? 'bg-neutral-alpha-200 text-text-strong'
-                    : 'text-text-sub hover:text-text-strong'
-                }`}
-                onClick={() => handleBodyModeChange('raw')}
-                onKeyDown={(e) => e.key === 'Enter' && handleBodyModeChange('raw')}
-              >
+              </ToggleGroupItem>
+              <ToggleGroupItem value="raw" aria-label="Raw JSON mode" className="text-xs">
                 Raw JSON
-              </span>
-            </div>
+              </ToggleGroupItem>
+            </ToggleGroup>
 
             {bodyMode === 'key-value' ? (
               <KeyValuePairList

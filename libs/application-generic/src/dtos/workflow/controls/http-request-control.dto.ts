@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
 
 export enum HttpMethodEnum {
   GET = 'GET',
@@ -53,6 +53,7 @@ export class HttpRequestControlDto {
     enum: ['key-value', 'raw'],
   })
   @IsString()
+  @IsIn(['key-value', 'raw'])
   @IsOptional()
   bodyMode?: 'key-value' | 'raw';
 

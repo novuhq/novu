@@ -61,10 +61,32 @@ export class TestHttpEndpointUsecase {
       compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
     );
 
-    const resolvedBodyPairs: Record<string, unknown> =
-      bodyMode === 'raw' && rawJsonBody
-        ? parseRawBody(rawJsonBody)
-        : Object.fromEntries(compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value]));
+    const startTime = performance.now();
+
+    let resolvedBodyPairs: Record<string, unknown>;
+    try {
+      if (bodyMode === 'raw') {
+        resolvedBodyPairs = rawJsonBody ? parseRawBody(rawJsonBody) : {};
+      } else {
+        resolvedBodyPairs = Object.fromEntries(
+          compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value])
+        );
+      }
+    } catch (parseError) {
+      const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
+
+      return {
+        statusCode: 400,
+        body: { error: `Invalid raw JSON body: ${errorMessage}` },
+        headers: {},
+        durationMs: Math.round(performance.now() - startTime),
+        resolvedRequest: {
+          url: resolvedUrl,
+          method,
+          headers: resolvedHeaders,
+        },
+      };
+    }
 
     const hasBody = shouldIncludeBody(resolvedBodyPairs, method);
 
@@ -72,8 +94,6 @@ export class TestHttpEndpointUsecase {
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
     );
     resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBodyPairs : {});
-
-    const startTime = performance.now();
 
     try {
       const response = await this.httpClientService.request<string>({
