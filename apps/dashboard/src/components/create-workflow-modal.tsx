@@ -64,7 +64,7 @@ type CreateWorkflowTab = 'guided' | 'manual';
 const WORKFLOW_SUGGESTIONS = [
   'Welcome email workflow',
   'Order confirmation workflow',
-  'Payment failed',
+  'Payment failed workflow',
   'Password reset workflow',
 ];
 
