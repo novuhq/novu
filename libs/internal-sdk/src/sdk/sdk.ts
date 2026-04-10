@@ -20,7 +20,6 @@ import { Integrations } from "./integrations.js";
 import { Layouts } from "./layouts.js";
 import { Messages } from "./messages.js";
 import { Notifications } from "./notifications.js";
-import { ProviderActivities } from "./provideractivities.js";
 import { Subscribers } from "./subscribers.js";
 import { Topics } from "./topics.js";
 import { Translations } from "./translations.js";
@@ -37,9 +36,9 @@ export class Novu extends ClientSDK {
     return (this._environments ??= new Environments(this._options));
   }
 
-  private _providerActivities?: ProviderActivities;
-  get providerActivities(): ProviderActivities {
-    return (this._providerActivities ??= new ProviderActivities(this._options));
+  private _activity?: Activity;
+  get activity(): Activity {
+    return (this._activity ??= new Activity(this._options));
   }
 
   private _layouts?: Layouts;
@@ -65,11 +64,6 @@ export class Novu extends ClientSDK {
   private _workflows?: Workflows;
   get workflows(): Workflows {
     return (this._workflows ??= new Workflows(this._options));
-  }
-
-  private _activity?: Activity;
-  get activity(): Activity {
-    return (this._activity ??= new Activity(this._options));
   }
 
   private _channelConnections?: ChannelConnections;

@@ -32,7 +32,7 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Track activity and engagement events for a specific delivery provider
  */
-export function providerActivitiesTrack(
+export function activityTrack(
   client: NovuCore,
   request: operations.InboundWebhooksControllerHandleWebhookRequest,
   options?: RequestOptions,

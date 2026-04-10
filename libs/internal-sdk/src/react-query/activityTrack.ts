@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { providerActivitiesTrack } from "../funcs/providerActivitiesTrack.js";
+import { activityTrack } from "../funcs/activityTrack.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -27,16 +27,14 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type ProviderActivitiesTrackMutationVariables = {
+export type ActivityTrackMutationVariables = {
   request: operations.InboundWebhooksControllerHandleWebhookRequest;
   options?: RequestOptions;
 };
 
-export type ProviderActivitiesTrackMutationData = Array<
-  components.WebhookResultDto
->;
+export type ActivityTrackMutationData = Array<components.WebhookResultDto>;
 
-export type ProviderActivitiesTrackMutationError =
+export type ActivityTrackMutationError =
   | NovuError
   | ResponseValidationError
   | ConnectionError
@@ -52,43 +50,43 @@ export type ProviderActivitiesTrackMutationError =
  * @remarks
  * Track activity and engagement events for a specific delivery provider
  */
-export function useProviderActivitiesTrackMutation(
+export function useActivityTrackMutation(
   options?: MutationHookOptions<
-    ProviderActivitiesTrackMutationData,
-    ProviderActivitiesTrackMutationError,
-    ProviderActivitiesTrackMutationVariables
+    ActivityTrackMutationData,
+    ActivityTrackMutationError,
+    ActivityTrackMutationVariables
   >,
 ): UseMutationResult<
-  ProviderActivitiesTrackMutationData,
-  ProviderActivitiesTrackMutationError,
-  ProviderActivitiesTrackMutationVariables
+  ActivityTrackMutationData,
+  ActivityTrackMutationError,
+  ActivityTrackMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildProviderActivitiesTrackMutation(client, options),
+    ...buildActivityTrackMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyProviderActivitiesTrack(): MutationKey {
-  return ["@novu/api", "Provider Activities", "track"];
+export function mutationKeyActivityTrack(): MutationKey {
+  return ["@novu/api", "Activity", "track"];
 }
 
-export function buildProviderActivitiesTrackMutation(
+export function buildActivityTrackMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: ProviderActivitiesTrackMutationVariables,
-  ) => Promise<ProviderActivitiesTrackMutationData>;
+    variables: ActivityTrackMutationVariables,
+  ) => Promise<ActivityTrackMutationData>;
 } {
   return {
-    mutationKey: mutationKeyProviderActivitiesTrack(),
-    mutationFn: function providerActivitiesTrackMutationFn({
+    mutationKey: mutationKeyActivityTrack(),
+    mutationFn: function activityTrackMutationFn({
       request,
       options,
-    }): Promise<ProviderActivitiesTrackMutationData> {
+    }): Promise<ActivityTrackMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -101,7 +99,7 @@ export function buildProviderActivitiesTrackMutation(
           ),
         },
       };
-      return unwrapAsync(providerActivitiesTrack(
+      return unwrapAsync(activityTrack(
         client$,
         request,
         mergedOptions,
