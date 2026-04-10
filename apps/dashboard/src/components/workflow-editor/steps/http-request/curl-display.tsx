@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { canMethodHaveBody, type KeyValuePair, NOVU_SIGNATURE_HEADER_KEY } from './curl-utils';
+import { canMethodHaveBody, escapeShellSingleQuoted, type KeyValuePair, NOVU_SIGNATURE_HEADER_KEY } from './curl-utils';
 
 type CurlDisplayProps = {
   url: string;
@@ -52,26 +52,26 @@ export function CurlDisplay({ url, method, headers, body, className, novuSignatu
       <p className="my-0 leading-[1.5]">
         <span className="text-[#99a0ae]">{'novu $ '}</span>
         <span className="text-[#0e121b]">{'curl --location '}</span>
-        <span className="text-[#7d52f4]">{`'${url || 'https://api.example.com/endpoint'}' `}</span>
+        <span className="text-[#7d52f4]">{`'${escapeShellSingleQuoted(url || 'https://api.example.com/endpoint')}' `}</span>
       </p>
       {novuSignature && !hasNovuSignature && (
         <p className="my-0 leading-[1.5] opacity-60">
           <span className="text-[#0e121b]">{'--header '}</span>
-          <span className="text-[#fb4ba3]">{`'${NOVU_SIGNATURE_HEADER_KEY}`}</span>
-          <span className="text-[#7d52f4]">{`: ${novuSignature}' `}</span>
+          <span className="text-[#fb4ba3]">{`'${escapeShellSingleQuoted(NOVU_SIGNATURE_HEADER_KEY)}`}</span>
+          <span className="text-[#7d52f4]">{`: ${escapeShellSingleQuoted(novuSignature)}' `}</span>
         </p>
       )}
       {headerEntries.map(([key, val]) => (
         <p key={key} className="my-0 leading-[1.5]">
           <span className="text-[#0e121b]">{'--header '}</span>
-          <span className="text-[#fb4ba3]">{`'${key}`}</span>
-          <span className="text-[#7d52f4]">{`: ${val}' `}</span>
+          <span className="text-[#fb4ba3]">{`'${escapeShellSingleQuoted(key)}`}</span>
+          <span className="text-[#7d52f4]">{`: ${escapeShellSingleQuoted(val)}' `}</span>
         </p>
       ))}
       {bodyStr && (
         <p className="my-0 leading-[1.5]">
           <span className="text-[#0e121b]">{'--data '}</span>
-          <span className="text-[#7d52f4]">{`'${bodyStr}' `}</span>
+          <span className="text-[#7d52f4]">{`'${escapeShellSingleQuoted(bodyStr)}' `}</span>
         </p>
       )}
     </div>

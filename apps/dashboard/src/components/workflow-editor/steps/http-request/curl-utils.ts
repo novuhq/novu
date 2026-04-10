@@ -8,6 +8,12 @@ export function canMethodHaveBody(method: string): boolean {
   return METHODS_WITH_BODY.has(method.toUpperCase());
 }
 
+// Escape single quotes for safe interpolation inside POSIX shell single-quoted strings.
+// Single quotes cannot appear inside single-quoted strings, so we close, escape, and reopen.
+export function escapeShellSingleQuoted(value: string): string {
+  return value.replace(/'/g, "'\\''");
+}
+
 export function buildRawCurlString(
   url: string,
   method: string,
@@ -27,7 +33,9 @@ export function buildRawCurlString(
     headerEntries.unshift([NOVU_SIGNATURE_HEADER_KEY, novuSignature]);
   }
 
-  const headerArgs = headerEntries.map(([k, v]) => `--header '${k}: ${v}'`).join(' \\\n');
+  const headerArgs = headerEntries
+    .map(([k, v]) => `--header '${escapeShellSingleQuoted(k)}: ${escapeShellSingleQuoted(v)}'`)
+    .join(' \\\n');
 
   const canHaveBody = canMethodHaveBody(method);
   let bodyStr = '';
@@ -36,7 +44,7 @@ export function buildRawCurlString(
     if (bodyMode === 'raw') {
       // Raw mode is exclusive — never fall back to key-value pairs
       if (rawBody) {
-        bodyStr = `--data '${rawBody}'`;
+        bodyStr = `--data '${escapeShellSingleQuoted(rawBody)}'`;
       }
     } else {
       let bodyObj: Record<string, unknown> | null = null;
@@ -52,13 +60,15 @@ export function buildRawCurlString(
       }
 
       if (bodyObj) {
-        bodyStr = `--data '${JSON.stringify(bodyObj)}'`;
+        bodyStr = `--data '${escapeShellSingleQuoted(JSON.stringify(bodyObj))}'`;
       }
     }
   }
-  const parts = [`novu $ curl --location '${url || 'https://api.example.com/endpoint'}'`, headerArgs, bodyStr].filter(
-    Boolean
-  );
+  const parts = [
+    `novu $ curl --location '${escapeShellSingleQuoted(url || 'https://api.example.com/endpoint')}'`,
+    headerArgs,
+    bodyStr,
+  ].filter(Boolean);
 
   return parts.join(' \\\n');
 }
