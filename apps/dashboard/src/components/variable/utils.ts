@@ -5,7 +5,7 @@ function escapeString(str: string): string {
   return String(str).replace(/'/g, "\\'");
 }
 
-export function formatParamValue(param: string, type?: string) {
+function formatParamValue(param: string, type?: string) {
   if (type === 'number') {
     return param;
   }
@@ -57,7 +57,7 @@ export function validateEnhancedDigestFilters(filters: string[]): {
   return null;
 }
 
-export const parseParams = (input: string) => {
+const parseParams = (input: string) => {
   if (!input) return '';
   return input
     .split(',')

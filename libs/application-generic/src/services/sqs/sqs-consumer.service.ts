@@ -3,8 +3,8 @@ import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
 import { PinoLogger } from '../../logging';
-import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import { SqsService } from './sqs.service';
+import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import {
   ISqsConsumerOptions,
   ISqsMessageMeta,
@@ -234,9 +234,7 @@ export class SqsConsumerService {
 
   private async processMessage(message: Message): Promise<void> {
     const rawBody = message.Body || '{}';
-    const resolvedBody = this.payloadOffload
-      ? await this.payloadOffload.maybeResolve(rawBody)
-      : rawBody;
+    const resolvedBody = this.payloadOffload ? await this.payloadOffload.maybeResolve(rawBody) : rawBody;
 
     const data = JSON.parse(resolvedBody);
     const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || '1', 10);

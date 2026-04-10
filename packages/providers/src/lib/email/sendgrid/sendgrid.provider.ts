@@ -229,6 +229,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
           open: true,
           click: true,
           bounce: true,
+          blocked: true,
           dropped: true,
           delivered: true,
         },
@@ -326,6 +327,8 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
         return EmailEventStatusEnum.OPENED;
       case 'bounce':
         return EmailEventStatusEnum.BOUNCED;
+      case 'blocked':
+        return EmailEventStatusEnum.BLOCKED;
       case 'click':
         return EmailEventStatusEnum.CLICKED;
       case 'dropped':

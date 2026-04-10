@@ -7,7 +7,7 @@ import {
 import { QueryKeys } from '@/utils/query-keys';
 
 type UpdateEnvironmentVariableArgs = {
-  variableId: string;
+  variableKey: string;
 } & UpdateEnvironmentVariableDto;
 
 export const useUpdateEnvironmentVariable = (
@@ -16,11 +16,12 @@ export const useUpdateEnvironmentVariable = (
   const queryClient = useQueryClient();
 
   const { mutateAsync, ...rest } = useMutation({
-    mutationFn: ({ variableId, ...body }: UpdateEnvironmentVariableArgs) => updateEnvironmentVariable(variableId, body),
+    mutationFn: ({ variableKey, ...body }: UpdateEnvironmentVariableArgs) =>
+      updateEnvironmentVariable(variableKey, body),
     ...options,
     onSuccess: async (data, variables, ctx) => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchEnvironmentVariables] });
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchEnvironmentVariable, variables.variableId] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchEnvironmentVariable, variables.variableKey] });
       options?.onSuccess?.(data, variables, ctx);
     },
   });

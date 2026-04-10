@@ -73,4 +73,3 @@ export const ConditionBadge = ({ conditionsCount, stepSlug, conditionsData, clas
     </button>
   );
 };
-

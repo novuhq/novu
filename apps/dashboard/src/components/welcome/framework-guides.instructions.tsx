@@ -71,7 +71,7 @@ function stepsByMethod(
   return manualSteps;
 }
 
-export const customizationTip = {
+const customizationTip = {
   title: 'Tip:',
   description: (
     <>
@@ -89,7 +89,7 @@ export const customizationTip = {
   ),
 };
 
-export const commonInstallStep = (packageName: string): InstallationStep => ({
+const commonInstallStep = (packageName: string): InstallationStep => ({
   title: 'Install the package',
   description: `${packageName} is the package that powers the notification center.`,
   code: `npm install ${packageName}`,
@@ -97,7 +97,7 @@ export const commonInstallStep = (packageName: string): InstallationStep => ({
   codeTitle: 'Terminal',
 });
 
-export const commonCLIInstallStep = (): InstallationStep => ({
+const commonCLIInstallStep = (): InstallationStep => ({
   title: 'Run the CLI command in an existing project',
   description: `You'll notice a new folder in your project called inbox. This is where you'll find the inbox component boilerplate code. \n You can customize the <Inbox /> component to match your app theme.`,
   code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${cliFlags}`,
@@ -105,7 +105,7 @@ export const commonCLIInstallStep = (): InstallationStep => ({
   codeTitle: 'Terminal',
 });
 
-export const commonAIAssistInstallStep = (
+const commonAIAssistInstallStep = (
   frameworkName: string,
   applicationIdentifier: string,
   subscriberId: string
@@ -428,6 +428,3 @@ novu.mountComponent({
     ),
   },
 ];
-
-// Export a default frameworks array for backward compatibility
-export const frameworks = getFrameworks('manual');

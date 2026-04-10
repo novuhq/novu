@@ -2,7 +2,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { CustomNodeDefinition, JsonEditor, UpdateFunctionProps } from 'json-edit-react';
 import JSON5 from 'json5';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { cn } from '@/utils/ui';
 import { CUSTOM_THEME } from './constants';
@@ -88,24 +88,21 @@ export function EditableJsonViewer({
     }
   }, [value, validateData]);
 
-  const handleUpdate = useMemo(
-    () => (updatedData: UpdateFunctionProps) => {
+  const handleUpdate = useCallback(
+    (updatedData: UpdateFunctionProps) => {
       validateData(updatedData.newData);
       onChange(updatedData.newData);
     },
     [onChange, validateData]
   );
 
-  const handleError = useMemo(
-    () => (errorData: any) => {
-      const { error, path } = errorData;
-      const pathString = Array.isArray(path) ? path.join('.') : path || '';
-      const errorMessage = pathString ? `${pathString}: ${error.message}` : error.message;
+  const handleError = useCallback((errorData: any) => {
+    const { error, path } = errorData;
+    const pathString = Array.isArray(path) ? path.join('.') : path || '';
+    const errorMessage = pathString ? `${pathString}: ${error.message}` : error.message;
 
-      setValidationErrors([errorMessage]);
-    },
-    []
-  );
+    setValidationErrors([errorMessage]);
+  }, []);
 
   useHideRootNode(containerRef, value);
 

@@ -3,8 +3,8 @@ import { Type } from 'class-transformer';
 import { IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
-import { IsTagsFilter } from '../../validators/is-tags-filter.validator';
 import { NotificationFilter } from '../../utils/types';
+import { IsTagsFilter } from '../../validators/is-tags-filter.validator';
 
 class Filter implements NotificationFilter {
   @IsOptional()

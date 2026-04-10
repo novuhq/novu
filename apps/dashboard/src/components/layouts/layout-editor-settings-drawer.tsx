@@ -167,8 +167,7 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
         await deleteLayout({
           layoutSlug: layout.slug,
         });
-      } catch {
-      }
+      } catch {}
     };
 
     const onSubmit = async (data: LayoutSettingsFormData) => {
@@ -183,8 +182,7 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
           },
           layoutSlug: layout.slug,
         });
-      } catch {
-      }
+      } catch {}
     };
 
     const checkUnsavedChanges = useCallback(
