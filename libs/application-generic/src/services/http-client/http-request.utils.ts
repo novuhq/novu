@@ -18,16 +18,19 @@ export function toBodyRecord(pairs: KeyValuePair[]): Record<string, unknown> | u
   }, {});
 }
 
-export function parseRawBody(raw: string): Record<string, unknown> {
+export function parseRawBody(raw: string): Record<string, unknown> | unknown[] {
   const parsed = JSON.parse(raw);
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new Error('Raw body must be a JSON object');
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error('Raw body must be a JSON object or array');
   }
 
-  return parsed as Record<string, unknown>;
+  return parsed as Record<string, unknown> | unknown[];
 }
 
-export function shouldIncludeBody(body: Record<string, unknown> | undefined, method: string): boolean {
+export function shouldIncludeBody(
+  body: Record<string, unknown> | unknown[] | undefined,
+  method: string
+): boolean {
   const methodsWithoutBody = ['GET', 'DELETE', 'HEAD', 'OPTIONS'];
 
   return !!body && !methodsWithoutBody.includes(method);

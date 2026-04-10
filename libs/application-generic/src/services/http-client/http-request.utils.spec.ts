@@ -46,20 +46,21 @@ describe('http-request.utils', () => {
       });
     });
 
+    it('should accept top-level JSON arrays', () => {
+      expect(parseRawBody('[1,2,3]')).to.deep.equal([1, 2, 3]);
+      expect(parseRawBody('[{"id":1}]')).to.deep.equal([{ id: 1 }]);
+    });
+
     it('should throw for invalid JSON', () => {
       expect(() => parseRawBody('not json')).to.throw();
     });
 
-    it('should throw for JSON array', () => {
-      expect(() => parseRawBody('[1,2,3]')).to.throw('Raw body must be a JSON object');
-    });
-
     it('should throw for JSON string', () => {
-      expect(() => parseRawBody('"hello"')).to.throw('Raw body must be a JSON object');
+      expect(() => parseRawBody('"hello"')).to.throw('Raw body must be a JSON object or array');
     });
 
     it('should throw for JSON null', () => {
-      expect(() => parseRawBody('null')).to.throw('Raw body must be a JSON object');
+      expect(() => parseRawBody('null')).to.throw('Raw body must be a JSON object or array');
     });
   });
 });

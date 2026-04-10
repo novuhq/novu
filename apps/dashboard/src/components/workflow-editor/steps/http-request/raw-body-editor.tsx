@@ -19,8 +19,8 @@ function validateJson(value: string): string | undefined {
 
   try {
     const parsed = JSON.parse(value);
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return 'Body must be a JSON object';
+    if (typeof parsed !== 'object' || parsed === null) {
+      return 'Body must be a JSON object or array';
     }
 
     return undefined;
@@ -64,7 +64,8 @@ export function RawBodyEditor() {
                   setDraft(newVal);
                   // Only propagate to the form (and trigger preview update) when valid
                   if (!validateJson(newVal)) {
-                    field.onChange(newVal);
+                    // Persist whitespace-only drafts as empty so the backend sees no body
+                    field.onChange(newVal.trim() ? newVal : '');
                     saveForm();
                   }
                 }}

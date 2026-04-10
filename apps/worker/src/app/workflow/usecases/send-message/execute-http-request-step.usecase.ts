@@ -148,7 +148,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     const headersRecord = toHeadersRecord(rawHeaders);
 
-    let bodyObject: Record<string, unknown> | undefined;
+    let bodyObject: Record<string, unknown> | unknown[] | undefined;
     try {
       if (bodyMode === 'raw') {
         bodyObject = rawJsonBody ? parseRawBody(rawJsonBody) : undefined;

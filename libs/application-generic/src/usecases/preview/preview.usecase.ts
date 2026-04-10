@@ -217,7 +217,7 @@ export class PreviewUsecase {
       const rawJsonBody = resolvedOutputs?.rawBody as string | undefined;
       const method = (resolvedOutputs?.method as string) ?? 'GET';
 
-      let bodyRecord: Record<string, unknown> | undefined;
+      let bodyRecord: Record<string, unknown> | unknown[] | undefined;
       if (bodyMode === 'raw') {
         bodyRecord = rawJsonBody ? parseRawBody(rawJsonBody) : undefined;
       } else {

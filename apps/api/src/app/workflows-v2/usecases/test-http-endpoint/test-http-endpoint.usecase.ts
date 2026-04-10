@@ -63,12 +63,12 @@ export class TestHttpEndpointUsecase {
 
     const startTime = performance.now();
 
-    let resolvedBodyPairs: Record<string, unknown>;
+    let resolvedBody: Record<string, unknown> | unknown[];
     try {
       if (bodyMode === 'raw') {
-        resolvedBodyPairs = rawJsonBody ? parseRawBody(rawJsonBody) : {};
+        resolvedBody = rawJsonBody ? parseRawBody(rawJsonBody) : {};
       } else {
-        resolvedBodyPairs = Object.fromEntries(
+        resolvedBody = Object.fromEntries(
           compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value])
         );
       }
@@ -88,19 +88,19 @@ export class TestHttpEndpointUsecase {
       };
     }
 
-    const hasBody = shouldIncludeBody(resolvedBodyPairs, method);
+    const hasBody = shouldIncludeBody(resolvedBody, method);
 
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
     );
-    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBodyPairs : {});
+    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBody : {});
 
     try {
       const response = await this.httpClientService.request<string>({
         url: resolvedUrl,
         method: method as HttpRequestOptions['method'],
         headers: resolvedHeaders,
-        ...(hasBody ? { body: resolvedBodyPairs } : {}),
+        ...(hasBody ? { body: resolvedBody } : {}),
         timeout: 30_000,
         responseType: 'text',
       });
@@ -115,7 +115,7 @@ export class TestHttpEndpointUsecase {
           url: resolvedUrl,
           method,
           headers: resolvedHeaders,
-          ...(hasBody ? { body: resolvedBodyPairs } : {}),
+          ...(hasBody ? { body: resolvedBody } : {}),
         },
       };
     } catch (error) {
@@ -137,7 +137,7 @@ export class TestHttpEndpointUsecase {
             url: resolvedUrl,
             method,
             headers: resolvedHeaders,
-            ...(hasBody ? { body: resolvedBodyPairs } : {}),
+            ...(hasBody ? { body: resolvedBody } : {}),
           },
         };
       }
