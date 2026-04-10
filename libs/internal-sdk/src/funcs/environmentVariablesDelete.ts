@@ -29,11 +29,13 @@ import { Result } from '../types/fp.js';
  * Delete environment variable
  *
  * @remarks
- * Deletes an environment variable by id.
+ * Deletes an environment variable by key.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function environmentVariablesDelete(
   client: NovuCore,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): APIPromise<
@@ -51,12 +53,12 @@ export function environmentVariablesDelete(
     | SDKValidationError
   >
 > {
-  return new APIPromise($do(client, variableId, idempotencyKey, options));
+  return new APIPromise($do(client, variableKey, idempotencyKey, options));
 }
 
 async function $do(
   client: NovuCore,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): Promise<
@@ -78,7 +80,7 @@ async function $do(
   ]
 > {
   const input: operations.EnvironmentVariablesControllerDeleteEnvironmentVariableRequest = {
-    variableId: variableId,
+    variableKey: variableKey,
     idempotencyKey: idempotencyKey,
   };
 
@@ -94,12 +96,12 @@ async function $do(
   const body = null;
 
   const pathParams = {
-    variableId: encodeSimple('variableId', payload.variableId, {
+    variableKey: encodeSimple('variableKey', payload.variableKey, {
       explode: false,
       charEncoding: 'percent',
     }),
   };
-  const path = pathToFunc('/v1/environment-variables/{variableId}')(pathParams);
+  const path = pathToFunc('/v1/environment-variables/{variableKey}')(pathParams);
 
   const headers = new Headers(
     compactMap({
@@ -112,7 +114,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from '../core.js';
-import { appendForm, encodeSimple } from '../lib/encodings.js';
+import { appendForm, encodeSimple, normalizeBlob } from '../lib/encodings.js';
 import { bytesToBlob, getContentTypeFromFileName, readableStreamToArrayBuffer } from '../lib/files.js';
 import * as M from '../lib/matchers.js';
 import { compactMap } from '../lib/primitives.js';
@@ -33,6 +33,8 @@ import { isReadableStream } from '../types/streams.js';
  *
  * @remarks
  * Upload a master JSON file containing translations for multiple workflows. Locale is automatically detected from filename (e.g., en_US.json)
+ *
+ * This operation requires one of {@link Security.secretKey}, {@link Security.bearerAuth}, or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function translationsMasterUpload(
   client: NovuCore,
@@ -93,8 +95,9 @@ async function $do(
   const body = new FormData();
 
   if (isBlobLike(payload.RequestBody.file)) {
-    const blob = payload.RequestBody.file;
-    const name = 'name' in blob ? (blob.name as string) : undefined;
+    const file = payload.RequestBody.file;
+    const blob = await normalizeBlob(file);
+    const name = 'name' in file ? (file.name as string) : undefined;
     appendForm(body, 'file', blob, name);
   } else if (isReadableStream(payload.RequestBody.file.content)) {
     const buffer = await readableStreamToArrayBuffer(payload.RequestBody.file.content);
@@ -123,7 +126,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [0, 1]);
 
   const context = {
     options: client._options,

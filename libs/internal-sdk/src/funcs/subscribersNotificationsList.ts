@@ -29,8 +29,10 @@ import { Result } from '../types/fp.js';
  * Retrieve subscriber notifications
  *
  * @remarks
- * Retrieve in-app notifications for a subscriber by its unique key identifier **subscriberId**.
+ * Retrieve in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**.
  *     Supports filtering by tags, read/archived/snoozed/seen state, data attributes, severity, date range, and context keys.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersNotificationsList(
   client: NovuCore,
@@ -108,7 +110,6 @@ async function $do(
     seen: payload.seen,
     severity: payload.severity,
     snoozed: payload.snoozed,
-    tags: payload.tags,
   });
 
   const headers = new Headers(
@@ -122,7 +123,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

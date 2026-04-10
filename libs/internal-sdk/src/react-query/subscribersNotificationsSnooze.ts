@@ -43,10 +43,10 @@ export type SubscribersNotificationsSnoozeMutationError =
   | SDKValidationError;
 
 /**
- * Snooze notification
+ * Snooze a notification
  *
  * @remarks
- * Snooze a specific notification by its unique identifier **notificationId** until a specified time.
+ * Snooze a specific in-app (inbox) notification by its unique identifier **notificationId** until a specified time.
  */
 export function useSubscribersNotificationsSnoozeMutation(
   options?: MutationHookOptions<

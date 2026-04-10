@@ -51,7 +51,7 @@ export type SubscribersNotificationsDeleteAllMutationError =
  * Delete all notifications
  *
  * @remarks
- * Delete all notifications matching the specified filters. Supports context-based filtering.
+ * Permanently delete all in-app (inbox) notifications matching the specified filters. Supports context-based filtering.
  */
 export function useSubscribersNotificationsDeleteAllMutation(
   options?: MutationHookOptions<

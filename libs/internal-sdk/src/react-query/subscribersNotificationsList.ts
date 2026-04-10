@@ -53,7 +53,7 @@ export type SubscribersNotificationsListQueryError =
  * Retrieve subscriber notifications
  *
  * @remarks
- * Retrieve in-app notifications for a subscriber by its unique key identifier **subscriberId**.
+ * Retrieve in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**.
  *     Supports filtering by tags, read/archived/snoozed/seen state, data attributes, severity, date range, and context keys.
  */
 export function useSubscribersNotificationsList(
@@ -71,7 +71,7 @@ export function useSubscribersNotificationsList(
  * Retrieve subscriber notifications
  *
  * @remarks
- * Retrieve in-app notifications for a subscriber by its unique key identifier **subscriberId**.
+ * Retrieve in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**.
  *     Supports filtering by tags, read/archived/snoozed/seen state, data attributes, severity, date range, and context keys.
  */
 export function useSubscribersNotificationsListSuspense(
@@ -93,7 +93,6 @@ export function setSubscribersNotificationsListData(
       limit?: number | undefined;
       after?: string | undefined;
       offset?: number | undefined;
-      tags?: Array<string> | undefined;
       read?: boolean | undefined;
       archived?: boolean | undefined;
       snoozed?: boolean | undefined;
@@ -122,7 +121,6 @@ export function invalidateSubscribersNotificationsList(
         limit?: number | undefined;
         after?: string | undefined;
         offset?: number | undefined;
-        tags?: Array<string> | undefined;
         read?: boolean | undefined;
         archived?: boolean | undefined;
         snoozed?: boolean | undefined;

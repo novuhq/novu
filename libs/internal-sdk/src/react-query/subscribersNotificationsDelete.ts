@@ -45,10 +45,10 @@ export type SubscribersNotificationsDeleteMutationError =
   | SDKValidationError;
 
 /**
- * Delete notification
+ * Delete a notification
  *
  * @remarks
- * Delete a specific notification by its unique identifier **notificationId**.
+ * Delete a specific in-app (inbox) notification permanently by its unique identifier **notificationId**.
  */
 export function useSubscribersNotificationsDeleteMutation(
   options?: MutationHookOptions<

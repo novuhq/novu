@@ -26,14 +26,16 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * Get environment variable usage
+ * Retrieve a variable usage
  *
  * @remarks
- * Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.
+ * Returns the workflows that reference this environment variable via `{{env.KEY}}` in their step controls. **variableId** is required.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function environmentVariablesUsage(
   client: NovuCore,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): APIPromise<
@@ -51,12 +53,12 @@ export function environmentVariablesUsage(
     | SDKValidationError
   >
 > {
-  return new APIPromise($do(client, variableId, idempotencyKey, options));
+  return new APIPromise($do(client, variableKey, idempotencyKey, options));
 }
 
 async function $do(
   client: NovuCore,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): Promise<
@@ -78,7 +80,7 @@ async function $do(
   ]
 > {
   const input: operations.EnvironmentVariablesControllerGetEnvironmentVariableUsageRequest = {
-    variableId: variableId,
+    variableKey: variableKey,
     idempotencyKey: idempotencyKey,
   };
 
@@ -94,12 +96,12 @@ async function $do(
   const body = null;
 
   const pathParams = {
-    variableId: encodeSimple('variableId', payload.variableId, {
+    variableKey: encodeSimple('variableKey', payload.variableKey, {
       explode: false,
       charEncoding: 'percent',
     }),
   };
-  const path = pathToFunc('/v1/environment-variables/{variableId}/usage')(pathParams);
+  const path = pathToFunc('/v1/environment-variables/{variableKey}/usage')(pathParams);
 
   const headers = new Headers(
     compactMap({
@@ -112,7 +114,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

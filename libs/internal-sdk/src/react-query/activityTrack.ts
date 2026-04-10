@@ -41,7 +41,7 @@ export type ActivityTrackMutationError =
   | SDKValidationError;
 
 /**
- * Track activity and engagement events
+ * Track provider activity and engagement events
  *
  * @remarks
  * Track activity and engagement events for a specific delivery provider

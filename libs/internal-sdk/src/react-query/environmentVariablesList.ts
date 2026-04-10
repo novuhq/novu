@@ -49,7 +49,7 @@ export type EnvironmentVariablesListQueryError =
   | SDKValidationError;
 
 /**
- * List environment variables
+ * List all variables
  *
  * @remarks
  * Returns all environment variables for the current organization. Secret values are masked.
@@ -67,7 +67,7 @@ export function useEnvironmentVariablesList(
 }
 
 /**
- * List environment variables
+ * List all variables
  *
  * @remarks
  * Returns all environment variables for the current organization. Secret values are masked.

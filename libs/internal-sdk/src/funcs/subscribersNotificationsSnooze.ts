@@ -26,10 +26,12 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * Snooze notification
+ * Snooze a notification
  *
  * @remarks
- * Snooze a specific notification by its unique identifier **notificationId** until a specified time.
+ * Snooze a specific in-app (inbox) notification by its unique identifier **notificationId** until a specified time.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersNotificationsSnooze(
   client: NovuCore,
@@ -116,7 +118,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

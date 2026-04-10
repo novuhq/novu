@@ -15,18 +15,18 @@ export type EnvironmentVariablesRetrieveQueryData =
 export function prefetchEnvironmentVariablesRetrieve(
   queryClient: QueryClient,
   client$: NovuCore,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildEnvironmentVariablesRetrieveQuery(client$, variableId, idempotencyKey, options),
+    ...buildEnvironmentVariablesRetrieveQuery(client$, variableKey, idempotencyKey, options),
   });
 }
 
 export function buildEnvironmentVariablesRetrieveQuery(
   client$: NovuCore,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): {
@@ -34,7 +34,7 @@ export function buildEnvironmentVariablesRetrieveQuery(
   queryFn: (context: QueryFunctionContext) => Promise<EnvironmentVariablesRetrieveQueryData>;
 } {
   return {
-    queryKey: queryKeyEnvironmentVariablesRetrieve(variableId, {
+    queryKey: queryKeyEnvironmentVariablesRetrieve(variableKey, {
       idempotencyKey,
     }),
     queryFn: async function environmentVariablesRetrieveQueryFn(ctx): Promise<EnvironmentVariablesRetrieveQueryData> {
@@ -45,14 +45,14 @@ export function buildEnvironmentVariablesRetrieveQuery(
         signal: sig,
       };
 
-      return unwrapAsync(environmentVariablesRetrieve(client$, variableId, idempotencyKey, mergedOptions));
+      return unwrapAsync(environmentVariablesRetrieve(client$, variableKey, idempotencyKey, mergedOptions));
     },
   };
 }
 
 export function queryKeyEnvironmentVariablesRetrieve(
-  variableId: string,
+  variableKey: string,
   parameters: { idempotencyKey?: string | undefined }
 ): QueryKey {
-  return ['@novu/api', 'Environment Variables', 'retrieve', variableId, parameters];
+  return ['@novu/api', 'Environment Variables', 'retrieve', variableKey, parameters];
 }

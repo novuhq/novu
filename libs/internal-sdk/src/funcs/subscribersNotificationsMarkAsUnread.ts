@@ -26,10 +26,12 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * Mark notification as unread
+ * Mark a notification as unread
  *
  * @remarks
- * Mark a specific notification as unread by its unique identifier **notificationId**.
+ * Mark a specific in-app (inbox) notification as unread by its unique identifier **notificationId**.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersNotificationsMarkAsUnread(
   client: NovuCore,
@@ -113,7 +115,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

@@ -9,7 +9,10 @@ import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type EnvironmentVariablesControllerDeleteEnvironmentVariableRequest = {
-  variableId: string;
+  /**
+   * The unique key of the environment variable (e.g. BASE_URL)
+   */
+  variableKey: string;
   /**
    * A header for idempotency purposes
    */
@@ -22,7 +25,7 @@ export type EnvironmentVariablesControllerDeleteEnvironmentVariableResponse = {
 
 /** @internal */
 export type EnvironmentVariablesControllerDeleteEnvironmentVariableRequest$Outbound = {
-  variableId: string;
+  variableKey: string;
   'idempotency-key'?: string | undefined;
 };
 
@@ -33,7 +36,7 @@ export const EnvironmentVariablesControllerDeleteEnvironmentVariableRequest$outb
   EnvironmentVariablesControllerDeleteEnvironmentVariableRequest
 > = z
   .object({
-    variableId: z.string(),
+    variableKey: z.string(),
     idempotencyKey: z.string().optional(),
   })
   .transform((v) => {

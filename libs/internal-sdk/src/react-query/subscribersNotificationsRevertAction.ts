@@ -44,10 +44,10 @@ export type SubscribersNotificationsRevertActionMutationError =
   | SDKValidationError;
 
 /**
- * Revert notification action
+ * Revert a notification action
  *
  * @remarks
- * Revert a notification action (primary or secondary) to pending state by its unique identifier **notificationId** and action type.
+ * Revert a single in-app (inbox) notification's action (primary or secondary) to pending state by its unique identifier **notificationId** and action type **actionType**.
  */
 export function useSubscribersNotificationsRevertActionMutation(
   options?: MutationHookOptions<

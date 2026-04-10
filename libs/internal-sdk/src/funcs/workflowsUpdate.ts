@@ -31,6 +31,8 @@ import { Result } from '../types/fp.js';
  *
  * @remarks
  * Updates the details of an existing workflow, here **workflowId** is the identifier of the workflow
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function workflowsUpdate(
   client: NovuCore,
@@ -117,7 +119,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

@@ -26,7 +26,7 @@ import { MutationHookOptions } from './_types.js';
 
 export type EnvironmentVariablesUpdateMutationVariables = {
   updateEnvironmentVariableRequestDto: components.UpdateEnvironmentVariableRequestDto;
-  variableId: string;
+  variableKey: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -47,7 +47,7 @@ export type EnvironmentVariablesUpdateMutationError =
   | SDKValidationError;
 
 /**
- * Update environment variable
+ * Update a variable
  *
  * @remarks
  * Updates an existing environment variable. Providing values replaces all existing per-environment values.
@@ -87,7 +87,7 @@ export function buildEnvironmentVariablesUpdateMutation(
     mutationKey: mutationKeyEnvironmentVariablesUpdate(),
     mutationFn: function environmentVariablesUpdateMutationFn({
       updateEnvironmentVariableRequestDto,
-      variableId,
+      variableKey,
       idempotencyKey,
       options,
     }): Promise<EnvironmentVariablesUpdateMutationData> {
@@ -104,7 +104,7 @@ export function buildEnvironmentVariablesUpdateMutation(
         environmentVariablesUpdate(
           client$,
           updateEnvironmentVariableRequestDto,
-          variableId,
+          variableKey,
           idempotencyKey,
           mergedOptions
         )

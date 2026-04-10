@@ -33,6 +33,8 @@ import { Result } from '../types/fp.js';
  *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**, **severity**, **contextKeys**.
  *     Checkout all available filters in the query section.
  *     This API returns event triggers, to list each channel notifications, check messages APIs.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function notificationsList(
   client: NovuCore,
@@ -119,7 +121,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

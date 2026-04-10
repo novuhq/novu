@@ -86,6 +86,7 @@ export const ProviderId = {
   Imedia: 'imedia',
   Sinch: 'sinch',
   IsendproSms: 'isendpro-sms',
+  CmTelecom: 'cm-telecom',
   Fcm: 'fcm',
   Apns: 'apns',
   Expo: 'expo',

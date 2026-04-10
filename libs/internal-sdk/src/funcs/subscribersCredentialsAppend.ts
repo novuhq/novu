@@ -32,6 +32,8 @@ import { Result } from '../types/fp.js';
  * @remarks
  * Upsert credentials for a provider such as **slack** and **FCM**.
  *       **providerId** is required field. This API creates **deviceTokens** or appends to the existing ones.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersCredentialsAppend(
   client: NovuCore,
@@ -120,7 +122,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

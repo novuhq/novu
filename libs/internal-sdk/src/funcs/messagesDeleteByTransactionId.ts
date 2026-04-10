@@ -31,6 +31,8 @@ import { Result } from '../types/fp.js';
  * @remarks
  * Delete multiple messages from the Novu platform using **transactionId** of triggered event.
  *     This API supports filtering by **channel** and delete all messages associated with the **transactionId**.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function messagesDeleteByTransactionId(
   client: NovuCore,
@@ -120,7 +122,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

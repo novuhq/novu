@@ -51,7 +51,7 @@ export type SubscribersNotificationsArchiveAllMutationError =
  * Archive all notifications
  *
  * @remarks
- * Archive all notifications matching the specified filters. Supports context-based filtering.
+ * Archive all in-app (inbox) notifications matching the specified filters. Supports context-based filtering.
  */
 export function useSubscribersNotificationsArchiveAllMutation(
   options?: MutationHookOptions<

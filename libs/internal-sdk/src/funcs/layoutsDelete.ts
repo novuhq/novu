@@ -30,6 +30,8 @@ import { Result } from '../types/fp.js';
  *
  * @remarks
  * Removes a specific layout by its unique identifier **layoutId**
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function layoutsDelete(
   client: NovuCore,
@@ -112,7 +114,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

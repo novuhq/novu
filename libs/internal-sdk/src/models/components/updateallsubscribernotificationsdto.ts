@@ -4,11 +4,16 @@
 
 import * as z from 'zod/v3';
 
+/**
+ * Filter notifications by workflow tags (OR for string[], or { and: [{ or: string[] }, ...] } for AND of OR-groups).
+ */
+export type Tags = {};
+
 export type UpdateAllSubscriberNotificationsDto = {
   /**
-   * Filter notifications by workflow tags
+   * Filter notifications by workflow tags (OR for string[], or { and: [{ or: string[] }, ...] } for AND of OR-groups).
    */
-  tags?: Array<string> | undefined;
+  tags?: Tags | undefined;
   /**
    * Filter notifications by data attributes (JSON string)
    */
@@ -20,8 +25,18 @@ export type UpdateAllSubscriberNotificationsDto = {
 };
 
 /** @internal */
+export type Tags$Outbound = {};
+
+/** @internal */
+export const Tags$outboundSchema: z.ZodType<Tags$Outbound, z.ZodTypeDef, Tags> = z.object({});
+
+export function tagsToJSON(tags: Tags): string {
+  return JSON.stringify(Tags$outboundSchema.parse(tags));
+}
+
+/** @internal */
 export type UpdateAllSubscriberNotificationsDto$Outbound = {
-  tags?: Array<string> | undefined;
+  tags?: Tags$Outbound | undefined;
   data?: string | undefined;
   contextKeys?: Array<string> | undefined;
 };
@@ -32,7 +47,7 @@ export const UpdateAllSubscriberNotificationsDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   UpdateAllSubscriberNotificationsDto
 > = z.object({
-  tags: z.array(z.string()).optional(),
+  tags: z.lazy(() => Tags$outboundSchema).optional(),
   data: z.string().optional(),
   contextKeys: z.array(z.string()).optional(),
 });

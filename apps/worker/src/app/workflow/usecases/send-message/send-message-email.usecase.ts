@@ -40,6 +40,7 @@ import {
   FeatureFlagsKeysEnum,
   IAttachmentOptions,
   IEmailOptions,
+  safeJsonStringify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -574,7 +575,8 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
+          raw:
+            safeJsonStringify(error) === '{}' ? JSON.stringify({ message: error.message }) : safeJsonStringify(error),
         })
       );
 

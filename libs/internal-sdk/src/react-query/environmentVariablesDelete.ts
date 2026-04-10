@@ -24,7 +24,7 @@ import { useNovuContext } from './_context.js';
 import { MutationHookOptions } from './_types.js';
 
 export type EnvironmentVariablesDeleteMutationVariables = {
-  variableId: string;
+  variableKey: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -49,7 +49,7 @@ export type EnvironmentVariablesDeleteMutationError =
  * Delete environment variable
  *
  * @remarks
- * Deletes an environment variable by id.
+ * Deletes an environment variable by key.
  */
 export function useEnvironmentVariablesDeleteMutation(
   options?: MutationHookOptions<
@@ -85,7 +85,7 @@ export function buildEnvironmentVariablesDeleteMutation(
   return {
     mutationKey: mutationKeyEnvironmentVariablesDelete(),
     mutationFn: function environmentVariablesDeleteMutationFn({
-      variableId,
+      variableKey,
       idempotencyKey,
       options,
     }): Promise<EnvironmentVariablesDeleteMutationData> {
@@ -98,7 +98,7 @@ export function buildEnvironmentVariablesDeleteMutation(
           signal: combineSignals(hookOptions?.fetchOptions?.signal, options?.fetchOptions?.signal),
         },
       };
-      return unwrapAsync(environmentVariablesDelete(client$, variableId, idempotencyKey, mergedOptions));
+      return unwrapAsync(environmentVariablesDelete(client$, variableKey, idempotencyKey, mergedOptions));
     },
   };
 }

@@ -51,7 +51,7 @@ export type SubscribersNotificationsMarkAllAsReadMutationError =
  * Mark all notifications as read
  *
  * @remarks
- * Mark all notifications matching the specified filters as read. Supports context-based filtering.
+ * Mark all in-app (inbox) notifications matching the specified filters as read. Supports context-based filtering.
  */
 export function useSubscribersNotificationsMarkAllAsReadMutation(
   options?: MutationHookOptions<

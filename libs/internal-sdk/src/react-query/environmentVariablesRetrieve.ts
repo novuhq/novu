@@ -52,16 +52,16 @@ export type EnvironmentVariablesRetrieveQueryError =
  * Get environment variable
  *
  * @remarks
- * Returns a single environment variable by id. Secret values are masked.
+ * Returns a single environment variable by key. Secret values are masked.
  */
 export function useEnvironmentVariablesRetrieve(
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<EnvironmentVariablesRetrieveQueryData, EnvironmentVariablesRetrieveQueryError>
 ): UseQueryResult<EnvironmentVariablesRetrieveQueryData, EnvironmentVariablesRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentVariablesRetrieveQuery(client, variableId, idempotencyKey, options),
+    ...buildEnvironmentVariablesRetrieveQuery(client, variableKey, idempotencyKey, options),
     ...options,
   });
 }
@@ -70,23 +70,23 @@ export function useEnvironmentVariablesRetrieve(
  * Get environment variable
  *
  * @remarks
- * Returns a single environment variable by id. Secret values are masked.
+ * Returns a single environment variable by key. Secret values are masked.
  */
 export function useEnvironmentVariablesRetrieveSuspense(
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<EnvironmentVariablesRetrieveQueryData, EnvironmentVariablesRetrieveQueryError>
 ): UseSuspenseQueryResult<EnvironmentVariablesRetrieveQueryData, EnvironmentVariablesRetrieveQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentVariablesRetrieveQuery(client, variableId, idempotencyKey, options),
+    ...buildEnvironmentVariablesRetrieveQuery(client, variableKey, idempotencyKey, options),
     ...options,
   });
 }
 
 export function setEnvironmentVariablesRetrieveData(
   client: QueryClient,
-  queryKeyBase: [variableId: string, parameters: { idempotencyKey?: string | undefined }],
+  queryKeyBase: [variableKey: string, parameters: { idempotencyKey?: string | undefined }],
   data: EnvironmentVariablesRetrieveQueryData
 ): EnvironmentVariablesRetrieveQueryData | undefined {
   const key = queryKeyEnvironmentVariablesRetrieve(...queryKeyBase);
@@ -96,7 +96,7 @@ export function setEnvironmentVariablesRetrieveData(
 
 export function invalidateEnvironmentVariablesRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[variableId: string, parameters: { idempotencyKey?: string | undefined }]>,
+  queryKeyBase: TupleToPrefixes<[variableKey: string, parameters: { idempotencyKey?: string | undefined }]>,
   filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({

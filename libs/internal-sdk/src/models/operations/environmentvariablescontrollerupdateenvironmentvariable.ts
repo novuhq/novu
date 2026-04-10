@@ -10,7 +10,10 @@ import * as components from '../components/index.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type EnvironmentVariablesControllerUpdateEnvironmentVariableRequest = {
-  variableId: string;
+  /**
+   * The unique key of the environment variable (e.g. BASE_URL)
+   */
+  variableKey: string;
   /**
    * A header for idempotency purposes
    */
@@ -25,7 +28,7 @@ export type EnvironmentVariablesControllerUpdateEnvironmentVariableResponse = {
 
 /** @internal */
 export type EnvironmentVariablesControllerUpdateEnvironmentVariableRequest$Outbound = {
-  variableId: string;
+  variableKey: string;
   'idempotency-key'?: string | undefined;
   UpdateEnvironmentVariableRequestDto: components.UpdateEnvironmentVariableRequestDto$Outbound;
 };
@@ -37,7 +40,7 @@ export const EnvironmentVariablesControllerUpdateEnvironmentVariableRequest$outb
   EnvironmentVariablesControllerUpdateEnvironmentVariableRequest
 > = z
   .object({
-    variableId: z.string(),
+    variableKey: z.string(),
     idempotencyKey: z.string().optional(),
     updateEnvironmentVariableRequestDto: components.UpdateEnvironmentVariableRequestDto$outboundSchema,
   })

@@ -31,6 +31,8 @@ import { Result } from '../types/fp.js';
  * @remarks
  * Delete an environment by its unique identifier **environmentId**.
  *     This action is irreversible and will remove the environment and all its associated data.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function environmentsDelete(
   client: NovuCore,
@@ -113,7 +115,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

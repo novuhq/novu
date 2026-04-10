@@ -43,10 +43,10 @@ export type SubscribersNotificationsArchiveMutationError =
   | SDKValidationError;
 
 /**
- * Archive notification
+ * Archive a notification
  *
  * @remarks
- * Archive a specific notification by its unique identifier **notificationId**.
+ * Archive a specific in-app (inbox) notification by its unique identifier **notificationId**.
  */
 export function useSubscribersNotificationsArchiveMutation(
   options?: MutationHookOptions<

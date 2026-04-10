@@ -44,10 +44,10 @@ export type SubscribersNotificationsCompleteActionMutationError =
   | SDKValidationError;
 
 /**
- * Complete notification action
+ * Complete a notification action
  *
  * @remarks
- * Mark a notification action (primary or secondary) as completed by its unique identifier **notificationId** and action type.
+ * Mark a single in-app (inbox) notification's action (primary or secondary) as completed by its unique identifier **notificationId** and action type **actionType**.
  */
 export function useSubscribersNotificationsCompleteActionMutation(
   options?: MutationHookOptions<

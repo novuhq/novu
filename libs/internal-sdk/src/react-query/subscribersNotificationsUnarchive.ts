@@ -44,10 +44,10 @@ export type SubscribersNotificationsUnarchiveMutationError =
   | SDKValidationError;
 
 /**
- * Unarchive notification
+ * Unarchive a notification
  *
  * @remarks
- * Unarchive a specific notification by its unique identifier **notificationId**.
+ * Unarchive a specific in-app (inbox) notification by its unique identifier **notificationId**.
  */
 export function useSubscribersNotificationsUnarchiveMutation(
   options?: MutationHookOptions<

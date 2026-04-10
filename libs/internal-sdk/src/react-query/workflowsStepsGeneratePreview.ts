@@ -43,7 +43,7 @@ export type WorkflowsStepsGeneratePreviewMutationError =
   | SDKValidationError;
 
 /**
- * Generate step preview
+ * Generate a step preview
  *
  * @remarks
  * Generates a preview for a specific workflow step by its unique identifier **stepId**

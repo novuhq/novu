@@ -43,10 +43,10 @@ export type SubscribersNotificationsUnsnoozeMutationError =
   | SDKValidationError;
 
 /**
- * Unsnooze notification
+ * Unsnooze a notification
  *
  * @remarks
- * Unsnooze a specific notification by its unique identifier **notificationId**.
+ * Unsnooze a specific in-app (inbox) notification by its unique identifier **notificationId**.
  */
 export function useSubscribersNotificationsUnsnoozeMutation(
   options?: MutationHookOptions<

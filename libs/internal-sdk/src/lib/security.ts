@@ -214,8 +214,11 @@ function applyBearer(
   }
 }
 
-export function resolveGlobalSecurity(security: Partial<components.Security> | null | undefined): SecurityState | null {
-  return resolveSecurity(
+export function resolveGlobalSecurity(
+  security: Partial<components.Security> | null | undefined,
+  allowedFields?: number[]
+): SecurityState | null {
+  let inputs: SecurityInput[][] = [
     [
       {
         fieldName: 'Authorization',
@@ -229,8 +232,19 @@ export function resolveGlobalSecurity(security: Partial<components.Security> | n
         type: 'http:bearer',
         value: security?.bearerAuth,
       },
-    ]
-  );
+    ],
+  ];
+
+  if (allowedFields) {
+    inputs = allowedFields.map((i) => {
+      if (i < 0 || i >= inputs.length) {
+        throw new RangeError(`invalid allowedFields index ${i}`);
+      }
+      return inputs[i]!;
+    });
+  }
+
+  return resolveSecurity(...inputs);
 }
 
 export async function extractSecurity<T extends string | Record<string, unknown>>(

@@ -4,15 +4,20 @@
 
 import * as z from 'zod/v3';
 
+/**
+ * Filter notifications by workflow tags (OR for string[], or { and: [{ or: string[] }, ...] } for AND of OR-groups).
+ */
+export type MarkSubscriberNotificationsAsSeenDtoTags = {};
+
 export type MarkSubscriberNotificationsAsSeenDto = {
   /**
    * Specific notification IDs to mark as seen
    */
   notificationIds?: Array<string> | undefined;
   /**
-   * Filter notifications by workflow tags
+   * Filter notifications by workflow tags (OR for string[], or { and: [{ or: string[] }, ...] } for AND of OR-groups).
    */
-  tags?: Array<string> | undefined;
+  tags?: MarkSubscriberNotificationsAsSeenDtoTags | undefined;
   /**
    * Filter notifications by data attributes (JSON string)
    */
@@ -24,9 +29,27 @@ export type MarkSubscriberNotificationsAsSeenDto = {
 };
 
 /** @internal */
+export type MarkSubscriberNotificationsAsSeenDtoTags$Outbound = {};
+
+/** @internal */
+export const MarkSubscriberNotificationsAsSeenDtoTags$outboundSchema: z.ZodType<
+  MarkSubscriberNotificationsAsSeenDtoTags$Outbound,
+  z.ZodTypeDef,
+  MarkSubscriberNotificationsAsSeenDtoTags
+> = z.object({});
+
+export function markSubscriberNotificationsAsSeenDtoTagsToJSON(
+  markSubscriberNotificationsAsSeenDtoTags: MarkSubscriberNotificationsAsSeenDtoTags
+): string {
+  return JSON.stringify(
+    MarkSubscriberNotificationsAsSeenDtoTags$outboundSchema.parse(markSubscriberNotificationsAsSeenDtoTags)
+  );
+}
+
+/** @internal */
 export type MarkSubscriberNotificationsAsSeenDto$Outbound = {
   notificationIds?: Array<string> | undefined;
-  tags?: Array<string> | undefined;
+  tags?: MarkSubscriberNotificationsAsSeenDtoTags$Outbound | undefined;
   data?: string | undefined;
   contextKeys?: Array<string> | undefined;
 };
@@ -38,7 +61,7 @@ export const MarkSubscriberNotificationsAsSeenDto$outboundSchema: z.ZodType<
   MarkSubscriberNotificationsAsSeenDto
 > = z.object({
   notificationIds: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z.lazy(() => MarkSubscriberNotificationsAsSeenDtoTags$outboundSchema).optional(),
   data: z.string().optional(),
   contextKeys: z.array(z.string()).optional(),
 });

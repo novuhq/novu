@@ -31,6 +31,8 @@ import { Result } from '../types/fp.js';
  *
  * @remarks
  * Duplicates a workflow by its unique identifier **workflowId**. This will create a new workflow with the same steps and settings.
+ *
+ * This operation requires {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function workflowsDuplicate(
   client: NovuCore,
@@ -119,7 +121,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1]);
 
   const context = {
     options: client._options,

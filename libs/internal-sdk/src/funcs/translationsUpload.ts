@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from '../core.js';
-import { appendForm, encodeSimple } from '../lib/encodings.js';
+import { appendForm, encodeSimple, normalizeBlob } from '../lib/encodings.js';
 import { bytesToBlob, getContentTypeFromFileName, readableStreamToArrayBuffer } from '../lib/files.js';
 import * as M from '../lib/matchers.js';
 import { compactMap } from '../lib/primitives.js';
@@ -33,6 +33,8 @@ import { isReadableStream } from '../types/streams.js';
  *
  * @remarks
  * Upload one or more JSON translation files for a specific workflow. Files name must match the locale, e.g. en_US.json. Supports both "files" and "files[]" field names for backwards compatibility.
+ *
+ * This operation requires one of {@link Security.secretKey}, {@link Security.bearerAuth}, or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function translationsUpload(
   client: NovuCore,
@@ -94,8 +96,9 @@ async function $do(
 
   for (const fileItem of payload.RequestBody.files ?? []) {
     if (isBlobLike(fileItem)) {
-      const blob = fileItem;
-      const name = 'name' in blob ? (blob.name as string) : undefined;
+      const file = fileItem;
+      const blob = await normalizeBlob(file);
+      const name = 'name' in file ? (file.name as string) : undefined;
       appendForm(body, 'files', blob, name);
     } else if (isReadableStream(fileItem.content)) {
       const buffer = await readableStreamToArrayBuffer(fileItem.content);
@@ -122,7 +125,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [0, 1]);
 
   const context = {
     options: client._options,

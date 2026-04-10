@@ -15,7 +15,7 @@ import { unwrapAsync } from '../types/fp.js';
 
 export class EnvironmentVariables extends ClientSDK {
   /**
-   * List environment variables
+   * List all variables
    *
    * @remarks
    * Returns all environment variables for the current organization. Secret values are masked.
@@ -29,7 +29,7 @@ export class EnvironmentVariables extends ClientSDK {
   }
 
   /**
-   * Create environment variable
+   * Create a variable
    *
    * @remarks
    * Creates a new environment variable. Keys must be uppercase with underscores only (e.g. BASE_URL). Secret variables are encrypted at rest and masked in API responses.
@@ -46,30 +46,30 @@ export class EnvironmentVariables extends ClientSDK {
    * Get environment variable
    *
    * @remarks
-   * Returns a single environment variable by id. Secret values are masked.
+   * Returns a single environment variable by key. Secret values are masked.
    */
   async retrieve(
-    variableId: string,
+    variableKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions
   ): Promise<operations.EnvironmentVariablesControllerGetEnvironmentVariableResponse> {
-    return unwrapAsync(environmentVariablesRetrieve(this, variableId, idempotencyKey, options));
+    return unwrapAsync(environmentVariablesRetrieve(this, variableKey, idempotencyKey, options));
   }
 
   /**
-   * Update environment variable
+   * Update a variable
    *
    * @remarks
    * Updates an existing environment variable. Providing values replaces all existing per-environment values.
    */
   async update(
     updateEnvironmentVariableRequestDto: components.UpdateEnvironmentVariableRequestDto,
-    variableId: string,
+    variableKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions
   ): Promise<operations.EnvironmentVariablesControllerUpdateEnvironmentVariableResponse> {
     return unwrapAsync(
-      environmentVariablesUpdate(this, updateEnvironmentVariableRequestDto, variableId, idempotencyKey, options)
+      environmentVariablesUpdate(this, updateEnvironmentVariableRequestDto, variableKey, idempotencyKey, options)
     );
   }
 
@@ -77,27 +77,27 @@ export class EnvironmentVariables extends ClientSDK {
    * Delete environment variable
    *
    * @remarks
-   * Deletes an environment variable by id.
+   * Deletes an environment variable by key.
    */
   async delete(
-    variableId: string,
+    variableKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions
   ): Promise<operations.EnvironmentVariablesControllerDeleteEnvironmentVariableResponse | undefined> {
-    return unwrapAsync(environmentVariablesDelete(this, variableId, idempotencyKey, options));
+    return unwrapAsync(environmentVariablesDelete(this, variableKey, idempotencyKey, options));
   }
 
   /**
-   * Get environment variable usage
+   * Retrieve a variable usage
    *
    * @remarks
-   * Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.
+   * Returns the workflows that reference this environment variable via `{{env.KEY}}` in their step controls. **variableId** is required.
    */
   async usage(
-    variableId: string,
+    variableKey: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions
   ): Promise<operations.EnvironmentVariablesControllerGetEnvironmentVariableUsageResponse> {
-    return unwrapAsync(environmentVariablesUsage(this, variableId, idempotencyKey, options));
+    return unwrapAsync(environmentVariablesUsage(this, variableKey, idempotencyKey, options));
   }
 }

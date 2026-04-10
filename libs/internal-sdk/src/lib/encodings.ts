@@ -473,3 +473,10 @@ export function appendForm(fd: FormData, key: string, value: unknown, fileName?:
     fd.append(key, String(value));
   }
 }
+
+export async function normalizeBlob(value: Pick<Blob, 'arrayBuffer' | 'type'>): Promise<Blob> {
+  if (value instanceof Blob) {
+    return value;
+  }
+  return new Blob([await value.arrayBuffer()], { type: value.type });
+}

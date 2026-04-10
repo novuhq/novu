@@ -30,6 +30,8 @@ import { Result } from '../types/fp.js';
  *
  * @remarks
  * Delete an entire translation group and all its translations
+ *
+ * This operation requires one of {@link Security.secretKey}, {@link Security.bearerAuth}, or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function translationsGroupsDelete(
   client: NovuCore,
@@ -115,7 +117,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [0, 1]);
 
   const context = {
     options: client._options,

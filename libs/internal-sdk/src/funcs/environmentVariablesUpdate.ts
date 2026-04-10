@@ -27,15 +27,17 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * Update environment variable
+ * Update a variable
  *
  * @remarks
  * Updates an existing environment variable. Providing values replaces all existing per-environment values.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function environmentVariablesUpdate(
   client: NovuCore,
   updateEnvironmentVariableRequestDto: components.UpdateEnvironmentVariableRequestDto,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): APIPromise<
@@ -53,13 +55,13 @@ export function environmentVariablesUpdate(
     | SDKValidationError
   >
 > {
-  return new APIPromise($do(client, updateEnvironmentVariableRequestDto, variableId, idempotencyKey, options));
+  return new APIPromise($do(client, updateEnvironmentVariableRequestDto, variableKey, idempotencyKey, options));
 }
 
 async function $do(
   client: NovuCore,
   updateEnvironmentVariableRequestDto: components.UpdateEnvironmentVariableRequestDto,
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): Promise<
@@ -82,7 +84,7 @@ async function $do(
 > {
   const input: operations.EnvironmentVariablesControllerUpdateEnvironmentVariableRequest = {
     updateEnvironmentVariableRequestDto: updateEnvironmentVariableRequestDto,
-    variableId: variableId,
+    variableKey: variableKey,
     idempotencyKey: idempotencyKey,
   };
 
@@ -100,12 +102,12 @@ async function $do(
   });
 
   const pathParams = {
-    variableId: encodeSimple('variableId', payload.variableId, {
+    variableKey: encodeSimple('variableKey', payload.variableKey, {
       explode: false,
       charEncoding: 'percent',
     }),
   };
-  const path = pathToFunc('/v1/environment-variables/{variableId}')(pathParams);
+  const path = pathToFunc('/v1/environment-variables/{variableKey}')(pathParams);
 
   const headers = new Headers(
     compactMap({
@@ -119,7 +121,7 @@ async function $do(
   );
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

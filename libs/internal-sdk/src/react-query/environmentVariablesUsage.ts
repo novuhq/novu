@@ -49,44 +49,44 @@ export type EnvironmentVariablesUsageQueryError =
   | SDKValidationError;
 
 /**
- * Get environment variable usage
+ * Retrieve a variable usage
  *
  * @remarks
- * Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.
+ * Returns the workflows that reference this environment variable via `{{env.KEY}}` in their step controls. **variableId** is required.
  */
 export function useEnvironmentVariablesUsage(
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError>
 ): UseQueryResult<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildEnvironmentVariablesUsageQuery(client, variableId, idempotencyKey, options),
+    ...buildEnvironmentVariablesUsageQuery(client, variableKey, idempotencyKey, options),
     ...options,
   });
 }
 
 /**
- * Get environment variable usage
+ * Retrieve a variable usage
  *
  * @remarks
- * Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.
+ * Returns the workflows that reference this environment variable via `{{env.KEY}}` in their step controls. **variableId** is required.
  */
 export function useEnvironmentVariablesUsageSuspense(
-  variableId: string,
+  variableKey: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError>
 ): UseSuspenseQueryResult<EnvironmentVariablesUsageQueryData, EnvironmentVariablesUsageQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildEnvironmentVariablesUsageQuery(client, variableId, idempotencyKey, options),
+    ...buildEnvironmentVariablesUsageQuery(client, variableKey, idempotencyKey, options),
     ...options,
   });
 }
 
 export function setEnvironmentVariablesUsageData(
   client: QueryClient,
-  queryKeyBase: [variableId: string, parameters: { idempotencyKey?: string | undefined }],
+  queryKeyBase: [variableKey: string, parameters: { idempotencyKey?: string | undefined }],
   data: EnvironmentVariablesUsageQueryData
 ): EnvironmentVariablesUsageQueryData | undefined {
   const key = queryKeyEnvironmentVariablesUsage(...queryKeyBase);
@@ -96,7 +96,7 @@ export function setEnvironmentVariablesUsageData(
 
 export function invalidateEnvironmentVariablesUsage(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[variableId: string, parameters: { idempotencyKey?: string | undefined }]>,
+  queryKeyBase: TupleToPrefixes<[variableKey: string, parameters: { idempotencyKey?: string | undefined }]>,
   filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
