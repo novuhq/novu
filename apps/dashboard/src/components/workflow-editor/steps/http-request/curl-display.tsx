@@ -23,8 +23,11 @@ export function CurlDisplay({ url, method, headers, body, className, novuSignatu
   let bodyStr: string | null = null;
 
   if (canHaveBody) {
-    if (bodyMode === 'raw' && rawBody) {
-      bodyStr = rawBody;
+    if (bodyMode === 'raw') {
+      // Raw mode is exclusive — never fall back to key-value pairs
+      if (rawBody) {
+        bodyStr = rawBody;
+      }
     } else if (body) {
       let bodyObj: Record<string, unknown> | null = null;
 

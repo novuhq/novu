@@ -33,8 +33,11 @@ export function buildRawCurlString(
   let bodyStr = '';
 
   if (canHaveBody) {
-    if (bodyMode === 'raw' && rawBody) {
-      bodyStr = `--data '${rawBody}'`;
+    if (bodyMode === 'raw') {
+      // Raw mode is exclusive — never fall back to key-value pairs
+      if (rawBody) {
+        bodyStr = `--data '${rawBody}'`;
+      }
     } else {
       let bodyObj: Record<string, unknown> | null = null;
 
