@@ -9,6 +9,7 @@ import {
   HttpRequestOptions,
   InstrumentUsecase,
   KeyValuePair,
+  parseRawBody,
   shouldIncludeBody,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -53,14 +54,17 @@ export class TestHttpEndpointUsecase {
     const method = (compiled.method as string) ?? 'GET';
     const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
     const compiledBody = (compiled.body as KeyValuePair[]) ?? [];
+    const bodyMode = (compiled.bodyMode as string) ?? 'key-value';
+    const rawJsonBody = compiled.rawBody as string | undefined;
 
     const resolvedHeaders: Record<string, string> = Object.fromEntries(
       compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
     );
 
-    const resolvedBodyPairs: Record<string, unknown> = Object.fromEntries(
-      compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value])
-    );
+    const resolvedBodyPairs: Record<string, unknown> =
+      bodyMode === 'raw' && rawJsonBody
+        ? parseRawBody(rawJsonBody)
+        : Object.fromEntries(compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value]));
 
     const hasBody = shouldIncludeBody(resolvedBodyPairs, method);
 

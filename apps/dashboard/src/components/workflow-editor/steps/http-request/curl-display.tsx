@@ -8,9 +8,11 @@ type CurlDisplayProps = {
   body?: KeyValuePair[] | Record<string, unknown> | null;
   className?: string;
   novuSignature?: string;
+  rawBody?: string | null;
+  bodyMode?: string | null;
 };
 
-export function CurlDisplay({ url, method, headers, body, className, novuSignature }: CurlDisplayProps) {
+export function CurlDisplay({ url, method, headers, body, className, novuSignature, rawBody, bodyMode }: CurlDisplayProps) {
   const headerEntries: [string, string][] = Array.isArray(headers)
     ? headers.filter((h) => h.key).map((h) => [h.key, h.value])
     : Object.entries(headers);
@@ -18,17 +20,27 @@ export function CurlDisplay({ url, method, headers, body, className, novuSignatu
   const hasNovuSignature = headerEntries.some(([k]) => k.toLowerCase() === NOVU_SIGNATURE_HEADER_KEY);
 
   const canHaveBody = canMethodHaveBody(method);
-  let bodyObj: Record<string, unknown> | null = null;
+  let bodyStr: string | null = null;
 
-  if (canHaveBody && body) {
-    if (Array.isArray(body)) {
-      const pairs = body.filter((b) => b.key);
+  if (canHaveBody) {
+    if (bodyMode === 'raw' && rawBody) {
+      bodyStr = rawBody;
+    } else if (body) {
+      let bodyObj: Record<string, unknown> | null = null;
 
-      if (pairs.length > 0) {
-        bodyObj = Object.fromEntries(pairs.map(({ key, value }) => [key, value]));
+      if (Array.isArray(body)) {
+        const pairs = body.filter((b) => b.key);
+
+        if (pairs.length > 0) {
+          bodyObj = Object.fromEntries(pairs.map(({ key, value }) => [key, value]));
+        }
+      } else if (Object.keys(body).length > 0) {
+        bodyObj = body;
       }
-    } else if (Object.keys(body).length > 0) {
-      bodyObj = body;
+
+      if (bodyObj) {
+        bodyStr = JSON.stringify(bodyObj);
+      }
     }
   }
 
@@ -53,10 +65,10 @@ export function CurlDisplay({ url, method, headers, body, className, novuSignatu
           <span className="text-[#7d52f4]">{`: ${val}' `}</span>
         </p>
       ))}
-      {bodyObj && (
+      {bodyStr && (
         <p className="my-0 leading-[1.5]">
           <span className="text-[#0e121b]">{'--data '}</span>
-          <span className="text-[#7d52f4]">{`'${JSON.stringify(bodyObj)}' `}</span>
+          <span className="text-[#7d52f4]">{`'${bodyStr}' `}</span>
         </p>
       )}
     </div>

@@ -31,7 +31,16 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
     return <StepEditorUnavailable />;
   }
 
+  const rawBody = watch('rawBody');
+
   const handleBodyModeChange = (mode: 'key-value' | 'raw') => {
+    if (mode === 'key-value' && bodyMode === 'raw' && rawBody?.trim()) {
+      const confirmed = window.confirm(
+        'Switching to Key-Value mode will discard your raw JSON body. Continue?'
+      );
+      if (!confirmed) return;
+    }
+
     setValue('bodyMode', mode);
     saveForm();
   };
@@ -50,28 +59,32 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
         {hasBody && (
           <>
             <div className="flex items-center gap-1 px-1">
-              <button
-                type="button"
-                className={`rounded px-2 py-0.5 text-xs font-medium ${
+              <span
+                role="button"
+                tabIndex={0}
+                className={`cursor-pointer rounded px-2 py-0.5 text-xs font-medium ${
                   bodyMode === 'key-value'
                     ? 'bg-neutral-alpha-200 text-text-strong'
                     : 'text-text-sub hover:text-text-strong'
                 }`}
                 onClick={() => handleBodyModeChange('key-value')}
+                onKeyDown={(e) => e.key === 'Enter' && handleBodyModeChange('key-value')}
               >
                 Key-Value
-              </button>
-              <button
-                type="button"
-                className={`rounded px-2 py-0.5 text-xs font-medium ${
+              </span>
+              <span
+                role="button"
+                tabIndex={0}
+                className={`cursor-pointer rounded px-2 py-0.5 text-xs font-medium ${
                   bodyMode === 'raw'
                     ? 'bg-neutral-alpha-200 text-text-strong'
                     : 'text-text-sub hover:text-text-strong'
                 }`}
                 onClick={() => handleBodyModeChange('raw')}
+                onKeyDown={(e) => e.key === 'Enter' && handleBodyModeChange('raw')}
               >
                 Raw JSON
-              </button>
+              </span>
             </div>
 
             {bodyMode === 'key-value' ? (

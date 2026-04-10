@@ -30,7 +30,7 @@ export function ConfigureHttpRequestStepPreview({ controlValues, className }: Co
       </div>
 
       <div className="relative overflow-hidden bg-white p-2">
-        <CurlDisplay url={url} method={method} headers={headers} body={body} className="whitespace-pre text-[10px]" />
+        <CurlDisplay url={url} method={method} headers={headers} body={body} rawBody={rawBody} bodyMode={bodyMode} className="whitespace-pre text-[10px]" />
         <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-linear-to-r from-transparent to-white" />
       </div>
     </div>

@@ -96,8 +96,8 @@ function CurlRequest({
   onTest: () => void;
   isTestPending: boolean;
 }) {
-  const { url, method, headers = {}, body, rawBody: resolvedRawBody, bodyMode } = result.resolvedRequest;
-  const curlToCopy = buildRawCurlString(url, method, headers, body, undefined, resolvedRawBody, bodyMode);
+  const { url, method, headers = {}, body } = result.resolvedRequest;
+  const curlToCopy = buildRawCurlString(url, method, headers, body);
 
   const handleCopySuccess = useCallback(() => {
     showToast({
@@ -333,7 +333,7 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
             </>
           }
         >
-          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} novuSignature={novuSignature} />
+          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} novuSignature={novuSignature} rawBody={controlRawBody} bodyMode={controlBodyMode} />
         </BrowserShell>
 
         <div className="flex items-center justify-between overflow-clip rounded-md border border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 ">
@@ -460,7 +460,7 @@ function ErrorState({
           </>
         }
       >
-        <CurlDisplay url={url} method={method} headers={headers} body={body} novuSignature={novuSignature} />
+        <CurlDisplay url={url} method={method} headers={headers} body={body} novuSignature={novuSignature} rawBody={errorRawBody} bodyMode={errorBodyMode} />
       </BrowserShell>
 
       <div className="flex flex-col gap-3">
