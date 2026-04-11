@@ -10,7 +10,7 @@ function isLaunchDarklyEnabled() {
   return !!LAUNCH_DARKLY_CLIENT_SIDE_ID && !(IS_SELF_HOSTED && IS_ENTERPRISE);
 }
 
-export const useFeatureFlagMap = (defaultValue = false): FeatureFlags => {
+const useFeatureFlagMap = (defaultValue = false): FeatureFlags => {
   const flags = useFlags();
 
   return Object.keys(flags).reduce((acc: FeatureFlags, flag: string) => {
