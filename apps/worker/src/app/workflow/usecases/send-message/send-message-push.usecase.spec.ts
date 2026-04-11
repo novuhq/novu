@@ -29,7 +29,7 @@ describe('serializePushProviderError', () => {
     circular.self = circular;
 
     const serialized = serializePushProviderError(circular);
-    const parsed = JSON.parse(serialized) as { self?: string };
+    const parsed = JSON.parse(serialized) as { message?: string; self?: string };
 
     expect(parsed.message).to.equal('request failed');
     expect(parsed.self).to.equal('[Circular]');
