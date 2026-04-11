@@ -68,7 +68,7 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "start:server": "http-server ./dist -p 4010",
-    "prebuild": "cp ./src/ui/index.css ./src/ui/index.directcss",
+    "prebuild": "node -e \"require('node:fs').copyFileSync('./src/ui/index.css','./src/ui/index.directcss')\"",
     "build": "pnpm run clean && NODE_ENV=production tsup",
     "postbuild": "rm ./src/ui/index.directcss && ./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
