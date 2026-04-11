@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, Req, Scope, ServiceUnavailableException } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Query, Req, Scope, ServiceUnavailableException } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeatureFlagsService, RequirePermissions, ResourceCategory } from '@novu/application-generic';
 import {
@@ -8,6 +8,7 @@ import {
   FeatureFlagsKeysEnum,
   PermissionsEnum,
   ResourceEnum,
+  StepTypeEnum,
   TriggerRequestCategoryEnum,
   UserSessionData,
 } from '@novu/shared';
@@ -34,6 +35,7 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
+import { CompleteDelayed, CompleteDelayedCommand } from './usecases/complete-delayed';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
@@ -49,6 +51,14 @@ function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnu
   };
 }
 
+function toQueryArray(value?: string | string[]): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return Array.isArray(value) ? value : [value];
+}
+
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
 @RequireAuthentication()
@@ -61,6 +71,7 @@ function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnu
 export class EventsController {
   constructor(
     private cancelDelayedUsecase: CancelDelayed,
+    private completeDelayedUsecase: CompleteDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
@@ -241,6 +252,113 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
+  @Delete('/trigger')
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @ApiOperation({
+    summary: 'Cancel active digests or delayed events',
+    description: `
+    Cancel active workflows using query filters like transactionId, subscriberId, workflowId, stepName, digestKey, or stepType.
+    Bulk operations are supported for transactionId and subscriberId.
+    `,
+  })
+  @SdkMethodName('cancelBulk')
+  @SdkUsageExample('Cancel Triggered Events in Bulk')
+  @SdkGroupName('')
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
+  async cancelByQuery(
+    @UserSession() user: UserSessionData,
+    @Query('transactionId') transactionId?: string | string[],
+    @Query('subscriberId') subscriberId?: string | string[],
+    @Query('workflowId') workflowId?: string,
+    @Query('stepName') stepName?: string,
+    @Query('stepType') stepType?: StepTypeEnum,
+    @Query('digestKey') digestKey?: string
+  ): Promise<boolean> {
+    return await this.cancelDelayedUsecase.execute(
+      CancelDelayedCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionId: toQueryArray(transactionId),
+        subscriberId: toQueryArray(subscriberId),
+        workflowId,
+        stepName,
+        stepType,
+        digestKey,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @Post('/trigger/complete')
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @ApiOperation({
+    summary: 'Complete Delayed Triggered Events in Bulk (Delay or Digest)',
+    description: `
+    Force-complete active delay or digest steps using query filters like transactionId, subscriberId, workflowId, stepName, digestKey, or stepType.
+    Bulk operations are supported for transactionId and subscriberId.
+    `,
+  })
+  @SdkMethodName('completeBulk')
+  @SdkUsageExample('Complete Delayed Triggered Events in Bulk (Delay or Digest)')
+  @SdkGroupName('')
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
+  async completeByQuery(
+    @UserSession() user: UserSessionData,
+    @Query('transactionId') transactionId?: string | string[],
+    @Query('subscriberId') subscriberId?: string | string[],
+    @Query('workflowId') workflowId?: string,
+    @Query('stepName') stepName?: string,
+    @Query('digestKey') digestKey?: string,
+    @Query('stepType') stepType?: StepTypeEnum
+  ): Promise<boolean> {
+    return await this.completeDelayedUsecase.execute(
+      CompleteDelayedCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionId: toQueryArray(transactionId),
+        subscriberId: toQueryArray(subscriberId),
+        workflowId,
+        stepName,
+        digestKey,
+        stepType,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @Post('/trigger/complete/:transactionId')
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @ApiOperation({
+    summary: 'Complete Delayed Triggered Event (Delay or Digest)',
+    description: `
+    Using a previously generated transactionId during the event trigger,
+     will complete any active or pending workflows. This is useful to complete active digests, delays etc...
+    `,
+  })
+  @SdkMethodName('complete')
+  @SdkUsageExample('Complete Delayed Triggered Event (Delay or Digest)')
+  @SdkGroupName('')
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
+  async complete(@UserSession() user: UserSessionData, @Param('transactionId') transactionId: string): Promise<boolean> {
+    return await this.completeDelayedUsecase.execute(
+      CompleteDelayedCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionId: [transactionId],
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
     type: Boolean,
@@ -262,7 +380,7 @@ export class EventsController {
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        transactionId,
+        transactionId: [transactionId],
       })
     );
   }

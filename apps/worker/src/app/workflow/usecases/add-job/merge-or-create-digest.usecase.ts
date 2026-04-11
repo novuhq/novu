@@ -66,6 +66,10 @@ export class MergeOrCreateDigest {
     digestMeta: IDigestBaseMetadata | undefined,
     job: JobEntity
   ): Promise<DigestCreationResultEnum> {
+    if ((digestMeta as IDigestBaseMetadata | IDigestTimedMetadata | undefined)?.type === DigestTypeEnum.NONE) {
+      return DigestCreationResultEnum.CREATED;
+    }
+
     if ((digestMeta as unknown as IDigestTimedMetadata)?.timed?.cronExpression) {
       return DigestCreationResultEnum.CREATED;
     }

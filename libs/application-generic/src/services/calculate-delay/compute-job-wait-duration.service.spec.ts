@@ -1,4 +1,4 @@
-import { DelayTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { addSeconds } from 'date-fns';
 import { ComputeJobWaitDurationService } from './compute-job-wait-duration.service';
 
@@ -24,6 +24,35 @@ describe('Compute Job Wait Duration Service', () => {
     it('should convert days to milliseconds', () => {
       const result = (computeJobWaitDurationService as any).toMilliseconds(1, DigestUnitEnum.DAYS);
       expect(result).toEqual(86400000);
+    });
+  });
+
+  describe('calculateDelay - None Digest/Delay', () => {
+    it('should return 0 for a digest with the none type', () => {
+      const delay = computeJobWaitDurationService.calculateDelay({
+        stepMetadata: {
+          type: DigestTypeEnum.NONE,
+          digestKey: 'groupId',
+        },
+        payload: {
+          groupId: 'group-1',
+        },
+        overrides: {},
+      });
+
+      expect(delay).toEqual(0);
+    });
+
+    it('should return 0 for a delay with the none type', () => {
+      const delay = computeJobWaitDurationService.calculateDelay({
+        stepMetadata: {
+          type: DelayTypeEnum.NONE,
+        },
+        payload: {},
+        overrides: {},
+      });
+
+      expect(delay).toEqual(0);
     });
   });
 

@@ -8,11 +8,11 @@ import { LookBackWindowDto } from './look-back-window.dto';
 export class DigestControlDto extends SkipControlDto {
   @ApiPropertyOptional({
     description: 'The type of digest strategy. Determines which fields are applicable.',
-    enum: [DigestTypeEnum.REGULAR, DigestTypeEnum.TIMED],
+    enum: [DigestTypeEnum.REGULAR, DigestTypeEnum.TIMED, DigestTypeEnum.NONE],
   })
-  @IsEnum([DigestTypeEnum.REGULAR, DigestTypeEnum.TIMED])
+  @IsEnum([DigestTypeEnum.REGULAR, DigestTypeEnum.TIMED, DigestTypeEnum.NONE])
   @IsOptional()
-  type?: DigestTypeEnum.REGULAR | DigestTypeEnum.TIMED;
+  type?: DigestTypeEnum.REGULAR | DigestTypeEnum.TIMED | DigestTypeEnum.NONE;
 
   @ApiPropertyOptional({
     description: 'The amount of time for the digest interval (for REGULAR type). Min 1.',

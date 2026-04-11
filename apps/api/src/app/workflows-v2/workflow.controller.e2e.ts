@@ -2,6 +2,7 @@ import { Novu } from '@novu/api';
 import {
   ContentIssueEnum,
   CreateWorkflowDto,
+  DelayStepUpsertDto,
   DigestStepUpsertDto,
   EmailStepResponseDto,
   EmailStepUpsertDto,
@@ -62,6 +63,18 @@ function buildDigestStep(overrides: Partial<DigestStepUpsertDto> = {}): DigestSt
     },
     ...overrides,
   } as DigestStepUpsertDto;
+}
+
+function buildDelayStep(overrides: Partial<DelayStepUpsertDto> = {}): DelayStepUpsertDto {
+  return {
+    name: 'Delay Test Step',
+    type: 'delay',
+    controlValues: {
+      amount: 1,
+      unit: 'hours',
+    },
+    ...overrides,
+  } as DelayStepUpsertDto;
 }
 
 function buildEmailStep(overrides: Partial<EmailStepUpsertDto> = {}): EmailStepUpsertDto {
@@ -1232,6 +1245,28 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
           expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(ContentIssueEnum.TierLimitExceeded);
           expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(ContentIssueEnum.TierLimitExceeded);
+        });
+
+        it('should allow digest control values with the none type for manual-completion', async () => {
+          const steps = [{ ...buildDigestStep({ controlValues: { type: 'none', digestKey: 'groupId' } }) }];
+          const workflowCreated = await createWorkflow(apiClient, buildWorkflow({ steps } as CreateWorkflowDto));
+          const step = workflowCreated.steps[0];
+
+          expect(step.controls?.values).to.containSubset({ type: 'none', digestKey: 'groupId' });
+          expect(step.issues?.controls?.amount).to.be.undefined;
+          expect(step.issues?.controls?.unit).to.be.undefined;
+          expect(step.issues?.controls?.cron).to.be.undefined;
+        });
+
+        it('should allow delay control values with the none type for manual-completion', async () => {
+          const steps = [{ ...buildDelayStep({ controlValues: { type: 'none' } }) }];
+          const workflowCreated = await createWorkflow(apiClient, buildWorkflow({ steps } as CreateWorkflowDto));
+          const step = workflowCreated.steps[0];
+
+          expect(step.controls?.values).to.containSubset({ type: 'none' });
+          expect(step.issues?.controls?.amount).to.be.undefined;
+          expect(step.issues?.controls?.unit).to.be.undefined;
+          expect(step.issues?.controls?.cron).to.be.undefined;
         });
 
         it('should always show issues for illegal variables in control values', async () => {

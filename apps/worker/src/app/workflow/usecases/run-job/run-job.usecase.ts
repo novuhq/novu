@@ -93,6 +93,18 @@ export class RunJob {
       throw new PlatformException(`Job with id ${command.jobId} not found`);
     }
 
+    if (
+      job.status === JobStatusEnum.CANCELED ||
+      job.status === JobStatusEnum.COMPLETED ||
+      job.status === JobStatusEnum.FAILED ||
+      job.status === JobStatusEnum.MERGED ||
+      job.status === JobStatusEnum.SKIPPED
+    ) {
+      this.logger.debug({ jobId: job._id, status: job.status }, 'Skipping job execution for terminal-state job');
+
+      return job;
+    }
+
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.RUNNING,
     });

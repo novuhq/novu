@@ -13,6 +13,7 @@ import {
   InstrumentUsecase,
   isDynamicOutput,
   isLookBackDigestOutput,
+  isNoneOutput,
   isRegularOutput,
   isTimedOutput,
   JobsOptions,
@@ -47,9 +48,11 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDelayDynamicMetadata,
+  IDelayNoneMetadata,
   IDelayRegularMetadata,
   IDelayTimedMetadata,
   IDigestBaseMetadata,
+  IDigestNoneMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IWorkflowStepMetadata,
@@ -233,9 +236,14 @@ export class AddJob {
     }
 
     let digestResult: {
-      digestAmount: number;
+      digestAmount: number | undefined;
       digestCreationResult: DigestCreationResultEnum;
       cronExpression?: string;
+      shouldQueue: boolean;
+    } | null = null;
+    let delayResult: {
+      delayAmount: number | undefined;
+      shouldQueue: boolean;
     } | null = null;
 
     const subscriber = await this.subscriberRepository.findOne(
@@ -278,6 +286,28 @@ export class AddJob {
       }
 
       digestAmount = digestResult.digestAmount;
+
+      if (!digestResult.shouldQueue) {
+        const updatedJob = await this.jobRepository.findOne({
+          _id: job._id,
+          _environmentId: job._environmentId,
+        });
+
+        if (!updatedJob) {
+          throw new Error(`Job with id ${job._id} not found`);
+        }
+
+        if (digestResult.digestCreationResult === DigestCreationResultEnum.CREATED) {
+          await this.stepRunRepository.create(updatedJob, {
+            status: JobStatusEnum.DELAYED,
+          });
+        }
+
+        return {
+          workflowStatus: null,
+          deliveryLifecycleStatus: null,
+        };
+      }
     }
 
     if (job.type === StepTypeEnum.THROTTLE) {
@@ -309,7 +339,7 @@ export class AddJob {
 
     if (job.type === StepTypeEnum.DELAY) {
       try {
-        delayAmount = await this.handleDelay({
+        delayResult = await this.handleDelay({
           command,
           job,
           bridgeResponse,
@@ -318,8 +348,30 @@ export class AddJob {
           timezone: subscriber?.timezone,
         });
 
+        delayAmount = delayResult.delayAmount;
+
         if (delayAmount === undefined) {
           this.logger.warn(`Delay Amount does not exist on a delay job ${job._id}`);
+
+          return {
+            workflowStatus: null,
+            deliveryLifecycleStatus: null,
+          };
+        }
+
+        if (!delayResult.shouldQueue) {
+          const updatedJob = await this.jobRepository.findOne({
+            _id: job._id,
+            _environmentId: job._environmentId,
+          });
+
+          if (!updatedJob) {
+            throw new Error(`Job with id ${job._id} not found`);
+          }
+
+          await this.stepRunRepository.create(updatedJob, {
+            status: JobStatusEnum.DELAYED,
+          });
 
           return {
             workflowStatus: null,
@@ -439,7 +491,7 @@ export class AddJob {
     bridgeDelayAmountDate: Date | null;
     bridgeDelayAmount: number | undefined;
     timezone: string | undefined;
-  }) {
+  }): Promise<{ delayAmount: number | undefined; shouldQueue: boolean }> {
     let metadata: IWorkflowStepMetadata;
     if (bridgeResponse) {
       // Assign V2 metadata from Bridge response
@@ -463,11 +515,16 @@ export class AddJob {
       await this.validateDynamicDuration(command, job, delayAmount, StepTypeEnum.DELAY);
     }
 
+    const manualCompletionRequired = 'type' in metadata && metadata.type === DelayTypeEnum.NONE;
+
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
 
     this.logger.debug(`Delay step Amount is: ${delayAmount}`);
 
-    return delayAmount;
+    return {
+      delayAmount,
+      shouldQueue: !manualCompletionRequired,
+    };
   }
 
   private async validateDynamicDuration(
@@ -608,7 +665,26 @@ export class AddJob {
     const outputDigestValue = outputs?.digestKey;
     const digestType = getDigestType(outputs);
 
-    if (isTimedOutput(outputs)) {
+    if (isNoneOutput(outputs)) {
+      metadata = {
+        type: DigestTypeEnum.NONE,
+        digestValue: outputDigestValue || 'No-Value-Provided',
+        digestKey: digest.digestKey || 'No-Key-Provided',
+      } as IDigestNoneMetadata;
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'digest.type': metadata.type,
+            'digest.digestValue': metadata.digestValue,
+            'digest.digestKey': metadata.digestKey,
+          },
+        }
+      );
+    } else if (isTimedOutput(outputs)) {
       metadata = {
         type: DigestTypeEnum.TIMED,
         digestValue: outputDigestValue || 'No-Value-Provided',
@@ -632,9 +708,7 @@ export class AddJob {
           },
         }
       );
-    }
-
-    if (isLookBackDigestOutput(outputs)) {
+    } else if (isLookBackDigestOutput(outputs)) {
       metadata = {
         type: digestType,
         amount: outputs?.amount,
@@ -664,14 +738,7 @@ export class AddJob {
           },
         }
       );
-    }
-
-    if (isRegularOutput(outputs)) {
-      if (!outputs.amount && !outputs.unit) {
-        outputs.amount = 0;
-        outputs.unit = 'seconds';
-      }
-
+    } else if (isRegularOutput(outputs)) {
       metadata = {
         type: digestType,
         amount: outputs?.amount,
@@ -696,7 +763,6 @@ export class AddJob {
         }
       );
     }
-
     return metadata;
   }
 
@@ -704,7 +770,23 @@ export class AddJob {
     const outputs = response.outputs as DelayOutput;
     let metadata = {} as IWorkflowStepMetadata;
 
-    if (isDynamicOutput(outputs)) {
+    if (isNoneOutput(outputs)) {
+      metadata = {
+        type: DelayTypeEnum.NONE,
+      } as IDelayNoneMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': metadata.type,
+          },
+        }
+      );
+    } else if (isDynamicOutput(outputs)) {
       metadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: (outputs as unknown as { dynamicKey: string }).dynamicKey,
@@ -938,14 +1020,16 @@ export class AddJob {
 
     validateDigest(job);
 
-    const digestAmount =
-      bridgeDelayAmount ??
-      this.computeJobWaitDurationService.calculateDelay({
-        stepMetadata: metadata,
-        payload: job.payload,
-        overrides: job.overrides,
-        timezone,
-      });
+    const manualCompletionRequired = 'type' in metadata && metadata.type === DigestTypeEnum.NONE;
+    const digestAmount = manualCompletionRequired
+      ? undefined
+      : (bridgeDelayAmount ??
+        this.computeJobWaitDurationService.calculateDelay({
+          stepMetadata: metadata,
+          payload: job.payload,
+          overrides: job.overrides,
+          timezone,
+        }));
 
     this.logger.debug(`Digest step amount is: ${digestAmount}`);
 
@@ -963,7 +1047,12 @@ export class AddJob {
       await this.handleDigestSkip(command, job);
     }
 
-    return { digestAmount, digestCreationResult, cronExpression: bridgeResponse?.outputs?.cron as string | undefined };
+    return {
+      digestAmount,
+      digestCreationResult,
+      cronExpression: bridgeResponse?.outputs?.cron as string | undefined,
+      shouldQueue: digestCreationResult === DigestCreationResultEnum.CREATED && !manualCompletionRequired,
+    };
   }
 
   private getBridgeNextCronDate(bridgeResponse: ExecuteOutput | null, timezone?: string): Date | null {

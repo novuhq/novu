@@ -39,15 +39,25 @@ const delayDynamicControlZodSchema = z
   })
   .strict();
 
+const delayNoneControlZodSchema = z
+  .object({
+    skip: skipZodSchema,
+    type: z.literal(DelayTypeEnum.NONE),
+    extendToSchedule: z.boolean().optional(),
+  })
+  .strict();
+
 export const delayControlZodSchema = z.discriminatedUnion('type', [
   delayRegularControlZodSchema,
   delayTimedControlZodSchema,
   delayDynamicControlZodSchema,
+  delayNoneControlZodSchema,
 ]);
 
 export type DelayRegularControlType = z.infer<typeof delayRegularControlZodSchema>;
 export type DelayTimedControlType = z.infer<typeof delayTimedControlZodSchema>;
 export type DelayDynamicControlType = z.infer<typeof delayDynamicControlZodSchema>;
+export type DelayNoneControlType = z.infer<typeof delayNoneControlZodSchema>;
 export type DelayControlType = z.infer<typeof delayControlZodSchema>;
 
 export const delayControlSchema = zodToJsonSchema(delayControlZodSchema, defaultOptions) as JSONSchemaEntity;

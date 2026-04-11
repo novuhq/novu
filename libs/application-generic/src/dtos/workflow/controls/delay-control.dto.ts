@@ -5,13 +5,13 @@ import { SkipControlDto } from '../skip.dto';
 
 export class DelayControlDto extends SkipControlDto {
   @ApiProperty({
-    description: "Type of the delay. Currently only 'regular' is supported by the schema.",
-    enum: [DelayTypeEnum.REGULAR, DelayTypeEnum.TIMED],
+    description: "Type of the delay. Currently only 'regular' and 'none' are supported by the schema.",
+    enum: [DelayTypeEnum.REGULAR, DelayTypeEnum.TIMED, DelayTypeEnum.NONE],
     default: DelayTypeEnum.REGULAR,
   })
-  @IsEnum([DelayTypeEnum.REGULAR, DelayTypeEnum.TIMED])
+  @IsEnum([DelayTypeEnum.REGULAR, DelayTypeEnum.TIMED, DelayTypeEnum.NONE])
   @IsOptional()
-  type?: DelayTypeEnum.REGULAR | DelayTypeEnum.TIMED;
+  type?: DelayTypeEnum.REGULAR | DelayTypeEnum.TIMED | DelayTypeEnum.NONE;
 
   @ApiPropertyOptional({
     description: 'Amount of time to delay.',

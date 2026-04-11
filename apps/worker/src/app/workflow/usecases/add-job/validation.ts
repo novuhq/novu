@@ -92,6 +92,10 @@ export const validateDigest = (job: JobEntity): void => {
 
   const digestWithType = job.digest as IDigestRegularMetadata | IDigestTimedMetadata;
 
+  if (digestWithType.type === DigestTypeEnum.NONE) {
+    return;
+  }
+
   if (
     digestWithType.type &&
     (digestWithType.type === DigestTypeEnum.REGULAR || digestWithType.type === DigestTypeEnum.BACKOFF) &&

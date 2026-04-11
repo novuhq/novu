@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   isActionStepType,
   isMainDigest,
@@ -28,7 +28,7 @@ export class CancelDelayed {
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
     let jobs: JobEntity[] = await this.jobRepository.find({
       _environmentId: command.environmentId,
-      transactionId: command.transactionId,
+      ...this.buildCancelQuery(command),
       status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED],
     });
 
@@ -36,14 +36,18 @@ export class CancelDelayed {
       return false;
     }
 
-    if (jobs.find((job) => job.type && isActionStepType(job.type))) {
+    const transactionIds = Array.from(new Set(jobs.map((job) => job.transactionId).filter(Boolean)));
+
+    if (jobs.find((job) => job.type && isActionStepType(job.type)) && transactionIds.length) {
       const possiblePendingJobs: JobEntity[] = await this.jobRepository.find({
         _environmentId: command.environmentId,
-        transactionId: command.transactionId,
+        transactionId: {
+          $in: transactionIds,
+        },
         status: [JobStatusEnum.PENDING],
       });
 
-      jobs = [...jobs, ...possiblePendingJobs];
+      jobs = this.getUniqueJobs([...jobs, ...possiblePendingJobs]);
     }
 
     await this.jobRepository.update(
@@ -70,13 +74,73 @@ export class CancelDelayed {
       status: JobStatusEnum.CANCELED,
     });
 
-    const mainDigestJob = jobs.find((job) => isMainDigest(job.type, job.status));
+    const mainDigestJobs = this.getUniqueJobs(jobs.filter((job) => isMainDigest(job.type, job.status)));
 
-    if (!mainDigestJob) {
+    if (!mainDigestJobs.length) {
       return true;
     }
 
-    return await this.assignNextDigestJob(mainDigestJob);
+    const reassignmentResults = await Promise.all(mainDigestJobs.map((job) => this.assignNextDigestJob(job)));
+
+    return reassignmentResults.every(Boolean);
+  }
+
+  private buildCancelQuery(command: CancelDelayedCommand): Record<string, unknown> {
+    if (
+      !command.transactionId?.length &&
+      !command.subscriberId?.length &&
+      !command.workflowId &&
+      !command.stepType &&
+      !command.stepName &&
+      !command.digestKey
+    ) {
+      throw new BadRequestException('At least one transaction or delayed-step filter is required');
+    }
+
+    const query: Record<string, unknown> = { };
+
+    this.addArrayFilter(query, 'transactionId', command.transactionId);
+    this.addArrayFilter(query, 'subscriberId', command.subscriberId);
+
+    if (command.workflowId) {
+      query.identifier = command.workflowId;
+    }
+
+    if (command.stepType) {
+      query.type = command.stepType;
+    }
+
+    if (command.stepName) {
+      query['step.name'] = command.stepName;
+    }
+
+    if (command.digestKey) {
+      query['digest.digestKey'] = command.digestKey;
+    }
+
+    return query;
+  }
+
+  private addArrayFilter(query: Record<string, unknown>, field: string, values?: string[]): void {
+    const normalizedValues = this.getUniqueStrings(values);
+
+    if (!normalizedValues.length) {
+      return;
+    }
+
+    query[field] = normalizedValues.length === 1 ? normalizedValues[0] : { $in: normalizedValues };
+  }
+
+  private getUniqueStrings(values?: string[]): string[] {
+    if (!values?.length) {
+      return [];
+    }
+
+    return Array.from(new Set(values.filter(Boolean)));
+  }
+
+  private getUniqueJobs(jobs: JobEntity[]): JobEntity[] {
+    return Array.from(new Map(jobs.map((job) => [job._id, job])).values());
   }
 
   private async assignNextDigestJob(job: JobEntity) {

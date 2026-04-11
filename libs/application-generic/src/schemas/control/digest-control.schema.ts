@@ -41,12 +41,26 @@ const digestTimedControlZodSchema = z
   })
   .strict();
 
+const digestNoneControlZodSchema = z
+  .object({
+    skip: skipZodSchema,
+    type: z.literal(DigestTypeEnum.NONE),
+    digestKey: z.string().optional(),
+    extendToSchedule: z.boolean().optional(),
+  })
+  .strict();
+
 export type LookBackWindowType = z.infer<typeof lookBackWindowZodSchema>;
 export type DigestRegularControlType = z.infer<typeof digestRegularControlZodSchema>;
 export type DigestTimedControlType = z.infer<typeof digestTimedControlZodSchema>;
+export type DigestNoneControlType = z.infer<typeof digestNoneControlZodSchema>;
 export type DigestControlSchemaType = z.infer<typeof digestControlZodSchema>;
 
-export const digestControlZodSchema = z.union([digestRegularControlZodSchema, digestTimedControlZodSchema]);
+export const digestControlZodSchema = z.discriminatedUnion('type', [
+  digestRegularControlZodSchema,
+  digestTimedControlZodSchema,
+  digestNoneControlZodSchema,
+]);
 export const digestControlSchema = zodToJsonSchema(digestControlZodSchema, defaultOptions) as JSONSchemaEntity;
 
 export function isDigestRegularControl(data: unknown): data is DigestRegularControlType {

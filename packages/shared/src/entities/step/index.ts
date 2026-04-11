@@ -42,6 +42,7 @@ export enum DigestTypeEnum {
   REGULAR = 'regular',
   BACKOFF = 'backoff',
   TIMED = 'timed',
+  NONE = 'none',
 }
 
 export enum DelayTypeEnum {
@@ -50,6 +51,7 @@ export enum DelayTypeEnum {
   SCHEDULED = 'scheduled',
   TIMED = 'timed',
   DYNAMIC = 'dynamic',
+  NONE = 'none',
 }
 
 export enum MonthlyTypeEnum {
@@ -118,6 +120,10 @@ export interface IDigestTimedMetadata extends IDigestBaseMetadata {
   timed?: ITimedConfig;
 }
 
+export interface IDigestNoneMetadata extends IDigestBaseMetadata {
+  type: DigestTypeEnum.NONE;
+}
+
 export interface IDelayRegularMetadata extends IAmountAndUnit {
   type: DelayTypeEnum.REGULAR;
 }
@@ -138,6 +144,10 @@ export interface IDelayDynamicMetadata {
   dynamicKey: string;
 }
 
+export interface IDelayNoneMetadata {
+  type: DelayTypeEnum.NONE;
+}
+
 export interface IThrottleMetadata {
   type?: 'fixed' | 'dynamic';
   // Fixed throttle fields
@@ -153,8 +163,10 @@ export interface IThrottleMetadata {
 export type IWorkflowStepMetadata =
   | IDigestRegularMetadata
   | IDigestTimedMetadata
+  | IDigestNoneMetadata
   | IDelayRegularMetadata
   | IDelayScheduledMetadata
   | IDelayTimedMetadata
   | IDelayDynamicMetadata
+  | IDelayNoneMetadata
   | IThrottleMetadata;

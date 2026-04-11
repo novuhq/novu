@@ -48,8 +48,23 @@ export const digestTimedOutputSchema = {
   additionalProperties: false,
 } as const satisfies JsonSchema;
 
+export const digestNoneOutputSchema = {
+  type: 'object',
+  properties: {
+    type: {
+      enum: ['none'],
+    },
+    digestKey: {
+      type: 'string',
+    },
+    extendToSchedule: { type: 'boolean' },
+  },
+  required: ['type'],
+  additionalProperties: false,
+} as const satisfies JsonSchema;
+
 export const digestOutputSchema = {
-  oneOf: [digestRegularOutputSchema, digestTimedOutputSchema],
+  oneOf: [digestRegularOutputSchema, digestTimedOutputSchema, digestNoneOutputSchema],
 } as const satisfies JsonSchema;
 
 export const digestResultSchema = {

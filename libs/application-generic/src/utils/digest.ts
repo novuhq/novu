@@ -2,8 +2,15 @@ import { JobEntity } from '@novu/dal';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
+  IDelayDynamicMetadata,
+  IDelayNoneMetadata,
+  IDelayRegularMetadata,
+  IDelayScheduledMetadata,
+  IDelayTimedMetadata,
   IDigestBaseMetadata,
+  IDigestNoneMetadata,
   IDigestRegularMetadata,
+  IDigestTimedMetadata,
   JobStatusEnum,
   StepTypeEnum,
 } from '@novu/shared';
@@ -17,9 +24,36 @@ export const isRegularDelay = (type: DelayTypeEnum) => {
   return type === DelayTypeEnum.REGULAR;
 };
 
+type DelayMetadata =
+  | IDelayRegularMetadata
+  | IDelayTimedMetadata
+  | IDelayScheduledMetadata
+  | IDelayDynamicMetadata
+  | IDelayNoneMetadata
+  | null
+  | undefined;
+
+export function hasDelayScheduleConfig(delayMeta: DelayMetadata): boolean {
+  return Boolean(delayMeta && delayMeta.type !== DelayTypeEnum.NONE);
+}
+
+export function isNoneDelay(delayMeta: DelayMetadata): boolean {
+  return delayMeta?.type === DelayTypeEnum.NONE;
+}
+
 export const isMainDigest = (type: StepTypeEnum | undefined, status: JobStatusEnum) => {
   return type === StepTypeEnum.DIGEST && status === JobStatusEnum.DELAYED;
 };
+
+type DigestMetadata = IDigestBaseMetadata | IDigestTimedMetadata | IDigestNoneMetadata | null | undefined;
+
+export function hasDigestScheduleConfig(digestMeta: DigestMetadata): boolean {
+  return Boolean(digestMeta && digestMeta.type !== DigestTypeEnum.NONE);
+}
+
+export function isNoneDigest(digestMeta: DigestMetadata): boolean {
+  return digestMeta?.type === DigestTypeEnum.NONE;
+}
 
 export function isActionStepType(type: StepTypeEnum) {
   const channels = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE];

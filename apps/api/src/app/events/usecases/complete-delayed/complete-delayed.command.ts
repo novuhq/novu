@@ -3,7 +3,7 @@ import { IsIn, IsOptional, IsString } from 'class-validator';
 import { StepTypeEnum } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class CancelDelayedCommand extends EnvironmentWithUserCommand {
+export class CompleteDelayedCommand extends EnvironmentWithUserCommand {
   @Transform(({ value }) => (value === undefined ? undefined : Array.isArray(value) ? value : [value]))
   @IsString({ each: true })
   @IsOptional()

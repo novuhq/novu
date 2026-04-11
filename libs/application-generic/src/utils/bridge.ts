@@ -9,7 +9,9 @@ import {
 import { DigestTypeEnum } from '@novu/shared';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
-  if (isTimedOutput(outputs)) {
+  if (isNoneOutput(outputs)) {
+    return DigestTypeEnum.NONE;
+  } else if (isTimedOutput(outputs)) {
     return DigestTypeEnum.TIMED;
   } else if (isLookBackDigestOutput(outputs)) {
     return DigestTypeEnum.BACKOFF;
@@ -17,6 +19,10 @@ export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
 
   return DigestTypeEnum.REGULAR;
 }
+
+export const isNoneOutput = (outputs: DigestOutput | DelayOutput | undefined): boolean => {
+  return (outputs as { type?: string })?.type === 'none';
+};
 
 export const isTimedOutput = (
   outputs: DigestOutput | DelayOutput | undefined
@@ -38,7 +44,7 @@ export const isDynamicOutput = (outputs: DelayOutput | undefined): boolean => {
 export const isRegularOutput = (
   outputs: DigestOutput | DelayOutput
 ): outputs is DigestRegularOutput | DelayRegularOutput => {
-  return !isTimedOutput(outputs) && !isLookBackDigestOutput(outputs) && !isDynamicOutput(outputs);
+  return !isNoneOutput(outputs) && !isTimedOutput(outputs) && !isLookBackDigestOutput(outputs) && !isDynamicOutput(outputs);
 };
 
 export const BRIDGE_EXECUTION_ERROR = {
