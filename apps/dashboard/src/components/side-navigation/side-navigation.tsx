@@ -126,6 +126,19 @@ export const SideNavigation = () => {
                 </NavigationLink>
               </Protect>
 
+              <NavigationLink
+                to={
+                  currentEnvironment?.slug
+                    ? buildRoute(ROUTES.AGENTS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                    : undefined
+                }
+              >
+                <RiRobot2Line className="size-4" />
+                <span>Agents</span>
+              </NavigationLink>
+            </NavigationGroup>
+
+            <NavigationGroup label="Content">
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                 <NavigationLink
                   to={
@@ -148,17 +161,6 @@ export const SideNavigation = () => {
               >
                 <RiTranslate2 className="size-4" />
                 <span>Translations</span>
-              </NavigationLink>
-
-              <NavigationLink
-                to={
-                  currentEnvironment?.slug
-                    ? buildRoute(ROUTES.AGENTS, { environmentSlug: currentEnvironment?.slug ?? '' })
-                    : undefined
-                }
-              >
-                <RiRobot2Line className="size-4" />
-                <span>Agents</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Data">
