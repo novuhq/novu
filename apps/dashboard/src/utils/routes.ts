@@ -71,6 +71,7 @@ export const ROUTES = {
   TRANSLATIONS_EDIT: '/env/:environmentSlug/translations/:resourceType/:resourceId/:locale',
   VARIABLES: '/env/:environmentSlug/variables',
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
+  AGENTS: '/env/:environmentSlug/agents',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
