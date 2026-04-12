@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ContextEntity, ContextRepository, EnforceEnvOrOrgIds } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
@@ -9,6 +9,10 @@ export class ListContexts {
   constructor(private contextRepository: ContextRepository) {}
 
   async execute(command: ListContextsCommand) {
+    if (command.before && command.after) {
+      throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
     const filter: FilterQuery<ContextEntity> & EnforceEnvOrOrgIds = {
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,

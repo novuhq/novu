@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { TopicRepository } from '@novu/dal';
 import { DirectionEnum } from '../../../shared/dtos/base-responses';
@@ -12,6 +12,10 @@ export class ListTopicsUseCase {
 
   @InstrumentUsecase()
   async execute(command: ListTopicsCommand): Promise<ListTopicsResponseDto> {
+    if (command.before && command.after) {
+      throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
     const pagination = await this.topicRepository.listTopics({
       after: command.after,
       before: command.before,
