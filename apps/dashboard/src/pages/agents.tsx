@@ -1,4 +1,5 @@
 import { CaretSortIcon } from '@radix-ui/react-icons';
+import { useMutation } from '@tanstack/react-query';
 import type { FormEvent, ReactElement, ReactNode } from 'react';
 import { useCallback, useId, useMemo, useState } from 'react';
 import {
@@ -22,6 +23,7 @@ import {
   SiWhatsapp,
   SiZoom,
 } from 'react-icons/si';
+import { NovuApiError, post } from '@/api/api.client';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -30,6 +32,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Separator } from '@/components/primitives/separator';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { cn } from '@/utils/ui';
@@ -131,6 +134,17 @@ type AgentsEarlyAccessDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+type AgentsEarlyAccessFormErrors = {
+  providers?: string;
+  description?: string;
+};
+
+type AgentsEarlyAccessRequestBody = {
+  howAgentRunsToday: { value: AgentRunValue; label: string };
+  plannedProviders: { id: ProviderId; label: string }[];
+  whatAgentDoes: string;
+};
+
 function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialogProps) {
   const formId = useId();
   const agentRunFieldId = `${formId}-agent-run`;
@@ -141,16 +155,23 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
   const [providerIds, setProviderIds] = useState<ProviderId[]>([]);
   const [description, setDescription] = useState('');
   const [providerMenuOpen, setProviderMenuOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState<AgentsEarlyAccessFormErrors>({});
 
   const providerById = useMemo(() => {
     return new Map(PROVIDER_DEFINITIONS.map((p) => [p.id, p]));
   }, []);
+
+  const earlyAccessMutation = useMutation({
+    mutationFn: (payload: AgentsEarlyAccessRequestBody) =>
+      post<{ success: boolean }>('/support/agents-early-access', { body: payload }),
+  });
 
   const resetForm = useCallback(() => {
     setAgentRun('building');
     setProviderIds([]);
     setDescription('');
     setProviderMenuOpen(false);
+    setFormErrors({});
   }, []);
 
   const handleOpenChange = (next: boolean) => {
@@ -162,6 +183,7 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
   };
 
   const toggleProvider = (id: ProviderId) => {
+    setFormErrors((prev) => ({ ...prev, providers: undefined }));
     setProviderIds((prev) => {
       if (prev.includes(id)) {
         return prev.filter((x) => x !== id);
@@ -175,22 +197,47 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
     setProviderIds((prev) => prev.filter((x) => x !== id));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    const trimmedDescription = description.trim();
+    const nextErrors: AgentsEarlyAccessFormErrors = {};
+
+    if (providerIds.length === 0) {
+      nextErrors.providers = 'Select at least one provider.';
+    }
+
+    if (!trimmedDescription) {
+      nextErrors.description = 'Describe what your agent does.';
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFormErrors(nextErrors);
+
+      return;
+    }
+
+    setFormErrors({});
+
     const agentRunLabel = AGENT_RUN_OPTIONS.find((o) => o.value === agentRun)?.label ?? agentRun;
-    const providers = providerIds.map((id) => ({
-      id,
-      label: providerById.get(id)?.label ?? id,
-    }));
-
-    console.log('agents early access request', {
+    const payload: AgentsEarlyAccessRequestBody = {
       howAgentRunsToday: { value: agentRun, label: agentRunLabel },
-      plannedProviders: providers,
-      whatAgentDoes: description.trim(),
-    });
+      plannedProviders: providerIds.map((id) => ({
+        id,
+        label: providerById.get(id)?.label ?? id,
+      })),
+      whatAgentDoes: trimmedDescription,
+    };
 
-    handleOpenChange(false);
+    try {
+      await earlyAccessMutation.mutateAsync(payload);
+      showSuccessToast('We received your request and will be in touch.', 'Early access');
+      handleOpenChange(false);
+    } catch (err) {
+      const message = err instanceof NovuApiError ? err.message : 'Something went wrong. Please try again.';
+
+      showErrorToast(message, 'Request failed');
+    }
   };
 
   const selectedProvidersOrdered = useMemo(() => {
@@ -250,7 +297,11 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="border-stroke-soft bg-bg-white shadow-xs flex min-h-8 w-full flex-wrap items-center gap-1 rounded-md border px-1 py-1 text-left ring-inset"
+                      className={cn(
+                        'border-stroke-soft bg-bg-white shadow-xs flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border px-1 py-1 text-left ring-inset',
+                        formErrors.providers && 'border-destructive ring-error-base ring-1'
+                      )}
+                      aria-invalid={formErrors.providers ? true : undefined}
                       aria-labelledby={providersLabelId}
                     >
                       {selectedProvidersOrdered.length === 0 && (
@@ -318,6 +369,11 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
                     </div>
                   </PopoverContent>
                 </Popover>
+                {formErrors.providers ? (
+                  <p className="text-error-base text-label-xs" role="alert">
+                    {formErrors.providers}
+                  </p>
+                ) : null}
               </div>
 
               <Separator variant="line" />
@@ -331,16 +387,33 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
                   placeholder="A sentence or two is good."
                   maxLength={200}
                   showCounter
+                  hasError={Boolean(formErrors.description)}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setFormErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
                   className="min-h-[88px]"
+                  aria-invalid={formErrors.description ? true : undefined}
                 />
+                {formErrors.description ? (
+                  <p className="text-error-base text-label-xs" role="alert">
+                    {formErrors.description}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
 
           <div className="flex justify-end p-3">
-            <Button variant="secondary" mode="gradient" size="xs" trailingIcon={RiArrowRightSLine} type="submit">
+            <Button
+              variant="secondary"
+              mode="gradient"
+              size="xs"
+              trailingIcon={RiArrowRightSLine}
+              type="submit"
+              isLoading={earlyAccessMutation.isPending}
+            >
               Request access
             </Button>
           </div>
