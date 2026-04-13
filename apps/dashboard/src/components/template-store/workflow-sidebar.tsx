@@ -220,7 +220,7 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect }: Workflow
     },
     {
       key: 'code-based',
-      icon: <Code2 className="h-3 w-3 text-gray-700" />,
+      icon: <Code2 className="h-3 w-3 text-feature" />,
       label: 'Code-based workflow',
       hasExternalLink: true,
       bgColor: 'bg-blue-50',

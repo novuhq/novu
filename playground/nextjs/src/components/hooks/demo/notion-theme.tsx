@@ -1,19 +1,19 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
 import { useCounts, useNotifications } from '@novu/nextjs/hooks';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import { FiChevronDown, FiHome, FiInbox, FiSearch, FiSettings } from 'react-icons/fi';
-import { BsFillFileTextFill, BsTrash } from 'react-icons/bs';
+import { useMemo, useRef } from 'react';
 import { AiOutlineCalendar } from 'react-icons/ai';
+import { BsFillFileTextFill, BsTrash } from 'react-icons/bs';
 import { FaUserFriends } from 'react-icons/fa';
+import { FiChevronDown, FiHome, FiInbox, FiSearch, FiSettings } from 'react-icons/fi';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import { EmptyIcon, NotionIcon } from '@/components/hooks/icons';
-import { StatusDropdown } from './status-dropdown';
+import { InboxItem } from './inbox-item';
 import { MoreActionsDropdown } from './more-actions-dropdown';
 import { Show } from './show';
-import { InboxItem } from './inbox-item';
 import { SidebarItem } from './sidebar-item';
 import { useStatus } from './status-context';
+import { StatusDropdown } from './status-dropdown';
 
 const EmptyNotificationList = () => {
   return (

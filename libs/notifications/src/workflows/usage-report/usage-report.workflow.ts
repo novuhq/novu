@@ -16,13 +16,6 @@ export const usageReportWorkflow = workflow(
       }
     );
 
-    await step.throttle('throttle', async () => ({
-      type: 'fixed',
-      amount: 7,
-      unit: 'days',
-      threshold: 1,
-    }));
-
     await step.email(
       'email',
       async (controls) => {

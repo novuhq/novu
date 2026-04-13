@@ -1,5 +1,6 @@
 import { ChatStatus, UIMessage } from 'ai';
-import { FormEvent, useMemo } from 'react';
+import { FC, FormEvent, SVGProps, useMemo } from 'react';
+import { IconType } from 'react-icons';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
 import { Message } from '../ai-elements/message';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../ai-elements/prompt-input';
 import { Broom } from '../icons/broom';
 import { BroomSparkle } from '../icons/broom-sparkle';
+import { Badge, BadgeIcon } from '../primitives/badge';
 import { Skeleton } from '../primitives/skeleton';
 import { AssistantMessage } from './assistant-message';
 import { hasKnownMessageParts } from './message-utils';
@@ -57,8 +59,51 @@ export const ChatBodySkeleton = () => {
   );
 };
 
+const ChatBodyNoHistory = ({
+  newChatSuggestions,
+  isGenerating,
+  onSuggestionClick,
+}: {
+  newChatSuggestions?: { label: string; icon: IconType | FC<SVGProps<SVGSVGElement>> }[];
+  isGenerating: boolean;
+  onSuggestionClick: (suggestion: string) => void;
+}) => {
+  return (
+    <div className="flex flex-col justify-center items-start h-full p-5">
+      <div className="flex flex-col gap-1 px-1 py-5">
+        <div className="flex flex-col gap-3">
+          <BroomSparkle className="size-5" />
+          <span className="text-label-md font-normal bg-linear-to-b from-[hsla(0,0%,57%,1)] to-[hsla(0,0%,39%,1)] bg-clip-text text-transparent">
+            Novu Copilot
+          </span>
+        </div>
+        <span className="text-label-xs text-text-soft">
+          Suggests improvements, fills gaps, and applies best practices as you build.{' '}
+        </span>
+      </div>
+      <div className="flex flex-row gap-2 flex-wrap">
+        {newChatSuggestions?.map((suggestion) => (
+          <Badge
+            key={suggestion.label}
+            variant="stroke"
+            color="gray"
+            size="md"
+            className="cursor-pointer px-2.5 py-1.5 text-label-xs h-auto ring-stroke-soft"
+            disabled={isGenerating}
+            onClick={() => onSuggestionClick(suggestion.label)}
+          >
+            <BadgeIcon as={suggestion.icon} className="size-4 fill-current" />
+            {suggestion.label}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const ChatBody = ({
   hasNoChatHistory,
+  newChatSuggestions,
   inputText,
   onInputChange,
   isGenerating,
@@ -75,8 +120,10 @@ export const ChatBody = ({
   onDiscard,
   onTryAgain,
   onRevertMessage,
+  onSuggestionClick,
 }: {
   hasNoChatHistory: boolean;
+  newChatSuggestions?: { label: string; icon: IconType | FC<SVGProps<SVGSVGElement>> }[];
   inputText: string;
   onInputChange: (text: string) => void;
   isGenerating: boolean;
@@ -93,6 +140,7 @@ export const ChatBody = ({
   onDiscard: (messageId: string) => void;
   onTryAgain: (messageId: string) => void;
   onRevertMessage: (messageId: string) => void;
+  onSuggestionClick: (suggestion: string) => void;
 }) => {
   const hasLastUserMessage = messages.length === 0 || messages[messages.length - 1].role === 'user';
   const lastMessage = messages[messages.length - 1];
@@ -119,19 +167,11 @@ export const ChatBody = ({
     <>
       <Conversation className="min-h-0 [&>div:first-child]:overflow-x-hidden">
         {hasNoChatHistory && messages.length === 0 ? (
-          <div className="flex justify-start items-center h-full p-5">
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-col gap-3">
-                <BroomSparkle className="size-5" />
-                <span className="text-label-md font-normal bg-linear-to-b from-[hsla(0,0%,57%,1)] to-[hsla(0,0%,39%,1)] bg-clip-text text-transparent">
-                  Novu Copilot
-                </span>
-              </div>
-              <span className="text-label-xs text-text-soft">
-                Suggests improvements, fills gaps, and applies best practices as you build.{' '}
-              </span>
-            </div>
-          </div>
+          <ChatBodyNoHistory
+            newChatSuggestions={newChatSuggestions}
+            isGenerating={isGenerating}
+            onSuggestionClick={onSuggestionClick}
+          />
         ) : (
           <ConversationContent
             className={chatConversationContentClassName}

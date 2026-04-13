@@ -38,6 +38,7 @@ import {
   InboxCountTypeEnum,
   ProvidersIdEnum,
   PushProviderIdEnum,
+  safeJsonStringify,
   TriggerOverrides,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -70,6 +71,21 @@ export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
 
 export function isSubscriberError(errorMessage: string): boolean {
   return SUBSCRIBER_ERROR_PATTERNS.some((pattern) => errorMessage.includes(pattern));
+}
+
+/** Safe for Axios / Node errors that may contain circular socket references. */
+export function serializePushProviderError(error: unknown): string {
+  const serialized = safeJsonStringify(error);
+
+  if (serialized !== '{}') {
+    return serialized;
+  }
+
+  if (error instanceof Error) {
+    return JSON.stringify({ message: error.message, name: error.name });
+  }
+
+  return JSON.stringify({ message: String(error ?? '') });
 }
 
 interface IPushProviderOverride {
@@ -600,6 +616,7 @@ export class SendMessagePush extends SendMessageBase {
         title: (bridgeOutputs as PushOutput)?.subject || title,
         content: (bridgeOutputs as PushOutput)?.body || content,
         payload: { ...command.payload, __nvMessageId: message._id },
+        messageId: message._id,
         overrides,
         subscriber,
         step,
@@ -642,7 +659,7 @@ export class SendMessagePush extends SendMessageBase {
       Logger.log(
         {
           jobId: command.jobId,
-          errorContent: JSON.stringify(e) || e?.message,
+          errorContent: serializePushProviderError(e),
           code: e?.code,
           message: e?.message,
           details: e?.details,
@@ -660,7 +677,7 @@ export class SendMessagePush extends SendMessageBase {
         e
       );
 
-      const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
+      const raw = serializePushProviderError(e);
 
       try {
         await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {

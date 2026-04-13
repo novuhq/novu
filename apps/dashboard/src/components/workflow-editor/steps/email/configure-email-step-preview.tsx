@@ -30,11 +30,7 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
       <div className="flex flex-col gap-1 py-1">
         <EmailPreviewHeader className="px-2 text-sm" previewFrom={previewFrom} />
         <Separator className="before:bg-neutral-alpha-100" />
-        <div
-          className="relative z-10 line-clamp-3 space-y-1 px-2 pt-2 text-xs"
-        >
-          {children}
-        </div>
+        <div className="relative z-10 line-clamp-3 space-y-1 px-2 pt-2 text-xs">{children}</div>
       </div>
     </div>
   );

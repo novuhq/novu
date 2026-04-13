@@ -7,6 +7,8 @@ const ROOT_DIR = resolve(__dirname, '..');
 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
 const BETTER_AUTH_URL = `${API_URL}/v1/better-auth`;
+const BETTER_AUTH_ORIGIN =
+  process.env.SEED_BETTER_AUTH_ORIGIN || process.env.DASHBOARD_URL || 'http://localhost:4201';
 
 const SEED_EMAIL = process.env.SEED_USER_EMAIL || 'agent@novu.co';
 const SEED_PASSWORD = process.env.SEED_USER_PASSWORD || 'Agent123!@#';
@@ -114,7 +116,7 @@ async function signUp() {
 
   const res = await fetch(`${BETTER_AUTH_URL}/sign-up/email`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: betterAuthRequestHeaders(),
     body: JSON.stringify({
       email: SEED_EMAIL,
       password: SEED_PASSWORD,
@@ -144,7 +146,7 @@ async function signUp() {
 async function signIn() {
   const res = await fetch(`${BETTER_AUTH_URL}/sign-in/email`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: betterAuthRequestHeaders(),
     body: JSON.stringify({
       email: SEED_EMAIL,
       password: SEED_PASSWORD,
@@ -162,11 +164,18 @@ async function signIn() {
   return { token, user: body.user };
 }
 
-function authHeaders(token) {
+function betterAuthRequestHeaders(extra = {}) {
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    Origin: BETTER_AUTH_ORIGIN,
+    ...extra,
   };
+}
+
+function authHeaders(token) {
+  return betterAuthRequestHeaders({
+    Authorization: `Bearer ${token}`,
+  });
 }
 
 async function listOrganizations(token) {

@@ -9,7 +9,7 @@ import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from '.
  * A custom framework name is specified for the Novu-managed Bridge endpoint
  * to provide a clear distinction between Novu-managed and self-managed Bridge endpoints.
  */
-export const frameworkName = 'novu-nest';
+const frameworkName = 'novu-nest';
 
 /**
  * This class overrides the default NestJS Novu Bridge Client to allow for dynamic construction of

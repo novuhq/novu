@@ -127,7 +127,7 @@ export const UpsertVariableForm = ({
     try {
       if (isEditing) {
         await updateEnvironmentVariable({
-          variableId: variable._id,
+          variableKey: variable.key,
           key: data.key.trim(),
           values,
         });

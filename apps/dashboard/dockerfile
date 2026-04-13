@@ -1,11 +1,10 @@
-FROM node:22.22.1-alpine3.22 AS builder
-RUN apk add g++ make py3-pip
+FROM node:22.22-alpine3.23 AS builder
+RUN apk add --no-cache g++ make py3-pip bash
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache bash
-RUN npm install -g pnpm@10.33.0 --loglevel notice
+RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
 
 COPY .npmrc .
 COPY package.json .
@@ -23,21 +22,35 @@ COPY pnpm-lock.yaml .
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
   pnpm install --frozen-lockfile --unsafe-perm
 
+ARG VITE_EE_AUTH_PROVIDER
+ARG VITE_SELF_HOSTED=true
+ARG VITE_NOVU_ENTERPRISE=false
+
+ENV VITE_EE_AUTH_PROVIDER=${VITE_EE_AUTH_PROVIDER}
+ENV VITE_SELF_HOSTED=${VITE_SELF_HOSTED}
+ENV VITE_NOVU_ENTERPRISE=${VITE_NOVU_ENTERPRISE}
+
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
-FROM node:22.22.1-alpine3.22
+FROM node:22.22-alpine3.23 AS prod
 
-RUN npm install -g http-server --loglevel notice
+ENV CI=true
+
+RUN apk upgrade --no-cache && \
+    # Manually upgrade libcrypto3/libssl3 from edge/main to patch CVE-2025-15467
+    # until the fix is backported to the alpine3.23 stable repo
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 && \
+    npm --no-update-notifier --no-fund --global install http-server && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER 1000
 WORKDIR /app
 
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/dist /app/dist
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/package.json /app/package.json
-COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/docker-entrypoint.sh /app/docker-entrypoint.sh  
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/docker-entrypoint.sh /app/docker-entrypoint.sh
 
 RUN chmod +x /app/docker-entrypoint.sh
 ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
-# Expose the port the app runs on
 EXPOSE 4000
 CMD [ "http-server", "dist", "-p", "4000", "-d", "false", "--proxy", "http://localhost:4000?" ]

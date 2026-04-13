@@ -52,6 +52,12 @@ export const getEnvironmentVariables = async ({
   return data;
 };
 
+export const getEnvironmentVariable = async (variableKey: string): Promise<EnvironmentVariableResponseDto> => {
+  const { data } = await get<{ data: EnvironmentVariableResponseDto }>(`/environment-variables/${variableKey}`);
+
+  return data;
+};
+
 export const createEnvironmentVariable = async (
   body: CreateEnvironmentVariableDto
 ): Promise<EnvironmentVariableResponseDto> => {
@@ -61,27 +67,29 @@ export const createEnvironmentVariable = async (
 };
 
 export const updateEnvironmentVariable = async (
-  variableId: string,
+  variableKey: string,
   body: UpdateEnvironmentVariableDto
 ): Promise<EnvironmentVariableResponseDto> => {
-  const { data } = await patch<{ data: EnvironmentVariableResponseDto }>(`/environment-variables/${variableId}`, {
+  const { data } = await patch<{ data: EnvironmentVariableResponseDto }>(`/environment-variables/${variableKey}`, {
     body,
   });
 
   return data;
 };
 
-export const deleteEnvironmentVariable = async (variableId: string): Promise<void> => {
-  await del(`/environment-variables/${variableId}`);
+export const deleteEnvironmentVariable = async (variableKey: string): Promise<void> => {
+  await del(`/environment-variables/${variableKey}`);
 };
 
 export type GetEnvironmentVariableUsageResponse = {
   workflows: { name: string; workflowId: string }[];
 };
 
-export const getEnvironmentVariableUsage = async (variableId: string): Promise<GetEnvironmentVariableUsageResponse> => {
+export const getEnvironmentVariableUsage = async (
+  variableKey: string
+): Promise<GetEnvironmentVariableUsageResponse> => {
   const { data } = await get<{ data: GetEnvironmentVariableUsageResponse }>(
-    `/environment-variables/${variableId}/usage`
+    `/environment-variables/${variableKey}/usage`
   );
 
   return data;

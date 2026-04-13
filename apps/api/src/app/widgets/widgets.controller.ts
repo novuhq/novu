@@ -345,7 +345,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: { feedId?: string | string[] }
   ) {
-    const feedIds = this.toArray(body.feedId);
+    const feedIds = this.toArray(body?.feedId);
 
     return await this.markAllMessagesAsUsecase.execute(
       MarkAllMessagesAsCommand.create({
@@ -367,7 +367,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: { feedId?: string | string[] }
   ): Promise<number> {
-    const feedIds = this.toArray(body.feedId);
+    const feedIds = this.toArray(body?.feedId);
 
     return await this.markAllMessagesAsUsecase.execute(
       MarkAllMessagesAsCommand.create({

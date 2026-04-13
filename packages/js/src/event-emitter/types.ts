@@ -19,7 +19,6 @@ import { Preference } from '../preferences/preference';
 import { Schedule } from '../preferences/schedule';
 import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
-import type { TagsFilter } from '../types';
 import type { TopicSubscription } from '../subscriptions/subscription';
 import { SubscriptionPreference } from '../subscriptions/subscription-preference';
 import type {
@@ -30,6 +29,7 @@ import type {
   UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from '../subscriptions/types';
+import type { TagsFilter } from '../types';
 import { Session, WebSocketEvent } from '../types';
 
 type NovuPendingEvent<A, D = undefined> = {

@@ -5,30 +5,34 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   ActivityWorkflowRunsListQueryData,
   buildActivityWorkflowRunsListQuery,
   prefetchActivityWorkflowRunsList,
   queryKeyActivityWorkflowRunsList,
-} from './activityWorkflowRunsList.core.js';
+} from "./activityWorkflowRunsList.core.js";
 export {
   type ActivityWorkflowRunsListQueryData,
   buildActivityWorkflowRunsListQuery,
@@ -54,11 +58,21 @@ export type ActivityWorkflowRunsListQueryError =
  */
 export function useActivityWorkflowRunsList(
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: QueryHookOptions<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError>
-): UseQueryResult<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError> {
+  options?: QueryHookOptions<
+    ActivityWorkflowRunsListQueryData,
+    ActivityWorkflowRunsListQueryError
+  >,
+): UseQueryResult<
+  ActivityWorkflowRunsListQueryData,
+  ActivityWorkflowRunsListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildActivityWorkflowRunsListQuery(client, request, options),
+    ...buildActivityWorkflowRunsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -71,11 +85,21 @@ export function useActivityWorkflowRunsList(
  */
 export function useActivityWorkflowRunsListSuspense(
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: SuspenseQueryHookOptions<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError>
-): UseSuspenseQueryResult<ActivityWorkflowRunsListQueryData, ActivityWorkflowRunsListQueryError> {
+  options?: SuspenseQueryHookOptions<
+    ActivityWorkflowRunsListQueryData,
+    ActivityWorkflowRunsListQueryError
+  >,
+): UseSuspenseQueryResult<
+  ActivityWorkflowRunsListQueryData,
+  ActivityWorkflowRunsListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildActivityWorkflowRunsListQuery(client, request, options),
+    ...buildActivityWorkflowRunsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -100,7 +124,7 @@ export function setActivityWorkflowRunsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ActivityWorkflowRunsListQueryData
+  data: ActivityWorkflowRunsListQueryData,
 ): ActivityWorkflowRunsListQueryData | undefined {
   const key = queryKeyActivityWorkflowRunsList(...queryKeyBase);
 
@@ -110,39 +134,37 @@ export function setActivityWorkflowRunsListData(
 export function invalidateActivityWorkflowRunsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        limit: number | undefined;
-        cursor?: string | undefined;
-        workflowIds?: Array<string> | undefined;
-        subscriberIds?: Array<string> | undefined;
-        transactionIds?: Array<string> | undefined;
-        statuses?: Array<operations.QueryParamStatuses> | undefined;
-        channels?: Array<string> | undefined;
-        topicKey?: string | undefined;
-        subscriptionId?: string | undefined;
-        createdGte?: string | undefined;
-        createdLte?: string | undefined;
-        severity?: Array<operations.QueryParamSeverity> | undefined;
-        contextKeys?: Array<string> | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      limit: number | undefined;
+      cursor?: string | undefined;
+      workflowIds?: Array<string> | undefined;
+      subscriberIds?: Array<string> | undefined;
+      transactionIds?: Array<string> | undefined;
+      statuses?: Array<operations.QueryParamStatuses> | undefined;
+      channels?: Array<string> | undefined;
+      topicKey?: string | undefined;
+      subscriptionId?: string | undefined;
+      createdGte?: string | undefined;
+      createdLte?: string | undefined;
+      severity?: Array<operations.QueryParamSeverity> | undefined;
+      contextKeys?: Array<string> | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'WorkflowRuns', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "WorkflowRuns", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllActivityWorkflowRunsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'WorkflowRuns', 'list'],
+    queryKey: ["@novu/api", "WorkflowRuns", "list"],
   });
 }

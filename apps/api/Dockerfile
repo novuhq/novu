@@ -1,4 +1,4 @@
-FROM node:22.22.1-alpine3.22 AS dev_base
+FROM node:22.22-alpine3.23 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -46,14 +46,20 @@ WORKDIR /usr/src/app
 RUN pnpm recursive exec -- rm -rf ./src
 
 # ------- PRODUCTION BUILD ----------
-FROM node:22.22.1-alpine3.22 AS prod
+FROM node:22.22-alpine3.23 AS prod
 
 ARG PACKAGE_PATH
 
 ENV CI=true
 ENV NX_DAEMON=false
 
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0
+RUN apk upgrade --no-cache && \
+    # Manually upgrade libcrypto3/libssl3 from edge/main to patch CVE-2025-15467
+    # until the fix is backported to the alpine3.23 stable repo
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 && \
+    npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0 && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/lib/node_modules/pnpm /usr/local/bin/pnpm /usr/local/bin/pnpx
 
 # Set non-root user
 USER 1000

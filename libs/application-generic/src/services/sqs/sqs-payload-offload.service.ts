@@ -69,11 +69,7 @@ export class SqsPayloadOffloadService {
       })
     );
 
-    Logger.log(
-      { topic, messageId, groupId, sizeBytes, key },
-      'Large SQS payload offloaded to S3',
-      LOG_CONTEXT
-    );
+    Logger.log({ topic, messageId, groupId, sizeBytes, key }, 'Large SQS payload offloaded to S3', LOG_CONTEXT);
 
     const reference: ISqsLargePayloadReference = {
       [SQS_LARGE_PAYLOAD_MARKER]: { bucket: this.bucket, key },
@@ -100,9 +96,7 @@ export class SqsPayloadOffloadService {
 
     const { bucket, key } = (parsed as ISqsLargePayloadReference)[SQS_LARGE_PAYLOAD_MARKER];
 
-    const response = await this.s3Client.send(
-      new GetObjectCommand({ Bucket: bucket, Key: key })
-    );
+    const response = await this.s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
 
     const resolved = await this.streamToString(response.Body as Readable);
 
