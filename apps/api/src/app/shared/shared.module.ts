@@ -30,6 +30,8 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChangeRepository,
   CommunityMemberRepository,
   CommunityOrganizationRepository,
@@ -111,6 +113,8 @@ const DAL_MODELS = [
   ControlValuesRepository,
   PreferencesRepository,
   EnvironmentVariableRepository,
+  AgentRepository,
+  AgentIntegrationRepository,
 ];
 
 const dalService = {
