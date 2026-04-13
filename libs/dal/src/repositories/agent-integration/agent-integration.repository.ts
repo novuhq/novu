@@ -24,7 +24,7 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     organizationId: string;
     environmentId: string;
     agentIds: string[];
-  }): Promise<Pick<AgentIntegrationEntity, '_agentId' | '_integrationId'>[]> {
+  }) {
     if (agentIds.length === 0) {
       return [];
     }

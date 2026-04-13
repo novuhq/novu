@@ -1,10 +1,6 @@
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 
-import type {
-  AgentIntegrationResponseDto,
-  AgentIntegrationSummaryDto,
-  AgentResponseDto,
-} from '../dtos';
+import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
 export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
   return {

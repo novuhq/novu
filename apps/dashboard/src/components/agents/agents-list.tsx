@@ -2,7 +2,15 @@ import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiRobot2Line } from 'react-icons/ri';
-import { type AgentResponse, type CreateAgentBody, createAgent, deleteAgent, listAgents } from '@/api/agents';
+import {
+  AGENTS_LIST_QUERY_KEY,
+  type AgentResponse,
+  type CreateAgentBody,
+  createAgent,
+  deleteAgent,
+  getAgentsListQueryKey,
+  listAgents,
+} from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
@@ -13,7 +21,6 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { QueryKeys } from '@/utils/query-keys';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
 
@@ -49,7 +56,12 @@ export function AgentsList() {
   }, [search]);
 
   const listQuery = useQuery({
-    queryKey: [QueryKeys.fetchAgents, currentEnvironment?._id, { after, before, limit, identifier: debouncedSearch }],
+    queryKey: getAgentsListQueryKey(currentEnvironment?._id, {
+      after,
+      before,
+      limit,
+      identifier: debouncedSearch,
+    }),
     queryFn: () =>
       listAgents({
         environment: requireEnvironment(currentEnvironment, 'No environment selected'),
@@ -68,7 +80,7 @@ export function AgentsList() {
     mutationFn: (body: CreateAgentBody) =>
       createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchAgents] });
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
     },
     onError: (err: Error) => {
@@ -82,9 +94,37 @@ export function AgentsList() {
     mutationFn: (identifier: string) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchAgents] });
-      showSuccessToast('Agent deleted', 'The agent was removed.');
       setAgentToDelete(null);
+      showSuccessToast('Agent deleted', 'The agent was removed.');
+
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const listKey = getAgentsListQueryKey(environment._id, {
+        after,
+        before,
+        limit,
+        identifier: debouncedSearch,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+
+      const refreshed = await queryClient.fetchQuery({
+        queryKey: listKey,
+        queryFn: () =>
+          listAgents({
+            environment,
+            limit,
+            after,
+            before,
+            orderBy: 'updatedAt',
+            orderDirection: DirectionEnum.DESC,
+            identifier: debouncedSearch || undefined,
+          }),
+      });
+
+      if (refreshed.data.length === 0 && refreshed.previous) {
+        setBefore(refreshed.previous);
+        setAfter(undefined);
+      }
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not delete agent.';

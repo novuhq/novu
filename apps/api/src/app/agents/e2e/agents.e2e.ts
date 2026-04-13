@@ -68,6 +68,11 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(res.status).to.equal(422);
+    const message = res.body?.message;
+    const text = Array.isArray(message) ? message.join(' ') : String(message ?? '');
+
+    expect(text.toLowerCase()).to.contain('identifier');
+    expect(text.toLowerCase()).to.match(/slug|valid/);
   });
 
   it('should return 404 when agent identifier does not exist', async () => {

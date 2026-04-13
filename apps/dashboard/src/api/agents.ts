@@ -1,6 +1,16 @@
 import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
 import { del, get, post } from '@/api/api.client';
 
+/** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
+export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
+
+export function getAgentsListQueryKey(
+  environmentId: string | undefined,
+  params: { after?: string; before?: string; limit: number; identifier: string }
+) {
+  return [AGENTS_LIST_QUERY_KEY, environmentId, params] as const;
+}
+
 export type AgentIntegrationSummary = {
   integrationId: string;
   providerId: string;

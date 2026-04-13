@@ -66,9 +66,11 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
           return (
             <Tooltip key={integration.integrationId}>
               <TooltipTrigger asChild>
-                <div
+                <button
+                  type="button"
+                  aria-label={integration.name}
                   className={cn(
-                    'border-static-white bg-bg-white shadow-xs relative box-border flex size-6 shrink-0 items-center justify-center rounded-full border border-solid p-1',
+                    'border-static-white bg-bg-white shadow-xs relative box-border flex size-6 shrink-0 cursor-default items-center justify-center rounded-full border border-solid p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-sub',
                     index > 0 && '-ml-2'
                   )}
                   style={{ zIndex: 10 + index }}
@@ -81,7 +83,7 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
                       !integration.active && 'opacity-60 grayscale'
                     )}
                   />
-                </div>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="top">{integration.name}</TooltipContent>
             </Tooltip>
@@ -137,7 +139,9 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
           <TableHead className="h-11 px-3 py-2.5">Agent</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Integrations</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Last updated</TableHead>
-          <TableHead className="h-11 w-[52px] px-3 py-2.5" />
+          <TableHead className="h-11 w-[52px] px-3 py-2.5">
+            <span className="sr-only">Actions</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       {!isLoading && (
