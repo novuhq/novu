@@ -62,6 +62,7 @@ import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
+import { AgentsPage } from './pages/agents';
 import { UpsertVariablePage } from './pages/upsert-variable';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
@@ -348,6 +349,10 @@ const router = createBrowserRouter([
                     ),
                   },
                 ],
+              },
+              {
+                path: ROUTES.AGENTS,
+                element: <AgentsPage />,
               },
               {
                 path: ROUTES.API_KEYS,
