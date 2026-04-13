@@ -24,30 +24,17 @@ export class RemoveAgentIntegration {
       throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
     }
 
-    const link = await this.agentIntegrationRepository.findOne(
-      {
-        _id: command.agentIntegrationId,
-        _agentId: agent._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
+    const deleted = await this.agentIntegrationRepository.findOneAndDelete({
+      _id: command.agentIntegrationId,
+      _agentId: agent._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
 
-    if (!link) {
+    if (!deleted) {
       throw new NotFoundException(
         `Agent-integration link "${command.agentIntegrationId}" was not found for this agent.`
       );
     }
-
-    await this.agentIntegrationRepository.delete(
-      {
-        _id: command.agentIntegrationId,
-        _agentId: agent._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      {}
-    );
   }
 }
