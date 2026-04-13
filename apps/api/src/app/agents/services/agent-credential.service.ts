@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, FeatureFlagsService } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -17,12 +17,12 @@ export interface ResolvedPlatformConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
+  integrationIdentifier: string;
 }
 
 @Injectable()
 export class AgentCredentialService {
   constructor(
-    private readonly logger: PinoLogger,
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
@@ -89,6 +89,6 @@ export class AgentCredentialService {
       connectionAccessToken = connection.auth.accessToken;
     }
 
-    return { platform, credentials, connectionAccessToken, environmentId, organizationId };
+    return { platform, credentials, connectionAccessToken, environmentId, organizationId, integrationIdentifier };
   }
 }

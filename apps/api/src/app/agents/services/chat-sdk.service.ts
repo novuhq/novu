@@ -7,6 +7,7 @@ import { LRUCache } from 'lru-cache';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
+import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 
 /**
  * ICredentials field mapping per platform adapter:
@@ -40,7 +41,8 @@ export class ChatSdkService implements OnModuleDestroy {
 
   constructor(
     private readonly logger: PinoLogger,
-    private readonly agentCredentialService: AgentCredentialService
+    private readonly agentCredentialService: AgentCredentialService,
+    private readonly subscriberResolver: AgentSubscriberResolver
   ) {
     this.instances = new LRUCache<string, Chat>({
       max: MAX_CACHED_INSTANCES,
@@ -104,7 +106,7 @@ export class ChatSdkService implements OnModuleDestroy {
     if (existing) return existing;
 
     const chat = await this.createChatInstance(instanceKey, platform, config);
-    this.registerEventHandlers(agentId, chat);
+    this.registerEventHandlers(agentId, chat, config);
     this.instances.set(instanceKey, chat);
 
     return chat;
@@ -189,16 +191,39 @@ export class ChatSdkService implements OnModuleDestroy {
     }
   }
 
-  private registerEventHandlers(agentId: string, chat: Chat) {
-    chat.onNewMention(async (thread: Thread, _message: Message) => {
-      await thread.subscribe();
-      await thread.startTyping();
-      await thread.post(`Hello! I'm agent \`${agentId}\`. I'm now listening to this thread.`);
+  private registerEventHandlers(agentId: string, chat: Chat, config: ResolvedPlatformConfig) {
+    chat.onNewMention(async (thread: Thread, message: Message) => {
+      try {
+        await thread.subscribe();
+
+        const subscriberId = await this.resolveSubscriber(config, message.author.userId);
+
+        await thread.startTyping();
+        await thread.post(`Hello! I'm agent \`${agentId}\`. I'm now listening to this thread.`);
+      } catch (err) {
+        this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
+      }
     });
 
     chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
-      await thread.startTyping();
-      await thread.post(`Echo: ${message.text}`);
+      try {
+        const subscriberId = await this.resolveSubscriber(config, message.author.userId);
+
+        await thread.startTyping();
+        await thread.post(`Echo: ${message.text}`);
+      } catch (err) {
+        this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
+      }
+    });
+  }
+
+  private async resolveSubscriber(config: ResolvedPlatformConfig, platformUserId: string): Promise<string | null> {
+    return this.subscriberResolver.resolve({
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      platform: config.platform,
+      platformUserId,
+      integrationIdentifier: config.integrationIdentifier,
     });
   }
 }
