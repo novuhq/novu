@@ -13,8 +13,8 @@ export class AgentConversationEnabledGuard implements CanActivate {
     const isEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED,
       defaultValue: false,
-      ...(user?.organizationId ? { organization: { _id: user.organizationId } } : {}),
-      ...(user?.environmentId ? { environment: { _id: user.environmentId } } : {}),
+      organization: { _id: user?.organizationId ?? '' },
+      environment: { _id: user?.environmentId ?? '' },
     });
 
     if (!isEnabled) {
