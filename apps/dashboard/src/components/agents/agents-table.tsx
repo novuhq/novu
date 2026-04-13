@@ -1,6 +1,7 @@
-import { PermissionsEnum } from '@novu/shared';
+import { providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CompactButton } from '@/components/primitives/button-compact';
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ import {
   TableRow,
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
@@ -41,6 +43,58 @@ type AgentsTableProps = {
   };
 };
 
+const MAX_VISIBLE_INTEGRATION_ICONS = 3;
+
+function getProviderDisplayName(providerId: string): string {
+  return novuProviders.find((p) => p.id === providerId)?.displayName ?? providerId;
+}
+
+function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
+  const integrations = agent.integrations ?? [];
+
+  if (integrations.length === 0) {
+    return <span className="text-label-sm text-text-sub italic">—</span>;
+  }
+
+  const visible = integrations.slice(0, MAX_VISIBLE_INTEGRATION_ICONS);
+  const overflowCount = integrations.length - visible.length;
+
+  return (
+    <div className="flex min-h-[41px] items-center">
+      <div className="flex items-center">
+        {visible.map((integration, index) => {
+          return (
+            <Tooltip key={integration.integrationId}>
+              <TooltipTrigger asChild>
+                <div
+                  className={cn(
+                    'border-static-white bg-bg-white shadow-xs relative box-border flex size-6 shrink-0 items-center justify-center rounded-full border border-solid p-1',
+                    index > 0 && '-ml-2'
+                  )}
+                  style={{ zIndex: 10 + index }}
+                >
+                  <ProviderIcon
+                    providerId={integration.providerId}
+                    providerDisplayName={getProviderDisplayName(integration.providerId)}
+                    className={cn(
+                      'pointer-events-none block h-4 w-4 max-h-4 max-w-4 shrink-0',
+                      !integration.active && 'opacity-60 grayscale'
+                    )}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">{integration.name}</TooltipContent>
+            </Tooltip>
+          );
+        })}
+        {overflowCount > 0 ? (
+          <span className="text-text-soft text-label-xs ml-1.5 shrink-0 tabular-nums">+{overflowCount}</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function AgentsTableSkeletonRow() {
   return (
     <TableRow>
@@ -54,7 +108,13 @@ function AgentsTableSkeletonRow() {
         </div>
       </TableCell>
       <TableCell className="p-3">
-        <Skeleton className="h-4 max-w-md rounded-md" />
+        <div className="flex min-h-[41px] items-center">
+          <div className="flex items-center">
+            <Skeleton className="border-static-white bg-bg-white size-6 shrink-0 rounded-full border border-solid shadow-xs" />
+            <Skeleton className="border-static-white bg-bg-white size-6 shrink-0 -ml-2 rounded-full border border-solid shadow-xs" />
+            <Skeleton className="border-static-white bg-bg-white size-6 shrink-0 -ml-2 rounded-full border border-solid shadow-xs" />
+          </div>
+        </div>
       </TableCell>
       <TableCell className="p-3">
         <Skeleton className="h-5 w-[9ch] rounded-full" />
@@ -75,7 +135,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       <TableHeader>
         <TableRow>
           <TableHead className="h-11 px-3 py-2.5">Agent</TableHead>
-          <TableHead className="h-11 px-3 py-2.5">Description</TableHead>
+          <TableHead className="h-11 px-3 py-2.5">Integrations</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Last updated</TableHead>
           <TableHead className="h-11 w-[52px] px-3 py-2.5" />
         </TableRow>
@@ -101,11 +161,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                   </div>
                 </TableCell>
                 <TableCell className="p-3 align-middle">
-                  <span
-                    className={cn('text-label-sm text-text-sub line-clamp-2 max-w-md', !agent.description && 'italic')}
-                  >
-                    {agent.description?.trim() || '—'}
-                  </span>
+                  <AgentIntegrationsCell agent={agent} />
                 </TableCell>
                 <TableCell className="text-foreground-600 p-3 align-middle text-sm font-medium">
                   <span className="text-label-sm">{formatDateSimple(agent.updatedAt)}</span>

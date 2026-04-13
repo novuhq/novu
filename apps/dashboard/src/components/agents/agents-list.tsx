@@ -138,7 +138,7 @@ export function AgentsList() {
 
   const data = listQuery.data;
   const isLoading = listQuery.isPending;
-  const agents = data?.data ?? [];
+  const agents: AgentResponse[] = data?.data ?? [];
   const hasFilters = debouncedSearch.length > 0;
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;

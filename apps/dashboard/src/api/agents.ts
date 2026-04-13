@@ -1,5 +1,14 @@
-import type { DirectionEnum, IEnvironment } from '@novu/shared';
+import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
 import { del, get, post } from '@/api/api.client';
+
+export type AgentIntegrationSummary = {
+  integrationId: string;
+  providerId: string;
+  name: string;
+  identifier: string;
+  channel: ChannelTypeEnum;
+  active: boolean;
+};
 
 export type AgentResponse = {
   _id: string;
@@ -10,6 +19,7 @@ export type AgentResponse = {
   _organizationId: string;
   createdAt: string;
   updatedAt: string;
+  integrations?: AgentIntegrationSummary[];
 };
 
 export type ListAgentsResponse = {
