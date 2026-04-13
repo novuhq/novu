@@ -43,27 +43,29 @@ export class UpdateAgentIntegration {
       );
     }
 
-    if (existingLink._integrationId === command.integrationId) {
-      return toAgentIntegrationResponse(existingLink);
-    }
-
-    const integration = await this.integrationRepository.findOne(
+    const targetIntegration = await this.integrationRepository.findOne(
       {
-        _id: command.integrationId,
+        identifier: command.integrationIdentifier,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      '_id'
+      ['_id', 'identifier']
     );
 
-    if (!integration) {
-      throw new NotFoundException(`Integration with id "${command.integrationId}" was not found.`);
+    if (!targetIntegration) {
+      throw new NotFoundException(
+        `Integration with identifier "${command.integrationIdentifier}" was not found.`
+      );
+    }
+
+    if (existingLink._integrationId === targetIntegration._id) {
+      return toAgentIntegrationResponse(existingLink, targetIntegration.identifier);
     }
 
     const duplicate = await this.agentIntegrationRepository.findOne(
       {
         _agentId: agent._id,
-        _integrationId: command.integrationId,
+        _integrationId: targetIntegration._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
@@ -81,7 +83,7 @@ export class UpdateAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      { $set: { _integrationId: command.integrationId } }
+      { $set: { _integrationId: targetIntegration._id } }
     );
 
     const updated = await this.agentIntegrationRepository.findById(
@@ -99,6 +101,6 @@ export class UpdateAgentIntegration {
       );
     }
 
-    return toAgentIntegrationResponse(updated);
+    return toAgentIntegrationResponse(updated, targetIntegration.identifier);
   }
 }

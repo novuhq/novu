@@ -102,6 +102,7 @@ describe('Agents API - /agents #novu-v2', () => {
 
     const integrations = (await session.testAgent.get('/v1/integrations')).body.data as Array<{
       _id: string;
+      identifier: string;
       channel: string;
       providerId: string;
     }>;
@@ -120,15 +121,15 @@ describe('Agents API - /agents #novu-v2', () => {
       throw new Error('Seeded email/SMS integrations not found');
     }
 
-    const emailIntegrationId = emailIntegration._id;
-    const smsIntegrationId = smsIntegration._id;
+    const emailIntegrationIdentifier = emailIntegration.identifier;
+    const smsIntegrationIdentifier = smsIntegration.identifier;
 
     const addRes = await session.testAgent
       .post(`/v1/agents/${encodeURIComponent(identifier)}/integrations`)
-      .send({ integrationId: emailIntegrationId });
+      .send({ integrationIdentifier: emailIntegrationIdentifier });
 
     expect(addRes.status).to.equal(201);
-    expect(addRes.body.data._integrationId).to.equal(emailIntegrationId);
+    expect(addRes.body.data.integrationIdentifier).to.equal(emailIntegrationIdentifier);
     const linkId = addRes.body.data._id as string;
 
     const listRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/integrations`);
@@ -141,10 +142,10 @@ describe('Agents API - /agents #novu-v2', () => {
 
     const patchLinkRes = await session.testAgent
       .patch(`/v1/agents/${encodeURIComponent(identifier)}/integrations/${linkId}`)
-      .send({ integrationId: smsIntegrationId });
+      .send({ integrationIdentifier: smsIntegrationIdentifier });
 
     expect(patchLinkRes.status).to.equal(200);
-    expect(patchLinkRes.body.data._integrationId).to.equal(smsIntegrationId);
+    expect(patchLinkRes.body.data.integrationIdentifier).to.equal(smsIntegrationIdentifier);
 
     const removeRes = await session.testAgent.delete(
       `/v1/agents/${encodeURIComponent(identifier)}/integrations/${linkId}`
@@ -171,11 +172,13 @@ describe('Agents API - /agents #novu-v2', () => {
 
     const agentId = createAgentRes.body.data._id as string;
 
-    const integrations = (await session.testAgent.get('/v1/integrations')).body.data as Array<{ _id: string }>;
-    const integrationId = integrations[0]._id;
+    const integrations = (await session.testAgent.get('/v1/integrations')).body.data as Array<{
+      identifier: string;
+    }>;
+    const integrationIdentifier = integrations[0].identifier;
 
     await session.testAgent.post(`/v1/agents/${encodeURIComponent(identifier)}/integrations`).send({
-      integrationId,
+      integrationIdentifier,
     });
 
     const countBefore = await agentIntegrationRepository.count({

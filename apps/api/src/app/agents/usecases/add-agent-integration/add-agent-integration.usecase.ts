@@ -29,21 +29,23 @@ export class AddAgentIntegration {
 
     const integration = await this.integrationRepository.findOne(
       {
-        _id: command.integrationId,
+        identifier: command.integrationIdentifier,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      '_id'
+      ['_id', 'identifier']
     );
 
     if (!integration) {
-      throw new NotFoundException(`Integration with id "${command.integrationId}" was not found.`);
+      throw new NotFoundException(
+        `Integration with identifier "${command.integrationIdentifier}" was not found.`
+      );
     }
 
     const existingLink = await this.agentIntegrationRepository.findOne(
       {
         _agentId: agent._id,
-        _integrationId: command.integrationId,
+        _integrationId: integration._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
@@ -56,11 +58,11 @@ export class AddAgentIntegration {
 
     const link = await this.agentIntegrationRepository.create({
       _agentId: agent._id,
-      _integrationId: command.integrationId,
+      _integrationId: integration._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
-    return toAgentIntegrationResponse(link);
+    return toAgentIntegrationResponse(link, integration.identifier);
   }
 }

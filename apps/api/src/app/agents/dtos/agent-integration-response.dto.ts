@@ -7,8 +7,10 @@ export class AgentIntegrationResponseDto {
   @ApiProperty()
   _agentId: string;
 
-  @ApiProperty()
-  _integrationId: string;
+  @ApiProperty({
+    description: 'The integration identifier (matches the integration store), not the internal MongoDB _id.',
+  })
+  integrationIdentifier: string;
 
   @ApiProperty()
   _environmentId: string;

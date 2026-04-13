@@ -15,11 +15,14 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
   };
 }
 
-export function toAgentIntegrationResponse(link: AgentIntegrationEntity): AgentIntegrationResponseDto {
+export function toAgentIntegrationResponse(
+  link: AgentIntegrationEntity,
+  integrationIdentifier: string
+): AgentIntegrationResponseDto {
   return {
     _id: link._id,
     _agentId: link._agentId,
-    _integrationId: link._integrationId,
+    integrationIdentifier,
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,
     createdAt: link.createdAt,

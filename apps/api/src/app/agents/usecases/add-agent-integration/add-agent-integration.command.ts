@@ -9,5 +9,5 @@ export class AddAgentIntegrationCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsNotEmpty()
-  integrationId: string;
+  integrationIdentifier: string;
 }

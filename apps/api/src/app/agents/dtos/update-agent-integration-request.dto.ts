@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateAgentIntegrationRequestDto {
   @ApiProperty({
-    description: 'The Novu integration document _id this link should point to.',
+    description: 'The integration identifier this link should point to (not the internal document _id).',
   })
   @IsString()
   @IsNotEmpty()
-  integrationId: string;
+  integrationIdentifier: string;
 }

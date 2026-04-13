@@ -22,6 +22,5 @@ export class ListAgentIntegrationsCommand extends CursorBasedPaginatedCommand<
 
   @IsString()
   @IsOptional()
-  @IsMongoId()
-  integrationId?: string;
+  integrationIdentifier?: string;
 }

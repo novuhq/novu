@@ -13,5 +13,5 @@ export class UpdateAgentIntegrationCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsNotEmpty()
-  integrationId: string;
+  integrationIdentifier: string;
 }

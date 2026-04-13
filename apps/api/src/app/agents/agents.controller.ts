@@ -129,7 +129,7 @@ export class AgentsController {
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
-    description: 'Creates a link between an agent (by identifier) and an integration (by internal id).',
+    description: 'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
@@ -146,7 +146,7 @@ export class AgentsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         agentIdentifier: identifier,
-        integrationId: body.integrationId,
+        integrationIdentifier: body.integrationIdentifier,
       })
     );
   }
@@ -179,7 +179,7 @@ export class AgentsController {
         orderDirection: query.orderDirection || DirectionEnum.DESC,
         orderBy: query.orderBy || '_id',
         includeCursor: query.includeCursor,
-        integrationId: query.integrationId,
+        integrationIdentifier: query.integrationIdentifier,
       })
     );
   }
@@ -188,7 +188,7 @@ export class AgentsController {
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
     summary: 'Update agent-integration link',
-    description: 'Updates which integration a link points to (by integration document id).',
+    description: 'Updates which integration a link points to (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent, integration, or link was not found.',
@@ -207,7 +207,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         agentIntegrationId,
-        integrationId: body.integrationId,
+        integrationIdentifier: body.integrationIdentifier,
       })
     );
   }
