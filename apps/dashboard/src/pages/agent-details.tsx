@@ -1,11 +1,13 @@
-import { FeatureFlagsKeysEnum, providers as novuProviders } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AGENTS_LIST_QUERY_KEY, type AgentResponse, deleteAgent, getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
+import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
-import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { PageMeta } from '@/components/page-meta';
 import {
   Breadcrumb,
@@ -17,38 +19,47 @@ import {
 } from '@/components/primitives/breadcrumb';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { formatDateSimple } from '@/utils/format-date';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { cn } from '@/utils/ui';
+import {
+  AGENT_DETAILS_DEFAULT_TAB,
+  AGENT_DETAILS_TABS,
+  type AgentDetailsTab,
+  buildRoute,
+  parseAgentDetailsTab,
+  ROUTES,
+} from '@/utils/routes';
 
-function getProviderDisplayName(providerId: string): string {
-  return novuProviders.find((p) => p.id === providerId)?.displayName ?? providerId;
+function isValidAgentDetailsTab(tab: string): tab is AgentDetailsTab {
+  return (AGENT_DETAILS_TABS as readonly string[]).includes(tab);
 }
 
-function AgentDetailsSkeleton() {
+function AgentDetailsTabsSkeleton() {
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-6 py-2">
-      <Skeleton className="h-8 w-[min(100%,24ch)]" />
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-5 w-[min(100%,32ch)] font-mono" />
+    <div className="flex w-full flex-col">
+      <div className="border-stroke-soft -mx-2 border-b px-4 py-3 md:px-6">
+        <Skeleton className="h-5 w-56" />
       </div>
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-20 w-full" />
+      <div className="mx-auto max-w-3xl px-3 py-4 md:px-6">
+        <Skeleton className="h-24 w-full max-w-xl" />
       </div>
     </div>
   );
 }
 
 export function AgentDetailsPage() {
-  const { agentIdentifier = '' } = useParams<{ agentIdentifier?: string }>();
+  const { agentIdentifier = '', agentTab: agentTabParam } = useParams<{
+    agentIdentifier?: string;
+    agentTab?: string;
+  }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
 
   const agentsListPath = buildRoute(ROUTES.AGENTS, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -59,6 +70,41 @@ export function AgentDetailsPage() {
     queryFn: () => getAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agentIdentifier),
     enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (identifier: string) =>
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
+    onSuccess: async () => {
+      setAgentToDelete(null);
+      showSuccessToast('Agent deleted', 'The agent was removed.');
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      navigate(agentsListPath);
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not delete agent.';
+
+      showErrorToast(message, 'Delete failed');
+    },
+  });
+
+  const currentTab = parseAgentDetailsTab(agentTabParam);
+
+  useEffect(() => {
+    if (!agentTabParam || !agentIdentifier || !currentEnvironment?.slug) {
+      return;
+    }
+
+    if (!isValidAgentDetailsTab(agentTabParam)) {
+      navigate(
+        `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${location.search}`,
+        { replace: true }
+      );
+    }
+  }, [agentTabParam, agentIdentifier, currentEnvironment?.slug, navigate, location.search]);
 
   if (!isConversationalAgentsEnabled) {
     return <Navigate to={agentsListPath} replace />;
@@ -73,6 +119,44 @@ export function AgentDetailsPage() {
   const error = agentQuery.error;
   const isNotFound = error instanceof NovuApiError && error.status === 404;
 
+  let pageTitle = 'Agent';
+
+  if (isNotFound) {
+    pageTitle = 'Agent not found';
+  } else if (error && !isNotFound) {
+    pageTitle = 'Agent';
+  } else if (agent) {
+    pageTitle = agent.name;
+  }
+
+  const handleTabChange = (value: string) => {
+    if (!agent || !currentEnvironment?.slug) {
+      return;
+    }
+
+    navigate(
+      `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(agent.identifier),
+        agentTab: value,
+      })}${location.search}`
+    );
+  };
+
+  const handleBack = () => navigate(agentsListPath);
+
+  const breadcrumbCurrentLabel = (() => {
+    if (isNotFound) {
+      return 'Not found';
+    }
+
+    if (error) {
+      return 'Agent';
+    }
+
+    return agent?.name ?? 'Agent';
+  })();
+
   const headerStartItems = (
     <div className="flex min-w-0 items-center gap-1 overflow-hidden">
       <CompactButton
@@ -82,7 +166,7 @@ export function AgentDetailsPage() {
         icon={RiArrowLeftSLine}
         type="button"
         aria-label="Back to agents"
-        onClick={() => navigate(agentsListPath)}
+        onClick={handleBack}
       />
       <Breadcrumb className="min-w-0">
         <BreadcrumbList>
@@ -96,7 +180,10 @@ export function AgentDetailsPage() {
             {isLoading ? (
               <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
             ) : (
-              <BreadcrumbPage className="truncate">{agent?.name ?? 'Agent'}</BreadcrumbPage>
+              <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+                <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
+                <span className="truncate">{breadcrumbCurrentLabel}</span>
+              </BreadcrumbPage>
             )}
           </BreadcrumbItem>
         </BreadcrumbList>
@@ -104,22 +191,12 @@ export function AgentDetailsPage() {
     </div>
   );
 
-  let pageTitle = 'Agent';
-
-  if (isNotFound) {
-    pageTitle = 'Agent not found';
-  } else if (error && !isNotFound) {
-    pageTitle = 'Agent';
-  } else if (agent) {
-    pageTitle = agent.name;
-  }
-
   return (
     <>
       <PageMeta title={pageTitle} />
       <DashboardLayout headerStartItems={headerStartItems}>
         {isNotFound ? (
-          <div className="text-text-soft text-label-sm max-w-3xl py-2">
+          <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
             <p>This agent does not exist or was removed.</p>
             <Link to={agentsListPath} className="text-primary-base mt-3 inline-block text-label-sm font-medium">
               Back to agents
@@ -128,85 +205,65 @@ export function AgentDetailsPage() {
         ) : null}
 
         {error && !isNotFound ? (
-          <div className="text-error-base text-label-sm max-w-3xl py-2">
+          <div className="text-error-base text-label-sm max-w-3xl px-4 py-6 md:px-6">
             Could not load this agent. Try again later.
           </div>
         ) : null}
 
-        {!error && (isLoading || !agent) ? <AgentDetailsSkeleton /> : null}
+        {!error && isLoading ? (
+          <>
+            <AgentDetailsHeader agent={undefined} isLoading />
+            <AgentDetailsTabsSkeleton />
+          </>
+        ) : null}
 
         {!error && !isLoading && agent ? (
-          <div className="flex w-full max-w-3xl flex-col gap-8 py-2">
-            <div className="flex items-start gap-4">
-              <span
-                className="text-text-sub bg-neutral-alpha-100 flex size-10 shrink-0 items-center justify-center rounded-lg"
-                aria-hidden
-              >
-                <RiRobot2Line className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1 flex-col gap-1">
-                <h1 className="text-text-strong text-[20px] font-semibold leading-7 tracking-tight">{agent.name}</h1>
-                <p className="text-text-soft font-mono text-label-sm">{agent.identifier}</p>
+          <>
+            <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
+
+            <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
+              <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">
+                <TabsTrigger variant="regular" value="overview" size="xl">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger variant="regular" value="integrations" size="xl">
+                  Integrations
+                </TabsTrigger>
+                <TabsTrigger variant="regular" value="activity" size="xl">
+                  Activity
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
+                <TabsContent value="overview" className="outline-none">
+                  <p className="text-text-soft text-label-sm">Test content — Overview tab (placeholder).</p>
+                </TabsContent>
+                <TabsContent value="integrations" className="outline-none">
+                  <p className="text-text-soft text-label-sm">Test content — Integrations tab (placeholder).</p>
+                </TabsContent>
+                <TabsContent value="activity" className="outline-none">
+                  <p className="text-text-soft text-label-sm">Test content — Activity tab (placeholder).</p>
+                </TabsContent>
               </div>
-            </div>
+            </Tabs>
 
-            <div className="flex flex-col gap-1.5">
-              <span className="text-text-sub text-label-xs font-medium uppercase tracking-wide">Last updated</span>
-              <span className="text-text-strong text-label-sm">{formatDateSimple(agent.updatedAt)}</span>
-            </div>
-
-            {agent.description ? (
-              <div className="flex flex-col gap-1.5">
-                <span className="text-text-sub text-label-xs font-medium uppercase tracking-wide">Description</span>
-                <p className="text-text-strong text-label-sm whitespace-pre-wrap">{agent.description}</p>
-              </div>
-            ) : null}
-
-            <div className="flex flex-col gap-3">
-              <span className="text-text-sub text-label-xs font-medium uppercase tracking-wide">Integrations</span>
-              {(agent.integrations ?? []).length === 0 ? (
-                <p className="text-text-soft text-label-sm italic">No integrations linked yet.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {(agent.integrations ?? []).map((integration) => {
-                    return (
-                      <li
-                        key={integration.integrationId}
-                        className="border-stroke-soft flex items-center gap-3 rounded-lg border px-3 py-2"
-                      >
-                        <ProviderIcon
-                          providerId={integration.providerId}
-                          providerDisplayName={getProviderDisplayName(integration.providerId)}
-                          className={cn('size-5 shrink-0', !integration.active && 'opacity-60 grayscale')}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-text-strong text-label-sm font-medium">{integration.name}</p>
-                          <p className="text-text-soft font-mono text-label-xs">{integration.identifier}</p>
-                        </div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span
-                              className={cn(
-                                'text-label-xs shrink-0 rounded-full px-2 py-0.5 font-medium',
-                                integration.active
-                                  ? 'bg-success/10 text-success'
-                                  : 'bg-neutral-alpha-100 text-text-soft'
-                              )}
-                            >
-                              {integration.active ? 'Active' : 'Inactive'}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="left">
-                            {integration.active ? 'Integration is active' : 'Integration is inactive'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
+            <DeleteAgentDialog
+              open={Boolean(agentToDelete)}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setAgentToDelete(null);
+                }
+              }}
+              onConfirm={() => {
+                if (agentToDelete) {
+                  deleteMutation.mutate(agentToDelete.identifier);
+                }
+              }}
+              agentName={agentToDelete?.name ?? ''}
+              agentIdentifier={agentToDelete?.identifier ?? ''}
+              isDeleting={deleteMutation.isPending}
+            />
+          </>
         ) : null}
       </DashboardLayout>
     </>

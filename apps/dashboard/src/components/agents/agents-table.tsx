@@ -170,9 +170,10 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       {!isLoading && (
         <TableBody>
           {agents.map((agent) => {
-            const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS, {
+            const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
               environmentSlug: currentEnvironment?.slug ?? '',
               agentIdentifier: encodeURIComponent(agent.identifier),
+              agentTab: 'overview',
             })}${location.search}`;
 
             return (

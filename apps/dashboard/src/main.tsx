@@ -356,6 +356,14 @@ const router = createBrowserRouter([
                 element: <AgentsPage />,
               },
               {
+                path: ROUTES.AGENT_DETAILS_TAB,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
                 path: ROUTES.AGENT_DETAILS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>

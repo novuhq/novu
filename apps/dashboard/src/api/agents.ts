@@ -104,15 +104,25 @@ export function listAgents(params: ListAgentsParams): Promise<ListAgentsResponse
   });
 }
 
-export function getAgent(environment: IEnvironment, identifier: string, signal?: AbortSignal): Promise<AgentResponse> {
-  return get<AgentResponse>(`/agents/${encodeURIComponent(identifier)}`, {
+type AgentApiEnvelope = { data: AgentResponse };
+
+export async function getAgent(
+  environment: IEnvironment,
+  identifier: string,
+  signal?: AbortSignal
+): Promise<AgentResponse> {
+  const response = await get<AgentApiEnvelope>(`/agents/${encodeURIComponent(identifier)}`, {
     environment,
     signal,
   });
+
+  return response.data;
 }
 
-export function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
-  return post<AgentResponse>('/agents', { environment, body });
+export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
+  const response = await post<AgentApiEnvelope>('/agents', { environment, body });
+
+  return response.data;
 }
 
 export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
