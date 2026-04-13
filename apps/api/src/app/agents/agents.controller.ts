@@ -15,7 +15,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -71,7 +70,6 @@ export class AgentsController {
   ) {}
 
   @Post('/')
-  @ExternalApiAccessible()
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
     summary: 'Create agent',
@@ -95,7 +93,6 @@ export class AgentsController {
   }
 
   @Get('/')
-  @ExternalApiAccessible()
   @ApiResponse(AgentResponseDto, 200, true)
   @ApiOperation({
     summary: 'List agents',
@@ -112,7 +109,6 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations')
-  @ExternalApiAccessible()
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
@@ -139,7 +135,6 @@ export class AgentsController {
   }
 
   @Get('/:identifier/integrations')
-  @ExternalApiAccessible()
   @ApiResponse(AgentIntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'List agent integrations',
@@ -163,7 +158,6 @@ export class AgentsController {
   }
 
   @Patch('/:identifier/integrations/:agentIntegrationId')
-  @ExternalApiAccessible()
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
     summary: 'Update agent-integration link',
@@ -192,7 +186,6 @@ export class AgentsController {
   }
 
   @Delete('/:identifier/integrations/:agentIntegrationId')
-  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Remove agent-integration link',
@@ -222,7 +215,6 @@ export class AgentsController {
   }
 
   @Get('/:identifier')
-  @ExternalApiAccessible()
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
     summary: 'Get agent',
@@ -243,7 +235,6 @@ export class AgentsController {
   }
 
   @Patch('/:identifier')
-  @ExternalApiAccessible()
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
     summary: 'Update agent',
@@ -271,7 +262,6 @@ export class AgentsController {
   }
 
   @Delete('/:identifier')
-  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete agent',
