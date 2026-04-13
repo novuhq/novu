@@ -8,22 +8,18 @@ const agentIntegrationSchema = new Schema<AgentIntegrationDBModel>(
     _agentId: {
       type: Schema.Types.ObjectId,
       ref: 'Agent',
-      index: true,
     },
     _integrationId: {
       type: Schema.Types.ObjectId,
       ref: 'Integration',
-      index: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
   },
   schemaOptions
