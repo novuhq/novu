@@ -1,12 +1,6 @@
-import { createSlackAdapter } from '@chat-adapter/slack';
-import { createRedisState } from '@chat-adapter/state-redis';
-import { createTeamsAdapter } from '@chat-adapter/teams';
-import { createTelegramAdapter } from '@chat-adapter/telegram';
-import { createWhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ICredentialsEntity } from '@novu/dal';
-import { type Adapter, Chat } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
@@ -31,18 +25,30 @@ import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credenti
  * Telegram: credentials.apiToken → botToken
  */
 
+// Chat SDK packages are ESM-only; SWC rewrites import() → require() for CJS output.
+// Wrapping in new Function prevents SWC from seeing the import() keyword.
+// eslint-disable-next-line @typescript-eslint/no-implied-eval
+const esmImport = new Function('specifier', 'return import(specifier)') as (s: string) => Promise<any>;
+
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
 
+type ChatInstance = {
+  webhooks: Record<string, (req: Request) => Promise<Response>>;
+  onNewMention: (handler: (thread: any, message: any) => void | Promise<void>) => void;
+  onSubscribedMessage: (handler: (thread: any, message: any) => void | Promise<void>) => void;
+  shutdown: () => Promise<void>;
+};
+
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
-  private readonly instances: LRUCache<string, Chat>;
+  private readonly instances: LRUCache<string, ChatInstance>;
 
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentCredentialService: AgentCredentialService
   ) {
-    this.instances = new LRUCache<string, Chat>({
+    this.instances = new LRUCache<string, ChatInstance>({
       max: MAX_CACHED_INSTANCES,
       ttl: INSTANCE_TTL_MS,
       dispose: (chat, key) => {
@@ -99,19 +105,28 @@ export class ChatSdkService implements OnModuleDestroy {
     agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedPlatformConfig
-  ): Promise<Chat> {
+  ): Promise<ChatInstance> {
     const existing = this.instances.get(instanceKey);
     if (existing) return existing;
 
-    const chat = this.createChatInstance(instanceKey, platform, config);
+    const chat = await this.createChatInstance(instanceKey, platform, config);
     this.registerEventHandlers(agentId, chat);
     this.instances.set(instanceKey, chat);
 
     return chat;
   }
 
-  private createChatInstance(instanceKey: string, platform: AgentPlatformEnum, config: ResolvedPlatformConfig): Chat {
-    const adapters = this.buildAdapters(platform, config);
+  private async createChatInstance(
+    instanceKey: string,
+    platform: AgentPlatformEnum,
+    config: ResolvedPlatformConfig
+  ): Promise<ChatInstance> {
+    const [{ Chat }, { createRedisState }] = await Promise.all([
+      esmImport('chat'),
+      esmImport('@chat-adapter/state-redis'),
+    ]);
+
+    const adapters = await this.buildAdapters(platform, config);
     const redisHost = process.env.REDIS_HOST || 'localhost';
     const redisPort = process.env.REDIS_PORT || '6379';
 
@@ -126,54 +141,61 @@ export class ChatSdkService implements OnModuleDestroy {
     });
   }
 
-  private buildAdapters(platform: AgentPlatformEnum, config: ResolvedPlatformConfig): Record<string, Adapter> {
+  private async buildAdapters(
+    platform: AgentPlatformEnum,
+    config: ResolvedPlatformConfig
+  ): Promise<Record<string, unknown>> {
     const { credentials, connectionAccessToken } = config;
 
     switch (platform) {
-      case AgentPlatformEnum.SLACK:
-        return { slack: this.createSlack(credentials, connectionAccessToken) };
-      case AgentPlatformEnum.TEAMS:
-        return { teams: this.createTeams(credentials) };
-      case AgentPlatformEnum.WHATSAPP:
-        return { whatsapp: this.createWhatsApp(credentials) };
-      case AgentPlatformEnum.TELEGRAM:
-        return { telegram: this.createTelegram(credentials) };
+      case AgentPlatformEnum.SLACK: {
+        const { createSlackAdapter } = await esmImport('@chat-adapter/slack');
+
+        return {
+          slack: createSlackAdapter({
+            botToken: connectionAccessToken!,
+            signingSecret: credentials.apiKey!,
+          }),
+        };
+      }
+      case AgentPlatformEnum.TEAMS: {
+        const { createTeamsAdapter } = await esmImport('@chat-adapter/teams');
+
+        return {
+          teams: createTeamsAdapter({
+            appId: credentials.clientId!,
+            appPassword: credentials.secretKey!,
+            appTenantId: credentials.tenantId!,
+          }),
+        };
+      }
+      case AgentPlatformEnum.WHATSAPP: {
+        const { createWhatsAppAdapter } = await esmImport('@chat-adapter/whatsapp');
+
+        return {
+          whatsapp: createWhatsAppAdapter({
+            accessToken: credentials.token!,
+            appSecret: credentials.secretKey!,
+            verifyToken: credentials.apiToken!,
+            phoneNumberId: credentials.phoneNumberIdentification!,
+          }),
+        };
+      }
+      case AgentPlatformEnum.TELEGRAM: {
+        const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+
+        return {
+          telegram: createTelegramAdapter({
+            botToken: credentials.apiToken!,
+          }),
+        };
+      }
       default:
         throw new BadRequestException(`Unsupported platform: ${platform}`);
     }
   }
 
-  private createSlack(credentials: ICredentialsEntity, connectionAccessToken?: string): Adapter {
-    return createSlackAdapter({
-      botToken: connectionAccessToken!,
-      signingSecret: credentials.apiKey!,
-    });
-  }
-
-  private createTeams(credentials: ICredentialsEntity): Adapter {
-    return createTeamsAdapter({
-      appId: credentials.clientId!,
-      appPassword: credentials.secretKey!,
-      appTenantId: credentials.tenantId!,
-    });
-  }
-
-  private createWhatsApp(credentials: ICredentialsEntity): Adapter {
-    return createWhatsAppAdapter({
-      accessToken: credentials.token!,
-      appSecret: credentials.secretKey!,
-      verifyToken: credentials.apiToken!,
-      phoneNumberId: credentials.phoneNumberIdentification!,
-    });
-  }
-
-  private createTelegram(credentials: ICredentialsEntity): Adapter {
-    return createTelegramAdapter({
-      botToken: credentials.apiToken!,
-    });
-  }
-
-  private registerEventHandlers(agentId: string, chat: Chat) {
+  private registerEventHandlers(agentId: string, chat: ChatInstance) {
     chat.onNewMention(async (thread) => {
       await thread.subscribe();
       await thread.startTyping();
