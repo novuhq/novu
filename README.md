@@ -201,7 +201,6 @@ The following modules and folders are licensed under the enterprise license:
 
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
-<a href="https://novu.co/contributors?utm_source=github" target="_blank" rel="noopener noreferrer"
->
+<a href="https://novu.co/contributors?utm_source=github" target="_blank" rel="noopener noreferrer">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>

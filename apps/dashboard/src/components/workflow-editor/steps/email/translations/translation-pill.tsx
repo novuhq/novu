@@ -107,7 +107,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({
           contentEditable={false}
           className={cn(
             'bg-bg-white border-stroke-soft font-code',
-            'relative m-0 box-border inline-flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-px align-middle font-medium leading-[inherit] text-inherit',
+            'relative m-0 box-border inline-flex cursor-pointer items-center gap-1 rounded-lg border px-1.5! py-px! align-middle font-medium leading-[inherit] text-inherit',
             'text-text-sub h-[max(18px,calc(1em+2px))] text-[max(12px,calc(1em-3px))]',
             { 'hover:bg-error-base/2.5': hasError }
           )}
@@ -116,7 +116,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({
           ref={buttonRef}
         >
           <VariableIcon variableName={decoratorKey} hasError={hasError} context="translations" />
-          <span className="text-text-sub max-w-[24ch] truncate leading-[1.2] antialiased" title={displayTranslationKey}>
+          <span className="text-label-xs text-text-sub max-w-[24ch] truncate" title={displayTranslationKey}>
             {displayTranslationKey}
           </span>
         </button>

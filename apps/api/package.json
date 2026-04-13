@@ -1,6 +1,6 @@
 {
   "name": "@novu/api-service",
-  "version": "3.14.0",
+  "version": "3.15.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -96,7 +96,7 @@
     "handlebars": "4.7.9",
     "helmet": "^6.0.1",
     "i18next": "^23.7.6",
-    "ioredis": "5.3.2",
+    "ioredis": "5.10.1",
     "json-logic-js": "^2.0.5",
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",

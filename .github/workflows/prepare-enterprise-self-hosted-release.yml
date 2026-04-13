@@ -76,7 +76,8 @@ jobs:
             services+=("\"worker-ee\"")
           fi
           if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
-            services+=("\"dashboard-ee\"")
+            services+=("\"dashboard-ee-clerk\"")
+            services+=("\"dashboard-ee-betterauth\"")
           fi
           if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
             services+=("\"ws-ee\"")
@@ -109,11 +110,35 @@ jobs:
         run: |
           SERVICE_NAME="${{ matrix.name }}"
           LATEST_VERSION="${{ github.event.inputs.version }}"
-          SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
+
+          # Extract auth provider if present
+          if [[ "$SERVICE_NAME" == *"-clerk" ]]; then
+            AUTH_PROVIDER="clerk"
+            SERVICE_COMMON_NAME="dashboard"
+            REPO_NAME="dashboard-ee"
+            IMAGE_TAG="${LATEST_VERSION}-clerk"
+          elif [[ "$SERVICE_NAME" == *"-betterauth" ]]; then
+            AUTH_PROVIDER="better-auth"
+            SERVICE_COMMON_NAME="dashboard"
+            REPO_NAME="dashboard-ee"
+            IMAGE_TAG="${LATEST_VERSION}-betterauth"
+          else
+            AUTH_PROVIDER=""
+            SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
+            REPO_NAME="$SERVICE_NAME"
+            IMAGE_TAG="$LATEST_VERSION"
+          fi
+
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
           echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
           echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
-          echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "AUTH_PROVIDER=$AUTH_PROVIDER" >> $GITHUB_ENV
+          echo "This is the service name: $SERVICE_NAME with repo: $REPO_NAME and tag: $IMAGE_TAG"
+          if [ -n "$AUTH_PROVIDER" ]; then
+            echo "Auth provider: $AUTH_PROVIDER"
+          fi
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -130,6 +155,10 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: pnpm install --frozen-lockfile
+
+      - name: Symlink Enterprise Packages
+        shell: bash
+        run: pnpm symlink:submodules
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -155,11 +184,9 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: novu
-          SERVICE: ${{ env.SERVICE_NAME }}
-          IMAGE_TAG: ${{ env.LATEST_VERSION }}
           DOCKER_BUILD_ARGUMENTS: >
             --platform=linux/amd64
-            --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
+            --output=type=image,name=$REGISTRY/$REPOSITORY/$REPO_NAME,push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
@@ -174,13 +201,43 @@ jobs:
             sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
           fi
 
-          pnpm run docker:build
-          docker tag novu-$SERVICE_COMMON_NAME $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
+          # Build dashboard with auth provider build args
+          if [[ "$SERVICE_COMMON_NAME" == "dashboard" ]]; then
+            if [[ "$AUTH_PROVIDER" == "clerk" ]]; then
+              echo "Building dashboard for Clerk authentication"
+              docker buildx build \
+                --load \
+                --platform=linux/amd64 \
+                --build-arg VITE_EE_AUTH_PROVIDER=clerk \
+                --build-arg VITE_SELF_HOSTED=true \
+                --build-arg VITE_NOVU_ENTERPRISE=true \
+                -t novu-$SERVICE_COMMON_NAME \
+                -f dockerfile \
+                ../..
+            elif [[ "$AUTH_PROVIDER" == "better-auth" ]]; then
+              echo "Building dashboard for Better Auth authentication"
+              docker buildx build \
+                --load \
+                --platform=linux/amd64 \
+                --build-arg VITE_EE_AUTH_PROVIDER=better-auth \
+                --build-arg VITE_SELF_HOSTED=true \
+                --build-arg VITE_NOVU_ENTERPRISE=true \
+                -t novu-$SERVICE_COMMON_NAME \
+                -f dockerfile \
+                ../..
+            fi
+          else
+            pnpm run docker:build
+          fi
+
+          docker tag novu-$SERVICE_COMMON_NAME $REGISTRY/$REPOSITORY/$REPO_NAME:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY/$REPO_NAME:$IMAGE_TAG
 
       - name: Output image details
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           echo "Successfully built and pushed:"
-          echo "  - $REGISTRY/novu/$SERVICE_NAME:$IMAGE_TAG"
+          echo "  - $REGISTRY/novu/$REPO_NAME:$IMAGE_TAG"
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"
