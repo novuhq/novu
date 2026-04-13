@@ -13,7 +13,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
