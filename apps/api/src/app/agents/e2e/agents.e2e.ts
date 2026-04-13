@@ -68,8 +68,8 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(res.status).to.equal(422);
-    const message = res.body?.message;
-    const text = Array.isArray(message) ? message.join(' ') : String(message ?? '');
+    const messages = res.body?.errors?.general?.messages;
+    const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
 
     expect(text.toLowerCase()).to.contain('identifier');
     expect(text.toLowerCase()).to.match(/slug|valid/);
