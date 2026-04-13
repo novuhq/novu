@@ -1,7 +1,7 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { RiAddLine } from 'react-icons/ri';
+import { RiRobot2Line } from 'react-icons/ri';
 import { type AgentResponse, type CreateAgentBody, createAgent, deleteAgent, listAgents } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentsTable } from '@/components/agents/agents-table';
@@ -159,10 +159,11 @@ export function AgentsList() {
           size="xs"
           variant="primary"
           mode="gradient"
-          leadingIcon={RiAddLine}
+          className="gap-1.5"
+          leadingIcon={RiRobot2Line}
           onClick={() => setCreateOpen(true)}
         >
-          Add agent
+          Add Agent
         </PermissionButton>
       </div>
 
@@ -181,10 +182,11 @@ export function AgentsList() {
             size="xs"
             variant="primary"
             mode="gradient"
-            leadingIcon={RiAddLine}
+            className="gap-1"
+            leadingIcon={RiRobot2Line}
             onClick={() => setCreateOpen(true)}
           >
-            Add agent
+            Add Agent
           </PermissionButton>
         </div>
       ) : null}

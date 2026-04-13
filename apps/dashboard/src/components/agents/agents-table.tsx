@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { Skeleton } from '@/components/primitives/skeleton';
 import {
   Table,
   TableBody,
@@ -40,11 +41,26 @@ type AgentsTableProps = {
   };
 };
 
-function AgentRowSkeleton() {
+function AgentsTableSkeletonRow() {
   return (
     <TableRow>
-      <TableCell colSpan={4} className="animate-pulse">
-        <div className="bg-neutral-alpha-100 h-10 w-full rounded-md" />
+      <TableCell className="p-3">
+        <div className="flex min-h-[41px] items-center gap-4">
+          <Skeleton className="size-5 shrink-0 rounded-md" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <Skeleton className="h-5 w-[min(100%,20ch)]" />
+            <Skeleton className="h-3 w-[min(100%,15ch)] rounded-full" />
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="p-3">
+        <Skeleton className="h-4 max-w-md rounded-md" />
+      </TableCell>
+      <TableCell className="p-3">
+        <Skeleton className="h-5 w-[9ch] rounded-full" />
+      </TableCell>
+      <TableCell className="w-[52px] p-3 text-right">
+        <RiMore2Fill className="text-foreground-600 size-4 opacity-50" aria-hidden />
       </TableCell>
     </TableRow>
   );
@@ -55,13 +71,13 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
   const canWrite = has?.({ permission: PermissionsEnum.AGENT_WRITE }) ?? true;
 
   return (
-    <Table isLoading={isLoading} loadingRowsCount={paginationProps.pageSize} loadingRow={<AgentRowSkeleton />}>
+    <Table isLoading={isLoading} loadingRowsCount={5} loadingRow={<AgentsTableSkeletonRow />}>
       <TableHeader>
         <TableRow>
-          <TableHead>Agent</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Last updated</TableHead>
-          <TableHead className="w-[52px]" />
+          <TableHead className="h-11 px-3 py-2.5">Agent</TableHead>
+          <TableHead className="h-11 px-3 py-2.5">Description</TableHead>
+          <TableHead className="h-11 px-3 py-2.5">Last updated</TableHead>
+          <TableHead className="h-11 w-[52px] px-3 py-2.5" />
         </TableRow>
       </TableHeader>
       {!isLoading && (
@@ -69,28 +85,32 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
           {agents.map((agent) => {
             return (
               <TableRow key={agent._id}>
-                <TableCell>
-                  <div className="flex items-start gap-2">
-                    <span className="bg-bg-weak text-text-sub flex size-8 shrink-0 items-center justify-center rounded-lg border border-stroke-soft">
-                      <RiRobot2Line className="size-4" aria-hidden />
+                <TableCell className="p-3 align-middle">
+                  <div className="flex min-h-[41px] items-center gap-4">
+                    <span className="text-text-sub flex size-5 shrink-0 items-center justify-center" aria-hidden>
+                      <RiRobot2Line className="size-3.5" />
                     </span>
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <span className="text-text-strong text-label-sm font-medium">{agent.name}</span>
-                      <span className="text-text-soft font-mono text-label-xs">{agent.identifier}</span>
+                      <span className="text-text-strong text-label-sm font-medium leading-5 tracking-tight">
+                        {agent.name}
+                      </span>
+                      <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">
+                        {agent.identifier}
+                      </span>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="p-3 align-middle">
                   <span
                     className={cn('text-label-sm text-text-sub line-clamp-2 max-w-md', !agent.description && 'italic')}
                   >
                     {agent.description?.trim() || '—'}
                   </span>
                 </TableCell>
-                <TableCell>
-                  <span className="text-label-sm text-text-sub">{formatDateSimple(agent.updatedAt)}</span>
+                <TableCell className="text-foreground-600 p-3 align-middle text-sm font-medium">
+                  <span className="text-label-sm">{formatDateSimple(agent.updatedAt)}</span>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="p-3 text-right align-middle">
                   {canWrite ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
