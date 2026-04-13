@@ -8,6 +8,10 @@ describe('Agents API - /agents #novu-v2', () => {
   const agentRepository = new AgentRepository();
   const agentIntegrationRepository = new AgentIntegrationRepository();
 
+  before(() => {
+    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+  });
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
