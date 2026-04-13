@@ -9,11 +9,12 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
@@ -28,6 +29,10 @@ import {
   AgentIntegrationResponseDto,
   AgentResponseDto,
   CreateAgentRequestDto,
+  ListAgentIntegrationsQueryDto,
+  ListAgentIntegrationsResponseDto,
+  ListAgentsQueryDto,
+  ListAgentsResponseDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
@@ -93,17 +98,29 @@ export class AgentsController {
   }
 
   @Get('/')
-  @ApiResponse(AgentResponseDto, 200, true)
+  @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
     summary: 'List agents',
-    description: 'Returns all agents for the current environment.',
+    description:
+      'Returns a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
-  listAgents(@UserSession() user: UserSessionData): Promise<AgentResponseDto[]> {
+  listAgents(
+    @UserSession() user: UserSessionData,
+    @Query() query: ListAgentsQueryDto
+  ): Promise<ListAgentsResponseDto> {
     return this.listAgentsUsecase.execute(
       ListAgentsCommand.create({
+        user,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
+        limit: Number(query.limit || '10'),
+        after: query.after,
+        before: query.before,
+        orderDirection: query.orderDirection || DirectionEnum.DESC,
+        orderBy: query.orderBy || '_id',
+        includeCursor: query.includeCursor,
+        identifier: query.identifier,
       })
     );
   }
@@ -135,10 +152,11 @@ export class AgentsController {
   }
 
   @Get('/:identifier/integrations')
-  @ApiResponse(AgentIntegrationResponseDto, 200, true)
+  @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
     summary: 'List agent integrations',
-    description: 'Lists integration links for an agent identified by its external identifier.',
+    description:
+      'Lists integration links for an agent identified by its external identifier. Supports cursor pagination via **after**, **before**, **limit**, **orderBy**, and **orderDirection**.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -146,13 +164,22 @@ export class AgentsController {
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   listAgentIntegrations(
     @UserSession() user: UserSessionData,
-    @Param('identifier') identifier: string
-  ): Promise<AgentIntegrationResponseDto[]> {
+    @Param('identifier') identifier: string,
+    @Query() query: ListAgentIntegrationsQueryDto
+  ): Promise<ListAgentIntegrationsResponseDto> {
     return this.listAgentIntegrationsUsecase.execute(
       ListAgentIntegrationsCommand.create({
+        user,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         agentIdentifier: identifier,
+        limit: Number(query.limit || '10'),
+        after: query.after,
+        before: query.before,
+        orderDirection: query.orderDirection || DirectionEnum.DESC,
+        orderBy: query.orderBy || '_id',
+        includeCursor: query.includeCursor,
+        integrationId: query.integrationId,
       })
     );
   }

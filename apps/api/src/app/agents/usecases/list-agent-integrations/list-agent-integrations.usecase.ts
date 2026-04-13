@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
-
+import { DirectionEnum } from '@novu/shared';
+import { ListAgentIntegrationsResponseDto } from '../../dtos/list-agent-integrations-response.dto';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
-import type { AgentIntegrationResponseDto } from '../../dtos';
 import { ListAgentIntegrationsCommand } from './list-agent-integrations.command';
 
 @Injectable()
@@ -12,7 +13,12 @@ export class ListAgentIntegrations {
     private readonly agentIntegrationRepository: AgentIntegrationRepository
   ) {}
 
-  async execute(command: ListAgentIntegrationsCommand): Promise<AgentIntegrationResponseDto[]> {
+  @InstrumentUsecase()
+  async execute(command: ListAgentIntegrationsCommand): Promise<ListAgentIntegrationsResponseDto> {
+    if (command.before && command.after) {
+      throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.agentIdentifier,
@@ -26,16 +32,25 @@ export class ListAgentIntegrations {
       throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
     }
 
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: agent._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      '*',
-      { sort: { createdAt: -1 } }
-    );
+    const pagination = await this.agentIntegrationRepository.listAgentIntegrationsForAgent({
+      after: command.after,
+      before: command.before,
+      limit: command.limit,
+      sortDirection: command.orderDirection === DirectionEnum.ASC ? 1 : -1,
+      sortBy: command.orderBy,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId: agent._id,
+      includeCursor: command.includeCursor,
+      integrationId: command.integrationId,
+    });
 
-    return links.map(toAgentIntegrationResponse);
+    return {
+      data: pagination.links.map((link) => toAgentIntegrationResponse(link)),
+      next: pagination.next,
+      previous: pagination.previous,
+      totalCount: pagination.totalCount,
+      totalCountCapped: pagination.totalCountCapped,
+    };
   }
 }

@@ -1,9 +1,27 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { CursorBasedPaginatedCommand } from '@novu/application-generic';
+import { AgentIntegrationEntity } from '@novu/dal';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+export class ListAgentIntegrationsCommand extends CursorBasedPaginatedCommand<
+  AgentIntegrationEntity,
+  'createdAt' | 'updatedAt' | '_id'
+> {
+  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
+  environmentId: string;
 
-export class ListAgentIntegrationsCommand extends EnvironmentCommand {
+  @IsString()
+  @IsMongoId()
+  @IsNotEmpty()
+  organizationId: string;
+
   @IsString()
   @IsNotEmpty()
   agentIdentifier: string;
+
+  @IsString()
+  @IsOptional()
+  @IsMongoId()
+  integrationId?: string;
 }

@@ -32,6 +32,10 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(listRes.status).to.equal(200);
     expect(listRes.body.data).to.be.an('array');
+    expect(listRes.body).to.have.property('next');
+    expect(listRes.body).to.have.property('previous');
+    expect(listRes.body).to.have.property('totalCount');
+    expect(listRes.body).to.have.property('totalCountCapped');
     expect(listRes.body.data.some((a: { identifier: string }) => a.identifier === identifier)).to.be.true;
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
@@ -61,6 +65,15 @@ describe('Agents API - /agents #novu-v2', () => {
     const res = await session.testAgent.get('/v1/agents/nonexistent-agent-id-xyz');
 
     expect(res.status).to.equal(404);
+  });
+
+  it('should return 400 when both before and after cursors are provided on list agents', async () => {
+    const response = await session.testAgent
+      .get('/v1/agents')
+      .query({ before: '000000000000000000000001', after: '000000000000000000000002' });
+
+    expect(response.status).to.equal(400);
+    expect(response.body.message).to.contain('Cannot specify both "before" and "after" cursors');
   });
 
   it('should return 409 when creating a duplicate agent identifier in the same environment', async () => {
@@ -122,6 +135,7 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(listRes.status).to.equal(200);
     expect(listRes.body.data).to.be.an('array');
+    expect(listRes.body).to.have.property('next');
     expect(listRes.body.data.length).to.equal(1);
     expect(listRes.body.data[0]._id).to.equal(linkId);
 
