@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ICredentialsEntity } from '@novu/dal';
+import type { Chat, Message, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
@@ -33,22 +34,15 @@ const esmImport = new Function('specifier', 'return import(specifier)') as (s: s
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
 
-type ChatInstance = {
-  webhooks: Record<string, (req: Request) => Promise<Response>>;
-  onNewMention: (handler: (thread: any, message: any) => void | Promise<void>) => void;
-  onSubscribedMessage: (handler: (thread: any, message: any) => void | Promise<void>) => void;
-  shutdown: () => Promise<void>;
-};
-
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
-  private readonly instances: LRUCache<string, ChatInstance>;
+  private readonly instances: LRUCache<string, Chat>;
 
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentCredentialService: AgentCredentialService
   ) {
-    this.instances = new LRUCache<string, ChatInstance>({
+    this.instances = new LRUCache<string, Chat>({
       max: MAX_CACHED_INSTANCES,
       ttl: INSTANCE_TTL_MS,
       dispose: (chat, key) => {
@@ -105,7 +99,7 @@ export class ChatSdkService implements OnModuleDestroy {
     agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedPlatformConfig
-  ): Promise<ChatInstance> {
+  ): Promise<Chat> {
     const existing = this.instances.get(instanceKey);
     if (existing) return existing;
 
@@ -120,7 +114,7 @@ export class ChatSdkService implements OnModuleDestroy {
     instanceKey: string,
     platform: AgentPlatformEnum,
     config: ResolvedPlatformConfig
-  ): Promise<ChatInstance> {
+  ): Promise<Chat> {
     const [{ Chat }, { createRedisState }] = await Promise.all([
       esmImport('chat'),
       esmImport('@chat-adapter/state-redis'),
@@ -195,14 +189,14 @@ export class ChatSdkService implements OnModuleDestroy {
     }
   }
 
-  private registerEventHandlers(agentId: string, chat: ChatInstance) {
-    chat.onNewMention(async (thread) => {
+  private registerEventHandlers(agentId: string, chat: Chat) {
+    chat.onNewMention(async (thread: Thread, _message: Message) => {
       await thread.subscribe();
       await thread.startTyping();
       await thread.post(`Hello! I'm agent \`${agentId}\`. I'm now listening to this thread.`);
     });
 
-    chat.onSubscribedMessage(async (thread, message) => {
+    chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       await thread.startTyping();
       await thread.post(`Echo: ${message.text}`);
     });
