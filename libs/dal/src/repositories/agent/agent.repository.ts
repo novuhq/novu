@@ -12,6 +12,17 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
     super(Agent, AgentEntity);
   }
 
+  /**
+   * Unscoped lookup by _id — used exclusively for inbound webhook bootstrap
+   * where _environmentId / _organizationId are not yet known.
+   */
+  async findByIdForWebhook(agentId: string): Promise<AgentEntity | null> {
+    const doc = await this.MongooseModel.findById(agentId).lean();
+    if (!doc) return null;
+
+    return this.mapProjectedEntity(doc) as AgentEntity;
+  }
+
   async listAgents({
     organizationId,
     environmentId,
