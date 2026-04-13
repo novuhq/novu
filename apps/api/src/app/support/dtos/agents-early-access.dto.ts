@@ -1,8 +1,39 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsDefined, IsString, ValidateNested } from 'class-validator';
+
+export class HowAgentRunsTodayDto {
+  @IsDefined()
+  @IsString()
+  value: string;
+
+  @IsDefined()
+  @IsString()
+  label: string;
+}
+
+export class PlannedProviderDto {
+  @IsDefined()
+  @IsString()
+  id: string;
+
+  @IsDefined()
+  @IsString()
+  label: string;
+}
 
 export class AgentsEarlyAccessDto {
-  @ApiProperty()
-  @IsBoolean()
-  enabled: boolean;
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => HowAgentRunsTodayDto)
+  howAgentRunsToday: HowAgentRunsTodayDto;
+
+  @IsDefined()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PlannedProviderDto)
+  plannedProviders: PlannedProviderDto[];
+
+  @IsDefined()
+  @IsString()
+  whatAgentDoes: string;
 }
