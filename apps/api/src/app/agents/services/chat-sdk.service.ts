@@ -24,8 +24,6 @@ import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
  *           credentials.secretKey                → appSecret
  *           credentials.apiToken                 → verifyToken
  *           credentials.phoneNumberIdentification → phoneNumberId
- *
- * Telegram: credentials.apiToken → botToken
  */
 
 // Chat SDK packages are ESM-only; SWC rewrites import() → require() for CJS output.
@@ -176,15 +174,6 @@ export class ChatSdkService implements OnModuleDestroy {
             appSecret: credentials.secretKey!,
             verifyToken: credentials.apiToken!,
             phoneNumberId: credentials.phoneNumberIdentification!,
-          }),
-        };
-      }
-      case AgentPlatformEnum.TELEGRAM: {
-        const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
-
-        return {
-          telegram: createTelegramAdapter({
-            botToken: credentials.apiToken!,
           }),
         };
       }

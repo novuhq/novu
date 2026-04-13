@@ -47,7 +47,6 @@
     "@chat-adapter/slack": "^4.25.0",
     "@chat-adapter/state-redis": "^4.25.0",
     "@chat-adapter/teams": "^4.25.0",
-    "@chat-adapter/telegram": "^4.25.0",
     "@chat-adapter/whatsapp": "^4.25.0",
     "@godaddy/terminus": "^4.12.1",
     "@google-cloud/storage": "^6.2.3",
