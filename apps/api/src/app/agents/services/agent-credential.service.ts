@@ -18,6 +18,7 @@ export interface ResolvedPlatformConfig {
   environmentId: string;
   organizationId: string;
   integrationIdentifier: string;
+  integrationId: string;
 }
 
 @Injectable()
@@ -89,6 +90,14 @@ export class AgentCredentialService {
       connectionAccessToken = connection.auth.accessToken;
     }
 
-    return { platform, credentials, connectionAccessToken, environmentId, organizationId, integrationIdentifier };
+    return {
+      platform,
+      credentials,
+      connectionAccessToken,
+      environmentId,
+      organizationId,
+      integrationIdentifier,
+      integrationId: integration._id,
+    };
   }
 }
