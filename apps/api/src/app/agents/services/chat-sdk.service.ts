@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ICredentialsEntity } from '@novu/dal';
+import { ConversationParticipantTypeEnum, ICredentialsEntity } from '@novu/dal';
 import type { Chat, Message, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
+import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 
 /**
@@ -42,7 +43,8 @@ export class ChatSdkService implements OnModuleDestroy {
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentCredentialService: AgentCredentialService,
-    private readonly subscriberResolver: AgentSubscriberResolver
+    private readonly subscriberResolver: AgentSubscriberResolver,
+    private readonly conversationService: AgentConversationService
   ) {
     this.instances = new LRUCache<string, Chat>({
       max: MAX_CACHED_INSTANCES,
@@ -195,11 +197,7 @@ export class ChatSdkService implements OnModuleDestroy {
     chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-
-        const subscriberId = await this.resolveSubscriber(config, message.author.userId);
-
-        await thread.startTyping();
-        await thread.post(`Hello! I'm agent \`${agentId}\`. I'm now listening to this thread.`);
+        await this.handleInboundMessage(agentId, config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
       }
@@ -207,23 +205,66 @@ export class ChatSdkService implements OnModuleDestroy {
 
     chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        const subscriberId = await this.resolveSubscriber(config, message.author.userId);
-
-        await thread.startTyping();
-        await thread.post(`Echo: ${message.text}`);
+        await this.handleInboundMessage(agentId, config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
       }
     });
   }
 
-  private async resolveSubscriber(config: ResolvedPlatformConfig, platformUserId: string): Promise<string | null> {
-    return this.subscriberResolver.resolve({
+  private async handleInboundMessage(
+    agentId: string,
+    config: ResolvedPlatformConfig,
+    thread: Thread,
+    message: Message
+  ) {
+    const subscriberId = await this.subscriberResolver
+      .resolve({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        platform: config.platform,
+        platformUserId: message.author.userId,
+        integrationIdentifier: config.integrationIdentifier,
+      })
+      .catch((err) => {
+        this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
+
+        return null;
+      });
+
+    const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
+    const participantType = subscriberId
+      ? ConversationParticipantTypeEnum.SUBSCRIBER
+      : ConversationParticipantTypeEnum.PLATFORM_USER;
+
+    const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
       organizationId: config.organizationId,
+      agentId,
       platform: config.platform,
-      platformUserId,
-      integrationIdentifier: config.integrationIdentifier,
+      integrationId: config.integrationId,
+      platformThreadId: thread.id,
+      participantId,
+      participantType,
+      platformUserId: message.author.userId,
+      firstMessageText: message.text,
     });
+
+    await this.conversationService.persistInboundMessage({
+      conversationId: conversation._id,
+      platform: config.platform,
+      integrationId: config.integrationId,
+      platformThreadId: thread.id,
+      senderId: participantId,
+      senderName: message.author.fullName,
+      content: message.text,
+      platformMessageId: message.id,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
+
+    await thread.startTyping();
+
+    // TODO Phase 5: bridge executor fires here with { conversation, subscriberId, history }
   }
 }

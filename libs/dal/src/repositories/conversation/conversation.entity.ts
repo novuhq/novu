@@ -10,6 +10,7 @@ export enum ConversationStatusEnum {
 export enum ConversationParticipantTypeEnum {
   SUBSCRIBER = 'subscriber',
   AGENT = 'agent',
+  PLATFORM_USER = 'platform_user',
 }
 
 export interface ConversationParticipant {

@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ChannelConnectionRepository, ChannelEndpointRepository } from '@novu/dal';
+import {
+  ChannelConnectionRepository,
+  ChannelEndpointRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
+} from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentsController } from './agents.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
+import { AgentConversationService } from './services/agent-conversation.service';
 import { AgentCredentialService } from './services/agent-credential.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { ChatSdkService } from './services/chat-sdk.service';
@@ -17,8 +23,11 @@ import { USE_CASES } from './usecases';
     ...USE_CASES,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
+    ConversationRepository,
+    ConversationActivityRepository,
     AgentCredentialService,
     AgentSubscriberResolver,
+    AgentConversationService,
     ChatSdkService,
   ],
   exports: [...USE_CASES, ChatSdkService],

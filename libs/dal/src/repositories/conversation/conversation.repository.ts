@@ -4,6 +4,7 @@ import { BaseRepositoryV2 } from '../base-repository-v2';
 import {
   ConversationDBModel,
   ConversationEntity,
+  ConversationParticipant,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
 } from './conversation.entity';
@@ -62,6 +63,18 @@ export class ConversationRepository extends BaseRepositoryV2<
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { metadata } }
+    );
+  }
+
+  async updateParticipants(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    participants: ConversationParticipant[]
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { participants } }
     );
   }
 
