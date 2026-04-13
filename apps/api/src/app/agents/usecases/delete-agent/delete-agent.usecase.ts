@@ -24,24 +24,16 @@ export class DeleteAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    await this.agentRepository.withTransaction(async (session) => {
-      await this.agentIntegrationRepository.delete(
-        {
-          _agentId: agent._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session: session ?? undefined }
-      );
+    await this.agentIntegrationRepository.delete({
+      _agentId: agent._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
 
-      await this.agentRepository.delete(
-        {
-          _id: agent._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session: session ?? undefined }
-      );
+    await this.agentRepository.delete({
+      _id: agent._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
     });
   }
 }
