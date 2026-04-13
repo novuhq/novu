@@ -37,10 +37,10 @@ export class SupportController {
     const organization = await this.organizationRepository.findById(user.organizationId);
     const organizationName = organization?.name ?? '';
 
-    const secretKey = process.env.NOVU_SECRET_KEY;
+    const secretKey = process.env.NOVU_INTERNAL_SECRET_KEY;
 
     if (!secretKey) {
-      this.logger.warn('NOVU_SECRET_KEY is not set; skipping early-access-request-agents-internal-email trigger');
+      this.logger.warn('NOVU_INTERNAL_SECRET_KEY is not set; skipping early-access-request-agents-internal-email trigger');
 
       return {
         success: true,
