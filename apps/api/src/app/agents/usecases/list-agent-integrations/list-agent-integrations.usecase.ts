@@ -82,7 +82,7 @@ export class ListAgentIntegrations {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
-        ['_id', 'identifier']
+        '_id identifier'
       );
 
       idToIdentifier = new Map(integrations.map((i) => [i._id, i.identifier]));
