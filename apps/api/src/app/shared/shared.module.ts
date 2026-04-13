@@ -37,8 +37,6 @@ import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ControlValuesRepository,
-  ConversationActivityRepository,
-  ConversationRepository,
   DalService,
   EnvironmentRepository,
   EnvironmentVariableRepository,
@@ -117,8 +115,6 @@ const DAL_MODELS = [
   EnvironmentVariableRepository,
   AgentRepository,
   AgentIntegrationRepository,
-  ConversationRepository,
-  ConversationActivityRepository,
 ];
 
 const dalService = {

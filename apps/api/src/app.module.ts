@@ -11,7 +11,6 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { ActivityModule } from './app/activity/activity.module';
 import { AgentsModule } from './app/agents/agents.module';
-import { ConversationsModule } from './app/conversations/conversations.module';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
@@ -84,6 +83,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-ai')?.AiModule);
     }
 
+    if (require('@novu/ee-api')?.ConversationsModule) {
+      modules.push(require('@novu/ee-api')?.ConversationsModule);
+    }
+
     modules.push(SupportModule);
     modules.push(OutboundWebhooksModule.forRoot());
   }
@@ -148,7 +151,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   ChannelConnectionsModule,
   ChannelEndpointsModule,
   StepResolversModule,
-  ConversationsModule,
 ];
 
 const enterpriseModules = enterpriseImports();
