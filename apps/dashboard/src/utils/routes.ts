@@ -72,6 +72,7 @@ export const ROUTES = {
   VARIABLES: '/env/:environmentSlug/variables',
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
   AGENTS: '/env/:environmentSlug/agents',
+  AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

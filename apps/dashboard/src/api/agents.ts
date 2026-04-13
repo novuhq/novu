@@ -4,6 +4,12 @@ import { del, get, post } from '@/api/api.client';
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
 
+export const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
+
+export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
+  return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
+}
+
 export function getAgentsListQueryKey(
   environmentId: string | undefined,
   params: { after?: string; before?: string; limit: number; identifier: string }
@@ -95,6 +101,13 @@ export function listAgents(params: ListAgentsParams): Promise<ListAgentsResponse
   return get<ListAgentsResponse>(`/agents${query}`, {
     environment: params.environment,
     signal: params.signal,
+  });
+}
+
+export function getAgent(environment: IEnvironment, identifier: string, signal?: AbortSignal): Promise<AgentResponse> {
+  return get<AgentResponse>(`/agents/${encodeURIComponent(identifier)}`, {
+    environment,
+    signal,
   });
 }
 
