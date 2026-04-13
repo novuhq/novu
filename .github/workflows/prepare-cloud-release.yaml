@@ -32,17 +32,13 @@ jobs:
       - name: Close existing cloud release PRs
         id: close-existing-prs
         run: |
-          EXISTING_PRS=$(gh pr list --base prod --search "chore(root): Release" --state open --json number,headRefName --jq '.[] | select(.headRefName | startswith("release_"))')
-          if [ -n "$EXISTING_PRS" ]; then
-            echo "$EXISTING_PRS" | jq -r '.number' | while read PR_NUMBER; do
-              BRANCH_NAME=$(echo "$EXISTING_PRS" | jq -r "select(.number == $PR_NUMBER) | .headRefName")
-              echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
-              gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
-              git push origin --delete "$BRANCH_NAME" || true
-            done
-          else
-            echo "No existing cloud release PRs found."
-          fi
+          gh pr list --base prod --search "chore(root): Release" --state open --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
+          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
+            echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
+            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
+            git push origin --delete "$BRANCH_NAME" || true
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
