@@ -80,7 +80,7 @@ export class AgentsController {
     summary: 'Create agent',
     description: 'Creates an agent scoped to the current environment. The identifier must be unique per environment.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createAgent(
     @UserSession() user: UserSessionData,
     @Body() body: CreateAgentRequestDto
@@ -104,7 +104,7 @@ export class AgentsController {
     description:
       'Returns a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgents(
     @UserSession() user: UserSessionData,
     @Query() query: ListAgentsQueryDto
@@ -134,7 +134,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   addAgentIntegration(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -161,7 +161,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgentIntegrations(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -193,7 +193,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent, integration, or link was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   updateAgentIntegration(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -224,7 +224,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent or agent-integration link was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   removeAgentIntegration(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -250,7 +250,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
   getAgent(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<AgentResponseDto> {
     return this.getAgentUsecase.execute(
       GetAgentCommand.create({
@@ -270,7 +270,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   updateAgent(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -300,7 +300,7 @@ export class AgentsController {
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
   })
-  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   deleteAgent(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<void> {
     return this.deleteAgentUsecase.execute(
       DeleteAgentCommand.create({
