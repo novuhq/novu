@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
+import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 
 export class CreateAgentRequestDto {
   @ApiProperty()
@@ -10,6 +11,9 @@ export class CreateAgentRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Matches(SLUG_IDENTIFIER_REGEX, {
+    message: slugIdentifierFormatMessage('identifier'),
+  })
   identifier: string;
 
   @ApiPropertyOptional()

@@ -6,6 +6,8 @@ import {
   MAX_TAG_ELEMENTS,
   MAX_TAG_LENGTH,
   SeverityLevelEnum,
+  SLUG_IDENTIFIER_REGEX,
+  slugIdentifierFormatMessage,
   VALID_ID_REGEX,
 } from '@novu/shared';
 import * as z from 'zod';
@@ -13,8 +15,8 @@ import * as z from 'zod';
 export const workflowSchema = z.object({
   active: z.boolean().optional(),
   name: z.string().min(1).max(MAX_NAME_LENGTH),
-  workflowId: z.string().regex(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
-    message: 'workflowId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
+  workflowId: z.string().regex(SLUG_IDENTIFIER_REGEX, {
+    message: slugIdentifierFormatMessage('workflowId'),
   }),
   tags: z
     .array(z.string().min(0).max(MAX_TAG_LENGTH))
