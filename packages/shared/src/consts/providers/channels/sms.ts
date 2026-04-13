@@ -23,6 +23,7 @@ import {
   kannelConfig,
   maqsamConfig,
   messagebirdConfig,
+  messenteConfig,
   mobishastraConfig,
   nexmoConfig,
   plivoConfig,
@@ -350,4 +351,12 @@ export const smsProviders: IProviderConfig[] = [
     docReference: 'https://developers.cm.com/messaging/docs/sms',
     logoFileName: { light: 'cm-telecom.svg', dark: 'cm-telecom.svg' },
   },
+  {
+    id: SmsProviderIdEnum.Messente,
+    displayName: 'Messente',
+    channel: ChannelTypeEnum.SMS,
+    credentials: messenteConfig,
+    docReference: 'https://messente.com/docs',
+    logoFileName: { light: 'messente.svg', dark: 'messente.svg' },
+  }
 ];
