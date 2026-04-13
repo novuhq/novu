@@ -61,13 +61,13 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(afterDelete.status).to.equal(404);
   });
 
-  it('should return 400 when identifier is not a valid slug', async () => {
+  it('should return 422 when identifier is not a valid slug', async () => {
     const res = await session.testAgent.post('/v1/agents').send({
       name: 'Invalid Slug Agent',
       identifier: 'bad id with spaces',
     });
 
-    expect(res.status).to.equal(400);
+    expect(res.status).to.equal(422);
   });
 
   it('should return 404 when agent identifier does not exist', async () => {
