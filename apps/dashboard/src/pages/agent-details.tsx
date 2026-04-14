@@ -178,9 +178,7 @@ export function AgentDetailsPage() {
       <Breadcrumb className="min-w-0">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to={agentsListPath}>Agents</Link>
-            </BreadcrumbLink>
+            <BreadcrumbLink to={agentsListPath}>Agents</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem className="min-w-0">
