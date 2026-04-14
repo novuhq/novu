@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationParticipantTypeEnum, ICredentialsEntity, SubscriberRepository } from '@novu/dal';
 import type { Chat, Message, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
@@ -8,9 +7,7 @@ import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
-import { AgentConversationService } from './agent-conversation.service';
-import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import { BridgeExecutorService } from './bridge-executor.service';
+import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 /**
  * ICredentials field mapping per platform adapter:
@@ -43,10 +40,7 @@ export class ChatSdkService implements OnModuleDestroy {
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentCredentialService: AgentCredentialService,
-    private readonly subscriberResolver: AgentSubscriberResolver,
-    private readonly conversationService: AgentConversationService,
-    private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly inboundHandler: AgentInboundHandler
   ) {
     this.instances = new LRUCache<string, Chat>({
       max: MAX_CACHED_INSTANCES,
@@ -207,7 +201,7 @@ export class ChatSdkService implements OnModuleDestroy {
     chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.handleInboundMessage(agentId, config, thread, message, AgentEventEnum.ON_START);
+        await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_START);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
       }
@@ -215,92 +209,10 @@ export class ChatSdkService implements OnModuleDestroy {
 
     chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        await this.handleInboundMessage(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
       }
-    });
-  }
-
-  private async handleInboundMessage(
-    agentId: string,
-    config: ResolvedPlatformConfig,
-    thread: Thread,
-    message: Message,
-    event: AgentEventEnum
-  ) {
-    const subscriberId = await this.subscriberResolver
-      .resolve({
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        platform: config.platform,
-        platformUserId: message.author.userId,
-        integrationIdentifier: config.integrationIdentifier,
-      })
-      .catch((err) => {
-        this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
-
-        return null;
-      });
-
-    const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
-    const participantType = subscriberId
-      ? ConversationParticipantTypeEnum.SUBSCRIBER
-      : ConversationParticipantTypeEnum.PLATFORM_USER;
-
-    const conversation = await this.conversationService.createOrGetConversation({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      agentId,
-      platform: config.platform,
-      integrationId: config.integrationId,
-      platformThreadId: thread.id,
-      participantId,
-      participantType,
-      platformUserId: message.author.userId,
-      firstMessageText: message.text,
-    });
-
-    await this.conversationService.persistInboundMessage({
-      conversationId: conversation._id,
-      platform: config.platform,
-      integrationId: config.integrationId,
-      platformThreadId: thread.id,
-      senderId: participantId,
-      senderName: message.author.fullName,
-      content: message.text,
-      platformMessageId: message.id,
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-    });
-
-    await thread.startTyping();
-
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      thread.id,
-      serializedThread
-    );
-
-    const [subscriber, history] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
-    ]);
-
-    await this.bridgeExecutor.execute({
-      event,
-      agentId: agentId,
-      config,
-      conversation,
-      subscriber,
-      history,
-      message,
-      thread,
     });
   }
 }

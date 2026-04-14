@@ -2,9 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 
-const SIGNAL_TYPES = ['metadata', 'trigger', 'resolve'] as const;
+const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
-class ReplyContentDto {
+class TextContentDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -12,12 +12,11 @@ class ReplyContentDto {
   text: string;
 }
 
-class UpdateContentDto {
-  @ApiProperty()
+class ResolveDto {
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  @MaxLength(40_000)
-  text: string;
+  summary?: string;
 }
 
 class SignalDto {
@@ -33,19 +32,26 @@ export class AgentReplyPayloadDto {
   @IsNotEmpty()
   replyToken: string;
 
-  @ApiPropertyOptional({ type: ReplyContentDto })
+  @ApiPropertyOptional({ type: TextContentDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => ReplyContentDto)
-  reply?: ReplyContentDto;
+  @Type(() => TextContentDto)
+  reply?: TextContentDto;
 
-  @ApiPropertyOptional({ type: UpdateContentDto })
+  @ApiPropertyOptional({ type: TextContentDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => UpdateContentDto)
-  update?: UpdateContentDto;
+  @Type(() => TextContentDto)
+  update?: TextContentDto;
+
+  @ApiPropertyOptional({ type: ResolveDto })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ResolveDto)
+  resolve?: ResolveDto;
 
   @ApiPropertyOptional({ type: [SignalDto] })
   @IsOptional()

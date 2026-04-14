@@ -4,8 +4,8 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
-  Param,
   Post,
+  Param,
   Req,
   Res,
   UseGuards,
@@ -29,16 +29,13 @@ export class AgentsWebhookController {
 
   @Post('/:agentId/reply')
   @HttpCode(HttpStatus.OK)
-  async handleAgentReply(
-    @Param('agentId') agentId: string,
-    @Body() body: AgentReplyPayloadDto
-  ) {
+  async handleAgentReply(@Body() body: AgentReplyPayloadDto) {
     return this.handleAgentReplyUsecase.execute(
       HandleAgentReplyCommand.create({
-        agentId,
         replyToken: body.replyToken,
         reply: body.reply,
         update: body.update,
+        resolve: body.resolve,
         signals: body.signals as Signal[],
       })
     );

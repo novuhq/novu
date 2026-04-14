@@ -24,7 +24,6 @@ const RETRY_BASE_DELAY_MS = 500;
 
 export interface BridgeExecutorParams {
   event: AgentEventEnum;
-  agentId: string;
   config: ResolvedPlatformConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;

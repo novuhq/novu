@@ -4,10 +4,6 @@ import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-valid
 export class HandleAgentReplyCommand extends BaseCommand {
   @IsString()
   @IsNotEmpty()
-  agentId: string;
-
-  @IsString()
-  @IsNotEmpty()
   replyToken: string;
 
   @IsOptional()
@@ -19,11 +15,14 @@ export class HandleAgentReplyCommand extends BaseCommand {
   update?: { text: string };
 
   @IsOptional()
+  @IsObject()
+  resolve?: { summary?: string };
+
+  @IsOptional()
   @IsArray()
   signals?: Signal[];
 }
 
 export type Signal =
   | { type: 'metadata'; key: string; value: unknown }
-  | { type: 'trigger'; workflowId: string; to?: string; payload?: Record<string, unknown> }
-  | { type: 'resolve'; summary?: string };
+  | { type: 'trigger'; workflowId: string; to?: string; payload?: Record<string, unknown> };
