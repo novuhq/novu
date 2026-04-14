@@ -88,6 +88,15 @@ export function serializePushProviderError(error: unknown): string {
   return JSON.stringify({ message: String(error ?? '') });
 }
 
+export function applySubscriberWebhookUrl(
+  combinedOverrides: Record<string, unknown>,
+  subscriberWebhookUrl?: string
+): Record<string, unknown> {
+  return subscriberWebhookUrl && !combinedOverrides.webhookUrl
+    ? { ...combinedOverrides, webhookUrl: subscriberWebhookUrl }
+    : combinedOverrides;
+}
+
 interface IPushProviderOverride {
   providerId: PushProviderIdEnum;
   overrides: Record<string, unknown>;
@@ -623,10 +632,7 @@ export class SendMessagePush extends SendMessageBase {
 
       // Inject subscriber-level webhookUrl as a middle-priority default.
       // Priority: trigger override (in combinedOverrides) > subscriber credential > integration config (in provider).
-      const bridgeProviderData =
-        subscriberWebhookUrl && !combinedOverrides.webhookUrl
-          ? { ...combinedOverrides, webhookUrl: subscriberWebhookUrl }
-          : combinedOverrides;
+      const bridgeProviderData = applySubscriberWebhookUrl(combinedOverrides, subscriberWebhookUrl);
 
       const result = await pushHandler.send({
         target: [deviceToken],

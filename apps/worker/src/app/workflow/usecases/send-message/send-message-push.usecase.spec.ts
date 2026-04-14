@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { isSubscriberError, SUBSCRIBER_ERROR_PATTERNS, serializePushProviderError } from './send-message-push.usecase';
+import { isSubscriberError, SUBSCRIBER_ERROR_PATTERNS, serializePushProviderError, applySubscriberWebhookUrl } from './send-message-push.usecase';
 
 describe('isSubscriberError', () => {
   for (const pattern of SUBSCRIBER_ERROR_PATTERNS) {
@@ -59,15 +59,6 @@ describe('serializePushProviderError', () => {
  *   3. Integration config (not tested here, handled by provider) — lowest
  */
 describe('webhookUrl priority injection logic', () => {
-  function applySubscriberWebhookUrl(
-    combinedOverrides: Record<string, unknown>,
-    subscriberWebhookUrl?: string
-  ): Record<string, unknown> {
-    return subscriberWebhookUrl && !combinedOverrides.webhookUrl
-      ? { ...combinedOverrides, webhookUrl: subscriberWebhookUrl }
-      : combinedOverrides;
-  }
-
   it('should use trigger override when both trigger and subscriber webhookUrls are present', () => {
     const combinedOverrides = { webhookUrl: 'https://trigger.example.com' };
     const result = applySubscriberWebhookUrl(combinedOverrides, 'https://subscriber.example.com');
