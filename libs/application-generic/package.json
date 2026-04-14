@@ -33,7 +33,7 @@
     "@nestjs/terminus": "10.2.3",
     "@nestjs/testing": "10.4.18",
     "jsonwebtoken": "9.0.3",
-    "newrelic": "^13.12.0",
+    "newrelic": "^13.18.0",
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
