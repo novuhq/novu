@@ -4,7 +4,7 @@ import { IsArray, IsIn, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength, V
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
-class TextContentDto {
+export class TextContentDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -12,14 +12,14 @@ class TextContentDto {
   text: string;
 }
 
-class ResolveDto {
+export class ResolveDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   summary?: string;
 }
 
-class SignalDto {
+export class SignalDto {
   @ApiProperty({ enum: SIGNAL_TYPES })
   @IsString()
   @IsIn(SIGNAL_TYPES)
