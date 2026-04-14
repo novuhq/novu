@@ -13,6 +13,7 @@ import { AgentsWebhookController } from './agents-webhook.controller';
 import { AgentConversationService } from './services/agent-conversation.service';
 import { AgentCredentialService } from './services/agent-credential.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
+import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { USE_CASES } from './usecases';
 
@@ -28,6 +29,7 @@ import { USE_CASES } from './usecases';
     AgentCredentialService,
     AgentSubscriberResolver,
     AgentConversationService,
+    BridgeExecutorService,
     ChatSdkService,
   ],
   exports: [...USE_CASES, ChatSdkService],

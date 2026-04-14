@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationParticipantTypeEnum, ICredentialsEntity } from '@novu/dal';
+import { ConversationParticipantTypeEnum, ICredentialsEntity, SubscriberRepository } from '@novu/dal';
 import type { Chat, Message, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
@@ -10,6 +10,7 @@ import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
+import { BridgeExecutorService } from './bridge-executor.service';
 
 /**
  * ICredentials field mapping per platform adapter:
@@ -43,7 +44,9 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly agentCredentialService: AgentCredentialService,
     private readonly subscriberResolver: AgentSubscriberResolver,
-    private readonly conversationService: AgentConversationService
+    private readonly conversationService: AgentConversationService,
+    private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly subscriberRepository: SubscriberRepository
   ) {
     this.instances = new LRUCache<string, Chat>({
       max: MAX_CACHED_INSTANCES,
@@ -256,7 +259,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     await thread.startTyping();
 
-    const serializedThread = thread.toJSON();
+    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
     await this.conversationService.updateChannelThread(
       config.environmentId,
       config.organizationId,
@@ -265,6 +268,22 @@ export class ChatSdkService implements OnModuleDestroy {
       serializedThread
     );
 
-    // TODO Phase 5: bridge executor fires here with { event, conversation, subscriberId, history }
+    const [subscriber, history] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.conversationService.getHistory(config.environmentId, conversation._id),
+    ]);
+
+    await this.bridgeExecutor.execute({
+      event,
+      agentId: agentId,
+      config,
+      conversation,
+      subscriber,
+      history,
+      message,
+      thread,
+    });
   }
 }
