@@ -11,7 +11,7 @@ export function ProviderIcon({ providerId, providerDisplayName, className }: Pro
     <img
       src={`/images/providers/light/square/${providerId}.svg`}
       alt={providerDisplayName}
-      className={cn('h-6 w-6', className)}
+      className={cn('h-6 w-6 object-contain', className)}
     />
   );
 }
