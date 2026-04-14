@@ -5,11 +5,12 @@ import {
   ConversationActivityTypeEnum,
   ConversationEntity,
   ConversationRepository,
+  ConversationStatusEnum,
 } from '@novu/dal';
 import jwt from 'jsonwebtoken';
-import { ReplyTokenClaims } from '../../services/bridge-executor.service';
+import { BridgeExecutorService, ReplyTokenClaims } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import { HandleAgentReplyCommand } from './handle-agent-reply.command';
+import { HandleAgentReplyCommand, Signal } from './handle-agent-reply.command';
 
 @Injectable()
 export class HandleAgentReply {
@@ -17,6 +18,7 @@ export class HandleAgentReply {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly chatSdkService: ChatSdkService,
+    private readonly bridgeExecutor: BridgeExecutorService,
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey
   ) {}
 
@@ -46,7 +48,9 @@ export class HandleAgentReply {
 
     await this.deliverMessage(claims, conversation, command.reply!.text, ConversationActivityTypeEnum.MESSAGE);
 
-    // TODO Block 6: execute signals here
+    if (command.signals?.length) {
+      await this.executeSignals(claims, conversation, command.signals);
+    }
 
     return { status: 'ok' };
   }
@@ -105,6 +109,94 @@ export class HandleAgentReply {
         conversation._id,
         text
       ),
+    ]);
+  }
+
+  private async executeSignals(
+    claims: ReplyTokenClaims,
+    conversation: ConversationEntity,
+    signals: Signal[]
+  ): Promise<void> {
+    const metadataSignals = signals.filter((s): s is Extract<Signal, { type: 'metadata' }> => s.type === 'metadata');
+
+    if (metadataSignals.length) {
+      await this.executeMetadataSignals(claims, conversation, metadataSignals);
+    }
+
+    const triggerSignals = signals.filter((s) => s.type === 'trigger');
+    if (triggerSignals.length) {
+      // TODO: execute trigger signals — requires wiring TriggerEvent or ParseEventRequest from EventsModule
+    }
+
+    const resolveSignals = signals.filter((s): s is Extract<Signal, { type: 'resolve' }> => s.type === 'resolve');
+    if (resolveSignals.length) {
+      await this.executeResolveSignal(claims, conversation, resolveSignals[0]);
+    }
+  }
+
+  private async executeMetadataSignals(
+    claims: ReplyTokenClaims,
+    conversation: ConversationEntity,
+    signals: Array<{ type: 'metadata'; key: string; value: unknown }>
+  ): Promise<void> {
+    const merged = { ...(conversation.metadata ?? {}) };
+    for (const signal of signals) {
+      merged[signal.key] = signal.value;
+    }
+
+    const serialized = JSON.stringify(merged);
+    if (Buffer.byteLength(serialized) > 65_536) {
+      throw new BadRequestException('Conversation metadata exceeds 64KB limit');
+    }
+
+    await Promise.all([
+      this.conversationRepository.updateMetadata(
+        claims.environmentId,
+        claims.organizationId,
+        conversation._id,
+        merged
+      ),
+      this.activityRepository.createSignalActivity({
+        identifier: `act-${shortId(8)}`,
+        conversationId: conversation._id,
+        platform: conversation.channels[0].platform,
+        integrationId: conversation.channels[0]._integrationId,
+        platformThreadId: conversation.channels[0].platformThreadId,
+        agentId: claims.agentId,
+        content: `Metadata updated: ${signals.map((s) => s.key).join(', ')}`,
+        signalData: { type: 'metadata', payload: merged },
+        environmentId: claims.environmentId,
+        organizationId: claims.organizationId,
+      }),
+    ]);
+  }
+
+  private async executeResolveSignal(
+    claims: ReplyTokenClaims,
+    conversation: ConversationEntity,
+    signal: { type: 'resolve'; summary?: string }
+  ): Promise<void> {
+    const channel = conversation.channels[0];
+
+    await Promise.all([
+      this.conversationRepository.updateStatus(
+        claims.environmentId,
+        claims.organizationId,
+        conversation._id,
+        ConversationStatusEnum.RESOLVED
+      ),
+      this.activityRepository.createSignalActivity({
+        identifier: `act-${shortId(8)}`,
+        conversationId: conversation._id,
+        platform: channel.platform,
+        integrationId: channel._integrationId,
+        platformThreadId: channel.platformThreadId,
+        agentId: claims.agentId,
+        content: signal.summary ?? 'Conversation resolved',
+        signalData: { type: 'resolve', payload: signal.summary ? { summary: signal.summary } : undefined },
+        environmentId: claims.environmentId,
+        organizationId: claims.organizationId,
+      }),
     ]);
   }
 }
