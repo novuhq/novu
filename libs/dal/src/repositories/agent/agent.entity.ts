@@ -11,6 +11,8 @@ export class AgentEntity {
 
   description?: string;
 
+  active: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

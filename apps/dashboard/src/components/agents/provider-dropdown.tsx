@@ -47,6 +47,10 @@ type ProviderDropdownProps = {
   agentIdentifier: string;
   /** Integration IDs already linked to the agent — selecting one of these skips the link API call. */
   linkedIntegrationIds?: Set<string>;
+  /** When true, hide integrations whose _id is in `linkedIntegrationIds` from the list. */
+  excludeLinked?: boolean;
+  /** Override the default trigger button. Receives `isBusy` so the caller can disable while linking. */
+  renderTrigger?: (props: { isBusy: boolean }) => React.ReactNode;
 };
 
 function buildDropdownItems(
@@ -113,6 +117,8 @@ export function ProviderDropdown({
   onSelect,
   agentIdentifier,
   linkedIntegrationIds,
+  excludeLinked = false,
+  renderTrigger,
 }: ProviderDropdownProps) {
   const [open, setOpen] = useState(false);
   const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
@@ -120,10 +126,20 @@ export function ProviderDropdown({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
 
-  const { supported, comingSoon } = useMemo(
+  const { supported: allSupported, comingSoon } = useMemo(
     () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
     [integrations]
   );
+
+  const supported = useMemo(() => {
+    if (!excludeLinked || !linkedIntegrationIds?.size) {
+      return allSupported;
+    }
+
+    return allSupported.filter(
+      (item) => !item.integration || !linkedIntegrationIds.has(item.integration._id)
+    );
+  }, [allSupported, excludeLinked, linkedIntegrationIds]);
 
   const selected = useMemo(() => {
     if (selectedIntegrationId) {
@@ -246,6 +262,143 @@ export function ProviderDropdown({
     }
   }
 
+  const defaultTrigger = (
+    <button
+      type="button"
+      disabled={isBusy}
+      className="border-stroke-soft bg-bg-white flex h-7 w-full max-w-[320px] items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60"
+    >
+      {selected ? (
+        <div className="flex items-center gap-1">
+          <ProviderIcon
+            providerId={selected.providerId}
+            providerDisplayName={selected.displayName}
+            className="size-4 shrink-0"
+          />
+          <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
+        </div>
+      ) : (
+        <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>
+      )}
+      {isBusy ? (
+        <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+      ) : (
+        <RiExpandUpDownLine className="text-text-soft size-3" />
+      )}
+    </button>
+  );
+
+  const popoverContent = (
+    <PopoverContent
+      className="w-(--radix-popover-trigger-width) max-w-[320px] min-w-[220px] overflow-hidden p-0"
+      align="start"
+    >
+      <Command>
+        <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
+          <CommandInput
+            placeholder="Search provider"
+            size="xs"
+            disabled={isBusy}
+            inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
+            inputWrapperClassName="h-4 min-h-4 bg-transparent px-0 py-0 hover:[&:not(&:has(input:focus))]:bg-transparent has-[input:disabled]:bg-transparent"
+            className="text-text-sub text-label-xs leading-4 placeholder:text-text-sub h-4 min-h-4 py-0"
+          />
+          <RiSearchLine className="text-text-soft size-3 shrink-0" />
+        </div>
+
+        <CommandList className="max-h-[260px] p-1">
+          <CommandEmpty className="text-text-soft text-label-xs py-4">No providers found.</CommandEmpty>
+
+          {supported.length > 0 && (
+            <CommandGroup
+              heading="Providers"
+              className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
+            >
+              {supported.map((item, index) => {
+                const itemKey = getSupportedItemKey(item, index);
+                const isRowPending = pendingItemKey === itemKey;
+
+                return (
+                  <CommandItem
+                    key={itemKey}
+                    value={`${item.displayName} ${item.providerId}${item.integration ? ` ${item.integration.identifier}` : ''}`}
+                    disabled={isBusy}
+                    onSelect={() => {
+                      void handleSelect(item, index);
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 rounded-md p-1',
+                      item.integration?._id === selectedIntegrationId && 'bg-bg-muted'
+                    )}
+                  >
+                    <div className="flex flex-1 items-center gap-1">
+                      <ProviderIcon
+                        providerId={item.providerId}
+                        providerDisplayName={item.displayName}
+                        className="size-4 shrink-0"
+                      />
+                      <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
+                        {item.displayName}
+                      </span>
+                    </div>
+
+                    {isRowPending ? (
+                      <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+                    ) : item.integration ? (
+                      <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
+                        {item.integration.identifier}
+                      </span>
+                    ) : (
+                      <RiAddLine className="text-text-soft size-3 shrink-0" />
+                    )}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          )}
+
+          {comingSoon.length > 0 && (
+            <CommandGroup
+              heading="Coming soon"
+              className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
+            >
+              {comingSoon.map((item) => (
+                <CommandItem
+                  key={item.providerId}
+                  value={`${item.displayName} ${item.providerId}`}
+                  disabled
+                  className="flex items-center gap-2 rounded-md p-1 opacity-50"
+                >
+                  <div className="flex flex-1 items-center gap-1">
+                    <ProviderIcon
+                      providerId={item.providerId}
+                      providerDisplayName={item.displayName}
+                      className="size-4 shrink-0"
+                    />
+                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
+                      {item.displayName}
+                    </span>
+                  </div>
+                  <span className="font-code text-text-soft shrink-0 text-[10px] leading-[15px]">soon</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </Command>
+    </PopoverContent>
+  );
+
+  if (renderTrigger) {
+
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>{renderTrigger({ isBusy })}</PopoverTrigger>
+        {popoverContent}
+      </Popover>
+    );
+  }
+
   return (
     <div className="flex w-full flex-col gap-1">
       <div className="flex items-center gap-px">
@@ -257,130 +410,8 @@ export function ProviderDropdown({
 
       <div className="w-full max-w-[320px]">
         <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              disabled={isBusy}
-              className="border-stroke-soft bg-bg-white flex h-7 w-full max-w-[320px] items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60"
-            >
-              {selected ? (
-                <div className="flex items-center gap-1">
-                  <ProviderIcon
-                    providerId={selected.providerId}
-                    providerDisplayName={selected.displayName}
-                    className="size-4 shrink-0"
-                  />
-                  <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
-                </div>
-              ) : (
-                <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>
-              )}
-              {isBusy ? (
-                <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
-              ) : (
-                <RiExpandUpDownLine className="text-text-soft size-3" />
-              )}
-            </button>
-          </PopoverTrigger>
-
-          <PopoverContent
-            className="w-(--radix-popover-trigger-width) max-w-[320px] min-w-[220px] overflow-hidden p-0"
-            align="start"
-          >
-            <Command>
-              <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-[12px] pr-[12px]">
-                <CommandInput
-                  placeholder="Search provider"
-                  size="xs"
-                  disabled={isBusy}
-                  inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
-                  inputWrapperClassName="h-4 min-h-4 bg-transparent px-0 py-0 hover:[&:not(&:has(input:focus))]:bg-transparent has-[input:disabled]:bg-transparent"
-                  className="text-text-sub text-label-xs leading-4 placeholder:text-text-sub h-4 min-h-4 py-0"
-                />
-                <RiSearchLine className="text-text-soft size-3 shrink-0" />
-              </div>
-
-              <CommandList className="max-h-[260px] p-1">
-                <CommandEmpty className="text-text-soft text-label-xs py-4">No providers found.</CommandEmpty>
-
-                {supported.length > 0 && (
-                  <CommandGroup
-                    heading="Providers"
-                    className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
-                  >
-                    {supported.map((item, index) => {
-                      const itemKey = getSupportedItemKey(item, index);
-                      const isRowPending = pendingItemKey === itemKey;
-
-                      return (
-                        <CommandItem
-                          key={itemKey}
-                          value={`${item.displayName} ${item.providerId}${item.integration ? ` ${item.integration.identifier}` : ''}`}
-                          disabled={isBusy}
-                          onSelect={() => {
-                            void handleSelect(item, index);
-                          }}
-                          className={cn(
-                            'flex items-center gap-2 rounded-md p-1',
-                            item.integration?._id === selectedIntegrationId && 'bg-bg-muted'
-                          )}
-                        >
-                          <div className="flex flex-1 items-center gap-1">
-                            <ProviderIcon
-                              providerId={item.providerId}
-                              providerDisplayName={item.displayName}
-                              className="size-4 shrink-0"
-                            />
-                            <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
-                              {item.displayName}
-                            </span>
-                          </div>
-
-                          {isRowPending ? (
-                            <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
-                          ) : item.integration ? (
-                            <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
-                              {item.integration.identifier}
-                            </span>
-                          ) : (
-                            <RiAddLine className="text-text-soft size-3 shrink-0" />
-                          )}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                )}
-
-                {comingSoon.length > 0 && (
-                  <CommandGroup
-                    heading="Coming soon"
-                    className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
-                  >
-                    {comingSoon.map((item) => (
-                      <CommandItem
-                        key={item.providerId}
-                        value={`${item.displayName} ${item.providerId}`}
-                        disabled
-                        className="flex items-center gap-2 rounded-md p-1 opacity-50"
-                      >
-                        <div className="flex flex-1 items-center gap-1">
-                          <ProviderIcon
-                            providerId={item.providerId}
-                            providerDisplayName={item.displayName}
-                            className="size-4 shrink-0"
-                          />
-                          <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
-                            {item.displayName}
-                          </span>
-                        </div>
-                        <span className="font-code text-text-soft shrink-0 text-[10px] leading-[15px]">soon</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
+          <PopoverTrigger asChild>{defaultTrigger}</PopoverTrigger>
+          {popoverContent}
         </Popover>
       </div>
 

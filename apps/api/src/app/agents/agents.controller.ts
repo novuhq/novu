@@ -96,6 +96,7 @@ export class AgentsController {
         name: body.name,
         identifier: body.identifier,
         description: body.description,
+        active: body.active,
       })
     );
   }
@@ -287,6 +288,7 @@ export class AgentsController {
         identifier,
         name: body.name,
         description: body.description,
+        active: body.active,
       })
     );
   }

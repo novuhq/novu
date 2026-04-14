@@ -4,26 +4,26 @@ import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide'
 import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
 
 type ResolveAgentIntegrationGuideProps = {
-  providerId: string;
+  integrationLink: AgentIntegrationLink;
   onBack: () => void;
   embedded?: boolean;
   agent: AgentResponse;
-  integrationLink?: AgentIntegrationLink;
   canRemoveIntegration: boolean;
   onRequestRemoveIntegration?: () => void;
   isRemovingIntegration?: boolean;
 };
 
 export function ResolveAgentIntegrationGuide({
-  providerId,
+  integrationLink,
   onBack,
   embedded = false,
   agent,
-  integrationLink,
   canRemoveIntegration,
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: ResolveAgentIntegrationGuideProps) {
+  const providerId = integrationLink.integration.providerId;
+
   if (providerId === ChatProviderIdEnum.Slack) {
 
     return (

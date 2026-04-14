@@ -67,11 +67,11 @@ export function AgentDetailsPage() {
   const {
     agentIdentifier = '',
     agentTab: agentTabParam,
-    providerId: providerIdParam,
+    integrationIdentifier: integrationIdentifierParam,
   } = useParams<{
     agentIdentifier?: string;
     agentTab?: string;
-    providerId?: string;
+    integrationIdentifier?: string;
   }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,8 +106,10 @@ export function AgentDetailsPage() {
     },
   });
 
-  const providerId = providerIdParam ? decodeURIComponent(providerIdParam) : undefined;
-  const currentTab = providerId ? 'integrations' : parseAgentDetailsTab(agentTabParam);
+  const integrationIdentifier = integrationIdentifierParam
+    ? decodeURIComponent(integrationIdentifierParam)
+    : undefined;
+  const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
   if (!isConversationalAgentsEnabled) {
     return <Navigate to={agentsListPath} replace />;
@@ -242,7 +244,9 @@ export function AgentDetailsPage() {
                 <AgentOverviewTab agent={agent} />
               </TabsContent>
               <TabsContent value="integrations" className="outline-none">
-                <AgentIntegrationsTab agent={agent} providerId={providerId} />
+                {currentTab === 'integrations' ? (
+                  <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                ) : null}
               </TabsContent>
               <TabsContent value="activity" className="outline-none">
                 <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">

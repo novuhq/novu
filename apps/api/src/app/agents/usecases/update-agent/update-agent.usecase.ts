@@ -10,8 +10,8 @@ export class UpdateAgent {
   constructor(private readonly agentRepository: AgentRepository) {}
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
-    if (command.name === undefined && command.description === undefined) {
-      throw new BadRequestException('At least one of name or description must be provided.');
+    if (command.name === undefined && command.description === undefined && command.active === undefined) {
+      throw new BadRequestException('At least one of name, description, or active must be provided.');
     }
 
     const existing = await this.agentRepository.findOne(
@@ -27,7 +27,7 @@ export class UpdateAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    const $set: Record<string, string> = {};
+    const $set: Record<string, string | boolean> = {};
 
     if (command.name !== undefined) {
       $set.name = command.name;
@@ -35,6 +35,10 @@ export class UpdateAgent {
 
     if (command.description !== undefined) {
       $set.description = command.description;
+    }
+
+    if (command.active !== undefined) {
+      $set.active = command.active;
     }
 
     await this.agentRepository.updateOne(

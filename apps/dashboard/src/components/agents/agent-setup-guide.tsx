@@ -6,18 +6,18 @@ import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine, RiKey2Line } 
 import type { AgentResponse } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
-import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
-import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
+import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
-import { cn } from '@/utils/ui';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
+import { cn } from '@/utils/ui';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentSetupGuideProps = {
@@ -217,30 +217,14 @@ settings:
   token_rotation_enabled: false`;
 }
 
-function ManifestSection({
-  createSlackAppUrl,
-  manifestYaml,
-}: {
-  createSlackAppUrl: string;
-  manifestYaml: string;
-}) {
+function ManifestSection({ createSlackAppUrl, manifestYaml }: { createSlackAppUrl: string; manifestYaml: string }) {
   const [showManifest, setShowManifest] = useState(false);
 
   return (
     <div className="flex flex-col gap-2">
       <a href={createSlackAppUrl} target="_blank" rel="noopener noreferrer">
-        <Button
-          variant="secondary"
-          mode="outline"
-          size="xs"
-          className="text-text-sub gap-1 px-2 py-1.5"
-          type="button"
-        >
-          <ProviderIcon
-            providerId={ChatProviderIdEnum.Slack}
-            providerDisplayName="Slack"
-            className="size-4 shrink-0"
-          />
+        <Button variant="secondary" mode="outline" size="xs" className="text-text-sub gap-1 px-2 py-1.5" type="button">
+          <ProviderIcon providerId={ChatProviderIdEnum.Slack} providerDisplayName="Slack" className="size-4 shrink-0" />
           <span className="text-label-xs font-medium">Create slack app</span>
           <RiArrowRightUpLine className="size-3" />
         </Button>
@@ -251,9 +235,7 @@ function ManifestSection({
         className="text-text-sub hover:text-text-strong flex items-center gap-1 self-start py-1 transition-colors"
         onClick={() => setShowManifest((prev) => !prev)}
       >
-        <RiArrowDownSLine
-          className={cn('size-3.5 transition-transform duration-200', showManifest && 'rotate-180')}
-        />
+        <RiArrowDownSLine className={cn('size-3.5 transition-transform duration-200', showManifest && 'rotate-180')} />
         <span className="text-label-xs font-medium">{showManifest ? 'Hide manifest' : 'Show manifest'}</span>
       </button>
 
@@ -369,13 +351,10 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
   const selectedIntegrationIdentifier = useMemo(() => {
     const slackFromSelection = selectedIntegrationId
-      ? integrations?.find(
-          (i) => i._id === selectedIntegrationId && i.providerId === ChatProviderIdEnum.Slack
-        )
+      ? integrations?.find((i) => i._id === selectedIntegrationId && i.providerId === ChatProviderIdEnum.Slack)
       : undefined;
 
     if (slackFromSelection?.identifier) {
-
       return slackFromSelection.identifier;
     }
 
@@ -437,18 +416,18 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               status={deriveStepStatus(2, firstIncompleteStep)}
               title="Create Slack App via Manifest"
               description="Click the button to create a Slack app with a pre-filled manifest, or expand to view and copy the YAML manually."
-              rightContent={
-                <ManifestSection createSlackAppUrl={createSlackAppUrl} manifestYaml={manifestYaml} />
-              }
+              rightContent={<ManifestSection createSlackAppUrl={createSlackAppUrl} manifestYaml={manifestYaml} />}
             />
 
             <SetupStep
               index={3}
               status={deriveStepStatus(3, firstIncompleteStep)}
-              title="Paste the Client ID and secret from Slack App."
+              title="Paste the app credentials to the integration"
               description={
                 <span>
-                  {'Paste the Client ID and Client Secret from your Slack app into the integration. View '}
+                  {
+                    'Paste the App ID, Client ID, Client Secret and Signing Secret from your Slack app into the integration. View '
+                  }
                   <a
                     href="https://docs.novu.co/integrations/chat/slack"
                     target="_blank"

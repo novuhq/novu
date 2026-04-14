@@ -39,6 +39,7 @@ export type AgentResponse = {
   name: string;
   identifier: string;
   description?: string;
+  active: boolean;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -58,11 +59,13 @@ export type CreateAgentBody = {
   name: string;
   identifier: string;
   description?: string;
+  active?: boolean;
 };
 
 export type UpdateAgentBody = {
   name?: string;
   description?: string;
+  active?: boolean;
 };
 
 export type ListAgentsParams = {

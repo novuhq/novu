@@ -16,6 +16,9 @@ export class AgentResponseDto {
   description?: string;
 
   @ApiProperty()
+  active: boolean;
+
+  @ApiProperty()
   _environmentId: string;
 
   @ApiProperty()

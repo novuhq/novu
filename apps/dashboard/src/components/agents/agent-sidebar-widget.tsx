@@ -49,7 +49,6 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
-  const hasIntegrations = agent.integrations && agent.integrations.length > 0;
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [name, setName] = useState(agent.name);
@@ -171,11 +170,24 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
     <div className="flex w-[300px] shrink-0 flex-col gap-2.5">
       <div className="bg-bg-weak flex flex-col rounded p-1 py-1.5">
         <SidebarRow label="Status">
-          <Badge variant="lighter" color="red" size="md">
-            <AnimatedBadgeDot color="red" />
-            Action needed
-          </Badge>
-          <Switch checked={hasIntegrations} />
+          {agent.active ? (
+            <Badge variant="lighter" color="green" size="md">
+              <AnimatedBadgeDot color="green" />
+              Active
+            </Badge>
+          ) : (
+            <Badge variant="lighter" color="red" size="md">
+              <AnimatedBadgeDot color="red" />
+              Inactive
+            </Badge>
+          )}
+          <Switch
+            checked={agent.active}
+            disabled={!canWrite || isUpdatePending}
+            onCheckedChange={(checked) => {
+              void updateAgentAsync({ active: checked });
+            }}
+          />
         </SidebarRow>
 
         <div className="flex h-8 items-center justify-between gap-2 px-1.5">
