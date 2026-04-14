@@ -9,6 +9,7 @@ import {
   addAgentIntegration,
   getAgentIntegrationsQueryKey,
   listAgentIntegrations,
+  removeAgentIntegration,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { IntegrationsList } from '@/components/integrations/components/integrations-list';
@@ -26,6 +27,7 @@ import {
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
@@ -117,7 +119,10 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
   const location = useLocation();
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+
+  const canRemoveAgentIntegration = has({ permission: PermissionsEnum.AGENT_WRITE });
 
   const integrationsHubPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -184,6 +189,31 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
     },
   });
 
+  const removeIntegrationMutation = useMutation({
+    mutationFn: (agentIntegrationId: string) =>
+      removeAgentIntegration(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        agentIntegrationId
+      ),
+    onSuccess: async (_, agentIntegrationId) => {
+      const rows = listQuery.data?.data ?? [];
+      const removed = rows.find((row) => row._id === agentIntegrationId);
+      const name = removed?.integration.name ?? 'Integration';
+
+      showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
+      await queryClient.invalidateQueries({
+        queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      handleBackFromGuide();
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not remove integration.';
+
+      showErrorToast(message, 'Remove failed');
+    },
+  });
+
   const handlePickIntegration = (item: TableIntegration) => {
     if (addMutation.isPending) {
       return;
@@ -215,7 +245,24 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
 
   const mainPanel = (() => {
     if (providerId) {
-      return <ResolveAgentIntegrationGuide embedded providerId={providerId} onBack={handleBackFromGuide} />;
+      return (
+        <ResolveAgentIntegrationGuide
+          embedded
+          providerId={providerId}
+          onBack={handleBackFromGuide}
+          agent={agent}
+          integrationLink={selectedIntegration}
+          canRemoveIntegration={canRemoveAgentIntegration}
+          onRequestRemoveIntegration={() => {
+            if (!selectedIntegration || removeIntegrationMutation.isPending) {
+              return;
+            }
+
+            removeIntegrationMutation.mutate(selectedIntegration._id);
+          }}
+          isRemovingIntegration={removeIntegrationMutation.isPending}
+        />
+      );
     }
 
     if (isLoading) {

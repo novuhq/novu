@@ -1,4 +1,5 @@
-import { ChatProviderIdEnum, providers } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
+import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideSection } from './agent-integration-guide-section';
 import { AgentIntegrationGuideStep } from './agent-integration-guide-step';
@@ -6,18 +7,33 @@ import { AgentIntegrationGuideStep } from './agent-integration-guide-step';
 type SlackAgentIntegrationGuideProps = {
   onBack: () => void;
   embedded?: boolean;
+  agent: AgentResponse;
+  integrationLink?: AgentIntegrationLink;
+  canRemoveIntegration: boolean;
+  onRequestRemoveIntegration?: () => void;
+  isRemovingIntegration?: boolean;
 };
 
-const slackProvider = providers.find((p) => p.id === ChatProviderIdEnum.Slack);
-
-export function SlackAgentIntegrationGuide({ onBack, embedded = false }: SlackAgentIntegrationGuideProps) {
+export function SlackAgentIntegrationGuide({
+  onBack,
+  embedded = false,
+  agent,
+  integrationLink,
+  canRemoveIntegration,
+  onRequestRemoveIntegration,
+  isRemovingIntegration,
+}: SlackAgentIntegrationGuideProps) {
   return (
     <AgentIntegrationGuideLayout
       providerId={ChatProviderIdEnum.Slack}
       providerDisplayName="Slack"
       onBack={onBack}
       embedded={embedded}
-      docHref={slackProvider?.docReference}
+      agent={agent}
+      integrationLink={integrationLink}
+      canRemoveIntegration={canRemoveIntegration}
+      onRequestRemoveIntegration={onRequestRemoveIntegration}
+      isRemovingIntegration={isRemovingIntegration}
     >
       <AgentIntegrationGuideSection title="Overview">
         <p>

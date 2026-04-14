@@ -1,4 +1,5 @@
 import { providers } from '@novu/shared';
+import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideSection } from './agent-integration-guide-section';
 
@@ -6,12 +7,22 @@ type GenericAgentIntegrationGuideProps = {
   providerId: string;
   onBack: () => void;
   embedded?: boolean;
+  agent: AgentResponse;
+  integrationLink?: AgentIntegrationLink;
+  canRemoveIntegration: boolean;
+  onRequestRemoveIntegration?: () => void;
+  isRemovingIntegration?: boolean;
 };
 
 export function GenericAgentIntegrationGuide({
   providerId,
   onBack,
   embedded = false,
+  agent,
+  integrationLink,
+  canRemoveIntegration,
+  onRequestRemoveIntegration,
+  isRemovingIntegration,
 }: GenericAgentIntegrationGuideProps) {
   const provider = providers.find((p) => p.id === providerId);
 
@@ -23,7 +34,11 @@ export function GenericAgentIntegrationGuide({
       providerDisplayName={displayName}
       onBack={onBack}
       embedded={embedded}
-      docHref={provider?.docReference}
+      agent={agent}
+      integrationLink={integrationLink}
+      canRemoveIntegration={canRemoveIntegration}
+      onRequestRemoveIntegration={onRequestRemoveIntegration}
+      isRemovingIntegration={isRemovingIntegration}
     >
       <AgentIntegrationGuideSection title="Get started">
         <p>

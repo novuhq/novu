@@ -213,3 +213,14 @@ export async function addAgentIntegration(
 
   return response.data;
 }
+
+export function removeAgentIntegration(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  agentIntegrationId: string
+): Promise<void> {
+  return del(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`,
+    { environment }
+  );
+}
