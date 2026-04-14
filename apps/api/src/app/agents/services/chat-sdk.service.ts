@@ -12,7 +12,7 @@ import { AgentInboundHandler } from './agent-inbound-handler.service';
 /**
  * ICredentials field mapping per platform adapter:
  *
- * Slack:    credentials.apiKey        → signingSecret
+ * Slack:    credentials.signingSecret   → signingSecret
  *           connection.auth.accessToken → botToken
  *
  * Teams:    credentials.clientId  → appId
@@ -188,7 +188,7 @@ export class ChatSdkService implements OnModuleDestroy {
         return {
           slack: createSlackAdapter({
             botToken: connectionAccessToken!,
-            signingSecret: credentials.apiKey!,
+            signingSecret: credentials.signingSecret!,
           }),
         };
       }

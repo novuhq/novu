@@ -27,6 +27,7 @@ const SECURE_CREDENTIALS = [
   CredentialsKeyEnum.Token,
   CredentialsKeyEnum.Password,
   CredentialsKeyEnum.ServiceAccount,
+  CredentialsKeyEnum.SigningSecret,
 ];
 
 function FormLabel({ credential, tooltip }: { credential: IConfigCredential; tooltip?: ReactNode }) {
