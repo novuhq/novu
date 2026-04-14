@@ -45,6 +45,8 @@ type ProviderDropdownProps = {
   fallbackProviderId?: string;
   onSelect: (providerId: string, integration?: IIntegration) => void;
   agentIdentifier: string;
+  /** Integration IDs already linked to the agent — selecting one of these skips the link API call. */
+  linkedIntegrationIds?: Set<string>;
 };
 
 function buildDropdownItems(
@@ -110,6 +112,7 @@ export function ProviderDropdown({
   fallbackProviderId,
   onSelect,
   agentIdentifier,
+  linkedIntegrationIds,
 }: ProviderDropdownProps) {
   const [open, setOpen] = useState(false);
   const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
@@ -203,8 +206,13 @@ export function ProviderDropdown({
 
     try {
       if (item.integration) {
-        await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
-        showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
+        const alreadyLinked = linkedIntegrationIds?.has(item.integration._id);
+
+        if (!alreadyLinked) {
+          await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
+          showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
+        }
+
         onSelect(item.providerId, item.integration);
         setOpen(false);
       } else {

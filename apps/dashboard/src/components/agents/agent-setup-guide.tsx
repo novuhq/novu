@@ -362,6 +362,11 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
   const hasProviderSelected = !!selectedIntegrationId || !!slackIntegration;
 
+  const linkedIntegrationIds = useMemo(
+    () => new Set(agent.integrations?.map((i) => i.integrationId) ?? []),
+    [agent.integrations]
+  );
+
   const selectedIntegrationIdentifier = useMemo(() => {
     const slackFromSelection = selectedIntegrationId
       ? integrations?.find(
@@ -417,6 +422,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
                 <ProviderDropdown
                   agentIdentifier={agent.identifier}
                   selectedIntegrationId={selectedIntegrationId}
+                  linkedIntegrationIds={linkedIntegrationIds}
                   onSelect={(_providerId, integration) => {
                     if (integration?._id) {
                       setSelectedIntegrationId(integration._id);
