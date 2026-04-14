@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, type IIntegration, type IProviderConfig, providers as novuProviders } from '@novu/shared';
+import {
+  CONVERSATIONAL_PROVIDERS,
+  type ConversationalProvider,
+  type IIntegration,
+  providers as novuProviders,
+} from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiExpandUpDownLine, RiSearchLine } from 'react-icons/ri';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -14,25 +19,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 
-const CHANNEL_ORDER: ChannelTypeEnum[] = [
-  ChannelTypeEnum.EMAIL,
-  ChannelTypeEnum.CHAT,
-  ChannelTypeEnum.PUSH,
-  ChannelTypeEnum.SMS,
-];
-
-const CHANNEL_LABEL: Record<ChannelTypeEnum, string> = {
-  [ChannelTypeEnum.IN_APP]: 'In-app',
-  [ChannelTypeEnum.EMAIL]: 'Email',
-  [ChannelTypeEnum.CHAT]: 'Chat',
-  [ChannelTypeEnum.PUSH]: 'Push',
-  [ChannelTypeEnum.SMS]: 'SMS',
-};
-
 type DropdownItem = {
   providerId: string;
   displayName: string;
-  channel: ChannelTypeEnum;
+  comingSoon: boolean;
   integration?: IIntegration;
 };
 
@@ -41,7 +31,10 @@ type ProviderDropdownProps = {
   onSelect: (providerId: string, integration?: IIntegration) => void;
 };
 
-function buildDropdownGroups(allProviders: IProviderConfig[], integrations: IIntegration[] | undefined) {
+function buildDropdownItems(
+  conversationalProviders: ConversationalProvider[],
+  integrations: IIntegration[] | undefined
+) {
   const integrationsByProvider = new Map<string, IIntegration[]>();
   for (const integration of integrations ?? []) {
     const list = integrationsByProvider.get(integration.providerId) ?? [];
@@ -49,62 +42,64 @@ function buildDropdownGroups(allProviders: IProviderConfig[], integrations: IInt
     integrationsByProvider.set(integration.providerId, list);
   }
 
-  const grouped = new Map<ChannelTypeEnum, DropdownItem[]>();
+  const supported: DropdownItem[] = [];
+  const comingSoon: DropdownItem[] = [];
 
-  for (const provider of allProviders) {
-    if (provider.comingSoon) continue;
+  for (const cp of conversationalProviders) {
+    const providerConfig = novuProviders.find((p) => p.id === cp.providerId);
 
-    const channel = provider.channel;
-    if (!CHANNEL_ORDER.includes(channel)) continue;
+    if (cp.comingSoon) {
+      comingSoon.push({
+        providerId: cp.providerId,
+        displayName: cp.displayName,
+        comingSoon: true,
+      });
+      continue;
+    }
 
-    const items = grouped.get(channel) ?? [];
-    const existing = integrationsByProvider.get(provider.id);
+    const existing = integrationsByProvider.get(cp.providerId);
 
     if (existing?.length) {
       for (const integration of existing) {
-        items.push({
-          providerId: provider.id,
-          displayName: integration.name || provider.displayName,
-          channel,
+        supported.push({
+          providerId: cp.providerId,
+          displayName: integration.name || providerConfig?.displayName || cp.displayName,
+          comingSoon: false,
           integration,
         });
       }
     } else {
-      items.push({
-        providerId: provider.id,
-        displayName: provider.displayName,
-        channel,
+      supported.push({
+        providerId: cp.providerId,
+        displayName: providerConfig?.displayName || cp.displayName,
+        comingSoon: false,
       });
     }
-
-    grouped.set(channel, items);
   }
 
-  return CHANNEL_ORDER.filter((ch) => grouped.has(ch)).map((channel) => ({
-    channel,
-    label: CHANNEL_LABEL[channel],
-    items: grouped.get(channel) ?? [],
-  }));
+  return { supported, comingSoon };
 }
 
 export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
   const [open, setOpen] = useState(false);
   const { integrations } = useFetchIntegrations();
 
-  const groups = useMemo(() => buildDropdownGroups(novuProviders, integrations), [integrations]);
+  const { supported, comingSoon } = useMemo(
+    () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
+    [integrations]
+  );
+
+  const allItems = useMemo(() => [...supported, ...comingSoon], [supported, comingSoon]);
 
   const selected = useMemo(() => {
     if (!value) return undefined;
 
-    for (const group of groups) {
-      const match = group.items.find((item) => item.providerId === value);
-      if (match) return match;
-    }
-
-    return undefined;
-  }, [value, groups]);
+    return allItems.find((item) => item.providerId === value);
+  }, [value, allItems]);
 
   const handleSelect = (item: DropdownItem) => {
+    if (item.comingSoon) return;
+
     onSelect(item.providerId, item.integration);
     setOpen(false);
   };
@@ -160,13 +155,12 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
               <CommandList className="max-h-[260px] p-1">
                 <CommandEmpty className="text-text-soft text-label-xs py-4">No providers found.</CommandEmpty>
 
-                {groups.map((group) => (
+                {supported.length > 0 && (
                   <CommandGroup
-                    key={group.channel}
-                    heading={group.label}
+                    heading="Providers"
                     className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
                   >
-                    {group.items.map((item) => {
+                    {supported.map((item) => {
                       const itemKey = item.integration
                         ? `${item.providerId}-${item.integration._id}`
                         : item.providerId;
@@ -203,7 +197,35 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
                       );
                     })}
                   </CommandGroup>
-                ))}
+                )}
+
+                {comingSoon.length > 0 && (
+                  <CommandGroup
+                    heading="Coming soon"
+                    className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
+                  >
+                    {comingSoon.map((item) => (
+                      <CommandItem
+                        key={item.providerId}
+                        value={`${item.displayName} ${item.providerId}`}
+                        disabled
+                        className="flex items-center gap-2 rounded-md p-1 opacity-50"
+                      >
+                        <div className="flex flex-1 items-center gap-1">
+                          <ProviderIcon
+                            providerId={item.providerId}
+                            providerDisplayName={item.displayName}
+                            className="size-4 shrink-0"
+                          />
+                          <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
+                            {item.displayName}
+                          </span>
+                        </div>
+                        <span className="font-code text-text-soft shrink-0 text-[10px] leading-[15px]">soon</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
               </CommandList>
             </Command>
           </PopoverContent>
