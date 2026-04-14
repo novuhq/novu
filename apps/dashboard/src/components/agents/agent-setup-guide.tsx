@@ -1,7 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { Loader } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { type ReactNode, useState } from 'react';
-import { RiArrowRightUpLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
@@ -202,11 +203,69 @@ oauth_config:
       - im:history`;
 }
 
+function ManifestSection({
+  createSlackAppUrl,
+  manifestYaml,
+}: {
+  createSlackAppUrl: string;
+  manifestYaml: string;
+}) {
+  const [showManifest, setShowManifest] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <a href={createSlackAppUrl} target="_blank" rel="noopener noreferrer">
+        <Button
+          variant="secondary"
+          mode="outline"
+          size="xs"
+          className="text-text-sub gap-1 px-2 py-1.5"
+          type="button"
+        >
+          <ProviderIcon
+            providerId={ChatProviderIdEnum.Slack}
+            providerDisplayName="Slack"
+            className="size-4 shrink-0"
+          />
+          <span className="text-label-xs font-medium">Create slack app</span>
+          <RiArrowRightUpLine className="size-3" />
+        </Button>
+      </a>
+
+      <button
+        type="button"
+        className="text-text-sub hover:text-text-strong flex items-center gap-1 self-start py-1 transition-colors"
+        onClick={() => setShowManifest((prev) => !prev)}
+      >
+        <RiArrowDownSLine
+          className={cn('size-3.5 transition-transform duration-200', showManifest && 'rotate-180')}
+        />
+        <span className="text-label-xs font-medium">{showManifest ? 'Hide manifest' : 'Show manifest'}</span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {showManifest && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <CodeBlock code={manifestYaml} language="shell" title="slack-app-manifest.yaml" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const webhookUrl = buildWebhookUrl(agent._id);
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
   const manifestYaml = buildSlackManifestYaml(agent, webhookUrl);
+  const createSlackAppUrl = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(manifestYaml)}`;
 
   const step1Status: StepStatus = slackIntegration ? 'completed' : 'current';
 
@@ -246,33 +305,9 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               index={2}
               status="current"
               title="Create Slack App via Manifest"
-              description="Copy the YAML into Slack's manifest editor. It wires up events and permissions for your agent."
+              description="Click the button to create a Slack app with a pre-filled manifest, or expand to view and copy the YAML manually."
               rightContent={
-                <div className="flex w-full flex-col gap-1">
-                  <a
-                    href="https://api.slack.com/apps?new_app=1&manifest_yaml="
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full"
-                  >
-                    <Button
-                      variant="secondary"
-                      mode="outline"
-                      size="xs"
-                      className="text-text-sub w-full gap-1 px-2 py-1.5"
-                      type="button"
-                    >
-                      <ProviderIcon
-                        providerId={ChatProviderIdEnum.Slack}
-                        providerDisplayName="Slack"
-                        className="size-4 shrink-0"
-                      />
-                      <span className="text-label-xs font-medium">Create slack app</span>
-                      <RiArrowRightUpLine className="size-3" />
-                    </Button>
-                  </a>
-                  <CodeBlock code={manifestYaml} language="shell" title="slack-app-manifest.yaml" />
-                </div>
+                <ManifestSection createSlackAppUrl={createSlackAppUrl} manifestYaml={manifestYaml} />
               }
             />
 
