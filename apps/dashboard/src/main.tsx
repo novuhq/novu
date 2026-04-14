@@ -62,6 +62,7 @@ import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
+import { AgentDetailsPage } from './pages/agent-details';
 import { AgentsPage } from './pages/agents';
 import { UpsertVariablePage } from './pages/upsert-variable';
 import { VariablesPage } from './pages/variables';
@@ -353,6 +354,30 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.AGENTS,
                 element: <AgentsPage />,
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_PROVIDER,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_TAB,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.API_KEYS,

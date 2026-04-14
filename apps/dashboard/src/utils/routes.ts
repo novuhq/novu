@@ -72,7 +72,26 @@ export const ROUTES = {
   VARIABLES: '/env/:environmentSlug/variables',
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
   AGENTS: '/env/:environmentSlug/agents',
+  AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
+  /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:providerId` is not parsed as a tab name. */
+  AGENT_DETAILS_INTEGRATIONS_PROVIDER: '/env/:environmentSlug/agents/:agentIdentifier/integrations/:providerId',
+  AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
 } as const;
+
+export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
+
+export const AGENT_DETAILS_TABS = ['overview', 'integrations', 'activity'] as const;
+
+export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
+
+export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
+  if (tab && (AGENT_DETAILS_TABS as readonly string[]).includes(tab)) {
+
+    return tab as AgentDetailsTab;
+  }
+
+  return AGENT_DETAILS_DEFAULT_TAB;
+}
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
   return Object.entries(params).reduce((acc, [key, value]) => {
