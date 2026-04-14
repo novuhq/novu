@@ -68,13 +68,13 @@ function buildDropdownItems(
           integration,
         });
       }
-    } else {
-      supported.push({
-        providerId: cp.providerId,
-        displayName: providerConfig?.displayName || cp.displayName,
-        comingSoon: false,
-      });
     }
+
+    supported.push({
+      providerId: cp.providerId,
+      displayName: providerConfig?.displayName || cp.displayName,
+      comingSoon: false,
+    });
   }
 
   return { supported, comingSoon };
@@ -160,19 +160,19 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
                     heading="Providers"
                     className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
                   >
-                    {supported.map((item) => {
+                    {supported.map((item, index) => {
                       const itemKey = item.integration
                         ? `${item.providerId}-${item.integration._id}`
-                        : item.providerId;
+                        : `${item.providerId}-new-${index}`;
 
                       return (
                         <CommandItem
                           key={itemKey}
-                          value={`${item.displayName} ${item.providerId}`}
+                          value={`${item.displayName} ${item.providerId}${item.integration ? ` ${item.integration.identifier}` : ''}`}
                           onSelect={() => handleSelect(item)}
                           className={cn(
                             'flex items-center gap-2 rounded-md p-1',
-                            value === item.providerId && 'bg-bg-muted'
+                            value === item.providerId && item.integration && 'bg-bg-muted'
                           )}
                         >
                           <div className="flex flex-1 items-center gap-1">
