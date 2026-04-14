@@ -17,6 +17,7 @@ export interface ResolvedPlatformConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
+  agentIdentifier: string;
   integrationIdentifier: string;
   integrationId: string;
 }
@@ -96,6 +97,7 @@ export class AgentCredentialService {
       connectionAccessToken,
       environmentId,
       organizationId,
+      agentIdentifier: agent.identifier,
       integrationIdentifier,
       integrationId: integration._id,
     };
