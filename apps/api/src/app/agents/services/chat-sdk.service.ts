@@ -4,6 +4,7 @@ import { ConversationParticipantTypeEnum, ICredentialsEntity } from '@novu/dal';
 import type { Chat, Message, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
+import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
@@ -186,7 +187,7 @@ export class ChatSdkService implements OnModuleDestroy {
     chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.handleInboundMessage(agentId, config, thread, message);
+        await this.handleInboundMessage(agentId, config, thread, message, AgentEventEnum.ON_START);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
       }
@@ -194,7 +195,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        await this.handleInboundMessage(agentId, config, thread, message);
+        await this.handleInboundMessage(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
       }
@@ -205,7 +206,8 @@ export class ChatSdkService implements OnModuleDestroy {
     agentId: string,
     config: ResolvedPlatformConfig,
     thread: Thread,
-    message: Message
+    message: Message,
+    event: AgentEventEnum
   ) {
     const subscriberId = await this.subscriberResolver
       .resolve({
@@ -254,6 +256,15 @@ export class ChatSdkService implements OnModuleDestroy {
 
     await thread.startTyping();
 
-    // TODO Phase 5: bridge executor fires here with { conversation, subscriberId, history }
+    const serializedThread = thread.toJSON();
+    await this.conversationService.updateChannelThread(
+      config.environmentId,
+      config.organizationId,
+      conversation._id,
+      thread.id,
+      serializedThread
+    );
+
+    // TODO Phase 5: bridge executor fires here with { event, conversation, subscriberId, history }
   }
 }
