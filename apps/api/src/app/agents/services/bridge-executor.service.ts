@@ -82,6 +82,7 @@ interface BridgeHistoryEntry {
 export interface AgentBridgeRequest {
   version: 1;
   timestamp: string;
+  deliveryId: string;
   event: AgentEventEnum;
   agentId: string;
   replyUrl: string;
@@ -202,9 +203,14 @@ export class BridgeExecutorService {
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
     const replyUrl = `${apiRootUrl}/v1/agents/${agentIdentifier}/reply`;
 
+    const deliveryId = message?.id
+      ? `${conversation._id}:${message.id}`
+      : `${conversation._id}:${event}`;
+
     return {
       version: 1,
       timestamp: new Date().toISOString(),
+      deliveryId,
       event,
       agentId: agentIdentifier,
       replyUrl,
