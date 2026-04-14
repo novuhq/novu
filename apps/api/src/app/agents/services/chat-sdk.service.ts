@@ -224,7 +224,7 @@ export class ChatSdkService implements OnModuleDestroy {
     chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_START);
+        await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
       }

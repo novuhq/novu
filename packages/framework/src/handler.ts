@@ -21,18 +21,22 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
+import { AgentContextImpl, AgentEventEnum } from './resources/agent';
+import type { Agent, AgentBridgeRequest } from './resources/agent';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient } from './utils';
 
-export type ServeHandlerOptions = {
+export interface ServeHandlerOptions {
   client?: Client;
-  workflows: Array<Workflow>;
-};
+  workflows?: Array<Workflow>;
+  agents?: Array<Agent>;
+}
 
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
   frameworkName: string;
   client?: Client;
-  workflows: Array<Workflow>;
+  workflows?: Array<Workflow>;
+  agents?: Array<Agent>;
   handler: Handler<Input, Output>;
 };
 
@@ -45,6 +49,7 @@ type HandlerResponse<Output = any> = {
   queryString?: (key: string, url: URL) => Awaitable<string | null | undefined>;
   url: () => Awaitable<URL>;
   transformResponse: (res: IActionResponse<string>) => Output;
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 export type IActionResponse<TBody extends string = string> = {
@@ -62,14 +67,17 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private readonly hmacEnabled: boolean;
   private readonly http;
   private readonly workflows: Array<Workflow>;
+  private readonly agents: Array<Agent>;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
-    this.workflows = options.workflows;
+    this.workflows = options.workflows || [];
+    this.agents = options.agents || [];
     this.http = initApiClient(this.client.secretKey, this.client.apiUrl);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
+    this.client.addAgents(this.agents);
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {
@@ -129,6 +137,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     const action = url.searchParams.get(HttpQueryKeysEnum.ACTION) || GetActionEnum.HEALTH_CHECK;
     const workflowId = url.searchParams.get(HttpQueryKeysEnum.WORKFLOW_ID) || '';
     const stepId = url.searchParams.get(HttpQueryKeysEnum.STEP_ID) || '';
+    const agentId = url.searchParams.get(HttpQueryKeysEnum.AGENT_ID) || '';
+    const agentEvent = url.searchParams.get(HttpQueryKeysEnum.EVENT) || '';
     const signatureHeader = (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE)) || '';
 
     let body: Record<string, unknown> = {};
@@ -145,7 +155,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         await this.validateHmac(body, signatureHeader);
       }
 
-      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action);
+      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action, agentId, agentEvent, actions.waitUntil);
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
       if (method === HttpMethodEnum.POST) {
@@ -171,7 +181,10 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     body: any,
     workflowId: string,
     stepId: string,
-    action: string
+    action: string,
+    agentId: string,
+    agentEvent: string,
+    waitUntil?: (promise: Promise<unknown>) => void
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
       [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
@@ -194,6 +207,25 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         });
 
         return this.createResponse(HttpStatusEnum.OK, result);
+      },
+      [PostActionEnum.AGENT_EVENT]: async () => {
+        const registeredAgent = this.client.getAgent(agentId);
+
+        if (!registeredAgent) {
+          return this.createResponse(HttpStatusEnum.NOT_FOUND, { error: `Agent '${agentId}' not registered` });
+        }
+
+        const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
+
+        const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
+          console.error(`[agent:${agentId}] Handler error:`, err);
+        });
+
+        if (waitUntil) {
+          waitUntil(handlerPromise);
+        }
+
+        return this.createResponse(HttpStatusEnum.OK, { status: 'ack' });
       },
     };
   }
@@ -262,6 +294,20 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     } else {
       throw new InvalidActionError(action, GetActionEnum);
     }
+  }
+
+  private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
+    if (event === AgentEventEnum.ON_RESOLVE) {
+      if (registeredAgent.handlers.onResolve) {
+        await registeredAgent.handlers.onResolve(ctx);
+      }
+    } else if (event === AgentEventEnum.ON_MESSAGE) {
+      await registeredAgent.handlers.onMessage(ctx);
+    } else {
+      throw new InvalidActionError(event, AgentEventEnum);
+    }
+
+    await ctx.flush();
   }
 
   private handleError(error: unknown): IActionResponse {

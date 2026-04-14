@@ -52,7 +52,7 @@ export async function setupAgentTestContext(): Promise<AgentTestContext> {
     _organizationId: session.organization._id,
     providerId: ChatProviderIdEnum.Slack,
     channel: ChannelTypeEnum.CHAT,
-    credentials: encryptCredentials({ apiKey: SIGNING_SECRET }),
+    credentials: encryptCredentials({ signingSecret: SIGNING_SECRET }),
     active: true,
     name: 'Slack Agent E2E',
     identifier: `slack-agent-e2e-${Date.now()}`,
