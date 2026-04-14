@@ -1,16 +1,23 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
 import { Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { type ReactNode, useMemo, useState } from 'react';
-import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
+import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
+import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
+import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
+import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
 import { cn } from '@/utils/ui';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentSetupGuideProps = {
@@ -81,11 +88,13 @@ function SetupButton({
   href,
   leadingIcon,
   onClick,
+  disabled,
 }: {
   children: ReactNode;
   href?: string;
   leadingIcon?: ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   const content = (
     <Button
@@ -95,6 +104,7 @@ function SetupButton({
       className="text-text-sub gap-1 px-2 py-1.5"
       type="button"
       onClick={onClick}
+      disabled={disabled}
     >
       {leadingIcon}
       <span className="text-label-xs font-medium">{children}</span>
@@ -264,9 +274,78 @@ function ManifestSection({
   );
 }
 
+function IntegrationCredentialsSidebar({
+  integrationId,
+  isOpen,
+  onClose,
+}: {
+  integrationId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { integrations } = useFetchIntegrations();
+  const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
+  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
+
+  const integration = integrations?.find((i) => i._id === integrationId);
+  const provider = novuProviders?.find((p) => p.id === integration?.providerId);
+
+  async function onSubmit(data: IntegrationFormData) {
+    if (!integration) return;
+
+    try {
+      await updateIntegration({
+        integrationId: integration._id,
+        data: {
+          name: data.name,
+          identifier: data.identifier,
+          active: data.active,
+          primary: data.primary,
+          credentials: cleanCredentials(data.credentials),
+          check: data.check,
+          configurations: data.configurations,
+        },
+      });
+
+      showSuccessToast('Integration updated successfully');
+      onClose();
+    } catch (error: unknown) {
+      handleIntegrationError(error, 'update');
+    }
+  }
+
+  if (!integration || !provider) return null;
+
+  return (
+    <IntegrationSheet isOpened={isOpen} onClose={onClose} provider={provider} mode="update">
+      <div className="scrollbar-custom flex-1 overflow-y-auto">
+        <IntegrationSettings
+          provider={provider}
+          integration={integration}
+          onSubmit={onSubmit}
+          mode="update"
+          onFormStateChange={setFormState}
+        />
+      </div>
+
+      <div className="bg-background flex justify-end gap-2 border-t p-3">
+        <Button
+          type="submit"
+          form={`integration-configuration-form-${provider.id}`}
+          isLoading={isUpdating}
+          disabled={!formState.isValid}
+        >
+          Save Changes
+        </Button>
+      </div>
+    </IntegrationSheet>
+  );
+}
+
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const { integrations } = useFetchIntegrations();
 
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
@@ -351,7 +430,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               title="Paste the Client ID and secret from Slack App."
               description={
                 <span>
-                  {'Configure the Slack provider under Novu Integrations. View '}
+                  {'Paste the Client ID and Client Secret from your Slack app into the integration. View '}
                   <a
                     href="https://docs.novu.co/integrations/chat/slack"
                     target="_blank"
@@ -364,7 +443,13 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
                 </span>
               }
               rightContent={
-                <SetupButton href="/integrations">Setup Slack credentials</SetupButton>
+                <SetupButton
+                  disabled={!selectedIntegrationId}
+                  leadingIcon={<RiKey2Line className="size-3.5" />}
+                  onClick={() => setIsCredentialsSidebarOpen(true)}
+                >
+                  {selectedIntegrationId ? 'Configure credentials' : 'Select a provider first'}
+                </SetupButton>
               }
             />
 
@@ -407,6 +492,14 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
           <ListeningStatus />
         </div>
+      )}
+
+      {selectedIntegrationId && (
+        <IntegrationCredentialsSidebar
+          integrationId={selectedIntegrationId}
+          isOpen={isCredentialsSidebarOpen}
+          onClose={() => setIsCredentialsSidebarOpen(false)}
+        />
       )}
     </div>
   );
