@@ -278,10 +278,12 @@ function IntegrationCredentialsSidebar({
   integrationId,
   isOpen,
   onClose,
+  onSaveSuccess,
 }: {
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
+  onSaveSuccess: () => void;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -308,6 +310,7 @@ function IntegrationCredentialsSidebar({
       });
 
       showSuccessToast('Integration updated successfully');
+      onSaveSuccess();
       onClose();
     } catch (error: unknown) {
       handleIntegrationError(error, 'update');
@@ -342,13 +345,22 @@ function IntegrationCredentialsSidebar({
   );
 }
 
+function deriveStepStatus(stepIndex: number, firstIncompleteStep: number): StepStatus {
+  if (stepIndex < firstIncompleteStep) return 'completed';
+  if (stepIndex === firstIncompleteStep) return 'current';
+
+  return 'upcoming';
+}
+
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
+  const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const { integrations } = useFetchIntegrations();
 
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
+  const hasProviderSelected = !!selectedIntegrationId || !!slackIntegration;
 
   const selectedIntegrationIdentifier = useMemo(() => {
     const slackFromSelection = selectedIntegrationId
@@ -372,7 +384,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const manifestYaml = buildSlackManifestYaml(agent, webhookHandlerUrl);
   const createSlackAppUrl = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(manifestYaml)}`;
 
-  const step1Status: StepStatus = slackIntegration ? 'completed' : 'current';
+  const firstIncompleteStep = !hasProviderSelected ? 1 : !isCredentialsSaved ? 2 : 4;
 
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
@@ -397,7 +409,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
             <SetupStep
               index={1}
-              status={step1Status}
+              status={deriveStepStatus(1, firstIncompleteStep)}
               sectionLabel="1/2 SETUP PROVIDER"
               title="Choose where your agent listens and communicates"
               description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
@@ -416,7 +428,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
             <SetupStep
               index={2}
-              status="current"
+              status={deriveStepStatus(2, firstIncompleteStep)}
               title="Create Slack App via Manifest"
               description="Click the button to create a Slack app with a pre-filled manifest, or expand to view and copy the YAML manually."
               rightContent={
@@ -426,7 +438,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
             <SetupStep
               index={3}
-              status="upcoming"
+              status={deriveStepStatus(3, firstIncompleteStep)}
               title="Paste the Client ID and secret from Slack App."
               description={
                 <span>
@@ -455,7 +467,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
             <SetupStep
               index={4}
-              status="upcoming"
+              status={deriveStepStatus(4, firstIncompleteStep)}
               title="Verify by installing the app to your workspace"
               description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
               extraContent={
@@ -499,6 +511,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
           integrationId={selectedIntegrationId}
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
+          onSaveSuccess={() => setIsCredentialsSaved(true)}
         />
       )}
     </div>
