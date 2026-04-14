@@ -334,7 +334,9 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
 
   if (listQuery.isError) {
     return (
-      <div className="text-error-base text-label-sm">Could not load integrations for this agent. Try again later.</div>
+      <div className="px-6 pt-4">
+        <p className="text-error-base text-label-sm">Could not load integrations for this agent. Try again later.</p>
+      </div>
     );
   }
 
@@ -361,9 +363,9 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
   );
 
   return (
-    <div className="flex w-full flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
+    <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
       <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
-        <aside className="w-full shrink-0 lg:w-[300px]">
+        <aside className="w-[300px] shrink-0">
           <div className="flex flex-col gap-4">
             <div className="bg-bg-weak flex flex-col gap-2 rounded-[10px] p-1">
               <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected providers</p>

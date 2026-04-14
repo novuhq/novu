@@ -242,9 +242,7 @@ export function AgentDetailsPage() {
                 <AgentOverviewTab agent={agent} />
               </TabsContent>
               <TabsContent value="integrations" className="outline-none">
-                <div className="mx-auto mt-4 w-full max-w-7xl px-3 py-2 md:px-6">
-                  <AgentIntegrationsTab agent={agent} providerId={providerId} />
-                </div>
+                <AgentIntegrationsTab agent={agent} providerId={providerId} />
               </TabsContent>
               <TabsContent value="activity" className="outline-none">
                 <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
