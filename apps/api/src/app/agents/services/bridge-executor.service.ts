@@ -13,12 +13,10 @@ import {
   EnvironmentRepository,
   SubscriberEntity,
 } from '@novu/dal';
-import jwt from 'jsonwebtoken';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { ResolvedPlatformConfig } from './agent-credential.service';
 
-const REPLY_TOKEN_TTL = '24h';
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
 
@@ -30,14 +28,6 @@ export interface BridgeExecutorParams {
   history: ConversationActivityEntity[];
   message: Message;
   thread: Thread;
-}
-
-export interface ReplyTokenClaims {
-  conversationId: string;
-  agentId: string;
-  environmentId: string;
-  organizationId: string;
-  integrationIdentifier: string;
 }
 
 interface BridgeMessageAuthor {
@@ -94,8 +84,9 @@ export interface AgentBridgeRequest {
   timestamp: string;
   event: AgentEventEnum;
   agentId: string;
-  replyToken: string;
   replyUrl: string;
+  conversationId: string;
+  integrationIdentifier: string;
   message: BridgeMessage | null;
   conversation: BridgeConversation;
   subscriber: BridgeSubscriber | null;
@@ -125,15 +116,7 @@ export class BridgeExecutorService {
       GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
     );
 
-    const replyToken = this.signReplyToken(secretKey, {
-      conversationId: conversation._id,
-      agentId: agentIdentifier,
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      integrationIdentifier: config.integrationIdentifier,
-    });
-
-    const payload = this.buildPayload(params, replyToken, thread);
+    const payload = this.buildPayload(params, thread);
     const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
 
     this.fireWithRetries(bridgeUrl, payload, signatureHeader, agentIdentifier).catch((err) => {
@@ -208,11 +191,7 @@ export class BridgeExecutorService {
     return url.toString();
   }
 
-  private signReplyToken(secretKey: string, claims: ReplyTokenClaims): string {
-    return jwt.sign(claims, secretKey, { expiresIn: REPLY_TOKEN_TTL });
-  }
-
-  private buildPayload(params: BridgeExecutorParams, replyToken: string, thread: Thread): AgentBridgeRequest {
+  private buildPayload(params: BridgeExecutorParams, thread: Thread): AgentBridgeRequest {
     const { event, config, conversation, subscriber, history, message } = params;
     const agentIdentifier = config.agentIdentifier;
 
@@ -224,8 +203,9 @@ export class BridgeExecutorService {
       timestamp: new Date().toISOString(),
       event,
       agentId: agentIdentifier,
-      replyToken,
       replyUrl,
+      conversationId: conversation._id,
+      integrationIdentifier: config.integrationIdentifier,
       message: this.mapMessage(message),
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),

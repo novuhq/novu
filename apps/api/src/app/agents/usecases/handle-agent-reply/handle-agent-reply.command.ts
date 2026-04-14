@@ -1,10 +1,18 @@
-import { BaseCommand } from '@novu/application-generic';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class HandleAgentReplyCommand extends BaseCommand {
+export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  replyToken: string;
+  conversationId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  agentIdentifier: string;
+
+  @IsString()
+  @IsNotEmpty()
+  integrationIdentifier: string;
 
   @IsOptional()
   @IsObject()

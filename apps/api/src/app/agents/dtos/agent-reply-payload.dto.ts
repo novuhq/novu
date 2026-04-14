@@ -30,7 +30,12 @@ export class AgentReplyPayloadDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  replyToken: string;
+  conversationId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  integrationIdentifier: string;
 
   @ApiPropertyOptional({ type: TextContentDto })
   @IsOptional()

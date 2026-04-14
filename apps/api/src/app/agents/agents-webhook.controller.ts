@@ -4,14 +4,18 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
-  Post,
   Param,
+  Post,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { UserSessionData } from '@novu/shared';
 import { Request, Response } from 'express';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
@@ -29,10 +33,21 @@ export class AgentsWebhookController {
 
   @Post('/:agentId/reply')
   @HttpCode(HttpStatus.OK)
-  async handleAgentReply(@Body() body: AgentReplyPayloadDto) {
+  @RequireAuthentication()
+  @ExternalApiAccessible()
+  async handleAgentReply(
+    @UserSession() user: UserSessionData,
+    @Param('agentId') agentId: string,
+    @Body() body: AgentReplyPayloadDto
+  ) {
     return this.handleAgentReplyUsecase.execute(
       HandleAgentReplyCommand.create({
-        replyToken: body.replyToken,
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        conversationId: body.conversationId,
+        agentIdentifier: agentId,
+        integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
         update: body.update,
         resolve: body.resolve,

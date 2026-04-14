@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand, shortId } from '@novu/application-generic';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { shortId } from '@novu/application-generic';
 import {
   ConversationActivityRepository,
   ConversationActivityTypeEnum,
@@ -8,18 +8,15 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
 } from '@novu/dal';
-import jwt from 'jsonwebtoken';
-import { ReplyTokenClaims } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import { HandleAgentReplyCommand, Signal } from './handle-agent-reply.command';
+import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
 export class HandleAgentReply {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
-    private readonly chatSdkService: ChatSdkService,
-    private readonly getDecryptedSecretKey: GetDecryptedSecretKey
+    private readonly chatSdkService: ChatSdkService
   ) {}
 
   async execute(command: HandleAgentReplyCommand): Promise<{ status: string }> {
@@ -30,10 +27,12 @@ export class HandleAgentReply {
       throw new BadRequestException('At least one of reply, update, resolve, or signals must be provided');
     }
 
-    const claims = await this.validateToken(command.replyToken);
-
     const conversation = await this.conversationRepository.findOne(
-      { _id: claims.conversationId, _environmentId: claims.environmentId, _organizationId: claims.organizationId },
+      {
+        _id: command.conversationId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
       '*'
     );
     if (!conversation) {
@@ -43,21 +42,21 @@ export class HandleAgentReply {
     const channel = this.getPrimaryChannel(conversation);
 
     if (command.update) {
-      await this.deliverMessage(claims, conversation, channel, command.update.text, ConversationActivityTypeEnum.UPDATE);
+      await this.deliverMessage(command, conversation, channel, command.update.text, ConversationActivityTypeEnum.UPDATE);
 
       return { status: 'update_sent' };
     }
 
     if (command.reply) {
-      await this.deliverMessage(claims, conversation, channel, command.reply.text, ConversationActivityTypeEnum.MESSAGE);
+      await this.deliverMessage(command, conversation, channel, command.reply.text, ConversationActivityTypeEnum.MESSAGE);
     }
 
     if (command.signals?.length) {
-      await this.executeSignals(claims, conversation, channel, command.signals);
+      await this.executeSignals(command, conversation, channel, command.signals);
     }
 
     if (command.resolve) {
-      await this.executeResolveSignal(claims, conversation, channel, command.resolve);
+      await this.executeResolveSignal(command, conversation, channel, command.resolve);
     }
 
     return { status: 'ok' };
@@ -72,25 +71,8 @@ export class HandleAgentReply {
     return channel;
   }
 
-  private async validateToken(token: string): Promise<ReplyTokenClaims> {
-    const claims = jwt.decode(token) as ReplyTokenClaims | null;
-    if (!claims?.environmentId || !claims?.organizationId) {
-      throw new UnauthorizedException('Invalid reply token');
-    }
-
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({ environmentId: claims.environmentId, organizationId: claims.organizationId })
-    );
-
-    try {
-      return jwt.verify(token, secretKey) as ReplyTokenClaims;
-    } catch (err) {
-      throw new UnauthorizedException('Invalid or expired reply token');
-    }
-  }
-
   private async deliverMessage(
-    claims: ReplyTokenClaims,
+    command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
     text: string,
@@ -98,8 +80,8 @@ export class HandleAgentReply {
   ): Promise<void> {
     await Promise.all([
       this.chatSdkService.postToConversation(
-        claims.agentId,
-        claims.integrationIdentifier,
+        command.agentIdentifier,
+        command.integrationIdentifier,
         channel.platform,
         channel.serializedThread!,
         text
@@ -110,15 +92,15 @@ export class HandleAgentReply {
         platform: channel.platform,
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
-        agentId: claims.agentId,
+        agentId: command.agentIdentifier,
         content: text,
         type,
-        environmentId: claims.environmentId,
-        organizationId: claims.organizationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
       }),
       this.conversationRepository.touchActivity(
-        claims.environmentId,
-        claims.organizationId,
+        command.environmentId,
+        command.organizationId,
         conversation._id,
         text
       ),
@@ -126,25 +108,27 @@ export class HandleAgentReply {
   }
 
   private async executeSignals(
-    claims: ReplyTokenClaims,
+    command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    signals: Signal[]
+    signals: HandleAgentReplyCommand['signals']
   ): Promise<void> {
-    const metadataSignals = signals.filter((s): s is Extract<Signal, { type: 'metadata' }> => s.type === 'metadata');
+    const metadataSignals = (signals ?? []).filter(
+      (s): s is Extract<NonNullable<HandleAgentReplyCommand['signals']>[number], { type: 'metadata' }> => s.type === 'metadata'
+    );
 
     if (metadataSignals.length) {
-      await this.executeMetadataSignals(claims, conversation, channel, metadataSignals);
+      await this.executeMetadataSignals(command, conversation, channel, metadataSignals);
     }
 
-    const triggerSignals = signals.filter((s) => s.type === 'trigger');
+    const triggerSignals = (signals ?? []).filter((s) => s.type === 'trigger');
     if (triggerSignals.length) {
       // TODO: execute trigger signals — requires wiring TriggerEvent or ParseEventRequest from EventsModule
     }
   }
 
   private async executeMetadataSignals(
-    claims: ReplyTokenClaims,
+    command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
     signals: Array<{ type: 'metadata'; key: string; value: unknown }>
@@ -161,8 +145,8 @@ export class HandleAgentReply {
 
     await Promise.all([
       this.conversationRepository.updateMetadata(
-        claims.environmentId,
-        claims.organizationId,
+        command.environmentId,
+        command.organizationId,
         conversation._id,
         merged
       ),
@@ -172,25 +156,25 @@ export class HandleAgentReply {
         platform: channel.platform,
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
-        agentId: claims.agentId,
+        agentId: command.agentIdentifier,
         content: `Metadata updated: ${signals.map((s) => s.key).join(', ')}`,
         signalData: { type: 'metadata', payload: merged },
-        environmentId: claims.environmentId,
-        organizationId: claims.organizationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
       }),
     ]);
   }
 
   private async executeResolveSignal(
-    claims: ReplyTokenClaims,
+    command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
     signal: { summary?: string }
   ): Promise<void> {
     await Promise.all([
       this.conversationRepository.updateStatus(
-        claims.environmentId,
-        claims.organizationId,
+        command.environmentId,
+        command.organizationId,
         conversation._id,
         ConversationStatusEnum.RESOLVED
       ),
@@ -200,11 +184,11 @@ export class HandleAgentReply {
         platform: channel.platform,
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
-        agentId: claims.agentId,
+        agentId: command.agentIdentifier,
         content: signal.summary ?? 'Conversation resolved',
         signalData: { type: 'resolve', payload: signal.summary ? { summary: signal.summary } : undefined },
-        environmentId: claims.environmentId,
-        organizationId: claims.organizationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
       }),
     ]);
   }
