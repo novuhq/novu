@@ -11,7 +11,7 @@ import {
   SmsControlDto,
   ThrottleControlDto,
 } from '@novu/application-generic';
-import { StepTypeEnum } from '@novu/shared';
+import { SLUG_IDENTIFIER_REGEX, StepTypeEnum, slugIdentifierFormatMessage } from '@novu/shared';
 import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 // Base DTO for common properties
@@ -27,8 +27,8 @@ export class BaseStepConfigDto {
 
   @ApiPropertyOptional({ description: 'Unique identifier for the step' })
   @IsString()
-  @Matches(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
-    message: 'stepId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
+  @Matches(SLUG_IDENTIFIER_REGEX, {
+    message: slugIdentifierFormatMessage('stepId'),
   })
   @IsOptional()
   stepId?: string;

@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
+
 export class AgentResponseDto {
   @ApiProperty()
   _id: string;
@@ -24,4 +26,7 @@ export class AgentResponseDto {
 
   @ApiProperty()
   updatedAt: string;
+
+  @ApiPropertyOptional({ type: [AgentIntegrationSummaryDto] })
+  integrations?: AgentIntegrationSummaryDto[];
 }

@@ -1,6 +1,6 @@
-import type { AgentEntity, AgentIntegrationEntity } from '@novu/dal';
+import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 
-import type { AgentIntegrationResponseDto, AgentResponseDto } from '../dtos';
+import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
 export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
   return {
@@ -12,6 +12,19 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     _organizationId: agent._organizationId,
     createdAt: agent.createdAt,
     updatedAt: agent.updatedAt,
+  };
+}
+
+export function toAgentIntegrationSummary(
+  integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>
+): AgentIntegrationSummaryDto {
+  return {
+    integrationId: integration._id,
+    providerId: integration.providerId,
+    name: integration.name,
+    identifier: integration.identifier,
+    channel: integration.channel,
+    active: integration.active,
   };
 }
 
