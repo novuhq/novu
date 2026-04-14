@@ -6,6 +6,7 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, deleteAgent, getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
+import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -50,9 +51,14 @@ function AgentDetailsTabsSkeleton() {
 }
 
 export function AgentDetailsPage() {
-  const { agentIdentifier = '', agentTab: agentTabParam } = useParams<{
+  const {
+    agentIdentifier = '',
+    agentTab: agentTabParam,
+    providerId: providerIdParam,
+  } = useParams<{
     agentIdentifier?: string;
     agentTab?: string;
+    providerId?: string;
   }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,7 +93,8 @@ export function AgentDetailsPage() {
     },
   });
 
-  const currentTab = parseAgentDetailsTab(agentTabParam);
+  const providerId = providerIdParam ? decodeURIComponent(providerIdParam) : undefined;
+  const currentTab = providerId ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
   useEffect(() => {
     if (!agentTabParam || !agentIdentifier || !currentEnvironment?.slug) {
@@ -234,17 +241,21 @@ export function AgentDetailsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
-                <TabsContent value="overview" className="outline-none">
+              <TabsContent value="overview" className="outline-none">
+                <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
                   <p className="text-text-soft text-label-sm">Test content — Overview tab (placeholder).</p>
-                </TabsContent>
-                <TabsContent value="integrations" className="outline-none">
-                  <p className="text-text-soft text-label-sm">Test content — Integrations tab (placeholder).</p>
-                </TabsContent>
-                <TabsContent value="activity" className="outline-none">
+                </div>
+              </TabsContent>
+              <TabsContent value="integrations" className="outline-none">
+                <div className="mx-auto mt-4 w-full max-w-7xl px-3 py-2 md:px-6">
+                  <AgentIntegrationsTab agent={agent} providerId={providerId} />
+                </div>
+              </TabsContent>
+              <TabsContent value="activity" className="outline-none">
+                <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
                   <p className="text-text-soft text-label-sm">Test content — Activity tab (placeholder).</p>
-                </TabsContent>
-              </div>
+                </div>
+              </TabsContent>
             </Tabs>
 
             <DeleteAgentDialog
