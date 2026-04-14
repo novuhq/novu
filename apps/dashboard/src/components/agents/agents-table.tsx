@@ -151,7 +151,7 @@ function AgentsTableSkeletonRow() {
 
 export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProps }: AgentsTableProps) {
   const has = useHasPermission();
-  const canWrite = has?.({ permission: PermissionsEnum.AGENT_WRITE }) ?? true;
+  const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
 

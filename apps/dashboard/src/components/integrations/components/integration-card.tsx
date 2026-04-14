@@ -70,9 +70,11 @@ export function IntegrationCard({
 
   if (variant === 'connectSheet') {
     return (
-      <div
+      <button
+        type="button"
         className={cn(
-          'group relative flex min-w-0 flex-1 basis-[calc(50%-0.5rem)] cursor-pointer flex-col gap-1.5 sm:max-w-[157px]',
+          'group relative flex min-w-0 flex-1 basis-[calc(50%-0.5rem)] cursor-pointer flex-col gap-1.5 text-left sm:max-w-[157px]',
+          'border-0 bg-transparent p-0 font-[inherit]',
           !integration.active && 'opacity-75 grayscale'
         )}
         onClick={handleConfigureClick}
@@ -117,7 +119,7 @@ export function IntegrationCard({
         <div className="flex min-h-4 max-w-full items-center gap-2">
           <span className="text-text-strong text-label-xs truncate font-medium leading-4">{integration.name}</span>
         </div>
-      </div>
+      </button>
     );
   }
 

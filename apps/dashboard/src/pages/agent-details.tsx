@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, deleteAgent, getAgent, getAgentDetailQueryKey } from '@/api/agents';
@@ -35,6 +35,20 @@ import {
 
 function isValidAgentDetailsTab(tab: string): tab is AgentDetailsTab {
   return (AGENT_DETAILS_TABS as readonly string[]).includes(tab);
+}
+
+function getBreadcrumbCurrentLabel(isNotFound: boolean, error: unknown, agent: AgentResponse | undefined): string {
+  if (isNotFound) {
+
+    return 'Not found';
+  }
+
+  if (error) {
+
+    return 'Agent';
+  }
+
+  return agent?.name ?? 'Agent';
 }
 
 function AgentDetailsTabsSkeleton() {
@@ -96,29 +110,29 @@ export function AgentDetailsPage() {
   const providerId = providerIdParam ? decodeURIComponent(providerIdParam) : undefined;
   const currentTab = providerId ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
-  useEffect(() => {
-    if (!agentTabParam || !agentIdentifier || !currentEnvironment?.slug) {
-      return;
-    }
-
-    if (!isValidAgentDetailsTab(agentTabParam)) {
-      navigate(
-        `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
-          environmentSlug: currentEnvironment.slug,
-          agentIdentifier: encodeURIComponent(agentIdentifier),
-          agentTab: AGENT_DETAILS_DEFAULT_TAB,
-        })}${location.search}`,
-        { replace: true }
-      );
-    }
-  }, [agentTabParam, agentIdentifier, currentEnvironment?.slug, navigate, location.search]);
-
   if (!isConversationalAgentsEnabled) {
     return <Navigate to={agentsListPath} replace />;
   }
 
   if (!agentIdentifier) {
     return <Navigate to={agentsListPath} replace />;
+  }
+
+  if (
+    agentTabParam &&
+    currentEnvironment?.slug &&
+    !isValidAgentDetailsTab(agentTabParam)
+  ) {
+    return (
+      <Navigate
+        replace
+        to={`${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${location.search}`}
+      />
+    );
   }
 
   const isLoading = agentQuery.isLoading;
@@ -152,17 +166,7 @@ export function AgentDetailsPage() {
 
   const handleBack = () => navigate(agentsListPath);
 
-  const breadcrumbCurrentLabel = (() => {
-    if (isNotFound) {
-      return 'Not found';
-    }
-
-    if (error) {
-      return 'Agent';
-    }
-
-    return agent?.name ?? 'Agent';
-  })();
+  const breadcrumbCurrentLabel = getBreadcrumbCurrentLabel(isNotFound, error, agent);
 
   const headerStartItems = (
     <div className="flex min-w-0 items-center gap-1 overflow-hidden">

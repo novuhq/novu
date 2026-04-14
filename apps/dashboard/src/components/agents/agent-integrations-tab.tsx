@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -112,6 +112,93 @@ function groupLinksByChannel(links: AgentIntegrationLink[]) {
   }
 
   return groups;
+}
+
+type IntegrationsHubPlaceholderProps = {
+  title: string;
+  description: ReactNode;
+};
+
+function IntegrationsHubPlaceholder({ title, description }: IntegrationsHubPlaceholderProps) {
+  return (
+    <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
+      <p className="text-text-strong text-label-sm font-medium">{title}</p>
+      <p className="text-text-soft text-label-sm mt-2 max-w-sm leading-5">{description}</p>
+    </div>
+  );
+}
+
+type IntegrationsMainPanelProps = {
+  providerId: string | undefined;
+  agent: AgentResponse;
+  selectedIntegration: AgentIntegrationLink | undefined;
+  canRemoveAgentIntegration: boolean;
+  onBackFromGuide: () => void;
+  onRequestRemoveSelected: () => void;
+  isRemovingIntegration: boolean;
+  isLoading: boolean;
+  links: AgentIntegrationLink[];
+};
+
+function IntegrationsMainPanel({
+  providerId,
+  agent,
+  selectedIntegration,
+  canRemoveAgentIntegration,
+  onBackFromGuide,
+  onRequestRemoveSelected,
+  isRemovingIntegration,
+  isLoading,
+  links,
+}: IntegrationsMainPanelProps) {
+  if (providerId) {
+
+    return (
+      <ResolveAgentIntegrationGuide
+        embedded
+        providerId={providerId}
+        onBack={onBackFromGuide}
+        agent={agent}
+        integrationLink={selectedIntegration}
+        canRemoveIntegration={canRemoveAgentIntegration}
+        onRequestRemoveIntegration={onRequestRemoveSelected}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  if (isLoading) {
+
+    return (
+      <div className="flex min-h-[320px] flex-col gap-4">
+        <Skeleton className="h-12 w-2/3 max-w-md rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (links.length > 0) {
+
+    return (
+      <IntegrationsHubPlaceholder
+        title="Select a provider"
+        description="Choose a connected provider on the left to open its setup guide and finish configuration."
+      />
+    );
+  }
+
+  return (
+    <IntegrationsHubPlaceholder
+      title="No integrations linked yet"
+      description={
+        <>
+          Use <span className="text-text-strong">Add provider</span> in the list to connect an integration from this
+          environment.
+        </>
+      }
+    />
+  );
 }
 
 export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTabProps) {
@@ -243,59 +330,27 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
     );
   }
 
-  const mainPanel = (() => {
-    if (providerId) {
-      return (
-        <ResolveAgentIntegrationGuide
-          embedded
-          providerId={providerId}
-          onBack={handleBackFromGuide}
-          agent={agent}
-          integrationLink={selectedIntegration}
-          canRemoveIntegration={canRemoveAgentIntegration}
-          onRequestRemoveIntegration={() => {
-            if (!selectedIntegration || removeIntegrationMutation.isPending) {
-              return;
-            }
-
-            removeIntegrationMutation.mutate(selectedIntegration._id);
-          }}
-          isRemovingIntegration={removeIntegrationMutation.isPending}
-        />
-      );
+  const handleRequestRemoveSelected = () => {
+    if (!selectedIntegration || removeIntegrationMutation.isPending) {
+      return;
     }
 
-    if (isLoading) {
-      return (
-        <div className="flex min-h-[320px] flex-col gap-4">
-          <Skeleton className="h-12 w-2/3 max-w-md rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-        </div>
-      );
-    }
+    removeIntegrationMutation.mutate(selectedIntegration._id);
+  };
 
-    if (links.length > 0) {
-      return (
-        <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
-          <p className="text-text-strong text-label-sm font-medium">Select a provider</p>
-          <p className="text-text-soft text-label-sm mt-2 max-w-sm leading-5">
-            Choose a connected provider on the left to open its setup guide and finish configuration.
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
-        <p className="text-text-strong text-label-sm font-medium">No integrations linked yet</p>
-        <p className="text-text-soft text-label-sm mt-2 max-w-sm leading-5">
-          Use <span className="text-text-strong">Add provider</span> in the list to connect an integration from this
-          environment.
-        </p>
-      </div>
-    );
-  })();
+  const mainPanel = (
+    <IntegrationsMainPanel
+      providerId={providerId}
+      agent={agent}
+      selectedIntegration={selectedIntegration}
+      canRemoveAgentIntegration={canRemoveAgentIntegration}
+      onBackFromGuide={handleBackFromGuide}
+      onRequestRemoveSelected={handleRequestRemoveSelected}
+      isRemovingIntegration={removeIntegrationMutation.isPending}
+      isLoading={isLoading}
+      links={links}
+    />
+  );
 
   return (
     <div className="flex w-full flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
@@ -393,8 +448,8 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
             </div>
 
             <p className="text-label-xs px-0.5 leading-4">
-              <span className="text-[#9394A1]">{lastUpdatedParts.prefix}</span>
-              <span className="text-[#5E5F6E]">{lastUpdatedParts.emphasis}</span>
+              <span className="text-text-soft">{lastUpdatedParts.prefix}</span>
+              <span className="text-text-sub font-medium">{lastUpdatedParts.emphasis}</span>
             </p>
 
             <div className="border-stroke-soft border-t pt-3">

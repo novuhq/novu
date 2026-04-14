@@ -58,7 +58,7 @@ export function AgentIntegrationGuideLayout({
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {embedded ? null : (
+      {!embedded && (
         <CompactButton
           type="button"
           size="lg"
@@ -90,11 +90,11 @@ export function AgentIntegrationGuideLayout({
                 <span className="text-success-base text-label-xs font-medium leading-4">Active</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1 rounded-md bg-[rgba(251,55,72,0.1)] px-1 py-0.5">
-                <span className="flex size-4 items-center justify-center rounded-full bg-[rgba(251,55,72,0.1)]">
-                  <span className="size-1.5 rounded-full bg-[rgba(251,55,72,0.6)]" />
+              <span className="bg-error-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
+                <span className="bg-error-lighter flex size-4 items-center justify-center rounded-full">
+                  <span className="bg-error-base size-1.5 rounded-full" />
                 </span>
-                <span className="text-label-xs font-medium leading-4 text-[#fb3748]">Action needed</span>
+                <span className="text-error-base text-label-xs font-medium leading-4">Action needed</span>
               </span>
             )}
           </div>
@@ -108,8 +108,8 @@ export function AgentIntegrationGuideLayout({
                 <>
                   <span className="bg-text-soft size-0.5 shrink-0 rounded-full" />
                   <span className="text-[12px] leading-4">
-                    <span className="text-[#9394A1]">Created </span>
-                    <span className="text-[#5E5F6E] font-medium">{formatCreatedDate(createdAt)}</span>
+                    <span className="text-text-soft">Created </span>
+                    <span className="text-text-sub font-medium">{formatCreatedDate(createdAt)}</span>
                   </span>
                 </>
               ) : null}

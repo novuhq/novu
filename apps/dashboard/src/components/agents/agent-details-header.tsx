@@ -1,5 +1,5 @@
 import { PermissionsEnum } from '@novu/shared';
-import { RiCodeSSlashLine, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
 import {
@@ -10,8 +10,6 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useHasPermission } from '@/hooks/use-has-permission';
-
-const INTEGRATE_AGENT_DOCS_HREF = 'https://docs.novu.co';
 
 type AgentDetailsHeaderProps = {
   agent: AgentResponse | undefined;
@@ -32,8 +30,7 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
             <Skeleton className="h-4 w-[min(100%,24ch)]" />
           </div>
           <div className="flex shrink-0 gap-3">
-            <Skeleton className="h-8 w-[7.5rem] rounded-md" />
-            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="size-8 shrink-0 rounded-md" />
           </div>
         </div>
       </header>
