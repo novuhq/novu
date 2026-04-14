@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export class ChannelCredentials {
   @ApiPropertyOptional({
     description:
-      'Webhook URL used by chat app integrations. The webhook should be obtained from the chat app provider.',
+      'Webhook URL used by chat and push-webhook integrations. For chat, the webhook should be obtained from the chat app provider. For push-webhook, it overrides the integration-level URL for this subscriber.',
     example: 'https://example.com/webhook',
     type: String,
   })

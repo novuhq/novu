@@ -299,7 +299,8 @@ export class SendMessagePush extends SendMessageBase {
           title,
           content,
           overrides,
-          stepData
+          stepData,
+          channel.credentials?.webhookUrl
         );
 
         if (result.success) {
@@ -344,7 +345,8 @@ export class SendMessagePush extends SendMessageBase {
           title,
           content,
           overrides,
-          stepData
+          stepData,
+          channel.credentials?.webhookUrl
         );
 
         this.messageRepository.update(
@@ -594,7 +596,8 @@ export class SendMessagePush extends SendMessageBase {
     title: string,
     content: string,
     overrides: object,
-    step: IPushOptions['step']
+    step: IPushOptions['step'],
+    subscriberWebhookUrl?: string
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
     try {
       Logger.log(
@@ -611,6 +614,20 @@ export class SendMessagePush extends SendMessageBase {
         LOG_CONTEXT
       );
 
+      const combinedOverrides = this.combineOverrides(
+        command.bridgeData,
+        command.overrides,
+        command.step.stepId,
+        integration.providerId
+      );
+
+      // Inject subscriber-level webhookUrl as a middle-priority default.
+      // Priority: trigger override (in combinedOverrides) > subscriber credential > integration config (in provider).
+      const bridgeProviderData =
+        subscriberWebhookUrl && !combinedOverrides.webhookUrl
+          ? { ...combinedOverrides, webhookUrl: subscriberWebhookUrl }
+          : combinedOverrides;
+
       const result = await pushHandler.send({
         target: [deviceToken],
         title: (bridgeOutputs as PushOutput)?.subject || title,
@@ -620,12 +637,7 @@ export class SendMessagePush extends SendMessageBase {
         overrides,
         subscriber,
         step,
-        bridgeProviderData: this.combineOverrides(
-          command.bridgeData,
-          command.overrides,
-          command.step.stepId,
-          integration.providerId
-        ),
+        bridgeProviderData,
       });
 
       await this.createExecutionDetails.execute(
