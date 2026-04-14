@@ -1,0 +1,8 @@
+---
+description: pnpm minimumReleaseAge exclusions — do not bypass for follow-redirects
+alwaysApply: true
+---
+
+### `minimumReleaseAgeExclude`
+
+Never add `follow-redirects` to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`. Prefer `pnpm.overrides` (or waiting for the release-age window) to adopt patched versions without carving out an exception for that package.
