@@ -3,6 +3,7 @@ import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   ConversationActivityEntity,
   ConversationActivityRepository,
+  ConversationActivitySenderTypeEnum,
   ConversationEntity,
   ConversationParticipantTypeEnum,
   ConversationRepository,
@@ -27,6 +28,7 @@ export interface PersistInboundMessageParams {
   platform: string;
   integrationId: string;
   platformThreadId: string;
+  senderType: ConversationActivitySenderTypeEnum;
   senderId: string;
   senderName?: string;
   content: string;
@@ -134,6 +136,7 @@ export class AgentConversationService {
         platform: params.platform,
         integrationId: params.integrationId,
         platformThreadId: params.platformThreadId,
+        senderType: params.senderType,
         senderId: params.senderId,
         senderName: params.senderName,
         content: params.content,

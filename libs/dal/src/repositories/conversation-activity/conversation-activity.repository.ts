@@ -37,6 +37,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     platform: string;
     integrationId: string;
     platformThreadId: string;
+    senderType: ConversationActivitySenderTypeEnum;
     senderId: string;
     content: string;
     platformMessageId?: string;
@@ -51,7 +52,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       platform: params.platform,
       _integrationId: params.integrationId,
       platformThreadId: params.platformThreadId,
-      senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+      senderType: params.senderType,
       senderId: params.senderId,
       content: params.content,
       platformMessageId: params.platformMessageId,

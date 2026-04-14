@@ -196,7 +196,7 @@ export class BridgeExecutorService {
     const agentIdentifier = config.agentIdentifier;
 
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
-    const replyUrl = `${apiRootUrl}/agents/${agentIdentifier}/reply`;
+    const replyUrl = `${apiRootUrl}/v1/agents/${agentIdentifier}/reply`;
 
     return {
       version: 1,

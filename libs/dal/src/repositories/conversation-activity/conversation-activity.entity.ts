@@ -12,6 +12,7 @@ export enum ConversationActivityTypeEnum {
 
 export enum ConversationActivitySenderTypeEnum {
   SUBSCRIBER = 'subscriber',
+  PLATFORM_USER = 'platform_user',
   AGENT = 'agent',
   SYSTEM = 'system',
 }

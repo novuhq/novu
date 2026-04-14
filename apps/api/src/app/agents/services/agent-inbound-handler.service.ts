@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
+import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { ResolvedPlatformConfig } from './agent-credential.service';
@@ -57,11 +57,16 @@ export class AgentInboundHandler {
       firstMessageText: message.text,
     });
 
+    const senderType = subscriberId
+      ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+      : ConversationActivitySenderTypeEnum.PLATFORM_USER;
+
     await this.conversationService.persistInboundMessage({
       conversationId: conversation._id,
       platform: config.platform,
       integrationId: config.integrationId,
       platformThreadId: thread.id,
+      senderType,
       senderId: participantId,
       senderName: message.author.fullName,
       content: message.text,

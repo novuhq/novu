@@ -65,8 +65,11 @@ export class AgentsWebhookController {
     @Res() res: Response
   ) {
     try {
+      console.log('handleInboundWebhook', agentId, integrationIdentifier);
       await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res);
+      console.log('handleInboundWebhook success');
     } catch (err) {
+      console.log(err);
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {

@@ -90,7 +90,7 @@ export class HandleAgentReply {
   ): Promise<void> {
     await Promise.all([
       this.chatSdkService.postToConversation(
-        command.agentIdentifier,
+        conversation._agentId,
         command.integrationIdentifier,
         channel.platform,
         channel.serializedThread!,
