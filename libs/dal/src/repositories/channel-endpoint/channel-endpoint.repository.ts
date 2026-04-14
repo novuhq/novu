@@ -16,6 +16,7 @@ export class ChannelEndpointRepository extends BaseRepository<
   async findByPlatformIdentity(params: {
     _environmentId: string;
     _organizationId: string;
+    integrationIdentifier: string;
     type: ChannelEndpointType;
     endpointField: string;
     endpointValue: string;
@@ -23,6 +24,7 @@ export class ChannelEndpointRepository extends BaseRepository<
     return this.findOne({
       _environmentId: params._environmentId,
       _organizationId: params._organizationId,
+      integrationIdentifier: params.integrationIdentifier,
       type: params.type,
       [`endpoint.${params.endpointField}`]: params.endpointValue,
     });

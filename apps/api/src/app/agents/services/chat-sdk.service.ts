@@ -140,12 +140,15 @@ export class ChatSdkService implements OnModuleDestroy {
     const adapters = await this.buildAdapters(platform, config);
     const redisHost = process.env.REDIS_HOST || 'localhost';
     const redisPort = process.env.REDIS_PORT || '6379';
+    const redisScheme = process.env.REDIS_TLS_ENABLED === 'true' ? 'rediss' : 'redis';
+    const redisPassword = process.env.REDIS_PASSWORD;
+    const redisAuth = redisPassword ? `:${encodeURIComponent(redisPassword)}@` : '';
 
     return new Chat({
       userName: `novu-agent-${instanceKey}`,
       adapters,
       state: createRedisState({
-        url: `redis://${redisHost}:${redisPort}`,
+        url: `${redisScheme}://${redisAuth}${redisHost}:${redisPort}`,
         keyPrefix: `novu:agent:${instanceKey}`,
       }),
       logger: 'silent',

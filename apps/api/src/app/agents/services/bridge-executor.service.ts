@@ -107,7 +107,7 @@ export class BridgeExecutorService {
     const { config, event } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, agentIdentifier, event);
+    const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, config.organizationId, agentIdentifier, event);
     if (!bridgeUrl) {
       return;
     }
@@ -171,10 +171,14 @@ export class BridgeExecutorService {
 
   private async resolveBridgeUrl(
     environmentId: string,
+    organizationId: string,
     agentIdentifier: string,
     event: AgentEventEnum
   ): Promise<string | null> {
-    const environment = await this.environmentRepository.findOne({ _id: environmentId }, ['bridge']);
+    const environment = await this.environmentRepository.findOne(
+      { _id: environmentId, _organizationId: organizationId },
+      ['bridge']
+    );
     const baseUrl = environment?.bridge?.url;
 
     if (!baseUrl) {

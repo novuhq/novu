@@ -34,6 +34,7 @@ export class AgentSubscriberResolver {
     const endpoint = await this.channelEndpointRepository.findByPlatformIdentity({
       _environmentId: environmentId,
       _organizationId: organizationId,
+      integrationIdentifier,
       type: endpointConfig.endpointType,
       endpointField: endpointConfig.identityField,
       endpointValue: platformUserId,
