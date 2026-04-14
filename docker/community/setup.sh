@@ -51,6 +51,7 @@ create_env() {
     if [ "$needs_update" = true ]; then
       warn "Empty secrets found in existing .env — filling them in"
       fill_secrets "$env_file"
+      chmod 600 "$env_file"
     else
       log "All secrets already set in .env"
     fi
@@ -60,6 +61,7 @@ create_env() {
 
   cp "$env_example" "$env_file"
   fill_secrets "$env_file"
+  chmod 600 "$env_file"
   log "Created .env with secure random secrets"
 }
 
