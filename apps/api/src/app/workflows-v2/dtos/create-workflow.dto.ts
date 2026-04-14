@@ -12,7 +12,13 @@ import {
   ThrottleControlDto,
   WorkflowCommonsFields,
 } from '@novu/application-generic';
-import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  SeverityLevelEnum,
+  SLUG_IDENTIFIER_REGEX,
+  StepTypeEnum,
+  slugIdentifierFormatMessage,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import {
@@ -67,8 +73,8 @@ export type StepCreateDto =
 export class CreateWorkflowDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier for the workflow' })
   @IsString()
-  @Matches(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
-    message: 'workflowId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
+  @Matches(SLUG_IDENTIFIER_REGEX, {
+    message: slugIdentifierFormatMessage('workflowId'),
   })
   workflowId: string;
 

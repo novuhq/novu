@@ -16,6 +16,28 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     super(AgentIntegration, AgentIntegrationEntity);
   }
 
+  async findLinksForAgents({
+    organizationId,
+    environmentId,
+    agentIds,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    agentIds: string[];
+  }) {
+    if (agentIds.length === 0) {
+      return [];
+    }
+
+    const query: FilterQuery<AgentIntegrationDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _agentId: { $in: agentIds },
+    };
+
+    return this.find(query, ['_agentId', '_integrationId']);
+  }
+
   async listAgentIntegrationsForAgent({
     organizationId,
     environmentId,

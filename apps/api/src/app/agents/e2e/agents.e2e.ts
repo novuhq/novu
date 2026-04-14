@@ -61,6 +61,20 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(afterDelete.status).to.equal(404);
   });
 
+  it('should return 422 when identifier is not a valid slug', async () => {
+    const res = await session.testAgent.post('/v1/agents').send({
+      name: 'Invalid Slug Agent',
+      identifier: 'bad id with spaces',
+    });
+
+    expect(res.status).to.equal(422);
+    const messages = res.body?.errors?.general?.messages;
+    const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
+
+    expect(text.toLowerCase()).to.contain('identifier');
+    expect(text.toLowerCase()).to.match(/slug|valid/);
+  });
+
   it('should return 404 when agent identifier does not exist', async () => {
     const res = await session.testAgent.get('/v1/agents/nonexistent-agent-id-xyz');
 
@@ -153,9 +167,7 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(removeRes.status).to.equal(204);
 
-    const listAfterRemove = await session.testAgent.get(
-      `/v1/agents/${encodeURIComponent(identifier)}/integrations`
-    );
+    const listAfterRemove = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/integrations`);
 
     expect(listAfterRemove.body.data.length).to.equal(0);
 
