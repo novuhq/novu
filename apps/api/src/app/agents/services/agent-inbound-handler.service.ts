@@ -95,7 +95,11 @@ export class AgentInboundHandler {
       subscriber,
       history,
       message,
-      thread,
+      platformContext: {
+        threadId: thread.id,
+        channelId: thread.channelId,
+        isDM: thread.isDM,
+      },
     });
   }
 }

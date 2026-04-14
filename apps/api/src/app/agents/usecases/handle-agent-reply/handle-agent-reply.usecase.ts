@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { shortId } from '@novu/application-generic';
+import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   ConversationActivityRepository,
   ConversationActivityTypeEnum,
@@ -7,7 +7,12 @@ import {
   ConversationEntity,
   ConversationRepository,
   ConversationStatusEnum,
+  SubscriberRepository,
 } from '@novu/dal';
+import { AgentEventEnum } from '../../dtos/agent-event.enum';
+import { AgentCredentialService } from '../../services/agent-credential.service';
+import { AgentConversationService } from '../../services/agent-conversation.service';
+import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
@@ -16,7 +21,12 @@ export class HandleAgentReply {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
-    private readonly chatSdkService: ChatSdkService
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly chatSdkService: ChatSdkService,
+    private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly agentCredentialService: AgentCredentialService,
+    private readonly conversationService: AgentConversationService,
+    private readonly logger: PinoLogger
   ) {}
 
   async execute(command: HandleAgentReplyCommand): Promise<{ status: string }> {
@@ -191,5 +201,40 @@ export class HandleAgentReply {
         organizationId: command.organizationId,
       }),
     ]);
+
+    this.fireOnResolveBridgeCall(command, conversation).catch((err) => {
+      this.logger.error(err, `[agent:${command.agentIdentifier}] Failed to fire onResolve bridge call`);
+    });
+  }
+
+  private async fireOnResolveBridgeCall(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity
+  ): Promise<void> {
+    const config = await this.agentCredentialService.resolve(conversation._agentId, command.integrationIdentifier);
+
+    const subscriberParticipant = conversation.participants.find((p) => p.type === 'subscriber');
+    const [subscriber, history] = await Promise.all([
+      subscriberParticipant
+        ? this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberParticipant.id)
+        : Promise.resolve(null),
+      this.conversationService.getHistory(command.environmentId, conversation._id),
+    ]);
+
+    const channel = conversation.channels[0];
+
+    await this.bridgeExecutor.execute({
+      event: AgentEventEnum.ON_RESOLVE,
+      config,
+      conversation,
+      subscriber,
+      history,
+      message: null,
+      platformContext: {
+        threadId: channel?.platformThreadId ?? '',
+        channelId: '',
+        isDM: false,
+      },
+    });
   }
 }

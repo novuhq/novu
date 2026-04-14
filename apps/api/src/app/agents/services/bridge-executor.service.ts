@@ -13,12 +13,18 @@ import {
   EnvironmentRepository,
   SubscriberEntity,
 } from '@novu/dal';
-import type { Message, Thread } from 'chat';
+import type { Message } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { ResolvedPlatformConfig } from './agent-credential.service';
 
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
+
+export interface BridgePlatformContext {
+  threadId: string;
+  channelId: string;
+  isDM: boolean;
+}
 
 export interface BridgeExecutorParams {
   event: AgentEventEnum;
@@ -26,8 +32,8 @@ export interface BridgeExecutorParams {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   history: ConversationActivityEntity[];
-  message: Message;
-  thread: Thread;
+  message: Message | null;
+  platformContext: BridgePlatformContext;
 }
 
 interface BridgeMessageAuthor {
@@ -73,12 +79,6 @@ interface BridgeHistoryEntry {
   createdAt: string;
 }
 
-interface BridgePlatformContext {
-  threadId: string;
-  channelId: string;
-  isDM: boolean;
-}
-
 export interface AgentBridgeRequest {
   version: 1;
   timestamp: string;
@@ -104,7 +104,7 @@ export class BridgeExecutorService {
   ) {}
 
   async execute(params: BridgeExecutorParams): Promise<void> {
-    const { config, event, conversation, thread } = params;
+    const { config, event } = params;
     const agentIdentifier = config.agentIdentifier;
 
     const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, agentIdentifier, event);
@@ -116,7 +116,7 @@ export class BridgeExecutorService {
       GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
     );
 
-    const payload = this.buildPayload(params, thread);
+    const payload = this.buildPayload(params);
     const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
 
     this.fireWithRetries(bridgeUrl, payload, signatureHeader, agentIdentifier).catch((err) => {
@@ -191,8 +191,8 @@ export class BridgeExecutorService {
     return url.toString();
   }
 
-  private buildPayload(params: BridgeExecutorParams, thread: Thread): AgentBridgeRequest {
-    const { event, config, conversation, subscriber, history, message } = params;
+  private buildPayload(params: BridgeExecutorParams): AgentBridgeRequest {
+    const { event, config, conversation, subscriber, history, message, platformContext } = params;
     const agentIdentifier = config.agentIdentifier;
 
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
@@ -206,16 +206,12 @@ export class BridgeExecutorService {
       replyUrl,
       conversationId: conversation._id,
       integrationIdentifier: config.integrationIdentifier,
-      message: this.mapMessage(message),
+      message: message ? this.mapMessage(message) : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
       history: this.mapHistory(history),
       platform: config.platform,
-      platformContext: {
-        threadId: thread.id,
-        channelId: thread.channelId,
-        isDM: thread.isDM,
-      },
+      platformContext,
     };
   }
 
