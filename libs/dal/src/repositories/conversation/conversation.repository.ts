@@ -78,10 +78,34 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async touchLastActivityAt(environmentId: string, organizationId: string, id: string): Promise<void> {
+  async touchActivity(environmentId: string, organizationId: string, id: string, messagePreview: string): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
-      { $set: { lastActivityAt: new Date().toISOString() } }
+      {
+        $set: {
+          lastActivityAt: new Date().toISOString(),
+          lastMessagePreview: messagePreview.slice(0, 200),
+        },
+        $inc: { messageCount: 1 },
+      }
+    );
+  }
+
+  async updateChannelThread(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    platformThreadId: string,
+    serializedThread: Record<string, unknown>
+  ): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        'channels.platformThreadId': platformThreadId,
+      },
+      { $set: { 'channels.$.serializedThread': serializedThread } }
     );
   }
 }

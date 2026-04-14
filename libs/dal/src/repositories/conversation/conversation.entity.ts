@@ -26,6 +26,8 @@ export interface ConversationChannel {
   _integrationId: string;
   /** Unique thread identifier on the platform (e.g. Slack channel+ts, GitHub PR number) */
   platformThreadId: string;
+  /** Chat SDK SerializedThread — stored for reply delivery via ThreadImpl.fromJSON() */
+  serializedThread?: Record<string, unknown>;
 }
 
 export class ConversationEntity {
@@ -50,6 +52,11 @@ export class ConversationEntity {
 
   /** Customer-controlled key/value bag accumulated across turns, sent back in every bridge payload */
   metadata: Record<string, unknown>;
+
+  messageCount: number;
+
+  /** Truncated preview of the most recent message (max 200 chars) */
+  lastMessagePreview?: string;
 
   _environmentId: EnvironmentId;
 

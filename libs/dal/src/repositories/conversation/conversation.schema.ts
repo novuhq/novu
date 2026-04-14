@@ -48,6 +48,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
               type: Schema.Types.String,
               required: true,
             },
+            serializedThread: {
+              type: Schema.Types.Mixed,
+            },
           },
           { _id: false }
         ),
@@ -67,6 +70,13 @@ const conversationSchema = new Schema<ConversationDBModel>(
     metadata: {
       type: Schema.Types.Mixed,
       default: {},
+    },
+    messageCount: {
+      type: Schema.Types.Number,
+      default: 0,
+    },
+    lastMessagePreview: {
+      type: Schema.Types.String,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,

@@ -141,7 +141,7 @@ export class AgentConversationService {
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       }),
-      this.conversationRepository.touchLastActivityAt(params.environmentId, params.organizationId, params.conversationId),
+      this.conversationRepository.touchActivity(params.environmentId, params.organizationId, params.conversationId, params.content),
     ]);
 
     return activity;
