@@ -30,12 +30,20 @@ export function toAgentIntegrationSummary(
 
 export function toAgentIntegrationResponse(
   link: AgentIntegrationEntity,
-  integrationIdentifier: string
+  integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>
 ): AgentIntegrationResponseDto {
+
   return {
     _id: link._id,
     _agentId: link._agentId,
-    integrationIdentifier,
+    integration: {
+      _id: integration._id,
+      identifier: integration.identifier,
+      name: integration.name,
+      providerId: integration.providerId,
+      channel: integration.channel,
+      active: integration.active,
+    },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,
     createdAt: link.createdAt,

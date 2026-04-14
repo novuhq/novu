@@ -33,7 +33,7 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'identifier']
+      '_id identifier name providerId channel active'
     );
 
     if (!integration) {
@@ -63,6 +63,6 @@ export class AddAgentIntegration {
       _organizationId: command.organizationId,
     });
 
-    return toAgentIntegrationResponse(link, integration.identifier);
+    return toAgentIntegrationResponse(link, integration);
   }
 }

@@ -49,7 +49,7 @@ export class UpdateAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'identifier']
+      '_id identifier name providerId channel active'
     );
 
     if (!targetIntegration) {
@@ -59,7 +59,7 @@ export class UpdateAgentIntegration {
     }
 
     if (existingLink._integrationId === targetIntegration._id) {
-      return toAgentIntegrationResponse(existingLink, targetIntegration.identifier);
+      return toAgentIntegrationResponse(existingLink, targetIntegration);
     }
 
     const duplicate = await this.agentIntegrationRepository.findOne(
@@ -101,6 +101,6 @@ export class UpdateAgentIntegration {
       );
     }
 
-    return toAgentIntegrationResponse(updated, targetIntegration.identifier);
+    return toAgentIntegrationResponse(updated, targetIntegration);
   }
 }

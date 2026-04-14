@@ -147,7 +147,7 @@ describe('Agents API - /agents #novu-v2', () => {
       .send({ integrationIdentifier: emailIntegrationIdentifier });
 
     expect(addRes.status).to.equal(201);
-    expect(addRes.body.data.integrationIdentifier).to.equal(emailIntegrationIdentifier);
+    expect(addRes.body.data.integration.identifier).to.equal(emailIntegrationIdentifier);
     const linkId = addRes.body.data._id as string;
 
     const listRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/integrations`);
@@ -163,7 +163,7 @@ describe('Agents API - /agents #novu-v2', () => {
       .send({ integrationIdentifier: smsIntegrationIdentifier });
 
     expect(patchLinkRes.status).to.equal(200);
-    expect(patchLinkRes.body.data.integrationIdentifier).to.equal(smsIntegrationIdentifier);
+    expect(patchLinkRes.body.data.integration.identifier).to.equal(smsIntegrationIdentifier);
 
     const removeRes = await session.testAgent.delete(
       `/v1/agents/${encodeURIComponent(identifier)}/integrations/${linkId}`

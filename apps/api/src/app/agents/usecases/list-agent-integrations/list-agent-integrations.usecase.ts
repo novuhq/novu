@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 
 import { ListAgentIntegrationsResponseDto } from '../../dtos/list-agent-integrations-response.dto';
@@ -73,7 +73,11 @@ export class ListAgentIntegrations {
     });
 
     const integrationIds = [...new Set(pagination.links.map((link) => link._integrationId))];
-    let idToIdentifier = new Map<string, string>();
+    type IntegrationSummary = Pick<
+      IntegrationEntity,
+      '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'
+    >;
+    let idToIntegration = new Map<string, IntegrationSummary>();
 
     if (integrationIds.length > 0) {
       const integrations = await this.integrationRepository.find(
@@ -82,16 +86,24 @@ export class ListAgentIntegrations {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
-        '_id identifier'
+        '_id identifier name providerId channel active'
       );
 
-      idToIdentifier = new Map(integrations.map((i) => [i._id, i.identifier]));
+      idToIntegration = new Map(integrations.map((i) => [i._id, i]));
     }
 
     return {
-      data: pagination.links.map((link) =>
-        toAgentIntegrationResponse(link, idToIdentifier.get(link._integrationId) ?? '')
-      ),
+      data: pagination.links.map((link) => {
+        const integration = idToIntegration.get(link._integrationId);
+
+        if (!integration) {
+          throw new Error(
+            `Integration "${link._integrationId}" missing for agent-integration link "${link._id}".`
+          );
+        }
+
+        return toAgentIntegrationResponse(link, integration);
+      }),
       next: pagination.next,
       previous: pagination.previous,
       totalCount: pagination.totalCount,

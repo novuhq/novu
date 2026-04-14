@@ -1,5 +1,7 @@
 import { providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import { ComponentProps } from 'react';
 import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { Link, useLocation } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -21,8 +23,10 @@ import {
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 type AgentsTableProps = {
@@ -43,6 +47,24 @@ type AgentsTableProps = {
   };
 };
 
+type AgentNavTableCellProps = ComponentProps<typeof TableCell> & {
+  to?: string;
+};
+
+function AgentNavTableCell({ children, className, to, ...rest }: AgentNavTableCellProps) {
+
+  return (
+    <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
+      {to ? (
+        <Link to={to} className="absolute inset-0" tabIndex={-1}>
+          <span className="sr-only">View agent details</span>
+        </Link>
+      ) : null}
+      {children}
+    </TableCell>
+  );
+}
+
 const MAX_VISIBLE_INTEGRATION_ICONS = 3;
 
 function getProviderDisplayName(providerId: string): string {
@@ -60,7 +82,7 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
   const overflowCount = integrations.length - visible.length;
 
   return (
-    <div className="flex min-h-[41px] items-center">
+    <div className="relative z-10 flex min-h-[41px] items-center">
       <div className="flex items-center">
         {visible.map((integration, index) => {
           return (
@@ -130,7 +152,9 @@ function AgentsTableSkeletonRow() {
 
 export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProps }: AgentsTableProps) {
   const has = useHasPermission();
-  const canWrite = has?.({ permission: PermissionsEnum.AGENT_WRITE }) ?? true;
+  const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
+  const { currentEnvironment } = useEnvironment();
+  const location = useLocation();
 
   return (
     <Table isLoading={isLoading} loadingRowsCount={5} loadingRow={<AgentsTableSkeletonRow />}>
@@ -147,9 +171,15 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       {!isLoading && (
         <TableBody>
           {agents.map((agent) => {
+            const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+              environmentSlug: currentEnvironment?.slug ?? '',
+              agentIdentifier: encodeURIComponent(agent.identifier),
+              agentTab: 'overview',
+            })}${location.search}`;
+
             return (
-              <TableRow key={agent._id}>
-                <TableCell className="p-3 align-middle">
+              <TableRow key={agent._id} className="group relative isolate cursor-pointer">
+                <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
                   <div className="flex min-h-[41px] items-center gap-4">
                     <span className="text-text-sub flex size-5 shrink-0 items-center justify-center" aria-hidden>
                       <RiRobot2Line className="size-3.5" />
@@ -163,22 +193,25 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                       </span>
                     </div>
                   </div>
-                </TableCell>
-                <TableCell className="p-3 align-middle">
+                </AgentNavTableCell>
+                <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
                   <AgentIntegrationsCell agent={agent} />
-                </TableCell>
-                <TableCell className="text-foreground-600 p-3 align-middle text-sm font-medium">
+                </AgentNavTableCell>
+                <AgentNavTableCell
+                  to={agentDetailsPath}
+                  className="text-foreground-600 p-3 align-middle text-sm font-medium"
+                >
                   <span className="text-label-sm">{formatDateSimple(agent.updatedAt)}</span>
-                </TableCell>
+                </AgentNavTableCell>
                 <TableCell className="p-3 text-right align-middle">
                   {canWrite ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <CompactButton size="md" variant="ghost" icon={RiMore2Fill}>
+                        <CompactButton size="md" variant="ghost" icon={RiMore2Fill} className="z-10">
                           <span className="sr-only">Open menu</span>
                         </CompactButton>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem
                           className="text-destructive cursor-pointer"
                           onClick={() => onRequestDelete(agent)}
