@@ -2,10 +2,19 @@ import {
   CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   type IIntegration,
+  PROVIDER_ID_TO_CHANNEL_MAP,
   providers as novuProviders,
 } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiExpandUpDownLine, RiSearchLine } from 'react-icons/ri';
+import { RiAddLine, RiExpandUpDownLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
+import {
+  addAgentIntegration,
+  getAgentDetailQueryKey,
+  getAgentIntegrationsQueryKey,
+} from '@/api/agents';
+import { NovuApiError } from '@/api/api.client';
+import { createIntegration } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
   Command,
@@ -16,7 +25,10 @@ import {
   CommandList,
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 
 type DropdownItem = {
@@ -27,8 +39,12 @@ type DropdownItem = {
 };
 
 type ProviderDropdownProps = {
-  value: string | undefined;
+  /** When set, trigger and list highlight match this integration. */
+  selectedIntegrationId: string | undefined;
+  /** Optional label when no integration is selected yet; omit to show the empty placeholder. */
+  fallbackProviderId?: string;
   onSelect: (providerId: string, integration?: IIntegration) => void;
+  agentIdentifier: string;
 };
 
 function buildDropdownItems(
@@ -80,29 +96,147 @@ function buildDropdownItems(
   return { supported, comingSoon };
 }
 
-export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
+function getSupportedItemKey(item: DropdownItem, index: number): string {
+  if (item.integration) {
+
+    return `${item.providerId}-${item.integration._id}`;
+  }
+
+  return `${item.providerId}-new-${index}`;
+}
+
+export function ProviderDropdown({
+  selectedIntegrationId,
+  fallbackProviderId,
+  onSelect,
+  agentIdentifier,
+}: ProviderDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
   const { integrations } = useFetchIntegrations();
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
 
   const { supported, comingSoon } = useMemo(
     () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
     [integrations]
   );
 
-  const allItems = useMemo(() => [...supported, ...comingSoon], [supported, comingSoon]);
-
   const selected = useMemo(() => {
-    if (!value) return undefined;
+    if (selectedIntegrationId) {
+      const fromList = supported.find((item) => item.integration?._id === selectedIntegrationId);
 
-    return allItems.find((item) => item.providerId === value);
-  }, [value, allItems]);
+      if (fromList) {
 
-  const handleSelect = (item: DropdownItem) => {
-    if (item.comingSoon) return;
+        return fromList;
+      }
+    }
 
-    onSelect(item.providerId, item.integration);
-    setOpen(false);
-  };
+    if (fallbackProviderId) {
+      const cfg = novuProviders.find((p) => p.id === fallbackProviderId);
+
+      if (cfg) {
+
+        return {
+          providerId: cfg.id,
+          displayName: cfg.displayName,
+          comingSoon: false,
+        };
+      }
+    }
+
+    return undefined;
+  }, [selectedIntegrationId, fallbackProviderId, supported]);
+
+  const isBusy = pendingItemKey !== null;
+
+  const addAgentIntegrationMutation = useMutation({
+    mutationFn: async (integrationIdentifier: string) => {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      return addAgentIntegration(environment, agentIdentifier, { integrationIdentifier });
+    },
+  });
+
+  const createIntegrationMutation = useMutation({
+    mutationFn: async (vars: { providerId: string; name: string }) => {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const channel = PROVIDER_ID_TO_CHANNEL_MAP[vars.providerId];
+
+      if (channel == null) {
+        throw new Error(`Unknown channel for provider ${vars.providerId}`);
+      }
+
+      const response = await createIntegration(
+        {
+          providerId: vars.providerId,
+          channel,
+          credentials: {},
+          configurations: {},
+          name: vars.name,
+          active: false,
+          _environmentId: environment._id,
+        },
+        environment
+      );
+
+      return response.data;
+    },
+  });
+
+  async function handleSelect(item: DropdownItem, index: number) {
+    if (item.comingSoon || isBusy) {
+
+      return;
+    }
+
+    const environment = currentEnvironment;
+
+    if (!environment?._id) {
+      showErrorToast('No environment selected.', 'Cannot link provider');
+
+      return;
+    }
+
+    const itemKey = getSupportedItemKey(item, index);
+    setPendingItemKey(itemKey);
+
+    try {
+      if (item.integration) {
+        await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
+        showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
+        onSelect(item.providerId, item.integration);
+        setOpen(false);
+      } else {
+        const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
+        const uniqueName = `${item.displayName} ${sameProviderCount + 1}`;
+
+        const created = await createIntegrationMutation.mutateAsync({
+          providerId: item.providerId,
+          name: uniqueName,
+        });
+        await addAgentIntegrationMutation.mutateAsync(created.identifier);
+        showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
+        await queryClient.refetchQueries({ queryKey: [QueryKeys.fetchIntegrations, environment._id] });
+        onSelect(item.providerId, created);
+        setOpen(false);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, environment._id] });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentIntegrationsQueryKey(environment._id, agentIdentifier),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentDetailQueryKey(environment._id, agentIdentifier),
+      });
+    } catch (err) {
+      const message = err instanceof NovuApiError ? err.message : 'Could not link integration.';
+
+      showErrorToast(message, 'Link failed');
+    } finally {
+      setPendingItemKey(null);
+    }
+  }
 
   return (
     <div className="flex w-full flex-col gap-1">
@@ -118,7 +252,8 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="border-stroke-soft bg-bg-white flex h-7 w-full max-w-[320px] items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs"
+              disabled={isBusy}
+              className="border-stroke-soft bg-bg-white flex h-7 w-full max-w-[320px] items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60"
             >
               {selected ? (
                 <div className="flex items-center gap-1">
@@ -132,7 +267,11 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
               ) : (
                 <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>
               )}
-              <RiExpandUpDownLine className="text-text-soft size-3" />
+              {isBusy ? (
+                <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+              ) : (
+                <RiExpandUpDownLine className="text-text-soft size-3" />
+              )}
             </button>
           </PopoverTrigger>
 
@@ -145,6 +284,7 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
                 <CommandInput
                   placeholder="Search provider"
                   size="xs"
+                  disabled={isBusy}
                   inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
                   inputWrapperClassName="h-4 min-h-4 bg-transparent px-0 py-0 hover:[&:not(&:has(input:focus))]:bg-transparent has-[input:disabled]:bg-transparent"
                   className="text-text-sub text-label-xs leading-4 placeholder:text-text-sub h-4 min-h-4 py-0"
@@ -161,18 +301,20 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
                     className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
                   >
                     {supported.map((item, index) => {
-                      const itemKey = item.integration
-                        ? `${item.providerId}-${item.integration._id}`
-                        : `${item.providerId}-new-${index}`;
+                      const itemKey = getSupportedItemKey(item, index);
+                      const isRowPending = pendingItemKey === itemKey;
 
                       return (
                         <CommandItem
                           key={itemKey}
                           value={`${item.displayName} ${item.providerId}${item.integration ? ` ${item.integration.identifier}` : ''}`}
-                          onSelect={() => handleSelect(item)}
+                          disabled={isBusy}
+                          onSelect={() => {
+                            void handleSelect(item, index);
+                          }}
                           className={cn(
                             'flex items-center gap-2 rounded-md p-1',
-                            value === item.providerId && item.integration && 'bg-bg-muted'
+                            item.integration?._id === selectedIntegrationId && 'bg-bg-muted'
                           )}
                         >
                           <div className="flex flex-1 items-center gap-1">
@@ -186,7 +328,9 @@ export function ProviderDropdown({ value, onSelect }: ProviderDropdownProps) {
                             </span>
                           </div>
 
-                          {item.integration ? (
+                          {isRowPending ? (
+                            <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+                          ) : item.integration ? (
                             <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
                               {item.integration.identifier}
                             </span>

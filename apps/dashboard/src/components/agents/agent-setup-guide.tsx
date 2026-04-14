@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -10,6 +10,7 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
 import { cn } from '@/utils/ui';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentSetupGuideProps = {
@@ -146,39 +147,64 @@ function ListeningStatus() {
   );
 }
 
-function buildWebhookUrl(agentId: string): string {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-
-  return `${baseUrl}/v1/agents/${agentId}`;
+function escapeYamlDoubleQuoted(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function buildSlackManifestYaml(agent: AgentResponse, webhookUrl: string): string {
+function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: string): string {
+  const baseUrl = (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
+
+  return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+}
+
+function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string): string {
+  const botName = escapeYamlDoubleQuoted(agent.name);
+  const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
+
   return `display_information:
-  name: "${agent.name}"
-  description: Novu agent.
-settings:
-  event_subscriptions:
-    request_url: ${webhookUrl}
-    bot_events:
-      - app_home_opened
-      - message.im
-      - assistant_thread_started
-  interactivity:
-    is_enabled: true
-    request_url: ${webhookUrl}
-  is_hosted: false
+  name: "${botName}"
+  description: "${displayDescription}"
+
 features:
   bot_user:
-    display_name: ${agent.name}
+    display_name: "${botName}"
     always_online: true
-  assistant_view:
-    assistant_description: "${agent.description || 'Novu agent.'}"
+
 oauth_config:
   scopes:
     bot:
-      - assistant:write
+      - app_mentions:read
+      - channels:history
+      - channels:read
       - chat:write
-      - im:history`;
+      - groups:history
+      - groups:read
+      - im:history
+      - im:read
+      - mpim:history
+      - mpim:read
+      - reactions:read
+      - reactions:write
+      - users:read
+
+settings:
+  event_subscriptions:
+    request_url: ${webhookHandlerUrl}
+    bot_events:
+      - app_mention
+      - message.channels
+      - message.groups
+      - message.im
+      - message.mpim
+      - member_joined_channel
+      - assistant_thread_started
+      - assistant_thread_context_changed
+  interactivity:
+    is_enabled: true
+    request_url: ${webhookHandlerUrl}
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false`;
 }
 
 function ManifestSection({
@@ -240,10 +266,31 @@ function ManifestSection({
 
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [selectedProviderId, setSelectedProviderId] = useState<string | undefined>(ChatProviderIdEnum.Slack);
-  const webhookUrl = buildWebhookUrl(agent._id);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const { integrations } = useFetchIntegrations();
+
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
-  const manifestYaml = buildSlackManifestYaml(agent, webhookUrl);
+
+  const selectedIntegrationIdentifier = useMemo(() => {
+    const slackFromSelection = selectedIntegrationId
+      ? integrations?.find(
+          (i) => i._id === selectedIntegrationId && i.providerId === ChatProviderIdEnum.Slack
+        )
+      : undefined;
+
+    if (slackFromSelection?.identifier) {
+
+      return slackFromSelection.identifier;
+    }
+
+    return slackIntegration?.identifier;
+  }, [integrations, selectedIntegrationId, slackIntegration?.identifier]);
+
+  const webhookHandlerUrl = buildAgentSlackWebhookUrl(
+    agent._id,
+    selectedIntegrationIdentifier ?? 'YOUR_INTEGRATION_IDENTIFIER'
+  );
+  const manifestYaml = buildSlackManifestYaml(agent, webhookHandlerUrl);
   const createSlackAppUrl = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(manifestYaml)}`;
 
   const step1Status: StepStatus = slackIntegration ? 'completed' : 'current';
@@ -276,7 +323,15 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               title="Choose where your agent listens and communicates"
               description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
               rightContent={
-                <ProviderDropdown value={selectedProviderId} onSelect={(providerId) => setSelectedProviderId(providerId)} />
+                <ProviderDropdown
+                  agentIdentifier={agent.identifier}
+                  selectedIntegrationId={selectedIntegrationId}
+                  onSelect={(_providerId, integration) => {
+                    if (integration?._id) {
+                      setSelectedIntegrationId(integration._id);
+                    }
+                  }}
+                />
               }
             />
 
