@@ -1,5 +1,5 @@
 import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
-import { del, get, post } from '@/api/api.client';
+import { del, get, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -57,6 +57,11 @@ export type ListAgentsResponse = {
 export type CreateAgentBody = {
   name: string;
   identifier: string;
+  description?: string;
+};
+
+export type UpdateAgentBody = {
+  name?: string;
   description?: string;
 };
 
@@ -129,6 +134,16 @@ export async function getAgent(
 
 export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
   const response = await post<AgentApiEnvelope>('/agents', { environment, body });
+
+  return response.data;
+}
+
+export async function updateAgent(
+  environment: IEnvironment,
+  identifier: string,
+  body: UpdateAgentBody
+): Promise<AgentResponse> {
+  const response = await patch<AgentApiEnvelope>(`/agents/${encodeURIComponent(identifier)}`, { environment, body });
 
   return response.data;
 }
