@@ -10,6 +10,7 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
 import { cn } from '@/utils/ui';
+import { ProviderDropdown } from './provider-dropdown';
 
 type AgentSetupGuideProps = {
   agent: AgentResponse;
@@ -70,29 +71,6 @@ function SetupStep({
         {extraContent}
       </div>
       {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
-    </div>
-  );
-}
-
-function ProviderDropdown({ providerId, providerName }: { providerId: string; providerName: string }) {
-  return (
-    <div className="flex w-full flex-col gap-1">
-      <div className="flex items-center gap-px">
-        <span className="text-text-sub text-label-xs font-medium leading-4">
-          What provider would you like to start with
-        </span>
-        <span className="text-text-soft ml-0.5 text-[10px]">&#9432;</span>
-      </div>
-      <div className="border-stroke-soft bg-bg-white flex h-7 items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs">
-        <div className="flex items-center gap-1">
-          <ProviderIcon providerId={providerId} providerDisplayName={providerName} className="size-4 shrink-0" />
-          <span className="text-text-strong text-label-xs font-medium leading-4">{providerName}</span>
-        </div>
-        <RiExpandUpDownLine className="text-text-soft size-3" />
-      </div>
-      <p className="text-text-soft text-label-xs font-medium leading-4">
-        {'💡 You can always add more providers.'}
-      </p>
     </div>
   );
 }
@@ -262,6 +240,7 @@ function ManifestSection({
 
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | undefined>(ChatProviderIdEnum.Slack);
   const webhookUrl = buildWebhookUrl(agent._id);
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
   const manifestYaml = buildSlackManifestYaml(agent, webhookUrl);
@@ -297,7 +276,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               title="Choose where your agent listens and communicates"
               description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
               rightContent={
-                <ProviderDropdown providerId={ChatProviderIdEnum.Slack} providerName="Slack" />
+                <ProviderDropdown value={selectedProviderId} onSelect={(providerId) => setSelectedProviderId(providerId)} />
               }
             />
 
