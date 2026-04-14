@@ -49,13 +49,16 @@ function ConnectSheetTileSkeleton() {
 function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsListVariant }) {
   if (variant === 'connectSheet') {
     return (
-      <div className="flex flex-wrap gap-4 p-1.5">
-        <ConnectSheetTileSkeleton />
-        <ConnectSheetTileSkeleton />
-        <ConnectSheetTileSkeleton />
-        <ConnectSheetTileSkeleton />
-        <ConnectSheetTileSkeleton />
-        <ConnectSheetTileSkeleton />
+      <div className="space-y-3">
+        <Skeleton className="h-3 w-24 rounded" />
+        <div className="flex flex-wrap gap-4 p-1.5">
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+        </div>
       </div>
     );
   }

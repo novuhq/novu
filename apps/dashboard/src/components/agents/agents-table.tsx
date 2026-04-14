@@ -52,6 +52,7 @@ type AgentNavTableCellProps = ComponentProps<typeof TableCell> & {
 };
 
 function AgentNavTableCell({ children, className, to, ...rest }: AgentNavTableCellProps) {
+
   return (
     <TableCell className={cn('group-hover:bg-neutral-alpha-50 text-text-sub relative', className)} {...rest}>
       {to ? (

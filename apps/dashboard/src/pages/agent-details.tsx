@@ -34,6 +34,7 @@ import {
 } from '@/utils/routes';
 
 function isValidAgentDetailsTab(tab: string): tab is AgentDetailsTab {
+
   return (AGENT_DETAILS_TABS as readonly string[]).includes(tab);
 }
 
@@ -52,6 +53,7 @@ function getBreadcrumbCurrentLabel(isNotFound: boolean, error: unknown, agent: A
 }
 
 function AgentDetailsTabsSkeleton() {
+
   return (
     <div className="flex w-full flex-col">
       <div className="border-stroke-soft -mx-2 border-b px-4 py-3 md:px-6">

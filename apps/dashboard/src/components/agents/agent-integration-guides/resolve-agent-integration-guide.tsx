@@ -25,6 +25,7 @@ export function ResolveAgentIntegrationGuide({
   isRemovingIntegration,
 }: ResolveAgentIntegrationGuideProps) {
   if (providerId === ChatProviderIdEnum.Slack) {
+
     return (
       <SlackAgentIntegrationGuide
         embedded={embedded}

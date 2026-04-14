@@ -23,6 +23,7 @@ export function SlackAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: SlackAgentIntegrationGuideProps) {
+
   return (
     <AgentIntegrationGuideLayout
       providerId={ChatProviderIdEnum.Slack}

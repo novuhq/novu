@@ -7,6 +7,7 @@ import {
   type AgentIntegrationLink,
   type AgentResponse,
   addAgentIntegration,
+  getAgentDetailQueryKey,
   getAgentIntegrationsQueryKey,
   listAgentIntegrations,
   removeAgentIntegration,
@@ -120,6 +121,7 @@ type IntegrationsHubPlaceholderProps = {
 };
 
 function IntegrationsHubPlaceholder({ title, description }: IntegrationsHubPlaceholderProps) {
+
   return (
     <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
       <p className="text-text-strong text-label-sm font-medium">{title}</p>
@@ -266,6 +268,9 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agent.identifier),
+      });
       setAddSheetOpen(false);
       navigateToGuide(data.integration.providerId);
     },
@@ -291,6 +296,9 @@ export function AgentIntegrationsTab({ agent, providerId }: AgentIntegrationsTab
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agent.identifier),
       });
       handleBackFromGuide();
     },

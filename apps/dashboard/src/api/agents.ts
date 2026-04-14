@@ -9,10 +9,12 @@ export const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
 export const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
+
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
 }
 
 export function getAgentIntegrationsQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+
   return [AGENT_INTEGRATIONS_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 

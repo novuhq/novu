@@ -86,6 +86,7 @@ export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
 
 export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
   if (tab && (AGENT_DETAILS_TABS as readonly string[]).includes(tab)) {
+
     return tab as AgentDetailsTab;
   }
 
