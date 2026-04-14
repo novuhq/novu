@@ -29,7 +29,7 @@ export class ResolveDto {
   summary?: string;
 }
 
-class SignalDto {
+export class SignalDto {
   @ApiProperty({ enum: SIGNAL_TYPES })
   @IsString()
   @IsIn(SIGNAL_TYPES)
