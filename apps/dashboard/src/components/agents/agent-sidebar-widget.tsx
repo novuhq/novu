@@ -3,13 +3,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiCheckboxCircleFill, RiExpandUpDownLine, RiTimeLine } from 'react-icons/ri';
+import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
 import { Input } from '@/components/primitives/input';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
@@ -44,49 +44,6 @@ function SidebarRow({ label, children, className }: { label: string; children: R
   );
 }
 
-type AgentUpdateIndicatorProps = {
-  isPending: boolean;
-  showSavedAck: boolean;
-  updatedAt: string;
-};
-
-function AgentUpdateIndicator({ isPending, showSavedAck, updatedAt }: AgentUpdateIndicatorProps) {
-  if (isPending) {
-    return (
-      <>
-        <span className="bg-primary-base relative flex size-2 shrink-0 rounded-full">
-          <motion.span
-            className="bg-primary-base/50 absolute inset-0 rounded-full"
-            animate={{ scale: [1, 2.2], opacity: [0.45, 0] }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: 'easeOut' }}
-          />
-        </span>
-        <span className="text-text-soft text-label-xs font-medium">Saving…</span>
-      </>
-    );
-  }
-
-  if (showSavedAck) {
-    return (
-      <>
-        <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden />
-        <span className="text-success-dark text-label-xs font-medium">Saved</span>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <RiTimeLine className="text-text-soft size-4 shrink-0" aria-hidden />
-      <p className="text-label-xs font-medium min-w-0">
-        <span className="text-text-soft">Last updated </span>
-        <span className="text-text-sub">{formatDistanceToNow(new Date(updatedAt), { addSuffix: false })}</span>
-        <span className="text-text-sub"> ago</span>
-      </p>
-    </>
-  );
-}
-
 export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
@@ -102,8 +59,6 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const [description, setDescription] = useState(agent.description ?? '');
   const descriptionContainerRef = useRef<HTMLDivElement>(null);
 
-  const [showSavedAck, setShowSavedAck] = useState(false);
-
   const { isPending: isUpdatePending, mutateAsync: updateAgentAsync } = useMutation({
     mutationFn: (body: UpdateAgentBody) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, body),
@@ -112,7 +67,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
         queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agent.identifier),
       });
 
-      setShowSavedAck(true);
+      showSuccessToast('Your changes were saved.', 'Agent updated');
     },
     onError: (err: Error, variables: UpdateAgentBody) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not save changes.';
@@ -128,20 +83,6 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
       }
     },
   });
-
-  useEffect(() => {
-    if (!showSavedAck) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setShowSavedAck(false);
-    }, 2200);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [showSavedAck]);
 
   const persistDescription = useCallback(async () => {
     const trimmed = description.trim();
@@ -228,7 +169,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
 
   return (
     <div className="flex w-[300px] shrink-0 flex-col gap-2.5">
-      <div className="bg-bg-weak flex flex-col rounded p-1">
+      <div className="bg-bg-weak flex flex-col rounded p-1 py-1.5">
         <SidebarRow label="Status">
           <Badge variant="lighter" color="red" size="md">
             <AnimatedBadgeDot color="red" />
@@ -333,23 +274,28 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
           </TimeDisplayHoverCard>
         </SidebarRow>
 
-        <div ref={descriptionContainerRef} className="px-1.5 py-1">
+        <div ref={descriptionContainerRef} className="flex flex-col">
           <button
             type="button"
             onClick={toggleDescriptionExpanded}
-            className="group text-text-soft hover:text-text-sub flex h-6 w-full cursor-pointer items-center justify-between transition-colors"
+            className="group text-text-soft hover:text-text-sub flex h-8 w-full cursor-pointer items-center justify-between rounded px-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-stroke-strong"
           >
             <span className="text-label-xs font-medium">Description</span>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="bg-bg-white hover:bg-bg-weak text-foreground-400 hover:text-foreground-600 flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors"
-            >
-              <RiExpandUpDownLine
-                className={cn('size-3.5 transition-transform duration-200', isDescriptionExpanded && 'rotate-180')}
-              />
-            </motion.div>
+            <span className="text-foreground-400 group-hover:text-foreground-600 flex min-w-8 shrink-0 items-center justify-end">
+              <motion.span
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="inline-flex items-center justify-center"
+              >
+                <RiExpandUpDownLine
+                  className={cn(
+                    'size-3.5 translate-x-0.5 transition-transform duration-200',
+                    isDescriptionExpanded && 'rotate-180'
+                  )}
+                />
+              </motion.span>
+            </span>
           </button>
           {isDescriptionExpanded ? (
             <motion.div
@@ -357,7 +303,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="mt-2 overflow-hidden"
+              className="mt-2 overflow-hidden px-1.5"
             >
               <Textarea
                 className="min-h-24 text-sm"
@@ -367,25 +313,17 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
                 maxLength={MAX_DESCRIPTION_LENGTH}
                 showCounter
                 disabled={!canWrite || isUpdatePending}
-                onBlur={() => {
-                  void persistDescription();
-                }}
               />
             </motion.div>
           ) : null}
         </div>
       </div>
 
-      <div
-        className="border-stroke-soft shadow-xs flex items-center gap-2 rounded-lg border bg-bg-white px-2.5 py-2"
-        aria-live="polite"
-      >
-        <AgentUpdateIndicator
-          isPending={isUpdatePending}
-          showSavedAck={showSavedAck}
-          updatedAt={agent.updatedAt}
-        />
-      </div>
+      <p className="text-label-xs font-medium">
+        <span className="text-text-soft">Last updated </span>
+        <span className="text-text-sub">{formatDistanceToNow(new Date(agent.updatedAt), { addSuffix: false })}</span>
+        <span className="text-text-sub"> ago</span>
+      </p>
     </div>
   );
 }
