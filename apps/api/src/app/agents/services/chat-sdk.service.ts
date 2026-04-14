@@ -100,6 +100,23 @@ export class ChatSdkService implements OnModuleDestroy {
     this.instances.clear();
   }
 
+  async postToConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    serializedThread: Record<string, unknown>,
+    message: string
+  ): Promise<void> {
+    const config = await this.agentCredentialService.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const { ThreadImpl } = await esmImport('chat');
+    const adapter = chat.getAdapter(platform);
+    const thread = ThreadImpl.fromJSON(serializedThread, adapter);
+    await thread.post(message);
+  }
+
   private async getOrCreate(
     instanceKey: string,
     agentId: string,

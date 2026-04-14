@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   HttpCode,
   HttpException,
@@ -11,14 +12,37 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
+import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
 
 @Controller('/agents')
 @UseGuards(AgentConversationEnabledGuard)
 @ApiExcludeController()
 export class AgentsWebhookController {
-  constructor(private chatSdkService: ChatSdkService) {}
+  constructor(
+    private chatSdkService: ChatSdkService,
+    private handleAgentReplyUsecase: HandleAgentReply
+  ) {}
+
+  @Post('/:agentId/reply')
+  @HttpCode(HttpStatus.OK)
+  async handleAgentReply(
+    @Param('agentId') agentId: string,
+    @Body() body: AgentReplyPayloadDto
+  ) {
+    return this.handleAgentReplyUsecase.execute(
+      HandleAgentReplyCommand.create({
+        agentId,
+        replyToken: body.replyToken,
+        reply: body.reply,
+        update: body.update,
+        signals: body.signals as Signal[],
+      })
+    );
+  }
 
   @Post('/:agentId/webhook/:integrationIdentifier')
   @HttpCode(HttpStatus.OK)
