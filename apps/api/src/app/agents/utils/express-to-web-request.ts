@@ -27,6 +27,8 @@ export function toWebRequest(req: ExpressRequest): Request {
     const rawBody = (req as ExpressRequest & { rawBody?: Buffer }).rawBody;
     if (rawBody) {
       body = rawBody;
+    } else if (Buffer.isBuffer(req.body) || typeof req.body === 'string') {
+      body = req.body;
     } else if (req.body !== undefined) {
       body = JSON.stringify(req.body);
       if (!headers.has('content-type')) {

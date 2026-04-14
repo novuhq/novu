@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDefined,
+  IsIn,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
@@ -19,11 +29,35 @@ export class ResolveDto {
   summary?: string;
 }
 
-export class SignalDto {
+class SignalDto {
   @ApiProperty({ enum: SIGNAL_TYPES })
   @IsString()
   @IsIn(SIGNAL_TYPES)
   type: (typeof SIGNAL_TYPES)[number];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  key?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  value?: unknown;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  workflowId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  to?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  payload?: Record<string, unknown>;
 }
 
 export class AgentReplyPayloadDto {

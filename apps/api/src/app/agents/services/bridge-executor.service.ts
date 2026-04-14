@@ -105,24 +105,29 @@ export class BridgeExecutorService {
   ) {}
 
   async execute(params: BridgeExecutorParams): Promise<void> {
-    const { config, event } = params;
-    const agentIdentifier = config.agentIdentifier;
+    const agentIdentifier = params.config.agentIdentifier;
 
-    const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, config.organizationId, agentIdentifier, event);
-    if (!bridgeUrl) {
-      return;
+    try {
+      const { config, event } = params;
+
+      const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, config.organizationId, agentIdentifier, event);
+      if (!bridgeUrl) {
+        return;
+      }
+
+      const secretKey = await this.getDecryptedSecretKey.execute(
+        GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
+      );
+
+      const payload = this.buildPayload(params);
+      const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
+
+      this.fireWithRetries(bridgeUrl, payload, signatureHeader, agentIdentifier).catch((err) => {
+        this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+      });
+    } catch (err) {
+      this.logger.error(err, `[agent:${agentIdentifier}] Bridge setup failed — skipping bridge call`);
     }
-
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
-    );
-
-    const payload = this.buildPayload(params);
-    const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
-
-    this.fireWithRetries(bridgeUrl, payload, signatureHeader, agentIdentifier).catch((err) => {
-      this.logger.error(err, `[agent:${agentIdentifier}] Bridge call to ${bridgeUrl} failed after ${MAX_RETRIES + 1} attempts`);
-    });
   }
 
   private async fireWithRetries(

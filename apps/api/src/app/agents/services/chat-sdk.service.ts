@@ -36,6 +36,7 @@ const INSTANCE_TTL_MS = 1000 * 60 * 30;
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
   private readonly instances: LRUCache<string, Chat>;
+  private readonly pendingCreations = new Map<string, Promise<Chat>>();
 
   constructor(
     private readonly logger: PinoLogger,
@@ -120,6 +121,25 @@ export class ChatSdkService implements OnModuleDestroy {
     const existing = this.instances.get(instanceKey);
     if (existing) return existing;
 
+    const pending = this.pendingCreations.get(instanceKey);
+    if (pending) return pending;
+
+    const creation = this.createAndCache(instanceKey, agentId, platform, config);
+    this.pendingCreations.set(instanceKey, creation);
+
+    try {
+      return await creation;
+    } finally {
+      this.pendingCreations.delete(instanceKey);
+    }
+  }
+
+  private async createAndCache(
+    instanceKey: string,
+    agentId: string,
+    platform: AgentPlatformEnum,
+    config: ResolvedPlatformConfig
+  ): Promise<Chat> {
     const chat = await this.createChatInstance(instanceKey, platform, config);
     this.registerEventHandlers(agentId, chat, config);
     this.instances.set(instanceKey, chat);
