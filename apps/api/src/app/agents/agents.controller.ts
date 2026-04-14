@@ -10,9 +10,10 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -36,6 +37,7 @@ import {
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
@@ -59,7 +61,8 @@ import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiTags('Agents')
+@UseGuards(AgentConversationEnabledGuard)
+@ApiExcludeController()
 @RequireAuthentication()
 export class AgentsController {
   constructor(

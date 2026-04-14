@@ -5,6 +5,8 @@ export * from './repositories/ai-chat';
 export * from './repositories/base-repository';
 export * from './repositories/base-repository-v2';
 export * from './repositories/change';
+export * from './repositories/conversation';
+export * from './repositories/conversation-activity';
 export * from './repositories/channel-connection';
 export * from './repositories/channel-endpoint';
 export * from './repositories/context';

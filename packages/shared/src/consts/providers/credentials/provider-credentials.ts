@@ -513,6 +513,13 @@ export const slackConfigLegacy: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.SigningSecret,
+    displayName: 'Signing Secret',
+    description: 'Slack app Signing Secret, used for verifying inbound webhook requests',
+    type: 'string',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.RedirectUrl,
     displayName: 'Redirect URL',
     description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
@@ -545,6 +552,13 @@ export const slackConfig: IConfigCredential[] = [
     displayName: 'Client Secret',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SigningSecret,
+    displayName: 'Signing Secret',
+    description: 'Slack app Signing Secret, used for verifying inbound webhook requests',
+    type: 'string',
+    required: false,
   },
   {
     key: CredentialsKeyEnum.RedirectUrl,

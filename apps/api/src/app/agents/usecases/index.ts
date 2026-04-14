@@ -2,6 +2,7 @@ import { AddAgentIntegration } from './add-agent-integration/add-agent-integrati
 import { CreateAgent } from './create-agent/create-agent.usecase';
 import { DeleteAgent } from './delete-agent/delete-agent.usecase';
 import { GetAgent } from './get-agent/get-agent.usecase';
+import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
 import { ListAgentIntegrations } from './list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
@@ -18,4 +19,5 @@ export const USE_CASES = [
   ListAgentIntegrations,
   UpdateAgentIntegration,
   RemoveAgentIntegration,
+  HandleAgentReply,
 ];
