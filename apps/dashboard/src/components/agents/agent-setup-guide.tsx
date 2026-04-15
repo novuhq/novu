@@ -2,7 +2,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactConfetti from 'react-confetti';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations, type AgentResponse } from '@/api/agents';
@@ -137,11 +138,7 @@ function ListeningStatus({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const [connectedAt, setConnectedAt] = useState<string | null>(null);
-  const [shouldCelebrateConnection, setShouldCelebrateConnection] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const confettiFiredRef = useRef(false);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sawMissingConnectedAtRef = useRef(false);
 
   useEffect(() => {
     if (!currentEnvironment || !watchedIntegrationId) {
@@ -149,20 +146,9 @@ function ListeningStatus({
     }
 
     const environment = currentEnvironment;
-
-    sawMissingConnectedAtRef.current = false;
-    confettiFiredRef.current = false;
-    setConnectedAt(null);
-    setShouldCelebrateConnection(false);
-
     let cancelled = false;
-
-    function clearPoll() {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    }
+    let confettiFired = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
     async function tick() {
       if (cancelled) {
@@ -182,23 +168,29 @@ function ListeningStatus({
 
         const link = res.data.find((l) => l.integration._id === watchedIntegrationId);
 
-        if (link?.connectedAt) {
-          setConnectedAt(link.connectedAt);
-
-          if (sawMissingConnectedAtRef.current) {
-            setShouldCelebrateConnection(true);
-          }
-
-          queryClient.invalidateQueries({
-            queryKey: getAgentIntegrationsQueryKey(environment._id, agentIdentifier),
-          });
-          clearPoll();
-
+        if (!link) {
           return;
         }
 
-        if (link) {
-          sawMissingConnectedAtRef.current = true;
+        if (!link.connectedAt) {
+          return;
+        }
+
+        setConnectedAt(link.connectedAt);
+
+        if (!confettiFired) {
+          confettiFired = true;
+          setShowConfetti(true);
+          window.setTimeout(() => setShowConfetti(false), 10_000);
+        }
+
+        queryClient.invalidateQueries({
+          queryKey: getAgentIntegrationsQueryKey(environment._id, agentIdentifier),
+        });
+
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
         }
       } catch {
         // ignore transient errors while polling
@@ -206,59 +198,35 @@ function ListeningStatus({
     }
 
     void tick();
-    pollIntervalRef.current = setInterval(() => void tick(), 1000);
+    intervalId = setInterval(() => void tick(), 1000);
 
     return () => {
       cancelled = true;
-      clearPoll();
+
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
   }, [agentIdentifier, currentEnvironment, queryClient, watchedIntegrationId]);
 
-  useEffect(() => {
-    if (!shouldCelebrateConnection) {
-      return;
-    }
-
-    if (confettiFiredRef.current) {
-      return;
-    }
-
-    const run = () => {
-      if (confettiFiredRef.current) {
-        return;
-      }
-
-      confettiFiredRef.current = true;
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 10_000);
-      setShouldCelebrateConnection(false);
-    };
-
-    if (typeof document !== 'undefined' && document.hasFocus()) {
-      run();
-
-      return;
-    }
-
-    const onFocus = () => {
-      run();
-      window.removeEventListener('focus', onFocus);
-    };
-
-    window.addEventListener('focus', onFocus);
-
-    return () => window.removeEventListener('focus', onFocus);
-  }, [shouldCelebrateConnection]);
-
   return (
     <>
-      {showConfetti && (
-        <ReactConfetti
-          recycle={false}
-          numberOfPieces={1000}
-          style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}
-        />
-      )}
+      {showConfetti &&
+        createPortal(
+          <ReactConfetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={1000}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 10000,
+            }}
+          />,
+          document.body
+        )}
       <div className="flex flex-col gap-2 pl-8 py-4">
         <div className="flex flex-col gap-3">
           {connectedAt ? (

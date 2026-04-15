@@ -111,6 +111,14 @@ function getSupportedItemKey(item: DropdownItem, index: number): string {
   return `${item.providerId}-new-${index}`;
 }
 
+function isAlreadyLinkedToAgentConflict(err: unknown): boolean {
+  if (!(err instanceof NovuApiError) || err.status !== 409) {
+    return false;
+  }
+
+  return err.message.includes('already linked');
+}
+
 export function ProviderDropdown({
   selectedIntegrationId,
   fallbackProviderId,
@@ -217,16 +225,34 @@ export function ProviderDropdown({
       return;
     }
 
+    const environmentId = environment._id;
+
     const itemKey = getSupportedItemKey(item, index);
     setPendingItemKey(itemKey);
+
+    async function invalidateAgentLinkQueries() {
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, environmentId] });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentIntegrationsQueryKey(environmentId, agentIdentifier),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: getAgentDetailQueryKey(environmentId, agentIdentifier),
+      });
+    }
 
     try {
       if (item.integration) {
         const alreadyLinked = linkedIntegrationIds?.has(item.integration._id);
 
         if (!alreadyLinked) {
-          await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
-          showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
+          try {
+            await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
+            showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
+          } catch (linkErr) {
+            if (!isAlreadyLinkedToAgentConflict(linkErr)) {
+              throw linkErr;
+            }
+          }
         }
 
         onSelect(item.providerId, item.integration);
@@ -241,19 +267,21 @@ export function ProviderDropdown({
         });
         await addAgentIntegrationMutation.mutateAsync(created.identifier);
         showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
-        await queryClient.refetchQueries({ queryKey: [QueryKeys.fetchIntegrations, environment._id] });
+        await queryClient.refetchQueries({ queryKey: [QueryKeys.fetchIntegrations, environmentId] });
         onSelect(item.providerId, created);
         setOpen(false);
       }
 
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, environment._id] });
-      await queryClient.invalidateQueries({
-        queryKey: getAgentIntegrationsQueryKey(environment._id, agentIdentifier),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: getAgentDetailQueryKey(environment._id, agentIdentifier),
-      });
+      await invalidateAgentLinkQueries();
     } catch (err) {
+      if (item.integration && isAlreadyLinkedToAgentConflict(err)) {
+        onSelect(item.providerId, item.integration);
+        setOpen(false);
+        await invalidateAgentLinkQueries();
+
+        return;
+      }
+
       const message = err instanceof NovuApiError ? err.message : 'Could not link integration.';
 
       showErrorToast(message, 'Link failed');
