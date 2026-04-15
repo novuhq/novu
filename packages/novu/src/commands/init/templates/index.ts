@@ -224,15 +224,9 @@ export const installTemplate = async ({
       '@react-email/components': '0.0.18',
       '@react-email/tailwind': '0.0.18',
     };
-
-    packageJson.dependencies = {
-      ...packageJson.dependencies,
-      zod: '^3.23.8',
-      'zod-to-json-schema': '^3.23.1',
-    };
   }
 
-  if (isAgentTemplate) {
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL || isAgentTemplate) {
     packageJson.dependencies = {
       ...packageJson.dependencies,
       zod: '^3.23.8',

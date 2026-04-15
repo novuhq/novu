@@ -6,9 +6,9 @@ A conversational AI agent powered by [Novu](https://novu.co) and [Next.js](https
 
 1. Start the development server:
 
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
 2. Connect a chat platform in the [Novu Dashboard](https://dashboard.novu.co).
 
@@ -18,7 +18,7 @@ Your agent is served at `/api/novu` and handles incoming messages via the Novu B
 
 ## Project Structure
 
-```
+```text
 app/
   api/novu/route.ts        → Bridge endpoint serving your agent
   novu/agents/
@@ -38,14 +38,14 @@ Your agent handler receives a context object with:
 | `ctx.history` | Recent conversation history |
 | `ctx.subscriber` | Resolved subscriber info |
 | `ctx.platform` | Source platform (slack, teams, whatsapp) |
-| `ctx.reply(content)` | Send a reply (text, markdown, or Card) |
+| `ctx.reply(content)` | Send a reply (text, Markdown, or Card) |
 | `ctx.metadata.set(k, v)` | Set conversation metadata |
 | `ctx.resolve(summary?)` | Mark conversation as resolved |
 | `ctx.trigger(workflowId)` | Trigger a Novu workflow |
 
 ## Wiring Up Your LLM
 
-Replace the demo handler in `app/novu/agents/support-agent.ts` with your LLM call:
+Replace the demo handler in `app/novu/agents/support-agent.tsx` with your LLM call:
 
 ```typescript
 onMessage: async (ctx) => {
