@@ -12,6 +12,7 @@ import { cleanCredentials } from '@/components/integrations/components/utils/hel
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
@@ -101,39 +102,26 @@ function SetupButton({
       variant="secondary"
       mode="outline"
       size="xs"
-      className="text-text-sub gap-1 px-2 py-1.5"
+      className="text-text-sub gap-1.5 px-2 py-1.5"
       type="button"
       onClick={onClick}
       disabled={disabled}
     >
       {leadingIcon}
-      <span className="text-label-xs font-medium">{children}</span>
-      {href && <RiArrowRightUpLine className="size-3" />}
+      <span className="text-label-xs inline-flex min-w-0 items-center font-medium">{children}</span>
+      {href && <RiArrowRightUpLine className="size-3 shrink-0" />}
     </Button>
   );
 
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="w-full">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex w-fit max-w-full">
         {content}
       </a>
     );
   }
 
   return content;
-}
-
-function TipCallout({ children }: { children: ReactNode }) {
-  return (
-    <div className="w-full py-2">
-      <div className="bg-bg-weak border-stroke-soft flex items-center gap-3 overflow-hidden rounded-lg border px-3 py-2.5">
-        <div className="flex self-stretch items-center">
-          <div className="bg-state-faded-base h-full w-1 rounded-full" />
-        </div>
-        <div className="text-text-sub text-label-xs font-medium leading-4">{children}</div>
-      </div>
-    </div>
-  );
 }
 
 function ListeningStatus() {
@@ -456,32 +444,39 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               title="Verify by installing the app to your workspace"
               description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
               extraContent={
-                <TipCallout>
-                  <span>
-                    <span className="text-text-strong">Tip:</span>
-                    {'  Integrate '}
-                    <code className="font-code text-[12px] tracking-[-0.24px]">{'<SlackConnectButton />'}</code>
-                    {' in your application, to let your users easily connect to this agent on Slack. '}
-                    <a
-                      href="https://docs.novu.co"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-text-sub underline"
-                    >
-                      Read docs
-                    </a>
-                    .
-                  </span>
-                </TipCallout>
+                <InlineToast
+                  className="mt-2 w-full"
+                  variant="tip"
+                  title="Tip:"
+                  description={
+                    <>
+                      Novu provides a{' '}
+                      <code className="font-code text-[12px] tracking-[-0.24px]">{'<SlackConnectButton />'}</code>
+                      {' component, to let your users easily connect this agent to their Slack workspace. '}
+                      <a
+                        href="https://docs.novu.co"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-text-sub underline"
+                      >
+                        Read docs
+                      </a>
+                    </>
+                  }
+                />
               }
               rightContent={
-                <SetupButton href={`https://slack.com/oauth/v2/authorize`}>
-                  <ProviderIcon
-                    providerId={ChatProviderIdEnum.Slack}
-                    providerDisplayName="Slack"
-                    className="size-4 shrink-0"
-                  />
-                  Install {agent.name}
+                <SetupButton
+                  href="https://slack.com/oauth/v2/authorize"
+                  leadingIcon={
+                    <ProviderIcon
+                      providerId={ChatProviderIdEnum.Slack}
+                      providerDisplayName="Slack"
+                      className="size-4 shrink-0"
+                    />
+                  }
+                >
+                  {`Install ${agent.name}`}
                 </SetupButton>
               }
             />
