@@ -12,6 +12,7 @@ import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -41,6 +42,62 @@ function SidebarRow({ label, children, className }: { label: string; children: R
       <span className="text-text-soft text-label-xs font-medium">{label}</span>
       <div className="flex items-center gap-1.5">{children}</div>
     </div>
+  );
+}
+
+function TruncatedUrl({ url }: { url: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="text-text-sub font-code text-label-xs block max-w-[160px] truncate tracking-tight">
+          {url}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-xs break-all">
+        {url}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+type BridgeUrlSectionProps = {
+  agent: AgentResponse;
+  canWrite: boolean;
+  isUpdatePending: boolean;
+  onUpdate: (body: UpdateAgentBody) => Promise<AgentResponse>;
+};
+
+function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: BridgeUrlSectionProps) {
+  const activeBridgeUrl = agent.devBridgeActive && agent.devBridgeUrl ? agent.devBridgeUrl : agent.bridgeUrl;
+
+  return (
+    <>
+      <SidebarRow label="Bridge URL">
+        {activeBridgeUrl ? (
+          <div className="flex items-center gap-1">
+            {agent.devBridgeActive ? (
+              <Badge variant="lighter" color="orange" size="sm">
+                DEV
+              </Badge>
+            ) : null}
+            <TruncatedUrl url={activeBridgeUrl} />
+          </div>
+        ) : (
+          <span className="text-text-soft text-label-xs italic">Not configured</span>
+        )}
+      </SidebarRow>
+      {agent.devBridgeUrl ? (
+        <SidebarRow label="Dev override">
+          <Switch
+            checked={agent.devBridgeActive ?? false}
+            disabled={!canWrite || isUpdatePending}
+            onCheckedChange={(checked) => {
+              void onUpdate({ devBridgeActive: checked });
+            }}
+          />
+        </SidebarRow>
+      ) : null}
+    </>
   );
 }
 
@@ -285,6 +342,8 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
             </span>
           </TimeDisplayHoverCard>
         </SidebarRow>
+
+        <BridgeUrlSection agent={agent} canWrite={canWrite} isUpdatePending={isUpdatePending} onUpdate={updateAgentAsync} />
 
         <div ref={descriptionContainerRef} className="flex flex-col">
           <button

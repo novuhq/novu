@@ -4,6 +4,7 @@ import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import { Link, useLocation } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
 import {
   DropdownMenu,
@@ -185,8 +186,15 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                       <RiRobot2Line className="size-3.5" />
                     </span>
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <span className="text-text-strong text-label-sm font-medium leading-5 tracking-tight">
-                        {agent.name}
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-text-strong text-label-sm font-medium leading-5 tracking-tight">
+                          {agent.name}
+                        </span>
+                        {agent.devBridgeActive ? (
+                          <Badge variant="lighter" color="orange" size="sm">
+                            DEV
+                          </Badge>
+                        ) : null}
                       </span>
                       <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">
                         {agent.identifier}

@@ -40,6 +40,9 @@ export type AgentResponse = {
   identifier: string;
   description?: string;
   active: boolean;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -66,6 +69,9 @@ export type UpdateAgentBody = {
   name?: string;
   description?: string;
   active?: boolean;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
 };
 
 export type ListAgentsParams = {

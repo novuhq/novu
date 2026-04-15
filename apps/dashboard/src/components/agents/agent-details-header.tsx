@@ -1,6 +1,7 @@
 import { PermissionsEnum } from '@novu/shared';
 import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
@@ -41,7 +42,14 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
     <header className="px-4 pt-2 pb-2 md:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="text-text-strong text-[18px] font-medium leading-6 tracking-tight">{agent.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-text-strong text-[18px] font-medium leading-6 tracking-tight">{agent.name}</h1>
+            {agent.devBridgeActive ? (
+              <Badge variant="lighter" color="orange" size="sm">
+                DEV
+              </Badge>
+            ) : null}
+          </div>
           <div className="flex min-w-0 items-center gap-1">
             <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
             <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">{agent.identifier}</span>
