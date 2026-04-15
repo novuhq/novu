@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ConversationFilters, ConversationsListResponse, getConversationsList } from '@/api/conversations';
-import { QueryKeys } from '@/utils/query-keys';
+import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { useEnvironment } from '../context/environment/hooks';
 
 type UseFetchConversationsOptions = {
@@ -22,7 +22,7 @@ export function useFetchConversations(
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery<ConversationsListResponse>({
-    queryKey: [QueryKeys.fetchConversations, currentEnvironment?._id, page, limit, filters],
+    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, page, limit, filters],
     queryFn: async ({ signal }) => {
       // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
       return getConversationsList({ environment: currentEnvironment!, page, limit, filters, signal });

@@ -23,6 +23,10 @@ export function ActivityFeed() {
 
   const getCurrentTab = () => {
     if (location.pathname.includes('/activity/conversations')) {
+      if (!isConversationalAgentsEnabled) {
+        return 'workflow-runs';
+      }
+
       return 'conversations';
     }
 
@@ -63,6 +67,17 @@ export function ActivityFeed() {
       });
     }
   }, [isHttpLogsPageEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
+
+  useEffect(() => {
+    if (
+      !isConversationalAgentsEnabled &&
+      location.pathname.includes('/activity/conversations') &&
+      currentEnvironment?.slug
+    ) {
+      const fallbackPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
+      navigate(`${fallbackPath}${location.search}`, { replace: true });
+    }
+  }, [isConversationalAgentsEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
 
   useEffect(() => {
     if (currentTab === 'requests') {

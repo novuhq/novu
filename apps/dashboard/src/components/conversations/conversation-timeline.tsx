@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useId, useState } from 'react';
 import {
   RiCheckboxCircleFill,
   RiExpandUpDownLine,
@@ -104,17 +104,28 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
 
 function MessageContent({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false);
+  const contentId = useId();
   const isLong = content.length > 80;
   const displayContent = expanded ? content : content.slice(0, 80);
 
   return (
     <div className="flex items-center gap-2.5 px-2 py-1">
-      <p className="text-label-xs min-w-0 flex-1 truncate font-medium text-[#1a1a1a]">
+      <p
+        id={contentId}
+        className={cn(
+          'text-label-xs min-w-0 flex-1 font-medium text-[#1a1a1a]',
+          !expanded && 'truncate',
+          expanded && 'wrap-break-word whitespace-pre-wrap'
+        )}
+      >
         {displayContent}
         {isLong && !expanded && '...'}
       </p>
       {isLong && (
         <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={contentId}
           onClick={() => setExpanded(!expanded)}
           className="text-text-soft flex shrink-0 items-center gap-0.5"
         >

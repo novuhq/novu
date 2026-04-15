@@ -1,6 +1,8 @@
 import { cn } from '@/utils/ui';
 
-const STATUS_CONFIG: Record<string, { label: string; bgClass: string; textClass: string }> = {
+type StatusStyle = { label: string; bgClass: string; textClass: string };
+
+const STATUS_CONFIG: Record<string, StatusStyle> = {
   resolved: {
     label: 'RESOLVED',
     bgClass: 'bg-success-lighter',
@@ -16,6 +18,11 @@ const STATUS_CONFIG: Record<string, { label: string; bgClass: string; textClass:
     bgClass: 'bg-error-lighter',
     textClass: 'text-destructive-base',
   },
+  unknown: {
+    label: 'UNKNOWN',
+    bgClass: 'bg-neutral-100',
+    textClass: 'text-text-soft',
+  },
 };
 
 type ConversationStatusBadgeProps = {
@@ -24,7 +31,7 @@ type ConversationStatusBadgeProps = {
 };
 
 export function ConversationStatusBadge({ status, className }: ConversationStatusBadgeProps) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.active;
+  const config: StatusStyle = STATUS_CONFIG[status] ?? STATUS_CONFIG.unknown;
 
   return (
     <span

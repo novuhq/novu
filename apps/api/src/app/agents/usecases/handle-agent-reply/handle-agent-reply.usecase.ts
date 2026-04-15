@@ -1,4 +1,11 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   AgentRepository,
@@ -55,17 +62,9 @@ export class HandleAgentReply {
 
     const channel = this.getPrimaryChannel(conversation);
 
-    const agent = await this.agentRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        identifier: command.agentIdentifier,
-      },
-      { name: 1, identifier: 1 }
-    );
-    const agentName = agent?.name;
-
     if (command.update) {
+      const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
+
       await this.deliverMessage(
         command,
         conversation,
@@ -84,6 +83,8 @@ export class HandleAgentReply {
       : null;
 
     if (command.reply) {
+      const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
+
       await this.deliverMessage(
         command,
         conversation,
@@ -107,6 +108,30 @@ export class HandleAgentReply {
     }
 
     return { status: 'ok' };
+  }
+
+  private async resolveValidatedAgentNameForDelivery(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity
+  ): Promise<string | undefined> {
+    const agent = await this.agentRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        identifier: command.agentIdentifier,
+      },
+      { _id: 1, name: 1, identifier: 1 }
+    );
+
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    if (String(agent._id) !== conversation._agentId) {
+      throw new ForbiddenException('Agent identifier does not match this conversation');
+    }
+
+    return agent.name;
   }
 
   private getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {

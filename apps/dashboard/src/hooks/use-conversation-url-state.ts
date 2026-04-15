@@ -83,13 +83,9 @@ export function useConversationUrlState(): ConversationUrlState & {
         newParams.set('dateRange', data.dateRange);
       }
 
-      if (searchParams.get('page')) {
-        newParams.set('page', searchParams.get('page') || '0');
-      }
-
       setSearchParams(newParams, { replace: true });
     },
-    [conversationItemId, searchParams, setSearchParams]
+    [conversationItemId, setSearchParams]
   );
 
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);

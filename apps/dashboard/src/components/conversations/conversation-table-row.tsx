@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import { RiCheckboxCircleFill, RiRobot2Line } from 'react-icons/ri';
 import { ConversationDto } from '@/api/conversations';
 import { TableCell, TableRow } from '@/components/primitives/table';
@@ -44,14 +45,27 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
     onClick?.(conversation.identifier);
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      if (event.key === ' ') {
+        event.preventDefault();
+      }
+
+      handleClick();
+    }
+  };
+
   const subscriber = getSubscriberLabel(conversation);
   const agentName = getAgentName(conversation);
   const isResolved = conversation.status === 'resolved';
 
   return (
     <TableRow
+      tabIndex={0}
+      aria-selected={isSelected}
       className={cn('relative cursor-pointer hover:bg-neutral-50', isSelected && 'bg-neutral-50')}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       <TableCell colSpan={2} className="px-3 py-1.5">
         <div className="flex flex-col gap-1.5">

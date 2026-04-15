@@ -39,6 +39,4 @@ export const QueryKeys = Object.freeze({
   fetchEnvironmentVariable: 'fetchEnvironmentVariable',
   fetchEnvironmentVariableUsage: 'fetchEnvironmentVariableUsage',
   stepResolversCount: 'stepResolversCount',
-  fetchConversations: 'fetchConversations',
-  fetchConversation: 'fetchConversation',
 });

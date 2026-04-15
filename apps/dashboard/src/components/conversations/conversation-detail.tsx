@@ -27,12 +27,16 @@ export function ConversationDetail({ conversationId, onClose, onNavigate }: Conv
           {onNavigate && (
             <>
               <button
+                type="button"
+                aria-label="Previous conversation"
                 onClick={() => onNavigate('prev')}
                 className="text-text-soft hover:text-text-strong rounded p-0.5"
               >
                 <RiArrowUpSLine className="size-4" />
               </button>
               <button
+                type="button"
+                aria-label="Next conversation"
                 onClick={() => onNavigate('next')}
                 className="text-text-soft hover:text-text-strong rounded p-0.5"
               >
@@ -42,7 +46,12 @@ export function ConversationDetail({ conversationId, onClose, onNavigate }: Conv
           )}
           {onNavigate && onClose && <div className="bg-stroke-soft mx-0.5 h-4 w-px" />}
           {onClose && (
-            <button onClick={onClose} className="text-text-soft hover:text-text-strong rounded p-0.5">
+            <button
+              type="button"
+              aria-label="Close conversation"
+              onClick={onClose}
+              className="text-text-soft hover:text-text-strong rounded p-0.5"
+            >
               <RiCloseFill className="size-4" />
             </button>
           )}

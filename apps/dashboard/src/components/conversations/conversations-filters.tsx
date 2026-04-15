@@ -1,5 +1,4 @@
 import { useOrganization } from '@clerk/clerk-react';
-import { CONVERSATIONAL_PROVIDERS } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -9,6 +8,7 @@ import { ConversationFiltersData } from '@/types/conversation';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { cn } from '@/utils/ui';
 import { IS_SELF_HOSTED } from '../../config';
+import { PROVIDER_OPTIONS } from './constants';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
@@ -20,11 +20,6 @@ type ConversationFiltersProps = {
   onReset?: () => void;
   className?: string;
 };
-
-const PROVIDER_OPTIONS = CONVERSATIONAL_PROVIDERS.filter((p) => !p.comingSoon).map((p) => ({
-  label: p.displayName,
-  value: p.providerId,
-}));
 
 export function ConversationFilters({
   onFiltersChange,

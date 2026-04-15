@@ -132,7 +132,7 @@ export function ConversationsTable({
             </TableBody>
             <TableFooter className="border-t border-t-neutral-200">
               <TableRow>
-                <TableCell colSpan={7} className="p-0">
+                <TableCell colSpan={2} className="p-0">
                   <TablePaginationFooter
                     pageSize={pageSize}
                     currentPageItemsCount={conversations.length}

@@ -2,13 +2,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
+import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { ConversationFilters } from '@/components/conversations/conversations-filters';
 import { ConversationsTable } from '@/components/conversations/conversations-table';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConversationUrlState } from '@/hooks/use-conversation-url-state';
-import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 import { defaultConversationFilters } from './constants';
@@ -62,7 +62,7 @@ export function ConversationsContent({
   }, [mergedFilterValues]);
 
   const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchConversations, currentEnvironment?._id] });
+    await queryClient.invalidateQueries({ queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id] });
     setLastUpdated(new Date());
   };
 

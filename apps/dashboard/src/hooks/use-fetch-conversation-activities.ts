@@ -5,14 +5,14 @@ import {
   getConversation,
   getConversationActivities,
 } from '@/api/conversations';
-import { QueryKeys } from '@/utils/query-keys';
+import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { useEnvironment } from '../context/environment/hooks';
 
 export function useFetchConversation(conversationId: string | null) {
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery<ConversationDto>({
-    queryKey: [QueryKeys.fetchConversation, currentEnvironment?._id, conversationId],
+    queryKey: [conversationQueryKeys.fetchConversation, currentEnvironment?._id, conversationId],
     queryFn: async () => {
       if (!conversationId || !currentEnvironment) {
         throw new Error('Missing conversation identifier or environment');
@@ -31,7 +31,7 @@ export function useFetchConversationActivities(conversationId: string | null) {
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery<ConversationActivitiesResponse>({
-    queryKey: [QueryKeys.fetchConversation, 'activities', currentEnvironment?._id, conversationId],
+    queryKey: [conversationQueryKeys.fetchConversation, 'activities', currentEnvironment?._id, conversationId],
     queryFn: async ({ signal }) => {
       if (!conversationId || !currentEnvironment) {
         throw new Error('Missing conversation identifier or environment');
