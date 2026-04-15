@@ -113,7 +113,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
       setActionLoading(true);
 
       const connectionMode = props.connectionMode ?? 'subscriber';
-      const resolvedContext = props.context;
+      const resolvedContext = props.context ?? novuAccessor().context;
       const resolvedSubscriberId =
         connectionMode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
 
