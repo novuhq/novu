@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.0",
+    "@novu/api": "workspace:*",
     "@ai-sdk/react": "^3.0.0",
     "@novu/agent-toolkit": "workspace:*",
     "@novu/nextjs": "workspace:*",

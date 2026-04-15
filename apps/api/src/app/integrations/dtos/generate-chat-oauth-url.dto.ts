@@ -1,8 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
-import { ContextPayload } from '@novu/shared';
-import { IsArray, IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { SLACK_DEFAULT_OAUTH_SCOPES } from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import { ConnectionMode, ContextPayload } from '@novu/shared';
+import { IsArray, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  OAuthMode,
+  SLACK_DEFAULT_OAUTH_SCOPES,
+  SLACK_LINK_USER_OAUTH_SCOPES,
+} from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 
 export class GenerateChatOauthUrlRequestDto {
   @ApiProperty({
@@ -65,4 +69,48 @@ export class GenerateChatOauthUrlRequestDto {
   @IsArray()
   @IsString({ each: true })
   scope?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      `**Slack only, link_user mode**: User-level OAuth scopes to request during authorization. ` +
+      `Used when mode is "link_user" to identify the Slack user via "Sign in with Slack". ` +
+      `If not specified, defaults to: ${SLACK_LINK_USER_OAUTH_SCOPES.join(', ')}.`,
+    example: ['identity.basic'],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  userScope?: string[];
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'OAuth flow mode. Use "connect" (default) to create a workspace channel connection, ' +
+      'or "link_user" to identify the subscriber\'s Slack user ID without creating a connection.',
+    enum: ['connect', 'link_user'],
+    example: 'link_user',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['connect', 'link_user'])
+  mode?: OAuthMode;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Connection mode that determines how the channel connection is scoped. ' +
+      'Use "subscriber" (default) to associate the connection with a specific subscriber. ' +
+      'Use "shared" to associate the connection with a context instead of a subscriber — ' +
+      'subscriberId will not be stored on the connection.',
+    enum: ['subscriber', 'shared'],
+    example: 'shared',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['subscriber', 'shared'])
+  connectionMode?: ConnectionMode;
 }
