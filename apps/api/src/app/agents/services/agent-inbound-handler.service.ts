@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
+import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, ConversationRepository, SubscriberRepository } from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -14,6 +14,7 @@ export class AgentInboundHandler {
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
+    private readonly conversationRepository: ConversationRepository,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository
   ) {}
@@ -75,10 +76,19 @@ export class AgentInboundHandler {
       organizationId: config.organizationId,
     });
 
-    if (config.reactionOnMessageReceived) {
+    const channel = conversation.channels[0];
+    const isFirstMessage = !channel?.firstPlatformMessageId;
+
+    if (isFirstMessage && config.reactionOnMessageReceived && message.id) {
       thread.createSentMessageFromMessage(message).addReaction(config.reactionOnMessageReceived).catch((err) => {
-        this.logger.warn(err, `[agent:${agentId}] Failed to add reaction to incoming message`);
+        this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
       });
+
+      this.conversationRepository
+        .setFirstPlatformMessageId(config.environmentId, config.organizationId, conversation._id, thread.id, message.id)
+        .catch((err) => {
+          this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
+        });
     }
 
     if (config.thinkingIndicatorEnabled) {

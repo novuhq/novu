@@ -112,6 +112,22 @@ export class ChatSdkService implements OnModuleDestroy {
     await thread.post(message);
   }
 
+  async removeReaction(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    platformMessageId: string,
+    emoji: string
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    await adapter.removeReaction(platformThreadId, platformMessageId, emoji);
+  }
+
   async reactToMessage(
     agentId: string,
     integrationIdentifier: string,

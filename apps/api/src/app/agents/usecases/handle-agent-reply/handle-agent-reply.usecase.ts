@@ -59,6 +59,10 @@ export class HandleAgentReply {
 
     if (command.reply) {
       await this.deliverMessage(command, conversation, channel, command.reply.text, ConversationActivityTypeEnum.MESSAGE);
+
+      this.removeAckReaction(command, conversation, channel).catch((err) => {
+        this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
+      });
     }
 
     if (command.signals?.length) {
@@ -211,26 +215,44 @@ export class HandleAgentReply {
     });
   }
 
+  private async removeAckReaction(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel
+  ): Promise<void> {
+    const firstMessageId = channel.firstPlatformMessageId;
+    if (!firstMessageId) return;
+
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
+    if (!config.reactionOnMessageReceived) return;
+
+    await this.chatSdkService.removeReaction(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      firstMessageId,
+      config.reactionOnMessageReceived
+    );
+  }
+
   private async reactOnResolve(
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel
   ): Promise<void> {
+    const firstMessageId = channel.firstPlatformMessageId;
+    if (!firstMessageId) return;
+
     const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
     if (!config.reactionOnResolved) return;
-
-    const lastInbound = await this.activityRepository.findLastInboundMessage(
-      command.environmentId,
-      conversation._id
-    );
-    if (!lastInbound?.platformMessageId) return;
 
     await this.chatSdkService.reactToMessage(
       conversation._agentId,
       command.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
-      lastInbound.platformMessageId,
+      firstMessageId,
       config.reactionOnResolved
     );
   }

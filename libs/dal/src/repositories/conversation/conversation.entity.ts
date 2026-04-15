@@ -28,6 +28,8 @@ export interface ConversationChannel {
   platformThreadId: string;
   /** Chat SDK SerializedThread — stored for reply delivery via ThreadImpl.fromJSON() */
   serializedThread?: Record<string, unknown>;
+  /** Platform message ID of the thread-starting message */
+  firstPlatformMessageId?: string;
 }
 
 export class ConversationEntity {

@@ -91,24 +91,6 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async findLastInboundMessage(
-    environmentId: string,
-    conversationId: string
-  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformMessageId' | 'platformThreadId'> | null> {
-    const results = await this.find(
-      {
-        _environmentId: environmentId,
-        _conversationId: conversationId,
-        type: ConversationActivityTypeEnum.MESSAGE,
-        senderType: { $in: [ConversationActivitySenderTypeEnum.SUBSCRIBER, ConversationActivitySenderTypeEnum.PLATFORM_USER] },
-      } as any,
-      ['_id', 'platformMessageId', 'platformThreadId'],
-      { sort: { createdAt: -1 }, limit: 1 }
-    );
-
-    return results[0] ?? null;
-  }
-
   async createSignalActivity(params: {
     identifier: string;
     conversationId: string;
