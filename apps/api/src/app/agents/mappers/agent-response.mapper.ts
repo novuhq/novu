@@ -47,6 +47,7 @@ export function toAgentIntegrationResponse(
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,
+    connectedAt: link.connectedAt ?? null,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
   };

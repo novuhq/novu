@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
-import { Loader } from 'lucide-react';
+import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import ReactConfetti from 'react-confetti';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
-import type { AgentResponse } from '@/api/agents';
+import { getAgentIntegrationsQueryKey, listAgentIntegrations, type AgentResponse } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -16,6 +18,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
@@ -124,24 +127,164 @@ function SetupButton({
   return content;
 }
 
-function ListeningStatus() {
+function ListeningStatus({
+  agentIdentifier,
+  watchedIntegrationId,
+}: {
+  agentIdentifier: string;
+  watchedIntegrationId: string | undefined;
+}) {
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
+  const [connectedAt, setConnectedAt] = useState<string | null>(null);
+  const [shouldCelebrateConnection, setShouldCelebrateConnection] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiFiredRef = useRef(false);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sawMissingConnectedAtRef = useRef(false);
+
+  useEffect(() => {
+    if (!currentEnvironment || !watchedIntegrationId) {
+      return;
+    }
+
+    const environment = currentEnvironment;
+
+    sawMissingConnectedAtRef.current = false;
+    confettiFiredRef.current = false;
+    setConnectedAt(null);
+    setShouldCelebrateConnection(false);
+
+    let cancelled = false;
+
+    function clearPoll() {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    }
+
+    async function tick() {
+      if (cancelled) {
+        return;
+      }
+
+      try {
+        const res = await listAgentIntegrations({
+          environment,
+          agentIdentifier,
+          limit: 100,
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        const link = res.data.find((l) => l.integration._id === watchedIntegrationId);
+
+        if (link?.connectedAt) {
+          setConnectedAt(link.connectedAt);
+
+          if (sawMissingConnectedAtRef.current) {
+            setShouldCelebrateConnection(true);
+          }
+
+          queryClient.invalidateQueries({
+            queryKey: getAgentIntegrationsQueryKey(environment._id, agentIdentifier),
+          });
+          clearPoll();
+
+          return;
+        }
+
+        if (link) {
+          sawMissingConnectedAtRef.current = true;
+        }
+      } catch {
+        // ignore transient errors while polling
+      }
+    }
+
+    void tick();
+    pollIntervalRef.current = setInterval(() => void tick(), 1000);
+
+    return () => {
+      cancelled = true;
+      clearPoll();
+    };
+  }, [agentIdentifier, currentEnvironment, queryClient, watchedIntegrationId]);
+
+  useEffect(() => {
+    if (!shouldCelebrateConnection) {
+      return;
+    }
+
+    if (confettiFiredRef.current) {
+      return;
+    }
+
+    const run = () => {
+      if (confettiFiredRef.current) {
+        return;
+      }
+
+      confettiFiredRef.current = true;
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 10_000);
+      setShouldCelebrateConnection(false);
+    };
+
+    if (typeof document !== 'undefined' && document.hasFocus()) {
+      run();
+
+      return;
+    }
+
+    const onFocus = () => {
+      run();
+      window.removeEventListener('focus', onFocus);
+    };
+
+    window.addEventListener('focus', onFocus);
+
+    return () => window.removeEventListener('focus', onFocus);
+  }, [shouldCelebrateConnection]);
+
   return (
-    <div className="flex flex-col gap-2 pl-8 py-4">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-1">
-          <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
-          <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
-            Listening...
-          </span>
+    <>
+      {showConfetti && (
+        <ReactConfetti
+          recycle={false}
+          numberOfPieces={1000}
+          style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}
+        />
+      )}
+      <div className="flex flex-col gap-2 pl-8 py-4">
+        <div className="flex flex-col gap-3">
+          {connectedAt ? (
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
+              <span className="text-text-strong text-label-sm font-medium">Connected</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
+              <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
+                Listening...
+              </span>
+            </div>
+          )}
+          <p className="text-text-soft text-label-xs font-medium leading-4">
+            {connectedAt
+              ? 'Your Slack workspace is connected. This agent is ready to receive messages.'
+              : 'Tag the Slack bot in your installed workspace and send a message to verify configuration.'}
+          </p>
         </div>
-        <p className="text-text-soft text-label-xs font-medium leading-4">
-          Tag the Slack bot in your installed workspace and send a message to verify configuration.
-        </p>
+        <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
+          Learn more in docs
+        </ExternalLink>
       </div>
-      <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
-        Learn more in docs
-      </ExternalLink>
-    </div>
+    </>
   );
 }
 
@@ -337,6 +480,18 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
     [agent.integrations]
   );
 
+  const watchedSlackIntegrationId = useMemo(() => {
+    if (slackIntegration?.integrationId) {
+      return slackIntegration.integrationId;
+    }
+
+    const selectedSlack = integrations?.find(
+      (i) => i._id === selectedIntegrationId && i.providerId === ChatProviderIdEnum.Slack
+    );
+
+    return selectedSlack?._id;
+  }, [integrations, selectedIntegrationId, slackIntegration?.integrationId]);
+
   const selectedIntegrationIdentifier = useMemo(() => {
     const slackFromSelection = selectedIntegrationId
       ? integrations?.find((i) => i._id === selectedIntegrationId && i.providerId === ChatProviderIdEnum.Slack)
@@ -482,7 +637,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
             />
           </div>
 
-          <ListeningStatus />
+          <ListeningStatus agentIdentifier={agent.identifier} watchedIntegrationId={watchedSlackIntegrationId} />
         </div>
       )}
 

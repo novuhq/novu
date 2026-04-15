@@ -72,6 +72,17 @@ export class AgentCredentialService {
       throw new UnprocessableEntityException(`Agent ${agentId} is not linked to integration ${integrationIdentifier}`);
     }
 
+    if (agentIntegration.connectedAt == null) {
+      await this.agentIntegrationRepository.updateOne(
+        {
+          _id: agentIntegration._id,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        { $set: { connectedAt: new Date() } }
+      );
+    }
+
     const platform = resolveAgentPlatform(integration.providerId);
     if (!platform) {
       throw new UnprocessableEntityException(

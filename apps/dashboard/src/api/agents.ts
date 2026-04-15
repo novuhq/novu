@@ -172,6 +172,7 @@ export type AgentIntegrationLink = {
   integration: AgentIntegrationEmbedded;
   _environmentId: string;
   _organizationId: string;
+  connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

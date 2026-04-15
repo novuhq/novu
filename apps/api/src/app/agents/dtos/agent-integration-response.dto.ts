@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
 
 /** Picked integration fields embedded on an agent–integration link response. */
@@ -39,6 +39,9 @@ export class AgentIntegrationResponseDto {
 
   @ApiProperty()
   _organizationId: string;
+
+  @ApiPropertyOptional({ description: 'Set when the agent–integration link has been used (e.g. first credential resolution).' })
+  connectedAt?: string | null;
 
   @ApiProperty()
   createdAt: string;
