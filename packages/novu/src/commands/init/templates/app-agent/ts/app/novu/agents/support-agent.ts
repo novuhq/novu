@@ -13,9 +13,9 @@ export const supportAgent = agent('support-agent', {
           children: [
             CardText('How can I help you today?'),
             Actions([
-              Button({ label: 'Billing question', actionId: 'topic', value: 'billing' }),
-              Button({ label: 'Technical issue', actionId: 'topic', value: 'technical' }),
-              Button({ label: 'Something else', actionId: 'topic', value: 'other' }),
+              Button({ id: 'topic-billing', label: 'Billing question', value: 'billing' }),
+              Button({ id: 'topic-technical', label: 'Technical issue', value: 'technical' }),
+              Button({ id: 'topic-other', label: 'Something else', value: 'other' }),
             ]),
           ],
         })
@@ -44,8 +44,8 @@ export const supportAgent = agent('support-agent', {
 
   onAction: async (ctx) => {
     const { actionId, value } = ctx.action!;
-    if (actionId === 'topic') {
-      ctx.metadata.set('topic', value!);
+    if (actionId.startsWith('topic-') && value) {
+      ctx.metadata.set('topic', value);
       await ctx.reply({
         markdown: `Topic set to **${value}**. Describe your issue and I'll help.`,
       });
