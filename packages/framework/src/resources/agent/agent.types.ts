@@ -1,3 +1,5 @@
+import type { CardElement } from 'chat';
+
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
   ON_RESOLVE = 'onResolve',
@@ -56,6 +58,43 @@ export interface AgentPlatformContext {
   isDM: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Rich content types
+// ---------------------------------------------------------------------------
+
+export interface FileRef {
+  filename: string;
+  mimeType?: string;
+  /** Base64-encoded file data (< 1 MB decoded) */
+  data?: string;
+  /** Publicly-accessible HTTPS URL */
+  url?: string;
+}
+
+/**
+ * Content accepted by ctx.reply() and ctx.update().
+ *
+ * - `string` — plain text
+ * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
+ * - `CardElement` — interactive card built with Card(), Button(), etc.
+ */
+export type MessageContent =
+  | string
+  | { markdown: string; files?: FileRef[] }
+  | CardElement;
+
+/** Serialized content shape that travels over HTTP to the reply endpoint. */
+export interface WireContent {
+  text?: string;
+  markdown?: string;
+  card?: CardElement;
+  files?: FileRef[];
+}
+
+// ---------------------------------------------------------------------------
+// Context + handlers
+// ---------------------------------------------------------------------------
+
 export interface AgentContext {
   readonly event: string;
   readonly message: AgentMessage | null;
@@ -65,8 +104,8 @@ export interface AgentContext {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
 
-  reply(text: string): Promise<void>;
-  update(text: string): Promise<void>;
+  reply(content: MessageContent): Promise<void>;
+  update(content: MessageContent): Promise<void>;
   resolve(summary?: string): void;
   metadata: {
     set(key: string, value: unknown): void;
@@ -112,8 +151,8 @@ export type Signal = MetadataSignal | TriggerSignal;
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
-  reply?: { text: string };
-  update?: { text: string };
+  reply?: WireContent;
+  update?: WireContent;
   resolve?: { summary?: string };
   signals?: Signal[];
 }

@@ -6,7 +6,12 @@ export type {
   Agent,
   AgentContext,
   AgentHandlers,
+  CardElement,
+  CardChild,
+  FileRef,
+  MessageContent,
 } from './resources';
+export { Card, Button, CardText, TextInput, Select, SelectOption, Divider, CardLink } from './resources';
 export type {
   AnyStepResolver,
   ChatStepResolver,

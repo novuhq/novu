@@ -7,8 +7,31 @@ import type {
   AgentPlatformContext,
   AgentReplyPayload,
   AgentSubscriber,
+  MessageContent,
   Signal,
+  WireContent,
 } from './agent.types';
+
+function isCardElement(content: object): content is import('chat').CardElement {
+  return 'type' in content && (content as { type: string }).type === 'card';
+}
+
+function toWireContent(content: MessageContent): WireContent {
+  if (typeof content === 'string') {
+    return { text: content };
+  }
+
+  if (isCardElement(content)) {
+    return { card: content };
+  }
+
+  const wire: WireContent = { markdown: content.markdown };
+  if (content.files?.length) {
+    wire.files = content.files;
+  }
+
+  return wire;
+}
 
 export class AgentContextImpl implements AgentContext {
   readonly event: string;
@@ -49,11 +72,11 @@ export class AgentContextImpl implements AgentContext {
     };
   }
 
-  async reply(text: string): Promise<void> {
+  async reply(content: MessageContent): Promise<void> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: { text },
+      reply: toWireContent(content),
     };
 
     if (this._signals.length) {
@@ -69,11 +92,11 @@ export class AgentContextImpl implements AgentContext {
     await this._post(body);
   }
 
-  async update(text: string): Promise<void> {
+  async update(content: MessageContent): Promise<void> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      update: { text },
+      update: toWireContent(content),
     };
 
     await this._post(body);

@@ -7,6 +7,7 @@ const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', '
 const baseConfig: Options = {
   entry: [
     'src/index.ts',
+    'src/jsx-runtime.ts',
     'src/internal/index.ts',
     'src/step-resolver.ts',
     'src/validators.ts',
