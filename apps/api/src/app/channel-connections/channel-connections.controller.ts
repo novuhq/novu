@@ -130,6 +130,7 @@ export class ChannelConnectionsController {
         integrationIdentifier: body.integrationIdentifier,
         subscriberId: body.subscriberId,
         context: body.context,
+        connectionMode: body.connectionMode,
         workspace: body.workspace,
         auth: body.auth,
       })

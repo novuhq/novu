@@ -4094,6 +4094,9 @@ importers:
       '@novu/agent-toolkit':
         specifier: workspace:*
         version: link:../../packages/agent-toolkit
+      '@novu/api':
+        specifier: workspace:*
+        version: link:../../libs/internal-sdk
       '@novu/nextjs':
         specifier: workspace:*
         version: link:../../packages/nextjs
