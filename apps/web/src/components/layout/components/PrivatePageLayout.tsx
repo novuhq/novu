@@ -19,6 +19,7 @@ import { useEnvironment, useRedirectURL, useRouteScopes } from '../../../hooks';
 // TODO: Move sidebar under layout folder as it belongs here
 import { Sidebar } from '../../nav/Sidebar';
 import { HeaderNav } from './v2/HeaderNav';
+import { DeprecationBanner } from './DeprecationBanner';
 import { FreeTrialBanner } from './FreeTrialBanner';
 import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
 import { useOptInRedirect } from '../../../hooks/useOptInRedirect';
@@ -103,6 +104,7 @@ export function PrivatePageLayout() {
             <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
               <Sidebar />
               <ContentShell>
+                <DeprecationBanner />
                 {showSampleModeBanner && <SampleModeBanner />}
                 <FreeTrialBanner />
                 <HeaderNav />
