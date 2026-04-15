@@ -59,11 +59,17 @@ export const useChannelConnection = (props: UseChannelConnectionProps): UseChann
   // propsRef at call-time so it doesn't appear in the callback body directly.
   // biome-ignore lint/correctness/useExhaustiveDependencies: props.identifier is an intentional trigger dependency
   useEffect(() => {
-    const cleanupGetPending = novu.on('channel-connection.get.pending', () => {
+    const cleanupGetPending = novu.on('channel-connection.get.pending', ({ args }) => {
+      if (!args || args.identifier !== propsRef.current.identifier) {
+        return;
+      }
       setIsFetching(true);
     });
 
-    const cleanupGetResolved = novu.on('channel-connection.get.resolved', ({ data, error: resolvedError }) => {
+    const cleanupGetResolved = novu.on('channel-connection.get.resolved', ({ args, data, error: resolvedError }) => {
+      if (!args || args.identifier !== propsRef.current.identifier) {
+        return;
+      }
       const { onSuccess, onError } = propsRef.current;
       if (resolvedError) {
         setError(resolvedError as NovuError);
