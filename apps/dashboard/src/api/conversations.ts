@@ -9,9 +9,23 @@ export type ConversationFilters = {
   status?: string;
 };
 
+export type ParticipantSubscriberData = {
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  subscriberId: string;
+};
+
+export type ParticipantAgentData = {
+  name: string;
+  identifier: string;
+};
+
 export type ConversationParticipantDto = {
   type: string;
   id: string;
+  subscriber?: ParticipantSubscriberData | null;
+  agent?: ParticipantAgentData | null;
 };
 
 export type ConversationChannelDto = {

@@ -135,6 +135,7 @@ export function ConversationsTable({
                 <TableCell colSpan={7} className="p-0">
                   <TablePaginationFooter
                     pageSize={pageSize}
+                    currentPageItemsCount={conversations.length}
                     onPreviousPage={() => handlePageChange(Math.max(0, page - 1))}
                     onNextPage={() => handlePageChange(page + 1)}
                     onPageSizeChange={handlePageSizeChange}

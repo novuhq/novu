@@ -32,7 +32,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
   const channels = conversation.channels ?? [];
   const subscriber = participants.find((p) => p.type === 'subscriber');
   const agent = participants.find((p) => p.type === 'agent');
-  const agentName = agent?.id ?? conversation._agentId ?? 'agent';
+  const agentName = agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
   const platforms = [...new Set(channels.map((c) => c.platform))];
 
   const sourceRequestId = (conversation.metadata?.sourceRequestId as string) ?? undefined;
@@ -92,20 +92,30 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
           <div className="border-stroke-soft h-2 border-l" />
         </div>
 
-        {subscriber && (
-          <div className="border-stroke-soft rounded-lg border bg-white p-1">
-            <div className="bg-bg-weak flex items-center gap-2 overflow-hidden rounded p-1">
-              <div className="bg-neutral-200 size-8 shrink-0 rounded-full" />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div className="text-label-xs flex items-center justify-between font-medium">
-                  <span className="text-text-strong truncate">{subscriber.id}</span>
-                  <span className="text-text-soft shrink-0 truncate">{subscriber.id}</span>
+        {subscriber && (() => {
+          const sub = subscriber.subscriber;
+          const displayName = [sub?.firstName, sub?.lastName].filter(Boolean).join(' ') || subscriber.id;
+          const subscriberId = sub?.subscriberId ?? subscriber.id;
+
+          return (
+            <div className="border-stroke-soft rounded-lg border bg-white p-1">
+              <div className="bg-bg-weak flex items-center gap-2 overflow-hidden rounded p-1">
+                {sub?.avatar ? (
+                  <img src={sub.avatar} alt="" className="size-8 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="bg-neutral-200 size-8 shrink-0 rounded-full" />
+                )}
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <div className="text-label-xs flex items-center justify-between font-medium">
+                    <span className="text-text-strong truncate">{displayName}</span>
+                    <span className="text-text-soft shrink-0 truncate">{subscriberId}</span>
+                  </div>
+                  <span className="text-text-soft text-label-xs truncate font-medium">{subscriberId}</span>
                 </div>
-                <span className="text-text-soft text-label-xs truncate font-medium">{subscriber.id}</span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

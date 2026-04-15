@@ -10,14 +10,22 @@ type ConversationTableRowProps = {
   onClick?: (conversationId: string) => void;
 };
 
-function getFirstSubscriberId(conversation: ConversationDto): string | undefined {
-  return (conversation.participants ?? []).find((p) => p.type === 'subscriber')?.id;
+function getSubscriberLabel(conversation: ConversationDto): string | undefined {
+  const p = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
+  if (!p) return undefined;
+
+  const sub = p.subscriber;
+  if (sub?.firstName || sub?.lastName) {
+    return [sub.firstName, sub.lastName].filter(Boolean).join(' ');
+  }
+
+  return sub?.subscriberId ?? p.id;
 }
 
 function getAgentName(conversation: ConversationDto): string {
   const agent = (conversation.participants ?? []).find((p) => p.type === 'agent');
 
-  return agent?.id ?? conversation._agentId ?? 'agent';
+  return agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
 }
 
 function formatTimestamp(dateStr: string): string {
@@ -36,7 +44,7 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
     onClick?.(conversation.identifier);
   };
 
-  const subscriber = getFirstSubscriberId(conversation);
+  const subscriber = getSubscriberLabel(conversation);
   const agentName = getAgentName(conversation);
   const isResolved = conversation.status === 'resolved';
 

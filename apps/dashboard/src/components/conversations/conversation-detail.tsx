@@ -40,7 +40,7 @@ export function ConversationDetail({ conversationId, onClose, onNavigate }: Conv
               </button>
             </>
           )}
-          {onNavigate && onClose && <Separator orientation="vertical" className="mx-0.5 h-4" />}
+          {onNavigate && onClose && <div className="bg-stroke-soft mx-0.5 h-4 w-px" />}
           {onClose && (
             <button onClick={onClose} className="text-text-soft hover:text-text-strong rounded p-0.5">
               <RiCloseFill className="size-4" />
