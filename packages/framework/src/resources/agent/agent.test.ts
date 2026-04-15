@@ -68,6 +68,27 @@ describe('agent()', () => {
   });
 });
 
+describe('Client.discover() includes agents', () => {
+  it('should return registered agents in discover output', () => {
+    const client = new Client({ secretKey: 'test-key', strictAuthentication: false });
+    const bot1 = agent('bot-a', { onMessage: async () => {} });
+    const bot2 = agent('bot-b', { onMessage: async () => {} });
+    client.addAgents([bot1, bot2]);
+
+    const output = client.discover();
+
+    expect(output.agents).toEqual([{ agentId: 'bot-a' }, { agentId: 'bot-b' }]);
+  });
+
+  it('should return empty agents array when no agents registered', () => {
+    const client = new Client({ secretKey: 'test-key', strictAuthentication: false });
+
+    const output = client.discover();
+
+    expect(output.agents).toEqual([]);
+  });
+});
+
 describe('agent dispatch via NovuRequestHandler', () => {
   let client: Client;
   let fetchMock: ReturnType<typeof vi.fn>;
