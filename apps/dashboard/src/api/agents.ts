@@ -4,6 +4,20 @@ import { del, get, post } from '@/api/api.client';
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
 
+export const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
+
+export const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
+
+export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
+
+  return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
+}
+
+export function getAgentIntegrationsQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+
+  return [AGENT_INTEGRATIONS_QUERY_KEY, environmentId, agentIdentifier] as const;
+}
+
 export function getAgentsListQueryKey(
   environmentId: string | undefined,
   params: { after?: string; before?: string; limit: number; identifier: string }
@@ -98,10 +112,117 @@ export function listAgents(params: ListAgentsParams): Promise<ListAgentsResponse
   });
 }
 
-export function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
-  return post<AgentResponse>('/agents', { environment, body });
+type AgentApiEnvelope = { data: AgentResponse };
+
+export async function getAgent(
+  environment: IEnvironment,
+  identifier: string,
+  signal?: AbortSignal
+): Promise<AgentResponse> {
+  const response = await get<AgentApiEnvelope>(`/agents/${encodeURIComponent(identifier)}`, {
+    environment,
+    signal,
+  });
+
+  return response.data;
+}
+
+export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
+  const response = await post<AgentApiEnvelope>('/agents', { environment, body });
+
+  return response.data;
 }
 
 export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
   return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
+}
+
+/** Picked integration fields on an agent–integration link (matches API `integration`). */
+export type AgentIntegrationEmbedded = {
+  _id: string;
+  identifier: string;
+  name: string;
+  providerId: string;
+  channel: ChannelTypeEnum;
+  active: boolean;
+};
+
+/** Agent–integration link row returned by GET /agents/:identifier/integrations */
+export type AgentIntegrationLink = {
+  _id: string;
+  _agentId: string;
+  integration: AgentIntegrationEmbedded;
+  _environmentId: string;
+  _organizationId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ListAgentIntegrationsResponse = {
+  data: AgentIntegrationLink[];
+  next: string | null;
+  previous: string | null;
+  totalCount: number;
+  totalCountCapped: boolean;
+};
+
+export type ListAgentIntegrationsParams = {
+  environment: IEnvironment;
+  agentIdentifier: string;
+  limit?: number;
+  signal?: AbortSignal;
+};
+
+function buildAgentIntegrationsQuery(params: ListAgentIntegrationsParams): string {
+  const searchParams = new URLSearchParams();
+
+  if (params.limit != null) {
+    searchParams.set('limit', String(params.limit));
+  }
+
+  const qs = searchParams.toString();
+
+  return qs ? `?${qs}` : '';
+}
+
+export function listAgentIntegrations(params: ListAgentIntegrationsParams): Promise<ListAgentIntegrationsResponse> {
+  const query = buildAgentIntegrationsQuery(params);
+
+  return get<ListAgentIntegrationsResponse>(
+    `/agents/${encodeURIComponent(params.agentIdentifier)}/integrations${query}`,
+    {
+      environment: params.environment,
+      signal: params.signal,
+    }
+  );
+}
+
+export type AddAgentIntegrationBody = {
+  integrationIdentifier: string;
+};
+
+type AgentIntegrationLinkEnvelope = { data: AgentIntegrationLink };
+
+export async function addAgentIntegration(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: AddAgentIntegrationBody
+): Promise<AgentIntegrationLink> {
+  const response = await post<AgentIntegrationLinkEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    { environment, body }
+  );
+
+  return response.data;
+}
+
+export function removeAgentIntegration(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  agentIntegrationId: string
+): Promise<void> {
+  return del(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`,
+    { environment }
+  );
 }
