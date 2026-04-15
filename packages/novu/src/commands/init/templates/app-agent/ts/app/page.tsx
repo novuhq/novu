@@ -16,7 +16,7 @@ export default function Home() {
               Open <code className={styles.code}>app/novu/agents/support-agent.ts</code> to edit your agent
             </li>
             <li>
-              Connect a chat platform (Slack, Teams, WhatsApp) in the{' '}
+              Create an agent and connect a chat platform (Slack, Teams, WhatsApp) in the{' '}
               <a href="https://dashboard.novu.co" target="_blank" rel="noopener noreferrer">
                 Novu Dashboard
               </a>
@@ -25,7 +25,8 @@ export default function Home() {
               Replace the demo handler with your LLM call (OpenAI, Anthropic, etc.)
             </li>
             <li>
-              Run <code className={styles.code}>npx novu dev</code> to open Novu Studio
+              Deploy your bridge endpoint and sync with{' '}
+              <code className={styles.code}>npx novu sync</code>
             </li>
           </ol>
         </div>

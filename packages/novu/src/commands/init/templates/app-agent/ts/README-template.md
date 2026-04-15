@@ -10,13 +10,13 @@ A conversational AI agent powered by [Novu](https://novu.co) and [Next.js](https
 npm run dev
 ```
 
-2. Open Novu Studio:
+2. Create an agent and connect a chat platform (Slack, Teams, WhatsApp) in the [Novu Dashboard](https://dashboard.novu.co).
+
+3. Deploy your bridge endpoint and sync:
 
 ```bash
-npx novu dev
+npx novu sync -b <your-bridge-url>/api/novu -s <your-secret-key>
 ```
-
-3. Connect a chat platform (Slack, Teams, WhatsApp) in the [Novu Dashboard](https://dashboard.novu.co).
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
