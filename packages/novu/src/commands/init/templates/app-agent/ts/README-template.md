@@ -12,7 +12,7 @@ npm run dev
 
 2. Connect a chat platform in the [Novu Dashboard](https://dashboard.novu.co).
 
-3. Replace the demo handler in `app/novu/agents/support-agent.ts` with your LLM call.
+3. Replace the demo handler in `app/novu/agents/support-agent.tsx` with your LLM call.
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
@@ -23,7 +23,7 @@ app/
   api/novu/route.ts        → Bridge endpoint serving your agent
   novu/agents/
     index.ts               → Agent exports
-    support-agent.ts       → Your agent handler (edit this!)
+    support-agent.tsx      → Your agent handler (edit this!)
   page.tsx                 → Landing page
 ```
 

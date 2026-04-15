@@ -13,7 +13,7 @@ export default function Home() {
           <h2>Get started</h2>
           <ol>
             <li>
-              Edit your agent in <code className={styles.code}>app/novu/agents/support-agent.ts</code>
+              Edit your agent in <code className={styles.code}>app/novu/agents/support-agent.tsx</code>
             </li>
             <li>
               Connect a chat platform in the{' '}

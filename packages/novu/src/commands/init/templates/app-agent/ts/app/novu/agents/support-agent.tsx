@@ -1,3 +1,4 @@
+/** @jsxImportSource @novu/framework */
 import { agent, Card, CardText, Actions, Button } from '@novu/framework';
 
 export const supportAgent = agent('support-agent', {
@@ -8,17 +9,14 @@ export const supportAgent = agent('support-agent', {
     if (isFirstMessage) {
       ctx.metadata.set('topic', 'unknown');
       await ctx.reply(
-        Card({
-          title: "Hi, I'm Support Agent",
-          children: [
-            CardText('How can I help you today?'),
-            Actions([
-              Button({ id: 'topic-billing', label: 'Billing question', value: 'billing' }),
-              Button({ id: 'topic-technical', label: 'Technical issue', value: 'technical' }),
-              Button({ id: 'topic-other', label: 'Something else', value: 'other' }),
-            ]),
-          ],
-        })
+        <Card title="Hi, I'm Support Agent">
+          <CardText>How can I help you today?</CardText>
+          <Actions>
+            <Button id="topic-billing" label="Billing question" value="billing" />
+            <Button id="topic-technical" label="Technical issue" value="technical" />
+            <Button id="topic-other" label="Something else" value="other" />
+          </Actions>
+        </Card>
       );
 
       return;
