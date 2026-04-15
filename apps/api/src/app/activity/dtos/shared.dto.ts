@@ -8,7 +8,7 @@ export enum WorkflowRunStatusDtoEnum {
   ERROR = 'error',
 }
 
-export class TopicResponseDto {
+class TopicResponseDto {
   @ApiProperty({ description: 'Internal topic identifier' })
   @IsString()
   _topicId: string;
