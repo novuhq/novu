@@ -1,12 +1,12 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ReactConfetti from 'react-confetti';
+import { createPortal } from 'react-dom';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
-import { getAgentIntegrationsQueryKey, listAgentIntegrations, type AgentResponse } from '@/api/agents';
+import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -131,9 +131,11 @@ function SetupButton({
 function ListeningStatus({
   agentIdentifier,
   watchedIntegrationId,
+  onSlackWorkspaceConnected,
 }: {
   agentIdentifier: string;
   watchedIntegrationId: string | undefined;
+  onSlackWorkspaceConnected?: () => void;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -182,6 +184,7 @@ function ListeningStatus({
           confettiFired = true;
           setShowConfetti(true);
           window.setTimeout(() => setShowConfetti(false), 10_000);
+          onSlackWorkspaceConnected?.();
         }
 
         queryClient.invalidateQueries({
@@ -207,7 +210,7 @@ function ListeningStatus({
         clearInterval(intervalId);
       }
     };
-  }, [agentIdentifier, currentEnvironment, queryClient, watchedIntegrationId]);
+  }, [agentIdentifier, currentEnvironment, onSlackWorkspaceConnected, queryClient, watchedIntegrationId]);
 
   return (
     <>
@@ -438,6 +441,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
+  const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const { integrations } = useFetchIntegrations();
 
   const slackIntegration = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
@@ -460,6 +464,15 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
     return selectedSlack?._id;
   }, [integrations, selectedIntegrationId, slackIntegration?.integrationId]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes (effect intentionally only depends on id)
+  useEffect(() => {
+    setIsSlackWorkspaceConnected(false);
+  }, [watchedSlackIntegrationId]);
+
+  const handleSlackWorkspaceConnected = useCallback(() => {
+    setIsSlackWorkspaceConnected(true);
+  }, []);
+
   const selectedIntegrationIdentifier = useMemo(() => {
     const slackFromSelection = selectedIntegrationId
       ? integrations?.find((i) => i._id === selectedIntegrationId && i.providerId === ChatProviderIdEnum.Slack)
@@ -479,7 +492,23 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const manifestYaml = buildSlackManifestYaml(agent, webhookHandlerUrl);
   const createSlackAppUrl = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(manifestYaml)}`;
 
-  const firstIncompleteStep = !hasProviderSelected ? 1 : !isCredentialsSaved ? 2 : 4;
+  const firstIncompleteStep = useMemo(() => {
+    if (!hasProviderSelected) {
+      return 1;
+    }
+
+    // Verified Slack workspace connection completes the flow regardless of whether
+    // credentials were saved through this UI (e.g. configured elsewhere).
+    if (isSlackWorkspaceConnected) {
+      return 5;
+    }
+
+    if (!isCredentialsSaved) {
+      return 2;
+    }
+
+    return 4;
+  }, [hasProviderSelected, isCredentialsSaved, isSlackWorkspaceConnected]);
 
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
@@ -605,7 +634,11 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
             />
           </div>
 
-          <ListeningStatus agentIdentifier={agent.identifier} watchedIntegrationId={watchedSlackIntegrationId} />
+          <ListeningStatus
+            agentIdentifier={agent.identifier}
+            watchedIntegrationId={watchedSlackIntegrationId}
+            onSlackWorkspaceConnected={handleSlackWorkspaceConnected}
+          />
         </div>
       )}
 
