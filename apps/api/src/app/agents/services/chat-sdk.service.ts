@@ -295,5 +295,20 @@ export class ChatSdkService implements OnModuleDestroy {
         this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
       }
     });
+
+    chat.onReaction(async (event: any) => {
+      try {
+        await this.inboundHandler.handleReaction(agentId, config, {
+          emoji: event.emoji,
+          added: event.added,
+          messageId: event.messageId,
+          message: event.message,
+          thread: event.thread,
+          user: event.user,
+        });
+      } catch (err) {
+        this.logger.error(err, `[agent:${agentId}] Error handling reaction`);
+      }
+    });
   }
 }

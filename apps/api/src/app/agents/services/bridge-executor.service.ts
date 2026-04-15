@@ -26,6 +26,13 @@ export interface BridgePlatformContext {
   isDM: boolean;
 }
 
+export interface BridgeReaction {
+  emoji: string;
+  added: boolean;
+  messageId: string;
+  sourceMessage?: Message;
+}
+
 export interface BridgeExecutorParams {
   event: AgentEventEnum;
   config: ResolvedAgentConfig;
@@ -35,6 +42,7 @@ export interface BridgeExecutorParams {
   message: Message | null;
   platformContext: BridgePlatformContext;
   action?: BridgeAction;
+  reaction?: BridgeReaction;
 }
 
 interface BridgeMessageAuthor {
@@ -85,6 +93,13 @@ interface BridgeHistoryEntry {
   createdAt: string;
 }
 
+interface BridgeReactionPayload {
+  messageId: string;
+  emoji: { name: string };
+  added: boolean;
+  message: BridgeMessage | null;
+}
+
 export interface AgentBridgeRequest {
   version: 1;
   timestamp: string;
@@ -101,6 +116,7 @@ export interface AgentBridgeRequest {
   platform: string;
   platformContext: BridgePlatformContext;
   action: BridgeAction | null;
+  reaction: BridgeReactionPayload | null;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -220,7 +236,7 @@ export class BridgeExecutorService {
   }
 
   private buildPayload(params: BridgeExecutorParams): AgentBridgeRequest {
-    const { event, config, conversation, subscriber, history, message, platformContext, action } = params;
+    const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
@@ -233,11 +249,13 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${message.id}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.actionId}:${timestamp}`;
+    } else if (reaction) {
+      deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
     } else {
       deliveryId = `${conversation._id}:${event}`;
     }
 
-    return {
+    const payload: AgentBridgeRequest = {
       version: 1,
       timestamp,
       deliveryId,
@@ -253,7 +271,10 @@ export class BridgeExecutorService {
       platform: config.platform,
       platformContext,
       action: action ?? null,
+      reaction: reaction ? this.mapReaction(reaction) : null,
     };
+
+    return payload;
   }
 
   private mapMessage(message: Message): BridgeMessage {
@@ -295,6 +316,15 @@ export class BridgeExecutorService {
       avatar: subscriber.avatar || undefined,
       locale: subscriber.locale || undefined,
       data: subscriber.data || undefined,
+    };
+  }
+
+  private mapReaction(reaction: BridgeReaction): BridgeReactionPayload {
+    return {
+      messageId: reaction.messageId,
+      emoji: { name: reaction.emoji },
+      added: reaction.added,
+      message: reaction.sourceMessage ? this.mapMessage(reaction.sourceMessage) : null,
     };
   }
 

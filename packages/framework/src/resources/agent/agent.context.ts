@@ -6,6 +6,7 @@ import type {
   AgentHistoryEntry,
   AgentMessage,
   AgentPlatformContext,
+  AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
   MessageContent,
@@ -42,6 +43,7 @@ export class AgentContextImpl implements AgentContext {
   readonly event: string;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
+  readonly reaction: AgentReaction | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly history: AgentHistoryEntry[];
@@ -61,6 +63,7 @@ export class AgentContextImpl implements AgentContext {
     this.event = request.event;
     this.action = request.action ?? null;
     this.message = request.message;
+    this.reaction = request.reaction;
     this.conversation = request.conversation;
     this.subscriber = request.subscriber;
     this.history = request.history;

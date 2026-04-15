@@ -148,26 +148,46 @@ export const installTemplate = async ({
   }
 
   /* write .env file */
-  const val = Object.entries({
-    NOVU_SECRET_KEY: secretKey,
-    NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId,
-    NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId,
-  }).reduce((acc, [key, value]) => {
+  const envVars =
+    template === TemplateTypeEnum.APP_AGENT
+      ? { NOVU_SECRET_KEY: secretKey }
+      : {
+          NOVU_SECRET_KEY: secretKey,
+          NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
+          NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId ?? '',
+        };
+
+  const val = Object.entries(envVars).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}${os.EOL}`;
   }, '');
 
   await fs.writeFile(path.join(root, '.env.local'), val);
 
-  /* write github action */
-  await copy(copySource, `${root}/.github`, {
-    parents: true,
-    cwd: path.join(__dirname, `./github`),
-  });
+  /* write github action (skip for agent template) */
+  if (template !== TemplateTypeEnum.APP_AGENT) {
+    await copy(copySource, `${root}/.github`, {
+      parents: true,
+      cwd: path.join(__dirname, `./github`),
+    });
+  }
 
   /** Copy the version from package.json or override for tests. */
   const version = '16.2.1';
 
   /** Create a package.json for the new project and write it to disk. */
+  const isAgentTemplate = template === TemplateTypeEnum.APP_AGENT;
+
+  const baseDependencies: Record<string, string> = {
+    react: '^19',
+    'react-dom': '^19',
+    next: version,
+    '@novu/framework': 'latest',
+  };
+
+  if (!isAgentTemplate) {
+    baseDependencies['@novu/nextjs'] = '^2.5.0';
+  }
+
   const packageJson: any = {
     name: appName,
     version: '0.1.0',
@@ -178,22 +198,10 @@ export const installTemplate = async ({
       start: 'next start',
       lint: 'next lint',
     },
-    /**
-     * Default dependencies.
-     */
-    dependencies: {
-      react: '^19',
-      'react-dom': '^19',
-      next: version,
-      '@novu/framework': 'latest',
-      '@novu/nextjs': '^2.5.0',
-    },
+    dependencies: baseDependencies,
     devDependencies: {},
   };
 
-  /**
-   * TypeScript projects will have type definitions and other devDependencies.
-   */
   if (mode === 'ts') {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
@@ -204,7 +212,6 @@ export const installTemplate = async ({
     };
   }
 
-  /* Add Tailwind CSS dependencies. */
   if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
@@ -217,8 +224,9 @@ export const installTemplate = async ({
       '@react-email/components': '0.0.18',
       '@react-email/tailwind': '0.0.18',
     };
+  }
 
-    /* Zod dependencies used in react email example */
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL || isAgentTemplate) {
     packageJson.dependencies = {
       ...packageJson.dependencies,
       zod: '^3.23.8',
@@ -230,7 +238,7 @@ export const installTemplate = async ({
   if (eslint) {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
-      eslint: '^8',
+      eslint: '^9',
       'eslint-config-next': version,
     };
   }
