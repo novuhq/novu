@@ -70,6 +70,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     platformThreadId: string;
     agentId: string;
     content: string;
+    richContent?: Record<string, unknown>;
     type?: ConversationActivityTypeEnum;
     senderName?: string;
     environmentId: string;
@@ -85,6 +86,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderType: ConversationActivitySenderTypeEnum.AGENT,
       senderId: params.agentId,
       content: params.content,
+      richContent: params.richContent,
       senderName: params.senderName,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,

@@ -54,6 +54,9 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     senderName: {
       type: Schema.Types.String,
     },
+    richContent: {
+      type: Schema.Types.Mixed,
+    },
     signalData: {
       type: Schema.Types.Mixed,
     },

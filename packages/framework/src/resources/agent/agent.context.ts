@@ -1,4 +1,5 @@
 import type {
+  AgentAction,
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,
@@ -7,11 +8,39 @@ import type {
   AgentPlatformContext,
   AgentReplyPayload,
   AgentSubscriber,
+  MessageContent,
+  ReplyContent,
   Signal,
 } from './agent.types';
 
+function isCardElement(content: object): content is import('chat').CardElement {
+  return 'type' in content && (content as { type: string }).type === 'card';
+}
+
+function serializeContent(content: MessageContent): ReplyContent {
+  if (typeof content === 'string') {
+    return { text: content };
+  }
+
+  if (isCardElement(content)) {
+    return { card: content };
+  }
+
+  if ('markdown' in content && typeof content.markdown === 'string') {
+    const result: ReplyContent = { markdown: content.markdown };
+    if (content.files?.length) {
+      result.files = content.files;
+    }
+
+    return result;
+  }
+
+  throw new Error('Invalid message content — expected string, { markdown }, or CardElement');
+}
+
 export class AgentContextImpl implements AgentContext {
   readonly event: string;
+  readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
@@ -30,6 +59,7 @@ export class AgentContextImpl implements AgentContext {
 
   constructor(request: AgentBridgeRequest, secretKey: string) {
     this.event = request.event;
+    this.action = request.action ?? null;
     this.message = request.message;
     this.conversation = request.conversation;
     this.subscriber = request.subscriber;
@@ -49,11 +79,11 @@ export class AgentContextImpl implements AgentContext {
     };
   }
 
-  async reply(text: string): Promise<void> {
+  async reply(content: MessageContent): Promise<void> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: { text },
+      reply: serializeContent(content),
     };
 
     if (this._signals.length) {
@@ -69,11 +99,11 @@ export class AgentContextImpl implements AgentContext {
     await this._post(body);
   }
 
-  async update(text: string): Promise<void> {
+  async update(content: MessageContent): Promise<void> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      update: { text },
+      update: serializeContent(content),
     };
 
     await this._post(body);

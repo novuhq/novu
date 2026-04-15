@@ -1,12 +1,12 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: d5035ea9a54578d83c06a7b5dce6b0f0
-  docVersion: 3.14.0
-  speakeasyVersion: 1.759.3
-  generationVersion: 2.869.25
+  docChecksum: 337129456f6c9117e52f22d85b33108a
+  docVersion: 3.15.0
+  speakeasyVersion: 1.761.5
+  generationVersion: 2.879.13
   releaseVersion: 1.0.0
-  configChecksum: 195e8691f7ff803979803dd4aeef71dc
+  configChecksum: 25eb47514328bc87ca500cfa55ddb708
 persistentEdits:
   generation_id: 29aa1db5-d1d6-4bbc-a073-1aedf94308fd
   pristine_commit_hash: 19fe80088018936c3fc11bc13ff8d2d4603495f4
@@ -25,7 +25,7 @@ features:
 trackedFiles:
   novu_api_postman_collection.json:
     id: f80b59e13e5c
-    last_write_checksum: sha1:c7682810cfddfd22125bb7b988de8fa968fb009d
+    last_write_checksum: sha1:884b69757b493aefc8fcd2076c8096509b41c897
     pristine_git_object: 5e1d2eedd7bc4934ecc1a374a7f4dd6b4fa15852
 examples:
   EventsController_trigger:
@@ -1718,7 +1718,7 @@ examples:
   ChannelConnectionsController_createChannelConnection:
     speakeasy-default-channel-connections-controller-create-channel-connection:
       requestBody:
-        application/json: {"identifier": "slack-prod-user123-abc4", "subscriberId": "subscriber-123", "integrationIdentifier": "slack-prod", "workspace": {"id": "T123456", "name": "Acme HQ"}, "auth": {"accessToken": "Workspace access token"}}
+        application/json: {"identifier": "slack-prod-user123-abc4", "subscriberId": "subscriber-123", "connectionMode": "shared", "integrationIdentifier": "slack-prod", "workspace": {"id": "T123456", "name": "Acme HQ"}, "auth": {"accessToken": "Workspace access token"}}
       responses:
         "201":
           application/json: {"identifier": "<value>", "channel": "sms", "providerId": "slack", "integrationIdentifier": "slack-prod", "subscriberId": "subscriber-123", "contextKeys": ["tenant:org-123", "region:us-east-1"], "workspace": {"id": "T123456", "name": "Acme HQ"}, "auth": {"accessToken": "Workspace access token"}, "createdAt": "1719812430207", "updatedAt": "1735628544115"}
@@ -1901,7 +1901,7 @@ examples:
   IntegrationsController_getChatOAuthUrl:
     speakeasy-default-integrations-controller-get-chat-O-auth-url:
       requestBody:
-        application/json: {"subscriberId": "subscriber-123", "integrationIdentifier": "<value>", "connectionIdentifier": "slack-connection-abc123", "scope": ["chat:write", "chat:write.public", "channels:read", "groups:read", "users:read", "users:read.email", "incoming-webhook"]}
+        application/json: {"subscriberId": "subscriber-123", "integrationIdentifier": "<value>", "connectionIdentifier": "slack-connection-abc123", "scope": ["chat:write", "chat:write.public", "channels:read", "groups:read", "users:read", "users:read.email", "incoming-webhook"], "userScope": ["identity.basic"], "mode": "link_user", "connectionMode": "shared"}
       responses:
         "201":
           application/json: {"url": "https://slack.com/oauth/v2/authorize?state=..."}
@@ -2004,6 +2004,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       responses:
         "200":
           application/json: {"_id": "<id>", "_organizationId": "<id>", "key": "<key>", "type": "string", "isSecret": false, "values": [{"_environmentId": "<id>", "value": "<value>"}], "createdAt": "1710536460779", "updatedAt": "1735619742616"}
@@ -2024,6 +2025,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       requestBody:
         application/json: {}
       responses:
@@ -2046,6 +2048,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       responses:
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
@@ -2064,6 +2067,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       responses:
         "200":
           application/json: {"workflows": [{"name": "Welcome Email", "workflowId": "welcome-email"}]}

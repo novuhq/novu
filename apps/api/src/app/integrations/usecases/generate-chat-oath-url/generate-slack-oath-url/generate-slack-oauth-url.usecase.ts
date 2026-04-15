@@ -47,9 +47,10 @@ export class GenerateSlackOauthUrl {
     await this.assertResourceExists(command);
 
     const { clientId } = await this.getIntegrationCredentials(command.integration);
+    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
     const secureState = await this.createSecureState(
       command.integration,
-      command.subscriberId,
+      subscriberId,
       command.context,
       command.connectionIdentifier,
       command.mode,

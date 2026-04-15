@@ -44,18 +44,23 @@ export const useChannelConnections = (props: UseChannelConnectionsProps = {}): U
 
       setIsFetching(true);
 
-      const response = await novu.channelConnections.list(listArgs);
+      try {
+        const response = await novu.channelConnections.list(listArgs);
 
-      if (response.error) {
-        setError(response.error as NovuError);
-        onError?.(response.error as NovuError);
-      } else if (response.data !== undefined) {
-        setConnections(response.data);
-        onSuccess?.(response.data);
+        if (response.error) {
+          setError(response.error as NovuError);
+          onError?.(response.error as NovuError);
+        } else if (response.data !== undefined) {
+          setConnections(response.data);
+          onSuccess?.(response.data);
+        }
+      } catch (err) {
+        setError(err as NovuError);
+        onError?.(err as NovuError);
+      } finally {
+        setIsLoading(false);
+        setIsFetching(false);
       }
-
-      setIsLoading(false);
-      setIsFetching(false);
     },
     [novu]
   );

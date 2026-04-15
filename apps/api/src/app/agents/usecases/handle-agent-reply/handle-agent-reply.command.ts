@@ -1,5 +1,7 @@
-import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -15,12 +17,14 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   integrationIdentifier: string;
 
   @IsOptional()
-  @IsObject()
-  reply?: { text: string };
+  @ValidateNested()
+  @Type(() => ReplyContentDto)
+  reply?: ReplyContentDto;
 
   @IsOptional()
-  @IsObject()
-  update?: { text: string };
+  @ValidateNested()
+  @Type(() => ReplyContentDto)
+  update?: ReplyContentDto;
 
   @IsOptional()
   @IsObject()

@@ -14,6 +14,7 @@ import { AgentConfigResolver } from '../../services/agent-config-resolver.servic
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
+import type { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -52,13 +53,13 @@ export class HandleAgentReply {
     const channel = this.getPrimaryChannel(conversation);
 
     if (command.update) {
-      await this.deliverMessage(command, conversation, channel, command.update.text, ConversationActivityTypeEnum.UPDATE);
+      await this.deliverMessage(command, conversation, channel, command.update, ConversationActivityTypeEnum.UPDATE);
 
       return { status: 'update_sent' };
     }
 
     if (command.reply) {
-      await this.deliverMessage(command, conversation, channel, command.reply.text, ConversationActivityTypeEnum.MESSAGE);
+      await this.deliverMessage(command, conversation, channel, command.reply, ConversationActivityTypeEnum.MESSAGE);
 
       this.removeAckReaction(command, conversation, channel).catch((err) => {
         this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
@@ -89,16 +90,18 @@ export class HandleAgentReply {
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    text: string,
+    content: ReplyContentDto,
     type: ConversationActivityTypeEnum
   ): Promise<void> {
+    const textFallback = this.extractTextFallback(content);
+
     await Promise.all([
       this.chatSdkService.postToConversation(
         conversation._agentId,
         command.integrationIdentifier,
         channel.platform,
         channel.serializedThread!,
-        text
+        content
       ),
       this.activityRepository.createAgentActivity({
         identifier: `act-${shortId(8)}`,
@@ -107,7 +110,8 @@ export class HandleAgentReply {
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
         agentId: command.agentIdentifier,
-        content: text,
+        content: textFallback,
+        richContent: (content.card || content.files?.length) ? (content as Record<string, unknown>) : undefined,
         type,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -116,9 +120,21 @@ export class HandleAgentReply {
         command.environmentId,
         command.organizationId,
         conversation._id,
-        text
+        textFallback
       ),
     ]);
+  }
+
+  private extractTextFallback(content: ReplyContentDto): string {
+    if (content.text) return content.text;
+    if (content.markdown) return content.markdown;
+    if (content.card) {
+      const title = (content.card as { title?: string }).title;
+
+      return title ?? '[Card]';
+    }
+
+    return '';
   }
 
   private async executeSignals(

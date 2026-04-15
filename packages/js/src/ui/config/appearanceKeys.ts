@@ -342,6 +342,7 @@ export const connectChatAppearanceKeys = [
   'connectChatButton',
   'connectChatButtonContainer',
   'connectChatButtonLabel',
+  'connectChatMisconfiguredTooltip',
 ] as const;
 
 export const channelConnectButtonAppearanceKeys = [
@@ -350,6 +351,7 @@ export const channelConnectButtonAppearanceKeys = [
   'channelConnectButtonInner',
   'channelConnectButtonIcon',
   'channelConnectButtonLabel',
+  'channelConnectButtonMisconfiguredTooltip',
 ] as const;
 
 export const linkSlackUserAppearanceKeys = [
