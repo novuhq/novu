@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AgentReactionSettingsDto {
@@ -8,6 +8,7 @@ export class AgentReactionSettingsDto {
     default: 'eyes',
   })
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsString()
   onMessageReceived?: string | null;
 
@@ -16,6 +17,7 @@ export class AgentReactionSettingsDto {
     default: 'check',
   })
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsString()
   onResolved?: string | null;
 }
