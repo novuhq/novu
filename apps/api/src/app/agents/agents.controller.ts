@@ -287,6 +287,7 @@ export class AgentsController {
         identifier,
         name: body.name,
         description: body.description,
+        behavior: body.behavior,
       })
     );
   }

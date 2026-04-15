@@ -75,7 +75,9 @@ export class AgentInboundHandler {
       organizationId: config.organizationId,
     });
 
-    await thread.startTyping();
+    if (config.thinkingIndicatorEnabled) {
+      await thread.startTyping('Thinking...');
+    }
 
     const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
     await this.conversationService.updateChannelThread(

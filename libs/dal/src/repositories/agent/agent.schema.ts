@@ -14,6 +14,9 @@ const agentSchema = new Schema<AgentDBModel>(
       required: true,
     },
     description: Schema.Types.String,
+    behavior: {
+      thinkingIndicatorEnabled: Schema.Types.Boolean,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

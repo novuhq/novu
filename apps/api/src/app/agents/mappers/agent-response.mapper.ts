@@ -8,6 +8,7 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     name: agent.name,
     identifier: agent.identifier,
     description: agent.description,
+    behavior: agent.behavior,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
     createdAt: agent.createdAt,

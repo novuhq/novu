@@ -1,5 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+import { AgentBehaviorDto } from './agent-behavior.dto';
 
 export class UpdateAgentRequestDto {
   @ApiPropertyOptional()
@@ -11,4 +14,10 @@ export class UpdateAgentRequestDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiPropertyOptional({ type: AgentBehaviorDto })
+  @ValidateNested()
+  @Type(() => AgentBehaviorDto)
+  @IsOptional()
+  behavior?: AgentBehaviorDto;
 }

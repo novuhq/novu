@@ -65,6 +65,39 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(afterDelete.status).to.equal(404);
   });
 
+  it('should update and return agent behavior settings', async () => {
+    const identifier = `e2e-behavior-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Behavior Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior).to.equal(undefined);
+
+    const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { thinkingIndicatorEnabled: false },
+    });
+
+    expect(patchRes.status).to.equal(200);
+    expect(patchRes.body.data.behavior).to.deep.equal({ thinkingIndicatorEnabled: false });
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.thinkingIndicatorEnabled).to.equal(false);
+
+    const reEnableRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { thinkingIndicatorEnabled: true },
+    });
+
+    expect(reEnableRes.status).to.equal(200);
+    expect(reEnableRes.body.data.behavior.thinkingIndicatorEnabled).to.equal(true);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
   it('should return 422 when identifier is not a valid slug', async () => {
     const res = await session.testAgent.post('/v1/agents').send({
       name: 'Invalid Slug Agent',
