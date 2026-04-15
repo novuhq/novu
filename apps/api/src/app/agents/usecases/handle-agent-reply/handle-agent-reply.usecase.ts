@@ -10,7 +10,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
-import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
@@ -59,10 +59,15 @@ export class HandleAgentReply {
       return { status: 'update_sent' };
     }
 
+    const needsConfig = !!(command.reply || command.resolve);
+    const config = needsConfig
+      ? await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier)
+      : null;
+
     if (command.reply) {
       await this.deliverMessage(command, conversation, channel, command.reply, ConversationActivityTypeEnum.MESSAGE);
 
-      this.removeAckReaction(command, conversation, channel).catch((err) => {
+      this.removeAckReaction(config!, conversation, channel).catch((err) => {
         this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
       });
     }
@@ -72,7 +77,7 @@ export class HandleAgentReply {
     }
 
     if (command.resolve) {
-      await this.executeResolveSignal(command, conversation, channel, command.resolve);
+      await this.executeResolveSignal(command, config!, conversation, channel, command.resolve);
     }
 
     return { status: 'ok' };
@@ -198,6 +203,7 @@ export class HandleAgentReply {
 
   private async executeResolveSignal(
     command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel,
     signal: { summary?: string }
@@ -223,29 +229,26 @@ export class HandleAgentReply {
       }),
     ]);
 
-    this.reactOnResolve(command, conversation, channel).catch((err) => {
+    this.reactOnResolve(config, conversation, channel).catch((err) => {
       this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to add resolve reaction`);
     });
 
-    this.fireOnResolveBridgeCall(command, conversation).catch((err) => {
+    this.fireOnResolveBridgeCall(command, config, conversation).catch((err) => {
       this.logger.error(err, `[agent:${command.agentIdentifier}] Failed to fire onResolve bridge call`);
     });
   }
 
   private async removeAckReaction(
-    command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel
   ): Promise<void> {
     const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId) return;
-
-    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
-    if (!config.reactionOnMessageReceived) return;
+    if (!firstMessageId || !config.reactionOnMessageReceived) return;
 
     await this.chatSdkService.removeReaction(
       conversation._agentId,
-      command.integrationIdentifier,
+      config.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
@@ -254,19 +257,16 @@ export class HandleAgentReply {
   }
 
   private async reactOnResolve(
-    command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel
   ): Promise<void> {
     const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId) return;
-
-    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
-    if (!config.reactionOnResolved) return;
+    if (!firstMessageId || !config.reactionOnResolved) return;
 
     await this.chatSdkService.reactToMessage(
       conversation._agentId,
-      command.integrationIdentifier,
+      config.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
@@ -276,10 +276,9 @@ export class HandleAgentReply {
 
   private async fireOnResolveBridgeCall(
     command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity
   ): Promise<void> {
-    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
-
     const subscriberParticipant = conversation.participants.find((p) => p.type === 'subscriber');
     const [subscriber, history] = await Promise.all([
       subscriberParticipant

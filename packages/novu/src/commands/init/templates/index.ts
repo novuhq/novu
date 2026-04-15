@@ -153,8 +153,8 @@ export const installTemplate = async ({
       ? { NOVU_SECRET_KEY: secretKey }
       : {
           NOVU_SECRET_KEY: secretKey,
-          NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId,
-          NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId,
+          NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
+          NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId ?? '',
         };
 
   const val = Object.entries(envVars).reduce((acc, [key, value]) => {

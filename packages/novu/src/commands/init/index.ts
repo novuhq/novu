@@ -149,7 +149,13 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     process.exit(1);
   }
 
+  const supportedTemplates = ['notifications', 'agent'] as const;
   let templateChoice = program.template;
+
+  if (templateChoice && !supportedTemplates.includes(templateChoice as (typeof supportedTemplates)[number])) {
+    console.error(`Invalid template "${program.template}". Supported templates: ${supportedTemplates.join(', ')}`);
+    process.exit(1);
+  }
 
   if (!templateChoice) {
     const res = await prompts({

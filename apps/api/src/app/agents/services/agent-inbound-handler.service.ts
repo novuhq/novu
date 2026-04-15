@@ -93,7 +93,7 @@ export class AgentInboundHandler {
       organizationId: config.organizationId,
     });
 
-    const channel = conversation.channels[0];
+    const channel = conversation.channels?.[0];
     const isFirstMessage = !channel?.firstPlatformMessageId;
 
     if (isFirstMessage && config.reactionOnMessageReceived && message.id) {
