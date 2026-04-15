@@ -6,7 +6,7 @@ import { IntegrationSheet } from '@/components/integrations/components/integrati
 import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
 import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
 import type { IntegrationFormData } from '@/components/integrations/types';
-import { Button } from '@/components/primitives/button';
+import { Button, buttonVariants } from '@/components/primitives/button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
@@ -83,7 +83,32 @@ export function SetupButton({
   onClick?: () => void;
   disabled?: boolean;
 }) {
-  const content = (
+  if (href) {
+    const isDisabled = Boolean(disabled);
+
+    return (
+      <a
+        href={isDisabled ? undefined : href}
+        target={isDisabled ? undefined : '_blank'}
+        rel={isDisabled ? undefined : 'noopener noreferrer'}
+        className={buttonVariants({ variant: 'secondary', mode: 'outline', size: 'xs' }).root({
+          class: cn(
+            'relative flex items-center justify-center text-text-sub gap-1.5 px-2 py-1.5',
+            'inline-flex w-fit max-w-full',
+            isDisabled && 'pointer-events-none cursor-default opacity-50'
+          ),
+        })}
+        aria-disabled={isDisabled ? true : undefined}
+        tabIndex={isDisabled ? -1 : undefined}
+      >
+        {leadingIcon}
+        <span className="text-label-xs inline-flex min-w-0 items-center font-medium">{children}</span>
+        <RiArrowRightUpLine className="size-3 shrink-0" />
+      </a>
+    );
+  }
+
+  return (
     <Button
       variant="secondary"
       mode="outline"
@@ -95,19 +120,8 @@ export function SetupButton({
     >
       {leadingIcon}
       <span className="text-label-xs inline-flex min-w-0 items-center font-medium">{children}</span>
-      {href && <RiArrowRightUpLine className="size-3 shrink-0" />}
     </Button>
   );
-
-  if (href) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex w-fit max-w-full">
-        {content}
-      </a>
-    );
-  }
-
-  return content;
 }
 
 export function IntegrationCredentialsSidebar({

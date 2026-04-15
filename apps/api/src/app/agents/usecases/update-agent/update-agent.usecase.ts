@@ -33,7 +33,7 @@ export class UpdateAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    const $set: Record<string, string | boolean> = {};
+    const $set: Record<string, string | boolean | null> = {};
 
     if (command.name !== undefined) {
       $set.name = command.name;
