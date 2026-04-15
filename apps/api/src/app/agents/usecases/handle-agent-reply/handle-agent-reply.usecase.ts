@@ -9,12 +9,20 @@ import {
   ConversationStatusEnum,
   SubscriberRepository,
 } from '@novu/dal';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import { AgentCredentialService } from '../../services/agent-credential.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
+
+export interface SignalError {
+  type: string;
+  workflowId?: string;
+  error: string;
+}
 
 @Injectable()
 export class HandleAgentReply {
@@ -26,10 +34,11 @@ export class HandleAgentReply {
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentCredentialService: AgentCredentialService,
     private readonly conversationService: AgentConversationService,
+    private readonly parseEventRequest: ParseEventRequest,
     private readonly logger: PinoLogger
   ) {}
 
-  async execute(command: HandleAgentReplyCommand): Promise<{ status: string }> {
+  async execute(command: HandleAgentReplyCommand): Promise<{ status: string; signalErrors?: SignalError[] }> {
     if (command.reply && command.update) {
       throw new BadRequestException('Only one of reply or update can be provided');
     }
@@ -61,15 +70,19 @@ export class HandleAgentReply {
       await this.deliverMessage(command, conversation, channel, command.reply.text, ConversationActivityTypeEnum.MESSAGE);
     }
 
+    let signalErrors: SignalError[] = [];
     if (command.signals?.length) {
-      await this.executeSignals(command, conversation, channel, command.signals);
+      signalErrors = await this.executeSignals(command, conversation, channel, command.signals);
     }
 
     if (command.resolve) {
       await this.executeResolveSignal(command, conversation, channel, command.resolve);
     }
 
-    return { status: 'ok' };
+    return {
+      status: 'ok',
+      ...(signalErrors.length ? { signalErrors } : {}),
+    };
   }
 
   private getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
@@ -122,7 +135,9 @@ export class HandleAgentReply {
     conversation: ConversationEntity,
     channel: ConversationChannel,
     signals: HandleAgentReplyCommand['signals']
-  ): Promise<void> {
+  ): Promise<SignalError[]> {
+    const errors: SignalError[] = [];
+
     const metadataSignals = (signals ?? []).filter(
       (s): s is Extract<NonNullable<HandleAgentReplyCommand['signals']>[number], { type: 'metadata' }> => s.type === 'metadata'
     );
@@ -131,10 +146,92 @@ export class HandleAgentReply {
       await this.executeMetadataSignals(command, conversation, channel, metadataSignals);
     }
 
-    const triggerSignals = (signals ?? []).filter((s) => s.type === 'trigger');
+    const triggerSignals = (signals ?? []).filter(
+      (s): s is Extract<NonNullable<HandleAgentReplyCommand['signals']>[number], { type: 'trigger' }> => s.type === 'trigger'
+    );
+
     if (triggerSignals.length) {
-      // TODO: execute trigger signals — requires wiring TriggerEvent or ParseEventRequest from EventsModule
+      const triggerErrors = await this.executeTriggerSignals(command, conversation, channel, triggerSignals);
+      errors.push(...triggerErrors);
     }
+
+    return errors;
+  }
+
+  private async executeTriggerSignals(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    signals: Array<{ type: 'trigger'; workflowId: string; to?: string; payload?: Record<string, unknown> }>
+  ): Promise<SignalError[]> {
+    const errors: SignalError[] = [];
+    const subscriberParticipant = conversation.participants.find((p) => p.type === 'subscriber');
+
+    for (const signal of signals) {
+      const subscriberId = signal.to ?? subscriberParticipant?.id;
+
+      try {
+        if (!subscriberId) {
+          throw new Error('No subscriber: signal.to is empty and conversation has no subscriber participant');
+        }
+
+        await this.parseEventRequest.execute(
+          ParseEventRequestMulticastCommand.create({
+            userId: command.userId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            identifier: signal.workflowId,
+            payload: signal.payload ?? {},
+            overrides: {},
+            to: [{ subscriberId }],
+            addressingType: AddressingTypeEnum.MULTICAST,
+            requestCategory: TriggerRequestCategoryEnum.SINGLE,
+            requestId: `agent-trigger-${shortId(12)}`,
+          })
+        );
+
+        await this.activityRepository.createSignalActivity({
+          identifier: `act-${shortId(8)}`,
+          conversationId: conversation._id,
+          platform: channel.platform,
+          integrationId: channel._integrationId,
+          platformThreadId: channel.platformThreadId,
+          agentId: command.agentIdentifier,
+          content: `Triggered workflow: ${signal.workflowId}`,
+          signalData: {
+            type: 'trigger',
+            payload: { workflowId: signal.workflowId, to: subscriberId, status: 'triggered' },
+          },
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        this.logger.error(err, `[agent:${command.agentIdentifier}] Trigger signal failed for workflow '${signal.workflowId}'`);
+
+        errors.push({ type: 'trigger', workflowId: signal.workflowId, error: errorMessage });
+
+        await this.activityRepository.createSignalActivity({
+          identifier: `act-${shortId(8)}`,
+          conversationId: conversation._id,
+          platform: channel.platform,
+          integrationId: channel._integrationId,
+          platformThreadId: channel.platformThreadId,
+          agentId: command.agentIdentifier,
+          content: `Failed to trigger workflow: ${signal.workflowId}`,
+          signalData: {
+            type: 'trigger',
+            payload: { workflowId: signal.workflowId, to: subscriberId, status: 'failed', error: errorMessage },
+          },
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        }).catch((activityErr) => {
+          this.logger.error(activityErr, `[agent:${command.agentIdentifier}] Failed to log trigger error activity`);
+        });
+      }
+    }
+
+    return errors;
   }
 
   private async executeMetadataSignals(
