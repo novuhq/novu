@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -17,6 +18,7 @@ import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -34,6 +36,7 @@ import {
   ListAgentIntegrationsResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  UpdateAgentBridgeRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
@@ -240,6 +243,36 @@ export class AgentsController {
     );
   }
 
+  @Put('/:identifier/bridge')
+  @ApiResponse(AgentResponseDto)
+  @ApiOperation({
+    summary: 'Update agent bridge configuration',
+    description:
+      'Updates the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateAgentBridge(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: UpdateAgentBridgeRequestDto
+  ): Promise<AgentResponseDto> {
+    return this.updateAgentUsecase.execute(
+      UpdateAgentCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+        bridgeUrl: body.bridgeUrl,
+        devBridgeUrl: body.devBridgeUrl,
+        devBridgeActive: body.devBridgeActive,
+      })
+    );
+  }
+
   @Get('/:identifier')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -285,6 +318,9 @@ export class AgentsController {
         description: body.description,
         active: body.active,
         behavior: body.behavior,
+        bridgeUrl: body.bridgeUrl,
+        devBridgeUrl: body.devBridgeUrl,
+        devBridgeActive: body.devBridgeActive,
       })
     );
   }

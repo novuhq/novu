@@ -1,23 +1,34 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AgentRepository } from '@novu/dal';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import type { AgentResponseDto } from '../../dtos';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import { UpdateAgentCommand } from './update-agent.command';
 
 @Injectable()
 export class UpdateAgent {
-  constructor(private readonly agentRepository: AgentRepository) {}
+  constructor(
+    private readonly agentRepository: AgentRepository,
+    private readonly environmentRepository: EnvironmentRepository
+  ) {}
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
-    if (
-      command.name === undefined &&
-      command.description === undefined &&
-      command.behavior === undefined &&
-      command.active === undefined
-    ) {
-      throw new BadRequestException(
-        'At least one of name, description, behavior, or active must be provided.'
-      );
+    const hasGeneralFields =
+      command.name !== undefined ||
+      command.description !== undefined ||
+      command.behavior !== undefined ||
+      command.active !== undefined;
+    const hasBridgeFields =
+      command.bridgeUrl !== undefined ||
+      command.devBridgeUrl !== undefined ||
+      command.devBridgeActive !== undefined;
+
+    if (!hasGeneralFields && !hasBridgeFields) {
+      throw new BadRequestException('At least one field must be provided.');
+    }
+
+    if (command.devBridgeActive === true || command.devBridgeUrl !== undefined) {
+      await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
     }
 
     const existing = await this.agentRepository.findOne(
@@ -62,6 +73,18 @@ export class UpdateAgent {
       }
     }
 
+    if (command.bridgeUrl !== undefined) {
+      $set.bridgeUrl = command.bridgeUrl;
+    }
+
+    if (command.devBridgeUrl !== undefined) {
+      $set.devBridgeUrl = command.devBridgeUrl;
+    }
+
+    if (command.devBridgeActive !== undefined) {
+      $set.devBridgeActive = command.devBridgeActive;
+    }
+
     await this.agentRepository.updateOne(
       {
         _id: existing._id,
@@ -85,5 +108,16 @@ export class UpdateAgent {
     }
 
     return toAgentResponse(updated);
+  }
+
+  private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
+    const environment = await this.environmentRepository.findOne(
+      { _id: environmentId, _organizationId: organizationId },
+      ['type']
+    );
+
+    if (environment?.type === EnvironmentTypeEnum.PROD) {
+      throw new ForbiddenException('Dev bridge cannot be activated on production environments.');
+    }
   }
 }
