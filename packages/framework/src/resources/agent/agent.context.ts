@@ -25,12 +25,16 @@ function toWireContent(content: MessageContent): WireContent {
     return { card: content };
   }
 
-  const wire: WireContent = { markdown: content.markdown };
-  if (content.files?.length) {
-    wire.files = content.files;
+  if ('markdown' in content && typeof content.markdown === 'string') {
+    const wire: WireContent = { markdown: content.markdown };
+    if (content.files?.length) {
+      wire.files = content.files;
+    }
+
+    return wire;
   }
 
-  return wire;
+  throw new Error('Invalid message content — expected string, { markdown }, or CardElement');
 }
 
 export class AgentContextImpl implements AgentContext {

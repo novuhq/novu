@@ -1,3 +1,4 @@
+import { Button, Card, CardText } from 'chat';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from '../../client';
@@ -66,7 +67,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
   beforeEach(() => {
     client = new Client({ secretKey: 'test-secret-key', strictAuthentication: false });
-    fetchMock = vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve('{}'), json: () => Promise.resolve({ status: 'ok' }) });
+    fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('{}'),
+      json: () => Promise.resolve({ status: 'ok' }),
+    });
     global.fetch = fetchMock as typeof fetch;
   });
 
@@ -127,7 +132,9 @@ describe('agent dispatch via NovuRequestHandler', () => {
       agents: [],
       client,
       handler: () => {
-        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=unknown-bot&event=onMessage`);
+        const url = new URL(
+          `http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=unknown-bot&event=onMessage`
+        );
 
         return {
           body: () => ({}),
@@ -319,5 +326,217 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.platform).toBe('slack');
     expect(capturedCtx.platformContext.threadId).toBe('t1');
     expect(capturedCtx.history).toEqual([]);
+  });
+
+  it('should serialize markdown content on reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        await ctx.reply({ markdown: '**bold** text' });
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.reply.markdown).toBe('**bold** text');
+    expect(replyBody.reply.text).toBeUndefined();
+    expect(replyBody.reply.card).toBeUndefined();
+  });
+
+  it('should serialize markdown with file attachments', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        await ctx.reply({
+          markdown: 'Here is the report',
+          files: [{ filename: 'report.pdf', url: 'https://example.com/report.pdf' }],
+        });
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.reply.markdown).toBe('Here is the report');
+    expect(replyBody.reply.files).toHaveLength(1);
+    expect(replyBody.reply.files[0]).toEqual({ filename: 'report.pdf', url: 'https://example.com/report.pdf' });
+  });
+
+  it('should serialize CardElement on reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        await ctx.reply(
+          Card({
+            title: 'Order #123',
+            children: [
+              CardText({ children: ['Your order is ready'] }),
+              Button({ id: 'confirm', label: 'Confirm', style: 'primary' }),
+            ],
+          })
+        );
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.reply.card).toBeDefined();
+    expect(replyBody.reply.card.type).toBe('card');
+    expect(replyBody.reply.card.title).toBe('Order #123');
+    expect(replyBody.reply.card.children).toHaveLength(2);
+    expect(replyBody.reply.card.children[1].type).toBe('button');
+    expect(replyBody.reply.card.children[1].id).toBe('confirm');
+    expect(replyBody.reply.text).toBeUndefined();
+    expect(replyBody.reply.markdown).toBeUndefined();
+  });
+
+  it('should serialize CardElement on update', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        await ctx.update(Card({ title: 'Loading...', children: [] }));
+        await ctx.reply('Done');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
+
+    const replyCalls = fetchMock.mock.calls.filter(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
+
+    const updateBody = parsedBodies.find((body: any) => body.update);
+    expect(updateBody.update.card).toBeDefined();
+    expect(updateBody.update.card.type).toBe('card');
+    expect(updateBody.update.card.title).toBe('Loading...');
+
+    const replyBody = parsedBodies.find((body: any) => body.reply);
+    expect(replyBody.reply.text).toBe('Done');
+  });
+
+  it('should batch signals with card reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        ctx.metadata.set('intent', 'order_confirm');
+        await ctx.reply(Card({ title: 'Confirm?', children: [Button({ id: 'yes', label: 'Yes', style: 'primary' })] }));
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.reply.card.type).toBe('card');
+    expect(replyBody.signals).toHaveLength(1);
+    expect(replyBody.signals[0]).toEqual({ type: 'metadata', key: 'intent', value: 'order_confirm' });
   });
 });
