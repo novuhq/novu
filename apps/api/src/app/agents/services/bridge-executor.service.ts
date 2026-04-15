@@ -96,6 +96,13 @@ export interface AgentBridgeRequest {
   platformContext: BridgePlatformContext;
 }
 
+export class NoBridgeUrlError extends Error {
+  constructor(agentIdentifier: string) {
+    super(`No bridge URL configured for agent ${agentIdentifier}`);
+    this.name = 'NoBridgeUrlError';
+  }
+}
+
 @Injectable()
 export class BridgeExecutorService {
   constructor(
@@ -112,7 +119,7 @@ export class BridgeExecutorService {
 
       const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, config.organizationId, agentIdentifier, event);
       if (!bridgeUrl) {
-        return;
+        throw new NoBridgeUrlError(agentIdentifier);
       }
 
       const secretKey = await this.getDecryptedSecretKey.execute(
@@ -126,6 +133,10 @@ export class BridgeExecutorService {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
       });
     } catch (err) {
+      if (err instanceof NoBridgeUrlError) {
+        throw err;
+      }
+
       this.logger.error(err, `[agent:${agentIdentifier}] Bridge setup failed — skipping bridge call`);
     }
   }

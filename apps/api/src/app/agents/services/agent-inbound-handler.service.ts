@@ -1,12 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { ResolvedPlatformConfig } from './agent-credential.service';
+import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { AgentConversationService } from './agent-conversation.service';
+import { ResolvedPlatformConfig } from './agent-credential.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import { BridgeExecutorService } from './bridge-executor.service';
+import { BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+
+const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
+
+Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
 
 @Injectable()
 export class AgentInboundHandler {
@@ -15,7 +21,9 @@ export class AgentInboundHandler {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    @Inject(forwardRef(() => HandleAgentReply))
+    private readonly handleAgentReply: HandleAgentReply
   ) {}
 
   async handle(
@@ -93,18 +101,38 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
-    await this.bridgeExecutor.execute({
-      event,
-      config,
-      conversation,
-      subscriber,
-      history,
-      message,
-      platformContext: {
-        threadId: thread.id,
-        channelId: thread.channelId,
-        isDM: thread.isDM,
-      },
-    });
+    try {
+      await this.bridgeExecutor.execute({
+        event,
+        config,
+        conversation,
+        subscriber,
+        history,
+        message,
+        platformContext: {
+          threadId: thread.id,
+          channelId: thread.channelId,
+          isDM: thread.isDM,
+        },
+      });
+    } catch (err) {
+      if (err instanceof NoBridgeUrlError) {
+        await this.handleAgentReply.execute(
+          HandleAgentReplyCommand.create({
+            userId: 'system',
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+            conversationId: conversation._id,
+            agentIdentifier: agentId,
+            integrationIdentifier: config.integrationIdentifier,
+            reply: { text: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN },
+          })
+        );
+
+        return;
+      }
+
+      throw err;
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   ConversationActivityRepository,
@@ -22,6 +22,7 @@ export class HandleAgentReply {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    @Inject(forwardRef(() => ChatSdkService))
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentCredentialService: AgentCredentialService,
