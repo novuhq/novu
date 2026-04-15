@@ -189,22 +189,6 @@ export class HandleAgentReply {
             requestId: `agent-trigger-${shortId(12)}`,
           })
         );
-
-        await this.activityRepository.createSignalActivity({
-          identifier: `act-${shortId(8)}`,
-          conversationId: conversation._id,
-          platform: channel.platform,
-          integrationId: channel._integrationId,
-          platformThreadId: channel.platformThreadId,
-          agentId: command.agentIdentifier,
-          content: `Triggered workflow: ${signal.workflowId}`,
-          signalData: {
-            type: 'trigger',
-            payload: { workflowId: signal.workflowId, to: subscriberId, status: 'triggered' },
-          },
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         this.logger.error(err, `[agent:${command.agentIdentifier}] Trigger signal failed for workflow '${signal.workflowId}'`);
@@ -228,7 +212,27 @@ export class HandleAgentReply {
         }).catch((activityErr) => {
           this.logger.error(activityErr, `[agent:${command.agentIdentifier}] Failed to log trigger error activity`);
         });
+
+        continue;
       }
+
+      await this.activityRepository.createSignalActivity({
+        identifier: `act-${shortId(8)}`,
+        conversationId: conversation._id,
+        platform: channel.platform,
+        integrationId: channel._integrationId,
+        platformThreadId: channel.platformThreadId,
+        agentId: command.agentIdentifier,
+        content: `Triggered workflow: ${signal.workflowId}`,
+        signalData: {
+          type: 'trigger',
+          payload: { workflowId: signal.workflowId, to: subscriberId, status: 'triggered' },
+        },
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }).catch((activityErr) => {
+        this.logger.error(activityErr, `[agent:${command.agentIdentifier}] Failed to log trigger success activity`);
+      });
     }
 
     return errors;
