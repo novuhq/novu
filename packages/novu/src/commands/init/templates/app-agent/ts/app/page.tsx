@@ -13,20 +13,16 @@ export default function Home() {
           <h2>Get started</h2>
           <ol>
             <li>
-              Open <code className={styles.code}>app/novu/agents/support-agent.ts</code> to edit your agent
+              Edit your agent in <code className={styles.code}>app/novu/agents/support-agent.ts</code>
             </li>
             <li>
-              Create an agent and connect a chat platform (Slack, Teams, WhatsApp) in the{' '}
+              Connect a chat platform in the{' '}
               <a href="https://dashboard.novu.co" target="_blank" rel="noopener noreferrer">
                 Novu Dashboard
               </a>
             </li>
             <li>
-              Replace the demo handler with your LLM call (OpenAI, Anthropic, etc.)
-            </li>
-            <li>
-              Deploy your bridge endpoint and sync with{' '}
-              <code className={styles.code}>npx novu sync</code>
+              Replace the demo handler with your LLM call
             </li>
           </ol>
         </div>
