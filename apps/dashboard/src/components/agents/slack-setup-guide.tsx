@@ -1,4 +1,6 @@
+import { useUser } from '@clerk/clerk-react';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { NovuProvider, SlackConnectButton } from '@novu/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -15,6 +17,7 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
@@ -267,6 +270,8 @@ export function SlackSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: SlackSetupGuideProps) {
+  const { user } = useUser();
+  const { currentEnvironment } = useEnvironment();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
@@ -378,18 +383,20 @@ export function SlackSetupGuide({
           />
         }
         rightContent={
-          <SetupButton
-            href="https://slack.com/oauth/v2/authorize"
-            leadingIcon={
-              <ProviderIcon
-                providerId={ChatProviderIdEnum.Slack}
-                providerDisplayName="Slack"
-                className="size-4 shrink-0"
+          user?.externalId && currentEnvironment?.identifier ? (
+            <NovuProvider
+              subscriberId={user.externalId}
+              applicationIdentifier={currentEnvironment.identifier}
+              backendUrl={apiHostnameManager.getHostname()}
+              socketUrl={apiHostnameManager.getWebSocketHostname()}
+            >
+              <SlackConnectButton
+                integrationIdentifier={selectedIntegrationIdentifier}
+                connectLabel={`Install ${agent.name}`}
+                connectedLabel="Connected to Slack"
               />
-            }
-          >
-            {`Install ${agent.name}`}
-          </SetupButton>
+            </NovuProvider>
+          ) : null
         }
       />
     </>
