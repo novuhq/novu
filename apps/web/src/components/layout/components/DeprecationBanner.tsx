@@ -1,12 +1,15 @@
-import { colors, Text, Warning } from '@novu/design-system';
 import { Group } from '@mantine/core';
+import { colors, Text, Warning } from '@novu/design-system';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useAuth } from '../../../hooks/useAuth';
+
+const MIGRATION_GUIDE_URL = 'https://go.novu.co/migration-guide';
 
 export function DeprecationBanner() {
   const { currentOrganization } = useAuth();
 
-  if (currentOrganization?.apiServiceLevel === ApiServiceLevelEnum.FREE) {
+  const apiServiceLevel = currentOrganization?.apiServiceLevel;
+  if (!apiServiceLevel || apiServiceLevel === ApiServiceLevelEnum.FREE) {
     return null;
   }
 
@@ -15,7 +18,7 @@ export function DeprecationBanner() {
       style={{
         width: '100%',
         padding: 8,
-        backgroundColor: '#FFD336',
+        background: colors.horizontal,
         textAlign: 'center',
         display: 'flex',
         justifyContent: 'center',
@@ -24,9 +27,18 @@ export function DeprecationBanner() {
       data-test-id="deprecation-banner"
     >
       <Group spacing={8}>
-        <Warning color={colors.black} />
-        <Text color={colors.black}>
-          This dashboard is going to be deprecated after 31st May. Please migrate to the new dashboard before time.
+        <Warning color={colors.white} />
+        <Text color={colors.white}>
+          This dashboard will be deprecated after May 31. To avoid disruption, please migrate to the new dashboard in
+          advance.{' '}
+          <a
+            href={MIGRATION_GUIDE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: colors.white, fontWeight: 700, textDecoration: 'underline' }}
+          >
+            Migration Guide →
+          </a>
         </Text>
       </Group>
     </div>
