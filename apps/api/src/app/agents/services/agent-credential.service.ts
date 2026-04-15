@@ -20,6 +20,11 @@ export interface ResolvedPlatformConfig {
   agentIdentifier: string;
   integrationIdentifier: string;
   integrationId: string;
+  thinkingIndicatorEnabled: boolean;
+}
+
+function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled?: boolean } }): boolean {
+  return agent.behavior?.thinkingIndicatorEnabled !== false;
 }
 
 @Injectable()
@@ -111,6 +116,7 @@ export class AgentCredentialService {
       agentIdentifier: agent.identifier,
       integrationIdentifier,
       integrationId: integration._id,
+      thinkingIndicatorEnabled: resolveThinkingIndicator(agent),
     };
   }
 }

@@ -2,6 +2,10 @@ import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 
+export interface AgentBehavior {
+  thinkingIndicatorEnabled?: boolean;
+}
+
 export class AgentEntity {
   _id: string;
 
@@ -12,6 +16,8 @@ export class AgentEntity {
   description?: string;
 
   active: boolean;
+
+  behavior?: AgentBehavior;
 
   _environmentId: EnvironmentId;
 

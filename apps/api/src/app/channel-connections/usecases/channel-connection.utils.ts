@@ -6,6 +6,10 @@ import { ConnectionMode, ContextPayload } from '@novu/shared';
  * requested connectionMode. Throws a BadRequestException when the caller
  * violates the scoping rules for the chosen mode.
  *
+ * Note: subscriberId may be present even in "shared" mode (e.g. injected from
+ * the subscriber JWT session). It is intentionally not rejected here — callers
+ * are responsible for stripping it before storing or embedding it in state.
+ *
  * Called from both CreateChannelConnection and GenerateSlackOauthUrl so the
  * rules are enforced in one place.
  */
@@ -21,10 +25,6 @@ export function validateConnectionMode({
   if (connectionMode === 'shared') {
     if (!context) {
       throw new BadRequestException('context is required when connectionMode is "shared"');
-    }
-
-    if (subscriberId) {
-      throw new BadRequestException('subscriberId must not be provided when connectionMode is "shared"');
     }
 
     return;

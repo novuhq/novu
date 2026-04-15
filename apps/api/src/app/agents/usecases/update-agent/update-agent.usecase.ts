@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AgentRepository } from '@novu/dal';
-
-import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import type { AgentResponseDto } from '../../dtos';
+import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import { UpdateAgentCommand } from './update-agent.command';
 
 @Injectable()
@@ -10,8 +9,13 @@ export class UpdateAgent {
   constructor(private readonly agentRepository: AgentRepository) {}
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
-    if (command.name === undefined && command.description === undefined && command.active === undefined) {
-      throw new BadRequestException('At least one of name, description, or active must be provided.');
+    if (
+      command.name === undefined &&
+      command.description === undefined &&
+      command.behavior === undefined &&
+      command.active === undefined
+    ) {
+      throw new BadRequestException('At least one of name, description, or behavior must be provided.');
     }
 
     const existing = await this.agentRepository.findOne(
@@ -39,6 +43,12 @@ export class UpdateAgent {
 
     if (command.active !== undefined) {
       $set.active = command.active;
+    }
+
+    if (command.behavior !== undefined) {
+      if (command.behavior.thinkingIndicatorEnabled !== undefined) {
+        $set['behavior.thinkingIndicatorEnabled'] = command.behavior.thinkingIndicatorEnabled;
+      }
     }
 
     await this.agentRepository.updateOne(

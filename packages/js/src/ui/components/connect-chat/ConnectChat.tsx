@@ -1,3 +1,4 @@
+import { createEffect, createMemo, Show } from 'solid-js';
 import type { ConnectionMode } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
 import { useChannelConnection } from '../../api/hooks/useChannelConnection';
@@ -5,6 +6,7 @@ import { useNovu } from '../../context';
 import { useStyle } from '../../helpers/useStyle';
 import { Loader } from '../../icons/Loader';
 import { Button, Motion } from '../primitives';
+import { Tooltip } from '../primitives/Tooltip';
 
 export type ConnectChatProps = {
   integrationIdentifier: string;
@@ -28,6 +30,19 @@ export const ConnectChat = (props: ConnectChatProps) => {
     subscriberId: props.subscriberId,
   });
 
+  const connectionMode = () => props.connectionMode ?? 'subscriber';
+  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
+
+  createEffect(() => {
+    if (isMisconfigured()) {
+      console.warn(
+        '[Novu] ConnectChat: "context" is required when connectionMode is "shared". ' +
+          'Provide it via the context prop on ConnectChat or on NovuProvider.'
+      );
+    }
+  });
+
   const isConnected = () => !!connection();
 
   const handleClick = async () => {
@@ -42,26 +57,18 @@ export const ConnectChat = (props: ConnectChatProps) => {
         props.onDisconnectSuccess?.();
       }
     } else {
-      const connectionMode = props.connectionMode ?? 'subscriber';
-      const resolvedContext = props.context;
+      const mode = connectionMode();
+      const ctx = resolvedContext();
       const resolvedSubscriberId =
-        connectionMode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
-
-      if (connectionMode === 'shared' && !resolvedContext) {
-        props.onConnectError?.(
-          new Error('context is required when connectionMode is "shared". Provide it on ConnectChat or NovuProvider.')
-        );
-
-        return;
-      }
+        mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
 
       const result = await connect({
         integrationIdentifier: props.integrationIdentifier,
         connectionIdentifier: props.connectionIdentifier,
         subscriberId: resolvedSubscriberId,
-        context: resolvedContext,
+        context: ctx,
         scope: props.scope,
-        connectionMode,
+        connectionMode: mode,
       });
 
       if (result.error) {
@@ -75,6 +82,39 @@ export const ConnectChat = (props: ConnectChatProps) => {
     }
   };
 
+  const buttonContent = () => (
+    <span
+      class={style({
+        key: 'connectChatButtonContainer',
+        className: 'nt-relative nt-overflow-hidden nt-inline-flex nt-items-center nt-justify-center nt-gap-1',
+      })}
+    >
+      <Motion.span
+        initial={{ opacity: 1 }}
+        animate={{ opacity: loading() ? 0 : 1 }}
+        transition={{ easing: 'ease-in-out', duration: 0.2 }}
+        class="nt-inline-flex nt-items-center"
+      >
+        <span
+          class={style({
+            key: 'connectChatButtonLabel',
+            className: '[line-height:16px]',
+          })}
+        >
+          {isConnected() ? 'Disconnect' : 'Connect'}
+        </span>
+      </Motion.span>
+      <Motion.span
+        initial={{ opacity: 1 }}
+        animate={{ opacity: loading() ? 1 : 0 }}
+        transition={{ easing: 'ease-in-out', duration: 0.2 }}
+        class="nt-absolute nt-left-0 nt-inline-flex nt-items-center"
+      >
+        <Loader class="nt-text-foreground-alpha-600 nt-size-3.5 nt-animate-spin" />
+      </Motion.span>
+    </span>
+  );
+
   return (
     <div
       class={style({
@@ -82,46 +122,50 @@ export const ConnectChat = (props: ConnectChatProps) => {
         className: 'nt-flex nt-items-center nt-gap-2',
       })}
     >
-      <Button
-        class={style({
-          key: 'connectChatButton',
-          className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width]',
-        })}
-        variant="secondary"
-        onClick={handleClick}
-        disabled={loading()}
-      >
-        <span
-          class={style({
-            key: 'connectChatButtonContainer',
-            className: 'nt-relative nt-overflow-hidden nt-inline-flex nt-items-center nt-justify-center nt-gap-1',
-          })}
-        >
-          <Motion.span
-            initial={{ opacity: 1 }}
-            animate={{ opacity: loading() ? 0 : 1 }}
-            transition={{ easing: 'ease-in-out', duration: 0.2 }}
-            class="nt-inline-flex nt-items-center"
-          >
-            <span
+      <Show
+        when={!isMisconfigured()}
+        fallback={
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              asChild={(triggerProps) => (
+                <Button
+                  class={style({
+                    key: 'connectChatButton',
+                    className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width] !nt-pointer-events-auto',
+                  })}
+                  variant="secondary"
+                  disabled={true}
+                  {...triggerProps}
+                >
+                  {buttonContent()}
+                </Button>
+              )}
+            />
+            <Tooltip.Content
               class={style({
-                key: 'connectChatButtonLabel',
-                className: '[line-height:16px]',
+                key: 'connectChatMisconfiguredTooltip',
+                className:
+                  'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-rounded-lg nt-text-background nt-text-xs nt-max-w-[220px]',
               })}
             >
-              {isConnected() ? 'Disconnect' : 'Connect'}
-            </span>
-          </Motion.span>
-          <Motion.span
-            initial={{ opacity: 1 }}
-            animate={{ opacity: loading() ? 1 : 0 }}
-            transition={{ easing: 'ease-in-out', duration: 0.2 }}
-            class="nt-absolute nt-left-0 nt-inline-flex nt-items-center"
-          >
-            <Loader class="nt-text-foreground-alpha-600 nt-size-3.5 nt-animate-spin" />
-          </Motion.span>
-        </span>
-      </Button>
+              Missing context — provide a <code>context</code> prop on <code>ConnectChat</code> or{' '}
+              <code>NovuProvider</code> when using <code>connectionMode="shared"</code>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        }
+      >
+        <Button
+          class={style({
+            key: 'connectChatButton',
+            className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width]',
+          })}
+          variant="secondary"
+          onClick={handleClick}
+          disabled={loading()}
+        >
+          {buttonContent()}
+        </Button>
+      </Show>
     </div>
   );
 };

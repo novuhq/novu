@@ -6,8 +6,8 @@ import { novuConfig } from '@/utils/config';
 const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_NOVU_SLACK_INTEGRATION_IDENTIFIER ?? 'slack';
 const CONNECTION_IDENTIFIER = 'slack-workspace-connection';
 const SLACK_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_NOVU_SLACK_TEST_WORKFLOW_ID ?? '';
-// const context = { key: 'value1' };
-const context = undefined;
+const context = { key: 'value2' };
+// const context = undefined;
 
 export default function ConnectChatPage() {
   const [dmStatus, setDmStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -91,7 +91,7 @@ export default function ConnectChatPage() {
           <p className="text-xs text-muted-foreground">
             OAuth can create the <code>ChannelEndpoint</code> automatically — the Step 2 Link User flow is optional.
           </p>
-          <NovuProvider {...novuConfig}>
+          <NovuProvider {...novuConfig} context={context}>
             <SlackConnectButton
               integrationIdentifier={INTEGRATION_IDENTIFIER}
               // connectLabel="Connect to Slack AAA"
@@ -107,10 +107,11 @@ export default function ConnectChatPage() {
               }}
               // connectionIdentifier={CONNECTION_IDENTIFIER}
               // connectionStrategy: 'subscriber' | 'shared' DEFAULT 'subscriber'
-
+              connectionMode="shared"
               // in NovuProvider
               // subscriberId: string // redundant
               // ...(context && { context: context }),
+              onConnectError={(error) => console.error(error)}
             />
           </NovuProvider>
 

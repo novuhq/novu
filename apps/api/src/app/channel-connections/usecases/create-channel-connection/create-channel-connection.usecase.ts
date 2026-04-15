@@ -111,6 +111,8 @@ export class CreateChannelConnection {
     integration: IntegrationEntity,
     contextKeys: string[]
   ): Promise<ChannelConnectionEntity> {
+    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
+
     const channelConnection = await this.channelConnectionRepository.create({
       identifier,
       integrationIdentifier: integration.identifier,
@@ -118,7 +120,7 @@ export class CreateChannelConnection {
       channel: integration.channel,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
+      subscriberId,
       contextKeys,
       workspace: command.workspace,
       auth: command.auth,

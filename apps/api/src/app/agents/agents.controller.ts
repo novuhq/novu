@@ -52,10 +52,10 @@ import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
-import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
-import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
+import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
+import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -84,10 +84,7 @@ export class AgentsController {
     description: 'Creates an agent scoped to the current environment. The identifier must be unique per environment.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  createAgent(
-    @UserSession() user: UserSessionData,
-    @Body() body: CreateAgentRequestDto
-  ): Promise<AgentResponseDto> {
+  createAgent(@UserSession() user: UserSessionData, @Body() body: CreateAgentRequestDto): Promise<AgentResponseDto> {
     return this.createAgentUsecase.execute(
       CreateAgentCommand.create({
         userId: user._id,
@@ -109,10 +106,7 @@ export class AgentsController {
       'Returns a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  listAgents(
-    @UserSession() user: UserSessionData,
-    @Query() query: ListAgentsQueryDto
-  ): Promise<ListAgentsResponseDto> {
+  listAgents(@UserSession() user: UserSessionData, @Query() query: ListAgentsQueryDto): Promise<ListAgentsResponseDto> {
     return this.listAgentsUsecase.execute(
       ListAgentsCommand.create({
         user,
@@ -133,7 +127,8 @@ export class AgentsController {
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
-    description: 'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
+    description:
+      'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
@@ -289,6 +284,7 @@ export class AgentsController {
         name: body.name,
         description: body.description,
         active: body.active,
+        behavior: body.behavior,
       })
     );
   }

@@ -4,7 +4,7 @@ import { useDataRef } from '@/hooks/use-data-ref';
 import { generateUUID } from '@/utils/uuid';
 import { ConditionsEditorContextType } from './types';
 
-export const ConditionsEditorContext = createContext<ConditionsEditorContextType>({
+const ConditionsEditorContext = createContext<ConditionsEditorContextType>({
   removeRuleOrGroup: () => {},
   cloneRuleOrGroup: () => {},
   getParentGroup: () => null,
