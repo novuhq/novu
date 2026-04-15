@@ -25,6 +25,12 @@ const agentSchema = new Schema<AgentDBModel>(
         onResolved: Schema.Types.Mixed,
       },
     },
+    bridgeUrl: Schema.Types.String,
+    devBridgeUrl: Schema.Types.String,
+    devBridgeActive: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

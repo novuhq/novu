@@ -27,6 +27,12 @@ export class AgentEntity {
 
   behavior?: AgentBehavior;
 
+  bridgeUrl?: string;
+
+  devBridgeUrl?: string;
+
+  devBridgeActive?: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

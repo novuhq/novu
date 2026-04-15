@@ -23,6 +23,9 @@ export interface ResolvedAgentConfig {
   thinkingIndicatorEnabled: boolean;
   reactionOnMessageReceived: string | null;
   reactionOnResolved: string | null;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
 }
 
 const DEFAULT_REACTION_ON_MESSAGE = 'eyes';
@@ -135,6 +138,9 @@ export class AgentConfigResolver {
         DEFAULT_REACTION_ON_MESSAGE
       ),
       reactionOnResolved: resolveReaction(agent.behavior?.reactions?.onResolved, DEFAULT_REACTION_ON_RESOLVED),
+      bridgeUrl: agent.bridgeUrl,
+      devBridgeUrl: agent.devBridgeUrl,
+      devBridgeActive: agent.devBridgeActive,
     };
   }
 }
