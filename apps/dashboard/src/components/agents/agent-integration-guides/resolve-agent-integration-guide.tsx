@@ -1,5 +1,6 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
 
@@ -24,8 +25,11 @@ export function ResolveAgentIntegrationGuide({
 }: ResolveAgentIntegrationGuideProps) {
   const providerId = integrationLink.integration.providerId;
 
-  if (providerId === ChatProviderIdEnum.Slack) {
+  if (providerId === ChatProviderIdEnum.Slack && !integrationLink.connectedAt) {
+    return <SlackSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+  }
 
+  if (providerId === ChatProviderIdEnum.Slack) {
     return (
       <SlackAgentIntegrationGuide
         embedded={embedded}
