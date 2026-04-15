@@ -54,7 +54,7 @@ type ProviderDropdownProps = {
 };
 
 function buildDropdownItems(
-  conversationalProviders: ConversationalProvider[],
+  conversationalProviders: readonly ConversationalProvider[],
   integrations: IIntegration[] | undefined
 ) {
   const integrationsByProvider = new Map<string, IIntegration[]>();
@@ -267,7 +267,6 @@ export function ProviderDropdown({
         });
         await addAgentIntegrationMutation.mutateAsync(created.identifier);
         showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
-        await queryClient.refetchQueries({ queryKey: [QueryKeys.fetchIntegrations, environmentId] });
         onSelect(item.providerId, created);
         setOpen(false);
       }

@@ -4,7 +4,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiKey2Line } from 'react-icons/ri';
@@ -46,6 +46,7 @@ function ListeningStatus({
   const queryClient = useQueryClient();
   const [connectedAt, setConnectedAt] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const confettiTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!currentEnvironment || !watchedIntegrationId) {
@@ -88,7 +89,15 @@ function ListeningStatus({
         if (!confettiFired) {
           confettiFired = true;
           setShowConfetti(true);
-          window.setTimeout(() => setShowConfetti(false), 10_000);
+
+          if (confettiTimeoutRef.current) {
+            clearTimeout(confettiTimeoutRef.current);
+          }
+
+          confettiTimeoutRef.current = window.setTimeout(() => {
+            confettiTimeoutRef.current = null;
+            setShowConfetti(false);
+          }, 10_000);
           onSlackWorkspaceConnected?.();
         }
 
@@ -113,6 +122,11 @@ function ListeningStatus({
 
       if (intervalId) {
         clearInterval(intervalId);
+      }
+
+      if (confettiTimeoutRef.current) {
+        clearTimeout(confettiTimeoutRef.current);
+        confettiTimeoutRef.current = null;
       }
     };
   }, [agentIdentifier, currentEnvironment, onSlackWorkspaceConnected, queryClient, watchedIntegrationId]);
@@ -185,6 +199,7 @@ function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string,
   const botName = escapeYamlDoubleQuoted(agent.name);
   const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
   const oauthCallbackQuoted = escapeYamlDoubleQuoted(chatOAuthCallbackUrl);
+  const webhookHandlerUrlQuoted = escapeYamlDoubleQuoted(webhookHandlerUrl);
 
   return `display_information:
   name: "${botName}"
@@ -216,7 +231,7 @@ oauth_config:
 
 settings:
   event_subscriptions:
-    request_url: ${webhookHandlerUrl}
+    request_url: "${webhookHandlerUrlQuoted}"
     bot_events:
       - app_mention
       - message.channels
@@ -228,7 +243,7 @@ settings:
       - assistant_thread_context_changed
   interactivity:
     is_enabled: true
-    request_url: ${webhookHandlerUrl}
+    request_url: "${webhookHandlerUrlQuoted}"
   org_deploy_enabled: false
   socket_mode_enabled: false
   token_rotation_enabled: false`;

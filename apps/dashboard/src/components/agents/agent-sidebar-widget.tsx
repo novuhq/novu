@@ -333,8 +333,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
 
       <p className="text-label-xs font-medium">
         <span className="text-text-soft">Last updated </span>
-        <span className="text-text-sub">{formatDistanceToNow(new Date(agent.updatedAt), { addSuffix: false })}</span>
-        <span className="text-text-sub"> ago</span>
+        <span className="text-text-sub">{formatDistanceToNow(new Date(agent.updatedAt), { addSuffix: true })}</span>
       </p>
     </div>
   );

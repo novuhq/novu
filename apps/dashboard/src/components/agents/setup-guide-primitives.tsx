@@ -16,7 +16,7 @@ import type { StepStatus } from './setup-guide-step-utils';
 export function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
   if (status === 'completed') {
     return (
-      <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[#5ec269] bg-[#77db89] shadow-[0px_0px_0px_1px_#FFF,0px_0px_0px_2px_#E1E4EA]">
+      <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-success-dark bg-success-light shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))]">
         <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
           <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

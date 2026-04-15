@@ -15,7 +15,9 @@ export class UpdateAgent {
       command.behavior === undefined &&
       command.active === undefined
     ) {
-      throw new BadRequestException('At least one of name, description, or behavior must be provided.');
+      throw new BadRequestException(
+        'At least one of name, description, behavior, or active must be provided.'
+      );
     }
 
     const existing = await this.agentRepository.findOne(
