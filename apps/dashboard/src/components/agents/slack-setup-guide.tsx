@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -200,6 +200,7 @@ function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string,
   const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
   const oauthCallbackQuoted = escapeYamlDoubleQuoted(chatOAuthCallbackUrl);
   const webhookHandlerUrlQuoted = escapeYamlDoubleQuoted(webhookHandlerUrl);
+  const botScopesYaml = SLACK_AGENT_OAUTH_SCOPES.map((scope) => `      - ${scope}`).join('\n');
 
   return `display_information:
   name: "${botName}"
@@ -215,19 +216,7 @@ oauth_config:
     - "${oauthCallbackQuoted}"
   scopes:
     bot:
-      - app_mentions:read
-      - channels:history
-      - channels:read
-      - chat:write
-      - groups:history
-      - groups:read
-      - im:history
-      - im:read
-      - mpim:history
-      - mpim:read
-      - reactions:read
-      - reactions:write
-      - users:read
+${botScopesYaml}
 
 settings:
   event_subscriptions:
