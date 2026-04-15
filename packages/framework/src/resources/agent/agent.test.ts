@@ -1,9 +1,9 @@
-import { Button, Card, CardText } from 'chat';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
+import { Card, CardText, Button } from './index';
 import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
 
