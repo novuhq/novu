@@ -2,6 +2,7 @@ export { AgentContextImpl } from './agent.context';
 export { agent } from './agent.resource';
 export type {
   Agent,
+  AgentAction,
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,

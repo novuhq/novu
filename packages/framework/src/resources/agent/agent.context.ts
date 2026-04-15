@@ -1,4 +1,5 @@
 import type {
+  AgentAction,
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,
@@ -39,6 +40,7 @@ function serializeContent(content: MessageContent): ReplyContent {
 
 export class AgentContextImpl implements AgentContext {
   readonly event: string;
+  readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
@@ -57,6 +59,7 @@ export class AgentContextImpl implements AgentContext {
 
   constructor(request: AgentBridgeRequest, secretKey: string) {
     this.event = request.event;
+    this.action = request.action ?? null;
     this.message = request.message;
     this.conversation = request.conversation;
     this.subscriber = request.subscriber;

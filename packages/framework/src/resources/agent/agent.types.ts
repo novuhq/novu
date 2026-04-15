@@ -2,6 +2,7 @@ import type { CardElement } from 'chat';
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
+  ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
 }
 
@@ -91,12 +92,19 @@ export interface ReplyContent {
   files?: FileRef[];
 }
 
+export interface AgentAction {
+  actionId: string;
+  value?: string;
+  metadata?: Record<string, unknown>;
+}
+
 // ---------------------------------------------------------------------------
 // Context + handlers
 // ---------------------------------------------------------------------------
 
 export interface AgentContext {
   readonly event: string;
+  readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
@@ -115,6 +123,7 @@ export interface AgentContext {
 
 export interface AgentHandlers {
   onMessage: (ctx: AgentContext) => Promise<void>;
+  onAction?: (ctx: AgentContext) => Promise<void>;
   onResolve?: (ctx: AgentContext) => Promise<void>;
 }
 
@@ -136,6 +145,7 @@ export interface AgentBridgeRequest {
   replyUrl: string;
   conversationId: string;
   integrationIdentifier: string;
+  action: AgentAction | null;
   message: AgentMessage | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
