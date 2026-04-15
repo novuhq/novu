@@ -148,6 +148,9 @@ const echoBot = agent('novu-agent', {
           ],
         })
       );
+    } else if (actionId === 'resolve') {
+      ctx.resolve('Incident resolved via action');
+      await ctx.reply(`Incident resolved by *${ctx.subscriber?.firstName ?? 'unknown'}*.`);
     } else if (actionId === 'assign') {
       await ctx.reply(`On-call assignment updated to *${value}*.`);
     } else if (actionId === 'escalate') {

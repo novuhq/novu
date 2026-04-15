@@ -113,8 +113,8 @@ export class ChatSdkService implements OnModuleDestroy {
 
     if (content.card) {
       await thread.post(content.card);
-    } else if (content.markdown) {
-      await thread.post({ markdown: content.markdown });
+    } else if (content.markdown !== undefined) {
+      await thread.post({ markdown: content.markdown, files: content.files });
     } else {
       await thread.post(content.text ?? '');
     }

@@ -215,13 +215,20 @@ export class BridgeExecutorService {
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
     const replyUrl = `${apiRootUrl}/v1/agents/${agentIdentifier}/reply`;
 
-    const deliveryId = message?.id
-      ? `${conversation._id}:${message.id}`
-      : `${conversation._id}:${event}`;
+    const timestamp = new Date().toISOString();
+
+    let deliveryId: string;
+    if (message?.id) {
+      deliveryId = `${conversation._id}:${message.id}`;
+    } else if (action) {
+      deliveryId = `${conversation._id}:${event}:${action.actionId}:${timestamp}`;
+    } else {
+      deliveryId = `${conversation._id}:${event}`;
+    }
 
     return {
       version: 1,
-      timestamp: new Date().toISOString(),
+      timestamp,
       deliveryId,
       event,
       agentId: agentIdentifier,
