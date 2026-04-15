@@ -14,7 +14,7 @@ export type {
   AgentSubscriber,
   FileRef,
   MessageContent,
-  WireContent,
+  ReplyContent,
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';
 

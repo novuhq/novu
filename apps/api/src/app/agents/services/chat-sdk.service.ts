@@ -5,6 +5,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { LRUCache } from 'lru-cache';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import type { ReplyContentDto } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
@@ -100,7 +101,7 @@ export class ChatSdkService implements OnModuleDestroy {
     integrationIdentifier: string,
     platform: string,
     serializedThread: Record<string, unknown>,
-    message: string
+    content: ReplyContentDto
   ): Promise<void> {
     const config = await this.agentCredentialService.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -109,7 +110,14 @@ export class ChatSdkService implements OnModuleDestroy {
     const { ThreadImpl } = await esmImport('chat');
     const adapter = chat.getAdapter(platform);
     const thread = ThreadImpl.fromJSON(serializedThread, adapter);
-    await thread.post(message);
+
+    if (content.card) {
+      await thread.post(content.card);
+    } else if (content.markdown) {
+      await thread.post({ markdown: content.markdown });
+    } else {
+      await thread.post(content.text ?? '');
+    }
   }
 
   private async getOrCreate(

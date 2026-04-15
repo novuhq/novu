@@ -8,15 +8,15 @@ import type {
   AgentReplyPayload,
   AgentSubscriber,
   MessageContent,
+  ReplyContent,
   Signal,
-  WireContent,
 } from './agent.types';
 
 function isCardElement(content: object): content is import('chat').CardElement {
   return 'type' in content && (content as { type: string }).type === 'card';
 }
 
-function toWireContent(content: MessageContent): WireContent {
+function serializeContent(content: MessageContent): ReplyContent {
   if (typeof content === 'string') {
     return { text: content };
   }
@@ -26,12 +26,12 @@ function toWireContent(content: MessageContent): WireContent {
   }
 
   if ('markdown' in content && typeof content.markdown === 'string') {
-    const wire: WireContent = { markdown: content.markdown };
+    const result: ReplyContent = { markdown: content.markdown };
     if (content.files?.length) {
-      wire.files = content.files;
+      result.files = content.files;
     }
 
-    return wire;
+    return result;
   }
 
   throw new Error('Invalid message content — expected string, { markdown }, or CardElement');
@@ -80,7 +80,7 @@ export class AgentContextImpl implements AgentContext {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: toWireContent(content),
+      reply: serializeContent(content),
     };
 
     if (this._signals.length) {
@@ -100,7 +100,7 @@ export class AgentContextImpl implements AgentContext {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      update: toWireContent(content),
+      update: serializeContent(content),
     };
 
     await this._post(body);

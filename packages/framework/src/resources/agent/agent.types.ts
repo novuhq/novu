@@ -83,8 +83,8 @@ export type MessageContent =
   | { markdown: string; files?: FileRef[] }
   | CardElement;
 
-/** Serialized content shape that travels over HTTP to the reply endpoint. */
-export interface WireContent {
+/** Normalized content shape sent over HTTP to the reply endpoint. */
+export interface ReplyContent {
   text?: string;
   markdown?: string;
   card?: CardElement;
@@ -151,8 +151,8 @@ export type Signal = MetadataSignal | TriggerSignal;
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
-  reply?: WireContent;
-  update?: WireContent;
+  reply?: ReplyContent;
+  update?: ReplyContent;
   resolve?: { summary?: string };
   signals?: Signal[];
 }
