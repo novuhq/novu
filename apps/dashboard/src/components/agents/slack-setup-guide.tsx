@@ -408,6 +408,7 @@ export function SlackSetupGuide({
             >
               <SlackConnectButton
                 integrationIdentifier={selectedIntegrationIdentifier}
+                connectionIdentifier={user.externalId + ':agent-quickstart:' + agent._id}
                 connectionMode="subscriber"
                 connectLabel={`Install ${agent.name} ↗`}
                 connectedLabel="Connected to Slack"
