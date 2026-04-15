@@ -122,7 +122,7 @@
     }
   },
   "dependencies": {
-    "@novu/api": "^3.14.1",
+    "@novu/api": "^3.15.0",
     "json-schema-to-zod": "^2.7.0",
     "zod": "^4.0.0"
   },
