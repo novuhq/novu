@@ -77,6 +77,12 @@ program
   .option('-sh, --studio-host <host>', 'The Local Studio server host', 'localhost')
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
   .option('-H, --headless', 'Run the Bridge in headless mode without opening the browser', false)
+  .option(
+    '-s, --secret-key <secret-key>',
+    'The Novu Secret Key (enables agent bridge registration)',
+    NOVU_SECRET_KEY || ''
+  )
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
       identity: {

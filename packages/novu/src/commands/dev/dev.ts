@@ -11,7 +11,6 @@ import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
 
 process.on('SIGINT', () => {
-  // TODO: Close the NTFR Tunnel
   process.exit();
 });
 
@@ -54,6 +53,11 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
   }
 
   await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
+
+  if (parsedOptions.secretKey) {
+    const bridgeUrl = `${tunnelOrigin}${NOVU_ENDPOINT_PATH}`;
+    await discoverAndRegisterAgents(parsedOptions, bridgeUrl);
+  }
 }
 
 async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointRoute: string) {
@@ -168,4 +172,71 @@ async function connectToNewTunnel(originUrl: URL) {
   await connectToTunnel(parsedUrl, originUrl);
 
   return parsedUrl.origin;
+}
+
+interface DiscoverResponse {
+  workflows: unknown[];
+  agents?: Array<{ agentId: string }>;
+}
+
+async function discoverAgents(endpointUrl: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${endpointUrl}?action=discover`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': `novu@${version}`,
+      },
+    });
+
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as DiscoverResponse;
+
+    return (data.agents ?? []).map((a) => a.agentId);
+  } catch {
+    return [];
+  }
+}
+
+async function activateAgentBridge(apiUrl: string, secretKey: string, agentId: string, devBridgeUrl: string) {
+  const res = await fetch(`${apiUrl}/v1/agents/${agentId}/bridge`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `ApiKey ${secretKey}`,
+    },
+    body: JSON.stringify({ devBridgeUrl, devBridgeActive: true }),
+  });
+
+  if (res.status === 403) {
+    console.log(chalk.yellow(`  ⚠ ${agentId}  → skipped (production environment)`));
+
+    return false;
+  }
+
+  if (!res.ok) {
+    console.log(chalk.yellow(`  ⚠ ${agentId}  → failed to activate (${res.status})`));
+
+    return false;
+  }
+
+  return true;
+}
+
+async function discoverAndRegisterAgents(parsedOptions: DevCommandOptions, bridgeUrl: string) {
+  const fullEndpoint = `${parsedOptions.origin}${parsedOptions.route}`;
+  const agentIds = await discoverAgents(fullEndpoint);
+
+  if (agentIds.length === 0) return;
+
+  console.log(`\n  Found ${agentIds.length} agent${agentIds.length > 1 ? 's' : ''}:`);
+
+  for (const agentId of agentIds) {
+    const success = await activateAgentBridge(parsedOptions.apiUrl, parsedOptions.secretKey, agentId, bridgeUrl);
+    if (success) {
+      console.log(chalk.green(`    ✓ ${agentId}  → dev bridge activated`));
+    }
+  }
 }
