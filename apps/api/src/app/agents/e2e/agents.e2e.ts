@@ -98,6 +98,46 @@ describe('Agents API - /agents #novu-v2', () => {
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
 
+  it('should update and return agent reaction settings with defaults', async () => {
+    const identifier = `e2e-reactions-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Reaction Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior).to.equal(undefined);
+
+    const setReactionsRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: {
+        reactions: { onMessageReceived: 'wave', onResolved: 'thumbs_up' },
+      },
+    });
+
+    expect(setReactionsRes.status).to.equal(200);
+    expect(setReactionsRes.body.data.behavior.reactions.onMessageReceived).to.equal('wave');
+    expect(setReactionsRes.body.data.behavior.reactions.onResolved).to.equal('thumbs_up');
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.reactions.onMessageReceived).to.equal('wave');
+    expect(getRes.body.data.behavior.reactions.onResolved).to.equal('thumbs_up');
+
+    const disableRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: {
+        reactions: { onMessageReceived: null },
+      },
+    });
+
+    expect(disableRes.status).to.equal(200);
+    expect(disableRes.body.data.behavior.reactions.onMessageReceived).to.equal(null);
+    expect(disableRes.body.data.behavior.reactions.onResolved).to.equal('thumbs_up');
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
   it('should return 422 when identifier is not a valid slug', async () => {
     const res = await session.testAgent.post('/v1/agents').send({
       name: 'Invalid Slug Agent',

@@ -10,7 +10,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
-import { AgentCredentialService } from '../../services/agent-credential.service';
+import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
@@ -24,7 +24,7 @@ export class HandleAgentReply {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly agentCredentialService: AgentCredentialService,
+    private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger
   ) {}
@@ -202,16 +202,44 @@ export class HandleAgentReply {
       }),
     ]);
 
+    this.reactOnResolve(command, conversation, channel).catch((err) => {
+      this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to add resolve reaction`);
+    });
+
     this.fireOnResolveBridgeCall(command, conversation).catch((err) => {
       this.logger.error(err, `[agent:${command.agentIdentifier}] Failed to fire onResolve bridge call`);
     });
+  }
+
+  private async reactOnResolve(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
+    if (!config.reactionOnResolved) return;
+
+    const lastInbound = await this.activityRepository.findLastInboundMessage(
+      command.environmentId,
+      conversation._id
+    );
+    if (!lastInbound?.platformMessageId) return;
+
+    await this.chatSdkService.reactToMessage(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      lastInbound.platformMessageId,
+      config.reactionOnResolved
+    );
   }
 
   private async fireOnResolveBridgeCall(
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity
   ): Promise<void> {
-    const config = await this.agentCredentialService.resolve(conversation._agentId, command.integrationIdentifier);
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
 
     const subscriberParticipant = conversation.participants.find((p) => p.type === 'subscriber');
     const [subscriber, history] = await Promise.all([

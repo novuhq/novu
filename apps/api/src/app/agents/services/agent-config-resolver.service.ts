@@ -11,7 +11,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { resolveAgentPlatform } from '../utils/provider-to-platform';
 
-export interface ResolvedPlatformConfig {
+export interface ResolvedAgentConfig {
   platform: AgentPlatformEnum;
   credentials: ICredentialsEntity;
   connectionAccessToken?: string;
@@ -21,14 +21,26 @@ export interface ResolvedPlatformConfig {
   integrationIdentifier: string;
   integrationId: string;
   thinkingIndicatorEnabled: boolean;
+  reactionOnMessageReceived: string | null;
+  reactionOnResolved: string | null;
 }
+
+const DEFAULT_REACTION_ON_MESSAGE = 'eyes';
+const DEFAULT_REACTION_ON_RESOLVED = 'check';
 
 function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled?: boolean } }): boolean {
   return agent.behavior?.thinkingIndicatorEnabled !== false;
 }
 
+function resolveReaction(value: string | null | undefined, defaultEmoji: string): string | null {
+  if (value === null) return null;
+  if (value === undefined) return defaultEmoji;
+
+  return value;
+}
+
 @Injectable()
-export class AgentCredentialService {
+export class AgentConfigResolver {
   constructor(
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly agentRepository: AgentRepository,
@@ -37,7 +49,7 @@ export class AgentCredentialService {
     private readonly channelConnectionRepository: ChannelConnectionRepository
   ) {}
 
-  async resolve(agentId: string, integrationIdentifier: string): Promise<ResolvedPlatformConfig> {
+  async resolve(agentId: string, integrationIdentifier: string): Promise<ResolvedAgentConfig> {
     const agent = await this.agentRepository.findByIdForWebhook(agentId);
     if (!agent) {
       throw new NotFoundException(`Agent ${agentId} not found`);
@@ -106,6 +118,11 @@ export class AgentCredentialService {
       integrationIdentifier,
       integrationId: integration._id,
       thinkingIndicatorEnabled: resolveThinkingIndicator(agent),
+      reactionOnMessageReceived: resolveReaction(
+        agent.behavior?.reactions?.onMessageReceived,
+        DEFAULT_REACTION_ON_MESSAGE
+      ),
+      reactionOnResolved: resolveReaction(agent.behavior?.reactions?.onResolved, DEFAULT_REACTION_ON_RESOLVED),
     };
   }
 }

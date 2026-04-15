@@ -15,7 +15,7 @@ import {
 } from '@novu/dal';
 import type { Message } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { ResolvedPlatformConfig } from './agent-credential.service';
+import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
@@ -28,7 +28,7 @@ export interface BridgePlatformContext {
 
 export interface BridgeExecutorParams {
   event: AgentEventEnum;
-  config: ResolvedPlatformConfig;
+  config: ResolvedAgentConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   history: ConversationActivityEntity[];

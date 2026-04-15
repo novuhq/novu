@@ -3,7 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { ResolvedPlatformConfig } from './agent-credential.service';
+import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './bridge-executor.service';
@@ -20,7 +20,7 @@ export class AgentInboundHandler {
 
   async handle(
     agentId: string,
-    config: ResolvedPlatformConfig,
+    config: ResolvedAgentConfig,
     thread: Thread,
     message: Message,
     event: AgentEventEnum
@@ -74,6 +74,12 @@ export class AgentInboundHandler {
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
+
+    if (config.reactionOnMessageReceived) {
+      thread.createSentMessageFromMessage(message).addReaction(config.reactionOnMessageReceived).catch((err) => {
+        this.logger.warn(err, `[agent:${agentId}] Failed to add reaction to incoming message`);
+      });
+    }
 
     if (config.thinkingIndicatorEnabled) {
       await thread.startTyping('Thinking...');

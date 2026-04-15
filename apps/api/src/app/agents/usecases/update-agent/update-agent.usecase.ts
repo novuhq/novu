@@ -41,6 +41,15 @@ export class UpdateAgent {
       if (command.behavior.thinkingIndicatorEnabled !== undefined) {
         $set['behavior.thinkingIndicatorEnabled'] = command.behavior.thinkingIndicatorEnabled;
       }
+
+      if (command.behavior.reactions !== undefined) {
+        if (command.behavior.reactions.onMessageReceived !== undefined) {
+          $set['behavior.reactions.onMessageReceived'] = command.behavior.reactions.onMessageReceived;
+        }
+        if (command.behavior.reactions.onResolved !== undefined) {
+          $set['behavior.reactions.onResolved'] = command.behavior.reactions.onResolved;
+        }
+      }
     }
 
     await this.agentRepository.updateOne(
