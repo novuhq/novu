@@ -20,6 +20,15 @@ import {
 } from './helpers/agent-test-setup';
 import { signSlackRequest, buildSlackChallenge } from './helpers/providers/slack';
 
+function mockSentMessage() {
+  return {
+    addReaction: async () => {},
+    removeReaction: async () => {},
+    edit: async () => mockSentMessage(),
+    delete: async () => {},
+  };
+}
+
 function mockThread(id: string, channelId = 'C_TEST') {
   return {
     id,
@@ -28,6 +37,7 @@ function mockThread(id: string, channelId = 'C_TEST') {
     startTyping: async () => {},
     subscribe: async () => {},
     toJSON: () => ({ id, platform: 'slack', channelId, serialized: true }),
+    createSentMessageFromMessage: () => mockSentMessage(),
   };
 }
 

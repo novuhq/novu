@@ -35,6 +35,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
     const chatSdkService = testServer.getService(ChatSdkService);
     sinon.stub(chatSdkService, 'postToConversation').resolves();
+    sinon.stub(chatSdkService, 'reactToMessage').resolves();
   });
 
   function postReply(body: Record<string, unknown>) {
