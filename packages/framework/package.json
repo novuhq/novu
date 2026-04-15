@@ -26,6 +26,7 @@
     "remix",
     "step-resolver",
     "sveltekit",
+    "jsx-runtime",
     "validators",
     "README.md"
   ],
@@ -71,6 +72,16 @@
       "import": {
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
+      }
+    },
+    "./jsx-runtime": {
+      "require": {
+        "types": "./dist/cjs/jsx-runtime.d.cts",
+        "default": "./dist/cjs/jsx-runtime.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/jsx-runtime.d.ts",
+        "default": "./dist/esm/jsx-runtime.js"
       }
     },
     "./express": {
@@ -252,6 +263,7 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
+    "chat": "^4.25.0",
     "ajv": "^8.18.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",

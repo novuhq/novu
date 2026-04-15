@@ -10,10 +10,11 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
-import { AgentCredentialService } from '../../services/agent-credential.service';
+import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
+import type { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -25,7 +26,7 @@ export class HandleAgentReply {
     @Inject(forwardRef(() => ChatSdkService))
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly agentCredentialService: AgentCredentialService,
+    private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger
   ) {}
@@ -53,13 +54,17 @@ export class HandleAgentReply {
     const channel = this.getPrimaryChannel(conversation);
 
     if (command.update) {
-      await this.deliverMessage(command, conversation, channel, command.update.text, ConversationActivityTypeEnum.UPDATE);
+      await this.deliverMessage(command, conversation, channel, command.update, ConversationActivityTypeEnum.UPDATE);
 
       return { status: 'update_sent' };
     }
 
     if (command.reply) {
-      await this.deliverMessage(command, conversation, channel, command.reply.text, ConversationActivityTypeEnum.MESSAGE);
+      await this.deliverMessage(command, conversation, channel, command.reply, ConversationActivityTypeEnum.MESSAGE);
+
+      this.removeAckReaction(command, conversation, channel).catch((err) => {
+        this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
+      });
     }
 
     if (command.signals?.length) {
@@ -86,16 +91,18 @@ export class HandleAgentReply {
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    text: string,
+    content: ReplyContentDto,
     type: ConversationActivityTypeEnum
   ): Promise<void> {
+    const textFallback = this.extractTextFallback(content);
+
     await Promise.all([
       this.chatSdkService.postToConversation(
         conversation._agentId,
         command.integrationIdentifier,
         channel.platform,
         channel.serializedThread!,
-        text
+        content
       ),
       this.activityRepository.createAgentActivity({
         identifier: `act-${shortId(8)}`,
@@ -104,7 +111,8 @@ export class HandleAgentReply {
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
         agentId: command.agentIdentifier,
-        content: text,
+        content: textFallback,
+        richContent: (content.card || content.files?.length) ? (content as Record<string, unknown>) : undefined,
         type,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -113,9 +121,21 @@ export class HandleAgentReply {
         command.environmentId,
         command.organizationId,
         conversation._id,
-        text
+        textFallback
       ),
     ]);
+  }
+
+  private extractTextFallback(content: ReplyContentDto): string {
+    if (content.text) return content.text;
+    if (content.markdown) return content.markdown;
+    if (content.card) {
+      const title = (content.card as { title?: string }).title;
+
+      return title ?? '[Card]';
+    }
+
+    return '';
   }
 
   private async executeSignals(
@@ -203,16 +223,62 @@ export class HandleAgentReply {
       }),
     ]);
 
+    this.reactOnResolve(command, conversation, channel).catch((err) => {
+      this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to add resolve reaction`);
+    });
+
     this.fireOnResolveBridgeCall(command, conversation).catch((err) => {
       this.logger.error(err, `[agent:${command.agentIdentifier}] Failed to fire onResolve bridge call`);
     });
+  }
+
+  private async removeAckReaction(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel
+  ): Promise<void> {
+    const firstMessageId = channel.firstPlatformMessageId;
+    if (!firstMessageId) return;
+
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
+    if (!config.reactionOnMessageReceived) return;
+
+    await this.chatSdkService.removeReaction(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      firstMessageId,
+      config.reactionOnMessageReceived
+    );
+  }
+
+  private async reactOnResolve(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel
+  ): Promise<void> {
+    const firstMessageId = channel.firstPlatformMessageId;
+    if (!firstMessageId) return;
+
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
+    if (!config.reactionOnResolved) return;
+
+    await this.chatSdkService.reactToMessage(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      firstMessageId,
+      config.reactionOnResolved
+    );
   }
 
   private async fireOnResolveBridgeCall(
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity
   ): Promise<void> {
-    const config = await this.agentCredentialService.resolve(conversation._agentId, command.integrationIdentifier);
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
 
     const subscriberParticipant = conversation.participants.find((p) => p.type === 'subscriber');
     const [subscriber, history] = await Promise.all([

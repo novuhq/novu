@@ -20,6 +20,10 @@ const agentSchema = new Schema<AgentDBModel>(
     },
     behavior: {
       thinkingIndicatorEnabled: Schema.Types.Boolean,
+      reactions: {
+        onMessageReceived: Schema.Types.Mixed,
+        onResolved: Schema.Types.Mixed,
+      },
     },
     _organizationId: {
       type: Schema.Types.ObjectId,

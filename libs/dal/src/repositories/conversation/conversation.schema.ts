@@ -51,6 +51,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
             serializedThread: {
               type: Schema.Types.Mixed,
             },
+            firstPlatformMessageId: {
+              type: Schema.Types.String,
+            },
           },
           { _id: false }
         ),

@@ -1,14 +1,14 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
+import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, ConversationRepository, SubscriberRepository } from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
-import { ResolvedPlatformConfig } from './agent-credential.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import { BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+import { type BridgeAction, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
 
 const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 
@@ -20,6 +20,7 @@ export class AgentInboundHandler {
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
+    private readonly conversationRepository: ConversationRepository,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository,
     @Inject(forwardRef(() => HandleAgentReply))
@@ -28,7 +29,7 @@ export class AgentInboundHandler {
 
   async handle(
     agentId: string,
-    config: ResolvedPlatformConfig,
+    config: ResolvedAgentConfig,
     thread: Thread,
     message: Message,
     event: AgentEventEnum
@@ -83,6 +84,21 @@ export class AgentInboundHandler {
       organizationId: config.organizationId,
     });
 
+    const channel = conversation.channels[0];
+    const isFirstMessage = !channel?.firstPlatformMessageId;
+
+    if (isFirstMessage && config.reactionOnMessageReceived && message.id) {
+      thread.createSentMessageFromMessage(message).addReaction(config.reactionOnMessageReceived).catch((err) => {
+        this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+      });
+
+      this.conversationRepository
+        .setFirstPlatformMessageId(config.environmentId, config.organizationId, conversation._id, thread.id, message.id)
+        .catch((err) => {
+          this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
+        });
+    }
+
     if (config.thinkingIndicatorEnabled) {
       await thread.startTyping('Thinking...');
     }
@@ -136,5 +152,79 @@ export class AgentInboundHandler {
 
       throw err;
     }
+  }
+
+  async handleAction(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    action: BridgeAction,
+    userId: string
+  ): Promise<void> {
+    const subscriberId = await this.subscriberResolver
+      .resolve({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        platform: config.platform,
+        platformUserId: userId,
+        integrationIdentifier: config.integrationIdentifier,
+      })
+      .catch((err) => {
+        this.logger.warn(
+          err,
+          `[agent:${agentId}] Subscriber resolution failed for action, continuing without subscriber`
+        );
+
+        return null;
+      });
+
+    const participantId = subscriberId ?? `${config.platform}:${userId}`;
+    const participantType = subscriberId
+      ? ConversationParticipantTypeEnum.SUBSCRIBER
+      : ConversationParticipantTypeEnum.PLATFORM_USER;
+
+    const conversation = await this.conversationService.createOrGetConversation({
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      agentId,
+      platform: config.platform,
+      integrationId: config.integrationId,
+      platformThreadId: thread.id,
+      participantId,
+      participantType,
+      platformUserId: userId,
+      firstMessageText: `[action:${action.actionId}]`,
+    });
+
+    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
+    await this.conversationService.updateChannelThread(
+      config.environmentId,
+      config.organizationId,
+      conversation._id,
+      thread.id,
+      serializedThread
+    );
+
+    const [subscriber, history] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.conversationService.getHistory(config.environmentId, conversation._id),
+    ]);
+
+    await this.bridgeExecutor.execute({
+      event: AgentEventEnum.ON_ACTION,
+      config,
+      conversation,
+      subscriber,
+      history,
+      message: null,
+      platformContext: {
+        threadId: thread.id,
+        channelId: thread.channelId,
+        isDM: thread.isDM,
+      },
+      action,
+    });
   }
 }

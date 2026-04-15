@@ -56,6 +56,9 @@ export class ConversationActivityEntity {
   /** Platform-native message ID (e.g. Slack ts) — used for deduplication */
   platformMessageId?: string;
 
+  /** Structured content for markdown, card, or file messages — absent for plain text */
+  richContent?: Record<string, unknown>;
+
   /** Populated only when type === SIGNAL */
   signalData?: ConversationActivitySignalData;
 

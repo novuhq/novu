@@ -301,6 +301,10 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       if (registeredAgent.handlers.onResolve) {
         await registeredAgent.handlers.onResolve(ctx);
       }
+    } else if (event === AgentEventEnum.ON_ACTION) {
+      if (registeredAgent.handlers.onAction) {
+        await registeredAgent.handlers.onAction(ctx);
+      }
     } else if (event === AgentEventEnum.ON_MESSAGE) {
       await registeredAgent.handlers.onMessage(ctx);
     } else {

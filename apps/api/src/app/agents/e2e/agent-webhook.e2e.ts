@@ -9,7 +9,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentInboundHandler } from '../services/agent-inbound-handler.service';
 import { BridgeExecutorService, BridgeExecutorParams } from '../services/bridge-executor.service';
-import { AgentCredentialService } from '../services/agent-credential.service';
+import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import {
   setupAgentTestContext,
@@ -20,6 +20,15 @@ import {
 } from './helpers/agent-test-setup';
 import { signSlackRequest, buildSlackChallenge } from './helpers/providers/slack';
 
+function mockSentMessage() {
+  return {
+    addReaction: async () => {},
+    removeReaction: async () => {},
+    edit: async () => mockSentMessage(),
+    delete: async () => {},
+  };
+}
+
 function mockThread(id: string, channelId = 'C_TEST') {
   return {
     id,
@@ -28,6 +37,7 @@ function mockThread(id: string, channelId = 'C_TEST') {
     startTyping: async () => {},
     subscribe: async () => {},
     toJSON: () => ({ id, platform: 'slack', channelId, serialized: true }),
+    createSentMessageFromMessage: () => mockSentMessage(),
   };
 }
 
@@ -48,7 +58,7 @@ function mockMessage(opts: { id?: string; userId: string; text: string; fullName
 describe('Agent Webhook - inbound flow #novu-v2', () => {
   let ctx: AgentTestContext;
   let inboundHandler: AgentInboundHandler;
-  let credentialService: AgentCredentialService;
+  let configResolver: AgentConfigResolver;
   let bridgeCalls: BridgeExecutorParams[];
 
   before(() => {
@@ -58,7 +68,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   beforeEach(async () => {
     ctx = await setupAgentTestContext();
     inboundHandler = testServer.getService(AgentInboundHandler);
-    credentialService = testServer.getService(AgentCredentialService);
+    configResolver = testServer.getService(AgentConfigResolver);
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
@@ -68,7 +78,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   });
 
   async function invokeInbound(threadId: string, message: ReturnType<typeof mockMessage>, event = AgentEventEnum.ON_MESSAGE) {
-    const config = await credentialService.resolve(ctx.agentId, ctx.integrationIdentifier);
+    const config = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
     const thread = mockThread(threadId);
     await inboundHandler.handle(ctx.agentId, config, thread as any, message as any, event);
   }

@@ -1,5 +1,8 @@
+import type { CardElement, ChatElement } from 'chat';
+
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
+  ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
 }
 
@@ -56,8 +59,52 @@ export interface AgentPlatformContext {
   isDM: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Rich content types
+// ---------------------------------------------------------------------------
+
+export interface FileRef {
+  filename: string;
+  mimeType?: string;
+  /** Base64-encoded file data (< 1 MB decoded) */
+  data?: string;
+  /** Publicly-accessible HTTPS URL */
+  url?: string;
+}
+
+/**
+ * Content accepted by ctx.reply() and ctx.update().
+ *
+ * - `string` — plain text
+ * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
+ * - `ChatElement` — interactive card built with Card(), Button(), etc.
+ *   (must be a CardElement at runtime; validated by serializeContent)
+ */
+export type MessageContent =
+  | string
+  | { markdown: string; files?: FileRef[] }
+  | ChatElement;
+
+/** Normalized content shape sent over HTTP to the reply endpoint. */
+export interface ReplyContent {
+  text?: string;
+  markdown?: string;
+  card?: CardElement;
+  files?: FileRef[];
+}
+
+export interface AgentAction {
+  actionId: string;
+  value?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Context + handlers
+// ---------------------------------------------------------------------------
+
 export interface AgentContext {
   readonly event: string;
+  readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
@@ -65,8 +112,8 @@ export interface AgentContext {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
 
-  reply(text: string): Promise<void>;
-  update(text: string): Promise<void>;
+  reply(content: MessageContent): Promise<void>;
+  update(content: MessageContent): Promise<void>;
   resolve(summary?: string): void;
   metadata: {
     set(key: string, value: unknown): void;
@@ -76,6 +123,7 @@ export interface AgentContext {
 
 export interface AgentHandlers {
   onMessage: (ctx: AgentContext) => Promise<void>;
+  onAction?: (ctx: AgentContext) => Promise<void>;
   onResolve?: (ctx: AgentContext) => Promise<void>;
 }
 
@@ -97,6 +145,7 @@ export interface AgentBridgeRequest {
   replyUrl: string;
   conversationId: string;
   integrationIdentifier: string;
+  action: AgentAction | null;
   message: AgentMessage | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
@@ -112,8 +161,8 @@ export type Signal = MetadataSignal | TriggerSignal;
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
-  reply?: { text: string };
-  update?: { text: string };
+  reply?: ReplyContent;
+  update?: ReplyContent;
   resolve?: { summary?: string };
   signals?: Signal[];
 }
