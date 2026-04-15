@@ -1,15 +1,14 @@
 import { Group } from '@mantine/core';
 import { colors, Text, Warning } from '@novu/design-system';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { useAuth } from '../../../hooks/useAuth';
+import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 
 const MIGRATION_GUIDE_URL = 'https://go.novu.co/migration-guide';
 
 export function DeprecationBanner() {
-  const { currentOrganization } = useAuth();
+  const { apiServiceLevel, isLoading } = useSubscription();
 
-  const apiServiceLevel = currentOrganization?.apiServiceLevel;
-  if (!apiServiceLevel || apiServiceLevel === ApiServiceLevelEnum.FREE) {
+  if (isLoading || apiServiceLevel === ApiServiceLevelEnum.FREE) {
     return null;
   }
 
