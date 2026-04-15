@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, Show } from 'solid-js';
 import type { ConnectionMode } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
 import { useChannelConnection } from '../../api/hooks/useChannelConnection';
@@ -9,6 +9,7 @@ import { Loader } from '../../icons/Loader';
 import { SlackColored } from '../../icons/SlackColored';
 import type { ChannelConnectButtonAppearanceCallback } from '../../types';
 import { Button, Motion } from '../primitives';
+import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 import { DEFAULT_CONNECTION_IDENTIFIER, DEFAULT_INTEGRATION_IDENTIFIER } from '../slack-constants';
 
@@ -43,6 +44,19 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   });
 
   const [actionLoading, setActionLoading] = createSignal(false);
+
+  const connectionMode = () => props.connectionMode ?? 'subscriber';
+  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
+
+  createEffect(() => {
+    if (isMisconfigured()) {
+      console.warn(
+        '[Novu] SlackConnectButton: "context" is required when connectionMode is "shared". ' +
+          'Provide it via the context prop on SlackConnectButton or on NovuProvider.'
+      );
+    }
+  });
 
   const isConnected = () => !!connection();
   const isLoading = () => loading() || actionLoading();
@@ -112,29 +126,18 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
     } else {
       setActionLoading(true);
 
-      const connectionMode = props.connectionMode ?? 'subscriber';
-      const resolvedContext = props.context ?? novuAccessor().context;
+      const mode = connectionMode();
+      const ctx = resolvedContext();
       const resolvedSubscriberId =
-        connectionMode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
-
-      if (connectionMode === 'shared' && !resolvedContext) {
-        setActionLoading(false);
-        props.onConnectError?.(
-          new Error(
-            'context is required when connectionMode is "shared". Provide it on SlackConnectButton or NovuProvider.'
-          )
-        );
-
-        return;
-      }
+        mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
 
       const result = await connect({
         integrationIdentifier: integrationIdentifier(),
         connectionIdentifier: connectionIdentifier(),
         subscriberId: resolvedSubscriberId,
-        context: resolvedContext,
+        context: ctx,
         scope: props.scope,
-        connectionMode,
+        connectionMode: mode,
       });
 
       if (result.error) {
@@ -151,6 +154,98 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
     }
   };
 
+  const buttonContent = () => (
+    <span
+      class={style({
+        key: 'channelConnectButtonInner',
+        className: 'nt-relative nt-overflow-hidden nt-inline-flex nt-items-center nt-justify-center nt-gap-1',
+        context: { connected: isConnected() } satisfies Parameters<
+          ChannelConnectButtonAppearanceCallback['channelConnectButtonInner']
+        >[0],
+      })}
+    >
+      <Motion.span
+        initial={{ opacity: 1 }}
+        animate={{ opacity: actionLoading() ? 0 : 1 }}
+        transition={{ easing: 'ease-in-out', duration: 0.2 }}
+        class="nt-inline-flex nt-items-center nt-gap-1"
+      >
+        {isConnected() ? (
+          <IconRendererWrapper
+            iconKey="channelConnected"
+            class={style({
+              key: 'channelConnectButtonIcon',
+              className:
+                'nt-inline-flex nt-items-center nt-justify-center nt-size-4 nt-shrink-0 nt-rounded-full nt-bg-white nt-shadow-[0_1px_2px_0_rgba(10,13,20,0.03)]',
+              iconKey: 'channelConnected',
+              context: { connected: true } satisfies Parameters<
+                ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
+              >[0],
+            })}
+            fallback={
+              <span
+                class={style({
+                  key: 'channelConnectButtonIcon',
+                  className:
+                    'nt-inline-flex nt-items-center nt-justify-center nt-size-4 nt-shrink-0 nt-rounded-full nt-bg-white nt-shadow-[0_1px_2px_0_rgba(10,13,20,0.03)]',
+                  iconKey: 'channelConnected',
+                  context: { connected: true } satisfies Parameters<
+                    ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
+                  >[0],
+                })}
+              >
+                <CheckCircleFill class="nt-size-full" />
+              </span>
+            }
+          />
+        ) : (
+          <IconRendererWrapper
+            iconKey="channelConnect"
+            class={style({
+              key: 'channelConnectButtonIcon',
+              className: 'nt-size-4 nt-shrink-0',
+              iconKey: 'channelConnect',
+              context: { connected: false } satisfies Parameters<
+                ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
+              >[0],
+            })}
+            fallback={
+              <SlackColored
+                class={style({
+                  key: 'channelConnectButtonIcon',
+                  className: 'nt-size-4 nt-shrink-0',
+                  iconKey: 'channelConnect',
+                  context: { connected: false } satisfies Parameters<
+                    ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
+                  >[0],
+                })}
+              />
+            }
+          />
+        )}
+        <span
+          class={style({
+            key: 'channelConnectButtonLabel',
+            className: '[line-height:16px]',
+            context: { connected: isConnected() } satisfies Parameters<
+              ChannelConnectButtonAppearanceCallback['channelConnectButtonLabel']
+            >[0],
+          })}
+        >
+          {isConnected() ? (props.connectedLabel ?? 'Connected') : (props.connectLabel ?? 'Connect Slack')}
+        </span>
+      </Motion.span>
+      <Motion.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: actionLoading() ? 1 : 0 }}
+        transition={{ easing: 'ease-in-out', duration: 0.2 }}
+        class="nt-absolute nt-left-0 nt-inline-flex nt-items-center"
+      >
+        <Loader class="nt-text-foreground-alpha-600 nt-size-3.5 nt-animate-spin" />
+      </Motion.span>
+    </span>
+  );
+
   return (
     <Show when={!loading()} fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}>
       <div
@@ -162,108 +257,56 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
           >[0],
         })}
       >
-        <Button
-          class={style({
-            key: 'channelConnectButton',
-            className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width]',
-            context: { connected: isConnected() } satisfies Parameters<
-              ChannelConnectButtonAppearanceCallback['channelConnectButton']
-            >[0],
-          })}
-          variant="secondary"
-          onClick={handleClick}
-          disabled={isLoading()}
-        >
-          <span
-            class={style({
-              key: 'channelConnectButtonInner',
-              className: 'nt-relative nt-overflow-hidden nt-inline-flex nt-items-center nt-justify-center nt-gap-1',
-              context: { connected: isConnected() } satisfies Parameters<
-                ChannelConnectButtonAppearanceCallback['channelConnectButtonInner']
-              >[0],
-            })}
-          >
-            <Motion.span
-              initial={{ opacity: 1 }}
-              animate={{ opacity: actionLoading() ? 0 : 1 }}
-              transition={{ easing: 'ease-in-out', duration: 0.2 }}
-              class="nt-inline-flex nt-items-center nt-gap-1"
-            >
-              {isConnected() ? (
-                <IconRendererWrapper
-                  iconKey="channelConnected"
-                  class={style({
-                    key: 'channelConnectButtonIcon',
-                    className:
-                      'nt-inline-flex nt-items-center nt-justify-center nt-size-4 nt-shrink-0 nt-rounded-full nt-bg-white nt-shadow-[0_1px_2px_0_rgba(10,13,20,0.03)]',
-                    iconKey: 'channelConnected',
-                    context: { connected: true } satisfies Parameters<
-                      ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
-                    >[0],
-                  })}
-                  fallback={
-                    <span
-                      class={style({
-                        key: 'channelConnectButtonIcon',
-                        className:
-                          'nt-inline-flex nt-items-center nt-justify-center nt-size-4 nt-shrink-0 nt-rounded-full nt-bg-white nt-shadow-[0_1px_2px_0_rgba(10,13,20,0.03)]',
-                        iconKey: 'channelConnected',
-                        context: { connected: true } satisfies Parameters<
-                          ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
-                        >[0],
-                      })}
-                    >
-                      <CheckCircleFill class="nt-size-full" />
-                    </span>
-                  }
-                />
-              ) : (
-                <IconRendererWrapper
-                  iconKey="channelConnect"
-                  class={style({
-                    key: 'channelConnectButtonIcon',
-                    className: 'nt-size-4 nt-shrink-0',
-                    iconKey: 'channelConnect',
-                    context: { connected: false } satisfies Parameters<
-                      ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
-                    >[0],
-                  })}
-                  fallback={
-                    <SlackColored
-                      class={style({
-                        key: 'channelConnectButtonIcon',
-                        className: 'nt-size-4 nt-shrink-0',
-                        iconKey: 'channelConnect',
-                        context: { connected: false } satisfies Parameters<
-                          ChannelConnectButtonAppearanceCallback['channelConnectButtonIcon']
-                        >[0],
-                      })}
-                    />
-                  }
-                />
-              )}
-              <span
+        <Show
+          when={!isMisconfigured()}
+          fallback={
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                asChild={(triggerProps) => (
+                  <Button
+                    class={style({
+                      key: 'channelConnectButton',
+                      className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width] !nt-pointer-events-auto',
+                      context: { connected: false } satisfies Parameters<
+                        ChannelConnectButtonAppearanceCallback['channelConnectButton']
+                      >[0],
+                    })}
+                    variant="secondary"
+                    disabled={true}
+                    {...triggerProps}
+                  >
+                    {buttonContent()}
+                  </Button>
+                )}
+              />
+              <Tooltip.Content
                 class={style({
-                  key: 'channelConnectButtonLabel',
-                  className: '[line-height:16px]',
-                  context: { connected: isConnected() } satisfies Parameters<
-                    ChannelConnectButtonAppearanceCallback['channelConnectButtonLabel']
-                  >[0],
+                  key: 'channelConnectButtonMisconfiguredTooltip',
+                  className:
+                    'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-rounded-lg nt-text-background nt-text-xs nt-max-w-[220px]',
                 })}
               >
-                {isConnected() ? (props.connectedLabel ?? 'Connected') : (props.connectLabel ?? 'Connect Slack')}
-              </span>
-            </Motion.span>
-            <Motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: actionLoading() ? 1 : 0 }}
-              transition={{ easing: 'ease-in-out', duration: 0.2 }}
-              class="nt-absolute nt-left-0 nt-inline-flex nt-items-center"
-            >
-              <Loader class="nt-text-foreground-alpha-600 nt-size-3.5 nt-animate-spin" />
-            </Motion.span>
-          </span>
-        </Button>
+                Missing context — provide a <code>context</code> prop on <code>SlackConnectButton</code> or{' '}
+                <code>NovuProvider</code> when using <code>connectionMode="shared"</code>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          }
+        >
+          <Button
+            class={style({
+              key: 'channelConnectButton',
+              className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width]',
+              context: { connected: isConnected() } satisfies Parameters<
+                ChannelConnectButtonAppearanceCallback['channelConnectButton']
+              >[0],
+            })}
+            variant="secondary"
+            onClick={handleClick}
+            disabled={isLoading()}
+          >
+            {buttonContent()}
+          </Button>
+        </Show>
       </div>
     </Show>
   );
