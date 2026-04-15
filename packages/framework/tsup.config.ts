@@ -20,6 +20,7 @@ const baseConfig: Options = {
   minifyWhitespace: true,
   minifyIdentifiers: true,
   minifySyntax: true,
+  noExternal: ['chat'],
   define: {
     SDK_VERSION: `"${version}"`,
     FRAMEWORK_VERSION: `"2024-06-26"`,

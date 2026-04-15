@@ -11,7 +11,7 @@ export type {
   FileRef,
   MessageContent,
 } from './resources';
-export { Card, Button, CardText, TextInput, Select, SelectOption, Divider, CardLink } from './resources';
+export { Actions, Card, Button, CardText, TextInput, Select, SelectOption, Divider, CardLink } from './resources';
 export type {
   AnyStepResolver,
   ChatStepResolver,

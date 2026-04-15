@@ -2,24 +2,72 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsDefined,
   IsIn,
   IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
   MaxLength,
+  Validate,
   ValidateNested,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
-export class TextContentDto {
-  @ApiProperty()
+export interface FileRef {
+  filename: string;
+  mimeType?: string;
+  data?: string;
+  url?: string;
+}
+
+@ValidatorConstraint({ name: 'isValidReplyContent', async: false })
+export class IsValidReplyContent implements ValidatorConstraintInterface {
+  validate(content: ReplyContentDto): boolean {
+    if (!content) return true;
+
+    const fields = [content.text, content.markdown, content.card].filter((v) => v !== undefined);
+    if (fields.length !== 1) return false;
+
+    if (content.files?.length && !content.markdown) return false;
+
+    for (const file of content.files ?? []) {
+      const sources = [file.data, file.url].filter(Boolean);
+      if (sources.length !== 1) return false;
+    }
+
+    return true;
+  }
+
+  defaultMessage(): string {
+    return 'Content must have exactly one of text, markdown, or card. Files only allowed with markdown. Each file needs exactly one of data or url.';
+  }
+}
+
+export class ReplyContentDto {
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(40_000)
-  text: string;
+  text?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  markdown?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  card?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  files?: FileRef[];
 }
 
 export class ResolveDto {
@@ -71,19 +119,21 @@ export class AgentReplyPayloadDto {
   @IsNotEmpty()
   integrationIdentifier: string;
 
-  @ApiPropertyOptional({ type: TextContentDto })
+  @ApiPropertyOptional({ type: ReplyContentDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => TextContentDto)
-  reply?: TextContentDto;
+  @Validate(IsValidReplyContent)
+  @Type(() => ReplyContentDto)
+  reply?: ReplyContentDto;
 
-  @ApiPropertyOptional({ type: TextContentDto })
+  @ApiPropertyOptional({ type: ReplyContentDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => TextContentDto)
-  update?: TextContentDto;
+  @Validate(IsValidReplyContent)
+  @Type(() => ReplyContentDto)
+  update?: ReplyContentDto;
 
   @ApiPropertyOptional({ type: ResolveDto })
   @IsOptional()

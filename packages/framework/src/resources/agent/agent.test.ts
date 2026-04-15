@@ -415,7 +415,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
           Card({
             title: 'Order #123',
             children: [
-              CardText({ children: ['Your order is ready'] }),
+              CardText('Your order is ready'),
               Button({ id: 'confirm', label: 'Confirm', style: 'primary' }),
             ],
           })

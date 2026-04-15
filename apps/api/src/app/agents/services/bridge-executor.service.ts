@@ -34,6 +34,7 @@ export interface BridgeExecutorParams {
   history: ConversationActivityEntity[];
   message: Message | null;
   platformContext: BridgePlatformContext;
+  action?: BridgeAction;
 }
 
 interface BridgeMessageAuthor {
@@ -48,6 +49,11 @@ interface BridgeMessage {
   platformMessageId: string;
   author: BridgeMessageAuthor;
   timestamp: string;
+}
+
+export interface BridgeAction {
+  actionId: string;
+  value?: string;
 }
 
 interface BridgeConversation {
@@ -94,6 +100,7 @@ export interface AgentBridgeRequest {
   history: BridgeHistoryEntry[];
   platform: string;
   platformContext: BridgePlatformContext;
+  action: BridgeAction | null;
 }
 
 @Injectable()
@@ -202,7 +209,7 @@ export class BridgeExecutorService {
   }
 
   private buildPayload(params: BridgeExecutorParams): AgentBridgeRequest {
-    const { event, config, conversation, subscriber, history, message, platformContext } = params;
+    const { event, config, conversation, subscriber, history, message, platformContext, action } = params;
     const agentIdentifier = config.agentIdentifier;
 
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
@@ -227,6 +234,7 @@ export class BridgeExecutorService {
       history: this.mapHistory(history),
       platform: config.platform,
       platformContext,
+      action: action ?? null,
     };
   }
 

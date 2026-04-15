@@ -1,4 +1,4 @@
-import type { CardElement } from 'chat';
+import type { CardElement, ChatElement } from 'chat';
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
@@ -77,12 +77,13 @@ export interface FileRef {
  *
  * - `string` — plain text
  * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
- * - `CardElement` — interactive card built with Card(), Button(), etc.
+ * - `ChatElement` — interactive card built with Card(), Button(), etc.
+ *   (must be a CardElement at runtime; validated by serializeContent)
  */
 export type MessageContent =
   | string
   | { markdown: string; files?: FileRef[] }
-  | CardElement;
+  | ChatElement;
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
@@ -95,7 +96,6 @@ export interface ReplyContent {
 export interface AgentAction {
   actionId: string;
   value?: string;
-  metadata?: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------

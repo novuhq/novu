@@ -14,7 +14,8 @@ import { AgentCredentialService } from '../../services/agent-credential.service'
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import { HandleAgentReplyCommand, type ReplyContentDto } from './handle-agent-reply.command';
+import type { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
+import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
 export class HandleAgentReply {

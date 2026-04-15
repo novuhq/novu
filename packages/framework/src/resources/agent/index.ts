@@ -19,8 +19,9 @@ export type {
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';
 
-export { Card, Button, CardText, TextInput, Select, SelectOption, Divider, CardLink } from 'chat';
+export { Actions, Card, Button, CardText, TextInput, Select, SelectOption, Divider, CardLink } from 'chat';
 export type {
+  ActionsElement,
   CardElement,
   CardChild,
   TextElement,

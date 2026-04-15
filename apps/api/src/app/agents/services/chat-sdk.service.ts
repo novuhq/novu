@@ -5,7 +5,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { LRUCache } from 'lru-cache';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import type { ReplyContentDto } from '../usecases/handle-agent-reply/handle-agent-reply.command';
+import type { ReplyContentDto } from '../dtos/agent-reply-payload.dto';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentCredentialService, ResolvedPlatformConfig } from './agent-credential.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
@@ -243,6 +243,23 @@ export class ChatSdkService implements OnModuleDestroy {
         await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
+      }
+    });
+
+    chat.onAction(async (event) => {
+      try {
+        if (!event.thread) {
+          this.logger.warn(`[agent:${agentId}] Action received without thread context, skipping`);
+
+          return;
+        }
+
+        await this.inboundHandler.handleAction(agentId, config, event.thread as Thread, {
+          actionId: event.actionId,
+          value: event.value,
+        }, event.user.userId);
+      } catch (err) {
+        this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
       }
     });
   }
