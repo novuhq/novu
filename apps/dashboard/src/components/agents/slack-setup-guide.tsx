@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
-import { ChatProviderIdEnum } from '@novu/shared';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -168,15 +168,23 @@ function escapeYamlDoubleQuoted(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  const baseUrl = (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-
-  return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+function getApiBaseUrl(): string {
+  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
 }
 
-function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string): string {
+function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: string): string {
+  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+}
+
+/** Matches API `CHAT_OAUTH_CALLBACK_PATH` — Slack OAuth redirect after connect. */
+function buildChatOAuthCallbackUrl(): string {
+  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
+}
+
+function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string, chatOAuthCallbackUrl: string): string {
   const botName = escapeYamlDoubleQuoted(agent.name);
   const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
+  const oauthCallbackQuoted = escapeYamlDoubleQuoted(chatOAuthCallbackUrl);
 
   return `display_information:
   name: "${botName}"
@@ -188,6 +196,8 @@ features:
     always_online: true
 
 oauth_config:
+  redirect_urls:
+    - "${oauthCallbackQuoted}"
   scopes:
     bot:
       - app_mentions:read
@@ -298,7 +308,8 @@ export function SlackSetupGuide({
     agent._id,
     selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER'
   );
-  const manifestYaml = buildSlackManifestYaml(agent, webhookHandlerUrl);
+  const chatOAuthCallbackUrl = buildChatOAuthCallbackUrl();
+  const manifestYaml = buildSlackManifestYaml(agent, webhookHandlerUrl, chatOAuthCallbackUrl);
   const createSlackAppUrl = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(manifestYaml)}`;
 
   const base = stepOffset;
@@ -385,14 +396,20 @@ export function SlackSetupGuide({
         rightContent={
           user?.externalId && currentEnvironment?.identifier ? (
             <NovuProvider
-              subscriberId={user.externalId}
+              subscriber={{
+                subscriberId: user.externalId + ':agent-quickstart:' + agent._id,
+                firstName: user.firstName ?? '',
+                lastName: user.lastName ?? '',
+                avatar: user.imageUrl ?? '',
+              }}
               applicationIdentifier={currentEnvironment.identifier}
-              backendUrl={apiHostnameManager.getHostname()}
+              apiUrl={apiHostnameManager.getHostname()}
               socketUrl={apiHostnameManager.getWebSocketHostname()}
             >
               <SlackConnectButton
                 integrationIdentifier={selectedIntegrationIdentifier}
-                connectLabel={`Install ${agent.name}`}
+                connectionMode="subscriber"
+                connectLabel={`Install ${agent.name} ↗`}
                 connectedLabel="Connected to Slack"
               />
             </NovuProvider>
