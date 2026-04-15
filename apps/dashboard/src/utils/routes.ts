@@ -42,6 +42,7 @@ export const ROUTES = {
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',
   ACTIVITY_REQUESTS: '/env/:environmentSlug/activity/requests',
+  ACTIVITY_CONVERSATIONS: '/env/:environmentSlug/activity/conversations',
   ANALYTICS: '/env/:environmentSlug/analytics',
   LOGS: '/env/:environmentSlug/requests',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
