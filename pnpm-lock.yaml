@@ -473,6 +473,9 @@ importers:
       es-toolkit:
         specifier: ^1.39.10
         version: 1.39.10
+      express:
+        specifier: ^5.0.1
+        version: 5.0.1
       handlebars:
         specifier: 4.7.9
         version: 4.7.9
@@ -566,6 +569,9 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
       zod:
         specifier: ^3.23.8
         version: 3.25.20
@@ -636,9 +642,6 @@ importers:
       chai-subset:
         specifier: ^1.6.0
         version: 1.6.0
-      express:
-        specifier: ^5.0.1
-        version: 5.0.1
       get-port:
         specifier: ^5.1.1
         version: 5.1.1
@@ -1594,6 +1597,9 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -1788,6 +1794,9 @@ importers:
       socket.io:
         specifier: ^4.7.2
         version: 4.8.1
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
     devDependencies:
       '@nestjs/cli':
         specifier: 10.4.5

@@ -63,6 +63,18 @@ COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 # Built output (not included by pnpm deploy because dist is gitignored)
 COPY --chown=1000:1000 --from=dev /usr/src/app/apps/api/dist ./dist
 
+# The NestJS swagger plugin generates dist/metadata.js with hardcoded
+# monorepo-relative paths (e.g. ../../../packages/shared/dist/...).
+# These break in the flat pnpm-deploy layout. Rewrite them so they
+# resolve against node_modules instead.
+RUN if [ -f dist/metadata.js ]; then \
+      sed -i \
+        -e 's|../../../packages/shared/dist|../node_modules/@novu/shared/dist|g' \
+        -e 's|../../../libs/application-generic/build|../node_modules/@novu/application-generic/build|g' \
+        -e 's|../../../libs/dal/dist|../node_modules/@novu/dal/dist|g' \
+        dist/metadata.js; \
+    fi
+
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
 ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]
