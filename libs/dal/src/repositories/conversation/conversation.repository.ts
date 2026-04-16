@@ -13,6 +13,17 @@ import {
 } from './conversation.entity';
 import { Conversation } from './conversation.schema';
 
+const LIST_CONVERSATIONS_SORT_FIELDS = ['_id', 'createdAt', 'lastActivityAt'] as const;
+type ListConversationsSortField = (typeof LIST_CONVERSATIONS_SORT_FIELDS)[number];
+
+function resolveListConversationsSortBy(sortBy?: string): ListConversationsSortField {
+  if (sortBy && (LIST_CONVERSATIONS_SORT_FIELDS as readonly string[]).includes(sortBy)) {
+    return sortBy as ListConversationsSortField;
+  }
+
+  return '_id';
+}
+
 @Injectable()
 export class ConversationRepository extends BaseRepositoryV2<
   ConversationDBModel,
@@ -183,6 +194,8 @@ export class ConversationRepository extends BaseRepositoryV2<
       throw new Error('Cannot specify both "before" and "after" cursors at the same time.');
     }
 
+    const validatedSortBy = resolveListConversationsSortBy(sortBy);
+
     let conversation: ConversationEntity | null = null;
     const id = before || after;
 
@@ -197,8 +210,14 @@ export class ConversationRepository extends BaseRepositoryV2<
       }
     }
 
-    const afterCursor = after && conversation ? { sortBy: conversation[sortBy], paginateField: conversation._id } : undefined;
-    const beforeCursor = before && conversation ? { sortBy: conversation[sortBy], paginateField: conversation._id } : undefined;
+    const afterCursor =
+      after && conversation
+        ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id }
+        : undefined;
+    const beforeCursor =
+      before && conversation
+        ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id }
+        : undefined;
 
     const query: FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
@@ -221,7 +240,7 @@ export class ConversationRepository extends BaseRepositoryV2<
       paginateField: '_id',
       limit,
       sortDirection: sortDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
-      sortBy,
+      sortBy: validatedSortBy,
       includeCursor,
       query,
       select: '*',

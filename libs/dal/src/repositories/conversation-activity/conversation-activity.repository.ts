@@ -13,6 +13,17 @@ import {
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
 
+const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
+type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
+
+function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
+  if (sortBy && (LIST_ACTIVITIES_SORT_FIELDS as readonly string[]).includes(sortBy)) {
+    return sortBy as ListActivitiesSortField;
+  }
+
+  return '_id';
+}
+
 @Injectable()
 export class ConversationActivityRepository extends BaseRepositoryV2<
   ConversationActivityDBModel,
@@ -155,12 +166,19 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       throw new Error('Cannot specify both "before" and "after" cursors at the same time.');
     }
 
+    const validatedSortBy = resolveListActivitiesSortBy(sortBy);
+
     let activity: ConversationActivityEntity | null = null;
     const id = before || after;
 
     if (id) {
       activity = await this.findOne(
-        { _environmentId: environmentId, _organizationId: organizationId, _id: id },
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _conversationId: conversationId,
+          _id: id,
+        },
         '*'
       );
 
@@ -169,8 +187,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       }
     }
 
-    const afterCursor = after && activity ? { sortBy: activity[sortBy], paginateField: activity._id } : undefined;
-    const beforeCursor = before && activity ? { sortBy: activity[sortBy], paginateField: activity._id } : undefined;
+    const afterCursor =
+      after && activity ? { sortBy: activity[validatedSortBy], paginateField: activity._id } : undefined;
+    const beforeCursor =
+      before && activity ? { sortBy: activity[validatedSortBy], paginateField: activity._id } : undefined;
 
     const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
@@ -184,7 +204,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       paginateField: '_id',
       limit,
       sortDirection: sortDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
-      sortBy,
+      sortBy: validatedSortBy,
       includeCursor,
       query,
       select: '*',
