@@ -46,6 +46,11 @@ FROM dev AS deploy
 WORKDIR /usr/src/app
 RUN pnpm --filter @novu/worker deploy --legacy --prod /usr/src/deploy
 
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
+      cd /usr/src/deploy && npm install --no-save @taskforcesh/bullmq-pro@6.11.0 --registry=https://npm.taskforce.sh/; \
+    fi
+
 # ------- PRODUCTION BUILD ----------
 FROM node:22.22-alpine3.23 AS prod
 

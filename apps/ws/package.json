@@ -80,9 +80,6 @@
     "tsconfig-paths": "~4.1.0",
     "typescript": "5.6.2"
   },
-  "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "6.11.0"
-  },
   "workspaces": {
     "nohoist": [
       "@nestjs/platform-socket.io",
