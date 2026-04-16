@@ -1,13 +1,23 @@
 import { RiRobot2Line } from 'react-icons/ri';
 import { ConversationDto } from '@/api/conversations';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationOverviewProps = {
   conversation: ConversationDto;
 };
 
-function formatTimestamp(dateStr: string): string {
+function formatTimestamp(dateStr: string | undefined): string {
+  if (!dateStr?.trim()) {
+    return '—';
+  }
+
   const d = new Date(dateStr);
+
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
+
   const month = d.toLocaleDateString('en-US', { month: 'short' });
   const day = d.getDate();
   const year = d.getFullYear();
@@ -40,18 +50,6 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col">
-        <div className="flex items-center justify-between p-1">
-          <div className="flex items-center px-2">
-            <div className="border-stroke-soft size-2.5 rounded-full border" />
-            <div className="py-1 pl-1.5 pr-1">
-              <span className="text-text-sub font-code text-xs font-medium tracking-tight">Conversation initiated</span>
-            </div>
-          </div>
-          <span className="text-text-sub font-code text-xs font-normal tracking-tight">
-            {formatTimestamp(conversation.createdAt)}
-          </span>
-        </div>
-
         <div className="border-stroke-soft rounded-lg border bg-white p-1">
           {sourceRequestId && (
             <MetaRow label="API request (source)">
@@ -60,6 +58,9 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
           )}
           <MetaRow label="Conversation ID">
             <span className="font-normal">{conversation.identifier}</span>
+          </MetaRow>
+          <MetaRow label="Thread started">
+            <span className="font-normal">{formatTimestamp(conversation.createdAt)}</span>
           </MetaRow>
           <MetaRow label="Agent">
             <span className="flex items-center gap-1 font-medium">
@@ -102,14 +103,13 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
                   {sub?.avatar ? (
                     <img src={sub.avatar} alt="" className="size-8 shrink-0 rounded-full object-cover" />
                   ) : (
-                    <div className="bg-neutral-200 size-8 shrink-0 rounded-full" />
+                    <SubscriberFallbackAvatar className="size-8" />
                   )}
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <div className="text-label-xs flex items-center justify-between font-medium">
-                      <span className="text-text-strong truncate">{displayName}</span>
-                      <span className="text-text-soft shrink-0 truncate">{subscriberId}</span>
-                    </div>
-                    <span className="text-text-soft text-label-xs truncate font-medium">{subscriberId}</span>
+                    <span className="text-text-strong text-label-xs truncate font-medium">{displayName}</span>
+                    <span className="text-text-soft font-code text-label-xs truncate font-medium" title={subscriberId}>
+                      {subscriberId}
+                    </span>
                   </div>
                 </div>
               </div>

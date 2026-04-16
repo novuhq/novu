@@ -5,12 +5,13 @@ import { useEnvironment } from '../context/environment/hooks';
 
 type UseFetchConversationsOptions = {
   filters?: ConversationFilters;
-  page?: number;
+  after?: string;
+  before?: string;
   limit?: number;
 };
 
 export function useFetchConversations(
-  { filters, page = 0, limit = 10 }: UseFetchConversationsOptions = {},
+  { filters, after, before, limit = 10 }: UseFetchConversationsOptions = {},
   {
     enabled = true,
     refetchOnWindowFocus = false,
@@ -22,10 +23,10 @@ export function useFetchConversations(
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery<ConversationsListResponse>({
-    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, page, limit, filters],
+    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, after, before, limit, filters],
     queryFn: async ({ signal }) => {
       // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
-      return getConversationsList({ environment: currentEnvironment!, page, limit, filters, signal });
+      return getConversationsList({ environment: currentEnvironment!, after, before, limit, filters, signal });
     },
     refetchOnWindowFocus,
     enabled: enabled && !!currentEnvironment,
@@ -33,9 +34,10 @@ export function useFetchConversations(
 
   return {
     conversations: data?.data || [],
-    hasMore: data?.hasMore || false,
-    totalCount: data?.totalCount || 0,
+    next: data?.next ?? null,
+    previous: data?.previous ?? null,
+    totalCount: data?.totalCount ?? 0,
+    totalCountCapped: data?.totalCountCapped ?? false,
     ...rest,
-    page,
   };
 }

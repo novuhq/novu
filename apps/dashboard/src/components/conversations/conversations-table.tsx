@@ -16,7 +16,6 @@ import {
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useFetchConversations } from '@/hooks/use-fetch-conversations';
 import { usePersistedPageSize } from '@/hooks/use-persisted-page-size';
-import { parsePageParam } from '@/utils/parse-page-param';
 import { ConversationTableRow } from './conversation-table-row';
 import { ConversationsEmptyState } from './conversations-empty-state';
 
@@ -47,12 +46,14 @@ export function ConversationsTable({
     defaultPageSize: 10,
   });
 
-  const page = parsePageParam(searchParams.get('page'));
+  const beforeCursor = searchParams.get('before') ?? undefined;
+  const afterCursor = beforeCursor ? undefined : (searchParams.get('after') ?? undefined);
 
-  const { conversations, hasMore, totalCount, isLoading, error } = useFetchConversations(
+  const { conversations, next, previous, totalCount, totalCountCapped, isLoading, error } = useFetchConversations(
     {
       filters,
-      page,
+      after: afterCursor,
+      before: beforeCursor,
       limit: pageSize,
     },
     {
@@ -73,17 +74,37 @@ export function ConversationsTable({
     onListStateChange?.(!isLoading && conversations.length > 0);
   }, [isLoading, conversations.length, onListStateChange]);
 
-  function handlePageChange(newPage: number) {
-    const newParams = createSearchParams({
-      ...Object.fromEntries(searchParams),
-      page: newPage.toString(),
-    });
+  function handleNextPage() {
+    if (!next) {
+      return;
+    }
+
+    const newParams = createSearchParams(Object.fromEntries(searchParams));
+    newParams.delete('page');
+    newParams.delete('before');
+    newParams.set('after', next);
+    navigate(`${location.pathname}?${newParams}`);
+  }
+
+  function handlePreviousPage() {
+    if (!previous) {
+      return;
+    }
+
+    const newParams = createSearchParams(Object.fromEntries(searchParams));
+    newParams.delete('page');
+    newParams.delete('after');
+    newParams.set('before', previous);
     navigate(`${location.pathname}?${newParams}`);
   }
 
   function handlePageSizeChange(newPageSize: number) {
     setPageSize(newPageSize);
-    handlePageChange(0);
+    const newParams = createSearchParams(Object.fromEntries(searchParams));
+    newParams.delete('page');
+    newParams.delete('after');
+    newParams.delete('before');
+    navigate(`${location.pathname}?${newParams}`);
   }
 
   return (
@@ -136,13 +157,14 @@ export function ConversationsTable({
                   <TablePaginationFooter
                     pageSize={pageSize}
                     currentPageItemsCount={conversations.length}
-                    onPreviousPage={() => handlePageChange(Math.max(0, page - 1))}
-                    onNextPage={() => handlePageChange(page + 1)}
+                    onPreviousPage={handlePreviousPage}
+                    onNextPage={handleNextPage}
                     onPageSizeChange={handlePageSizeChange}
-                    hasPreviousPage={page > 0}
-                    hasNextPage={hasMore}
+                    hasPreviousPage={!!previous}
+                    hasNextPage={!!next}
                     className="bg-transparent shadow-none"
                     totalCount={totalCount}
+                    totalCountCapped={totalCountCapped}
                     pageSizeOptions={[10, 20, 50]}
                   />
                 </TableCell>

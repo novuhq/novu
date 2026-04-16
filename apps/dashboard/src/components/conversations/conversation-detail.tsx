@@ -17,7 +17,7 @@ export function ConversationDetail({ conversationId, onClose, onNavigate }: Conv
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-8 shrink-0 items-center justify-between px-2">
+      <div className="z-10 mb-4 flex h-8 shrink-0 items-center justify-between rounded-t-lg bg-bg-weak px-3 shadow-[0_0_0_1px_hsl(var(--neutral-alpha-200))] ">
         <span className="text-text-strong text-label-sm font-medium">Conversation</span>
         <div className="flex items-center gap-0.5">
           {onNavigate && (
