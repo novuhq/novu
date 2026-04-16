@@ -5,25 +5,23 @@ import {
   GetDecryptedSecretKeyCommand,
   PinoLogger,
 } from '@novu/application-generic';
-import {
-  ConversationActivityEntity,
-  ConversationActivitySenderTypeEnum,
-  ConversationActivityTypeEnum,
-  ConversationEntity,
-  SubscriberEntity,
-} from '@novu/dal';
+import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
+import type {
+  AgentAction,
+  AgentBridgeRequest,
+  AgentConversation,
+  AgentHistoryEntry,
+  AgentMessage,
+  AgentPlatformContext,
+  AgentReaction,
+  AgentSubscriber,
+} from '@novu/framework';
+import { AgentEventEnum } from '@novu/framework';
 import type { Message } from 'chat';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
-
-export interface BridgePlatformContext {
-  threadId: string;
-  channelId: string;
-  isDM: boolean;
-}
 
 export interface BridgeReaction {
   emoji: string;
@@ -39,93 +37,9 @@ export interface BridgeExecutorParams {
   subscriber: SubscriberEntity | null;
   history: ConversationActivityEntity[];
   message: Message | null;
-  platformContext: BridgePlatformContext;
-  action?: BridgeAction;
+  platformContext: AgentPlatformContext;
+  action?: AgentAction;
   reaction?: BridgeReaction;
-}
-
-interface BridgeMessageAuthor {
-  userId: string;
-  fullName: string;
-  userName: string;
-  isBot: boolean | 'unknown';
-}
-
-interface BridgeAttachment {
-  type: string;
-  url?: string;
-  name?: string;
-  mimeType?: string;
-  size?: number;
-}
-
-interface BridgeMessage {
-  text: string;
-  platformMessageId: string;
-  author: BridgeMessageAuthor;
-  timestamp: string;
-  attachments?: BridgeAttachment[];
-}
-
-export interface BridgeAction {
-  actionId: string;
-  value?: string;
-}
-
-interface BridgeConversation {
-  identifier: string;
-  status: string;
-  metadata: Record<string, unknown>;
-  messageCount: number;
-  createdAt: string;
-  lastActivityAt: string;
-}
-
-interface BridgeSubscriber {
-  subscriberId: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  locale?: string;
-  data?: Record<string, unknown>;
-}
-
-interface BridgeHistoryEntry {
-  role: ConversationActivitySenderTypeEnum;
-  type: ConversationActivityTypeEnum;
-  content: string;
-  richContent?: Record<string, unknown>;
-  senderName?: string;
-  signalData?: { type: string; payload?: Record<string, unknown> };
-  createdAt: string;
-}
-
-interface BridgeReactionPayload {
-  messageId: string;
-  emoji: { name: string };
-  added: boolean;
-  message: BridgeMessage | null;
-}
-
-export interface AgentBridgeRequest {
-  version: 1;
-  timestamp: string;
-  deliveryId: string;
-  event: AgentEventEnum;
-  agentId: string;
-  replyUrl: string;
-  conversationId: string;
-  integrationIdentifier: string;
-  message: BridgeMessage | null;
-  conversation: BridgeConversation;
-  subscriber: BridgeSubscriber | null;
-  history: BridgeHistoryEntry[];
-  platform: string;
-  platformContext: BridgePlatformContext;
-  action: BridgeAction | null;
-  reaction: BridgeReactionPayload | null;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -269,7 +183,7 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${event}`;
     }
 
-    const payload: AgentBridgeRequest = {
+    return {
       version: 1,
       timestamp,
       deliveryId,
@@ -287,12 +201,10 @@ export class BridgeExecutorService {
       action: action ?? null,
       reaction: reaction ? this.mapReaction(reaction) : null,
     };
-
-    return payload;
   }
 
-  private mapMessage(message: Message): BridgeMessage {
-    const mapped: BridgeMessage = {
+  private mapMessage(message: Message): AgentMessage {
+    const mapped: AgentMessage = {
       text: message.text,
       platformMessageId: message.id,
       author: {
@@ -317,7 +229,7 @@ export class BridgeExecutorService {
     return mapped;
   }
 
-  private mapConversation(conversation: ConversationEntity): BridgeConversation {
+  private mapConversation(conversation: ConversationEntity): AgentConversation {
     return {
       identifier: conversation.identifier,
       status: conversation.status,
@@ -328,7 +240,7 @@ export class BridgeExecutorService {
     };
   }
 
-  private mapSubscriber(subscriber: SubscriberEntity | null): BridgeSubscriber | null {
+  private mapSubscriber(subscriber: SubscriberEntity | null): AgentSubscriber | null {
     if (!subscriber) {
       return null;
     }
@@ -345,7 +257,7 @@ export class BridgeExecutorService {
     };
   }
 
-  private mapReaction(reaction: BridgeReaction): BridgeReactionPayload {
+  private mapReaction(reaction: BridgeReaction): AgentReaction {
     return {
       messageId: reaction.messageId,
       emoji: { name: reaction.emoji },
@@ -354,7 +266,7 @@ export class BridgeExecutorService {
     };
   }
 
-  private mapHistory(activities: ConversationActivityEntity[]): BridgeHistoryEntry[] {
+  private mapHistory(activities: ConversationActivityEntity[]): AgentHistoryEntry[] {
     return [...activities].reverse().map((activity) => ({
       role: activity.senderType,
       type: activity.type,

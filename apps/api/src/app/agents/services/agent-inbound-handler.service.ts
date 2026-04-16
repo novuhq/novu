@@ -14,12 +14,8 @@ import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-re
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import {
-  type BridgeAction,
-  BridgeExecutorService,
-  type BridgeReaction,
-  NoBridgeUrlError,
-} from './bridge-executor.service';
+import type { AgentAction } from '@novu/framework';
+import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 
 const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 
@@ -263,7 +259,7 @@ export class AgentInboundHandler {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    action: BridgeAction,
+    action: AgentAction,
     userId: string
   ): Promise<void> {
     const subscriberId = await this.subscriberResolver

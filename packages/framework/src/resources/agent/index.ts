@@ -30,6 +30,9 @@ export type {
   AgentSubscriber,
   FileRef,
   MessageContent,
+  MetadataSignal,
   ReplyContent,
+  Signal,
+  TriggerSignal,
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';
