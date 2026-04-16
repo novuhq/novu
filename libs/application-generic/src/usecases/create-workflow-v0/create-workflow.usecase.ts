@@ -266,7 +266,7 @@ export class CreateWorkflowV0 {
     let identifier = '';
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const candidateIdentifier = attempt === 0 ? triggerIdentifier : `${triggerIdentifier}_${shortId()}`;
+      const candidateIdentifier = attempt === 0 ? triggerIdentifier : `${triggerIdentifier}-${shortId()}`;
 
       const isIdentifierExist = await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
