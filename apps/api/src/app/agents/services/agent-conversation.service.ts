@@ -32,6 +32,7 @@ export interface PersistInboundMessageParams {
   senderId: string;
   senderName?: string;
   content: string;
+  richContent?: Record<string, unknown>;
   platformMessageId?: string;
   environmentId: string;
   organizationId: string;
@@ -140,6 +141,7 @@ export class AgentConversationService {
         senderId: params.senderId,
         senderName: params.senderName,
         content: params.content,
+        richContent: params.richContent,
         platformMessageId: params.platformMessageId,
         environmentId: params.environmentId,
         organizationId: params.organizationId,

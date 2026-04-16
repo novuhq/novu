@@ -51,11 +51,20 @@ interface BridgeMessageAuthor {
   isBot: boolean | 'unknown';
 }
 
+interface BridgeAttachment {
+  type: string;
+  url?: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+}
+
 interface BridgeMessage {
   text: string;
   platformMessageId: string;
   author: BridgeMessageAuthor;
   timestamp: string;
+  attachments?: BridgeAttachment[];
 }
 
 export interface BridgeAction {
@@ -87,6 +96,7 @@ interface BridgeHistoryEntry {
   role: ConversationActivitySenderTypeEnum;
   type: ConversationActivityTypeEnum;
   content: string;
+  richContent?: Record<string, unknown>;
   senderName?: string;
   signalData?: { type: string; payload?: Record<string, unknown> };
   createdAt: string;
@@ -282,7 +292,7 @@ export class BridgeExecutorService {
   }
 
   private mapMessage(message: Message): BridgeMessage {
-    return {
+    const mapped: BridgeMessage = {
       text: message.text,
       platformMessageId: message.id,
       author: {
@@ -293,6 +303,18 @@ export class BridgeExecutorService {
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (message.attachments?.length) {
+      mapped.attachments = message.attachments.map((a) => ({
+        type: a.type,
+        url: a.url,
+        name: a.name,
+        mimeType: a.mimeType,
+        size: a.size,
+      }));
+    }
+
+    return mapped;
   }
 
   private mapConversation(conversation: ConversationEntity): BridgeConversation {
@@ -337,6 +359,7 @@ export class BridgeExecutorService {
       role: activity.senderType,
       type: activity.type,
       content: activity.content,
+      richContent: activity.richContent || undefined,
       senderName: activity.senderName || undefined,
       signalData: activity.signalData || undefined,
       createdAt: activity.createdAt,

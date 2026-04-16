@@ -90,6 +90,18 @@ export class AgentInboundHandler {
       ? ConversationActivitySenderTypeEnum.SUBSCRIBER
       : ConversationActivitySenderTypeEnum.PLATFORM_USER;
 
+    const richContent = message.attachments?.length
+      ? {
+          attachments: message.attachments.map((a) => ({
+            type: a.type,
+            url: a.url,
+            name: a.name,
+            mimeType: a.mimeType,
+            size: a.size,
+          })),
+        }
+      : undefined;
+
     await this.conversationService.persistInboundMessage({
       conversationId: conversation._id,
       platform: config.platform,
@@ -99,6 +111,7 @@ export class AgentInboundHandler {
       senderId: participantId,
       senderName: message.author.fullName,
       content: message.text,
+      richContent,
       platformMessageId: message.id,
       environmentId: config.environmentId,
       organizationId: config.organizationId,

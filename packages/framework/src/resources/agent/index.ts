@@ -16,6 +16,7 @@ export { agent } from './agent.resource';
 export type {
   Agent,
   AgentAction,
+  AgentAttachment,
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,
