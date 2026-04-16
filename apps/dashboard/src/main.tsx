@@ -356,7 +356,7 @@ const router = createBrowserRouter([
                 element: <AgentsPage />,
               },
               {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_PROVIDER,
+                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                     <AgentDetailsPage />
@@ -423,6 +423,14 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.ACTIVITY_REQUESTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ACTIVITY_CONVERSATIONS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />

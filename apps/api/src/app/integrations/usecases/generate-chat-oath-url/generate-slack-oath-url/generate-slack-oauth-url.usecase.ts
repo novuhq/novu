@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, GetNovuProviderCredentials, GetNovuProviderCredentialsCommand } from '@novu/application-generic';
-import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
-import { ChatProviderIdEnum, ConnectionMode, ContextPayload } from '@novu/shared';
+import {
+  AgentIntegrationRepository,
+  EnvironmentRepository,
+  ICredentialsEntity,
+  IntegrationEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChatProviderIdEnum, ConnectionMode, ContextPayload, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
@@ -39,7 +45,8 @@ export class GenerateSlackOauthUrl {
   constructor(
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository
   ) {}
 
   async execute(command: GenerateSlackOauthUrlCommand): Promise<string> {
@@ -57,7 +64,37 @@ export class GenerateSlackOauthUrl {
       command.connectionMode
     );
 
-    return this.getOAuthUrl(clientId!, secureState, command.scope, command.userScope, command.mode);
+    const resolvedScope =
+      command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
+
+    return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
+  }
+
+  private async resolveBotScopes(command: GenerateSlackOauthUrlCommand): Promise<string[] | undefined> {
+    if (command.scope !== undefined) {
+      return command.scope;
+    }
+
+    const isAgentLinked = await this.isIntegrationLinkedToAgent(command.integration);
+
+    if (isAgentLinked) {
+      return [...SLACK_AGENT_OAUTH_SCOPES];
+    }
+
+    return undefined;
+  }
+
+  private async isIntegrationLinkedToAgent(integration: IntegrationEntity): Promise<boolean> {
+    const link = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: integration._id,
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['_id']
+    );
+
+    return link != null;
   }
 
   private validateSubscriberIdOrContext(command: GenerateSlackOauthUrlCommand): void {

@@ -14,6 +14,10 @@ const agentSchema = new Schema<AgentDBModel>(
       required: true,
     },
     description: Schema.Types.String,
+    active: {
+      type: Schema.Types.Boolean,
+      default: true,
+    },
     behavior: {
       thinkingIndicatorEnabled: Schema.Types.Boolean,
       reactions: {

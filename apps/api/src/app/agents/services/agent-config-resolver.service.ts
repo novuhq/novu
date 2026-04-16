@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, FeatureFlagsService } from '@novu/application-generic';
+import { decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -46,7 +46,8 @@ export class AgentConfigResolver {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly channelConnectionRepository: ChannelConnectionRepository
+    private readonly channelConnectionRepository: ChannelConnectionRepository,
+    private readonly logger: PinoLogger
   ) {}
 
   async resolve(agentId: string, integrationIdentifier: string): Promise<ResolvedAgentConfig> {
@@ -106,6 +107,17 @@ export class AgentConfigResolver {
     });
     if (connection) {
       connectionAccessToken = connection.auth.accessToken;
+    }
+
+    if (!agentIntegration.connectedAt) {
+      await this.agentIntegrationRepository.updateOne(
+        {
+          _id: agentIntegration._id,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        { $set: { connectedAt: new Date() } }
+      );
     }
 
     return {

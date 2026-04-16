@@ -1,0 +1,102 @@
+import { ChatProviderIdEnum } from '@novu/shared';
+import { useMemo, useState } from 'react';
+import { RiExpandUpDownLine } from 'react-icons/ri';
+import { type AgentResponse } from '@/api/agents';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { cn } from '@/utils/ui';
+import { ProviderDropdown } from './provider-dropdown';
+import { SetupStep } from './setup-guide-primitives';
+import { deriveStepStatus } from './setup-guide-step-utils';
+import { SlackSetupGuide } from './slack-setup-guide';
+
+type AgentSetupGuideProps = {
+  agent: AgentResponse;
+};
+
+function resolveProviderSetupGuide(providerId: string) {
+  switch (providerId) {
+    case ChatProviderIdEnum.Slack:
+      return SlackSetupGuide;
+    default:
+      return null;
+  }
+}
+
+export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const { integrations } = useFetchIntegrations();
+
+  const slackFromAgent = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
+
+  const effectiveIntegrationId = selectedIntegrationId ?? slackFromAgent?.integrationId;
+
+  const selectedProviderId = useMemo(() => {
+    if (selectedIntegrationId) {
+      return integrations?.find((i) => i._id === selectedIntegrationId)?.providerId;
+    }
+
+    return slackFromAgent?.providerId;
+  }, [integrations, selectedIntegrationId, slackFromAgent?.providerId]);
+
+  const hasProviderSelected = Boolean(effectiveIntegrationId);
+
+  const linkedIntegrationIds = useMemo(
+    () => new Set(agent.integrations?.map((i) => i.integrationId) ?? []),
+    [agent.integrations]
+  );
+
+  const firstIncompleteStepForProviderRow = hasProviderSelected ? 2 : 1;
+
+  const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
+
+  return (
+    <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-2 py-1.5"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="text-text-soft text-[11px] font-medium uppercase leading-4 tracking-wider">Setup agent</span>
+        <RiExpandUpDownLine className={cn('text-text-soft size-3 transition-transform', isExpanded && 'rotate-180')} />
+      </button>
+
+      {isExpanded && (
+        <div className="bg-bg-white flex flex-col gap-0 overflow-hidden rounded-md p-3 shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
+          <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6">
+            <div
+              className="absolute bottom-0 left-[22px] top-0 w-px"
+              style={{
+                background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+              }}
+            />
+
+            <SetupStep
+              index={1}
+              status={deriveStepStatus(1, firstIncompleteStepForProviderRow)}
+              sectionLabel="1/2 SETUP PROVIDER"
+              title="Choose where your agent listens and communicates"
+              description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
+              rightContent={
+                <ProviderDropdown
+                  agentIdentifier={agent.identifier}
+                  selectedIntegrationId={selectedIntegrationId ?? slackFromAgent?.integrationId}
+                  linkedIntegrationIds={linkedIntegrationIds}
+                  onSelect={(_providerId, integration) => {
+                    if (integration?._id) {
+                      setSelectedIntegrationId(integration._id);
+                    }
+                  }}
+                />
+              }
+            />
+
+            {ProviderGuide && effectiveIntegrationId ? (
+              <ProviderGuide agent={agent} integrationId={effectiveIntegrationId} stepOffset={2} embedded={false} />
+            ) : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

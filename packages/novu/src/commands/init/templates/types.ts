@@ -5,6 +5,7 @@ export enum TemplateTypeEnum {
   APP = 'app',
   DEFAULT_REACT_EMAIL = 'default-react-email',
   APP_REACT_EMAIL = 'app-react-email',
+  APP_AGENT = 'app-agent',
 }
 
 export type TemplateType = `${TemplateTypeEnum}`;

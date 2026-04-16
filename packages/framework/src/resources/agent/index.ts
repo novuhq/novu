@@ -11,6 +11,7 @@ export type {
   AgentMessage,
   AgentMessageAuthor,
   AgentPlatformContext,
+  AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
   FileRef,

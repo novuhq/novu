@@ -20,6 +20,9 @@ export class AgentResponseDto {
   behavior?: AgentBehaviorDto;
 
   @ApiProperty()
+  active: boolean;
+
+  @ApiProperty()
   _environmentId: string;
 
   @ApiProperty()

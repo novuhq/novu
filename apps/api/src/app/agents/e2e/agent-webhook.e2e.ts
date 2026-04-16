@@ -7,7 +7,7 @@ import {
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AgentInboundHandler } from '../services/agent-inbound-handler.service';
+import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
 import { BridgeExecutorService, BridgeExecutorParams } from '../services/bridge-executor.service';
 import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
@@ -357,6 +357,121 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER && p.id === 'slack:U_LATER'
       );
       expect(remainingPlatformUsers.length).to.equal(0);
+    });
+  });
+
+  describe('Reaction handling', () => {
+    async function invokeReaction(threadId: string, reaction: InboundReactionEvent) {
+      const config = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
+      await inboundHandler.handleReaction(ctx.agentId, config, reaction);
+    }
+
+    it('should fire ON_REACTION bridge call for an existing conversation', async () => {
+      const threadId = `T_REACT_${Date.now()}`;
+      const msg = mockMessage({ userId: 'U_REACT', text: 'React to this' });
+
+      await invokeInbound(threadId, msg);
+      bridgeCalls = [];
+
+      const reactionEvent: InboundReactionEvent = {
+        emoji: { name: 'thumbs_up' },
+        added: true,
+        messageId: msg.id,
+        message: msg as any,
+        thread: mockThread(threadId) as any,
+      };
+
+      await invokeReaction(threadId, reactionEvent);
+
+      expect(bridgeCalls.length).to.equal(1);
+      const call = bridgeCalls[0];
+      expect(call.event).to.equal(AgentEventEnum.ON_REACTION);
+      expect(call.reaction).to.exist;
+      expect(call.reaction!.emoji).to.equal('thumbs_up');
+      expect(call.reaction!.added).to.equal(true);
+      expect(call.reaction!.messageId).to.equal(msg.id);
+    });
+
+    it('should skip reaction when no conversation exists for the thread', async () => {
+      const reactionEvent: InboundReactionEvent = {
+        emoji: { name: 'wave' },
+        added: true,
+        messageId: 'msg-orphan',
+        thread: mockThread(`T_NOCONV_${Date.now()}`) as any,
+      };
+
+      await invokeReaction('ignored', reactionEvent);
+
+      expect(bridgeCalls.length).to.equal(0);
+    });
+
+    it('should skip reaction when thread context is missing', async () => {
+      const reactionEvent: InboundReactionEvent = {
+        emoji: { name: 'fire' },
+        added: false,
+        messageId: 'msg-no-thread',
+      };
+
+      await invokeReaction('ignored', reactionEvent);
+
+      expect(bridgeCalls.length).to.equal(0);
+    });
+
+    it('should include sourceMessage in reaction bridge call', async () => {
+      const threadId = `T_REACT_MSG_${Date.now()}`;
+      const msg = mockMessage({ userId: 'U_REACT_MSG', text: 'Source message test', fullName: 'Jane Doe' });
+
+      await invokeInbound(threadId, msg);
+      bridgeCalls = [];
+
+      const reactionEvent: InboundReactionEvent = {
+        emoji: { name: 'tada' },
+        added: true,
+        messageId: msg.id,
+        message: msg as any,
+        thread: mockThread(threadId) as any,
+      };
+
+      await invokeReaction(threadId, reactionEvent);
+
+      expect(bridgeCalls.length).to.equal(1);
+      const call = bridgeCalls[0];
+      expect(call.reaction!.sourceMessage).to.exist;
+      expect(call.reaction!.sourceMessage!.text).to.equal('Source message test');
+      expect(call.reaction!.sourceMessage!.author.fullName).to.equal('Jane Doe');
+    });
+
+    it('should not persist conversation activity for reactions', async () => {
+      const threadId = `T_REACT_NOACT_${Date.now()}`;
+      const msg = mockMessage({ userId: 'U_REACT2', text: 'Activity test' });
+
+      await invokeInbound(threadId, msg);
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        threadId
+      );
+      const activitiesBefore = await activityRepository.findByConversation(
+        ctx.session.environment._id,
+        conversation!._id
+      );
+
+      const reactionEvent: InboundReactionEvent = {
+        emoji: { name: 'heart' },
+        added: true,
+        messageId: msg.id,
+        message: msg as any,
+        thread: mockThread(threadId) as any,
+      };
+
+      await invokeReaction(threadId, reactionEvent);
+
+      const activitiesAfter = await activityRepository.findByConversation(
+        ctx.session.environment._id,
+        conversation!._id
+      );
+      expect(activitiesAfter.length).to.equal(activitiesBefore.length);
     });
   });
 });

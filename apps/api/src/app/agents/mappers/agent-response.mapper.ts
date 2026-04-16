@@ -8,6 +8,7 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     name: agent.name,
     identifier: agent.identifier,
     description: agent.description,
+    active: agent.active,
     behavior: agent.behavior,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
@@ -33,7 +34,6 @@ export function toAgentIntegrationResponse(
   link: AgentIntegrationEntity,
   integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>
 ): AgentIntegrationResponseDto {
-
   return {
     _id: link._id,
     _agentId: link._agentId,
@@ -47,6 +47,7 @@ export function toAgentIntegrationResponse(
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,
+    connectedAt: link.connectedAt ?? null,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
   };

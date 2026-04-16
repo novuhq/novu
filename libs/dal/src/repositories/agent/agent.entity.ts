@@ -23,6 +23,8 @@ export class AgentEntity {
 
   description?: string;
 
+  active: boolean;
+
   behavior?: AgentBehavior;
 
   _environmentId: EnvironmentId;

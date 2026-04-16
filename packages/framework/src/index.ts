@@ -6,6 +6,7 @@ export type {
   Agent,
   AgentContext,
   AgentHandlers,
+  AgentReaction,
   CardElement,
   CardChild,
   FileRef,

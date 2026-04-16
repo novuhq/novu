@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { AgentBehaviorDto } from '../../dtos/agent-behavior.dto';
@@ -16,6 +16,10 @@ export class UpdateAgentCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ValidateIf((_, value) => value !== undefined)
+  @IsBoolean()
+  active?: boolean;
 
   @ValidateNested()
   @Type(() => AgentBehaviorDto)
