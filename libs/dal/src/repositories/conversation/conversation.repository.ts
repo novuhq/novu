@@ -24,6 +24,10 @@ function resolveListConversationsSortBy(sortBy?: string): ListConversationsSortF
   return '_id';
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 @Injectable()
 export class ConversationRepository extends BaseRepositoryV2<
   ConversationDBModel,
@@ -172,6 +176,9 @@ export class ConversationRepository extends BaseRepositoryV2<
     includeCursor = false,
     status,
     subscriberId,
+    identifier,
+    provider,
+    createdAfter,
   }: {
     organizationId: string;
     environmentId: string;
@@ -183,6 +190,9 @@ export class ConversationRepository extends BaseRepositoryV2<
     includeCursor?: boolean;
     status?: ConversationStatusEnum;
     subscriberId?: string;
+    identifier?: string;
+    provider?: string[];
+    createdAfter?: string;
   }): Promise<{
     data: ConversationEntity[];
     next: string | null;
@@ -232,6 +242,19 @@ export class ConversationRepository extends BaseRepositoryV2<
       query.participants = {
         $elemMatch: { id: subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
       };
+    }
+
+    const trimmedIdentifier = identifier?.trim();
+    if (trimmedIdentifier) {
+      query.identifier = new RegExp(escapeRegExp(trimmedIdentifier), 'i');
+    }
+
+    if (provider?.length) {
+      query.channels = { $elemMatch: { platform: { $in: provider } } };
+    }
+
+    if (createdAfter) {
+      query.createdAt = { $gte: new Date(createdAfter) };
     }
 
     return this.findWithCursorBasedPagination({

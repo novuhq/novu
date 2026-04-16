@@ -1,4 +1,4 @@
-import type { IEnvironment } from '@novu/shared';
+import { getDateRangeInMs, type IEnvironment } from '@novu/shared';
 import { get } from './api.client';
 
 export type ConversationFilters = {
@@ -87,6 +87,24 @@ export function getConversationsList({
 
   if (filters?.subscriberId) {
     searchParams.append('subscriberId', filters.subscriberId);
+  }
+
+  if (filters?.dateRange) {
+    const ms = getDateRangeInMs(filters.dateRange);
+    if (ms > 0) {
+      searchParams.append('createdAfter', new Date(Date.now() - ms).toISOString());
+    }
+  }
+
+  if (filters?.provider?.length) {
+    for (const p of filters.provider) {
+      searchParams.append('provider', p);
+    }
+  }
+
+  const conversationIdentifier = filters?.conversationId?.trim();
+  if (conversationIdentifier) {
+    searchParams.append('identifier', conversationIdentifier);
   }
 
   return get<ConversationsListResponse>(`/conversations?${searchParams.toString()}`, {
