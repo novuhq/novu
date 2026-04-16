@@ -81,10 +81,7 @@ export interface FileRef {
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
  *   (must be a CardElement at runtime; validated by serializeContent)
  */
-export type MessageContent =
-  | string
-  | { markdown: string; files?: FileRef[] }
-  | ChatElement;
+export type MessageContent = string | { markdown: string; files?: FileRef[] } | ChatElement;
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {

@@ -1,7 +1,6 @@
 import styles from './page.module.css';
 
 export default function Home() {
-
   return (
     <main className={styles.main}>
       <div className={styles.container}>
@@ -22,21 +21,31 @@ export default function Home() {
                 Novu Dashboard
               </a>
             </li>
-            <li>
-              Replace the demo handler with your LLM call
-            </li>
+            <li>Replace the demo handler with your LLM call</li>
           </ol>
         </div>
 
         <div className={styles.features}>
           <h2>What the demo agent shows</h2>
           <ul>
-            <li><strong>Interactive Cards</strong> — buttons and actions rendered natively per platform</li>
-            <li><strong>onAction handler</strong> — respond to button clicks and selections</li>
-            <li><strong>Conversation metadata</strong> — track state across messages</li>
-            <li><strong>Resolve lifecycle</strong> — close conversations and trigger follow-ups</li>
-            <li><strong>Markdown replies</strong> — rich formatted responses</li>
-            <li><strong>Conversation history</strong> — multi-turn awareness</li>
+            <li>
+              <strong>Interactive Cards</strong> — buttons and actions rendered natively per platform
+            </li>
+            <li>
+              <strong>onAction handler</strong> — respond to button clicks and selections
+            </li>
+            <li>
+              <strong>Conversation metadata</strong> — track state across messages
+            </li>
+            <li>
+              <strong>Resolve lifecycle</strong> — close conversations and trigger follow-ups
+            </li>
+            <li>
+              <strong>Markdown replies</strong> — rich formatted responses
+            </li>
+            <li>
+              <strong>Conversation history</strong> — multi-turn awareness
+            </li>
           </ul>
         </div>
 

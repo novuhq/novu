@@ -144,7 +144,10 @@ export class BridgeExecutorService {
       }
 
       const secretKey = await this.getDecryptedSecretKey.execute(
-        GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
+        GetDecryptedSecretKeyCommand.create({
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        })
       );
 
       const payload = this.buildPayload(params);
@@ -190,11 +193,13 @@ export class BridgeExecutorService {
         this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.status}`);
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`);
+        this.logger.warn(
+          `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
+        );
       }
 
       if (attempt < MAX_RETRIES) {
-        await this.delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        await this.delay(RETRY_BASE_DELAY_MS * 2 ** attempt);
       }
     }
 

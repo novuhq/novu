@@ -52,14 +52,24 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async updateStatus(environmentId: string, organizationId: string, id: string, status: ConversationStatusEnum): Promise<void> {
+  async updateStatus(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    status: ConversationStatusEnum
+  ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { status } }
     );
   }
 
-  async updateMetadata(environmentId: string, organizationId: string, id: string, metadata: Record<string, unknown>): Promise<void> {
+  async updateMetadata(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { metadata } }
@@ -78,7 +88,12 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async touchActivity(environmentId: string, organizationId: string, id: string, messagePreview: string): Promise<void> {
+  async touchActivity(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    messagePreview: string
+  ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       {

@@ -44,9 +44,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
           <div className="flex items-center px-2">
             <div className="border-stroke-soft size-2.5 rounded-full border" />
             <div className="py-1 pl-1.5 pr-1">
-              <span className="text-text-sub font-code text-xs font-medium tracking-tight">
-                Conversation initiated
-              </span>
+              <span className="text-text-sub font-code text-xs font-medium tracking-tight">Conversation initiated</span>
             </div>
           </div>
           <span className="text-text-sub font-code text-xs font-normal tracking-tight">
@@ -92,30 +90,31 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
           <div className="border-stroke-soft h-2 border-l" />
         </div>
 
-        {subscriber && (() => {
-          const sub = subscriber.subscriber;
-          const displayName = [sub?.firstName, sub?.lastName].filter(Boolean).join(' ') || subscriber.id;
-          const subscriberId = sub?.subscriberId ?? subscriber.id;
+        {subscriber &&
+          (() => {
+            const sub = subscriber.subscriber;
+            const displayName = [sub?.firstName, sub?.lastName].filter(Boolean).join(' ') || subscriber.id;
+            const subscriberId = sub?.subscriberId ?? subscriber.id;
 
-          return (
-            <div className="border-stroke-soft rounded-lg border bg-white p-1">
-              <div className="bg-bg-weak flex items-center gap-2 overflow-hidden rounded p-1">
-                {sub?.avatar ? (
-                  <img src={sub.avatar} alt="" className="size-8 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <div className="bg-neutral-200 size-8 shrink-0 rounded-full" />
-                )}
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div className="text-label-xs flex items-center justify-between font-medium">
-                    <span className="text-text-strong truncate">{displayName}</span>
-                    <span className="text-text-soft shrink-0 truncate">{subscriberId}</span>
+            return (
+              <div className="border-stroke-soft rounded-lg border bg-white p-1">
+                <div className="bg-bg-weak flex items-center gap-2 overflow-hidden rounded p-1">
+                  {sub?.avatar ? (
+                    <img src={sub.avatar} alt="" className="size-8 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="bg-neutral-200 size-8 shrink-0 rounded-full" />
+                  )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div className="text-label-xs flex items-center justify-between font-medium">
+                      <span className="text-text-strong truncate">{displayName}</span>
+                      <span className="text-text-soft shrink-0 truncate">{subscriberId}</span>
+                    </div>
+                    <span className="text-text-soft text-label-xs truncate font-medium">{subscriberId}</span>
                   </div>
-                  <span className="text-text-soft text-label-xs truncate font-medium">{subscriberId}</span>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
       </div>
     </div>
   );
