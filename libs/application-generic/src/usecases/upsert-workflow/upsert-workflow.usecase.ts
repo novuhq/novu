@@ -319,7 +319,7 @@ export class UpsertWorkflowUseCase {
         break;
       }
 
-      finalStepId = `${slug}-${shortId()}`;
+      finalStepId = `${slug}_${shortId()}`;
       attempts += 1;
     }
 
