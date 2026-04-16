@@ -40,7 +40,7 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
     anonymousId,
   };
 
-  const skipStudio = parsedOptions.noStudio === true;
+  const skipStudio = parsedOptions.studio === false;
 
   if (!skipStudio) {
     const httpServer = new DevServer(opts);

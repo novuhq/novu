@@ -10,7 +10,7 @@ export type DevCommandOptions = {
   route: string;
   tunnel: string;
   headless: boolean;
-  noStudio: boolean;
+  studio: boolean;
   secretKey: string;
   apiUrl: string;
 };
