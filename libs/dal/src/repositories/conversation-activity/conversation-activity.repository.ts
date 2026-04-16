@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { DirectionEnum } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
+import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import {
   ConversationActivityDBModel,
@@ -118,6 +121,73 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       signalData: params.signalData,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
+    });
+  }
+
+  async listActivities({
+    organizationId,
+    environmentId,
+    conversationId,
+    limit = 20,
+    after,
+    before,
+    sortBy = '_id',
+    sortDirection = 1,
+    includeCursor = false,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    conversationId: string;
+    limit?: number;
+    after?: string;
+    before?: string;
+    sortBy?: string;
+    sortDirection?: SortOrder;
+    includeCursor?: boolean;
+  }): Promise<{
+    data: ConversationActivityEntity[];
+    next: string | null;
+    previous: string | null;
+    totalCount: number;
+    totalCountCapped: boolean;
+  }> {
+    if (before && after) {
+      throw new Error('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
+    let activity: ConversationActivityEntity | null = null;
+    const id = before || after;
+
+    if (id) {
+      activity = await this.findOne(
+        { _environmentId: environmentId, _organizationId: organizationId, _id: id },
+        '*'
+      );
+
+      if (!activity) {
+        return { data: [], next: null, previous: null, totalCount: 0, totalCountCapped: false };
+      }
+    }
+
+    const afterCursor = after && activity ? { sortBy: activity[sortBy], paginateField: activity._id } : undefined;
+    const beforeCursor = before && activity ? { sortBy: activity[sortBy], paginateField: activity._id } : undefined;
+
+    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _conversationId: conversationId,
+    };
+
+    return this.findWithCursorBasedPagination({
+      after: afterCursor,
+      before: beforeCursor,
+      paginateField: '_id',
+      limit,
+      sortDirection: sortDirection === 1 ? DirectionEnum.ASC : DirectionEnum.DESC,
+      sortBy,
+      includeCursor,
+      query,
+      select: '*',
     });
   }
 }
