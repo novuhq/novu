@@ -23,6 +23,8 @@ export async function createApp({
   secretKey,
   applicationId,
   userId,
+  template: templateFlag,
+  agentIdentifier,
 }: {
   appPath: string;
   packageManager: PackageManager;
@@ -33,10 +35,12 @@ export async function createApp({
   secretKey: string;
   applicationId: string;
   userId: string;
+  template?: 'notifications' | 'agent';
+  agentIdentifier?: string;
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
-  const template: TemplateType = 'app-react-email';
+  const template: TemplateType = templateFlag === 'agent' ? 'app-agent' : 'app-react-email';
 
   const root = path.resolve(appPath);
 
@@ -79,6 +83,7 @@ export async function createApp({
     secretKey,
     applicationId,
     userId,
+    agentIdentifier,
   });
 
   if (tryGitInit(root)) {

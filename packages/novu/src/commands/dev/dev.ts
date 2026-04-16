@@ -40,16 +40,20 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
     anonymousId,
   };
 
-  const httpServer = new DevServer(opts);
+  const skipStudio = parsedOptions.noStudio === true;
 
-  const dashboardSpinner = ora('Opening dashboard').start();
-  const studioSpinner = ora('Starting local studio server').start();
-  await httpServer.listen();
+  if (!skipStudio) {
+    const httpServer = new DevServer(opts);
 
-  dashboardSpinner.succeed(`🖥️  Dashboard → ${parsedOptions.dashboardUrl}`);
-  studioSpinner.succeed(`🎨 Studio    → ${httpServer.getStudioAddress()}`);
-  if (process.env.NODE_ENV !== 'dev' && parsedOptions.headless === false) {
-    await open(httpServer.getStudioAddress());
+    const dashboardSpinner = ora('Opening dashboard').start();
+    const studioSpinner = ora('Starting local studio server').start();
+    await httpServer.listen();
+
+    dashboardSpinner.succeed(`🖥️  Dashboard → ${parsedOptions.dashboardUrl}`);
+    studioSpinner.succeed(`🎨 Studio    → ${httpServer.getStudioAddress()}`);
+    if (process.env.NODE_ENV !== 'dev' && parsedOptions.headless === false) {
+      await open(httpServer.getStudioAddress());
+    }
   }
 
   await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);

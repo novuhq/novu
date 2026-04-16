@@ -33,6 +33,7 @@ export const installTemplate = async ({
   secretKey,
   applicationId,
   userId,
+  agentIdentifier,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -69,6 +70,14 @@ export const installTemplate = async ({
       }
     },
   });
+
+  if (template === TemplateTypeEnum.APP_AGENT && agentIdentifier) {
+    const agentFile = path.join(root, 'app', 'novu', 'agents', 'support-agent.tsx');
+    await fs.writeFile(
+      agentFile,
+      (await fs.readFile(agentFile, 'utf8')).replace("agent('support-agent',", `agent('${agentIdentifier}',`)
+    );
+  }
 
   const tsconfigFile = path.join(root, 'tsconfig.json');
   await fs.writeFile(

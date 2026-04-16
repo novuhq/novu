@@ -28,6 +28,8 @@ export interface IInitCommandOptions {
   secretKey?: string;
   projectPath?: string;
   apiUrl: string;
+  template?: 'notifications' | 'agent';
+  agentIdentifier?: string;
 }
 
 export async function init(program: IInitCommandOptions, anonymousId?: string): Promise<void> {
@@ -182,6 +184,8 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     secretKey: program.secretKey,
     applicationId,
     userId,
+    template: program.template,
+    agentIdentifier: program.agentIdentifier,
   });
 
   if (userId || anonymousId) {
