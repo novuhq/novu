@@ -109,7 +109,7 @@ export class AgentConfigResolver {
       connectionAccessToken = connection.auth.accessToken;
     }
 
-    if (agentIntegration.connectedAt == null) {
+    if (!agentIntegration.connectedAt) {
       await this.agentIntegrationRepository.updateOne(
         {
           _id: agentIntegration._id,

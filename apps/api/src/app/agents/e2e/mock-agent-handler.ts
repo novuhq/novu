@@ -16,17 +16,17 @@
  */
 
 import {
-  agent,
-  serve,
-  Client,
   Actions,
+  agent,
   Button,
   Card,
   CardLink,
   CardText,
+  Client,
   Divider,
   Select,
   SelectOption,
+  serve,
 } from '@novu/framework/express';
 import express from 'express';
 
@@ -126,6 +126,18 @@ const echoBot = agent('novu-agent', {
     }
 
     await ctx.reply(`Echo: ${userText}`);
+  },
+
+  onReaction: async (ctx) => {
+    console.log('\n─────────────────────────────────────────');
+    console.log(`[${ctx.event}] reaction: ${ctx.reaction?.emoji.name} (${ctx.reaction?.added ? 'added' : 'removed'})`);
+    console.log(`Reacted message: ${ctx.reaction?.message?.text ?? '(unavailable)'}`);
+    console.log('─────────────────────────────────────────');
+
+    const emoji = ctx.reaction?.emoji.name ?? 'unknown';
+    const added = ctx.reaction?.added ?? false;
+
+    await ctx.reply(`Got ${added ? '' : 'un'}reaction: :${emoji}:`);
   },
 
   onAction: async (ctx) => {

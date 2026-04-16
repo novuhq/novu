@@ -4,6 +4,7 @@ export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
+  ON_REACTION = 'onReaction',
 }
 
 // ---------------------------------------------------------------------------
@@ -80,10 +81,7 @@ export interface FileRef {
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
  *   (must be a CardElement at runtime; validated by serializeContent)
  */
-export type MessageContent =
-  | string
-  | { markdown: string; files?: FileRef[] }
-  | ChatElement;
+export type MessageContent = string | { markdown: string; files?: FileRef[] } | ChatElement;
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
@@ -102,10 +100,18 @@ export interface AgentAction {
 // Context + handlers
 // ---------------------------------------------------------------------------
 
+export interface AgentReaction {
+  messageId: string;
+  emoji: { name: string };
+  added: boolean;
+  message: AgentMessage | null;
+}
+
 export interface AgentContext {
   readonly event: string;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
+  readonly reaction: AgentReaction | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly history: AgentHistoryEntry[];
@@ -123,6 +129,7 @@ export interface AgentContext {
 
 export interface AgentHandlers {
   onMessage: (ctx: AgentContext) => Promise<void>;
+  onReaction?: (ctx: AgentContext) => Promise<void>;
   onAction?: (ctx: AgentContext) => Promise<void>;
   onResolve?: (ctx: AgentContext) => Promise<void>;
 }
@@ -147,6 +154,7 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
   history: AgentHistoryEntry[];
