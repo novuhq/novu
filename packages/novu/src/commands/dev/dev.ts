@@ -4,6 +4,7 @@ import open from 'open';
 import ora from 'ora';
 import ws from 'ws';
 import packageJson from '../../../package.json';
+import { NOVU_API_URL, NOVU_SECRET_KEY } from '../../constants';
 import { DevServer } from '../../dev-server';
 import { config } from '../../index';
 import { showWelcomeScreen } from '../shared';
@@ -58,7 +59,7 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
 
   await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
 
-  if (parsedOptions.secretKey) {
+  if (NOVU_SECRET_KEY) {
     const bridgeUrl = `${tunnelOrigin}${NOVU_ENDPOINT_PATH}`;
     await discoverAndRegisterAgents(parsedOptions, bridgeUrl);
   }
@@ -194,22 +195,26 @@ async function discoverAgents(endpointUrl: string): Promise<string[]> {
       },
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      return [];
+    }
 
     const data = (await res.json()) as DiscoverResponse;
 
     return (data.agents ?? []).map((a) => a.agentId);
   } catch {
+
     return [];
   }
 }
 
-async function activateAgentBridge(apiUrl: string, secretKey: string, agentId: string, devBridgeUrl: string) {
-  const res = await fetch(`${apiUrl}/v1/agents/${agentId}/bridge`, {
+async function activateAgentBridge(agentId: string, devBridgeUrl: string) {
+  const apiUrl = NOVU_API_URL || 'https://api.novu.co';
+  const res = await fetch(`${apiUrl}/v1/agents/${encodeURIComponent(agentId)}/bridge`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `ApiKey ${secretKey}`,
+      Authorization: `ApiKey ${NOVU_SECRET_KEY}`,
     },
     body: JSON.stringify({ devBridgeUrl, devBridgeActive: true }),
   });
@@ -238,7 +243,7 @@ async function discoverAndRegisterAgents(parsedOptions: DevCommandOptions, bridg
   console.log(`\n  Found ${agentIds.length} agent${agentIds.length > 1 ? 's' : ''}:`);
 
   for (const agentId of agentIds) {
-    const success = await activateAgentBridge(parsedOptions.apiUrl, parsedOptions.secretKey, agentId, bridgeUrl);
+    const success = await activateAgentBridge(agentId, bridgeUrl);
     if (success) {
       console.log(chalk.green(`    ✓ ${agentId}  → dev bridge activated`));
     }

@@ -11,8 +11,6 @@ export type DevCommandOptions = {
   tunnel: string;
   headless: boolean;
   studio: boolean;
-  secretKey: string;
-  apiUrl: string;
 };
 
 export type LocalTunnelResponse = {

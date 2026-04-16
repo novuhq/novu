@@ -22,6 +22,7 @@ export async function createApp({
   srcDir,
   importAlias,
   secretKey,
+  apiUrl,
   applicationId,
   userId,
   agentIdentifier,
@@ -34,6 +35,7 @@ export async function createApp({
   srcDir: boolean;
   importAlias: string;
   secretKey: string;
+  apiUrl: string;
   applicationId: string;
   userId: string;
   agentIdentifier?: string;
@@ -81,6 +83,7 @@ export async function createApp({
     srcDir,
     importAlias,
     secretKey,
+    apiUrl,
     applicationId,
     userId,
     agentIdentifier,

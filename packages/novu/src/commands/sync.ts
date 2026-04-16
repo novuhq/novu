@@ -51,7 +51,7 @@ export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: 
 
 async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl: string) {
   try {
-    const discoverUrl = `${bridgeUrl}/novu?action=discover`;
+    const discoverUrl = `${bridgeUrl}?action=discover`;
     const discoverRes = await axios.get<DiscoverResponse>(discoverUrl, { timeout: 5000 });
     const agents = discoverRes.data?.agents ?? [];
 
@@ -64,7 +64,7 @@ async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl:
     const results = await Promise.allSettled(
       agents.map((agent) =>
         axios.put(
-          `${apiUrl}/v1/agents/${agent.agentId}/bridge`,
+          `${apiUrl}/v1/agents/${encodeURIComponent(agent.agentId)}/bridge`,
           { bridgeUrl },
           {
             headers: {

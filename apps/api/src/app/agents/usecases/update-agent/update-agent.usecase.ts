@@ -13,11 +13,16 @@ export class UpdateAgent {
   ) {}
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
+    const hasBehaviorFields =
+      command.behavior?.thinkingIndicatorEnabled !== undefined ||
+      command.behavior?.reactions?.onMessageReceived !== undefined ||
+      command.behavior?.reactions?.onResolved !== undefined;
+
     const hasGeneralFields =
       command.name !== undefined ||
       command.description !== undefined ||
-      command.behavior !== undefined ||
-      command.active !== undefined;
+      command.active !== undefined ||
+      hasBehaviorFields;
     const hasBridgeFields =
       command.bridgeUrl !== undefined ||
       command.devBridgeUrl !== undefined ||
@@ -27,7 +32,7 @@ export class UpdateAgent {
       throw new BadRequestException('At least one field must be provided.');
     }
 
-    if (command.devBridgeActive === true || command.devBridgeUrl !== undefined) {
+    if (command.devBridgeActive === true || (command.devBridgeUrl !== undefined && command.devBridgeUrl !== null)) {
       await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
     }
 
@@ -58,17 +63,17 @@ export class UpdateAgent {
       $set.active = command.active;
     }
 
-    if (command.behavior !== undefined) {
-      if (command.behavior.thinkingIndicatorEnabled !== undefined) {
-        $set['behavior.thinkingIndicatorEnabled'] = command.behavior.thinkingIndicatorEnabled;
+    if (hasBehaviorFields) {
+      if (command.behavior!.thinkingIndicatorEnabled !== undefined) {
+        $set['behavior.thinkingIndicatorEnabled'] = command.behavior!.thinkingIndicatorEnabled;
       }
 
-      if (command.behavior.reactions !== undefined) {
-        if (command.behavior.reactions.onMessageReceived !== undefined) {
-          $set['behavior.reactions.onMessageReceived'] = command.behavior.reactions.onMessageReceived;
+      if (command.behavior!.reactions !== undefined) {
+        if (command.behavior!.reactions.onMessageReceived !== undefined) {
+          $set['behavior.reactions.onMessageReceived'] = command.behavior!.reactions.onMessageReceived;
         }
-        if (command.behavior.reactions.onResolved !== undefined) {
-          $set['behavior.reactions.onResolved'] = command.behavior.reactions.onResolved;
+        if (command.behavior!.reactions.onResolved !== undefined) {
+          $set['behavior.reactions.onResolved'] = command.behavior!.reactions.onResolved;
         }
       }
     }
@@ -113,7 +118,7 @@ export class UpdateAgent {
   private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
     const environment = await this.environmentRepository.findOne(
       { _id: environmentId, _organizationId: organizationId },
-      ['type']
+      ['type', 'name']
     );
 
     if (environment?.type === EnvironmentTypeEnum.PROD) {

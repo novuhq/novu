@@ -31,6 +31,7 @@ export const installTemplate = async ({
   srcDir,
   importAlias,
   secretKey,
+  apiUrl,
   applicationId,
   userId,
   agentIdentifier,
@@ -72,6 +73,9 @@ export const installTemplate = async ({
   });
 
   if (template === TemplateTypeEnum.APP_AGENT && agentIdentifier) {
+    if (!/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
+      throw new Error(`Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`);
+    }
     const agentFile = path.join(root, 'app', 'novu', 'agents', 'support-agent.tsx');
     await fs.writeFile(
       agentFile,
@@ -159,7 +163,7 @@ export const installTemplate = async ({
   /* write .env file */
   const envVars =
     template === TemplateTypeEnum.APP_AGENT
-      ? { NOVU_SECRET_KEY: secretKey }
+      ? { NOVU_SECRET_KEY: secretKey, NOVU_API_URL: apiUrl ?? 'https://api.novu.co' }
       : {
           NOVU_SECRET_KEY: secretKey,
           NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',

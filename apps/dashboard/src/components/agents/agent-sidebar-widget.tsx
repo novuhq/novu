@@ -46,6 +46,7 @@ function SidebarRow({ label, children, className }: { label: string; children: R
 }
 
 function TruncatedUrl({ url }: { url: string }) {
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
