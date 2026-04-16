@@ -121,7 +121,12 @@ export class ConversationRepository extends BaseRepositoryV2<
         _id: id,
         _environmentId: environmentId,
         _organizationId: organizationId,
-        'channels.platformThreadId': platformThreadId,
+        channels: {
+          $elemMatch: {
+            platformThreadId,
+            firstPlatformMessageId: { $exists: false },
+          },
+        },
       },
       { $set: { 'channels.$.firstPlatformMessageId': firstPlatformMessageId } }
     );

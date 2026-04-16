@@ -28,7 +28,7 @@ export interface IInitCommandOptions {
   secretKey?: string;
   projectPath?: string;
   apiUrl: string;
-  template?: 'notifications' | 'agent';
+  template?: string;
   agentIdentifier?: string;
 }
 
@@ -150,11 +150,36 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     process.exit(1);
   }
 
+  const supportedTemplates = ['notifications', 'agent'] as const;
+  let templateChoice = program.template;
+
+  if (templateChoice && !supportedTemplates.includes(templateChoice as (typeof supportedTemplates)[number])) {
+    console.error(`Invalid template "${program.template}". Supported templates: ${supportedTemplates.join(', ')}`);
+    process.exit(1);
+  }
+
+  if (!templateChoice) {
+    const res = await prompts({
+      onState: onPromptState,
+      type: 'select',
+      name: 'template',
+      message: 'What type of Novu app do you want to create?',
+      choices: [
+        { title: 'Notifications', value: 'notifications', description: 'Workflows, email templates, and in-app inbox' },
+        { title: 'Agent', value: 'agent', description: 'Conversational AI agent with chat platform support' },
+      ],
+      initial: 0,
+    });
+
+    templateChoice = res.template;
+  }
+
+  if (!templateChoice) {
+    console.error('No template selected.');
+    process.exit(1);
+  }
+
   const preferences = {} as Record<string, boolean | string>;
-  /**
-   * If the user does not provide the necessary flags, prompt them for whether
-   * to use TS or JS.
-   */
   const defaults: typeof preferences = {
     typescript: true,
     eslint: true,
@@ -177,6 +202,7 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   await createApp({
     appPath: resolvedProjectPath,
     packageManager: 'npm',
+    templateChoice,
     typescript: defaults.typescript as boolean,
     eslint: defaults.eslint as boolean,
     srcDir: defaults.srcDir as boolean,
@@ -184,7 +210,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     secretKey: program.secretKey,
     applicationId,
     userId,
-    template: program.template,
     agentIdentifier: program.agentIdentifier,
   });
 

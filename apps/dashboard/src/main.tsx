@@ -430,6 +430,14 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: ROUTES.ACTIVITY_CONVERSATIONS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
                 path: ROUTES.ANALYTICS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
