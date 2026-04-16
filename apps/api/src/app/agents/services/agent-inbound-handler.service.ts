@@ -8,6 +8,7 @@ import {
 } from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
+import { PLATFORMS_WITHOUT_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -121,7 +122,7 @@ export class AgentInboundHandler {
         });
     }
 
-    if (config.thinkingIndicatorEnabled) {
+    if (config.thinkingIndicatorEnabled && !PLATFORMS_WITHOUT_TYPING_INDICATOR.has(config.platform)) {
       await thread.startTyping('Thinking...');
     }
 
