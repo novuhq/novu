@@ -45,7 +45,12 @@ RUN pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy
 
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
     if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
-      cd /usr/src/deploy && npm install --no-save @taskforcesh/bullmq-pro@6.11.0 --registry=https://npm.taskforce.sh/; \
+      cd $(mktemp -d) && \
+      echo "@taskforcesh:registry=https://npm.taskforce.sh/" > .npmrc && \
+      echo "//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" >> .npmrc && \
+      npm init -y > /dev/null 2>&1 && \
+      npm install @taskforcesh/bullmq-pro@6.11.0 && \
+      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh; \
     fi
 
 # ------- PRODUCTION BUILD ----------
