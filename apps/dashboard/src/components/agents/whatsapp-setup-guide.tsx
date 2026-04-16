@@ -187,6 +187,7 @@ function WebhookUrlSection({ webhookUrl }: { webhookUrl: string }) {
           type="text"
           readOnly
           value={webhookUrl}
+          aria-label="Webhook URL"
           className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
         />
         <CopyButton valueToCopy={webhookUrl} size="xs" className="shrink-0 border-l border-stroke-soft" />
@@ -202,7 +203,6 @@ export function WhatsAppSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: WhatsAppSetupGuideProps) {
-  const { currentEnvironment } = useEnvironment();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
