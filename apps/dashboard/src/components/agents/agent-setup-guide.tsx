@@ -1,9 +1,10 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { type AgentResponse } from '@/api/agents';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
+import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
@@ -25,6 +26,7 @@ function resolveProviderSetupGuide(providerId: string) {
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const [isProviderComplete, setIsProviderComplete] = useState(false);
   const { integrations } = useFetchIntegrations();
 
   const slackFromAgent = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
@@ -49,6 +51,10 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const firstIncompleteStepForProviderRow = hasProviderSelected ? 2 : 1;
 
   const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
+
+  const handleProviderStepsCompleted = useCallback(() => {
+    setIsProviderComplete(true);
+  }, []);
 
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
@@ -92,8 +98,16 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
             />
 
             {ProviderGuide && effectiveIntegrationId ? (
-              <ProviderGuide agent={agent} integrationId={effectiveIntegrationId} stepOffset={2} embedded={false} />
+              <ProviderGuide
+                agent={agent}
+                integrationId={effectiveIntegrationId}
+                stepOffset={2}
+                embedded={false}
+                onStepsCompleted={handleProviderStepsCompleted}
+              />
             ) : null}
+
+            <AgentCodeSetupSection agent={agent} stepOffset={5} isProviderComplete={isProviderComplete} />
           </div>
         </div>
       )}

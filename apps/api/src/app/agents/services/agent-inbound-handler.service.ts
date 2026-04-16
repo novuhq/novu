@@ -163,7 +163,7 @@ export class AgentInboundHandler {
             environmentId: config.environmentId,
             organizationId: config.organizationId,
             conversationId: conversation._id,
-            agentIdentifier: agentId,
+            agentIdentifier: config.agentIdentifier,
             integrationIdentifier: config.integrationIdentifier,
             reply: { text: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN },
           })
