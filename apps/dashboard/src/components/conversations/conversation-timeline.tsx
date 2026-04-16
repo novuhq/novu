@@ -105,7 +105,6 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
           </div>
         )}
       </div>
-      <RiExpandUpDownLine className="text-text-soft size-4 shrink-0" />
     </div>
   );
 }

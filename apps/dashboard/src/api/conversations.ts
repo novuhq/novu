@@ -152,6 +152,8 @@ export function getConversationActivities({
 }): Promise<ConversationActivitiesResponse> {
   const searchParams = new URLSearchParams();
   searchParams.append('limit', limit.toString());
+  searchParams.append('orderBy', 'createdAt');
+  searchParams.append('orderDirection', 'ASC');
 
   if (after) {
     searchParams.append('after', after);
