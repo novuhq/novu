@@ -99,7 +99,8 @@
   "optionalDependencies": {
     "@novu/ee-billing": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
-    "@novu/ee-translation": "workspace:*"
+    "@novu/ee-translation": "workspace:*",
+    "@taskforcesh/bullmq-pro": "6.11.0"
   },
   "nx": {
     "tags": [
