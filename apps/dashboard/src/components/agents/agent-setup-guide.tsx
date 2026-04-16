@@ -11,6 +11,7 @@ import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SlackSetupGuide } from './slack-setup-guide';
+import { WhatsAppSetupGuide } from './whatsapp-setup-guide';
 
 type AgentSetupGuideProps = {
   agent: AgentResponse;
@@ -20,6 +21,8 @@ function resolveProviderSetupGuide(providerId: string) {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
       return SlackSetupGuide;
+    case ChatProviderIdEnum.WhatsAppBusiness:
+      return WhatsAppSetupGuide;
     default:
       return null;
   }
@@ -64,17 +67,17 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
     return links.some((link) => Boolean(link.connectedAt));
   }, [isProviderComplete, agentIntegrationsQuery.data?.data]);
 
-  const slackFromAgent = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
+  const defaultFromAgent = agent.integrations?.[0];
 
-  const effectiveIntegrationId = selectedIntegrationId ?? slackFromAgent?.integrationId;
+  const effectiveIntegrationId = selectedIntegrationId ?? defaultFromAgent?.integrationId;
 
   const selectedProviderId = useMemo(() => {
     if (selectedIntegrationId) {
       return integrations?.find((i) => i._id === selectedIntegrationId)?.providerId;
     }
 
-    return slackFromAgent?.providerId;
-  }, [integrations, selectedIntegrationId, slackFromAgent?.providerId]);
+    return defaultFromAgent?.providerId;
+  }, [integrations, selectedIntegrationId, defaultFromAgent?.providerId]);
 
   const hasProviderSelected = Boolean(effectiveIntegrationId);
 
@@ -126,7 +129,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
                 rightContent={
                   <ProviderDropdown
                     agentIdentifier={agent.identifier}
-                    selectedIntegrationId={selectedIntegrationId ?? slackFromAgent?.integrationId}
+                    selectedIntegrationId={selectedIntegrationId ?? defaultFromAgent?.integrationId}
                     linkedIntegrationIds={linkedIntegrationIds}
                     onSelect={(_providerId, integration) => {
                       if (integration?._id) {
