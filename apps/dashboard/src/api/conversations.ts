@@ -131,10 +131,7 @@ export type ConversationActivitiesResponse = {
 };
 
 /** `conversationIdentifier` is the public `identifier` field — the API resolves by identifier, not Mongo `_id`. */
-export function getConversation(
-  conversationIdentifier: string,
-  environment: IEnvironment
-): Promise<ConversationDto> {
+export function getConversation(conversationIdentifier: string, environment: IEnvironment): Promise<ConversationDto> {
   return get<ConversationDto>(`/conversations/${encodeURIComponent(conversationIdentifier)}`, {
     environment,
   });

@@ -1,23 +1,39 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AgentRepository } from '@novu/dal';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import type { AgentResponseDto } from '../../dtos';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import { UpdateAgentCommand } from './update-agent.command';
 
 @Injectable()
 export class UpdateAgent {
-  constructor(private readonly agentRepository: AgentRepository) {}
+  constructor(
+    private readonly agentRepository: AgentRepository,
+    private readonly environmentRepository: EnvironmentRepository
+  ) {}
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
-    if (
-      command.name === undefined &&
-      command.description === undefined &&
-      command.behavior === undefined &&
-      command.active === undefined
-    ) {
-      throw new BadRequestException(
-        'At least one of name, description, behavior, or active must be provided.'
-      );
+    const hasBehaviorFields =
+      command.behavior?.thinkingIndicatorEnabled !== undefined ||
+      command.behavior?.reactions?.onMessageReceived !== undefined ||
+      command.behavior?.reactions?.onResolved !== undefined;
+
+    const hasGeneralFields =
+      command.name !== undefined ||
+      command.description !== undefined ||
+      command.active !== undefined ||
+      hasBehaviorFields;
+    const hasBridgeFields =
+      command.bridgeUrl !== undefined ||
+      command.devBridgeUrl !== undefined ||
+      command.devBridgeActive !== undefined;
+
+    if (!hasGeneralFields && !hasBridgeFields) {
+      throw new BadRequestException('At least one field must be provided.');
+    }
+
+    if (command.devBridgeActive === true || (command.devBridgeUrl !== undefined && command.devBridgeUrl !== null)) {
+      await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
     }
 
     const existing = await this.agentRepository.findOne(
@@ -47,19 +63,31 @@ export class UpdateAgent {
       $set.active = command.active;
     }
 
-    if (command.behavior !== undefined) {
-      if (command.behavior.thinkingIndicatorEnabled !== undefined) {
-        $set['behavior.thinkingIndicatorEnabled'] = command.behavior.thinkingIndicatorEnabled;
+    if (hasBehaviorFields) {
+      if (command.behavior!.thinkingIndicatorEnabled !== undefined) {
+        $set['behavior.thinkingIndicatorEnabled'] = command.behavior!.thinkingIndicatorEnabled;
       }
 
-      if (command.behavior.reactions !== undefined) {
-        if (command.behavior.reactions.onMessageReceived !== undefined) {
-          $set['behavior.reactions.onMessageReceived'] = command.behavior.reactions.onMessageReceived;
+      if (command.behavior!.reactions !== undefined) {
+        if (command.behavior!.reactions.onMessageReceived !== undefined) {
+          $set['behavior.reactions.onMessageReceived'] = command.behavior!.reactions.onMessageReceived;
         }
-        if (command.behavior.reactions.onResolved !== undefined) {
-          $set['behavior.reactions.onResolved'] = command.behavior.reactions.onResolved;
+        if (command.behavior!.reactions.onResolved !== undefined) {
+          $set['behavior.reactions.onResolved'] = command.behavior!.reactions.onResolved;
         }
       }
+    }
+
+    if (command.bridgeUrl !== undefined) {
+      $set.bridgeUrl = command.bridgeUrl;
+    }
+
+    if (command.devBridgeUrl !== undefined) {
+      $set.devBridgeUrl = command.devBridgeUrl;
+    }
+
+    if (command.devBridgeActive !== undefined) {
+      $set.devBridgeActive = command.devBridgeActive;
     }
 
     await this.agentRepository.updateOne(
@@ -85,5 +113,16 @@ export class UpdateAgent {
     }
 
     return toAgentResponse(updated);
+  }
+
+  private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
+    const environment = await this.environmentRepository.findOne(
+      { _id: environmentId, _organizationId: organizationId },
+      ['type', 'name']
+    );
+
+    if (environment?.type === EnvironmentTypeEnum.PROD) {
+      throw new ForbiddenException('Dev bridge cannot be activated on production environments.');
+    }
   }
 }

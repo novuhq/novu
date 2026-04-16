@@ -7,18 +7,18 @@ import {
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
-import { BridgeExecutorService, BridgeExecutorParams } from '../services/bridge-executor.service';
-import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
+import { AgentConfigResolver } from '../services/agent-config-resolver.service';
+import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
+import { BridgeExecutorParams, BridgeExecutorService } from '../services/bridge-executor.service';
 import {
-  setupAgentTestContext,
-  seedChannelEndpoint,
-  conversationRepository,
-  activityRepository,
   AgentTestContext,
+  activityRepository,
+  conversationRepository,
+  seedChannelEndpoint,
+  setupAgentTestContext,
 } from './helpers/agent-test-setup';
-import { signSlackRequest, buildSlackChallenge } from './helpers/providers/slack';
+import { buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
 
 function mockSentMessage() {
   return {
@@ -77,7 +77,11 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
     });
   });
 
-  async function invokeInbound(threadId: string, message: ReturnType<typeof mockMessage>, event = AgentEventEnum.ON_MESSAGE) {
+  async function invokeInbound(
+    threadId: string,
+    message: ReturnType<typeof mockMessage>,
+    event = AgentEventEnum.ON_MESSAGE
+  ) {
     const config = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
     const thread = mockThread(threadId);
     await inboundHandler.handle(ctx.agentId, config, thread as any, message as any, event);
@@ -126,15 +130,10 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(platformUserParticipant).to.exist;
       expect(platformUserParticipant!.id).to.equal('slack:U_CREATOR');
 
-      const agentParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.AGENT
-      );
+      const agentParticipant = conversation!.participants.find((p) => p.type === ConversationParticipantTypeEnum.AGENT);
       expect(agentParticipant).to.exist;
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversation!._id
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
       expect(activities.length).to.be.gte(1);
 
       const userActivity = activities.find((a) => a.senderType === ConversationActivitySenderTypeEnum.PLATFORM_USER);
@@ -173,10 +172,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(subParticipant).to.exist;
       expect(subParticipant!.id).to.equal(subscriber.subscriberId);
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversation!._id
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
       const userActivity = activities.find((a) => a.content === 'Hi from subscriber');
       expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
@@ -187,11 +183,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const threadId = `T_REUSE_${Date.now()}`;
 
       await invokeInbound(threadId, mockMessage({ userId: 'U1', text: 'First message' }));
-      await invokeInbound(
-        threadId,
-        mockMessage({ userId: 'U1', text: 'Second message' }),
-        AgentEventEnum.ON_MESSAGE
-      );
+      await invokeInbound(threadId, mockMessage({ userId: 'U1', text: 'Second message' }), AgentEventEnum.ON_MESSAGE);
 
       const conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
@@ -202,10 +194,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(conversation).to.exist;
       expect(conversation!.messageCount).to.be.gte(2);
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversation!._id
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
       expect(activities.length).to.be.gte(2);
     });
   });
@@ -296,11 +285,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         ConversationStatusEnum.RESOLVED
       );
 
-      await invokeInbound(
-        threadId,
-        mockMessage({ userId: 'U_REOPEN', text: 'Reopening' }),
-        AgentEventEnum.ON_MESSAGE
-      );
+      await invokeInbound(threadId, mockMessage({ userId: 'U_REOPEN', text: 'Reopening' }), AgentEventEnum.ON_MESSAGE);
 
       const reopened = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,

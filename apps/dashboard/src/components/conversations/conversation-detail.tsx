@@ -1,10 +1,7 @@
 import { RiArrowDownSLine, RiArrowUpSLine, RiCloseFill } from 'react-icons/ri';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
-import {
-  useFetchConversation,
-  useFetchConversationActivities,
-} from '@/hooks/use-fetch-conversation-activities';
+import { useFetchConversation, useFetchConversationActivities } from '@/hooks/use-fetch-conversation-activities';
 import { ConversationOverview } from './conversation-overview';
 import { ConversationTimeline } from './conversation-timeline';
 
@@ -16,8 +13,7 @@ type ConversationDetailProps = {
 
 export function ConversationDetail({ conversationId, onClose, onNavigate }: ConversationDetailProps) {
   const { conversation, isLoading: isConversationLoading } = useFetchConversation(conversationId);
-  const { activities, totalCount, isLoading: isActivitiesLoading } =
-    useFetchConversationActivities(conversationId);
+  const { activities, totalCount, isLoading: isActivitiesLoading } = useFetchConversationActivities(conversationId);
 
   return (
     <div className="flex h-full flex-col">
@@ -69,11 +65,7 @@ export function ConversationDetail({ conversationId, onClose, onNavigate }: Conv
 
         <Separator />
 
-        <ConversationTimeline
-          activities={activities}
-          isLoading={isActivitiesLoading}
-          totalCount={totalCount}
-        />
+        <ConversationTimeline activities={activities} isLoading={isActivitiesLoading} totalCount={totalCount} />
       </div>
     </div>
   );

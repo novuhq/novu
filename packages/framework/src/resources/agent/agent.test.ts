@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { jsx } from 'chat/jsx-runtime';
+
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
-import { Card, CardText, Button } from './index';
 import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
+import { Button, Card, CardText } from './index';
 
 function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
   return {
@@ -65,6 +67,27 @@ describe('agent()', () => {
     const bot = agent('wine-bot', { onMessage: async () => {} });
 
     expect(bot.handlers.onReaction).toBeUndefined();
+  });
+});
+
+describe('Client.discover() includes agents', () => {
+  it('should return registered agents in discover output', () => {
+    const client = new Client({ secretKey: 'test-key', strictAuthentication: false });
+    const bot1 = agent('bot-a', { onMessage: async () => {} });
+    const bot2 = agent('bot-b', { onMessage: async () => {} });
+    client.addAgents([bot1, bot2]);
+
+    const output = client.discover();
+
+    expect(output.agents).toEqual([{ agentId: 'bot-a' }, { agentId: 'bot-b' }]);
+  });
+
+  it('should return empty agents array when no agents registered', () => {
+    const client = new Client({ secretKey: 'test-key', strictAuthentication: false });
+
+    const output = client.discover();
+
+    expect(output.agents).toEqual([]);
   });
 });
 
@@ -421,10 +444,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
         await ctx.reply(
           Card({
             title: 'Order #123',
-            children: [
-              CardText('Your order is ready'),
-              Button({ id: 'confirm', label: 'Confirm', style: 'primary' }),
-            ],
+            children: [CardText('Your order is ready'), Button({ id: 'confirm', label: 'Confirm', style: 'primary' })],
           })
         );
       },
@@ -462,6 +482,51 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.reply.card.children).toHaveLength(2);
     expect(replyBody.reply.card.children[1].type).toBe('button');
     expect(replyBody.reply.card.children[1].id).toBe('confirm');
+    expect(replyBody.reply.text).toBeUndefined();
+    expect(replyBody.reply.markdown).toBeUndefined();
+  });
+
+  it('should serialize JSX Card elements on reply', async () => {
+    const jsxCard = jsx(Card, {
+      title: 'JSX Card',
+      children: [jsx(CardText, { children: 'Hello from JSX' }), jsx(Button, { id: 'ok', label: 'OK', style: 'primary' })],
+    });
+
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        await ctx.reply(jsxCard);
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.reply.card).toBeDefined();
+    expect(replyBody.reply.card.type).toBe('card');
+    expect(replyBody.reply.card.title).toBe('JSX Card');
     expect(replyBody.reply.text).toBeUndefined();
     expect(replyBody.reply.markdown).toBeUndefined();
   });

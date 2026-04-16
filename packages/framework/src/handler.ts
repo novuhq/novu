@@ -21,8 +21,8 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
-import { AgentContextImpl, AgentEventEnum } from './resources/agent';
 import type { Agent, AgentBridgeRequest } from './resources/agent';
+import { AgentContextImpl, AgentEventEnum } from './resources/agent';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient } from './utils';
 
@@ -155,7 +155,15 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         await this.validateHmac(body, signatureHeader);
       }
 
-      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action, agentId, agentEvent, actions.waitUntil);
+      const postActionMap = this.getPostActionMap(
+        body,
+        workflowId,
+        stepId,
+        action,
+        agentId,
+        agentEvent,
+        actions.waitUntil
+      );
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
       if (method === HttpMethodEnum.POST) {

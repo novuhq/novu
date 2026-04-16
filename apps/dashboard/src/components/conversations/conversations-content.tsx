@@ -62,7 +62,9 @@ export function ConversationsContent({
   }, [mergedFilterValues]);
 
   const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id] });
+    await queryClient.invalidateQueries({
+      queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id],
+    });
     setLastUpdated(new Date());
   };
 

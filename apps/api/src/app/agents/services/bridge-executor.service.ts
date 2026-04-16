@@ -10,7 +10,6 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   ConversationEntity,
-  EnvironmentRepository,
   SubscriberEntity,
 } from '@novu/dal';
 import type { Message } from 'chat';
@@ -129,7 +128,6 @@ export class NoBridgeUrlError extends Error {
 @Injectable()
 export class BridgeExecutorService {
   constructor(
-    private readonly environmentRepository: EnvironmentRepository,
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger
   ) {}
@@ -140,13 +138,16 @@ export class BridgeExecutorService {
     try {
       const { config, event } = params;
 
-      const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, config.organizationId, agentIdentifier, event);
+      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event);
       if (!bridgeUrl) {
         throw new NoBridgeUrlError(agentIdentifier);
       }
 
       const secretKey = await this.getDecryptedSecretKey.execute(
-        GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
+        GetDecryptedSecretKeyCommand.create({
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        })
       );
 
       const payload = this.buildPayload(params);
@@ -192,11 +193,13 @@ export class BridgeExecutorService {
         this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.status}`);
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`);
+        this.logger.warn(
+          `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
+        );
       }
 
       if (attempt < MAX_RETRIES) {
-        await this.delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        await this.delay(RETRY_BASE_DELAY_MS * 2 ** attempt);
       }
     }
 
@@ -209,20 +212,21 @@ export class BridgeExecutorService {
     });
   }
 
-  private async resolveBridgeUrl(
-    environmentId: string,
-    organizationId: string,
+  private resolveBridgeUrl(
+    config: ResolvedAgentConfig,
     agentIdentifier: string,
     event: AgentEventEnum
-  ): Promise<string | null> {
-    const environment = await this.environmentRepository.findOne(
-      { _id: environmentId, _organizationId: organizationId },
-      ['bridge']
-    );
-    const baseUrl = environment?.bridge?.url;
+  ): string | null {
+    let baseUrl: string | undefined;
+
+    if (config.devBridgeActive && config.devBridgeUrl) {
+      baseUrl = config.devBridgeUrl;
+    } else if (config.bridgeUrl) {
+      baseUrl = config.bridgeUrl;
+    }
 
     if (!baseUrl) {
-      this.logger.warn(`[agent:${agentIdentifier}] No bridge URL configured on environment, skipping bridge call`);
+      this.logger.warn(`[agent:${agentIdentifier}] No bridge URL configured on agent, skipping bridge call`);
 
       return null;
     }

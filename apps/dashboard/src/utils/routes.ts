@@ -75,7 +75,8 @@ export const ROUTES = {
   AGENTS: '/env/:environmentSlug/agents',
   AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
   /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
-  AGENT_DETAILS_INTEGRATIONS_DETAIL: '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
 } as const;
 
@@ -87,7 +88,6 @@ export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
 
 export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
   if (tab && (AGENT_DETAILS_TABS as readonly string[]).includes(tab)) {
-
     return tab as AgentDetailsTab;
   }
 

@@ -8,10 +8,10 @@ import { ConversationFiltersData } from '@/types/conversation';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { cn } from '@/utils/ui';
 import { IS_SELF_HOSTED } from '../../config';
-import { PROVIDER_OPTIONS } from './constants';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
+import { PROVIDER_OPTIONS } from './constants';
 
 type ConversationFiltersProps = {
   filters: ConversationFiltersData;

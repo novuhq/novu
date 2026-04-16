@@ -91,9 +91,7 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
               alt={activity.platform}
               className="size-3.5 object-contain"
             />
-            <span className="text-text-sub text-[10px] font-medium leading-[14px] capitalize">
-              {activity.platform}
-            </span>
+            <span className="text-text-sub text-[10px] font-medium leading-[14px] capitalize">{activity.platform}</span>
           </div>
         )}
       </div>
@@ -130,9 +128,7 @@ function MessageContent({ content }: { content: string }) {
           className="text-text-soft flex shrink-0 items-center gap-0.5"
         >
           <RiExpandUpDownLine className="size-3.5" />
-          <span className="text-[10px] font-medium leading-[14px]">
-            {expanded ? 'Collapse' : 'Show full message'}
-          </span>
+          <span className="text-[10px] font-medium leading-[14px]">{expanded ? 'Collapse' : 'Show full message'}</span>
         </button>
       )}
     </div>
@@ -143,12 +139,7 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   const isAgent = activity.senderType === 'agent';
 
   return (
-    <div
-      className={cn(
-        'border-stroke-soft flex flex-col rounded-md border',
-        isAgent ? 'bg-bg-weak' : 'bg-white'
-      )}
-    >
+    <div className={cn('border-stroke-soft flex flex-col rounded-md border', isAgent ? 'bg-bg-weak' : 'bg-white')}>
       <div className="flex flex-col py-1">
         <div className="flex items-center justify-between px-2 py-1">
           <SenderHeader activity={activity} />
@@ -164,11 +155,12 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
   const isAgentAction = activity.senderType === 'agent' || activity.senderType === 'system';
   const signalType = activity.signalData?.type;
 
-  const icon = signalType === 'trigger' ? (
-    <RiRouteFill className="text-text-soft size-3.5 shrink-0" />
-  ) : (
-    <RiRobot2Line className={cn('size-3.5 shrink-0', isAgentAction ? 'text-text-soft' : 'text-text-soft')} />
-  );
+  const icon =
+    signalType === 'trigger' ? (
+      <RiRouteFill className="text-text-soft size-3.5 shrink-0" />
+    ) : (
+      <RiRobot2Line className={cn('size-3.5 shrink-0', isAgentAction ? 'text-text-soft' : 'text-text-soft')} />
+    );
 
   return (
     <div className="flex items-center gap-1 overflow-hidden py-0.5 pl-[11px]">
@@ -234,9 +226,7 @@ export function ConversationTimeline({ activities, isLoading, totalCount }: Conv
     );
   }
 
-  const hasResolvedSignal = activities.some(
-    (a) => a.type === 'signal' && a.signalData?.type === 'resolve'
-  );
+  const hasResolvedSignal = activities.some((a) => a.type === 'signal' && a.signalData?.type === 'resolve');
 
   return (
     <div className="flex flex-col gap-3 p-3">
@@ -251,11 +241,7 @@ export function ConversationTimeline({ activities, isLoading, totalCount }: Conv
         {activities.map((activity, index) => (
           <Fragment key={activity._id}>
             {index > 0 && <TimelineDivider />}
-            {activity.type === 'message' ? (
-              <MessageCard activity={activity} />
-            ) : (
-              <InlineLogRow activity={activity} />
-            )}
+            {activity.type === 'message' ? <MessageCard activity={activity} /> : <InlineLogRow activity={activity} />}
           </Fragment>
         ))}
 

@@ -28,6 +28,8 @@ export interface InstallTemplateArgs {
   srcDir: boolean;
   importAlias: string;
   secretKey: string;
+  apiUrl: string;
   applicationId: string;
   userId: string;
+  agentIdentifier?: string;
 }

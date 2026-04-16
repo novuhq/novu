@@ -1,5 +1,5 @@
 /** @jsxImportSource @novu/framework */
-import { agent, Card, CardText, Actions, Button } from '@novu/framework';
+import { Actions, agent, Button, Card, CardText } from '@novu/framework';
 
 export const supportAgent = agent('support-agent', {
   onMessage: async (ctx) => {

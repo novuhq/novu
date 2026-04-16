@@ -1,3 +1,4 @@
+import { isJSX, toCardElement } from 'chat/jsx-runtime';
 import type {
   AgentAction,
   AgentBridgeRequest,
@@ -21,6 +22,13 @@ function isCardElement(content: object): content is import('chat').CardElement {
 function serializeContent(content: MessageContent): ReplyContent {
   if (typeof content === 'string') {
     return { text: content };
+  }
+
+  if (isJSX(content)) {
+    const card = toCardElement(content);
+    if (card) {
+      return { card };
+    }
   }
 
   if (isCardElement(content)) {

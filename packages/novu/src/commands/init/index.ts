@@ -29,6 +29,7 @@ export interface IInitCommandOptions {
   projectPath?: string;
   apiUrl: string;
   template?: string;
+  agentIdentifier?: string;
 }
 
 export async function init(program: IInitCommandOptions, anonymousId?: string): Promise<void> {
@@ -207,8 +208,10 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     srcDir: defaults.srcDir as boolean,
     importAlias: defaults.importAlias as string,
     secretKey: program.secretKey,
+    apiUrl: program.apiUrl,
     applicationId,
     userId,
+    agentIdentifier: program.agentIdentifier,
   });
 
   if (userId || anonymousId) {

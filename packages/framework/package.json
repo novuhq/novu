@@ -27,6 +27,7 @@
     "step-resolver",
     "sveltekit",
     "jsx-runtime",
+    "jsx-dev-runtime",
     "validators",
     "README.md"
   ],
@@ -82,6 +83,16 @@
       "import": {
         "types": "./dist/esm/jsx-runtime.d.ts",
         "default": "./dist/esm/jsx-runtime.js"
+      }
+    },
+    "./jsx-dev-runtime": {
+      "require": {
+        "types": "./dist/cjs/jsx-dev-runtime.d.cts",
+        "default": "./dist/cjs/jsx-dev-runtime.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/jsx-dev-runtime.d.ts",
+        "default": "./dist/esm/jsx-dev-runtime.js"
       }
     },
     "./express": {

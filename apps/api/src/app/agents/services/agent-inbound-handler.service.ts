@@ -1,6 +1,11 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, ConversationRepository, SubscriberRepository } from '@novu/dal';
+import {
+  ConversationActivitySenderTypeEnum,
+  ConversationParticipantTypeEnum,
+  ConversationRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import type { Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
@@ -8,7 +13,12 @@ import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-re
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import { type BridgeAction, type BridgeReaction, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+import {
+  type BridgeAction,
+  BridgeExecutorService,
+  type BridgeReaction,
+  NoBridgeUrlError,
+} from './bridge-executor.service';
 
 const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 
@@ -97,9 +107,12 @@ export class AgentInboundHandler {
     const isFirstMessage = !channel?.firstPlatformMessageId;
 
     if (isFirstMessage && config.reactionOnMessageReceived && message.id) {
-      thread.createSentMessageFromMessage(message).addReaction(config.reactionOnMessageReceived).catch((err) => {
-        this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
-      });
+      thread
+        .createSentMessageFromMessage(message)
+        .addReaction(config.reactionOnMessageReceived)
+        .catch((err) => {
+          this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+        });
 
       this.conversationRepository
         .setFirstPlatformMessageId(config.environmentId, config.organizationId, conversation._id, thread.id, message.id)
@@ -163,11 +176,7 @@ export class AgentInboundHandler {
     }
   }
 
-  async handleReaction(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    event: InboundReactionEvent
-  ): Promise<void> {
+  async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
     const threadId = event.thread?.id;
     if (!threadId) {
       this.logger.warn(`[agent:${agentId}] Reaction received without thread context, skipping`);
@@ -197,7 +206,10 @@ export class AgentInboundHandler {
             integrationIdentifier: config.integrationIdentifier,
           })
           .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed for reaction, continuing without subscriber`);
+            this.logger.warn(
+              err,
+              `[agent:${agentId}] Subscriber resolution failed for reaction, continuing without subscriber`
+            );
 
             return null;
           })
