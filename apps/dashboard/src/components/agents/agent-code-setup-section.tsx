@@ -15,6 +15,9 @@ import { deriveStepStatus } from './setup-guide-step-utils';
 const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
 
+// TODO: change to 'latest' when agents are GA and IS_CONVERSATIONAL_AGENTS_ENABLED flag is removed
+const CLI_PACKAGE_TAG = 'rc';
+
 function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
 }
@@ -31,7 +34,7 @@ function buildInitCommand({
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
-  const parts = [`npx novu@latest init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${key}`];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${key}`];
 
   if (apiUrl) {
     parts.push(`-a ${apiUrl}`);
@@ -49,7 +52,7 @@ function buildInitCopyCommand({
   secretKey: string;
   apiUrl: string | null;
 }): string {
-  const parts = [`npx novu@latest init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${secretKey}`];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${secretKey}`];
 
   if (apiUrl) {
     parts.push(`-a ${apiUrl}`);
@@ -262,8 +265,8 @@ export function AgentCodeSetupSection({ agent, stepOffset, isProviderComplete }:
         }
         rightContent={
           <TerminalBlock
-            displayCommand="npx novu@latest dev -p 4000 --no-studio"
-            copyCommand="npx novu@latest dev -p 4000 --no-studio"
+            displayCommand={`npx novu@${CLI_PACKAGE_TAG} dev -p 4000 --no-studio`}
+            copyCommand={`npx novu@${CLI_PACKAGE_TAG} dev -p 4000 --no-studio`}
           />
         }
       />

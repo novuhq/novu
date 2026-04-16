@@ -4,10 +4,20 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { bold, cyan } from 'picocolors';
+import packageJson from '../../../../package.json';
 import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
 
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
+
+function resolveFrameworkVersion(): string {
+  const raw = packageJson.dependencies['@novu/framework'];
+  if (raw.startsWith('workspace:')) {
+    return 'latest';
+  }
+
+  return raw;
+}
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -194,7 +204,7 @@ export const installTemplate = async ({
     react: '^19',
     'react-dom': '^19',
     next: version,
-    '@novu/framework': 'latest',
+    '@novu/framework': resolveFrameworkVersion(),
   };
 
   if (!isAgentTemplate) {
