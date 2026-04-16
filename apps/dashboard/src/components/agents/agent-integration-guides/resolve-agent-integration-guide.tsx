@@ -1,8 +1,10 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
+import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
+import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
 type ResolveAgentIntegrationGuideProps = {
   integrationLink: AgentIntegrationLink;
@@ -32,6 +34,24 @@ export function ResolveAgentIntegrationGuide({
   if (providerId === ChatProviderIdEnum.Slack) {
     return (
       <SlackAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && !integrationLink.connectedAt) {
+    return <WhatsAppSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+  }
+
+  if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+    return (
+      <WhatsAppAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}
