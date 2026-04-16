@@ -17,8 +17,10 @@ function resolveFrameworkVersion(): string {
   const pkgRoot = __dirname.slice(0, distIndex);
   try {
     const pkg = JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
+    const ver = pkg.dependencies?.['@novu/framework'];
+    if (!ver || ver.startsWith('workspace:')) return 'latest';
 
-    return pkg.dependencies?.['@novu/framework'] ?? 'latest';
+    return ver;
   } catch {
     return 'latest';
   }
