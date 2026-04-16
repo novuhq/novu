@@ -1290,6 +1290,20 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'App Secret',
+    description: 'Found under App Settings > Basic in your Meta app dashboard — used to verify inbound webhook signatures',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Verify Token',
+    description: 'A secret string you define — must match the Verify Token entered in your Meta webhook configuration',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const mobishastraConfig: IConfigCredential[] = [

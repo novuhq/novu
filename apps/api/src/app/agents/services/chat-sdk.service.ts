@@ -20,9 +20,9 @@ import { AgentInboundHandler } from './agent-inbound-handler.service';
  *           credentials.secretKey → appPassword
  *           credentials.tenantId  → appTenantId
  *
- * WhatsApp: credentials.token                    → accessToken
+ * WhatsApp: credentials.apiToken                  → accessToken
  *           credentials.secretKey                → appSecret
- *           credentials.apiToken                 → verifyToken
+ *           credentials.token                    → verifyToken
  *           credentials.phoneNumberIdentification → phoneNumberId
  */
 
@@ -249,9 +249,9 @@ export class ChatSdkService implements OnModuleDestroy {
 
         return {
           whatsapp: createWhatsAppAdapter({
-            accessToken: credentials.token!,
+            accessToken: credentials.apiToken!,
             appSecret: credentials.secretKey!,
-            verifyToken: credentials.apiToken!,
+            verifyToken: credentials.token!,
             phoneNumberId: credentials.phoneNumberIdentification!,
           }),
         };
