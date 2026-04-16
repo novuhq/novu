@@ -50,9 +50,12 @@ function TruncatedUrl({ url }: { url: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="text-text-sub font-code text-label-xs block max-w-[160px] truncate tracking-tight">
+        <button
+          type="button"
+          className="text-text-sub font-code text-label-xs block max-w-[160px] truncate tracking-tight bg-transparent p-0 text-left"
+        >
           {url}
-        </span>
+        </button>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="max-w-xs break-all">
         {url}
@@ -69,14 +72,15 @@ type BridgeUrlSectionProps = {
 };
 
 function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: BridgeUrlSectionProps) {
-  const activeBridgeUrl = agent.devBridgeActive && agent.devBridgeUrl ? agent.devBridgeUrl : agent.bridgeUrl;
+  const isDevOverrideActive = Boolean(agent.devBridgeActive && agent.devBridgeUrl);
+  const activeBridgeUrl = isDevOverrideActive ? agent.devBridgeUrl : agent.bridgeUrl;
 
   return (
     <>
       <SidebarRow label="Bridge URL">
         {activeBridgeUrl ? (
           <div className="flex items-center gap-1">
-            {agent.devBridgeActive ? (
+            {isDevOverrideActive ? (
               <Badge variant="lighter" color="orange" size="sm">
                 DEV
               </Badge>

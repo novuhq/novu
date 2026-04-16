@@ -210,14 +210,21 @@ async function discoverAgents(endpointUrl: string): Promise<string[]> {
 
 async function activateAgentBridge(agentId: string, devBridgeUrl: string) {
   const apiUrl = NOVU_API_URL || 'https://api.novu.co';
-  const res = await fetch(`${apiUrl}/v1/agents/${encodeURIComponent(agentId)}/bridge`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `ApiKey ${NOVU_SECRET_KEY}`,
-    },
-    body: JSON.stringify({ devBridgeUrl, devBridgeActive: true }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiUrl}/v1/agents/${encodeURIComponent(agentId)}/bridge`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `ApiKey ${NOVU_SECRET_KEY}`,
+      },
+      body: JSON.stringify({ devBridgeUrl, devBridgeActive: true }),
+    });
+  } catch {
+    console.log(chalk.yellow(`  ⚠ ${agentId}  → failed to activate (network error)`));
+
+    return false;
+  }
 
   if (res.status === 403) {
     console.log(chalk.yellow(`  ⚠ ${agentId}  → skipped (production environment)`));
