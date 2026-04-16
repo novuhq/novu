@@ -77,6 +77,7 @@ program
   .option('-sh, --studio-host <host>', 'The Local Studio server host', 'localhost')
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
   .option('-H, --headless', 'Run the Bridge in headless mode without opening the browser', false)
+  .option('--no-studio', 'Skip starting the local Studio server')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
       identity: {
@@ -97,6 +98,8 @@ program
     `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
+  .option('-t, --template <name>', 'The template to use (notifications or agent)')
+  .option('--agent-identifier <id>', 'Agent identifier to use in the scaffolded template')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
   });

@@ -41,6 +41,8 @@ import { UpdateIntegrationSidebar } from './components/integrations/components/u
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
+import { AgentDetailsPage } from './pages/agent-details';
+import { AgentsPage } from './pages/agents';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -62,8 +64,6 @@ import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
-import { AgentDetailsPage } from './pages/agent-details';
-import { AgentsPage } from './pages/agents';
 import { UpsertVariablePage } from './pages/upsert-variable';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
@@ -356,7 +356,7 @@ const router = createBrowserRouter([
                 element: <AgentsPage />,
               },
               {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_PROVIDER,
+                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                     <AgentDetailsPage />
@@ -423,6 +423,14 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.ACTIVITY_REQUESTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ACTIVITY_CONVERSATIONS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />

@@ -1,7 +1,29 @@
 export { Client } from './client';
 export { CronExpression } from './constants';
 export { NovuRequestHandler, type ServeHandlerOptions } from './handler';
-export { workflow } from './resources';
+export type {
+  Agent,
+  AgentContext,
+  AgentHandlers,
+  AgentReaction,
+  CardChild,
+  CardElement,
+  FileRef,
+  MessageContent,
+} from './resources';
+export {
+  Actions,
+  agent,
+  Button,
+  Card,
+  CardLink,
+  CardText,
+  Divider,
+  Select,
+  SelectOption,
+  TextInput,
+  workflow,
+} from './resources';
 export type {
   AnyStepResolver,
   ChatStepResolver,

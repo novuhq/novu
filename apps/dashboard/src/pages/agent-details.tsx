@@ -7,6 +7,7 @@ import { AGENTS_LIST_QUERY_KEY, type AgentResponse, deleteAgent, getAgent, getAg
 import { NovuApiError } from '@/api/api.client';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
+import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -34,18 +35,15 @@ import {
 } from '@/utils/routes';
 
 function isValidAgentDetailsTab(tab: string): tab is AgentDetailsTab {
-
   return (AGENT_DETAILS_TABS as readonly string[]).includes(tab);
 }
 
 function getBreadcrumbCurrentLabel(isNotFound: boolean, error: unknown, agent: AgentResponse | undefined): string {
   if (isNotFound) {
-
     return 'Not found';
   }
 
   if (error) {
-
     return 'Agent';
   }
 
@@ -53,7 +51,6 @@ function getBreadcrumbCurrentLabel(isNotFound: boolean, error: unknown, agent: A
 }
 
 function AgentDetailsTabsSkeleton() {
-
   return (
     <div className="flex w-full flex-col">
       <div className="border-stroke-soft -mx-2 border-b px-4 py-3 md:px-6">
@@ -70,11 +67,11 @@ export function AgentDetailsPage() {
   const {
     agentIdentifier = '',
     agentTab: agentTabParam,
-    providerId: providerIdParam,
+    integrationIdentifier: integrationIdentifierParam,
   } = useParams<{
     agentIdentifier?: string;
     agentTab?: string;
-    providerId?: string;
+    integrationIdentifier?: string;
   }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -109,8 +106,10 @@ export function AgentDetailsPage() {
     },
   });
 
-  const providerId = providerIdParam ? decodeURIComponent(providerIdParam) : undefined;
-  const currentTab = providerId ? 'integrations' : parseAgentDetailsTab(agentTabParam);
+  const integrationIdentifier = integrationIdentifierParam
+    ? decodeURIComponent(integrationIdentifierParam)
+    : undefined;
+  const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
   if (!isConversationalAgentsEnabled) {
     return <Navigate to={agentsListPath} replace />;
@@ -120,11 +119,7 @@ export function AgentDetailsPage() {
     return <Navigate to={agentsListPath} replace />;
   }
 
-  if (
-    agentTabParam &&
-    currentEnvironment?.slug &&
-    !isValidAgentDetailsTab(agentTabParam)
-  ) {
+  if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
     return (
       <Navigate
         replace
@@ -246,14 +241,12 @@ export function AgentDetailsPage() {
               </TabsList>
 
               <TabsContent value="overview" className="outline-none">
-                <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
-                  <p className="text-text-soft text-label-sm">Test content — Overview tab (placeholder).</p>
-                </div>
+                <AgentOverviewTab agent={agent} />
               </TabsContent>
               <TabsContent value="integrations" className="outline-none">
-                <div className="mx-auto mt-4 w-full max-w-7xl px-3 py-2 md:px-6">
-                  <AgentIntegrationsTab agent={agent} providerId={providerId} />
-                </div>
+                {currentTab === 'integrations' ? (
+                  <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                ) : null}
               </TabsContent>
               <TabsContent value="activity" className="outline-none">
                 <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">

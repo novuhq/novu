@@ -10,8 +10,11 @@ export {
   PreferenceLevel,
   Preferences,
   SeverityLevelEnum,
+  SlackConnectButton,
+  SlackLinkUser,
   SubscriptionButton,
   SubscriptionPreferences,
+  useNovu,
   WorkflowCriticalityEnum,
 } from '@novu/react';
 export { Inbox } from './Inbox';

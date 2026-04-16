@@ -24,9 +24,10 @@ export function formatToRelativeTime({
 
   const diffInSeconds = Math.floor(elapsed / 1000);
 
-  // If the difference is less than a minute, return 'Just now'
   if (Math.abs(diffInSeconds) < SECONDS.inMinute) {
-    return 'Just now';
+    const subMinuteFormatter = new Intl.RelativeTimeFormat(locale, { style: 'narrow', numeric: 'auto' });
+
+    return subMinuteFormatter.format(-0, 'second');
   }
   // If the difference is less than an hour, return the difference in minutes. i.e 3 minutes ago
   else if (Math.abs(diffInSeconds) < SECONDS.inHour) {

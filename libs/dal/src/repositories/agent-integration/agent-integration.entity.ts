@@ -13,6 +13,8 @@ export class AgentIntegrationEntity {
 
   _organizationId: OrganizationId;
 
+  connectedAt?: string | null;
+
   createdAt: string;
 
   updatedAt: string;

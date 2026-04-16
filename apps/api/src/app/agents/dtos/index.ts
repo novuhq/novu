@@ -1,4 +1,5 @@
 export * from './add-agent-integration-request.dto';
+export * from './agent-behavior.dto';
 export * from './agent-integration-summary.dto';
 export * from './agent-integration-response.dto';
 export * from './agent-response.dto';
@@ -8,4 +9,5 @@ export * from './list-agent-integrations-response.dto';
 export * from './list-agents-query.dto';
 export * from './list-agents-response.dto';
 export * from './update-agent-integration-request.dto';
+export * from './update-agent-bridge-request.dto';
 export * from './update-agent-request.dto';

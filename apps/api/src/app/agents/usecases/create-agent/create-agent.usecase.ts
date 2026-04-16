@@ -27,6 +27,7 @@ export class CreateAgent {
       name: command.name,
       identifier: command.identifier,
       description: command.description,
+      active: command.active ?? true,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });

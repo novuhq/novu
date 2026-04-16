@@ -3,4 +3,6 @@ export enum HttpQueryKeysEnum {
   STEP_ID = 'stepId',
   ACTION = 'action',
   SOURCE = 'source',
+  AGENT_ID = 'agentId',
+  EVENT = 'event',
 }

@@ -3,6 +3,7 @@
  */
 
 import * as z from "zod/v3";
+import { ClosedEnum } from "../../types/enums.js";
 import {
   AuthDto,
   AuthDto$Outbound,
@@ -29,6 +30,18 @@ export type CreateChannelConnectionRequestDtoContext =
   | CreateChannelConnectionRequestDtoContext2
   | string;
 
+/**
+ * Connection mode that determines how the channel connection is scoped. Use "subscriber" (default) to associate the connection with a specific subscriber. Use "shared" to associate the connection with a context instead of a subscriber — subscriberId will not be stored on the connection.
+ */
+export const ConnectionMode = {
+  Subscriber: "subscriber",
+  Shared: "shared",
+} as const;
+/**
+ * Connection mode that determines how the channel connection is scoped. Use "subscriber" (default) to associate the connection with a specific subscriber. Use "shared" to associate the connection with a context instead of a subscriber — subscriberId will not be stored on the connection.
+ */
+export type ConnectionMode = ClosedEnum<typeof ConnectionMode>;
+
 export type CreateChannelConnectionRequestDto = {
   /**
    * The unique identifier for the channel connection. If not provided, one will be generated automatically.
@@ -41,6 +54,10 @@ export type CreateChannelConnectionRequestDto = {
   context?:
     | { [k: string]: CreateChannelConnectionRequestDtoContext2 | string }
     | undefined;
+  /**
+   * Connection mode that determines how the channel connection is scoped. Use "subscriber" (default) to associate the connection with a specific subscriber. Use "shared" to associate the connection with a context instead of a subscriber — subscriberId will not be stored on the connection.
+   */
+  connectionMode?: ConnectionMode | undefined;
   /**
    * The identifier of the integration to use for this channel connection.
    */
@@ -104,12 +121,18 @@ export function createChannelConnectionRequestDtoContextToJSON(
 }
 
 /** @internal */
+export const ConnectionMode$outboundSchema: z.ZodNativeEnum<
+  typeof ConnectionMode
+> = z.nativeEnum(ConnectionMode);
+
+/** @internal */
 export type CreateChannelConnectionRequestDto$Outbound = {
   identifier?: string | undefined;
   subscriberId?: string | undefined;
   context?: {
     [k: string]: CreateChannelConnectionRequestDtoContext2$Outbound | string;
   } | undefined;
+  connectionMode?: string | undefined;
   integrationIdentifier: string;
   workspace: WorkspaceDto$Outbound;
   auth: AuthDto$Outbound;
@@ -129,6 +152,7 @@ export const CreateChannelConnectionRequestDto$outboundSchema: z.ZodType<
       z.string(),
     ]),
   ).optional(),
+  connectionMode: ConnectionMode$outboundSchema.optional(),
   integrationIdentifier: z.string(),
   workspace: WorkspaceDto$outboundSchema,
   auth: AuthDto$outboundSchema,

@@ -6,6 +6,7 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -16,17 +17,49 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { FeatureFlagsService } from '@novu/application-generic';
 import {
   AddressingTypeEnum,
+  FeatureFlagsKeysEnum,
   MessageActionStatusEnum,
   PreferenceLevelEnum,
   TriggerRequestCategoryEnum,
   UserSessionData,
 } from '@novu/shared';
+import { CreateChannelConnectionRequestDto } from '../channel-connections/dtos/create-channel-connection-request.dto';
+import { mapChannelConnectionEntityToDto } from '../channel-connections/dtos/dto.mapper';
+import { GetChannelConnectionResponseDto } from '../channel-connections/dtos/get-channel-connection-response.dto';
+import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
+import { ListChannelConnectionsResponseDto } from '../channel-connections/dtos/list-channel-connections-response.dto';
+import { CreateChannelConnectionCommand } from '../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
+import { CreateChannelConnection } from '../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
+import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
+import { GetChannelConnectionCommand } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.command';
+import { GetChannelConnection } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.usecase';
+import { ListChannelConnectionsCommand } from '../channel-connections/usecases/list-channel-connections/list-channel-connections.command';
+import { ListChannelConnections } from '../channel-connections/usecases/list-channel-connections/list-channel-connections.usecase';
+import { CreateChannelEndpointRequest } from '../channel-endpoints/dtos/create-channel-endpoint-request.dto';
+import { mapChannelEndpointEntityToDto } from '../channel-endpoints/dtos/dto.mapper';
+import { GetChannelEndpointResponseDto } from '../channel-endpoints/dtos/get-channel-endpoint-response.dto';
+import { ListChannelEndpointsQueryDto } from '../channel-endpoints/dtos/list-channel-endpoints-query.dto';
+import { ListChannelEndpointsResponseDto } from '../channel-endpoints/dtos/list-channel-endpoints-response.dto';
+import { CreateChannelEndpointCommand } from '../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from '../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { DeleteChannelEndpointCommand } from '../channel-endpoints/usecases/delete-channel-endpoint/delete-channel-endpoint.command';
+import { DeleteChannelEndpoint } from '../channel-endpoints/usecases/delete-channel-endpoint/delete-channel-endpoint.usecase';
+import { GetChannelEndpointCommand } from '../channel-endpoints/usecases/get-channel-endpoint/get-channel-endpoint.command';
+import { GetChannelEndpoint } from '../channel-endpoints/usecases/get-channel-endpoint/get-channel-endpoint.usecase';
+import { ListChannelEndpointsCommand } from '../channel-endpoints/usecases/list-channel-endpoints/list-channel-endpoints.command';
+import { ListChannelEndpoints } from '../channel-endpoints/usecases/list-channel-endpoints/list-channel-endpoints.usecase';
 import { TriggerEventRequestDto } from '../events/dtos';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
 import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
 import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
+import { GenerateChatOauthUrlRequestDto } from '../integrations/dtos/generate-chat-oauth-url.dto';
+import { GenerateChatOAuthUrlResponseDto } from '../integrations/dtos/generate-chat-oauth-url-response.dto';
+import { GenerateChatOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
+import { GenerateChatOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
@@ -103,7 +136,17 @@ export class InboxController {
     private parseEventRequest: ParseEventRequest,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private deleteNotificationUsecase: DeleteNotification,
-    private deleteAllNotificationsUsecase: DeleteAllNotifications
+    private deleteAllNotificationsUsecase: DeleteAllNotifications,
+    private listChannelConnectionsUsecase: ListChannelConnections,
+    private getChannelConnectionUsecase: GetChannelConnection,
+    private createChannelConnectionUsecase: CreateChannelConnection,
+    private deleteChannelConnectionUsecase: DeleteChannelConnection,
+    private listChannelEndpointsUsecase: ListChannelEndpoints,
+    private getChannelEndpointUsecase: GetChannelEndpoint,
+    private createChannelEndpointUsecase: CreateChannelEndpoint,
+    private deleteChannelEndpointUsecase: DeleteChannelEndpoint,
+    private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @KeylessAccessible()
@@ -624,5 +667,277 @@ export class InboxController {
     );
 
     return result as unknown as TriggerEventResponseDto;
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/channel-connections')
+  async listChannelConnections(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Query() query: ListChannelConnectionsQueryDto
+  ): Promise<ListChannelConnectionsResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const result = await this.listChannelConnectionsUsecase.execute(
+      ListChannelConnectionsCommand.create({
+        user: {
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+        } as UserSessionData,
+        subscriberId: subscriberSession.subscriberId,
+        limit: query.limit || 10,
+        after: query.after,
+        before: query.before,
+        orderDirection: query.orderDirection,
+        orderBy: query.orderBy || 'createdAt',
+        includeCursor: query.includeCursor,
+        contextKeys: query.contextKeys,
+        channel: query.channel,
+        providerId: query.providerId,
+        integrationIdentifier: query.integrationIdentifier,
+      })
+    );
+
+    return {
+      data: result.data.map(mapChannelConnectionEntityToDto),
+      next: result.next,
+      previous: result.previous,
+      totalCount: result.totalCount!,
+      totalCountCapped: result.totalCountCapped!,
+    };
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/channel-connections/:identifier')
+  async getChannelConnection(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('identifier') identifier: string
+  ): Promise<GetChannelConnectionResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const channelConnection = await this.getChannelConnectionUsecase.execute(
+      GetChannelConnectionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier,
+      })
+    );
+
+    if (channelConnection.subscriberId && channelConnection.subscriberId !== subscriberSession.subscriberId) {
+      throw new NotFoundException(`Channel connection not found: ${identifier}`);
+    }
+
+    return mapChannelConnectionEntityToDto(channelConnection);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/channel-connections')
+  async createChannelConnection(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Body() body: CreateChannelConnectionRequestDto
+  ): Promise<GetChannelConnectionResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const channelConnection = await this.createChannelConnectionUsecase.execute(
+      CreateChannelConnectionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier: body.identifier,
+        integrationIdentifier: body.integrationIdentifier,
+        subscriberId: subscriberSession.subscriberId,
+        context: body.context,
+        workspace: body.workspace,
+        auth: body.auth,
+      })
+    );
+
+    return mapChannelConnectionEntityToDto(channelConnection);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/channel-connections/:identifier')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteChannelConnection(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('identifier') identifier: string
+  ): Promise<void> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const channelConnection = await this.getChannelConnectionUsecase.execute(
+      GetChannelConnectionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier,
+      })
+    );
+
+    if (channelConnection.subscriberId && channelConnection.subscriberId !== subscriberSession.subscriberId) {
+      throw new NotFoundException(`Channel connection not found: ${identifier}`);
+    }
+
+    await this.deleteChannelConnectionUsecase.execute(
+      DeleteChannelConnectionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/channel-endpoints')
+  async listChannelEndpoints(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Query() query: ListChannelEndpointsQueryDto
+  ): Promise<ListChannelEndpointsResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const result = await this.listChannelEndpointsUsecase.execute(
+      ListChannelEndpointsCommand.create({
+        user: {
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+        } as UserSessionData,
+        subscriberId: subscriberSession.subscriberId,
+        limit: query.limit || 10,
+        after: query.after,
+        before: query.before,
+        orderDirection: query.orderDirection,
+        orderBy: query.orderBy || 'createdAt',
+        includeCursor: query.includeCursor,
+        contextKeys: query.contextKeys,
+        channel: query.channel,
+        providerId: query.providerId,
+        integrationIdentifier: query.integrationIdentifier,
+        connectionIdentifier: query.connectionIdentifier,
+      })
+    );
+
+    return {
+      data: result.data.map(mapChannelEndpointEntityToDto),
+      next: result.next,
+      previous: result.previous,
+      totalCount: result.totalCount!,
+      totalCountCapped: result.totalCountCapped!,
+    };
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/channel-endpoints/:identifier')
+  async getChannelEndpoint(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('identifier') identifier: string
+  ): Promise<GetChannelEndpointResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const channelEndpoint = await this.getChannelEndpointUsecase.execute(
+      GetChannelEndpointCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier,
+      })
+    );
+
+    if (channelEndpoint.subscriberId && channelEndpoint.subscriberId !== subscriberSession.subscriberId) {
+      throw new NotFoundException(`Channel endpoint not found: ${identifier}`);
+    }
+
+    return mapChannelEndpointEntityToDto(channelEndpoint);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/channel-endpoints')
+  async createChannelEndpoint(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Body() body: CreateChannelEndpointRequest
+  ): Promise<GetChannelEndpointResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    // Cast needed because CreateChannelEndpointRequest is a discriminated union; the type/endpoint
+    // fields are correctly validated by class-validator before reaching this handler.
+    const typedBody = body as Extract<CreateChannelEndpointRequest, { type: (typeof body)['type'] }>;
+
+    const channelEndpoint = await this.createChannelEndpointUsecase.execute(
+      CreateChannelEndpointCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier: typedBody.identifier,
+        integrationIdentifier: typedBody.integrationIdentifier,
+        connectionIdentifier: typedBody.connectionIdentifier,
+        subscriberId: subscriberSession.subscriberId,
+        context: typedBody.context,
+        type: typedBody.type,
+        endpoint: typedBody.endpoint,
+      } as Parameters<typeof CreateChannelEndpointCommand.create>[0])
+    );
+
+    return mapChannelEndpointEntityToDto(channelEndpoint);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/channel-endpoints/:identifier')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteChannelEndpoint(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('identifier') identifier: string
+  ): Promise<void> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const channelEndpoint = await this.getChannelEndpointUsecase.execute(
+      GetChannelEndpointCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier,
+      })
+    );
+
+    if (channelEndpoint.subscriberId && channelEndpoint.subscriberId !== subscriberSession.subscriberId) {
+      throw new NotFoundException(`Channel endpoint not found: ${identifier}`);
+    }
+
+    await this.deleteChannelEndpointUsecase.execute(
+      DeleteChannelEndpointCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/chat/oauth')
+  async generateChatOAuthUrl(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Body() body: GenerateChatOauthUrlRequestDto
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const url = await this.generateChatOauthUrlUsecase.execute(
+      GenerateChatOauthUrlCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
+        scope: body.scope,
+        userScope: body.userScope,
+        mode: body.mode,
+        connectionMode: body.connectionMode,
+      })
+    );
+
+    return { url };
+  }
+
+  private async checkChannelFeatureEnabled(organizationId: string): Promise<void> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!isEnabled) {
+      throw new NotFoundException('Feature not enabled');
+    }
   }
 }

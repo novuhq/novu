@@ -16,27 +16,33 @@ export class DownloadError extends Error {}
 export async function createApp({
   appPath,
   packageManager,
+  templateChoice,
   typescript,
   eslint,
   srcDir,
   importAlias,
   secretKey,
+  apiUrl,
   applicationId,
   userId,
+  agentIdentifier,
 }: {
   appPath: string;
   packageManager: PackageManager;
+  templateChoice: string;
   typescript: boolean;
   eslint: boolean;
   srcDir: boolean;
   importAlias: string;
   secretKey: string;
+  apiUrl: string;
   applicationId: string;
   userId: string;
+  agentIdentifier?: string;
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
-  const template: TemplateType = 'app-react-email';
+  const template: TemplateType = templateChoice === 'agent' ? 'app-agent' : 'app-react-email';
 
   const root = path.resolve(appPath);
 
@@ -77,8 +83,10 @@ export async function createApp({
     srcDir,
     importAlias,
     secretKey,
+    apiUrl,
     applicationId,
     userId,
+    agentIdentifier,
   });
 
   if (tryGitInit(root)) {

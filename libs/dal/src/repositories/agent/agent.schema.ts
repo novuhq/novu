@@ -14,6 +14,23 @@ const agentSchema = new Schema<AgentDBModel>(
       required: true,
     },
     description: Schema.Types.String,
+    active: {
+      type: Schema.Types.Boolean,
+      default: true,
+    },
+    behavior: {
+      thinkingIndicatorEnabled: Schema.Types.Boolean,
+      reactions: {
+        onMessageReceived: Schema.Types.Mixed,
+        onResolved: Schema.Types.Mixed,
+      },
+    },
+    bridgeUrl: Schema.Types.String,
+    devBridgeUrl: Schema.Types.String,
+    devBridgeActive: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

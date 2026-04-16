@@ -52,6 +52,7 @@ export enum CredentialsKeyEnum {
   AppIOBaseUrl = 'AppIOBaseUrl',
   ServicePlanId = 'servicePlanId',
   TenantId = 'tenantId',
+  SigningSecret = 'signingSecret',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

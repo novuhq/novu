@@ -5,6 +5,7 @@ export enum TemplateTypeEnum {
   APP = 'app',
   DEFAULT_REACT_EMAIL = 'default-react-email',
   APP_REACT_EMAIL = 'app-react-email',
+  APP_AGENT = 'app-agent',
 }
 
 export type TemplateType = `${TemplateTypeEnum}`;
@@ -27,6 +28,8 @@ export interface InstallTemplateArgs {
   srcDir: boolean;
   importAlias: string;
   secretKey: string;
+  apiUrl: string;
   applicationId: string;
   userId: string;
+  agentIdentifier?: string;
 }

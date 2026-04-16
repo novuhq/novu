@@ -83,6 +83,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-ai')?.AiModule);
     }
 
+    if (require('@novu/ee-api')?.ConversationsModule) {
+      modules.push(require('@novu/ee-api')?.ConversationsModule);
+    }
+
     modules.push(SupportModule);
     modules.push(OutboundWebhooksModule.forRoot());
   }

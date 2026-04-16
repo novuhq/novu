@@ -1,5 +1,5 @@
 import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
-import { del, get, post } from '@/api/api.client';
+import { del, get, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -39,6 +39,10 @@ export type AgentResponse = {
   name: string;
   identifier: string;
   description?: string;
+  active: boolean;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -58,6 +62,16 @@ export type CreateAgentBody = {
   name: string;
   identifier: string;
   description?: string;
+  active?: boolean;
+};
+
+export type UpdateAgentBody = {
+  name?: string;
+  description?: string;
+  active?: boolean;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
 };
 
 export type ListAgentsParams = {
@@ -133,6 +147,16 @@ export async function createAgent(environment: IEnvironment, body: CreateAgentBo
   return response.data;
 }
 
+export async function updateAgent(
+  environment: IEnvironment,
+  identifier: string,
+  body: UpdateAgentBody
+): Promise<AgentResponse> {
+  const response = await patch<AgentApiEnvelope>(`/agents/${encodeURIComponent(identifier)}`, { environment, body });
+
+  return response.data;
+}
+
 export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
   return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
 }
@@ -154,6 +178,7 @@ export type AgentIntegrationLink = {
   integration: AgentIntegrationEmbedded;
   _environmentId: string;
   _organizationId: string;
+  connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

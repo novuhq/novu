@@ -53,4 +53,5 @@ export interface ICredentials {
   AppIOOriginalSignature?: string;
   servicePlanId?: string;
   tenantId?: string;
+  signingSecret?: string;
 }

@@ -9,7 +9,7 @@ export const ROOT_DELIMITER = 'root';
 /**
  * The length of the root delimiter ( root + ".")
  */
-export const ROOT_DELIMITER_LENGTH = 5;
+const ROOT_DELIMITER_LENGTH = 5;
 
 export const UI_SCHEMA: UiSchema = {
   'ui:globalOptions': { addable: true, copyable: false, label: true, orderable: true },
