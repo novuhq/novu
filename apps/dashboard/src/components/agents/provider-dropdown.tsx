@@ -2,17 +2,13 @@ import {
   CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   type IIntegration,
-  PROVIDER_ID_TO_CHANNEL_MAP,
   providers as novuProviders,
+  PROVIDER_ID_TO_CHANNEL_MAP,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiExpandUpDownLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
-import {
-  addAgentIntegration,
-  getAgentDetailQueryKey,
-  getAgentIntegrationsQueryKey,
-} from '@/api/agents';
+import { addAgentIntegration, getAgentDetailQueryKey, getAgentIntegrationsQueryKey } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { createIntegration } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -104,7 +100,6 @@ function buildDropdownItems(
 
 function getSupportedItemKey(item: DropdownItem, index: number): string {
   if (item.integration) {
-
     return `${item.providerId}-${item.integration._id}`;
   }
 
@@ -144,9 +139,7 @@ export function ProviderDropdown({
       return allSupported;
     }
 
-    return allSupported.filter(
-      (item) => !item.integration || !linkedIntegrationIds.has(item.integration._id)
-    );
+    return allSupported.filter((item) => !item.integration || !linkedIntegrationIds.has(item.integration._id));
   }, [allSupported, excludeLinked, linkedIntegrationIds]);
 
   const selected = useMemo(() => {
@@ -154,7 +147,6 @@ export function ProviderDropdown({
       const fromList = supported.find((item) => item.integration?._id === selectedIntegrationId);
 
       if (fromList) {
-
         return fromList;
       }
     }
@@ -163,7 +155,6 @@ export function ProviderDropdown({
       const cfg = novuProviders.find((p) => p.id === fallbackProviderId);
 
       if (cfg) {
-
         return {
           providerId: cfg.id,
           displayName: cfg.displayName,
@@ -201,7 +192,7 @@ export function ProviderDropdown({
           credentials: {},
           configurations: {},
           name: vars.name,
-          active: false,
+          active: true,
           _environmentId: environment._id,
         },
         environment
@@ -213,7 +204,6 @@ export function ProviderDropdown({
 
   async function handleSelect(item: DropdownItem, index: number) {
     if (item.comingSoon || isBusy) {
-
       return;
     }
 
@@ -402,9 +392,7 @@ export function ProviderDropdown({
                       providerDisplayName={item.displayName}
                       className="size-4 shrink-0"
                     />
-                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
-                      {item.displayName}
-                    </span>
+                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">{item.displayName}</span>
                   </div>
                   <span className="font-code text-text-soft shrink-0 text-[10px] leading-[15px]">soon</span>
                 </CommandItem>
@@ -417,7 +405,6 @@ export function ProviderDropdown({
   );
 
   if (renderTrigger) {
-
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{renderTrigger({ isBusy })}</PopoverTrigger>
@@ -442,9 +429,7 @@ export function ProviderDropdown({
         </Popover>
       </div>
 
-      <p className="text-text-soft text-label-xs font-medium leading-4">
-        {'💡 You can always add more providers.'}
-      </p>
+      <p className="text-text-soft text-label-xs font-medium leading-4">{'💡 You can always add more providers.'}</p>
     </div>
   );
 }
