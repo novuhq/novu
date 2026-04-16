@@ -41,16 +41,17 @@ WORKDIR /usr/src/app
 FROM dev AS deploy
 
 WORKDIR /usr/src/app
-RUN pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy
-
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy && \
     if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
       cd $(mktemp -d) && \
       echo "@taskforcesh:registry=https://npm.taskforce.sh/" > .npmrc && \
       echo "//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" >> .npmrc && \
       npm init -y > /dev/null 2>&1 && \
-      npm install @taskforcesh/bullmq-pro@6.11.0 && \
-      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh; \
+      npm install @taskforcesh/bullmq-pro@6.11.0 2>/dev/null && \
+      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh && \
+      rm -rf node_modules/@taskforcesh && \
+      mv node_modules /usr/src/deploy/node_modules/@taskforcesh/bullmq-pro/node_modules; \
     fi
 
 # ------- PRODUCTION BUILD ----------
