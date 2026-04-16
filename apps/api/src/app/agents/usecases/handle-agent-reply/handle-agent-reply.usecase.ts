@@ -162,7 +162,7 @@ export class HandleAgentReply {
         content
       ),
       this.activityRepository.createAgentActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
@@ -241,7 +241,7 @@ export class HandleAgentReply {
         merged
       ),
       this.activityRepository.createSignalActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
@@ -270,7 +270,7 @@ export class HandleAgentReply {
         ConversationStatusEnum.RESOLVED
       ),
       this.activityRepository.createSignalActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,

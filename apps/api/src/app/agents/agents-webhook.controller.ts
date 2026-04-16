@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -56,6 +57,16 @@ export class AgentsWebhookController {
     );
   }
 
+  @Get('/:agentId/webhook/:integrationIdentifier')
+  async handleWebhookVerification(
+    @Param('agentId') agentId: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    return this.routeWebhook(agentId, integrationIdentifier, req, res);
+  }
+
   @Post('/:agentId/webhook/:integrationIdentifier')
   @HttpCode(HttpStatus.OK)
   async handleInboundWebhook(
@@ -64,12 +75,13 @@ export class AgentsWebhookController {
     @Req() req: Request,
     @Res() res: Response
   ) {
+    return this.routeWebhook(agentId, integrationIdentifier, req, res);
+  }
+
+  private async routeWebhook(agentId: string, integrationIdentifier: string, req: Request, res: Response) {
     try {
-      console.log('handleInboundWebhook', agentId, integrationIdentifier);
       await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res);
-      console.log('handleInboundWebhook success');
     } catch (err) {
-      console.log(err);
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {

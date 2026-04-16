@@ -20,9 +20,9 @@ import { AgentInboundHandler } from './agent-inbound-handler.service';
  *           credentials.secretKey → appPassword
  *           credentials.tenantId  → appTenantId
  *
- * WhatsApp: credentials.token                    → accessToken
+ * WhatsApp: credentials.apiToken                  → accessToken
  *           credentials.secretKey                → appSecret
- *           credentials.apiToken                 → verifyToken
+ *           credentials.token                    → verifyToken
  *           credentials.phoneNumberIdentification → phoneNumberId
  */
 
@@ -224,35 +224,49 @@ export class ChatSdkService implements OnModuleDestroy {
 
     switch (platform) {
       case AgentPlatformEnum.SLACK: {
+        if (!connectionAccessToken || !credentials.signingSecret) {
+          throw new BadRequestException('Slack agent integration requires botToken and signingSecret credentials');
+        }
+
         const { createSlackAdapter } = await esmImport('@chat-adapter/slack');
 
         return {
           slack: createSlackAdapter({
-            botToken: connectionAccessToken!,
-            signingSecret: credentials.signingSecret!,
+            botToken: connectionAccessToken,
+            signingSecret: credentials.signingSecret,
           }),
         };
       }
       case AgentPlatformEnum.TEAMS: {
+        if (!credentials.clientId || !credentials.secretKey || !credentials.tenantId) {
+          throw new BadRequestException('Teams agent integration requires appId, appPassword, and appTenantId credentials');
+        }
+
         const { createTeamsAdapter } = await esmImport('@chat-adapter/teams');
 
         return {
           teams: createTeamsAdapter({
-            appId: credentials.clientId!,
-            appPassword: credentials.secretKey!,
-            appTenantId: credentials.tenantId!,
+            appId: credentials.clientId,
+            appPassword: credentials.secretKey,
+            appTenantId: credentials.tenantId,
           }),
         };
       }
       case AgentPlatformEnum.WHATSAPP: {
+        if (!credentials.apiToken || !credentials.secretKey || !credentials.token || !credentials.phoneNumberIdentification) {
+          throw new BadRequestException(
+            'WhatsApp agent integration requires accessToken, appSecret, verifyToken, and phoneNumberId credentials'
+          );
+        }
+
         const { createWhatsAppAdapter } = await esmImport('@chat-adapter/whatsapp');
 
         return {
           whatsapp: createWhatsAppAdapter({
-            accessToken: credentials.token!,
-            appSecret: credentials.secretKey!,
-            verifyToken: credentials.apiToken!,
-            phoneNumberId: credentials.phoneNumberIdentification!,
+            accessToken: credentials.apiToken,
+            appSecret: credentials.secretKey,
+            verifyToken: credentials.token,
+            phoneNumberId: credentials.phoneNumberIdentification,
           }),
         };
       }

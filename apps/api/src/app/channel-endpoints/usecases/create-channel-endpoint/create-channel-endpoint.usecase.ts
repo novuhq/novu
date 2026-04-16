@@ -139,6 +139,6 @@ export class CreateChannelEndpoint {
   }
 
   private generateIdentifier(): string {
-    return `chendp-${shortId(6)}`;
+    return `chendp_${shortId(12)}`;
   }
 }

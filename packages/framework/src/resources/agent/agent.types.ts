@@ -18,11 +18,20 @@ export interface AgentMessageAuthor {
   isBot: boolean | 'unknown';
 }
 
+export interface AgentAttachment {
+  type: string;
+  url?: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+}
+
 export interface AgentMessage {
   text: string;
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
+  attachments?: AgentAttachment[];
 }
 
 export interface AgentConversation {
@@ -49,6 +58,7 @@ export interface AgentHistoryEntry {
   role: string;
   type: string;
   content: string;
+  richContent?: Record<string, unknown>;
   senderName?: string;
   signalData?: { type: string; payload?: Record<string, unknown> };
   createdAt: string;

@@ -13,14 +13,31 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import type { FileRef } from '@novu/framework';
+
+export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
-export interface FileRef {
-  filename: string;
-  mimeType?: string;
-  data?: string;
-  url?: string;
+@ValidatorConstraint({ name: 'isValidSignal', async: false })
+export class IsValidSignal implements ValidatorConstraintInterface {
+  validate(signal: SignalDto): boolean {
+    if (!signal?.type) return false;
+
+    if (signal.type === 'metadata') {
+      return typeof signal.key === 'string' && signal.key.length > 0 && signal.value !== undefined;
+    }
+
+    if (signal.type === 'trigger') {
+      return typeof signal.workflowId === 'string' && signal.workflowId.length > 0;
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return 'metadata signals require key + value; trigger signals require workflowId.';
+  }
 }
 
 @ValidatorConstraint({ name: 'isValidReplyContent', async: false })
@@ -146,6 +163,7 @@ export class AgentReplyPayloadDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
+  @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
 }
