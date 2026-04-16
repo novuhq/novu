@@ -1,7 +1,9 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
-import { type AgentResponse } from '@/api/agents';
+import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
@@ -23,11 +25,44 @@ function resolveProviderSetupGuide(providerId: string) {
   }
 }
 
+function AgentSetupGuideComingSoon() {
+
+  return (
+    <div className="border-stroke-soft bg-bg-weak/30 flex flex-col items-center justify-center rounded-md border border-dashed px-6 py-12 text-center">
+      <p className="text-text-strong text-label-sm font-medium">Coming soon</p>
+      <p className="text-text-soft text-label-xs mt-2 max-w-sm leading-5">
+        In-dashboard setup steps will return here as we expand agent tooling.
+      </p>
+    </div>
+  );
+}
+
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [isProviderComplete, setIsProviderComplete] = useState(false);
+  const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
+
+  const agentIntegrationsQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier: agent.identifier,
+        limit: 100,
+      }),
+    enabled: Boolean(currentEnvironment && agent.identifier),
+  });
+
+  const hasConnectedIntegration = useMemo(() => {
+    if (isProviderComplete) return true;
+
+    const links = agentIntegrationsQuery.data?.data;
+    if (!links?.length) return false;
+
+    return links.some((link) => Boolean(link.connectedAt));
+  }, [isProviderComplete, agentIntegrationsQuery.data?.data]);
 
   const slackFromAgent = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
 
@@ -56,6 +91,8 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
     setIsProviderComplete(true);
   }, []);
 
+  const isBridgeConnected = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
+
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
       <button
@@ -69,46 +106,52 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
       {isExpanded && (
         <div className="bg-bg-white flex flex-col gap-0 overflow-hidden rounded-md p-3 shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
-          <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6">
-            <div
-              className="absolute bottom-0 left-[22px] top-0 w-px"
-              style={{
-                background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-              }}
-            />
-
-            <SetupStep
-              index={1}
-              status={deriveStepStatus(1, firstIncompleteStepForProviderRow)}
-              sectionLabel="1/2 SETUP PROVIDER"
-              title="Choose where your agent listens and communicates"
-              description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
-              rightContent={
-                <ProviderDropdown
-                  agentIdentifier={agent.identifier}
-                  selectedIntegrationId={selectedIntegrationId ?? slackFromAgent?.integrationId}
-                  linkedIntegrationIds={linkedIntegrationIds}
-                  onSelect={(_providerId, integration) => {
-                    if (integration?._id) {
-                      setSelectedIntegrationId(integration._id);
-                    }
-                  }}
-                />
-              }
-            />
-
-            {ProviderGuide && effectiveIntegrationId ? (
-              <ProviderGuide
-                agent={agent}
-                integrationId={effectiveIntegrationId}
-                stepOffset={2}
-                embedded={false}
-                onStepsCompleted={handleProviderStepsCompleted}
+          {isBridgeConnected ? (
+            <AgentSetupGuideComingSoon />
+          ) : (
+            <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6">
+              <div
+                className="absolute bottom-0 left-[22px] top-0 w-px"
+                style={{
+                  background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+                }}
               />
-            ) : null}
 
-            <AgentCodeSetupSection agent={agent} stepOffset={5} isProviderComplete={isProviderComplete} />
-          </div>
+              <SetupStep
+                index={1}
+                status={deriveStepStatus(1, firstIncompleteStepForProviderRow)}
+                sectionLabel="1/2 SETUP PROVIDER"
+                title="Choose where your agent listens and communicates"
+                description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
+                rightContent={
+                  <ProviderDropdown
+                    agentIdentifier={agent.identifier}
+                    selectedIntegrationId={selectedIntegrationId ?? slackFromAgent?.integrationId}
+                    linkedIntegrationIds={linkedIntegrationIds}
+                    onSelect={(_providerId, integration) => {
+                      if (integration?._id) {
+                        setSelectedIntegrationId(integration._id);
+                      }
+                    }}
+                  />
+                }
+              />
+
+              {ProviderGuide && effectiveIntegrationId ? (
+                <ProviderGuide
+                  agent={agent}
+                  integrationId={effectiveIntegrationId}
+                  stepOffset={2}
+                  embedded={false}
+                  onStepsCompleted={handleProviderStepsCompleted}
+                />
+              ) : null}
+
+              {hasConnectedIntegration && (
+                <AgentCodeSetupSection agent={agent} stepOffset={5} isProviderComplete={hasConnectedIntegration} />
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

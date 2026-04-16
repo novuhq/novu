@@ -4,9 +4,9 @@ import { del, get, patch, post } from '@/api/api.client';
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
 
-export const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
+const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
 
-export const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
+const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
 
