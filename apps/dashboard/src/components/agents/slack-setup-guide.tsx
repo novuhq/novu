@@ -1,25 +1,20 @@
 import { useUser } from '@clerk/clerk-react';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
 import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
-import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactConfetti from 'react-confetti';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiKey2Line } from 'react-icons/ri';
-import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
+import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { ExternalLink } from '@/components/shared/external-link';
 import { API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
-import { IntegrationCredentialsSidebar, SetupButton, SetupStep } from './setup-guide-primitives';
+import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 
 export type SlackSetupGuideProps = {
@@ -32,151 +27,6 @@ export type SlackSetupGuideProps = {
   /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
 };
-
-function ListeningStatus({
-  agentIdentifier,
-  watchedIntegrationId,
-  onSlackWorkspaceConnected,
-}: {
-  agentIdentifier: string;
-  watchedIntegrationId: string | undefined;
-  onSlackWorkspaceConnected?: () => void;
-}) {
-  const { currentEnvironment } = useEnvironment();
-  const queryClient = useQueryClient();
-  const [connectedAt, setConnectedAt] = useState<string | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const confettiTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!currentEnvironment || !watchedIntegrationId) {
-      return;
-    }
-
-    const environment = currentEnvironment;
-    let cancelled = false;
-    let confettiFired = false;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    async function tick() {
-      if (cancelled) {
-        return;
-      }
-
-      try {
-        const res = await listAgentIntegrations({
-          environment,
-          agentIdentifier,
-          limit: 100,
-        });
-
-        if (cancelled) {
-          return;
-        }
-
-        const link = res.data.find((l) => l.integration._id === watchedIntegrationId);
-
-        if (!link) {
-          return;
-        }
-
-        if (!link.connectedAt) {
-          return;
-        }
-
-        setConnectedAt(link.connectedAt);
-
-        if (!confettiFired) {
-          confettiFired = true;
-          setShowConfetti(true);
-
-          if (confettiTimeoutRef.current) {
-            clearTimeout(confettiTimeoutRef.current);
-          }
-
-          confettiTimeoutRef.current = window.setTimeout(() => {
-            confettiTimeoutRef.current = null;
-            setShowConfetti(false);
-          }, 10_000);
-          onSlackWorkspaceConnected?.();
-        }
-
-        queryClient.invalidateQueries({
-          queryKey: getAgentIntegrationsQueryKey(environment._id, agentIdentifier),
-        });
-
-        if (intervalId) {
-          clearInterval(intervalId);
-          intervalId = null;
-        }
-      } catch {
-        // ignore transient errors while polling
-      }
-    }
-
-    void tick();
-    intervalId = setInterval(() => void tick(), 1000);
-
-    return () => {
-      cancelled = true;
-
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-
-      if (confettiTimeoutRef.current) {
-        clearTimeout(confettiTimeoutRef.current);
-        confettiTimeoutRef.current = null;
-      }
-    };
-  }, [agentIdentifier, currentEnvironment, onSlackWorkspaceConnected, queryClient, watchedIntegrationId]);
-
-  return (
-    <>
-      {showConfetti &&
-        createPortal(
-          <ReactConfetti
-            width={window.innerWidth}
-            height={window.innerHeight}
-            recycle={false}
-            numberOfPieces={1000}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              pointerEvents: 'none',
-              zIndex: 10000,
-            }}
-          />,
-          document.body
-        )}
-      <div className="flex flex-col gap-2 pl-8 py-4">
-        <div className="flex flex-col gap-3">
-          {connectedAt ? (
-            <div className="flex items-center gap-1">
-              <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
-              <span className="text-text-strong text-label-sm font-medium">Connected</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
-              <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
-                Listening...
-              </span>
-            </div>
-          )}
-          <p className="text-text-soft text-label-xs font-medium leading-4">
-            {connectedAt
-              ? 'Your Slack workspace is connected. This agent is ready to receive messages.'
-              : 'Tag the Slack bot in your installed workspace and send a message to verify configuration.'}
-          </p>
-        </div>
-        <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
-          Learn more in docs
-        </ExternalLink>
-      </div>
-    </>
-  );
-}
 
 function escapeYamlDoubleQuoted(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -428,7 +278,9 @@ export function SlackSetupGuide({
     <ListeningStatus
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
-      onSlackWorkspaceConnected={handleSlackWorkspaceConnected}
+      onConnected={handleSlackWorkspaceConnected}
+      connectedMessage="Your Slack workspace is connected. This agent is ready to receive messages."
+      listeningMessage="Tag the Slack bot in your installed workspace and send a message to verify configuration."
     />
   );
 

@@ -11,6 +11,7 @@ import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SlackSetupGuide } from './slack-setup-guide';
+import { TeamsSetupGuide } from './teams-setup-guide';
 import { WhatsAppSetupGuide } from './whatsapp-setup-guide';
 
 type AgentSetupGuideProps = {
@@ -21,6 +22,8 @@ function resolveProviderSetupGuide(providerId: string) {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
       return SlackSetupGuide;
+    case ChatProviderIdEnum.MsTeams:
+      return TeamsSetupGuide;
     case ChatProviderIdEnum.WhatsAppBusiness:
       return WhatsAppSetupGuide;
     default:
