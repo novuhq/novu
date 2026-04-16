@@ -21,7 +21,7 @@ function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
     return sortBy as ListActivitiesSortField;
   }
 
-  return '_id';
+  return 'createdAt';
 }
 
 @Injectable()
@@ -142,7 +142,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     limit = 20,
     after,
     before,
-    sortBy = '_id',
+    sortBy = 'createdAt',
     sortDirection = 1,
     includeCursor = false,
   }: {

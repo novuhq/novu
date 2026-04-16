@@ -318,6 +318,8 @@ describe('Conversations API - /conversations #novu-v2', () => {
 
       expect(res.status).to.equal(200);
       expect(res.body.data).to.be.an('array').with.length(2);
+      expect(res.body.data[0].content).to.equal('Hello from user');
+      expect(res.body.data[1].content).to.equal('Hello from agent');
       expect(res.body).to.have.property('next');
       expect(res.body).to.have.property('previous');
       expect(res.body).to.have.property('totalCount', 2);
