@@ -1,22 +1,27 @@
 import { Sema } from 'async-sema';
 import { async as glob } from 'fast-glob';
+import { readFileSync } from 'fs';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { bold, cyan } from 'picocolors';
-import packageJson from '../../../../package.json';
 import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
 
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
 
 function resolveFrameworkVersion(): string {
-  const raw = packageJson.dependencies['@novu/framework'];
-  if (raw.startsWith('workspace:')) {
+  const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
+  if (distIndex === -1) return 'latest';
+
+  const pkgRoot = __dirname.slice(0, distIndex);
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
+
+    return pkg.dependencies?.['@novu/framework'] ?? 'latest';
+  } catch {
     return 'latest';
   }
-
-  return raw;
 }
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
