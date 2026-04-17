@@ -202,22 +202,32 @@ export class HandleAgentReply {
       edit.content
     );
 
-    await this.activityRepository.createAgentActivity({
-      identifier: `act_${shortId(12)}`,
-      conversationId: conversation._id,
-      platform: channel.platform,
-      integrationId: channel._integrationId,
-      platformThreadId: sent.platformThreadId || channel.platformThreadId,
-      platformMessageId: sent.messageId,
-      agentId: command.agentIdentifier,
-      senderName: agentName,
-      content: textFallback,
-      richContent:
-        edit.content.card || edit.content.files?.length ? (edit.content as Record<string, unknown>) : undefined,
-      type: ConversationActivityTypeEnum.EDIT,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
+    await Promise.all([
+      this.activityRepository.createAgentActivity({
+        identifier: `act_${shortId(12)}`,
+        conversationId: conversation._id,
+        platform: channel.platform,
+        integrationId: channel._integrationId,
+        platformThreadId: sent.platformThreadId || channel.platformThreadId,
+        platformMessageId: sent.messageId,
+        agentId: command.agentIdentifier,
+        senderName: agentName,
+        content: textFallback,
+        richContent:
+          edit.content.card || edit.content.files?.length ? (edit.content as Record<string, unknown>) : undefined,
+        type: ConversationActivityTypeEnum.EDIT,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }),
+      // Refresh inbox preview + lastActivityAt without incrementing messageCount —
+      // edits mutate an existing message, they don't add a new one.
+      this.conversationRepository.touchPreview(
+        command.environmentId,
+        command.organizationId,
+        conversation._id,
+        textFallback
+      ),
+    ]);
 
     return sent;
   }

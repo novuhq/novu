@@ -103,6 +103,12 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
     it('should edit a previously sent message and persist an edit activity', async () => {
       const conversationId = await seedConversation(ctx);
 
+      const convBefore = await conversationRepository.findOne(
+        { _id: conversationId, _environmentId: ctx.session.environment._id },
+        '*'
+      );
+      const countBefore = convBefore!.messageCount;
+
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
@@ -130,6 +136,10 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         '*'
       );
       expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
+      // Edit refreshes the inbox preview to the new content...
+      expect(conversation!.lastMessagePreview).to.equal('Edited content');
+      // ...without bumping messageCount (edits mutate an existing message, not add one).
+      expect(conversation!.messageCount).to.equal(countBefore);
     });
 
     it('should reject when both reply and edit are provided', async () => {
