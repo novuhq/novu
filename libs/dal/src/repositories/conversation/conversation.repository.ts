@@ -176,6 +176,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     includeCursor = false,
     status,
     subscriberId,
+    agentId,
     identifier,
     provider,
     createdAfter,
@@ -190,6 +191,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     includeCursor?: boolean;
     status?: ConversationStatusEnum;
     subscriberId?: string;
+    agentId?: string;
     identifier?: string;
     provider?: string[];
     createdAfter?: string;
@@ -242,6 +244,10 @@ export class ConversationRepository extends BaseRepositoryV2<
       query.participants = {
         $elemMatch: { id: subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
       };
+    }
+
+    if (agentId) {
+      query._agentId = agentId;
     }
 
     const trimmedIdentifier = identifier?.trim();

@@ -4,6 +4,7 @@ import { get } from './api.client';
 export type ConversationFilters = {
   dateRange?: string;
   subscriberId?: string;
+  agentId?: string;
   provider?: string[];
   conversationId?: string;
   status?: string;
@@ -87,6 +88,10 @@ export function getConversationsList({
 
   if (filters?.subscriberId) {
     searchParams.append('subscriberId', filters.subscriberId);
+  }
+
+  if (filters?.agentId) {
+    searchParams.append('agentId', filters.agentId);
   }
 
   if (filters?.dateRange) {
