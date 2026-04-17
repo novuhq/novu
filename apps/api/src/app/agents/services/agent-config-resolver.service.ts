@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -12,8 +12,6 @@ import type { WellKnownEmoji } from 'chat';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { esmImport } from '../utils/esm-import';
 import { resolveAgentPlatform } from '../utils/provider-to-platform';
-
-const logger = new Logger('AgentConfigResolver');
 
 let cachedEmojiNames: Set<string> | null = null;
 
@@ -52,14 +50,15 @@ function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled
 
 async function resolveReaction(
   value: string | null | undefined,
-  defaultEmoji: WellKnownEmoji
+  defaultEmoji: WellKnownEmoji,
+  log: PinoLogger
 ): Promise<WellKnownEmoji | null> {
   if (value === null) return null;
   if (value === undefined) return defaultEmoji;
 
   const known = await loadEmojiNames();
   if (!known.has(value)) {
-    logger.warn(`Unknown emoji "${value}" in agent config, falling back to default "${defaultEmoji}"`);
+    log.warn(`Unknown emoji "${value}" in agent config, falling back to default "${defaultEmoji}"`);
 
     return defaultEmoji;
   }
@@ -160,9 +159,14 @@ export class AgentConfigResolver {
       thinkingIndicatorEnabled: resolveThinkingIndicator(agent),
       reactionOnMessageReceived: await resolveReaction(
         agent.behavior?.reactions?.onMessageReceived,
-        DEFAULT_REACTION_ON_MESSAGE
+        DEFAULT_REACTION_ON_MESSAGE,
+        this.logger
       ),
-      reactionOnResolved: await resolveReaction(agent.behavior?.reactions?.onResolved, DEFAULT_REACTION_ON_RESOLVED),
+      reactionOnResolved: await resolveReaction(
+        agent.behavior?.reactions?.onResolved,
+        DEFAULT_REACTION_ON_RESOLVED,
+        this.logger
+      ),
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
