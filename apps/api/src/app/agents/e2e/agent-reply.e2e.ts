@@ -100,7 +100,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
     });
 
-    it('should edit a previously sent message and persist an update activity', async () => {
+    it('should edit a previously sent message and persist an edit activity', async () => {
       const conversationId = await seedConversation(ctx);
 
       const res = await postReply({

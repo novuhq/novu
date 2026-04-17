@@ -54,13 +54,19 @@ interface ReplyPoster {
 }
 
 class ReplyHandleImpl implements ReplyHandle {
+  public messageId: string;
+  public platformThreadId: string;
+
   constructor(
-    readonly messageId: string,
-    readonly platformThreadId: string,
+    messageId: string,
+    platformThreadId: string,
     private readonly conversationId: string,
     private readonly integrationIdentifier: string,
     private readonly poster: ReplyPoster
-  ) {}
+  ) {
+    this.messageId = messageId;
+    this.platformThreadId = platformThreadId;
+  }
 
   async edit(content: MessageContent): Promise<ReplyHandle> {
     const info = await this.poster.post({
@@ -76,7 +82,13 @@ class ReplyHandleImpl implements ReplyHandle {
       throw new Error('Agent edit did not return a message handle');
     }
 
-    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this.conversationId, this.integrationIdentifier, this.poster);
+    // Mutate-in-place: the handle represents the same platform message, so we refresh
+    // ids from the edit response (Slack/Teams preserve them; other platforms may not)
+    // and return `this` to honour the "same handle for chaining" contract.
+    this.messageId = info.messageId;
+    this.platformThreadId = info.platformThreadId;
+
+    return this;
   }
 }
 
@@ -221,7 +233,7 @@ export class AgentContextImpl implements AgentContext {
         return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
       }
     } catch {
-      // non-JSON responses are tolerated (e.g. flush path returns {status} only)
+      // flush-only responses return null or an empty body; tolerate and fall through.
     }
 
     return null;
