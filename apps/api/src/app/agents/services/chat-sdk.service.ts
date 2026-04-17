@@ -1,6 +1,7 @@
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import type { Chat, Message, Thread } from 'chat';
+import type { SentMessageInfo } from '@novu/framework';
+import type { AdapterPostableMessage, Chat, Message, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
@@ -103,7 +104,7 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: string,
     serializedThread: Record<string, unknown>,
     content: ReplyContentDto
-  ): Promise<void> {
+  ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -112,13 +113,52 @@ export class ChatSdkService implements OnModuleDestroy {
     const adapter = chat.getAdapter(platform);
     const thread = ThreadImpl.fromJSON(serializedThread, adapter);
 
+    let sent: { id: string; threadId: string };
     if (content.card) {
-      await thread.post(content.card);
+      sent = await thread.post(content.card);
     } else if (content.markdown !== undefined) {
-      await thread.post({ markdown: content.markdown, files: content.files });
+      sent = await thread.post({ markdown: content.markdown, files: content.files });
     } else {
-      await thread.post(content.text ?? '');
+      sent = await thread.post(content.text ?? '');
     }
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  async editInConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    platformMessageId: string,
+    content: ReplyContentDto
+  ): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.editMessage !== 'function') {
+      throw new BadRequestException(`Platform ${platform} does not support editing messages`);
+    }
+
+    let edited: { id: string; threadId: string };
+    if (content.card) {
+      edited = await adapter.editMessage(
+        platformThreadId,
+        platformMessageId,
+        content.card as unknown as AdapterPostableMessage
+      );
+    } else if (content.markdown !== undefined) {
+      edited = await adapter.editMessage(platformThreadId, platformMessageId, {
+        markdown: content.markdown,
+        files: content.files,
+      } as unknown as AdapterPostableMessage);
+    } else {
+      edited = await adapter.editMessage(platformThreadId, platformMessageId, content.text ?? '');
+    }
+
+    return { messageId: edited.id, platformThreadId: edited.threadId };
   }
 
   async removeReaction(

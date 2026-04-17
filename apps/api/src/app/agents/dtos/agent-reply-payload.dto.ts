@@ -87,6 +87,20 @@ export class ReplyContentDto {
   files?: FileRef[];
 }
 
+export class EditPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+
+  @ApiProperty({ type: ReplyContentDto })
+  @IsObject()
+  @ValidateNested()
+  @Validate(IsValidReplyContent)
+  @Type(() => ReplyContentDto)
+  content: ReplyContentDto;
+}
+
 export class ResolveDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -144,13 +158,12 @@ export class AgentReplyPayloadDto {
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
 
-  @ApiPropertyOptional({ type: ReplyContentDto })
+  @ApiPropertyOptional({ type: EditPayloadDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Validate(IsValidReplyContent)
-  @Type(() => ReplyContentDto)
-  update?: ReplyContentDto;
+  @Type(() => EditPayloadDto)
+  edit?: EditPayloadDto;
 
   @ApiPropertyOptional({ type: ResolveDto })
   @IsOptional()

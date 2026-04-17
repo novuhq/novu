@@ -28,11 +28,14 @@ export type {
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  EditPayload,
   FileRef,
   MessageContent,
   MetadataSignal,
   ReplyContent,
+  ReplyHandle,
   Signal,
+  SentMessageInfo,
   TriggerSignal,
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';
