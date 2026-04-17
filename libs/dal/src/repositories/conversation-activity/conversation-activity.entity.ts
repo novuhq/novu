@@ -4,8 +4,8 @@ import { OrganizationId } from '../organization';
 
 export enum ConversationActivityTypeEnum {
   MESSAGE = 'message',
-  /** Interim status update sent via ctx.update() */
-  UPDATE = 'update',
+  /** In-place edit of a previously sent agent message, via replyHandle.edit() */
+  EDIT = 'edit',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
 }

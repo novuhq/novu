@@ -18,10 +18,13 @@ export type {
   AgentSubscriber,
   CardChild,
   CardElement,
+  EditPayload,
   FileRef,
   MessageContent,
   MetadataSignal,
   ReplyContent,
+  ReplyHandle,
+  SentMessageInfo,
   Signal,
   TriggerSignal,
 } from './resources';

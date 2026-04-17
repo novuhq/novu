@@ -1,8 +1,8 @@
+import type { Signal } from '@novu/framework';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import type { Signal } from '@novu/framework';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
+import { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 
 export type { Signal } from '@novu/framework';
 
@@ -26,8 +26,8 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ReplyContentDto)
-  update?: ReplyContentDto;
+  @Type(() => EditPayloadDto)
+  edit?: EditPayloadDto;
 
   @IsOptional()
   @IsObject()

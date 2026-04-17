@@ -89,6 +89,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     richContent?: Record<string, unknown>;
     type?: ConversationActivityTypeEnum;
     senderName?: string;
+    platformMessageId?: string;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -104,6 +105,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       content: params.content,
       richContent: params.richContent,
       senderName: params.senderName,
+      platformMessageId: params.platformMessageId,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });

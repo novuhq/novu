@@ -124,6 +124,28 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Refresh `lastActivityAt` and `lastMessagePreview` without incrementing `messageCount`.
+   * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
+   * but the conversation's timeline and preview should reflect the latest content.
+   */
+  async touchPreview(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    messagePreview: string
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        $set: {
+          lastActivityAt: new Date().toISOString(),
+          lastMessagePreview: messagePreview.slice(0, 200),
+        },
+      }
+    );
+  }
+
   async updateChannelThread(
     environmentId: string,
     organizationId: string,
@@ -176,6 +198,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     includeCursor = false,
     status,
     subscriberId,
+    agentId,
     identifier,
     provider,
     createdAfter,
@@ -190,6 +213,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     includeCursor?: boolean;
     status?: ConversationStatusEnum;
     subscriberId?: string;
+    agentId?: string;
     identifier?: string;
     provider?: string[];
     createdAfter?: string;
@@ -242,6 +266,10 @@ export class ConversationRepository extends BaseRepositoryV2<
       query.participants = {
         $elemMatch: { id: subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
       };
+    }
+
+    if (agentId) {
+      query._agentId = agentId;
     }
 
     const trimmedIdentifier = identifier?.trim();

@@ -101,6 +101,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
 conversationSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 conversationSchema.index({ _environmentId: 1, 'channels.platformThreadId': 1 });
 conversationSchema.index({ _environmentId: 1, 'participants.id': 1, status: 1 });
+conversationSchema.index({ _environmentId: 1, _agentId: 1, _id: 1 });
+conversationSchema.index({ _environmentId: 1, _agentId: 1, createdAt: 1 });
+conversationSchema.index({ _environmentId: 1, _agentId: 1, lastActivityAt: 1 });
 
 export const Conversation =
   (mongoose.models.Conversation as mongoose.Model<ConversationDBModel>) ||

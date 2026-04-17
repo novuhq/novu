@@ -34,7 +34,12 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
     });
 
     const chatSdkService = testServer.getService(ChatSdkService);
-    sinon.stub(chatSdkService, 'postToConversation').resolves();
+    sinon
+      .stub(chatSdkService, 'postToConversation')
+      .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
+    sinon
+      .stub(chatSdkService, 'editInConversation')
+      .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
     sinon.stub(chatSdkService, 'reactToMessage').resolves();
     sinon.stub(chatSdkService, 'removeReaction').resolves();
   });
@@ -61,7 +66,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.status).to.equal('ok');
+      expect(res.body.data?.messageId).to.equal('platform-msg-1');
 
       const convAfter = await conversationRepository.findOne(
         { _id: conversationId, _environmentId: ctx.session.environment._id },
@@ -81,42 +86,83 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(agentActivity!.content).to.equal('Hello from agent');
     });
 
-    it('should persist update activity and return early without executing resolve', async () => {
+    it('should return messageId/platformThreadId on successful reply', async () => {
       const conversationId = await seedConversation(ctx);
 
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        update: { text: 'Processing...' },
-        resolve: { summary: 'Should be ignored' },
+        reply: { text: 'Hello' },
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.status).to.equal('update_sent');
+      expect(res.body.data.messageId).to.equal('platform-msg-1');
+      expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
+    });
+
+    it('should edit a previously sent message and persist an edit activity', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const convBefore = await conversationRepository.findOne(
+        { _id: conversationId, _environmentId: ctx.session.environment._id },
+        '*'
+      );
+      const countBefore = convBefore!.messageCount;
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        edit: {
+          messageId: 'platform-msg-1',
+          content: { text: 'Edited content' },
+        },
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.messageId).to.equal('platform-msg-1');
+      expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
 
       const activities = await activityRepository.findByConversation(
         ctx.session.environment._id,
         conversationId
       );
-      const updateActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.UPDATE);
-      expect(updateActivity).to.exist;
-      expect(updateActivity!.content).to.equal('Processing...');
+      const editActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.EDIT);
+      expect(editActivity).to.exist;
+      expect(editActivity!.content).to.equal('Edited content');
+      expect(editActivity!.platformMessageId).to.equal('platform-msg-1');
 
       const conversation = await conversationRepository.findOne(
         { _id: conversationId, _environmentId: ctx.session.environment._id },
         '*'
       );
       expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
+      // Edit refreshes the conversation's lastMessagePreview to the new content...
+      expect(conversation!.lastMessagePreview).to.equal('Edited content');
+      // ...without bumping messageCount (edits mutate an existing message, not add one).
+      expect(conversation!.messageCount).to.equal(countBefore);
     });
 
-    it('should reject when both reply and update are provided', async () => {
+    it('should reject when both reply and edit are provided', async () => {
       const conversationId = await seedConversation(ctx);
 
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
         reply: { text: 'a' },
-        update: { text: 'b' },
+        edit: { messageId: 'platform-msg-1', content: { text: 'b' } },
+      });
+
+      expect(res.status).to.equal(400);
+    });
+
+    it('should reject when edit is combined with signals', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        edit: { messageId: 'platform-msg-1', content: { text: 'b' } },
+        signals: [{ type: 'metadata', key: 'k', value: 'v' }],
       });
 
       expect(res.status).to.equal(400);
@@ -146,7 +192,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.status).to.equal('ok');
+      expect(res.body.data).to.be.null;
 
       const conversation = await conversationRepository.findOne(
         { _id: conversationId, _environmentId: ctx.session.environment._id },
@@ -195,7 +241,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.status).to.equal('ok');
+      expect(res.body.data).to.be.null;
 
       const conversation = await conversationRepository.findOne(
         { _id: conversationId, _environmentId: ctx.session.environment._id },
@@ -237,7 +283,8 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.status).to.equal('ok');
+      expect(res.body.data.messageId).to.equal('platform-msg-1');
+      expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
 
       const convAfter = await conversationRepository.findOne(
         { _id: conversationId, _environmentId: ctx.session.environment._id },

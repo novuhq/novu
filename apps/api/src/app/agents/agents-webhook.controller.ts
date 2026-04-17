@@ -50,7 +50,7 @@ export class AgentsWebhookController {
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
-        update: body.update,
+        edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
       })
