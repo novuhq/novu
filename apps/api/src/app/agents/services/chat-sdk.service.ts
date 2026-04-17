@@ -1,11 +1,12 @@
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import type { Chat, Message, Thread } from 'chat';
+import type { Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { ReplyContentDto } from '../dtos/agent-reply-payload.dto';
+import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
@@ -25,11 +26,6 @@ import { AgentInboundHandler } from './agent-inbound-handler.service';
  *           credentials.token                    → verifyToken
  *           credentials.phoneNumberIdentification → phoneNumberId
  */
-
-// Chat SDK packages are ESM-only; SWC rewrites import() → require() for CJS output.
-// Wrapping in new Function prevents SWC from seeing the import() keyword.
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const esmImport = new Function('specifier', 'return import(specifier)') as (s: string) => Promise<any>;
 
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
@@ -133,14 +129,15 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    emoji: string
+    emojiName: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
 
     const adapter = chat.getAdapter(platform);
-    await adapter.removeReaction(platformThreadId, platformMessageId, emoji);
+    const resolved = await this.resolveEmoji(emojiName);
+    await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
   }
 
   async reactToMessage(
@@ -149,14 +146,21 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    emoji: string
+    emojiName: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
 
     const adapter = chat.getAdapter(platform);
-    await adapter.addReaction(platformThreadId, platformMessageId, emoji);
+    const resolved = await this.resolveEmoji(emojiName);
+    await adapter.addReaction(platformThreadId, platformMessageId, resolved);
+  }
+
+  private async resolveEmoji(name: string): Promise<EmojiValue> {
+    const { getEmoji } = await esmImport('chat');
+
+    return getEmoji(name);
   }
 
   private async getOrCreate(
@@ -379,14 +383,14 @@ export class ChatSdkService implements OnModuleDestroy {
       }
     });
 
-    cached.chat.onReaction(async (event: any) => {
+    cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
         await this.inboundHandler.handleReaction(agentId, cached.config, {
           emoji: event.emoji,
           added: event.added,
           messageId: event.messageId,
           message: event.message,
-          thread: event.thread,
+          thread: event.thread as Thread | undefined,
           user: event.user,
         });
       } catch (err) {

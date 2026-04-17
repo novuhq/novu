@@ -8,6 +8,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import type { WellKnownEmoji } from 'chat';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { resolveAgentPlatform } from '../utils/provider-to-platform';
 
@@ -21,25 +22,25 @@ export interface ResolvedAgentConfig {
   integrationIdentifier: string;
   integrationId: string;
   thinkingIndicatorEnabled: boolean;
-  reactionOnMessageReceived: string | null;
-  reactionOnResolved: string | null;
+  reactionOnMessageReceived: WellKnownEmoji | null;
+  reactionOnResolved: WellKnownEmoji | null;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
 }
 
-const DEFAULT_REACTION_ON_MESSAGE = 'eyes';
-const DEFAULT_REACTION_ON_RESOLVED = 'check';
+const DEFAULT_REACTION_ON_MESSAGE: WellKnownEmoji = 'eyes';
+const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
 
 function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled?: boolean } }): boolean {
   return agent.behavior?.thinkingIndicatorEnabled !== false;
 }
 
-function resolveReaction(value: string | null | undefined, defaultEmoji: string): string | null {
+function resolveReaction(value: string | null | undefined, defaultEmoji: WellKnownEmoji): WellKnownEmoji | null {
   if (value === null) return null;
   if (value === undefined) return defaultEmoji;
 
-  return value;
+  return value as WellKnownEmoji;
 }
 
 @Injectable()

@@ -1,6 +1,6 @@
+import type { Signal } from '@novu/framework';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import type { Signal } from '@novu/framework';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 

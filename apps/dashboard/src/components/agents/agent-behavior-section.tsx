@@ -1,6 +1,31 @@
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
+import { type AgentEmojiEntry, getAgentEmojiQueryKey, listAgentEmoji } from '@/api/agents';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Switch } from '@/components/primitives/switch';
+import { useEnvironment } from '@/context/environment/hooks';
+
+const DEFAULT_REACTION_ON_MESSAGE = 'eyes';
+const DEFAULT_REACTION_ON_RESOLVED = 'check';
+
+function useAgentEmoji() {
+  const { currentEnvironment } = useEnvironment();
+
+  const { data: emojiList = [] } = useQuery({
+    queryKey: getAgentEmojiQueryKey(),
+    queryFn: ({ signal }) => listAgentEmoji(currentEnvironment!, signal),
+    enabled: !!currentEnvironment,
+    staleTime: Infinity,
+  });
+
+  const unicodeMap = useMemo(
+    () => new Map<string, string>(emojiList.map((e: AgentEmojiEntry) => [e.name, e.unicode])),
+    [emojiList]
+  );
+
+  return { emojiList, unicodeMap };
+}
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
@@ -37,6 +62,10 @@ function EmojiPickerButton({ emoji }: { emoji: string }) {
 }
 
 export function AgentBehaviorSection() {
+  const { unicodeMap } = useAgentEmoji();
+  const messageEmoji = unicodeMap.get(DEFAULT_REACTION_ON_MESSAGE) ?? '';
+  const resolvedEmoji = unicodeMap.get(DEFAULT_REACTION_ON_RESOLVED) ?? '';
+
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
       <SectionHeader>Agent behavior</SectionHeader>
@@ -79,11 +108,11 @@ export function AgentBehaviorSection() {
           </ToggleRow>
 
           <ToggleRow label="React to incoming messages so users know the agent received them">
-            <EmojiPickerButton emoji="👀" />
+            <EmojiPickerButton emoji={messageEmoji} />
           </ToggleRow>
 
           <ToggleRow label="React to the final message when a conversation is resolved">
-            <EmojiPickerButton emoji="✅" />
+            <EmojiPickerButton emoji={resolvedEmoji} />
           </ToggleRow>
         </div>
       </div>

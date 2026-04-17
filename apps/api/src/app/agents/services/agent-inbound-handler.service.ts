@@ -6,7 +6,7 @@ import {
   ConversationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import type { Message, Thread } from 'chat';
+import type { EmojiValue, Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITHOUT_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
@@ -22,7 +22,7 @@ const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
 
 export interface InboundReactionEvent {
-  emoji: { name: string };
+  emoji: EmojiValue;
   added: boolean;
   messageId: string;
   message?: Message;

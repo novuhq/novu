@@ -104,7 +104,7 @@ export class HandleAgentReply {
     }
 
     if (command.resolve) {
-      await this.executeResolveSignal(command, config!, conversation, channel, command.resolve);
+      await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
 
     return { status: 'ok' };
@@ -255,12 +255,12 @@ export class HandleAgentReply {
     ]);
   }
 
-  private async executeResolveSignal(
+  private async resolveConversation(
     command: HandleAgentReplyCommand,
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    signal: { summary?: string }
+    options: { summary?: string }
   ): Promise<void> {
     await Promise.all([
       this.conversationRepository.updateStatus(
@@ -276,8 +276,8 @@ export class HandleAgentReply {
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
         agentId: command.agentIdentifier,
-        content: signal.summary ?? 'Conversation resolved',
-        signalData: { type: 'resolve', payload: signal.summary ? { summary: signal.summary } : undefined },
+        content: options.summary ?? 'Conversation resolved',
+        signalData: { type: 'resolve', payload: options.summary ? { summary: options.summary } : undefined },
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       }),
