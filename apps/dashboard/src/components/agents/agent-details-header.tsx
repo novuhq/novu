@@ -46,7 +46,7 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
             <h1 className="text-text-strong text-[18px] font-medium leading-6 tracking-tight">{agent.name}</h1>
             {agent.devBridgeActive ? (
               <Badge variant="lighter" color="orange" size="sm">
-                DEV
+                LOCAL
               </Badge>
             ) : null}
           </div>
