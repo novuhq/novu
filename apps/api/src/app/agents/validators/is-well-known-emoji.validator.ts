@@ -29,7 +29,7 @@ export class IsWellKnownEmojiConstraint implements ValidatorConstraintInterface 
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `"${args.value}" is not a supported emoji name. Use GET /agents/emoji to list available options.`;
+    return `${JSON.stringify(args.value)} is not a supported emoji name. Use GET /agents/emoji to list available options.`;
   }
 }
 

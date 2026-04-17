@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -10,7 +10,21 @@ import {
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { esmImport } from '../utils/esm-import';
 import { resolveAgentPlatform } from '../utils/provider-to-platform';
+
+const logger = new Logger('AgentConfigResolver');
+
+let cachedEmojiNames: Set<string> | null = null;
+
+async function loadEmojiNames(): Promise<Set<string>> {
+  if (cachedEmojiNames) return cachedEmojiNames;
+
+  const { DEFAULT_EMOJI_MAP } = await esmImport('chat');
+  cachedEmojiNames = new Set<string>(Object.keys(DEFAULT_EMOJI_MAP));
+
+  return cachedEmojiNames;
+}
 
 export interface ResolvedAgentConfig {
   platform: AgentPlatformEnum;
@@ -36,9 +50,19 @@ function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled
   return agent.behavior?.thinkingIndicatorEnabled !== false;
 }
 
-function resolveReaction(value: string | null | undefined, defaultEmoji: WellKnownEmoji): WellKnownEmoji | null {
+async function resolveReaction(
+  value: string | null | undefined,
+  defaultEmoji: WellKnownEmoji
+): Promise<WellKnownEmoji | null> {
   if (value === null) return null;
   if (value === undefined) return defaultEmoji;
+
+  const known = await loadEmojiNames();
+  if (!known.has(value)) {
+    logger.warn(`Unknown emoji "${value}" in agent config, falling back to default "${defaultEmoji}"`);
+
+    return defaultEmoji;
+  }
 
   return value as WellKnownEmoji;
 }
@@ -134,11 +158,11 @@ export class AgentConfigResolver {
       integrationIdentifier,
       integrationId: integration._id,
       thinkingIndicatorEnabled: resolveThinkingIndicator(agent),
-      reactionOnMessageReceived: resolveReaction(
+      reactionOnMessageReceived: await resolveReaction(
         agent.behavior?.reactions?.onMessageReceived,
         DEFAULT_REACTION_ON_MESSAGE
       ),
-      reactionOnResolved: resolveReaction(agent.behavior?.reactions?.onResolved, DEFAULT_REACTION_ON_RESOLVED),
+      reactionOnResolved: await resolveReaction(agent.behavior?.reactions?.onResolved, DEFAULT_REACTION_ON_RESOLVED),
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

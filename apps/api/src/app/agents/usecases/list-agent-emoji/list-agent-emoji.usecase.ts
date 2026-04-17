@@ -17,10 +17,14 @@ export class ListAgentEmoji {
     const { DEFAULT_EMOJI_MAP } = await esmImport('chat');
     const map = DEFAULT_EMOJI_MAP as Record<string, EmojiFormats>;
 
-    this.cached = Object.entries(map).map(([name, formats]) => ({
-      name,
-      unicode: Array.isArray(formats.gchat) ? formats.gchat[0] : formats.gchat,
-    }));
+    this.cached = Object.entries(map)
+      .map(([name, formats]) => {
+        const raw = formats.gchat ?? formats.slack ?? formats.teams ?? formats.whatsapp;
+        const unicode = Array.isArray(raw) ? raw[0] : raw;
+
+        return unicode ? { name, unicode } : null;
+      })
+      .filter((e): e is AgentEmojiEntry => e !== null);
 
     return this.cached;
   }

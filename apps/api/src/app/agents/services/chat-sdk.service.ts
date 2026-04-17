@@ -159,8 +159,12 @@ export class ChatSdkService implements OnModuleDestroy {
 
   private async resolveEmoji(name: string): Promise<EmojiValue> {
     const { getEmoji } = await esmImport('chat');
+    const resolved = getEmoji(name);
+    if (!resolved) {
+      throw new Error(`Unknown emoji name: "${name}". Use GET /agents/emoji to list supported options.`);
+    }
 
-    return getEmoji(name);
+    return resolved;
   }
 
   private async getOrCreate(

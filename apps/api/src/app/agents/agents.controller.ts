@@ -49,7 +49,7 @@ import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
-import { ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
+import { type AgentEmojiEntry, ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations/list-agent-integrations.command';
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
@@ -90,7 +90,7 @@ export class AgentsController {
       'Each entry includes the normalized name and a unicode representation for display.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  listEmoji() {
+  listAgentEmoji(): Promise<AgentEmojiEntry[]> {
     return this.listAgentEmojiUsecase.execute();
   }
 

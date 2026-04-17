@@ -263,6 +263,8 @@ export function getAgentEmojiQueryKey() {
   return [AGENT_EMOJI_QUERY_KEY] as const;
 }
 
-export function listAgentEmoji(environment: IEnvironment, signal?: AbortSignal): Promise<AgentEmojiEntry[]> {
-  return get<AgentEmojiEntry[]>('/agents/emoji', { environment, signal });
+export async function listAgentEmoji(environment: IEnvironment, signal?: AbortSignal): Promise<AgentEmojiEntry[]> {
+  const response = await get<{ data: AgentEmojiEntry[] }>('/agents/emoji', { environment, signal });
+
+  return response.data;
 }
