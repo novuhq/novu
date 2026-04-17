@@ -19,7 +19,7 @@ export class ListAgentEmoji {
 
     this.cached = Object.entries(map)
       .map(([name, formats]) => {
-        const raw = formats.gchat ?? formats.slack ?? formats.teams ?? formats.whatsapp;
+        const raw = formats.gchat ?? formats.slack;
         const unicode = Array.isArray(raw) ? raw[0] : raw;
 
         return unicode ? { name, unicode } : null;
