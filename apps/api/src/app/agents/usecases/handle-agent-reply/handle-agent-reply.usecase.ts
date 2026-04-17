@@ -219,8 +219,8 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       }),
-      // Refresh inbox preview + lastActivityAt without incrementing messageCount —
-      // edits mutate an existing message, they don't add a new one.
+      // Refresh the conversation's lastMessagePreview + lastActivityAt without
+      // incrementing messageCount — edits mutate an existing message, they don't add one.
       this.conversationRepository.touchPreview(
         command.environmentId,
         command.organizationId,

@@ -136,7 +136,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         '*'
       );
       expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
-      // Edit refreshes the inbox preview to the new content...
+      // Edit refreshes the conversation's lastMessagePreview to the new content...
       expect(conversation!.lastMessagePreview).to.equal('Edited content');
       // ...without bumping messageCount (edits mutate an existing message, not add one).
       expect(conversation!.messageCount).to.equal(countBefore);

@@ -127,7 +127,7 @@ export class ConversationRepository extends BaseRepositoryV2<
   /**
    * Refresh `lastActivityAt` and `lastMessagePreview` without incrementing `messageCount`.
    * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
-   * but the timeline and inbox preview should reflect the latest content.
+   * but the conversation's timeline and preview should reflect the latest content.
    */
   async touchPreview(
     environmentId: string,
