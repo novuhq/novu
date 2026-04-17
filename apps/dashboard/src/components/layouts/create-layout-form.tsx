@@ -23,9 +23,11 @@ interface CreateLayoutFormProps {
     name: string;
     isTranslationEnabled?: boolean;
   };
+  /** When true, changing the name does not overwrite the identifier (duplicate flow). */
+  disableIdentifierSlugSync?: boolean;
 }
 
-export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) {
+export function CreateLayoutForm({ onSubmit, template, disableIdentifierSlugSync }: CreateLayoutFormProps) {
   const form = useForm({
     resolver: standardSchemaResolver(layoutSchema),
     defaultValues: {
@@ -56,7 +58,10 @@ export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) 
                   autoFocus
                   onChange={(e) => {
                     field.onChange(e);
-                    form.setValue('layoutId', slugify(e.target.value));
+
+                    if (!disableIdentifierSlugSync) {
+                      form.setValue('layoutId', slugify(e.target.value));
+                    }
                   }}
                 />
               </FormControl>

@@ -1,4 +1,4 @@
-import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
+import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@novu/shared';
 import type { FormEvent, ReactNode } from 'react';
 import { useId, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiExternalLinkLine, RiInformationFill } from 'react-icons/ri';
@@ -45,12 +45,15 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
   const [identifier, setIdentifier] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
+  // Once the user edits the identifier manually, stop auto-syncing it from the name.
+  const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
 
   const reset = () => {
     setName('');
     setIdentifier('');
     setDescription('');
     setErrors({});
+    setIsIdentifierTouched(false);
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -144,8 +147,14 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
                   size="2xs"
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
+                    const nextName = e.target.value;
+                    setName(nextName);
                     setErrors((prev) => ({ ...prev, name: undefined }));
+
+                    if (!isIdentifierTouched) {
+                      setIdentifier(slugify(nextName));
+                      setErrors((prev) => ({ ...prev, identifier: undefined }));
+                    }
                   }}
                   placeholder="e.g. Wine Sommelier Agent"
                   hasError={Boolean(errors.name)}
@@ -168,6 +177,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value);
+                    setIsIdentifierTouched(true);
                     setErrors((prev) => ({ ...prev, identifier: undefined }));
                   }}
                   placeholder="e.g. wine-sommelier-agent"

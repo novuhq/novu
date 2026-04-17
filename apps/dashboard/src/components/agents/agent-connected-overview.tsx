@@ -12,7 +12,7 @@ export function AgentConnectedOverview({ agent }: AgentConnectedOverviewProps) {
     <div className="flex min-w-0 flex-1 flex-col gap-4">
       <AgentBehaviorSection />
       <ConnectedProvidersSection agent={agent} />
-      <RecentConversationsSection agent={agent} />
+      <RecentConversationsSection />
     </div>
   );
 }

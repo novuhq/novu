@@ -45,6 +45,7 @@ export class DuplicateLayoutUseCase {
       UpsertLayoutCommand.create({
         layoutDto: {
           name: command.overrides.name,
+          layoutId: command.overrides.layoutId,
           isTranslationEnabled: command.overrides.isTranslationEnabled,
           controlValues: originalControlValues?.controls ?? null,
         },

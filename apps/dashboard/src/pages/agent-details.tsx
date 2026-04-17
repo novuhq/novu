@@ -235,9 +235,6 @@ export function AgentDetailsPage() {
                 <TabsTrigger variant="regular" value="integrations" size="xl">
                   Integrations
                 </TabsTrigger>
-                <TabsTrigger variant="regular" value="activity" size="xl">
-                  Activity
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="outline-none">
@@ -247,11 +244,6 @@ export function AgentDetailsPage() {
                 {currentTab === 'integrations' ? (
                   <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
                 ) : null}
-              </TabsContent>
-              <TabsContent value="activity" className="outline-none">
-                <div className="mx-auto mt-4 max-w-3xl px-3 py-2 md:px-6">
-                  <p className="text-text-soft text-label-sm">Test content — Activity tab (placeholder).</p>
-                </div>
               </TabsContent>
             </Tabs>
 

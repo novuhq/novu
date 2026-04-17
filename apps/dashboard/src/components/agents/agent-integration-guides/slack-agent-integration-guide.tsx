@@ -23,6 +23,7 @@ export function SlackAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: SlackAgentIntegrationGuideProps) {
+  const isConnected = Boolean(integrationLink?.connectedAt);
 
   return (
     <AgentIntegrationGuideLayout
@@ -37,29 +38,38 @@ export function SlackAgentIntegrationGuide({
       isRemovingIntegration={isRemovingIntegration}
     >
       <AgentIntegrationGuideSection title="Overview">
-        <p>
-          Connect Slack so this agent can send and receive chat messages through your workspace. Ensure the integration
-          is configured and active in the integration store for this environment.
-        </p>
+        {isConnected ? (
+          <p>
+            This agent is connected to Slack. Tag the bot in any channel it has been invited to, or DM it directly, to
+            send and receive chat messages through your workspace.
+          </p>
+        ) : (
+          <p>
+            Connect Slack so this agent can send and receive chat messages through your workspace. Ensure the
+            integration is configured and active in the integration store for this environment.
+          </p>
+        )}
       </AgentIntegrationGuideSection>
-      <div className="flex flex-col gap-3">
-        <p className="text-text-strong text-label-sm font-medium">Steps</p>
-        <AgentIntegrationGuideStep
-          step={1}
-          title="Install the Slack app"
-          description="Complete OAuth in the integration store and grant the channels your agent should use."
-        />
-        <AgentIntegrationGuideStep
-          step={2}
-          title="Verify credentials"
-          description="Confirm the integration shows as active for this environment before testing the agent."
-        />
-        <AgentIntegrationGuideStep
-          step={3}
-          title="Test from the agent"
-          description="Send a test message from your application and confirm delivery in Slack."
-        />
-      </div>
+      {!isConnected && (
+        <div className="flex flex-col gap-3">
+          <p className="text-text-strong text-label-sm font-medium">Steps</p>
+          <AgentIntegrationGuideStep
+            step={1}
+            title="Install the Slack app"
+            description="Complete OAuth in the integration store and grant the channels your agent should use."
+          />
+          <AgentIntegrationGuideStep
+            step={2}
+            title="Verify credentials"
+            description="Confirm the integration shows as active for this environment before testing the agent."
+          />
+          <AgentIntegrationGuideStep
+            step={3}
+            title="Test from the agent"
+            description="Send a test message from your application and confirm delivery in Slack."
+          />
+        </div>
+      )}
     </AgentIntegrationGuideLayout>
   );
 }

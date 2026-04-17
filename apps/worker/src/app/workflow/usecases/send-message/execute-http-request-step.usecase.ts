@@ -88,10 +88,35 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       GetDecryptedSecretKeyCommand.create({ environmentId: command.environmentId })
     );
 
-    const compiled = (await this.compileControlValues(
-      controlValuesWithoutSkip,
-      compileContext
-    )) as typeof controlValuesWithoutSkip;
+    let compiled: typeof controlValuesWithoutSkip;
+    try {
+      compiled = (await this.compileControlValues(
+        controlValuesWithoutSkip,
+        compileContext
+      )) as typeof controlValuesWithoutSkip;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            error: `HTTP request step template compilation failed: ${errorMessage}`,
+          }),
+        })
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+        shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
+      };
+    }
 
     const url = compiled.url as string | undefined;
     const method = (compiled.method as string) ?? 'POST';
@@ -293,7 +318,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     try {
       return JSON.parse(compiled);
     } catch {
-      return values;
+      throw new Error('Rendered template output is not valid JSON');
     }
   }
 
