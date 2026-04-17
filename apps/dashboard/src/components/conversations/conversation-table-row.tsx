@@ -4,6 +4,7 @@ import { ConversationDto } from '@/api/conversations';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationTableRowProps = {
   conversation: ConversationDto;
@@ -29,8 +30,16 @@ function getAgentName(conversation: ConversationDto): string {
   return agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
 }
 
-function formatTimestamp(dateStr: string): string {
+function formatTimestamp(dateStr: string | undefined): string {
+  if (!dateStr?.trim()) {
+    return '—';
+  }
+
   const d = new Date(dateStr);
+
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
 
   const month = d.toLocaleDateString('en-US', { month: 'short' });
   const day = d.getDate();
@@ -56,8 +65,10 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
   };
 
   const subscriber = getSubscriberLabel(conversation);
+  const subscriberParticipant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
+  const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
   const agentName = getAgentName(conversation);
-  const isResolved = conversation.status === 'resolved';
+  const isFailed = conversation.status === 'failed';
 
   return (
     <TableRow
@@ -72,7 +83,7 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
           <div className="flex items-center gap-8">
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <RiCheckboxCircleFill
-                className={cn('size-4 shrink-0', isResolved ? 'text-success-base' : 'text-warning-base')}
+                className={cn('size-4 shrink-0', isFailed ? 'text-destructive-base' : 'text-success-base')}
               />
               <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">
                 {conversation.title || 'Untitled conversation'}
@@ -92,7 +103,15 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
               {subscriber && (
                 <>
                   <div className="flex max-w-[150px] items-center gap-1 rounded border border-stroke-soft bg-[#fbfbfb] px-1 py-0.5">
-                    <div className="bg-neutral-200 size-4 shrink-0 rounded-full" />
+                    {subscriberAvatar ? (
+                      <img
+                        src={subscriberAvatar}
+                        alt=""
+                        className="size-4 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <SubscriberFallbackAvatar className="size-4" />
+                    )}
                     <span className="text-text-strong font-code min-w-0 truncate text-xs font-medium">
                       {subscriber}
                     </span>

@@ -1,5 +1,6 @@
 import {
   CreateLayoutDto,
+  DuplicateLayoutDto,
   GeneratePreviewResponseDto,
   IEnvironment,
   LayoutResponseDto,
@@ -88,7 +89,7 @@ export const duplicateLayout = async ({
 }: {
   environment: IEnvironment;
   layoutSlug: string;
-  data: { name: string; isTranslationEnabled: boolean };
+  data: DuplicateLayoutDto;
 }) => {
   const { data: result } = await postV2<{ data: LayoutResponseDto }>(`/layouts/${layoutSlug}/duplicate`, {
     environment,

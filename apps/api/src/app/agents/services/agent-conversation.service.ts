@@ -32,6 +32,7 @@ export interface PersistInboundMessageParams {
   senderId: string;
   senderName?: string;
   content: string;
+  richContent?: Record<string, unknown>;
   platformMessageId?: string;
   environmentId: string;
   organizationId: string;
@@ -68,7 +69,7 @@ export class AgentConversationService {
     }
 
     const conversation = await this.conversationRepository.create({
-      identifier: `conv-${shortId(8)}`,
+      identifier: `conv_${shortId(12)}`,
       _agentId: params.agentId,
       participants: [
         { type: params.participantType, id: params.participantId },
@@ -131,7 +132,7 @@ export class AgentConversationService {
   async persistInboundMessage(params: PersistInboundMessageParams): Promise<ConversationActivityEntity> {
     const [activity] = await Promise.all([
       this.activityRepository.createUserActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: params.conversationId,
         platform: params.platform,
         integrationId: params.integrationId,
@@ -140,6 +141,7 @@ export class AgentConversationService {
         senderId: params.senderId,
         senderName: params.senderName,
         content: params.content,
+        richContent: params.richContent,
         platformMessageId: params.platformMessageId,
         environmentId: params.environmentId,
         organizationId: params.organizationId,

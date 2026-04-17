@@ -17,8 +17,9 @@ import {
   ConversationStatusEnum,
   SubscriberRepository,
 } from '@novu/dal';
+import type { SentMessageInfo } from '@novu/framework';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
-import type { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
+import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
@@ -40,12 +41,15 @@ export class HandleAgentReply {
     private readonly logger: PinoLogger
   ) {}
 
-  async execute(command: HandleAgentReplyCommand): Promise<{ status: string }> {
-    if (command.reply && command.update) {
-      throw new BadRequestException('Only one of reply or update can be provided');
+  async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    if (command.reply && command.edit) {
+      throw new BadRequestException('Only one of reply or edit can be provided');
     }
-    if (!command.reply && !command.update && !command.resolve && !command.signals?.length) {
-      throw new BadRequestException('At least one of reply, update, resolve, or signals must be provided');
+    if (command.edit && (command.resolve || command.signals?.length)) {
+      throw new BadRequestException('edit cannot be combined with resolve or signals');
+    }
+    if (!command.reply && !command.edit && !command.resolve && !command.signals?.length) {
+      throw new BadRequestException('At least one of reply, edit, resolve, or signals must be provided');
     }
 
     const conversation = await this.conversationRepository.findOne(
@@ -62,19 +66,10 @@ export class HandleAgentReply {
 
     const channel = this.getPrimaryChannel(conversation);
 
-    if (command.update) {
+    if (command.edit) {
       const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
 
-      await this.deliverMessage(
-        command,
-        conversation,
-        channel,
-        command.update,
-        ConversationActivityTypeEnum.UPDATE,
-        agentName
-      );
-
-      return { status: 'update_sent' };
+      return this.deliverEdit(command, conversation, channel, command.edit, agentName);
     }
 
     const needsConfig = !!(command.reply || command.resolve);
@@ -82,10 +77,11 @@ export class HandleAgentReply {
       ? await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier)
       : null;
 
+    let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
       const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
 
-      await this.deliverMessage(
+      replyInfo = await this.deliverMessage(
         command,
         conversation,
         channel,
@@ -104,10 +100,10 @@ export class HandleAgentReply {
     }
 
     if (command.resolve) {
-      await this.executeResolveSignal(command, config!, conversation, channel, command.resolve);
+      await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
 
-    return { status: 'ok' };
+    return replyInfo ?? null;
   }
 
   private async resolveValidatedAgentNameForDelivery(
@@ -150,23 +146,25 @@ export class HandleAgentReply {
     content: ReplyContentDto,
     type: ConversationActivityTypeEnum,
     agentName?: string
-  ): Promise<void> {
+  ): Promise<SentMessageInfo> {
     const textFallback = this.extractTextFallback(content);
 
+    const sent = await this.chatSdkService.postToConversation(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.serializedThread!,
+      content
+    );
+
     await Promise.all([
-      this.chatSdkService.postToConversation(
-        conversation._agentId,
-        command.integrationIdentifier,
-        channel.platform,
-        channel.serializedThread!,
-        content
-      ),
       this.activityRepository.createAgentActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
-        platformThreadId: channel.platformThreadId,
+        platformThreadId: sent.platformThreadId || channel.platformThreadId,
+        platformMessageId: sent.messageId,
         agentId: command.agentIdentifier,
         senderName: agentName,
         content: textFallback,
@@ -182,6 +180,56 @@ export class HandleAgentReply {
         textFallback
       ),
     ]);
+
+    return sent;
+  }
+
+  private async deliverEdit(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    edit: EditPayloadDto,
+    agentName?: string
+  ): Promise<SentMessageInfo> {
+    const textFallback = this.extractTextFallback(edit.content);
+
+    const sent = await this.chatSdkService.editInConversation(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      edit.messageId,
+      edit.content
+    );
+
+    await Promise.all([
+      this.activityRepository.createAgentActivity({
+        identifier: `act_${shortId(12)}`,
+        conversationId: conversation._id,
+        platform: channel.platform,
+        integrationId: channel._integrationId,
+        platformThreadId: sent.platformThreadId || channel.platformThreadId,
+        platformMessageId: sent.messageId,
+        agentId: command.agentIdentifier,
+        senderName: agentName,
+        content: textFallback,
+        richContent:
+          edit.content.card || edit.content.files?.length ? (edit.content as Record<string, unknown>) : undefined,
+        type: ConversationActivityTypeEnum.EDIT,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }),
+      // Refresh the conversation's lastMessagePreview + lastActivityAt without
+      // incrementing messageCount — edits mutate an existing message, they don't add one.
+      this.conversationRepository.touchPreview(
+        command.environmentId,
+        command.organizationId,
+        conversation._id,
+        textFallback
+      ),
+    ]);
+
+    return sent;
   }
 
   private extractTextFallback(content: ReplyContentDto): string {
@@ -241,7 +289,7 @@ export class HandleAgentReply {
         merged
       ),
       this.activityRepository.createSignalActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
@@ -255,12 +303,12 @@ export class HandleAgentReply {
     ]);
   }
 
-  private async executeResolveSignal(
+  private async resolveConversation(
     command: HandleAgentReplyCommand,
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    signal: { summary?: string }
+    options: { summary?: string }
   ): Promise<void> {
     await Promise.all([
       this.conversationRepository.updateStatus(
@@ -270,14 +318,14 @@ export class HandleAgentReply {
         ConversationStatusEnum.RESOLVED
       ),
       this.activityRepository.createSignalActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
         agentId: command.agentIdentifier,
-        content: signal.summary ?? 'Conversation resolved',
-        signalData: { type: 'resolve', payload: signal.summary ? { summary: signal.summary } : undefined },
+        content: options.summary ?? 'Conversation resolved',
+        signalData: { type: 'resolve', payload: options.summary ? { summary: options.summary } : undefined },
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       }),

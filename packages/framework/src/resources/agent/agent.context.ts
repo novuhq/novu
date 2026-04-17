@@ -12,6 +12,8 @@ import type {
   AgentSubscriber,
   MessageContent,
   ReplyContent,
+  ReplyHandle,
+  SentMessageInfo,
   Signal,
 } from './agent.types';
 
@@ -47,6 +49,49 @@ function serializeContent(content: MessageContent): ReplyContent {
   throw new Error('Invalid message content — expected string, { markdown }, or CardElement');
 }
 
+interface ReplyPoster {
+  post(body: AgentReplyPayload): Promise<SentMessageInfo | null>;
+}
+
+class ReplyHandleImpl implements ReplyHandle {
+  public messageId: string;
+  public platformThreadId: string;
+
+  constructor(
+    messageId: string,
+    platformThreadId: string,
+    private readonly conversationId: string,
+    private readonly integrationIdentifier: string,
+    private readonly poster: ReplyPoster
+  ) {
+    this.messageId = messageId;
+    this.platformThreadId = platformThreadId;
+  }
+
+  async edit(content: MessageContent): Promise<ReplyHandle> {
+    const info = await this.poster.post({
+      conversationId: this.conversationId,
+      integrationIdentifier: this.integrationIdentifier,
+      edit: {
+        messageId: this.messageId,
+        content: serializeContent(content),
+      },
+    });
+
+    if (!info) {
+      throw new Error('Agent edit did not return a message handle');
+    }
+
+    // Mutate-in-place: the handle represents the same platform message, so we refresh
+    // ids from the edit response (Slack/Teams preserve them; other platforms may not)
+    // and return `this` to honour the "same handle for chaining" contract.
+    this.messageId = info.messageId;
+    this.platformThreadId = info.platformThreadId;
+
+    return this;
+  }
+}
+
 export class AgentContextImpl implements AgentContext {
   readonly event: string;
   readonly action: AgentAction | null;
@@ -66,6 +111,7 @@ export class AgentContextImpl implements AgentContext {
   private readonly _conversationId: string;
   private readonly _integrationIdentifier: string;
   private readonly _secretKey: string;
+  private readonly _poster: ReplyPoster;
 
   constructor(request: AgentBridgeRequest, secretKey: string) {
     this.event = request.event;
@@ -82,6 +128,7 @@ export class AgentContextImpl implements AgentContext {
     this._conversationId = request.conversationId;
     this._integrationIdentifier = request.integrationIdentifier;
     this._secretKey = secretKey;
+    this._poster = { post: (body) => this._post(body) };
 
     this.metadata = {
       set: (key: string, value: unknown) => {
@@ -90,7 +137,7 @@ export class AgentContextImpl implements AgentContext {
     };
   }
 
-  async reply(content: MessageContent): Promise<void> {
+  async reply(content: MessageContent): Promise<ReplyHandle> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
@@ -107,17 +154,18 @@ export class AgentContextImpl implements AgentContext {
       this._resolveSignal = null;
     }
 
-    await this._post(body);
-  }
+    const info = await this._post(body);
+    if (!info) {
+      throw new Error('Agent reply did not return a message handle');
+    }
 
-  async update(content: MessageContent): Promise<void> {
-    const body: AgentReplyPayload = {
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-      update: serializeContent(content),
-    };
-
-    await this._post(body);
+    return new ReplyHandleImpl(
+      info.messageId,
+      info.platformThreadId,
+      this._conversationId,
+      this._integrationIdentifier,
+      this._poster
+    );
   }
 
   resolve(summary?: string): void {
@@ -155,7 +203,7 @@ export class AgentContextImpl implements AgentContext {
     await this._post(body);
   }
 
-  private async _post(body: AgentReplyPayload): Promise<void> {
+  private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
     const response = await fetch(this._replyUrl, {
       method: 'POST',
       headers: {
@@ -169,5 +217,25 @@ export class AgentContextImpl implements AgentContext {
       const text = await response.text().catch(() => '');
       throw new Error(`Agent reply failed (${response.status}): ${text}`);
     }
+
+    const raw = await response.text().catch(() => '');
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { data?: Record<string, unknown> } | Record<string, unknown>;
+      const envelope = (parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed) as
+        | Record<string, unknown>
+        | undefined;
+
+      if (envelope && typeof envelope.messageId === 'string' && typeof envelope.platformThreadId === 'string') {
+        return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
+      }
+    } catch {
+      // flush-only responses return null or an empty body; tolerate and fall through.
+    }
+
+    return null;
   }
 }

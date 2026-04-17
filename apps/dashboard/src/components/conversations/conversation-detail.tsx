@@ -1,4 +1,4 @@
-import { RiArrowDownSLine, RiArrowUpSLine, RiCloseFill } from 'react-icons/ri';
+import { RiCloseFill } from 'react-icons/ri';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useFetchConversation, useFetchConversationActivities } from '@/hooks/use-fetch-conversation-activities';
@@ -8,39 +8,17 @@ import { ConversationTimeline } from './conversation-timeline';
 type ConversationDetailProps = {
   conversationId: string;
   onClose?: () => void;
-  onNavigate?: (direction: 'prev' | 'next') => void;
 };
 
-export function ConversationDetail({ conversationId, onClose, onNavigate }: ConversationDetailProps) {
+export function ConversationDetail({ conversationId, onClose }: ConversationDetailProps) {
   const { conversation, isLoading: isConversationLoading } = useFetchConversation(conversationId);
   const { activities, totalCount, isLoading: isActivitiesLoading } = useFetchConversationActivities(conversationId);
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-8 shrink-0 items-center justify-between px-2">
+      <div className="z-10 mb-4 flex h-8 shrink-0 items-center justify-between rounded-t-lg bg-bg-weak px-3 shadow-[0_0_0_1px_hsl(var(--neutral-alpha-200))] ">
         <span className="text-text-strong text-label-sm font-medium">Conversation</span>
         <div className="flex items-center gap-0.5">
-          {onNavigate && (
-            <>
-              <button
-                type="button"
-                aria-label="Previous conversation"
-                onClick={() => onNavigate('prev')}
-                className="text-text-soft hover:text-text-strong rounded p-0.5"
-              >
-                <RiArrowUpSLine className="size-4" />
-              </button>
-              <button
-                type="button"
-                aria-label="Next conversation"
-                onClick={() => onNavigate('next')}
-                className="text-text-soft hover:text-text-strong rounded p-0.5"
-              >
-                <RiArrowDownSLine className="size-4" />
-              </button>
-            </>
-          )}
-          {onNavigate && onClose && <div className="bg-stroke-soft mx-0.5 h-4 w-px" />}
           {onClose && (
             <button
               type="button"

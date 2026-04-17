@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.971.0",
+    "yargs": "^17.7.2",
     "@chat-adapter/slack": "^4.25.0",
     "@chat-adapter/state-redis": "^4.25.0",
     "@chat-adapter/teams": "^4.25.0",
@@ -97,6 +98,7 @@
     "dotenv": "^16.5.0",
     "entities": "^7.0.0",
     "envalid": "^8.1.1",
+    "express": "^5.0.1",
     "es-toolkit": "^1.39.10",
     "handlebars": "4.7.9",
     "helmet": "^6.0.1",
@@ -154,7 +156,6 @@
     "async": "^3.2.0",
     "chai": "^4.2.0",
     "chai-subset": "^1.6.0",
-    "express": "^5.0.1",
     "get-port": "^5.1.1",
     "mocha": "^10.2.0",
     "pirates": "^4.0.7",

@@ -98,10 +98,18 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
   beforeEach(() => {
     client = new Client({ secretKey: 'test-secret-key', strictAuthentication: false });
-    fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve('{}'),
-      json: () => Promise.resolve({ status: 'ok' }),
+    let counter = 0;
+    fetchMock = vi.fn().mockImplementation(() => {
+      counter += 1;
+      const body = {
+        data: { status: 'ok', messageId: `msg-${counter}`, platformThreadId: 'thread-1' },
+      };
+
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(body)),
+        json: () => Promise.resolve(body),
+      });
     });
     global.fetch = fetchMock as typeof fetch;
   });
@@ -225,12 +233,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.signals[1]).toEqual({ type: 'metadata', key: 'language', value: 'en' });
   });
 
-  it('should send update independently without signals', async () => {
+  it('should edit a previously sent reply via the returned handle', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (ctx) => {
-        ctx.metadata.set('step', 'thinking');
-        await ctx.update('Thinking...');
-        await ctx.reply('Done thinking');
+        const msg = await ctx.reply('Thinking...');
+        await msg.edit('Done thinking');
       },
     });
 
@@ -261,16 +268,59 @@ describe('agent dispatch via NovuRequestHandler', () => {
     );
 
     const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
-    const updateBody = parsedBodies.find((body: any) => body.update);
-    const replyBody = parsedBodies.find((body: any) => body.reply);
+    const initialReply = parsedBodies.find((body: any) => body.reply);
+    const editBody = parsedBodies.find((body: any) => body.edit);
 
-    expect(updateBody).toBeDefined();
-    expect(updateBody.update.text).toBe('Thinking...');
-    expect(updateBody.signals).toBeUndefined();
+    expect(initialReply).toBeDefined();
+    expect(initialReply.reply.text).toBe('Thinking...');
 
-    expect(replyBody).toBeDefined();
-    expect(replyBody.reply.text).toBe('Done thinking');
-    expect(replyBody.signals).toHaveLength(1);
+    expect(editBody).toBeDefined();
+    expect(editBody.edit.content.text).toBe('Done thinking');
+    expect(editBody.edit.messageId).toBe('msg-1');
+    expect(editBody.reply).toBeUndefined();
+    expect(editBody.signals).toBeUndefined();
+  });
+
+  it('should not attach signals or resolve to an edit call', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        ctx.metadata.set('step', 'thinking');
+        const msg = await ctx.reply('Thinking...');
+        await msg.edit('Done');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
+
+    const bodies = fetchMock.mock.calls
+      .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
+      .map(([, init]: any[]) => JSON.parse(init.body));
+
+    const firstReply = bodies.find((b: any) => b.reply);
+    const edit = bodies.find((b: any) => b.edit);
+
+    expect(firstReply.signals).toHaveLength(1);
+    expect(edit.signals).toBeUndefined();
+    expect(edit.resolve).toBeUndefined();
   });
 
   it('should flush remaining signals after onResolve', async () => {
@@ -531,11 +581,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.reply.markdown).toBeUndefined();
   });
 
-  it('should serialize CardElement on update', async () => {
+  it('should serialize CardElement on edit', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (ctx) => {
-        await ctx.update(Card({ title: 'Loading...', children: [] }));
-        await ctx.reply('Done');
+        const msg = await ctx.reply('Loading...');
+        await msg.edit(Card({ title: 'Loaded', children: [] }));
       },
     });
 
@@ -565,13 +615,14 @@ describe('agent dispatch via NovuRequestHandler', () => {
     );
     const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
 
-    const updateBody = parsedBodies.find((body: any) => body.update);
-    expect(updateBody.update.card).toBeDefined();
-    expect(updateBody.update.card.type).toBe('card');
-    expect(updateBody.update.card.title).toBe('Loading...');
+    const editBody = parsedBodies.find((body: any) => body.edit);
+    expect(editBody.edit.content.card).toBeDefined();
+    expect(editBody.edit.content.card.type).toBe('card');
+    expect(editBody.edit.content.card.title).toBe('Loaded');
+    expect(editBody.edit.messageId).toBe('msg-1');
 
-    const replyBody = parsedBodies.find((body: any) => body.reply);
-    expect(replyBody.reply.text).toBe('Done');
+    const initialReply = parsedBodies.find((body: any) => body.reply);
+    expect(initialReply.reply.text).toBe('Loading...');
   });
 
   it('should batch signals with card reply', async () => {

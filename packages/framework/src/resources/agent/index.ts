@@ -16,6 +16,7 @@ export { agent } from './agent.resource';
 export type {
   Agent,
   AgentAction,
+  AgentAttachment,
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,
@@ -27,8 +28,14 @@ export type {
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  EditPayload,
   FileRef,
   MessageContent,
+  MetadataSignal,
   ReplyContent,
+  ReplyHandle,
+  Signal,
+  SentMessageInfo,
+  TriggerSignal,
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';

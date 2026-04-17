@@ -13,14 +13,31 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import type { FileRef } from '@novu/framework';
+
+export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
-export interface FileRef {
-  filename: string;
-  mimeType?: string;
-  data?: string;
-  url?: string;
+@ValidatorConstraint({ name: 'isValidSignal', async: false })
+export class IsValidSignal implements ValidatorConstraintInterface {
+  validate(signal: SignalDto): boolean {
+    if (!signal?.type) return false;
+
+    if (signal.type === 'metadata') {
+      return typeof signal.key === 'string' && signal.key.length > 0 && signal.value !== undefined;
+    }
+
+    if (signal.type === 'trigger') {
+      return typeof signal.workflowId === 'string' && signal.workflowId.length > 0;
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return 'metadata signals require key + value; trigger signals require workflowId.';
+  }
 }
 
 @ValidatorConstraint({ name: 'isValidReplyContent', async: false })
@@ -68,6 +85,20 @@ export class ReplyContentDto {
   @IsOptional()
   @IsArray()
   files?: FileRef[];
+}
+
+export class EditPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+
+  @ApiProperty({ type: ReplyContentDto })
+  @IsObject()
+  @ValidateNested()
+  @Validate(IsValidReplyContent)
+  @Type(() => ReplyContentDto)
+  content: ReplyContentDto;
 }
 
 export class ResolveDto {
@@ -127,13 +158,12 @@ export class AgentReplyPayloadDto {
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
 
-  @ApiPropertyOptional({ type: ReplyContentDto })
+  @ApiPropertyOptional({ type: EditPayloadDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Validate(IsValidReplyContent)
-  @Type(() => ReplyContentDto)
-  update?: ReplyContentDto;
+  @Type(() => EditPayloadDto)
+  edit?: EditPayloadDto;
 
   @ApiPropertyOptional({ type: ResolveDto })
   @IsOptional()
@@ -146,6 +176,7 @@ export class AgentReplyPayloadDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
+  @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
 }

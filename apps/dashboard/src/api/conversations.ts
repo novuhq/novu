@@ -4,6 +4,7 @@ import { get } from './api.client';
 export type ConversationFilters = {
   dateRange?: string;
   subscriberId?: string;
+  agentId?: string;
   provider?: string[];
   conversationId?: string;
   status?: string;
@@ -51,28 +52,35 @@ export type ConversationDto = {
 
 export type ConversationsListResponse = {
   data: ConversationDto[];
-  page: number;
+  next: string | null;
+  previous: string | null;
   totalCount: number;
-  pageSize: number;
-  hasMore: boolean;
+  totalCountCapped: boolean;
 };
 
 export function getConversationsList({
   environment,
-  page,
+  after,
+  before,
   limit,
   filters,
   signal,
 }: {
   environment: IEnvironment;
-  page: number;
+  after?: string;
+  before?: string;
   limit: number;
   filters?: ConversationFilters;
   signal?: AbortSignal;
 }): Promise<ConversationsListResponse> {
   const searchParams = new URLSearchParams();
-  searchParams.append('page', page.toString());
   searchParams.append('limit', limit.toString());
+
+  if (after) {
+    searchParams.append('after', after);
+  } else if (before) {
+    searchParams.append('before', before);
+  }
 
   if (filters?.status) {
     searchParams.append('status', filters.status);
@@ -82,9 +90,15 @@ export function getConversationsList({
     searchParams.append('subscriberId', filters.subscriberId);
   }
 
+  if (filters?.agentId) {
+    searchParams.append('agentId', filters.agentId);
+  }
+
   if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInMs(filters.dateRange));
-    searchParams.append('after', after.toISOString());
+    const ms = getDateRangeInMs(filters.dateRange);
+    if (ms > 0) {
+      searchParams.append('createdAfter', new Date(Date.now() - ms).toISOString());
+    }
   }
 
   if (filters?.provider?.length) {
@@ -93,8 +107,9 @@ export function getConversationsList({
     }
   }
 
-  if (filters?.conversationId) {
-    searchParams.append('conversationId', filters.conversationId);
+  const conversationIdentifier = filters?.conversationId?.trim();
+  if (conversationIdentifier) {
+    searchParams.append('identifier', conversationIdentifier);
   }
 
   return get<ConversationsListResponse>(`/conversations?${searchParams.toString()}`, {
@@ -124,35 +139,50 @@ export type ConversationActivityDto = {
 
 export type ConversationActivitiesResponse = {
   data: ConversationActivityDto[];
-  page: number;
+  next: string | null;
+  previous: string | null;
   totalCount: number;
-  pageSize: number;
-  hasMore: boolean;
+  totalCountCapped: boolean;
 };
 
 /** `conversationIdentifier` is the public `identifier` field — the API resolves by identifier, not Mongo `_id`. */
-export function getConversation(conversationIdentifier: string, environment: IEnvironment): Promise<ConversationDto> {
-  return get<ConversationDto>(`/conversations/${encodeURIComponent(conversationIdentifier)}`, {
-    environment,
-  });
+export async function getConversation(
+  conversationIdentifier: string,
+  environment: IEnvironment
+): Promise<ConversationDto> {
+  const { data } = await get<{ data: ConversationDto }>(
+    `/conversations/${encodeURIComponent(conversationIdentifier)}`,
+    { environment }
+  );
+
+  return data;
 }
 
 export function getConversationActivities({
   conversationIdentifier,
   environment,
-  page = 0,
+  after,
+  before,
   limit = 50,
   signal,
 }: {
   conversationIdentifier: string;
   environment: IEnvironment;
-  page?: number;
+  after?: string;
+  before?: string;
   limit?: number;
   signal?: AbortSignal;
 }): Promise<ConversationActivitiesResponse> {
   const searchParams = new URLSearchParams();
-  searchParams.append('page', page.toString());
   searchParams.append('limit', limit.toString());
+  searchParams.append('orderBy', 'createdAt');
+  searchParams.append('orderDirection', 'ASC');
+
+  if (after) {
+    searchParams.append('after', after);
+  } else if (before) {
+    searchParams.append('before', before);
+  }
 
   return get<ConversationActivitiesResponse>(
     `/conversations/${encodeURIComponent(conversationIdentifier)}/activities?${searchParams.toString()}`,

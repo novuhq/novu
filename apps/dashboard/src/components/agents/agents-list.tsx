@@ -1,7 +1,7 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { RiRobot2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
@@ -12,6 +12,7 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
@@ -183,6 +184,33 @@ export function AgentsList() {
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;
 
+  if (showEmptyBlank) {
+    return (
+      <>
+        <AgentsEmptyTeaser
+          cta={
+            <PermissionButton
+              permission={PermissionsEnum.AGENT_WRITE}
+              size="xs"
+              variant="secondary"
+              mode="gradient"
+              trailingIcon={RiArrowRightSLine}
+              onClick={() => setCreateOpen(true)}
+            >
+              Create agent
+            </PermissionButton>
+          }
+        />
+        <CreateAgentDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onSubmit={handleCreateSubmit}
+          isSubmitting={createMutation.isPending}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2 py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -211,26 +239,6 @@ export function AgentsList() {
         <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
       ) : null}
 
-      {showEmptyBlank ? (
-        <div className="border-stroke-soft flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 py-16">
-          <p className="text-text-strong text-label-sm font-medium">No agents yet</p>
-          <p className="text-text-soft max-w-md text-center text-label-sm">
-            Create an agent to connect your brain to channels with a unified API.
-          </p>
-          <PermissionButton
-            permission={PermissionsEnum.AGENT_WRITE}
-            size="xs"
-            variant="primary"
-            mode="gradient"
-            className="gap-1"
-            leadingIcon={RiRobot2Line}
-            onClick={() => setCreateOpen(true)}
-          >
-            Add Agent
-          </PermissionButton>
-        </div>
-      ) : null}
-
       {showNoResults ? (
         <ListNoResults
           title="No agents found"
@@ -239,7 +247,7 @@ export function AgentsList() {
         />
       ) : null}
 
-      {!listQuery.isError && !showEmptyBlank && !showNoResults ? (
+      {!listQuery.isError && !showNoResults ? (
         <AgentsTable
           agents={agents}
           isLoading={isLoading}

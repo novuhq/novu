@@ -21,7 +21,7 @@ function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
     return sortBy as ListActivitiesSortField;
   }
 
-  return '_id';
+  return 'createdAt';
 }
 
 @Injectable()
@@ -54,6 +54,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     senderType: ConversationActivitySenderTypeEnum;
     senderId: string;
     content: string;
+    richContent?: Record<string, unknown>;
     platformMessageId?: string;
     senderName?: string;
     environmentId: string;
@@ -69,6 +70,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderType: params.senderType,
       senderId: params.senderId,
       content: params.content,
+      richContent: params.richContent,
       platformMessageId: params.platformMessageId,
       senderName: params.senderName,
       _environmentId: params.environmentId,
@@ -87,6 +89,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     richContent?: Record<string, unknown>;
     type?: ConversationActivityTypeEnum;
     senderName?: string;
+    platformMessageId?: string;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -102,6 +105,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       content: params.content,
       richContent: params.richContent,
       senderName: params.senderName,
+      platformMessageId: params.platformMessageId,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -142,7 +146,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     limit = 20,
     after,
     before,
-    sortBy = '_id',
+    sortBy = 'createdAt',
     sortDirection = 1,
     includeCursor = false,
   }: {

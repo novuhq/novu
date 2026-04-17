@@ -4,9 +4,11 @@ import { del, get, patch, post } from '@/api/api.client';
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
 
-export const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
+const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
 
-export const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
+const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
+
+const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
 
@@ -250,4 +252,19 @@ export function removeAgentIntegration(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`,
     { environment }
   );
+}
+
+export type AgentEmojiEntry = {
+  name: string;
+  unicode: string;
+};
+
+export function getAgentEmojiQueryKey() {
+  return [AGENT_EMOJI_QUERY_KEY] as const;
+}
+
+export async function listAgentEmoji(environment: IEnvironment, signal?: AbortSignal): Promise<AgentEmojiEntry[]> {
+  const response = await get<{ data: AgentEmojiEntry[] }>('/agents/emoji', { environment, signal });
+
+  return response.data;
 }

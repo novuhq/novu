@@ -160,6 +160,6 @@ export class CreateChannelConnection {
   }
 
   private generateIdentifier(): string {
-    return `chconn-${shortId(6)}`;
+    return `chconn_${shortId(12)}`;
   }
 }

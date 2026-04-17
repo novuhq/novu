@@ -231,12 +231,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
   const integrationsStorePath = ROUTES.INTEGRATIONS;
 
-  const activityTabPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
-    environmentSlug: currentEnvironment?.slug ?? '',
-    agentIdentifier: encodeURIComponent(agent.identifier),
-    agentTab: 'activity',
-  })}${location.search}`;
-
   const navigateToGuide = (nextIntegrationIdentifier: string) => {
     if (!currentEnvironment?.slug) {
       return;
@@ -430,13 +424,16 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !int.active;
+                      const showActionNeeded = !link.connectedAt;
+
+                      const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
 
                       return (
                         <button
                           key={link._id}
                           type="button"
                           onClick={() => handleLinkedRowClick(link)}
+                          aria-label={`${int.name} — ${statusLabel}`}
                           className={cn(
                             'bg-bg-white border-stroke-weak hover:border-stroke-soft flex w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors',
                             isSelected && 'border-stroke-soft'
@@ -452,20 +449,13 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                               {int.name}
                             </span>
                           </span>
-                          <span className="flex shrink-0 items-center gap-1">
+                          <span className="flex shrink-0 items-center gap-1" aria-hidden>
                             {showActionNeeded ? (
-                              <RiErrorWarningFill
-                                className="text-error-base size-3 shrink-0"
-                                aria-label="Action needed"
-                              />
+                              <RiErrorWarningFill className="text-warning-base size-3 shrink-0" />
                             ) : (
-                              <div
-                                className="bg-success-base size-1.5 shrink-0 rounded-full"
-                                role="img"
-                                aria-label="Active"
-                              />
+                              <div className="bg-success-base size-1.5 shrink-0 rounded-full" />
                             )}
-                            <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
+                            <RiArrowRightSLine className="text-text-soft size-4 shrink-0" />
                           </span>
                         </button>
                       );
@@ -507,12 +497,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
           <div className="border-stroke-soft border-t pt-3">
             <p className="text-text-soft text-label-xs font-medium leading-4">Quick actions</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                to={activityTabPath}
-                className="border-stroke-soft text-text-strong hover:bg-bg-weak text-label-xs inline-flex h-7 items-center rounded-md border bg-transparent px-3 font-medium transition-colors"
-              >
-                View activity
-              </Link>
               <Link
                 to={integrationsStorePath}
                 className="border-stroke-soft text-text-strong hover:bg-bg-weak text-label-xs inline-flex h-7 items-center rounded-md border bg-transparent px-3 font-medium transition-colors"

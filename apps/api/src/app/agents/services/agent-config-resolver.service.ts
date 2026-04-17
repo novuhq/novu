@@ -8,8 +8,21 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import type { WellKnownEmoji } from 'chat';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { esmImport } from '../utils/esm-import';
 import { resolveAgentPlatform } from '../utils/provider-to-platform';
+
+let cachedEmojiNames: Set<string> | null = null;
+
+async function loadEmojiNames(): Promise<Set<string>> {
+  if (cachedEmojiNames) return cachedEmojiNames;
+
+  const { DEFAULT_EMOJI_MAP } = await esmImport('chat');
+  cachedEmojiNames = new Set<string>(Object.keys(DEFAULT_EMOJI_MAP));
+
+  return cachedEmojiNames;
+}
 
 export interface ResolvedAgentConfig {
   platform: AgentPlatformEnum;
@@ -21,25 +34,36 @@ export interface ResolvedAgentConfig {
   integrationIdentifier: string;
   integrationId: string;
   thinkingIndicatorEnabled: boolean;
-  reactionOnMessageReceived: string | null;
-  reactionOnResolved: string | null;
+  reactionOnMessageReceived: WellKnownEmoji | null;
+  reactionOnResolved: WellKnownEmoji | null;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
 }
 
-const DEFAULT_REACTION_ON_MESSAGE = 'eyes';
-const DEFAULT_REACTION_ON_RESOLVED = 'check';
+const DEFAULT_REACTION_ON_MESSAGE: WellKnownEmoji = 'eyes';
+const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
 
 function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled?: boolean } }): boolean {
   return agent.behavior?.thinkingIndicatorEnabled !== false;
 }
 
-function resolveReaction(value: string | null | undefined, defaultEmoji: string): string | null {
+async function resolveReaction(
+  value: string | null | undefined,
+  defaultEmoji: WellKnownEmoji,
+  log: PinoLogger
+): Promise<WellKnownEmoji | null> {
   if (value === null) return null;
   if (value === undefined) return defaultEmoji;
 
-  return value;
+  const known = await loadEmojiNames();
+  if (!known.has(value)) {
+    log.warn(`Unknown emoji "${value}" in agent config, falling back to default "${defaultEmoji}"`);
+
+    return defaultEmoji;
+  }
+
+  return value as WellKnownEmoji;
 }
 
 @Injectable()
@@ -133,11 +157,16 @@ export class AgentConfigResolver {
       integrationIdentifier,
       integrationId: integration._id,
       thinkingIndicatorEnabled: resolveThinkingIndicator(agent),
-      reactionOnMessageReceived: resolveReaction(
+      reactionOnMessageReceived: await resolveReaction(
         agent.behavior?.reactions?.onMessageReceived,
-        DEFAULT_REACTION_ON_MESSAGE
+        DEFAULT_REACTION_ON_MESSAGE,
+        this.logger
       ),
-      reactionOnResolved: resolveReaction(agent.behavior?.reactions?.onResolved, DEFAULT_REACTION_ON_RESOLVED),
+      reactionOnResolved: await resolveReaction(
+        agent.behavior?.reactions?.onResolved,
+        DEFAULT_REACTION_ON_RESOLVED,
+        this.logger
+      ),
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
