@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import type { Chat, Message, Thread } from 'chat';
@@ -181,16 +182,24 @@ export class ChatSdkService implements OnModuleDestroy {
       this.instances.delete(instanceKey);
     }
 
-    const pending = this.pendingCreations.get(instanceKey);
+    // Key pending builds by (instanceKey + fingerprint) so that a build kicked
+    // off with stale credentials can't be observed by a later caller that has
+    // already-rotated credentials — that caller would otherwise await the
+    // in-flight promise and receive a Chat whose adapter is baked with the old
+    // secrets. With this keying, concurrent callers with divergent configs
+    // each get their own build; the later instances.set() wins and the LRU
+    // dispose hook shuts down the superseded Chat.
+    const pendingKey = `${instanceKey}:${freshFingerprint}`;
+    const pending = this.pendingCreations.get(pendingKey);
     if (pending) return pending;
 
     const creation = this.createAndCache(instanceKey, agentId, platform, config, freshFingerprint);
-    this.pendingCreations.set(instanceKey, creation);
+    this.pendingCreations.set(pendingKey, creation);
 
     try {
       return await creation;
     } finally {
-      this.pendingCreations.delete(instanceKey);
+      this.pendingCreations.delete(pendingKey);
     }
   }
 
@@ -216,6 +225,11 @@ export class ChatSdkService implements OnModuleDestroy {
    * these values live inside already-constructed platform adapters and cannot
    * be mutated after the fact.
    *
+   * Uses SHA-256 over a JSON-stringified fixed-shape object so the encoding is
+   * injective (no delimiter collisions across free-form secret values) and so
+   * plaintext credentials don't linger as cache-key-adjacent strings for the
+   * lifetime of the LRU entry.
+   *
    * IMPORTANT: keep in sync with buildAdapters() whenever a new adapter input
    * is added. Missing a field here will cause the cache to silently serve
    * stale credentials until the LRU TTL expires.
@@ -223,19 +237,19 @@ export class ChatSdkService implements OnModuleDestroy {
   private adapterFingerprint(config: ResolvedAgentConfig): string {
     const { platform, credentials: c, connectionAccessToken } = config;
 
-    return [
+    const serialized = JSON.stringify({
       platform,
-      c.signingSecret,
-      c.clientId,
-      c.secretKey,
-      c.tenantId,
-      c.apiToken,
-      c.token,
-      c.phoneNumberIdentification,
-      connectionAccessToken,
-    ]
-      .map((v) => v ?? '')
-      .join('|');
+      signingSecret: c.signingSecret ?? null,
+      clientId: c.clientId ?? null,
+      secretKey: c.secretKey ?? null,
+      tenantId: c.tenantId ?? null,
+      apiToken: c.apiToken ?? null,
+      token: c.token ?? null,
+      phoneNumberIdentification: c.phoneNumberIdentification ?? null,
+      connectionAccessToken: connectionAccessToken ?? null,
+    });
+
+    return createHash('sha256').update(serialized).digest('hex');
   }
 
   private async createChatInstance(
