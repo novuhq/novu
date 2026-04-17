@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import type { Chat, Message, Thread } from 'chat';
@@ -225,10 +224,12 @@ export class ChatSdkService implements OnModuleDestroy {
    * these values live inside already-constructed platform adapters and cannot
    * be mutated after the fact.
    *
-   * Uses SHA-256 over a JSON-stringified fixed-shape object so the encoding is
-   * injective (no delimiter collisions across free-form secret values) and so
-   * plaintext credentials don't linger as cache-key-adjacent strings for the
-   * lifetime of the LRU entry.
+   * JSON.stringify over a fixed-shape object is injective (JSON escapes rule
+   * out delimiter collisions across free-form secret values), which is all we
+   * need for an equality-based cache-coherence check. We deliberately do NOT
+   * hash: this is not credential verification or password storage, so fast
+   * hashing would be architecturally wrong and the plaintext is already
+   * retained in cached.config for the entry's lifetime anyway.
    *
    * IMPORTANT: keep in sync with buildAdapters() whenever a new adapter input
    * is added. Missing a field here will cause the cache to silently serve
@@ -237,7 +238,7 @@ export class ChatSdkService implements OnModuleDestroy {
   private adapterFingerprint(config: ResolvedAgentConfig): string {
     const { platform, credentials: c, connectionAccessToken } = config;
 
-    const serialized = JSON.stringify({
+    return JSON.stringify({
       platform,
       signingSecret: c.signingSecret ?? null,
       clientId: c.clientId ?? null,
@@ -248,8 +249,6 @@ export class ChatSdkService implements OnModuleDestroy {
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
     });
-
-    return createHash('sha256').update(serialized).digest('hex');
   }
 
   private async createChatInstance(
