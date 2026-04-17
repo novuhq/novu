@@ -8,6 +8,7 @@ import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
+import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
@@ -36,10 +37,18 @@ function formatLongDate(dateStr: string): string {
   return formatted;
 }
 
-function SidebarRow({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+function SidebarRow({
+  label,
+  children,
+  className,
+}: {
+  label: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn('flex h-8 items-center justify-between px-1.5', className)}>
-      <span className="text-text-soft text-label-xs font-medium">{label}</span>
+      <span className="text-text-soft text-label-xs flex items-center gap-1 font-medium">{label}</span>
       <div className="flex items-center gap-1.5">{children}</div>
     </div>
   );
@@ -72,17 +81,17 @@ type BridgeUrlSectionProps = {
 };
 
 function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: BridgeUrlSectionProps) {
-  const isDevOverrideActive = Boolean(agent.devBridgeActive && agent.devBridgeUrl);
-  const activeBridgeUrl = isDevOverrideActive ? agent.devBridgeUrl : agent.bridgeUrl;
+  const isLocalTunnelActive = Boolean(agent.devBridgeActive && agent.devBridgeUrl);
+  const activeBridgeUrl = isLocalTunnelActive ? agent.devBridgeUrl : agent.bridgeUrl;
 
   return (
     <>
       <SidebarRow label="Bridge URL">
         {activeBridgeUrl ? (
           <div className="flex items-center gap-1">
-            {isDevOverrideActive ? (
+            {isLocalTunnelActive ? (
               <Badge variant="lighter" color="orange" size="sm">
-                DEV
+                LOCAL
               </Badge>
             ) : null}
             <TruncatedUrl url={activeBridgeUrl} />
@@ -92,7 +101,17 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: Bridge
         )}
       </SidebarRow>
       {agent.devBridgeUrl ? (
-        <SidebarRow label="Dev override">
+        <SidebarRow
+          label={
+            <>
+              Local tunnel connection
+              <HelpTooltipIndicator
+                size="3"
+                text="When enabled, the agent forwards traffic to your local tunnel URL instead of the deployed agent endpoint. Use this to test changes locally without redeploying."
+              />
+            </>
+          }
+        >
           <Switch
             checked={agent.devBridgeActive ?? false}
             disabled={!canWrite || isUpdatePending}

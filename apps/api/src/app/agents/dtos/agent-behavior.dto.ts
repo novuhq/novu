@@ -1,24 +1,29 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { IsBoolean, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
 export class AgentReactionSettingsDto {
   @ApiPropertyOptional({
-    description: 'Emoji reaction for incoming messages. Emoji name string to customize, null to disable. Default: "eyes" (👀)',
+    description:
+      'Cross-platform emoji name for incoming messages (e.g. "eyes", "thumbs_up"). ' +
+      'Set to null to disable. Default: "eyes"',
     default: 'eyes',
   })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
-  @IsString()
+  @IsWellKnownEmoji()
   onMessageReceived?: string | null;
 
   @ApiPropertyOptional({
-    description: 'Emoji reaction when a conversation is resolved. Emoji name string to customize, null to disable. Default: "check" (✅)',
+    description:
+      'Cross-platform emoji name for resolved conversations (e.g. "check", "star"). ' +
+      'Set to null to disable. Default: "check"',
     default: 'check',
   })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
-  @IsString()
+  @IsWellKnownEmoji()
   onResolved?: string | null;
 }
 

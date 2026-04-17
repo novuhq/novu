@@ -7,6 +7,7 @@ import {
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import type { EmojiValue } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
@@ -19,6 +20,10 @@ import {
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
 import { buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
+
+function mockEmoji(name: string): EmojiValue {
+  return { name, toJSON: () => `{{emoji:${name}}}`, toString: () => `{{emoji:${name}}}` };
+}
 
 function mockSentMessage() {
   return {
@@ -359,7 +364,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       bridgeCalls = [];
 
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'thumbs_up' },
+        emoji: mockEmoji('thumbs_up'),
         added: true,
         messageId: msg.id,
         message: msg as any,
@@ -379,7 +384,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
     it('should skip reaction when no conversation exists for the thread', async () => {
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'wave' },
+        emoji: mockEmoji('wave'),
         added: true,
         messageId: 'msg-orphan',
         thread: mockThread(`T_NOCONV_${Date.now()}`) as any,
@@ -392,7 +397,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
     it('should skip reaction when thread context is missing', async () => {
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'fire' },
+        emoji: mockEmoji('fire'),
         added: false,
         messageId: 'msg-no-thread',
       };
@@ -410,7 +415,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       bridgeCalls = [];
 
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'tada' },
+        emoji: mockEmoji('tada'),
         added: true,
         messageId: msg.id,
         message: msg as any,
@@ -443,7 +448,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       );
 
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'heart' },
+        emoji: mockEmoji('heart'),
         added: true,
         messageId: msg.id,
         message: msg as any,
