@@ -1,5 +1,5 @@
 import { RiBookMarkedLine, RiChat3Line, RiSparkling2Line } from 'react-icons/ri';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { LinkButton } from '@/components/primitives/button-link';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -83,11 +83,11 @@ export function ConversationsUpgradeCta({ source, variant = 'default', className
         >
           {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade now'}
         </Button>
-        <Link to="https://docs.novu.co/agents/overview" target="_blank" rel="noreferrer noopener">
-          <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
+        <LinkButton asChild size="sm" leadingIcon={RiBookMarkedLine}>
+          <a href="https://docs.novu.co/agents/overview" target="_blank" rel="noreferrer noopener">
             How does this help?
-          </LinkButton>
-        </Link>
+          </a>
+        </LinkButton>
       </div>
     </div>
   );

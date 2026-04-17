@@ -107,15 +107,12 @@ function RecentConversationItem({ conversation, environmentSlug }: RecentConvers
   const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
   const isFailed = conversation.status === 'failed';
 
-  const detailPath = environmentSlug
-    ? `${buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug })}?conversationItemId=${encodeURIComponent(conversation.identifier)}`
-    : '#';
+  const baseClassName = 'flex flex-col gap-1.5 px-3 py-2';
+  const interactiveClassName =
+    'group transition-colors hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none';
 
-  return (
-    <Link
-      to={detailPath}
-      className="group flex flex-col gap-1.5 px-3 py-2 transition-colors hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none"
-    >
+  const content = (
+    <>
       <div className="flex items-center gap-8">
         <div className="flex min-w-0 flex-1 items-center gap-1">
           <RiCheckboxCircleFill
@@ -154,6 +151,18 @@ function RecentConversationItem({ conversation, environmentSlug }: RecentConvers
           <ConversationStatusBadge status={conversation.status} />
         </div>
       </div>
+    </>
+  );
+
+  if (!environmentSlug) {
+    return <div className={baseClassName}>{content}</div>;
+  }
+
+  const detailPath = `${buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug })}?conversationItemId=${encodeURIComponent(conversation.identifier)}`;
+
+  return (
+    <Link to={detailPath} className={cn(baseClassName, interactiveClassName)}>
+      {content}
     </Link>
   );
 }
@@ -161,7 +170,7 @@ function RecentConversationItem({ conversation, environmentSlug }: RecentConvers
 function RecentConversationsSkeleton() {
   return (
     <ul className="flex flex-1 flex-col divide-y divide-stroke-soft">
-      {Array.from({ length: 4 }, (_, index) => (
+      {Array.from({ length: RECENT_CONVERSATIONS_DISPLAY_LIMIT }, (_, index) => (
         <li key={`skeleton-${index}`} className="flex flex-col gap-1.5 px-3 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
