@@ -152,7 +152,8 @@ export class GenerateMsTeamsOauthUrl {
     }
 
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-    return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
+    return `https://c9f4-79-177-157-205.ngrok-free.app${CHAT_OAUTH_CALLBACK_PATH}`;
+    // return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
