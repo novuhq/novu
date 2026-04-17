@@ -34,9 +34,27 @@ const esmImport = new Function('specifier', 'return import(specifier)') as (s: s
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
 
+/**
+ * Holds a cached Chat instance alongside a mutable pointer to the current
+ * resolved config. Event handlers registered via registerEventHandlers() close
+ * over this box instead of the config value, so updates to fields that the
+ * bridge executor and inbound handler read at event time (bridgeUrl,
+ * devBridgeUrl, devBridgeActive, thinkingIndicatorEnabled, reactions) take
+ * effect on the next inbound event without rebuilding the Chat instance.
+ *
+ * adapterFingerprint captures fields that are baked into the platform adapter
+ * at construction (credentials + connectionAccessToken); when these change,
+ * the cached instance is dropped and rebuilt — see getOrCreate().
+ */
+interface CachedChat {
+  chat: Chat;
+  config: ResolvedAgentConfig;
+  adapterFingerprint: string;
+}
+
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
-  private readonly instances: LRUCache<string, Chat>;
+  private readonly instances: LRUCache<string, CachedChat>;
   private readonly pendingCreations = new Map<string, Promise<Chat>>();
 
   constructor(
@@ -45,11 +63,11 @@ export class ChatSdkService implements OnModuleDestroy {
     @Inject(forwardRef(() => AgentInboundHandler))
     private readonly inboundHandler: AgentInboundHandler
   ) {
-    this.instances = new LRUCache<string, Chat>({
+    this.instances = new LRUCache<string, CachedChat>({
       max: MAX_CACHED_INSTANCES,
       ttl: INSTANCE_TTL_MS,
-      dispose: (chat, key) => {
-        chat.shutdown().catch((err) => {
+      dispose: (cached, key) => {
+        cached.chat.shutdown().catch((err) => {
           this.logger.error(err, `Failed to shut down evicted Chat instance ${key}`);
         });
       },
@@ -72,22 +90,10 @@ export class ChatSdkService implements OnModuleDestroy {
     await sendWebResponse(webResponse, res);
   }
 
-  evict(agentId: string, integrationIdentifier?: string) {
-    if (integrationIdentifier) {
-      this.instances.delete(`${agentId}:${integrationIdentifier}`);
-    } else {
-      for (const key of this.instances.keys()) {
-        if (key.startsWith(`${agentId}:`)) {
-          this.instances.delete(key);
-        }
-      }
-    }
-  }
-
   async onModuleDestroy() {
-    const shutdowns = [...this.instances.entries()].map(async ([key, chat]) => {
+    const shutdowns = [...this.instances.entries()].map(async ([key, cached]) => {
       try {
-        await chat.shutdown();
+        await cached.chat.shutdown();
       } catch (err) {
         this.logger.error(err, `Failed to shut down Chat instance ${key}`);
       }
@@ -159,13 +165,26 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Chat> {
+    const freshFingerprint = this.adapterFingerprint(config);
     const existing = this.instances.get(instanceKey);
-    if (existing) return existing;
+
+    if (existing) {
+      if (existing.adapterFingerprint === freshFingerprint) {
+        existing.config = config;
+
+        return existing.chat;
+      }
+
+      // Credentials / connection token changed since this instance was built —
+      // the platform adapter is frozen with the old values, so we must rebuild.
+      // Delete triggers the LRU dispose hook which calls chat.shutdown().
+      this.instances.delete(instanceKey);
+    }
 
     const pending = this.pendingCreations.get(instanceKey);
     if (pending) return pending;
 
-    const creation = this.createAndCache(instanceKey, agentId, platform, config);
+    const creation = this.createAndCache(instanceKey, agentId, platform, config, freshFingerprint);
     this.pendingCreations.set(instanceKey, creation);
 
     try {
@@ -179,13 +198,44 @@ export class ChatSdkService implements OnModuleDestroy {
     instanceKey: string,
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
+    config: ResolvedAgentConfig,
+    adapterFingerprint: string
   ): Promise<Chat> {
     const chat = await this.createChatInstance(instanceKey, platform, config);
-    this.registerEventHandlers(agentId, chat, config);
-    this.instances.set(instanceKey, chat);
+    const cached: CachedChat = { chat, config, adapterFingerprint };
+    this.registerEventHandlers(agentId, cached);
+    this.instances.set(instanceKey, cached);
 
     return chat;
+  }
+
+  /**
+   * Fingerprint of every field baked into the Chat instance at construction
+   * time — i.e. everything read by buildAdapters() and createChatInstance().
+   * When the fingerprint changes, the cached instance must be rebuilt because
+   * these values live inside already-constructed platform adapters and cannot
+   * be mutated after the fact.
+   *
+   * IMPORTANT: keep in sync with buildAdapters() whenever a new adapter input
+   * is added. Missing a field here will cause the cache to silently serve
+   * stale credentials until the LRU TTL expires.
+   */
+  private adapterFingerprint(config: ResolvedAgentConfig): string {
+    const { platform, credentials: c, connectionAccessToken } = config;
+
+    return [
+      platform,
+      c.signingSecret,
+      c.clientId,
+      c.secretKey,
+      c.tenantId,
+      c.apiToken,
+      c.token,
+      c.phoneNumberIdentification,
+      connectionAccessToken,
+    ]
+      .map((v) => v ?? '')
+      .join('|');
   }
 
   private async createChatInstance(
@@ -275,25 +325,25 @@ export class ChatSdkService implements OnModuleDestroy {
     }
   }
 
-  private registerEventHandlers(agentId: string, chat: Chat, config: ResolvedAgentConfig) {
-    chat.onNewMention(async (thread: Thread, message: Message) => {
+  private registerEventHandlers(agentId: string, cached: CachedChat) {
+    cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
       }
     });
 
-    chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
+    cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        await this.inboundHandler.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
       }
     });
 
-    chat.onAction(async (event) => {
+    cached.chat.onAction(async (event) => {
       try {
         if (!event.thread) {
           this.logger.warn(`[agent:${agentId}] Action received without thread context, skipping`);
@@ -303,7 +353,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
         await this.inboundHandler.handleAction(
           agentId,
-          config,
+          cached.config,
           event.thread as Thread,
           {
             actionId: event.actionId,
@@ -316,9 +366,9 @@ export class ChatSdkService implements OnModuleDestroy {
       }
     });
 
-    chat.onReaction(async (event: any) => {
+    cached.chat.onReaction(async (event: any) => {
       try {
-        await this.inboundHandler.handleReaction(agentId, config, {
+        await this.inboundHandler.handleReaction(agentId, cached.config, {
           emoji: event.emoji,
           added: event.added,
           messageId: event.messageId,
