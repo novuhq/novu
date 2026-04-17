@@ -111,6 +111,7 @@ function ManifestPreview({ manifestJson }: { manifestJson: string }) {
     <div className="flex min-w-0 flex-col gap-2">
       <button
         type="button"
+        aria-expanded={open}
         className="text-text-sub hover:text-text-strong flex items-center gap-1 self-start transition-colors"
         onClick={() => setOpen((v) => !v)}
       >
@@ -147,7 +148,6 @@ export function TeamsSetupGuide({
   embedded = false,
 }: TeamsSetupGuideProps) {
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
-  const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
@@ -168,14 +168,22 @@ export function TeamsSetupGuide({
   );
 
   const integrationIdentifier = selectedIntegration?.identifier ?? '';
-  const appId = (selectedIntegration?.credentials as Record<string, string> | undefined)?.clientId ?? '';
+  const credentials = selectedIntegration?.credentials as Record<string, string> | undefined;
+  const appId = credentials?.clientId ?? '';
+  const hasCredentials = Boolean(appId && credentials?.secretKey && credentials?.tenantId);
 
   const webhookUrl = buildWebhookUrl(agent._id, integrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
   const manifestJson = JSON.stringify(buildManifest(appId, agent.name), null, 2);
 
+  const canDownload = Boolean(appId);
+
   const handleDownload = useCallback(() => {
+    if (!canDownload) {
+      return;
+    }
+
     void downloadTeamsAppPackage(manifestJson, agent.name);
-  }, [manifestJson, agent.name]);
+  }, [canDownload, manifestJson, agent.name]);
 
   const base = stepOffset;
 
@@ -184,12 +192,12 @@ export function TeamsSetupGuide({
       return base + 5;
     }
 
-    if (!isCredentialsSaved) {
+    if (!hasCredentials) {
       return base;
     }
 
     return base + 4;
-  }, [base, isCredentialsSaved, isConnected]);
+  }, [base, hasCredentials, isConnected]);
 
   const steps = (
     <>
@@ -249,11 +257,15 @@ export function TeamsSetupGuide({
         index={base + 3}
         status={deriveStepStatus(base + 3, firstIncomplete)}
         title="Download the Teams app package"
-        description="We've generated a ready-to-upload app package with your manifest and placeholder icons. Replace the icons with your own branding before deploying to production."
+        description="We've generated a ready-to-upload app package with your manifest and placeholder icons. Before deploying to production, replace the icons and update the developer fields in manifest.json with your company info."
         rightContent={
           <div className="flex min-w-0 flex-col gap-3 self-stretch">
             <div className="self-start">
-              <SetupButton leadingIcon={<Download className="size-3.5" />} onClick={handleDownload}>
+              <SetupButton
+                leadingIcon={<Download className="size-3.5" />}
+                onClick={handleDownload}
+                disabled={!canDownload}
+              >
                 Download app package
               </SetupButton>
             </div>
@@ -334,7 +346,7 @@ export function TeamsSetupGuide({
       integrationId={integrationId}
       isOpen={isCredentialsSidebarOpen}
       onClose={() => setIsCredentialsSidebarOpen(false)}
-      onSaveSuccess={() => setIsCredentialsSaved(true)}
+      onSaveSuccess={() => {}}
     />
   );
 
