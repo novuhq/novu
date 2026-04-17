@@ -211,16 +211,10 @@ function BridgeConnectionStatus({
 type AgentCodeSetupSectionProps = {
   agent: AgentResponse;
   stepOffset: number;
-  isProviderComplete: boolean;
   providerId?: string;
 };
 
-export function AgentCodeSetupSection({
-  agent,
-  stepOffset,
-  isProviderComplete,
-  providerId,
-}: AgentCodeSetupSectionProps) {
+export function AgentCodeSetupSection({ agent, stepOffset, providerId }: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
 
@@ -229,14 +223,9 @@ export function AgentCodeSetupSection({
 
   const isBridgeConnected = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
 
-  let firstIncompleteStep: number;
-  if (isBridgeConnected) {
-    firstIncompleteStep = stepOffset + 2;
-  } else if (isProviderComplete) {
-    firstIncompleteStep = stepOffset;
-  } else {
-    firstIncompleteStep = stepOffset + 3;
-  }
+  // The caller only renders this section once a provider integration is
+  // connected, so the "2/2 Connect your code" steps start out active.
+  const firstIncompleteStep = isBridgeConnected ? stepOffset + 2 : stepOffset;
 
   return (
     <>
