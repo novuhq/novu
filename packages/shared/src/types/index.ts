@@ -8,7 +8,6 @@ export * from './channel-endpoint';
 export * from './context';
 export * from './controls';
 export * from './cron';
-export * from './domain';
 export * from './environment';
 export * from './environment-variable';
 export * from './events';
