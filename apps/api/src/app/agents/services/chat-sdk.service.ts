@@ -313,7 +313,7 @@ export class ChatSdkService implements OnModuleDestroy {
     const adapters = await this.buildAdapters(platform, config);
     const client = this.cacheService.client;
     if (!client) {
-      throw new Error('Cache in-memory provider client is not available for Chat SDK state adapter');
+      throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
     }
 
     return new Chat({
