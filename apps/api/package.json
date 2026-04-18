@@ -46,7 +46,7 @@
     "@aws-sdk/client-secrets-manager": "^3.971.0",
     "yargs": "^17.7.2",
     "@chat-adapter/slack": "^4.25.0",
-    "@chat-adapter/state-redis": "^4.25.0",
+    "@chat-adapter/state-ioredis": "^4.26.0",
     "@chat-adapter/teams": "^4.25.0",
     "@chat-adapter/whatsapp": "^4.25.0",
     "@godaddy/terminus": "^4.12.1",

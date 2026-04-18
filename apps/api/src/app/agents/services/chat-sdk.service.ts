@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { SentMessageInfo } from '@novu/framework';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
@@ -56,6 +56,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
   constructor(
     private readonly logger: PinoLogger,
+    private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
     @Inject(forwardRef(() => AgentInboundHandler))
     private readonly inboundHandler: AgentInboundHandler
@@ -304,27 +305,36 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Chat> {
-    const [{ Chat }, { createRedisState }] = await Promise.all([
+    const [{ Chat }, { createIoRedisState }] = await Promise.all([
       esmImport('chat'),
-      esmImport('@chat-adapter/state-redis'),
+      esmImport('@chat-adapter/state-ioredis'),
     ]);
 
     const adapters = await this.buildAdapters(platform, config);
-    const redisHost = process.env.REDIS_HOST || 'localhost';
-    const redisPort = process.env.REDIS_PORT || '6379';
-    const redisScheme = process.env.REDIS_TLS_ENABLED === 'true' ? 'rediss' : 'redis';
-    const redisPassword = process.env.REDIS_PASSWORD;
-    const redisAuth = redisPassword ? `:${encodeURIComponent(redisPassword)}@` : '';
+    const client = this.cacheService.client;
+    if (!client) {
+      throw new Error('Cache in-memory provider client is not available for Chat SDK state adapter');
+    }
 
     return new Chat({
       userName: `novu-agent-${instanceKey}`,
       adapters,
-      state: createRedisState({
-        url: `${redisScheme}://${redisAuth}${redisHost}:${redisPort}`,
+      state: createIoRedisState({
+        client,
         keyPrefix: `novu:agent:${instanceKey}`,
+        logger: this.chatStateLogger(),
       }),
       logger: 'silent',
     });
+  }
+
+  private chatStateLogger() {
+    return {
+      debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(ctx ?? {}, msg),
+      info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(ctx ?? {}, msg),
+      warn: (msg: string, ctx?: Record<string, unknown>) => this.logger.warn(ctx ?? {}, msg),
+      error: (msg: string, ctx?: Record<string, unknown>) => this.logger.error(ctx ?? {}, msg),
+    };
   }
 
   private async buildAdapters(
