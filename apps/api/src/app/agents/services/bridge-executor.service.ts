@@ -17,6 +17,7 @@ import type {
   AgentSubscriber,
 } from '@novu/framework';
 import { AgentEventEnum } from '@novu/framework';
+import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
@@ -104,7 +105,12 @@ export class BridgeExecutorService {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-novu-signature': signatureHeader,
+            // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
+            // this exact header to verify the HMAC. Sending any other name (e.g.
+            // `x-novu-signature`) silently disables signature verification on the
+            // bridge and lets a forged AgentBridgeRequest exfiltrate the secret key
+            // via an attacker-controlled `replyUrl`.
+            [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
           body,
         });

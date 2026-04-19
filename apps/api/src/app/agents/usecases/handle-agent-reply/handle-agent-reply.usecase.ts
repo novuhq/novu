@@ -19,6 +19,7 @@ import {
 } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
+import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
@@ -271,7 +272,17 @@ export class HandleAgentReply {
     channel: ConversationChannel,
     signals: Array<{ type: 'metadata'; key: string; value: unknown }>
   ): Promise<void> {
-    const merged = { ...(conversation.metadata ?? {}) };
+    // Defense in depth: the DTO validator already enforces this for HTTP callers,
+    // but commands can also be constructed internally (e.g. by the inbound handler).
+    // Reject prototype-pollution gadgets and any key that wouldn't survive a clean
+    // round-trip through downstream consumers.
+    for (const signal of signals) {
+      if (!isValidMetadataSignalKey(signal.key)) {
+        throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
+      }
+    }
+
+    const merged: Record<string, unknown> = { ...(conversation.metadata ?? {}) };
     for (const signal of signals) {
       merged[signal.key] = signal.value;
     }
