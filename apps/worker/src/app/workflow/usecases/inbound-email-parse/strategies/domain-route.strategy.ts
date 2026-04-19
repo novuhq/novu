@@ -1,9 +1,14 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { SendWebhookMessage } from '@novu/application-generic';
 import { DomainEntity, DomainRepository, DomainRoute } from '@novu/dal';
-import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
-import axios from 'axios';
+import { DomainRouteTypeEnum, DomainStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import { normalizeReferences, resolveThreadId } from './resolve-thread-id';
+
+type RoutableDomain = Pick<
+  DomainEntity,
+  '_id' | 'name' | 'status' | 'mxRecordConfigured' | 'routes' | '_environmentId' | '_organizationId'
+>;
 
 const LOG_CONTEXT = 'DomainRouteStrategy';
 
@@ -12,10 +17,8 @@ export type DomainRouteEmailPayload = {
     id: string;
     name: string;
   };
-  route: {
+  route?: {
     address: string;
-    destination: string;
-    type: DomainRouteTypeEnum;
   };
   mail: {
     from: InboundEmailParseCommand['from'];
@@ -35,7 +38,10 @@ export type DomainRouteEmailPayload = {
 
 @Injectable()
 export class DomainRouteStrategy {
-  constructor(private domainRepository: DomainRepository) {}
+  constructor(
+    private domainRepository: DomainRepository,
+    private sendWebhookMessage: SendWebhookMessage
+  ) {}
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
     const toAddress = command.to[0].address;
@@ -58,37 +64,28 @@ export class DomainRouteStrategy {
 
     const route = domain.routes.find((r) => r.address === toAddress.split('@')[0]);
 
+    await this.fireWebhookEvent(command, domain, route);
+
     if (!route) {
-      this.throwError(`No route found matching address ${toAddress} on domain ${domain.name}`);
+      return;
     }
 
     if (route.type === DomainRouteTypeEnum.AGENT) {
       await this.handleAgentRoute(command, domain, route, toAddress);
-
-      return;
-    }
-
-    if (route.type === DomainRouteTypeEnum.WEBHOOK) {
-      await this.handleWebhookRoute(command, domain, route, toAddress);
     }
   }
 
-  private async handleAgentRoute(
+  private async fireWebhookEvent(
     command: InboundEmailParseCommand,
-    domain: DomainEntity,
-    route: DomainRoute,
-    toAddress: string
+    domain: RoutableDomain,
+    route: DomainRoute | undefined
   ): Promise<void> {
-    const _agentPayload: DomainRouteEmailPayload = {
+    const payload: DomainRouteEmailPayload = {
       domain: {
         id: domain._id,
         name: domain.name,
       },
-      route: {
-        address: route.address,
-        destination: route.destination,
-        type: route.type,
-      },
+      ...(route ? { route: { address: route.address } } : {}),
       mail: {
         from: command.from,
         to: command.to,
@@ -105,6 +102,27 @@ export class DomainRouteStrategy {
       },
     };
 
+    await this.sendWebhookMessage.execute({
+      environmentId: domain._environmentId,
+      organizationId: domain._organizationId,
+      eventType: WebhookEventEnum.EMAIL_INBOUND_RECEIVED,
+      objectType: WebhookObjectTypeEnum.EMAIL_INBOUND,
+      payload: { object: payload as unknown as Record<string, unknown> },
+    });
+
+    Logger.log(
+      { toAddress: command.to[0].address, domain: domain.name },
+      'Fired email.inbound_received webhook event',
+      LOG_CONTEXT
+    );
+  }
+
+  private async handleAgentRoute(
+    command: InboundEmailParseCommand,
+    _domain: RoutableDomain,
+    route: DomainRoute,
+    toAddress: string
+  ): Promise<void> {
     const threadInfo = {
       threadId: resolveThreadId(toAddress, command.messageId, command.inReplyTo, command.references),
       messageId: command.messageId,
@@ -121,43 +139,6 @@ export class DomainRouteStrategy {
       'Agent route — thread info collected, forwarding not yet implemented',
       LOG_CONTEXT
     );
-  }
-
-  private async handleWebhookRoute(
-    command: InboundEmailParseCommand,
-    domain: DomainEntity,
-    route: DomainRoute,
-    toAddress: string
-  ): Promise<void> {
-    const payload: DomainRouteEmailPayload = {
-      domain: {
-        id: domain._id,
-        name: domain.name,
-      },
-      route: {
-        address: route.address,
-        destination: route.destination,
-        type: route.type,
-      },
-      mail: {
-        from: command.from,
-        to: command.to,
-        subject: command.subject,
-        html: command.html,
-        text: command.text,
-        headers: command.headers,
-        attachments: command.attachments,
-        messageId: command.messageId,
-        inReplyTo: command.inReplyTo,
-        references: command.references,
-        date: command.date,
-        cc: command.cc,
-      },
-    };
-
-    await axios.post(route.destination, payload);
-
-    Logger.log({ toAddress, destination: route.destination }, 'Forwarded email to webhook destination', LOG_CONTEXT);
   }
 
   private throwError(error: string): never {

@@ -5,5 +5,4 @@ export enum DomainStatusEnum {
 
 export enum DomainRouteTypeEnum {
   AGENT = 'agent',
-  WEBHOOK = 'webhook',
 }

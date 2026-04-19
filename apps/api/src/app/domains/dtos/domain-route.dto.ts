@@ -8,7 +8,7 @@ export class DomainRouteDto {
   @IsNotEmpty()
   address: string;
 
-  @ApiProperty({ description: 'Destination agent ID or webhook URL' })
+  @ApiProperty({ description: 'Destination agent ID' })
   @IsString()
   @IsNotEmpty()
   destination: string;

@@ -2,6 +2,7 @@ import { DomainRouteTypeEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { RiAddLine, RiMore2Fill, RiRobot2Line, RiWebhookLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { listAgents } from '@/api/agents';
 import type { DomainResponse, DomainRouteResponse } from '@/api/domains';
 import { Button } from '@/components/primitives/button';
@@ -18,18 +19,17 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateRoute, useDeleteRoute, useUpdateRoute } from '@/hooks/use-domain-routes';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { RoutingEmptyIllustration } from './routing-empty-illustration';
 
 type RouteFormState = {
   address: string;
   destination: string;
-  type: DomainRouteTypeEnum;
 };
 
 const DEFAULT_ROUTE_FORM: RouteFormState = {
   address: '',
   destination: '',
-  type: DomainRouteTypeEnum.AGENT,
 };
 
 type DomainRoutingProps = {
@@ -54,24 +54,6 @@ function useAgents() {
     enabled: !!currentEnvironment,
     select: (data) => data.data,
   });
-}
-
-function RouteTypeBadge({ type }: { type: DomainRouteTypeEnum }) {
-  if (type === DomainRouteTypeEnum.AGENT) {
-    return (
-      <span className="text-foreground-600 flex items-center gap-1 text-sm">
-        <RiRobot2Line className="size-4" />
-        Agent
-      </span>
-    );
-  }
-
-  return (
-    <span className="text-foreground-600 flex items-center gap-1 text-sm">
-      <RiWebhookLine className="size-4" />
-      Webhook
-    </span>
-  );
 }
 
 type InlineRouteFormProps = {
@@ -112,47 +94,22 @@ function InlineRouteForm({
             value={form.address}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
           />
-          <span className="text-foreground-400 shrink-0 text-xs">@inbound.{domainName}</span>
+          <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
         </div>
       </TableCell>
 
       {/* Destination */}
       <TableCell>
-        {form.type === DomainRouteTypeEnum.AGENT ? (
-          <Select value={form.destination} onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}>
-            <SelectTrigger className="h-7 w-56 text-sm" size="2xs">
-              <SelectValue placeholder="Select agent" />
-            </SelectTrigger>
-            <SelectContent>
-              {agentOptions.map((agent) => (
-                <SelectItem key={agent._id} value={agent._id}>
-                  {agent.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            className="h-7 w-56 text-sm"
-            placeholder="https://api.example.com/webhooks"
-            value={form.destination}
-            onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))}
-          />
-        )}
-      </TableCell>
-
-      {/* Type */}
-      <TableCell>
-        <Select
-          value={form.type}
-          onValueChange={(v) => setForm((f) => ({ ...f, type: v as DomainRouteTypeEnum, destination: '' }))}
-        >
-          <SelectTrigger className="h-7 w-28 text-sm" size="2xs">
-            <SelectValue />
+        <Select value={form.destination} onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}>
+          <SelectTrigger className="h-7 w-56 text-sm" size="2xs">
+            <SelectValue placeholder="Select agent" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={DomainRouteTypeEnum.AGENT}>Agent</SelectItem>
-            <SelectItem value={DomainRouteTypeEnum.WEBHOOK}>Webhook</SelectItem>
+            {agentOptions.map((agent) => (
+              <SelectItem key={agent._id} value={agent._id}>
+                {agent.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </TableCell>
@@ -202,19 +159,18 @@ function ExistingRouteRow({
   onEdit,
   isDeleting,
 }: ExistingRouteRowProps) {
-  const agentName =
-    route.type === DomainRouteTypeEnum.AGENT
-      ? (agentOptions.find((a) => a._id === route.destination)?.name ?? route.destination)
-      : route.destination;
+  const agentName = agentOptions.find((a) => a._id === route.destination)?.name ?? route.destination;
 
   return (
     <TableRow>
       <TableCell className="text-sm">
         {route.address}@{domainName}
       </TableCell>
-      <TableCell className="text-foreground-600 max-w-[200px] truncate text-sm">{agentName}</TableCell>
-      <TableCell>
-        <RouteTypeBadge type={route.type} />
+      <TableCell className="text-foreground-600 max-w-[200px] truncate text-sm">
+        <span className="flex items-center gap-1">
+          <RiRobot2Line className="size-4 shrink-0" />
+          {agentName}
+        </span>
       </TableCell>
       <TableCell>
         <span className="text-success text-sm">Active</span>
@@ -240,10 +196,60 @@ function ExistingRouteRow({
   );
 }
 
+type WebhookForwardingBannerProps = {
+  environmentSlug: string;
+  webhooksEnabled: boolean;
+};
+
+function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookForwardingBannerProps) {
+  const webhooksHref = buildRoute(webhooksEnabled ? ROUTES.WEBHOOKS_ENDPOINTS : ROUTES.WEBHOOKS, { environmentSlug });
+
+  if (!webhooksEnabled) {
+    return (
+      <div className="flex items-center justify-between rounded-lg border border-dashed px-4 py-3">
+        <div className="flex items-center gap-2">
+          <RiWebhookLine className="text-foreground-400 size-4 shrink-0" />
+          <p className="text-foreground-600 text-xs">
+            Enable webhooks to receive inbound emails via the{' '}
+            <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.inbound_received</code>{' '}
+            event.
+          </p>
+        </div>
+        <Link
+          to={webhooksHref}
+          className="text-foreground-900 hover:text-foreground-600 shrink-0 text-xs font-medium transition-colors"
+        >
+          Enable Webhooks →
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border bg-neutral-alpha-50 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <RiWebhookLine className="text-foreground-400 size-4 shrink-0" />
+        <p className="text-foreground-600 text-xs">
+          All inbound emails fire the{' '}
+          <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.inbound_received</code> event
+          on your webhook endpoints.
+        </p>
+      </div>
+      <Link
+        to={webhooksHref}
+        className="text-foreground-900 hover:text-foreground-600 shrink-0 text-xs font-medium transition-colors"
+      >
+        Configure Webhooks →
+      </Link>
+    </div>
+  );
+}
+
 export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>(function DomainRouting(
   { domain },
   ref
 ) {
+  const { currentEnvironment } = useEnvironment();
   const { data: agents = [] } = useAgents();
   const createRoute = useCreateRoute(domain._id);
   const updateRoute = useUpdateRoute(domain._id);
@@ -261,7 +267,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleCreate = async (values: RouteFormState) => {
     try {
-      await createRoute.mutateAsync(values);
+      await createRoute.mutateAsync({ ...values, type: DomainRouteTypeEnum.AGENT });
       setIsAdding(false);
     } catch {
       showErrorToast('Failed to add route.');
@@ -270,7 +276,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleUpdate = async (index: number, values: RouteFormState) => {
     try {
-      await updateRoute.mutateAsync({ routeIndex: index, body: values });
+      await updateRoute.mutateAsync({ routeIndex: index, body: { ...values, type: DomainRouteTypeEnum.AGENT } });
       setEditingIndex(null);
     } catch {
       showErrorToast('Failed to update route.');
@@ -288,74 +294,82 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const agentOptions = agents.map((a) => ({ _id: a._id, name: a.name, identifier: a.identifier }));
 
   return (
-    <div className="rounded-lg border bg-white">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Address</TableHead>
-            <TableHead>Destination</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {domain.routes.map((route, index) =>
-            editingIndex === index ? (
-              <InlineRouteForm
-                key={index}
-                domainName={domain.name}
-                initialValues={{ address: route.address, destination: route.destination, type: route.type }}
-                agentOptions={agentOptions}
-                onSave={(values) => handleUpdate(index, values)}
-                onCancel={() => setEditingIndex(null)}
-                isSaving={updateRoute.isPending}
-              />
-            ) : (
-              <ExistingRouteRow
-                key={index}
-                route={route}
-                routeIndex={index}
-                domainName={domain.name}
-                agentOptions={agentOptions}
-                onDelete={handleDelete}
-                onEdit={setEditingIndex}
-                isDeleting={deleteRoute.isPending}
-              />
-            )
-          )}
-
-          {isAdding && (
-            <InlineRouteForm
-              domainName={domain.name}
-              agentOptions={agentOptions}
-              onSave={handleCreate}
-              onCancel={() => setIsAdding(false)}
-              isSaving={createRoute.isPending}
-            />
-          )}
-
-          {domain.routes.length === 0 && !isAdding && (
+    <div className="space-y-3">
+      <div className="rounded-lg border bg-white">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="py-16 text-center">
-                <div className="flex flex-col items-center gap-6">
-                  <RoutingEmptyIllustration />
-                  <div className="space-y-1 text-center">
-                    <p className="text-foreground-600 text-sm font-medium">No routes configured</p>
-                    <p className="text-foreground-400 text-xs">
-                      Configure routes to route the incoming emails to relevant agents and webhooks.
-                    </p>
-                  </div>
-                  <Button size="sm" mode="outline" variant="secondary" className="mx-auto" onClick={startAdding}>
-                    <RiAddLine className="size-4" />
-                    Add new route
-                  </Button>
-                </div>
-              </TableCell>
+              <TableHead>Address</TableHead>
+              <TableHead>Agent</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead />
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {domain.routes.map((route, index) =>
+              editingIndex === index ? (
+                <InlineRouteForm
+                  key={index}
+                  domainName={domain.name}
+                  initialValues={{ address: route.address, destination: route.destination }}
+                  agentOptions={agentOptions}
+                  onSave={(values) => handleUpdate(index, values)}
+                  onCancel={() => setEditingIndex(null)}
+                  isSaving={updateRoute.isPending}
+                />
+              ) : (
+                <ExistingRouteRow
+                  key={index}
+                  route={route}
+                  routeIndex={index}
+                  domainName={domain.name}
+                  agentOptions={agentOptions}
+                  onDelete={handleDelete}
+                  onEdit={setEditingIndex}
+                  isDeleting={deleteRoute.isPending}
+                />
+              )
+            )}
+
+            {isAdding && (
+              <InlineRouteForm
+                domainName={domain.name}
+                agentOptions={agentOptions}
+                onSave={handleCreate}
+                onCancel={() => setIsAdding(false)}
+                isSaving={createRoute.isPending}
+              />
+            )}
+
+            {domain.routes.length === 0 && !isAdding && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-16 text-center">
+                  <div className="flex flex-col items-center gap-6">
+                    <RoutingEmptyIllustration />
+                    <div className="space-y-1 text-center">
+                      <p className="text-foreground-600 text-sm font-medium">No routes configured</p>
+                      <p className="text-foreground-400 text-xs">
+                        Configure routes to route incoming emails to relevant agents.
+                      </p>
+                    </div>
+                    <Button size="sm" mode="outline" variant="secondary" className="mx-auto" onClick={startAdding}>
+                      <RiAddLine className="size-4" />
+                      Add new route
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {currentEnvironment?.slug && (
+        <WebhookForwardingBanner
+          environmentSlug={currentEnvironment.slug}
+          webhooksEnabled={!!currentEnvironment.webhookAppId}
+        />
+      )}
     </div>
   );
 });

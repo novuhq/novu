@@ -34,7 +34,10 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
    */
   async findByRouteAddress(
     address: string
-  ): Promise<Pick<DomainEntity, '_id' | 'name' | 'status' | 'mxRecordConfigured' | 'routes'> | null> {
+  ): Promise<Pick<
+    DomainEntity,
+    '_id' | 'name' | 'status' | 'mxRecordConfigured' | 'routes' | '_environmentId' | '_organizationId'
+  > | null> {
     const domainName = address.split('@')[1];
 
     if (!domainName) {
@@ -47,6 +50,8 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
       'status',
       'mxRecordConfigured',
       'routes',
+      '_environmentId',
+      '_organizationId',
     ]);
   }
 
