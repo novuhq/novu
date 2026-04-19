@@ -6,8 +6,8 @@ export class AgentBehaviorDto {
   @ApiPropertyOptional({
     description:
       'Acknowledge incoming messages. On platforms that support a native typing indicator ' +
-      '(e.g. Microsoft Teams), shows a "Typing…" indicator while the agent processes the message. ' +
-      'On platforms that do not (e.g. Slack, WhatsApp), reacts with an "eyes" emoji to the first ' +
+      '(e.g. Slack, Microsoft Teams), shows a "Typing…" indicator while the agent processes the message. ' +
+      'On platforms that do not (e.g. WhatsApp), reacts with an "eyes" emoji to the first ' +
       'inbound message in a thread. Default: true',
     default: true,
   })

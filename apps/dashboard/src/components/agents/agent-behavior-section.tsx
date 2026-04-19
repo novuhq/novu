@@ -71,7 +71,7 @@ export function AgentBehaviorSection() {
         <div className="flex flex-col gap-2 p-3">
           <ToggleRow
             label="Acknowledge incoming messages"
-            tooltip='Show a "Typing…" indicator while the agent works. On platforms that don&#39;t support typing (Slack, WhatsApp), react with an "eyes" emoji instead.'
+            tooltip='Show a "Typing…" indicator while the agent works. On platforms that don&#39;t support typing, react with an "eyes" emoji instead.'
           >
             <Switch defaultChecked />
           </ToggleRow>
