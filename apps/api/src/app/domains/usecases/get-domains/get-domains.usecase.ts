@@ -17,7 +17,7 @@ export class GetDomains {
   async execute(command: GetDomainsCommand): Promise<DomainResponseDto[]> {
     const domains = await this.domainRepository.findByEnvironment(command.environmentId, command.organizationId);
 
-    if (domains.length === 0) {
+    if (domains.length === 0 && process.env.IS_SELF_HOSTED !== 'true') {
       const demoDomain = await this.getOrCreateDemoDomain(command);
       if (demoDomain) {
         return [toDomainResponse(demoDomain)];
