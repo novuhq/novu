@@ -167,7 +167,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
           </ToggleRow>
 
           <ToggleRow
-            label="React to the final message when a conversation is resolved"
+            label="React to the thread root message when a conversation is resolved"
             tooltip="Add an emoji reaction to the first message in the thread when the conversation is resolved."
           >
             <ResolvedEmojiPicker
