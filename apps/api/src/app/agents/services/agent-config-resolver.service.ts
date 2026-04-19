@@ -33,20 +33,14 @@ export interface ResolvedAgentConfig {
   agentIdentifier: string;
   integrationIdentifier: string;
   integrationId: string;
-  thinkingIndicatorEnabled: boolean;
-  reactionOnMessageReceived: WellKnownEmoji | null;
+  acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
 }
 
-const DEFAULT_REACTION_ON_MESSAGE: WellKnownEmoji = 'eyes';
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
-
-function resolveThinkingIndicator(agent: { behavior?: { thinkingIndicatorEnabled?: boolean } }): boolean {
-  return agent.behavior?.thinkingIndicatorEnabled !== false;
-}
 
 async function resolveReaction(
   value: string | null | undefined,
@@ -156,14 +150,9 @@ export class AgentConfigResolver {
       agentIdentifier: agent.identifier,
       integrationIdentifier,
       integrationId: integration._id,
-      thinkingIndicatorEnabled: resolveThinkingIndicator(agent),
-      reactionOnMessageReceived: await resolveReaction(
-        agent.behavior?.reactions?.onMessageReceived,
-        DEFAULT_REACTION_ON_MESSAGE,
-        this.logger
-      ),
+      acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
-        agent.behavior?.reactions?.onResolved,
+        agent.behavior?.reactionOnResolved,
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),

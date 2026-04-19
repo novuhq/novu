@@ -65,7 +65,7 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(afterDelete.status).to.equal(404);
   });
 
-  it('should update and return agent behavior settings', async () => {
+  it('should update and return acknowledgeOnReceived behavior', async () => {
     const identifier = `e2e-behavior-${Date.now()}`;
 
     const createRes = await session.testAgent.post('/v1/agents').send({
@@ -77,28 +77,28 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(createRes.body.data.behavior).to.equal(undefined);
 
     const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-      behavior: { thinkingIndicatorEnabled: false },
+      behavior: { acknowledgeOnReceived: false },
     });
 
     expect(patchRes.status).to.equal(200);
-    expect(patchRes.body.data.behavior).to.deep.equal({ thinkingIndicatorEnabled: false });
+    expect(patchRes.body.data.behavior).to.deep.equal({ acknowledgeOnReceived: false });
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
     expect(getRes.status).to.equal(200);
-    expect(getRes.body.data.behavior.thinkingIndicatorEnabled).to.equal(false);
+    expect(getRes.body.data.behavior.acknowledgeOnReceived).to.equal(false);
 
     const reEnableRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-      behavior: { thinkingIndicatorEnabled: true },
+      behavior: { acknowledgeOnReceived: true },
     });
 
     expect(reEnableRes.status).to.equal(200);
-    expect(reEnableRes.body.data.behavior.thinkingIndicatorEnabled).to.equal(true);
+    expect(reEnableRes.body.data.behavior.acknowledgeOnReceived).to.equal(true);
 
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
 
-  it('should update and return agent reaction settings with defaults', async () => {
+  it('should update and return reactionOnResolved behavior', async () => {
     const identifier = `e2e-reactions-${Date.now()}`;
 
     const createRes = await session.testAgent.post('/v1/agents').send({
@@ -109,31 +109,24 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(createRes.status).to.equal(201);
     expect(createRes.body.data.behavior).to.equal(undefined);
 
-    const setReactionsRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-      behavior: {
-        reactions: { onMessageReceived: 'wave', onResolved: 'thumbs_up' },
-      },
+    const setRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { reactionOnResolved: 'thumbs_up' },
     });
 
-    expect(setReactionsRes.status).to.equal(200);
-    expect(setReactionsRes.body.data.behavior.reactions.onMessageReceived).to.equal('wave');
-    expect(setReactionsRes.body.data.behavior.reactions.onResolved).to.equal('thumbs_up');
+    expect(setRes.status).to.equal(200);
+    expect(setRes.body.data.behavior.reactionOnResolved).to.equal('thumbs_up');
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
     expect(getRes.status).to.equal(200);
-    expect(getRes.body.data.behavior.reactions.onMessageReceived).to.equal('wave');
-    expect(getRes.body.data.behavior.reactions.onResolved).to.equal('thumbs_up');
+    expect(getRes.body.data.behavior.reactionOnResolved).to.equal('thumbs_up');
 
     const disableRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-      behavior: {
-        reactions: { onMessageReceived: null },
-      },
+      behavior: { reactionOnResolved: null },
     });
 
     expect(disableRes.status).to.equal(200);
-    expect(disableRes.body.data.behavior.reactions.onMessageReceived).to.equal(null);
-    expect(disableRes.body.data.behavior.reactions.onResolved).to.equal('thumbs_up');
+    expect(disableRes.body.data.behavior.reactionOnResolved).to.equal(null);
 
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });

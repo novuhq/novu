@@ -5,5 +5,6 @@ export enum AgentPlatformEnum {
 }
 
 export const PLATFORMS_WITHOUT_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
+  AgentPlatformEnum.SLACK,
   AgentPlatformEnum.WHATSAPP,
 ]);
