@@ -307,51 +307,51 @@ describe('Agents API - /agents #novu-v2', () => {
 
     it('should update bridgeUrl via PATCH', async () => {
       const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-        bridgeUrl: 'https://prod.example.com/api/novu',
+        bridgeUrl: 'https://example.com/api/novu',
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.bridgeUrl).to.equal('https://prod.example.com/api/novu');
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/api/novu');
     });
 
     it('should update devBridgeUrl and devBridgeActive via PUT bridge endpoint', async () => {
       const res = await session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/bridge`).send({
-        devBridgeUrl: 'https://tunnel.example.com',
+        devBridgeUrl: 'https://example.org',
         devBridgeActive: true,
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.devBridgeUrl).to.equal('https://tunnel.example.com');
+      expect(res.body.data.devBridgeUrl).to.equal('https://example.org');
       expect(res.body.data.devBridgeActive).to.equal(true);
     });
 
     it('should set bridgeUrl via PUT bridge endpoint', async () => {
       const res = await session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/bridge`).send({
-        bridgeUrl: 'https://prod.example.com/novu',
+        bridgeUrl: 'https://example.com/novu',
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.bridgeUrl).to.equal('https://prod.example.com/novu');
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/novu');
     });
 
     it('should return bridge fields on GET', async () => {
       await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-        bridgeUrl: 'https://prod.example.com/api/novu',
-        devBridgeUrl: 'https://tunnel.example.com',
+        bridgeUrl: 'https://example.com/api/novu',
+        devBridgeUrl: 'https://example.org',
         devBridgeActive: true,
       });
 
       const res = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.bridgeUrl).to.equal('https://prod.example.com/api/novu');
-      expect(res.body.data.devBridgeUrl).to.equal('https://tunnel.example.com');
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/api/novu');
+      expect(res.body.data.devBridgeUrl).to.equal('https://example.org');
       expect(res.body.data.devBridgeActive).to.equal(true);
     });
 
     it('should deactivate devBridgeActive', async () => {
       await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
-        devBridgeUrl: 'https://tunnel.example.com',
+        devBridgeUrl: 'https://example.org',
         devBridgeActive: true,
       });
 
@@ -361,7 +361,28 @@ describe('Agents API - /agents #novu-v2', () => {
 
       expect(res.status).to.equal(200);
       expect(res.body.data.devBridgeActive).to.equal(false);
-      expect(res.body.data.devBridgeUrl).to.equal('https://tunnel.example.com');
+      expect(res.body.data.devBridgeUrl).to.equal('https://example.org');
+    });
+
+    // Locks in the SSRF guard — see UpdateAgent.assertSafeBridgeUrl.
+    // localhost / private IPs / link-local must be rejected so an authenticated
+    // AGENT_WRITE caller can't repoint the bridge at internal hosts.
+    it('should reject bridgeUrl pointing at loopback', async () => {
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        bridgeUrl: 'http://localhost:4000/api/novu',
+      });
+
+      expect(res.status).to.equal(400);
+      expect(JSON.stringify(res.body)).to.match(/bridgeUrl/i);
+    });
+
+    it('should reject devBridgeUrl pointing at link-local cloud metadata', async () => {
+      const res = await session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/bridge`).send({
+        devBridgeUrl: 'http://169.254.169.254/latest/meta-data/',
+      });
+
+      expect(res.status).to.equal(400);
+      expect(JSON.stringify(res.body)).to.match(/devBridgeUrl/i);
     });
   });
 
@@ -406,7 +427,7 @@ describe('Agents API - /agents #novu-v2', () => {
       await prodSession.testAgent.post('/v1/agents').send({ name: 'Prod Agent 2', identifier: `${identifier}-prod2` });
 
       const res = await prodSession.testAgent.patch(`/v1/agents/${encodeURIComponent(`${identifier}-prod2`)}`).send({
-        devBridgeUrl: 'https://tunnel.example.com',
+        devBridgeUrl: 'https://example.org',
       });
 
       expect(res.status).to.equal(403);
@@ -420,11 +441,11 @@ describe('Agents API - /agents #novu-v2', () => {
       await prodSession.testAgent.post('/v1/agents').send({ name: 'Prod Agent 3', identifier: `${identifier}-prod3` });
 
       const res = await prodSession.testAgent.patch(`/v1/agents/${encodeURIComponent(`${identifier}-prod3`)}`).send({
-        bridgeUrl: 'https://prod.example.com/novu',
+        bridgeUrl: 'https://example.com/novu',
       });
 
       expect(res.status).to.equal(200);
-      expect(res.body.data.bridgeUrl).to.equal('https://prod.example.com/novu');
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/novu');
 
       await prodSession.testAgent.delete(`/v1/agents/${encodeURIComponent(`${identifier}-prod3`)}`);
     });

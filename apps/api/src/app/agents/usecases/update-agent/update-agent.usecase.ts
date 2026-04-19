@@ -128,7 +128,9 @@ export class UpdateAgent {
   }
 
   private async assertSafeBridgeUrl(url: string | undefined | null, field: string): Promise<void> {
-    if (!url) return;
+    if (!url) {
+      return;
+    }
 
     const ssrfError = await validateUrlSsrf(url);
     if (ssrfError) {

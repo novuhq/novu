@@ -59,7 +59,11 @@ export class IsValidSignal implements ValidatorConstraintInterface {
   }
 
   defaultMessage(): string {
-    return 'metadata signals require a safe alphanumeric key (letters, digits, "-", "_", ":") and a value; trigger signals require workflowId.';
+    return (
+      'metadata signals require a key 1-128 chars of letters, digits and "-", "_", ":" separators ' +
+      '(no leading, trailing or consecutive separators) plus a defined value; ' +
+      'trigger signals require workflowId.'
+    );
   }
 }
 

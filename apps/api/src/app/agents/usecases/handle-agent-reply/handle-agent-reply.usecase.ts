@@ -274,16 +274,17 @@ export class HandleAgentReply {
   ): Promise<void> {
     // Defense in depth: the DTO validator already enforces this for HTTP callers,
     // but commands can also be constructed internally (e.g. by the inbound handler).
-    // Reject prototype-pollution gadgets and any key that wouldn't survive a clean
-    // round-trip through downstream consumers.
+    // Reject prototype-pollution gadgets, keys that wouldn't survive a clean
+    // round-trip through downstream consumers, and undefined values (which would
+    // be silently dropped by JSON.stringify and never reach storage).
+    const merged: Record<string, unknown> = { ...(conversation.metadata ?? {}) };
     for (const signal of signals) {
       if (!isValidMetadataSignalKey(signal.key)) {
         throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
       }
-    }
-
-    const merged: Record<string, unknown> = { ...(conversation.metadata ?? {}) };
-    for (const signal of signals) {
+      if (signal.value === undefined) {
+        throw new BadRequestException(`Metadata signal "${signal.key}" must have a defined value`);
+      }
       merged[signal.key] = signal.value;
     }
 
