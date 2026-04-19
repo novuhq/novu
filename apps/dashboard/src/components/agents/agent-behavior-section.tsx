@@ -67,7 +67,7 @@ type ResolvedEmojiPickerProps = {
 
 function ResolvedEmojiPicker({ currentEmoji, emojiList, unicodeMap, disabled, onSelect }: ResolvedEmojiPickerProps) {
   const [open, setOpen] = useState(false);
-  const displayUnicode = currentEmoji ? (unicodeMap.get(currentEmoji) ?? '') : null;
+  const displayUnicode = currentEmoji ? unicodeMap.get(currentEmoji) : undefined;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -76,10 +76,12 @@ function ResolvedEmojiPicker({ currentEmoji, emojiList, unicodeMap, disabled, on
           type="button"
           className="border-stroke-soft bg-bg-white flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-[3px] shadow-xs disabled:opacity-50"
         >
-          {displayUnicode ? (
+          {currentEmoji === null ? (
+            <span className="text-text-soft text-label-sm leading-5">Off</span>
+          ) : displayUnicode ? (
             <span className="text-label-sm leading-5">{displayUnicode}</span>
           ) : (
-            <span className="text-text-soft text-label-sm leading-5">Off</span>
+            <span className="text-text-soft text-label-sm leading-5">{currentEmoji}</span>
           )}
           <RiExpandUpDownLine className="text-text-soft size-3" />
         </button>
@@ -167,8 +169,8 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
           </ToggleRow>
 
           <ToggleRow
-            label="React to the thread root message when a conversation is resolved"
-            tooltip="Add an emoji reaction to the first message in the thread when the conversation is resolved."
+            label="React to the first message when a conversation is resolved"
+            tooltip="Add an emoji reaction to the first message in the thread when the agent resolves the conversation."
           >
             <ResolvedEmojiPicker
               currentEmoji={reactionOnResolved}

@@ -20,7 +20,7 @@ const agentSchema = new Schema<AgentDBModel>(
     },
     behavior: {
       acknowledgeOnReceived: Schema.Types.Boolean,
-      reactionOnResolved: Schema.Types.Mixed,
+      reactionOnResolved: Schema.Types.String,
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,
