@@ -14,6 +14,7 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ConnectionMode, ContextPayload, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
@@ -72,8 +73,7 @@ export class GenerateSlackOauthUrl {
       command.connectionMode
     );
 
-    const resolvedScope =
-      command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
+    const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
 
     return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
   }
@@ -189,7 +189,7 @@ export class GenerateSlackOauthUrl {
       throw new BadRequestException('Failed to create OAuth state signature');
     }
 
-    const base64EncodedState = Buffer.from(`${payload}.${signature}`).toString('base64url');
+    const base64EncodedState = encodeOAuthState(payload, signature);
 
     this.logger.info({ stateData, base64EncodedState }, 'Slack OAuth secure state generated');
 
@@ -198,8 +198,7 @@ export class GenerateSlackOauthUrl {
 
   static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload, signature] = decoded.split('.');
+      const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
       if (signature !== expectedSignature) {
