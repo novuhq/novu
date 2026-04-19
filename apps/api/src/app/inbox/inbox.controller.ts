@@ -26,26 +26,14 @@ import {
   TriggerRequestCategoryEnum,
   UserSessionData,
 } from '@novu/shared';
-import { CreateChannelConnectionRequestDto } from '../channel-connections/dtos/create-channel-connection-request.dto';
-import { mapChannelConnectionEntityToDto } from '../channel-connections/dtos/dto.mapper';
-import { GetChannelConnectionResponseDto } from '../channel-connections/dtos/get-channel-connection-response.dto';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
-import { ListChannelConnectionsResponseDto } from '../channel-connections/dtos/list-channel-connections-response.dto';
-import { CreateChannelConnectionCommand } from '../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
-import { CreateChannelConnection } from '../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
 import { GetChannelConnectionCommand } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.command';
 import { GetChannelConnection } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.usecase';
 import { ListChannelConnectionsCommand } from '../channel-connections/usecases/list-channel-connections/list-channel-connections.command';
 import { ListChannelConnections } from '../channel-connections/usecases/list-channel-connections/list-channel-connections.usecase';
-import { CreateChannelEndpointRequest } from '../channel-endpoints/dtos/create-channel-endpoint-request.dto';
-import { mapChannelEndpointEntityToDto } from '../channel-endpoints/dtos/dto.mapper';
-import { GetChannelEndpointResponseDto } from '../channel-endpoints/dtos/get-channel-endpoint-response.dto';
 import { ListChannelEndpointsQueryDto } from '../channel-endpoints/dtos/list-channel-endpoints-query.dto';
-import { ListChannelEndpointsResponseDto } from '../channel-endpoints/dtos/list-channel-endpoints-response.dto';
-import { CreateChannelEndpointCommand } from '../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
-import { CreateChannelEndpoint } from '../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { DeleteChannelEndpointCommand } from '../channel-endpoints/usecases/delete-channel-endpoint/delete-channel-endpoint.command';
 import { DeleteChannelEndpoint } from '../channel-endpoints/usecases/delete-channel-endpoint/delete-channel-endpoint.usecase';
 import { GetChannelEndpointCommand } from '../channel-endpoints/usecases/get-channel-endpoint/get-channel-endpoint.command';
@@ -77,6 +65,12 @@ import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto
 import { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
 import { GetPreferencesRequestDto } from './dtos/get-preferences-request.dto';
 import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
+import {
+  InboxChannelConnectionResponseDto,
+  InboxListChannelConnectionsResponseDto,
+} from './dtos/inbox-channel-connection-response.dto';
+import { InboxListChannelEndpointsResponseDto } from './dtos/inbox-channel-endpoint-response.dto';
+import { mapChannelConnectionToInboxDto, mapChannelEndpointToInboxDto } from './dtos/inbox-dto.mapper';
 import { InboxNotificationDto } from './dtos/inbox-notification.dto';
 import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
 import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
@@ -139,11 +133,9 @@ export class InboxController {
     private deleteAllNotificationsUsecase: DeleteAllNotifications,
     private listChannelConnectionsUsecase: ListChannelConnections,
     private getChannelConnectionUsecase: GetChannelConnection,
-    private createChannelConnectionUsecase: CreateChannelConnection,
     private deleteChannelConnectionUsecase: DeleteChannelConnection,
     private listChannelEndpointsUsecase: ListChannelEndpoints,
     private getChannelEndpointUsecase: GetChannelEndpoint,
-    private createChannelEndpointUsecase: CreateChannelEndpoint,
     private deleteChannelEndpointUsecase: DeleteChannelEndpoint,
     private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
     private featureFlagsService: FeatureFlagsService
@@ -674,7 +666,7 @@ export class InboxController {
   async listChannelConnections(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Query() query: ListChannelConnectionsQueryDto
-  ): Promise<ListChannelConnectionsResponseDto> {
+  ): Promise<InboxListChannelConnectionsResponseDto> {
     await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
 
     const result = await this.listChannelConnectionsUsecase.execute(
@@ -698,11 +690,9 @@ export class InboxController {
     );
 
     return {
-      data: result.data.map(mapChannelConnectionEntityToDto),
-      next: result.next,
-      previous: result.previous,
-      totalCount: result.totalCount!,
-      totalCountCapped: result.totalCountCapped!,
+      data: result.data.map(mapChannelConnectionToInboxDto),
+      next: result.next ?? null,
+      previous: result.previous ?? null,
     };
   }
 
@@ -711,7 +701,7 @@ export class InboxController {
   async getChannelConnection(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
-  ): Promise<GetChannelConnectionResponseDto> {
+  ): Promise<InboxChannelConnectionResponseDto> {
     await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
 
     const channelConnection = await this.getChannelConnectionUsecase.execute(
@@ -726,31 +716,7 @@ export class InboxController {
       throw new NotFoundException(`Channel connection not found: ${identifier}`);
     }
 
-    return mapChannelConnectionEntityToDto(channelConnection);
-  }
-
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/channel-connections')
-  async createChannelConnection(
-    @SubscriberSession() subscriberSession: SubscriberSession,
-    @Body() body: CreateChannelConnectionRequestDto
-  ): Promise<GetChannelConnectionResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
-    const channelConnection = await this.createChannelConnectionUsecase.execute(
-      CreateChannelConnectionCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        identifier: body.identifier,
-        integrationIdentifier: body.integrationIdentifier,
-        subscriberId: subscriberSession.subscriberId,
-        context: body.context,
-        workspace: body.workspace,
-        auth: body.auth,
-      })
-    );
-
-    return mapChannelConnectionEntityToDto(channelConnection);
+    return mapChannelConnectionToInboxDto(channelConnection);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -788,7 +754,7 @@ export class InboxController {
   async listChannelEndpoints(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Query() query: ListChannelEndpointsQueryDto
-  ): Promise<ListChannelEndpointsResponseDto> {
+  ): Promise<InboxListChannelEndpointsResponseDto> {
     await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
 
     const result = await this.listChannelEndpointsUsecase.execute(
@@ -813,64 +779,10 @@ export class InboxController {
     );
 
     return {
-      data: result.data.map(mapChannelEndpointEntityToDto),
-      next: result.next,
-      previous: result.previous,
-      totalCount: result.totalCount!,
-      totalCountCapped: result.totalCountCapped!,
+      data: result.data.map(mapChannelEndpointToInboxDto),
+      next: result.next ?? null,
+      previous: result.previous ?? null,
     };
-  }
-
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/channel-endpoints/:identifier')
-  async getChannelEndpoint(
-    @SubscriberSession() subscriberSession: SubscriberSession,
-    @Param('identifier') identifier: string
-  ): Promise<GetChannelEndpointResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
-    const channelEndpoint = await this.getChannelEndpointUsecase.execute(
-      GetChannelEndpointCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        identifier,
-      })
-    );
-
-    if (channelEndpoint.subscriberId && channelEndpoint.subscriberId !== subscriberSession.subscriberId) {
-      throw new NotFoundException(`Channel endpoint not found: ${identifier}`);
-    }
-
-    return mapChannelEndpointEntityToDto(channelEndpoint);
-  }
-
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/channel-endpoints')
-  async createChannelEndpoint(
-    @SubscriberSession() subscriberSession: SubscriberSession,
-    @Body() body: CreateChannelEndpointRequest
-  ): Promise<GetChannelEndpointResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
-    // Cast needed because CreateChannelEndpointRequest is a discriminated union; the type/endpoint
-    // fields are correctly validated by class-validator before reaching this handler.
-    const typedBody = body as Extract<CreateChannelEndpointRequest, { type: (typeof body)['type'] }>;
-
-    const channelEndpoint = await this.createChannelEndpointUsecase.execute(
-      CreateChannelEndpointCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        identifier: typedBody.identifier,
-        integrationIdentifier: typedBody.integrationIdentifier,
-        connectionIdentifier: typedBody.connectionIdentifier,
-        subscriberId: subscriberSession.subscriberId,
-        context: typedBody.context,
-        type: typedBody.type,
-        endpoint: typedBody.endpoint,
-      } as Parameters<typeof CreateChannelEndpointCommand.create>[0])
-    );
-
-    return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

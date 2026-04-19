@@ -10,6 +10,7 @@ import {
 import { ChatProviderIdEnum } from '@novu/shared';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
   GenerateMsTeamsOauthUrl,
   StateData,
@@ -116,9 +117,7 @@ export class MsTeamsOauthCallback {
 
   private async decodeMsTeamsState(state: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload] = decoded.split('.');
-      const preliminaryData = JSON.parse(payload);
+      const preliminaryData = peekOAuthStatePayload<Partial<StateData>>(state);
 
       if (!preliminaryData.environmentId) {
         throw new BadRequestException('Invalid MS Teams state: missing environmentId');

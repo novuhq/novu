@@ -36,7 +36,7 @@ const INSTANCE_TTL_MS = 1000 * 60 * 30;
  * resolved config. Event handlers registered via registerEventHandlers() close
  * over this box instead of the config value, so updates to fields that the
  * bridge executor and inbound handler read at event time (bridgeUrl,
- * devBridgeUrl, devBridgeActive, thinkingIndicatorEnabled, reactions) take
+ * devBridgeUrl, devBridgeActive, acknowledgeOnReceived, reactionOnResolved) take
  * effect on the next inbound event without rebuilding the Chat instance.
  *
  * adapterFingerprint captures fields that are baked into the platform adapter

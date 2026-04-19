@@ -346,7 +346,7 @@ export class HandleAgentReply {
     channel: ConversationChannel
   ): Promise<void> {
     const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId || !config.reactionOnMessageReceived) return;
+    if (!firstMessageId || !config.acknowledgeOnReceived) return;
 
     await this.chatSdkService.removeReaction(
       conversation._agentId,
@@ -354,7 +354,7 @@ export class HandleAgentReply {
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
-      config.reactionOnMessageReceived
+      'eyes'
     );
   }
 

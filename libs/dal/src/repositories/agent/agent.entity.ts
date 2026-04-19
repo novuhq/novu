@@ -2,16 +2,9 @@ import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 
-export interface AgentReactionSettings {
-  /** Emoji name for acknowledging incoming messages (null = disabled, undefined = default "eyes") */
-  onMessageReceived?: string | null;
-  /** Emoji name for resolved conversations (null = disabled, undefined = default "check") */
-  onResolved?: string | null;
-}
-
 export interface AgentBehavior {
-  thinkingIndicatorEnabled?: boolean;
-  reactions?: AgentReactionSettings;
+  acknowledgeOnReceived?: boolean;
+  reactionOnResolved?: string | null;
 }
 
 export class AgentEntity {

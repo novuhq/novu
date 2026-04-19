@@ -14,9 +14,8 @@ export class UpdateAgent {
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
     const hasBehaviorFields =
-      command.behavior?.thinkingIndicatorEnabled !== undefined ||
-      command.behavior?.reactions?.onMessageReceived !== undefined ||
-      command.behavior?.reactions?.onResolved !== undefined;
+      command.behavior?.acknowledgeOnReceived !== undefined ||
+      command.behavior?.reactionOnResolved !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -64,17 +63,11 @@ export class UpdateAgent {
     }
 
     if (hasBehaviorFields) {
-      if (command.behavior!.thinkingIndicatorEnabled !== undefined) {
-        $set['behavior.thinkingIndicatorEnabled'] = command.behavior!.thinkingIndicatorEnabled;
+      if (command.behavior!.acknowledgeOnReceived !== undefined) {
+        $set['behavior.acknowledgeOnReceived'] = command.behavior!.acknowledgeOnReceived;
       }
-
-      if (command.behavior!.reactions !== undefined) {
-        if (command.behavior!.reactions.onMessageReceived !== undefined) {
-          $set['behavior.reactions.onMessageReceived'] = command.behavior!.reactions.onMessageReceived;
-        }
-        if (command.behavior!.reactions.onResolved !== undefined) {
-          $set['behavior.reactions.onResolved'] = command.behavior!.reactions.onResolved;
-        }
+      if (command.behavior!.reactionOnResolved !== undefined) {
+        $set['behavior.reactionOnResolved'] = command.behavior!.reactionOnResolved;
       }
     }
 
