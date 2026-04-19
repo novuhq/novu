@@ -310,7 +310,14 @@ export function DomainDetailPage() {
                                 {record.name}
                               </TableCell>
                               <TableCell className="max-w-[200px] truncate font-mono text-xs font-medium text-foreground-500">
-                                {record.content}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{record.content}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-sm break-all font-mono text-xs">
+                                    {record.content}
+                                  </TooltipContent>
+                                </Tooltip>
                               </TableCell>
                               <TableCell className="text-xs text-foreground-500">{record.ttl}</TableCell>
                               <TableCell className="text-xs text-foreground-500">{record.priority}</TableCell>
