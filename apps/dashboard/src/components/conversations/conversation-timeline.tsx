@@ -9,6 +9,7 @@ import {
 } from 'react-icons/ri';
 import { ConversationActivityDto } from '@/api/conversations';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
@@ -97,7 +98,7 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
         {activity.platform && (
           <div className="border-stroke-soft bg-bg-weak flex items-center gap-[3px] rounded border px-1 py-0.5">
             <img
-              src={`/images/providers/light/square/${activity.platform}.svg`}
+              src={`/images/providers/light/square/${getProviderSquareIconFileName(activity.platform)}.svg`}
               alt={activity.platform}
               className="size-3.5 object-contain"
             />

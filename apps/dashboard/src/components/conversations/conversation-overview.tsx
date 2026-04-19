@@ -1,5 +1,6 @@
 import { RiRobot2Line } from 'react-icons/ri';
 import { ConversationDto } from '@/api/conversations';
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
@@ -73,7 +74,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
               {platforms.map((platform) => (
                 <div key={platform} className="border-stroke-soft rounded border bg-[#fbfbfb] p-0.5">
                   <img
-                    src={`/images/providers/light/square/${platform}.svg`}
+                    src={`/images/providers/light/square/${getProviderSquareIconFileName(platform)}.svg`}
                     alt={platform}
                     className="size-[15px] object-contain"
                   />
