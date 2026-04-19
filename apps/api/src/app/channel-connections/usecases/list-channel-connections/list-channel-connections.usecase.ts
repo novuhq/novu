@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import {
   ChannelConnectionDBModel,
@@ -16,6 +16,10 @@ export class ListChannelConnections {
 
   @InstrumentUsecase()
   async execute(command: ListChannelConnectionsCommand) {
+    if (command.before && command.after) {
+      throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
     const filter: FilterQuery<ChannelConnectionDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,

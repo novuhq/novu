@@ -7,6 +7,13 @@ export class DuplicateLayoutDto {
   name: string;
 
   @ApiPropertyOptional({
+    description: 'Identifier for the duplicated layout. When omitted, it is derived from the name.',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string;
+
+  @ApiPropertyOptional({
     description: 'Enable or disable translations for this layout',
     required: false,
     default: false,

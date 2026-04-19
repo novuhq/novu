@@ -18,6 +18,7 @@
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@types/express": "4.17.17",
+    "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "@novu/testing": "workspace:*",
     "express": "^5.0.1"

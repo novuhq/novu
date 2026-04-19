@@ -410,7 +410,11 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
   ): Promise<{ acknowledged: boolean; deletedCount: number }> {
     const { session } = options;
 
-    return this.MongooseModel.deleteMany(query, session ? { session } : {});
+    if (session) {
+      return this.MongooseModel.deleteMany(query, { session });
+    }
+
+    return this.MongooseModel.deleteMany(query);
   }
 
   async create(

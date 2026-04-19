@@ -3,6 +3,8 @@ import { EnvironmentId } from './environment';
 import { OrganizationId } from './organization';
 import { ProvidersIdEnum } from './providers';
 
+export type ConnectionMode = 'subscriber' | 'shared';
+
 export type ChannelConnection = {
   _id: string;
   identifier: string;

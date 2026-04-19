@@ -94,6 +94,8 @@ export enum FeatureFlagsKeysEnum {
   IS_ACTION_STEP_RESOLVER_ENABLED = 'IS_ACTION_STEP_RESOLVER_ENABLED',
   IS_HTTP_REQUEST_STEP_ENABLED = 'IS_HTTP_REQUEST_STEP_ENABLED',
   IS_VARIABLES_PAGE_ENABLED = 'IS_VARIABLES_PAGE_ENABLED',
+  /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
+  IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

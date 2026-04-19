@@ -99,6 +99,11 @@ export type Workflow<T_Payload = never> = {
   discover: () => Promise<DiscoverWorkflowOutput>;
 };
 
+export type DiscoverAgentOutput = {
+  agentId: string;
+};
+
 export type DiscoverOutput = {
   workflows: Array<DiscoverWorkflowOutput>;
+  agents: Array<DiscoverAgentOutput>;
 };

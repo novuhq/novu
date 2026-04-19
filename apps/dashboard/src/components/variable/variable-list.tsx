@@ -189,6 +189,9 @@ const VariableListItem = ({
             isHovered ? 'bg-neutral-100' : ''
           )}
           value={option.value}
+          onMouseDown={(e) => {
+            e.preventDefault();
+          }}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();

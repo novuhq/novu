@@ -3,7 +3,7 @@ import { BaseOption, isOptionGroupArray, OptionList } from 'react-querybuilder';
 import { SelectGroup, SelectItem, SelectLabel } from '@/components/primitives/select';
 import { capitalize } from '@/utils/string';
 
-export const EMPTY_SELECT_VALUE = '__empty__';
+const EMPTY_SELECT_VALUE = '__empty__';
 
 export function toSafeValue(value: string | null | undefined): string {
   if (!value) return EMPTY_SELECT_VALUE;

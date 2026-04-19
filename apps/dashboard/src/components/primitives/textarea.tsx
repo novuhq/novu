@@ -185,4 +185,4 @@ function CharCounter({
 
 CharCounter.displayName = TEXTAREA_COUNTER_NAME;
 
-export { TextareaRoot as Textarea, CharCounter as TextareaCounter };
+export { TextareaRoot as Textarea };

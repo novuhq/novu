@@ -41,6 +41,8 @@ import { UpdateIntegrationSidebar } from './components/integrations/components/u
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
+import { AgentDetailsPage } from './pages/agent-details';
+import { AgentsPage } from './pages/agents';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -350,6 +352,34 @@ const router = createBrowserRouter([
                 ],
               },
               {
+                path: ROUTES.AGENTS,
+                element: <AgentsPage />,
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_TAB,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
                 path: ROUTES.API_KEYS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
@@ -393,6 +423,14 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.ACTIVITY_REQUESTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ACTIVITY_CONVERSATIONS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />

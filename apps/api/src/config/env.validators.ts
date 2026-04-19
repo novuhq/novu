@@ -77,7 +77,7 @@ export const envValidators = {
   STEP_RESOLVER_CF_ACCOUNT_ID: str({ default: undefined }),
   STEP_RESOLVER_CF_API_TOKEN: str({ default: undefined }),
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
-  STEP_RESOLVER_DISPATCH_URL: url({ default: '' }),
+  STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&

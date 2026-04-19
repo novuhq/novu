@@ -8,6 +8,8 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
+import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
+import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
@@ -29,6 +31,8 @@ import { USE_CASES } from './usecases';
     SubscribersV1Module,
     AuthModule,
     IntegrationModule,
+    ChannelConnectionsModule,
+    ChannelEndpointsModule,
     PreferencesModule,
     OrganizationModule,
     OutboundWebhooksModule.forRoot(),

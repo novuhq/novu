@@ -34,7 +34,7 @@ export function validateDataStructure(data: unknown): void {
  * - Value is a scalar (string, number, boolean, null)
  * - String values are limited to 256 characters
  */
-export function validateScalarValue(key: string, value: unknown): void {
+function validateScalarValue(key: string, value: unknown): void {
   if (typeof value === 'string' && value.length > 256) {
     throw new BadRequestException(`String value for ${key} exceeds 256 characters`);
   }

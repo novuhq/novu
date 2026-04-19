@@ -2,6 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ActivityFeedContent } from '@/components/activity/activity-feed-content';
+import { ConversationsContent } from '@/components/conversations/conversations-content';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -14,13 +15,21 @@ import { PageMeta } from '../components/page-meta';
 
 export function ActivityFeed() {
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
+  const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
   const track = useTelemetry();
 
-  // Determine current tab based on URL
   const getCurrentTab = () => {
+    if (location.pathname.includes('/activity/conversations')) {
+      if (!isConversationalAgentsEnabled) {
+        return 'workflow-runs';
+      }
+
+      return 'conversations';
+    }
+
     if (location.pathname.includes('/activity/requests')) {
       return 'requests';
     }
@@ -29,7 +38,6 @@ export function ActivityFeed() {
       return 'workflow-runs';
     }
 
-    // Default fallback for the original activity-feed route
     if (location.pathname.includes('/activity-feed')) {
       return 'workflow-runs';
     }
@@ -39,18 +47,18 @@ export function ActivityFeed() {
 
   const currentTab = getCurrentTab();
 
-  // Handle tab changes by navigating to the appropriate URL
   const handleTabChange = (value: string) => {
     if (!currentEnvironment?.slug) return;
 
     if (value === 'requests') {
       navigate(buildRoute(ROUTES.ACTIVITY_REQUESTS, { environmentSlug: currentEnvironment.slug }));
+    } else if (value === 'conversations') {
+      navigate(buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug }));
     } else if (value === 'workflow-runs') {
       navigate(buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }));
     }
   };
 
-  // Redirect legacy activity-feed URLs to the new runs URL when feature flag is enabled
   useEffect(() => {
     if (isHttpLogsPageEnabled && location.pathname.includes('/activity-feed') && currentEnvironment?.slug) {
       const newPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
@@ -60,7 +68,17 @@ export function ActivityFeed() {
     }
   }, [isHttpLogsPageEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
 
-  // Track page visit for requests tab
+  useEffect(() => {
+    if (
+      !isConversationalAgentsEnabled &&
+      location.pathname.includes('/activity/conversations') &&
+      currentEnvironment?.slug
+    ) {
+      const fallbackPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
+      navigate(`${fallbackPath}${location.search}`, { replace: true });
+    }
+  }, [isConversationalAgentsEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
+
   useEffect(() => {
     if (currentTab === 'requests') {
       track(TelemetryEvent.REQUEST_LOGS_PAGE_VISIT);
@@ -82,6 +100,11 @@ export function ActivityFeed() {
             <TabsTrigger value="workflow-runs" variant="regular" size="lg">
               Workflow Runs
             </TabsTrigger>
+            {isConversationalAgentsEnabled && (
+              <TabsTrigger value="conversations" variant="regular" size="lg">
+                Conversations
+              </TabsTrigger>
+            )}
             {isHttpLogsPageEnabled && (
               <TabsTrigger value="requests" variant="regular" size="lg">
                 Requests
@@ -91,6 +114,11 @@ export function ActivityFeed() {
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
+          {isConversationalAgentsEnabled && (
+            <TabsContent value="conversations">
+              <ConversationsContent contentHeight="h-[calc(100vh-170px)]" />
+            </TabsContent>
+          )}
           <TabsContent value="requests" className="h-[calc(100vh-140px)]">
             <RequestsTable />
           </TabsContent>
