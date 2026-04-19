@@ -91,7 +91,7 @@ export function AgentsList() {
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
-        environmentSlug: environment.slug,
+        environmentSlug: environment.slug ?? '',
         agentIdentifier: encodeURIComponent(createdAgent.identifier),
         agentTab: AGENT_DETAILS_DEFAULT_TAB,
       })}${location.search}`;
