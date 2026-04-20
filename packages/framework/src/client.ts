@@ -18,8 +18,8 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import type { Agent } from './resources/agent';
 import { mockSchema } from './jsonSchemaFaker';
+import type { Agent } from './resources/agent';
 import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
 import type {
   ActionStep,
@@ -195,6 +195,7 @@ export class Client {
   public discover(): DiscoverOutput {
     return {
       workflows: this.getRegisteredWorkflows(),
+      agents: Array.from(this.registeredAgents.keys()).map((id) => ({ agentId: id })),
     };
   }
 

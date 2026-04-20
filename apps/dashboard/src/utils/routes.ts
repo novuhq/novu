@@ -42,6 +42,7 @@ export const ROUTES = {
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',
   ACTIVITY_REQUESTS: '/env/:environmentSlug/activity/requests',
+  ACTIVITY_CONVERSATIONS: '/env/:environmentSlug/activity/conversations',
   ANALYTICS: '/env/:environmentSlug/analytics',
   LOGS: '/env/:environmentSlug/requests',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
@@ -75,14 +76,15 @@ export const ROUTES = {
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
   AGENTS: '/env/:environmentSlug/agents',
   AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
-  /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:providerId` is not parsed as a tab name. */
-  AGENT_DETAILS_INTEGRATIONS_PROVIDER: '/env/:environmentSlug/agents/:agentIdentifier/integrations/:providerId',
+  /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
 
-export const AGENT_DETAILS_TABS = ['overview', 'integrations', 'activity'] as const;
+export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
 
 export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
 

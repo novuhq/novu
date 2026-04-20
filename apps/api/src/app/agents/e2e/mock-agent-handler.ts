@@ -16,17 +16,17 @@
  */
 
 import {
-  agent,
-  serve,
-  Client,
   Actions,
+  agent,
   Button,
   Card,
   CardLink,
   CardText,
+  Client,
   Divider,
   Select,
   SelectOption,
+  serve,
 } from '@novu/framework/express';
 import express from 'express';
 

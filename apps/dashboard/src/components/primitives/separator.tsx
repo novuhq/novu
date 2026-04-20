@@ -2,7 +2,7 @@ import { tv, type VariantProps } from '@/utils/tv';
 
 const SEPARATOR_ROOT_NAME = 'SeparatorRoot';
 
-export const separatorVariants = tv({
+const separatorVariants = tv({
   base: 'relative flex w-full items-center',
   variants: {
     variant: {

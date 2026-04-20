@@ -20,6 +20,18 @@ export class AgentResponseDto {
   behavior?: AgentBehaviorDto;
 
   @ApiProperty()
+  active: boolean;
+
+  @ApiPropertyOptional({ description: 'Production bridge URL' })
+  bridgeUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Development bridge URL (set by npx novu dev)' })
+  devBridgeUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Whether the dev bridge override is active' })
+  devBridgeActive?: boolean;
+
+  @ApiProperty()
   _environmentId: string;
 
   @ApiProperty()

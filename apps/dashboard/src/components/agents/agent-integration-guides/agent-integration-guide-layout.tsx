@@ -32,10 +32,10 @@ function formatCreatedDate(isoDate: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function buildWebhookUrl(agentId: string): string {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
+function buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
+  const baseUrl = (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
 
-  return `${baseUrl}/v1/agents/${agentId}`;
+  return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 export function AgentIntegrationGuideLayout({
@@ -54,7 +54,7 @@ export function AgentIntegrationGuideLayout({
   const isActive = integrationLink?.integration.active ?? false;
   const integrationIdentifier = integrationLink?.integration.identifier;
   const createdAt = integrationLink?.createdAt;
-  const webhookUrl = buildWebhookUrl(agent._id);
+  const webhookUrl = buildWebhookUrl(agent._id, integrationIdentifier ?? 'YOUR_INTEGRATION_IDENTIFIER');
 
   return (
     <div className="flex w-full flex-col gap-6">

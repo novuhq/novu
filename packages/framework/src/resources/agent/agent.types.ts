@@ -4,6 +4,7 @@ export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
+  ON_REACTION = 'onReaction',
 }
 
 // ---------------------------------------------------------------------------
@@ -17,11 +18,20 @@ export interface AgentMessageAuthor {
   isBot: boolean | 'unknown';
 }
 
+export interface AgentAttachment {
+  type: string;
+  url?: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+}
+
 export interface AgentMessage {
   text: string;
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
+  attachments?: AgentAttachment[];
 }
 
 export interface AgentConversation {
@@ -48,6 +58,7 @@ export interface AgentHistoryEntry {
   role: string;
   type: string;
   content: string;
+  richContent?: Record<string, unknown>;
   senderName?: string;
   signalData?: { type: string; payload?: Record<string, unknown> };
   createdAt: string;
@@ -73,17 +84,14 @@ export interface FileRef {
 }
 
 /**
- * Content accepted by ctx.reply() and ctx.update().
+ * Content accepted by ctx.reply() and handle.edit().
  *
  * - `string` — plain text
  * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
  *   (must be a CardElement at runtime; validated by serializeContent)
  */
-export type MessageContent =
-  | string
-  | { markdown: string; files?: FileRef[] }
-  | ChatElement;
+export type MessageContent = string | { markdown: string; files?: FileRef[] } | ChatElement;
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
@@ -102,18 +110,48 @@ export interface AgentAction {
 // Context + handlers
 // ---------------------------------------------------------------------------
 
+export interface AgentReaction {
+  messageId: string;
+  emoji: { name: string };
+  added: boolean;
+  message: AgentMessage | null;
+}
+
+/**
+ * Handle to a message posted via ctx.reply(). Mirrors the chat SDK's `SentMessage`
+ * primitive: edits apply in-place on the platform (same platform message, content changes)
+ * and never post a new message.
+ */
+export interface ReplyHandle {
+  /** Platform-native message id (e.g. Slack ts, Teams activityId). */
+  readonly messageId: string;
+  /** Platform-native thread id this message lives in. */
+  readonly platformThreadId: string;
+  /** Edit this message in place with new content. Returns the same handle for chaining. */
+  edit(content: MessageContent): Promise<ReplyHandle>;
+}
+
 export interface AgentContext {
   readonly event: string;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
+  readonly reaction: AgentReaction | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly history: AgentHistoryEntry[];
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
 
-  reply(content: MessageContent): Promise<void>;
-  update(content: MessageContent): Promise<void>;
+  /**
+   * Post a message to the conversation and return a handle to it.
+   * Use the handle to edit the message in place later — no second post.
+   *
+   * @example
+   *   const msg = await ctx.reply('Thinking…');
+   *   // ... do work ...
+   *   await msg.edit('Here is the answer');
+   */
+  reply(content: MessageContent): Promise<ReplyHandle>;
   resolve(summary?: string): void;
   metadata: {
     set(key: string, value: unknown): void;
@@ -123,6 +161,7 @@ export interface AgentContext {
 
 export interface AgentHandlers {
   onMessage: (ctx: AgentContext) => Promise<void>;
+  onReaction?: (ctx: AgentContext) => Promise<void>;
   onAction?: (ctx: AgentContext) => Promise<void>;
   onResolve?: (ctx: AgentContext) => Promise<void>;
 }
@@ -147,6 +186,7 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
   history: AgentHistoryEntry[];
@@ -158,11 +198,23 @@ export type MetadataSignal = { type: 'metadata'; key: string; value: unknown };
 export type TriggerSignal = { type: 'trigger'; workflowId: string; to?: string; payload?: Record<string, unknown> };
 export type Signal = MetadataSignal | TriggerSignal;
 
+/** In-place edit of a previously posted agent message. Identified by platform message id. */
+export interface EditPayload {
+  messageId: string;
+  content: ReplyContent;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
   reply?: ReplyContent;
-  update?: ReplyContent;
+  edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+}
+
+/** Shape returned by /agents/:id/reply when a reply or edit was delivered. */
+export interface SentMessageInfo {
+  messageId: string;
+  platformThreadId: string;
 }

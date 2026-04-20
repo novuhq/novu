@@ -24,7 +24,6 @@ export enum SnapshotSourceTypeEnum {
 
 export enum AiWorkflowToolsEnum {
   REASONING = 'reasoning',
-  RETRIEVE_ORGANIZATION_META = 'retrieveOrganizationMeta',
   SET_WORKFLOW_METADATA = 'setWorkflowMetadata',
   ADD_STEP = 'addStep',
   ADD_STEP_IN_BETWEEN = 'addStepInBetween',
@@ -37,7 +36,6 @@ export enum AiWorkflowToolsEnum {
 
 export enum AiWorkflowToolsNameEnum {
   REASONING = 'tool-reasoning',
-  RETRIEVE_ORGANIZATION_META = `tool-retrieveOrganizationMeta`,
   SET_WORKFLOW_METADATA = `tool-setWorkflowMetadata`,
   ADD_STEP = 'tool-addStep',
   ADD_STEP_IN_BETWEEN = 'tool-addStepInBetween',

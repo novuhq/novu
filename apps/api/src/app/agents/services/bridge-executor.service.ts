@@ -4,26 +4,32 @@ import {
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
+  validateUrlSsrf,
 } from '@novu/application-generic';
-import {
-  ConversationActivityEntity,
-  ConversationActivitySenderTypeEnum,
-  ConversationActivityTypeEnum,
-  ConversationEntity,
-  EnvironmentRepository,
-  SubscriberEntity,
-} from '@novu/dal';
+import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
+import type {
+  AgentAction,
+  AgentBridgeRequest,
+  AgentConversation,
+  AgentHistoryEntry,
+  AgentMessage,
+  AgentPlatformContext,
+  AgentReaction,
+  AgentSubscriber,
+} from '@novu/framework';
+import { AgentEventEnum } from '@novu/framework';
+import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
 
-export interface BridgePlatformContext {
-  threadId: string;
-  channelId: string;
-  isDM: boolean;
+export interface BridgeReaction {
+  emoji: string;
+  added: boolean;
+  messageId: string;
+  sourceMessage?: Message;
 }
 
 export interface BridgeExecutorParams {
@@ -33,80 +39,21 @@ export interface BridgeExecutorParams {
   subscriber: SubscriberEntity | null;
   history: ConversationActivityEntity[];
   message: Message | null;
-  platformContext: BridgePlatformContext;
-  action?: BridgeAction;
+  platformContext: AgentPlatformContext;
+  action?: AgentAction;
+  reaction?: BridgeReaction;
 }
 
-interface BridgeMessageAuthor {
-  userId: string;
-  fullName: string;
-  userName: string;
-  isBot: boolean | 'unknown';
-}
-
-interface BridgeMessage {
-  text: string;
-  platformMessageId: string;
-  author: BridgeMessageAuthor;
-  timestamp: string;
-}
-
-export interface BridgeAction {
-  actionId: string;
-  value?: string;
-}
-
-interface BridgeConversation {
-  identifier: string;
-  status: string;
-  metadata: Record<string, unknown>;
-  messageCount: number;
-  createdAt: string;
-  lastActivityAt: string;
-}
-
-interface BridgeSubscriber {
-  subscriberId: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  locale?: string;
-  data?: Record<string, unknown>;
-}
-
-interface BridgeHistoryEntry {
-  role: ConversationActivitySenderTypeEnum;
-  type: ConversationActivityTypeEnum;
-  content: string;
-  senderName?: string;
-  signalData?: { type: string; payload?: Record<string, unknown> };
-  createdAt: string;
-}
-
-export interface AgentBridgeRequest {
-  version: 1;
-  timestamp: string;
-  deliveryId: string;
-  event: AgentEventEnum;
-  agentId: string;
-  replyUrl: string;
-  conversationId: string;
-  integrationIdentifier: string;
-  message: BridgeMessage | null;
-  conversation: BridgeConversation;
-  subscriber: BridgeSubscriber | null;
-  history: BridgeHistoryEntry[];
-  platform: string;
-  platformContext: BridgePlatformContext;
-  action: BridgeAction | null;
+export class NoBridgeUrlError extends Error {
+  constructor(agentIdentifier: string) {
+    super(`No bridge URL configured for agent ${agentIdentifier}`);
+    this.name = 'NoBridgeUrlError';
+  }
 }
 
 @Injectable()
 export class BridgeExecutorService {
   constructor(
-    private readonly environmentRepository: EnvironmentRepository,
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger
   ) {}
@@ -117,13 +64,16 @@ export class BridgeExecutorService {
     try {
       const { config, event } = params;
 
-      const bridgeUrl = await this.resolveBridgeUrl(config.environmentId, config.organizationId, agentIdentifier, event);
+      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event);
       if (!bridgeUrl) {
-        return;
+        throw new NoBridgeUrlError(agentIdentifier);
       }
 
       const secretKey = await this.getDecryptedSecretKey.execute(
-        GetDecryptedSecretKeyCommand.create({ environmentId: config.environmentId, organizationId: config.organizationId })
+        GetDecryptedSecretKeyCommand.create({
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        })
       );
 
       const payload = this.buildPayload(params);
@@ -133,6 +83,10 @@ export class BridgeExecutorService {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
       });
     } catch (err) {
+      if (err instanceof NoBridgeUrlError) {
+        throw err;
+      }
+
       this.logger.error(err, `[agent:${agentIdentifier}] Bridge setup failed — skipping bridge call`);
     }
   }
@@ -147,12 +101,27 @@ export class BridgeExecutorService {
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // Re-validate per attempt to defend against (a) agents whose bridgeUrl was
+      // stored before the update-time SSRF guard was added, and (b) DNS rebinding
+      // — a hostname that resolved to a public IP at update-time can later resolve
+      // to a private one. validateUrlSsrf caches DNS lookups for 5 minutes, so
+      // the per-attempt cost is amortized across retries.
+      const ssrfError = await validateUrlSsrf(url);
+      if (ssrfError) {
+        throw new Error(`Bridge URL blocked by SSRF protection: ${ssrfError}`);
+      }
+
       try {
         const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-novu-signature': signatureHeader,
+            // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
+            // this exact header to verify the HMAC. Sending any other name (e.g.
+            // `x-novu-signature`) silently disables signature verification on the
+            // bridge and lets a forged AgentBridgeRequest exfiltrate the secret key
+            // via an attacker-controlled `replyUrl`.
+            [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
           body,
         });
@@ -165,11 +134,13 @@ export class BridgeExecutorService {
         this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.status}`);
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`);
+        this.logger.warn(
+          `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
+        );
       }
 
       if (attempt < MAX_RETRIES) {
-        await this.delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        await this.delay(RETRY_BASE_DELAY_MS * 2 ** attempt);
       }
     }
 
@@ -182,20 +153,17 @@ export class BridgeExecutorService {
     });
   }
 
-  private async resolveBridgeUrl(
-    environmentId: string,
-    organizationId: string,
-    agentIdentifier: string,
-    event: AgentEventEnum
-  ): Promise<string | null> {
-    const environment = await this.environmentRepository.findOne(
-      { _id: environmentId, _organizationId: organizationId },
-      ['bridge']
-    );
-    const baseUrl = environment?.bridge?.url;
+  private resolveBridgeUrl(config: ResolvedAgentConfig, agentIdentifier: string, event: AgentEventEnum): string | null {
+    let baseUrl: string | undefined;
+
+    if (config.devBridgeActive && config.devBridgeUrl) {
+      baseUrl = config.devBridgeUrl;
+    } else if (config.bridgeUrl) {
+      baseUrl = config.bridgeUrl;
+    }
 
     if (!baseUrl) {
-      this.logger.warn(`[agent:${agentIdentifier}] No bridge URL configured on environment, skipping bridge call`);
+      this.logger.warn(`[agent:${agentIdentifier}] No bridge URL configured on agent, skipping bridge call`);
 
       return null;
     }
@@ -209,7 +177,7 @@ export class BridgeExecutorService {
   }
 
   private buildPayload(params: BridgeExecutorParams): AgentBridgeRequest {
-    const { event, config, conversation, subscriber, history, message, platformContext, action } = params;
+    const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
     const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
@@ -222,6 +190,8 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${message.id}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.actionId}:${timestamp}`;
+    } else if (reaction) {
+      deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
     } else {
       deliveryId = `${conversation._id}:${event}`;
     }
@@ -242,11 +212,12 @@ export class BridgeExecutorService {
       platform: config.platform,
       platformContext,
       action: action ?? null,
+      reaction: reaction ? this.mapReaction(reaction) : null,
     };
   }
 
-  private mapMessage(message: Message): BridgeMessage {
-    return {
+  private mapMessage(message: Message): AgentMessage {
+    const mapped: AgentMessage = {
       text: message.text,
       platformMessageId: message.id,
       author: {
@@ -257,9 +228,21 @@ export class BridgeExecutorService {
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (message.attachments?.length) {
+      mapped.attachments = message.attachments.map((a) => ({
+        type: a.type,
+        url: a.url,
+        name: a.name,
+        mimeType: a.mimeType,
+        size: a.size,
+      }));
+    }
+
+    return mapped;
   }
 
-  private mapConversation(conversation: ConversationEntity): BridgeConversation {
+  private mapConversation(conversation: ConversationEntity): AgentConversation {
     return {
       identifier: conversation.identifier,
       status: conversation.status,
@@ -270,7 +253,7 @@ export class BridgeExecutorService {
     };
   }
 
-  private mapSubscriber(subscriber: SubscriberEntity | null): BridgeSubscriber | null {
+  private mapSubscriber(subscriber: SubscriberEntity | null): AgentSubscriber | null {
     if (!subscriber) {
       return null;
     }
@@ -287,11 +270,21 @@ export class BridgeExecutorService {
     };
   }
 
-  private mapHistory(activities: ConversationActivityEntity[]): BridgeHistoryEntry[] {
+  private mapReaction(reaction: BridgeReaction): AgentReaction {
+    return {
+      messageId: reaction.messageId,
+      emoji: { name: reaction.emoji },
+      added: reaction.added,
+      message: reaction.sourceMessage ? this.mapMessage(reaction.sourceMessage) : null,
+    };
+  }
+
+  private mapHistory(activities: ConversationActivityEntity[]): AgentHistoryEntry[] {
     return [...activities].reverse().map((activity) => ({
       role: activity.senderType,
       type: activity.type,
       content: activity.content,
+      richContent: activity.richContent || undefined,
       senderName: activity.senderName || undefined,
       signalData: activity.signalData || undefined,
       createdAt: activity.createdAt,

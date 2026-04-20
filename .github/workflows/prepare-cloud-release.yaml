@@ -32,7 +32,7 @@ jobs:
       - name: Close existing cloud release PRs
         id: close-existing-prs
         run: |
-          gh pr list --base prod --search "chore(root): Release" --state open --json number,headRefName \
+          gh pr list --base prod --state open --json number,headRefName \
             --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
           while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
             echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"

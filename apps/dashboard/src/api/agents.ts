@@ -1,20 +1,20 @@
 import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
-import { del, get, post } from '@/api/api.client';
+import { del, get, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
 
-export const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
+const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
 
-export const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
+const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
+
+const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
-
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
 }
 
 export function getAgentIntegrationsQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
-
   return [AGENT_INTEGRATIONS_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
@@ -34,11 +34,21 @@ export type AgentIntegrationSummary = {
   active: boolean;
 };
 
+export type AgentBehavior = {
+  acknowledgeOnReceived?: boolean;
+  reactionOnResolved?: string | null;
+};
+
 export type AgentResponse = {
   _id: string;
   name: string;
   identifier: string;
   description?: string;
+  active: boolean;
+  behavior?: AgentBehavior;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -58,6 +68,17 @@ export type CreateAgentBody = {
   name: string;
   identifier: string;
   description?: string;
+  active?: boolean;
+};
+
+export type UpdateAgentBody = {
+  name?: string;
+  description?: string;
+  active?: boolean;
+  behavior?: AgentBehavior;
+  bridgeUrl?: string;
+  devBridgeUrl?: string;
+  devBridgeActive?: boolean;
 };
 
 export type ListAgentsParams = {
@@ -133,6 +154,16 @@ export async function createAgent(environment: IEnvironment, body: CreateAgentBo
   return response.data;
 }
 
+export async function updateAgent(
+  environment: IEnvironment,
+  identifier: string,
+  body: UpdateAgentBody
+): Promise<AgentResponse> {
+  const response = await patch<AgentApiEnvelope>(`/agents/${encodeURIComponent(identifier)}`, { environment, body });
+
+  return response.data;
+}
+
 export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
   return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
 }
@@ -154,6 +185,7 @@ export type AgentIntegrationLink = {
   integration: AgentIntegrationEmbedded;
   _environmentId: string;
   _organizationId: string;
+  connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -221,8 +253,22 @@ export function removeAgentIntegration(
   agentIdentifier: string,
   agentIntegrationId: string
 ): Promise<void> {
-  return del(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`,
-    { environment }
-  );
+  return del(`/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`, {
+    environment,
+  });
+}
+
+export type AgentEmojiEntry = {
+  name: string;
+  unicode: string;
+};
+
+export function getAgentEmojiQueryKey() {
+  return [AGENT_EMOJI_QUERY_KEY] as const;
+}
+
+export async function listAgentEmoji(environment: IEnvironment, signal?: AbortSignal): Promise<AgentEmojiEntry[]> {
+  const response = await get<{ data: AgentEmojiEntry[] }>('/agents/emoji', { environment, signal });
+
+  return response.data;
 }

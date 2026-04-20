@@ -1,9 +1,21 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, GetNovuProviderCredentials, GetNovuProviderCredentialsCommand } from '@novu/application-generic';
-import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
-import { ChatProviderIdEnum, ConnectionMode, ContextPayload } from '@novu/shared';
+import {
+  createHash,
+  GetNovuProviderCredentials,
+  GetNovuProviderCredentialsCommand,
+  PinoLogger,
+} from '@novu/application-generic';
+import {
+  AgentIntegrationRepository,
+  EnvironmentRepository,
+  ICredentialsEntity,
+  IntegrationEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChatProviderIdEnum, ConnectionMode, ContextPayload, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
 export type OAuthMode = 'connect' | 'link_user';
@@ -39,25 +51,57 @@ export class GenerateSlackOauthUrl {
   constructor(
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
-    private subscriberRepository: SubscriberRepository
-  ) {}
+    private subscriberRepository: SubscriberRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(GenerateSlackOauthUrl.name);
+  }
 
   async execute(command: GenerateSlackOauthUrlCommand): Promise<string> {
     this.validateSubscriberIdOrContext(command);
     await this.assertResourceExists(command);
 
     const { clientId } = await this.getIntegrationCredentials(command.integration);
-    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
     const secureState = await this.createSecureState(
       command.integration,
-      subscriberId,
+      command.subscriberId,
       command.context,
       command.connectionIdentifier,
       command.mode,
       command.connectionMode
     );
 
-    return this.getOAuthUrl(clientId!, secureState, command.scope, command.userScope, command.mode);
+    const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
+
+    return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
+  }
+
+  private async resolveBotScopes(command: GenerateSlackOauthUrlCommand): Promise<string[] | undefined> {
+    if (command.scope !== undefined) {
+      return command.scope;
+    }
+
+    const isAgentLinked = await this.isIntegrationLinkedToAgent(command.integration);
+
+    if (isAgentLinked) {
+      return [...SLACK_AGENT_OAUTH_SCOPES];
+    }
+
+    return undefined;
+  }
+
+  private async isIntegrationLinkedToAgent(integration: IntegrationEntity): Promise<boolean> {
+    const link = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: integration._id,
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['_id']
+    );
+
+    return link != null;
   }
 
   private validateSubscriberIdOrContext(command: GenerateSlackOauthUrlCommand): void {
@@ -144,13 +188,16 @@ export class GenerateSlackOauthUrl {
       throw new BadRequestException('Failed to create OAuth state signature');
     }
 
-    return Buffer.from(`${payload}.${signature}`).toString('base64url');
+    const base64EncodedState = encodeOAuthState(payload, signature);
+
+    this.logger.info({ stateData, base64EncodedState }, 'Slack OAuth secure state generated');
+
+    return base64EncodedState;
   }
 
   static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload, signature] = decoded.split('.');
+      const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
       if (signature !== expectedSignature) {

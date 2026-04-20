@@ -1,6 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
+  AgentRepository,
   ConversationActivityRepository,
   ConversationActivityTypeEnum,
   ConversationChannel,
@@ -9,12 +17,14 @@ import {
   ConversationStatusEnum,
   SubscriberRepository,
 } from '@novu/dal';
+import type { SentMessageInfo } from '@novu/framework';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
-import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
+import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
+import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import type { ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -23,6 +33,8 @@ export class HandleAgentReply {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentRepository: AgentRepository,
+    @Inject(forwardRef(() => ChatSdkService))
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,
@@ -30,12 +42,15 @@ export class HandleAgentReply {
     private readonly logger: PinoLogger
   ) {}
 
-  async execute(command: HandleAgentReplyCommand): Promise<{ status: string }> {
-    if (command.reply && command.update) {
-      throw new BadRequestException('Only one of reply or update can be provided');
+  async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    if (command.reply && command.edit) {
+      throw new BadRequestException('Only one of reply or edit can be provided');
     }
-    if (!command.reply && !command.update && !command.resolve && !command.signals?.length) {
-      throw new BadRequestException('At least one of reply, update, resolve, or signals must be provided');
+    if (command.edit && (command.resolve || command.signals?.length)) {
+      throw new BadRequestException('edit cannot be combined with resolve or signals');
+    }
+    if (!command.reply && !command.edit && !command.resolve && !command.signals?.length) {
+      throw new BadRequestException('At least one of reply, edit, resolve, or signals must be provided');
     }
 
     const conversation = await this.conversationRepository.findOne(
@@ -52,16 +67,31 @@ export class HandleAgentReply {
 
     const channel = this.getPrimaryChannel(conversation);
 
-    if (command.update) {
-      await this.deliverMessage(command, conversation, channel, command.update, ConversationActivityTypeEnum.UPDATE);
+    if (command.edit) {
+      const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
 
-      return { status: 'update_sent' };
+      return this.deliverEdit(command, conversation, channel, command.edit, agentName);
     }
 
-    if (command.reply) {
-      await this.deliverMessage(command, conversation, channel, command.reply, ConversationActivityTypeEnum.MESSAGE);
+    const needsConfig = !!(command.reply || command.resolve);
+    const config = needsConfig
+      ? await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier)
+      : null;
 
-      this.removeAckReaction(command, conversation, channel).catch((err) => {
+    let replyInfo: SentMessageInfo | undefined;
+    if (command.reply) {
+      const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
+
+      replyInfo = await this.deliverMessage(
+        command,
+        conversation,
+        channel,
+        command.reply,
+        ConversationActivityTypeEnum.MESSAGE,
+        agentName
+      );
+
+      this.removeAckReaction(config!, conversation, channel).catch((err) => {
         this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
       });
     }
@@ -71,10 +101,34 @@ export class HandleAgentReply {
     }
 
     if (command.resolve) {
-      await this.executeResolveSignal(command, conversation, channel, command.resolve);
+      await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
 
-    return { status: 'ok' };
+    return replyInfo ?? null;
+  }
+
+  private async resolveValidatedAgentNameForDelivery(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity
+  ): Promise<string | undefined> {
+    const agent = await this.agentRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        identifier: command.agentIdentifier,
+      },
+      { _id: 1, name: 1, identifier: 1 }
+    );
+
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    if (String(agent._id) !== conversation._agentId) {
+      throw new ForbiddenException('Agent identifier does not match this conversation');
+    }
+
+    return agent.name;
   }
 
   private getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
@@ -91,27 +145,31 @@ export class HandleAgentReply {
     conversation: ConversationEntity,
     channel: ConversationChannel,
     content: ReplyContentDto,
-    type: ConversationActivityTypeEnum
-  ): Promise<void> {
+    type: ConversationActivityTypeEnum,
+    agentName?: string
+  ): Promise<SentMessageInfo> {
     const textFallback = this.extractTextFallback(content);
 
+    const sent = await this.chatSdkService.postToConversation(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.serializedThread!,
+      content
+    );
+
     await Promise.all([
-      this.chatSdkService.postToConversation(
-        conversation._agentId,
-        command.integrationIdentifier,
-        channel.platform,
-        channel.serializedThread!,
-        content
-      ),
       this.activityRepository.createAgentActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
-        platformThreadId: channel.platformThreadId,
+        platformThreadId: sent.platformThreadId || channel.platformThreadId,
+        platformMessageId: sent.messageId,
         agentId: command.agentIdentifier,
+        senderName: agentName,
         content: textFallback,
-        richContent: (content.card || content.files?.length) ? (content as Record<string, unknown>) : undefined,
+        richContent: content.card || content.files?.length ? (content as Record<string, unknown>) : undefined,
         type,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -123,6 +181,56 @@ export class HandleAgentReply {
         textFallback
       ),
     ]);
+
+    return sent;
+  }
+
+  private async deliverEdit(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    edit: EditPayloadDto,
+    agentName?: string
+  ): Promise<SentMessageInfo> {
+    const textFallback = this.extractTextFallback(edit.content);
+
+    const sent = await this.chatSdkService.editInConversation(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      edit.messageId,
+      edit.content
+    );
+
+    await Promise.all([
+      this.activityRepository.createAgentActivity({
+        identifier: `act_${shortId(12)}`,
+        conversationId: conversation._id,
+        platform: channel.platform,
+        integrationId: channel._integrationId,
+        platformThreadId: sent.platformThreadId || channel.platformThreadId,
+        platformMessageId: sent.messageId,
+        agentId: command.agentIdentifier,
+        senderName: agentName,
+        content: textFallback,
+        richContent:
+          edit.content.card || edit.content.files?.length ? (edit.content as Record<string, unknown>) : undefined,
+        type: ConversationActivityTypeEnum.EDIT,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }),
+      // Refresh the conversation's lastMessagePreview + lastActivityAt without
+      // incrementing messageCount — edits mutate an existing message, they don't add one.
+      this.conversationRepository.touchPreview(
+        command.environmentId,
+        command.organizationId,
+        conversation._id,
+        textFallback
+      ),
+    ]);
+
+    return sent;
   }
 
   private extractTextFallback(content: ReplyContentDto): string {
@@ -144,7 +252,8 @@ export class HandleAgentReply {
     signals: HandleAgentReplyCommand['signals']
   ): Promise<void> {
     const metadataSignals = (signals ?? []).filter(
-      (s): s is Extract<NonNullable<HandleAgentReplyCommand['signals']>[number], { type: 'metadata' }> => s.type === 'metadata'
+      (s): s is Extract<NonNullable<HandleAgentReplyCommand['signals']>[number], { type: 'metadata' }> =>
+        s.type === 'metadata'
     );
 
     if (metadataSignals.length) {
@@ -163,8 +272,19 @@ export class HandleAgentReply {
     channel: ConversationChannel,
     signals: Array<{ type: 'metadata'; key: string; value: unknown }>
   ): Promise<void> {
-    const merged = { ...(conversation.metadata ?? {}) };
+    // Defense in depth: the DTO validator already enforces this for HTTP callers,
+    // but commands can also be constructed internally (e.g. by the inbound handler).
+    // Reject prototype-pollution gadgets, keys that wouldn't survive a clean
+    // round-trip through downstream consumers, and undefined values (which would
+    // be silently dropped by JSON.stringify and never reach storage).
+    const merged: Record<string, unknown> = { ...(conversation.metadata ?? {}) };
     for (const signal of signals) {
+      if (!isValidMetadataSignalKey(signal.key)) {
+        throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
+      }
+      if (signal.value === undefined) {
+        throw new BadRequestException(`Metadata signal "${signal.key}" must have a defined value`);
+      }
       merged[signal.key] = signal.value;
     }
 
@@ -181,7 +301,7 @@ export class HandleAgentReply {
         merged
       ),
       this.activityRepository.createSignalActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
@@ -195,11 +315,12 @@ export class HandleAgentReply {
     ]);
   }
 
-  private async executeResolveSignal(
+  private async resolveConversation(
     command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    signal: { summary?: string }
+    options: { summary?: string }
   ): Promise<void> {
     await Promise.all([
       this.conversationRepository.updateStatus(
@@ -209,63 +330,57 @@ export class HandleAgentReply {
         ConversationStatusEnum.RESOLVED
       ),
       this.activityRepository.createSignalActivity({
-        identifier: `act-${shortId(8)}`,
+        identifier: `act_${shortId(12)}`,
         conversationId: conversation._id,
         platform: channel.platform,
         integrationId: channel._integrationId,
         platformThreadId: channel.platformThreadId,
         agentId: command.agentIdentifier,
-        content: signal.summary ?? 'Conversation resolved',
-        signalData: { type: 'resolve', payload: signal.summary ? { summary: signal.summary } : undefined },
+        content: options.summary ?? 'Conversation resolved',
+        signalData: { type: 'resolve', payload: options.summary ? { summary: options.summary } : undefined },
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       }),
     ]);
 
-    this.reactOnResolve(command, conversation, channel).catch((err) => {
+    this.reactOnResolve(config, conversation, channel).catch((err) => {
       this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to add resolve reaction`);
     });
 
-    this.fireOnResolveBridgeCall(command, conversation).catch((err) => {
+    this.fireOnResolveBridgeCall(command, config, conversation).catch((err) => {
       this.logger.error(err, `[agent:${command.agentIdentifier}] Failed to fire onResolve bridge call`);
     });
   }
 
   private async removeAckReaction(
-    command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel
   ): Promise<void> {
     const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId) return;
-
-    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
-    if (!config.reactionOnMessageReceived) return;
+    if (!firstMessageId || !config.acknowledgeOnReceived) return;
 
     await this.chatSdkService.removeReaction(
       conversation._agentId,
-      command.integrationIdentifier,
+      config.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
-      config.reactionOnMessageReceived
+      'eyes'
     );
   }
 
   private async reactOnResolve(
-    command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     channel: ConversationChannel
   ): Promise<void> {
     const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId) return;
-
-    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
-    if (!config.reactionOnResolved) return;
+    if (!firstMessageId || !config.reactionOnResolved) return;
 
     await this.chatSdkService.reactToMessage(
       conversation._agentId,
-      command.integrationIdentifier,
+      config.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
@@ -275,10 +390,9 @@ export class HandleAgentReply {
 
   private async fireOnResolveBridgeCall(
     command: HandleAgentReplyCommand,
+    config: ResolvedAgentConfig,
     conversation: ConversationEntity
   ): Promise<void> {
-    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
-
     const subscriberParticipant = conversation.participants.find((p) => p.type === 'subscriber');
     const [subscriber, history] = await Promise.all([
       subscriberParticipant

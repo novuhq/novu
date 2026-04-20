@@ -50,7 +50,7 @@ overrides:
   next@<16.2.3: ^16.2.3
   fast-xml-parser@>=4.0.0 <5.0.0: 5.5.8
   fast-xml-parser@>=5.0.0 <5.5.7: 5.5.8
-  basic-ftp@<5.2.2: 5.2.2
+  basic-ftp@<=5.2.2: 5.3.0
   axios@>=1.0.0 <1.15.0: ^1.15.0
   seroval@<1.4.1: ^1.4.1
   h3@<1.15.9: ^1.15.9
@@ -82,7 +82,7 @@ overrides:
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
   send@<0.19.0: ^0.19.0
-  dompurify@>=3.1.3 <=3.3.1: ^3.3.2
+  dompurify@>=3.1.3 <3.4.0: ^3.4.0
   '@octokit/endpoint@>=9.0.5 <9.0.6': ^9.0.6
   '@octokit/request-error@<5.1.1': ^5.1.1
   '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
@@ -113,7 +113,7 @@ overrides:
   path-to-regexp@>=8.0.0 <8.4.0: ^8.4.0
   svelte@<5.53.5: 5.53.5
   '@sveltejs/kit@<=2.57.0': ^2.57.1
-  langsmith@<0.5.18: ^0.5.18
+  langsmith@<=0.5.18: ^0.5.19
   devalue@<5.6.4: 5.6.4
   picomatch@<2.3.2: ^2.3.2
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
@@ -125,6 +125,10 @@ overrides:
   '@smithy/config-resolver@<4.4.0': ^4.4.0
   esbuild@<0.25.0: ^0.25.0
   follow-redirects@<=1.15.11: ^1.16.0
+  '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
+  '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.4': ^3.47.4
+  protobufjs@<7.5.5: ^7.5.5
+  protobufjs@>=8.0.0 <8.0.1: ^8.0.1
 
 patchedDependencies:
   smtp-server@1.17.0:
@@ -319,9 +323,9 @@ importers:
       '@chat-adapter/slack':
         specifier: ^4.25.0
         version: 4.25.0
-      '@chat-adapter/state-redis':
-        specifier: ^4.25.0
-        version: 4.25.0
+      '@chat-adapter/state-ioredis':
+        specifier: ^4.26.0
+        version: 4.26.0
       '@chat-adapter/teams':
         specifier: ^4.25.0
         version: 4.25.0
@@ -478,6 +482,9 @@ importers:
       es-toolkit:
         specifier: ^1.39.10
         version: 1.39.10
+      express:
+        specifier: ^5.0.1
+        version: 5.0.1
       handlebars:
         specifier: 4.7.9
         version: 4.7.9
@@ -571,6 +578,9 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
       zod:
         specifier: ^3.23.8
         version: 3.25.20
@@ -641,9 +651,6 @@ importers:
       chai-subset:
         specifier: ^1.6.0
         version: 1.6.0
-      express:
-        specifier: ^5.0.1
-        version: 5.0.1
       get-port:
         specifier: ^5.1.1
         version: 5.1.1
@@ -1599,6 +1606,9 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -1793,6 +1803,9 @@ importers:
       socket.io:
         specifier: ^4.7.2
         version: 4.8.1
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
     devDependencies:
       '@nestjs/cli':
         specifier: 10.4.5
@@ -2557,8 +2570,8 @@ importers:
         specifier: ^23.7.6
         version: 23.7.11
       ioredis:
-        specifier: ^5.2.4
-        version: 5.3.2
+        specifier: ^5.4.1
+        version: 5.10.1
       json-logic-js:
         specifier: ^2.0.5
         version: 2.0.5
@@ -6094,8 +6107,8 @@ packages:
   '@chat-adapter/slack@4.25.0':
     resolution: {integrity: sha512-5jTLMzRUB3iyezaxNSxXAdJIX1xQFvMsVyOResrTWs72Mfa9Ae0K69iS7+X/Z2kbgj65w0wR54Oa5HXDt8HQWQ==}
 
-  '@chat-adapter/state-redis@4.25.0':
-    resolution: {integrity: sha512-XHZ6Kv9vbKP19YaRKXaurnsxzizHpQOkfY0P4JPS8oEGVKSCJ5a9ZEnlsT3guLG8zcO6cFqNR2Br+PmX6fh1Dw==}
+  '@chat-adapter/state-ioredis@4.26.0':
+    resolution: {integrity: sha512-DhTkcZv0qq5tYxyOrQTCDkwAepka5pi+gr1g3rjOfklX1AMdON/9N5x/+8v/wm7vahukcQTjG2hsDYE+Xwo+uA==}
 
   '@chat-adapter/teams@4.25.0':
     resolution: {integrity: sha512-oxRy6VgbGaLHvh7RMoxS5ZxJxZIwxJH57/2VUHiPXkmdJfvhFxfdYDJ3pKP3dVZKYKPr4gXAOR2no0MeQmyftQ==}
@@ -6136,8 +6149,8 @@ packages:
     peerDependencies:
       express: ^4.20.0
 
-  '@clerk/shared@2.21.1':
-    resolution: {integrity: sha512-uwdxPI6RVa6f2YiOP8c1yDIjwTXB4IGG9BWKyiDGB5328UvPpEXnxutHUppXwLupM/XD/hNN9Npf+5CDbrR0wg==}
+  '@clerk/shared@2.22.1':
+    resolution: {integrity: sha512-AaPMypQXJAQgJGhN8+5VRE6/VKT9D+fI8o1dCvqXjQBcegpZWyK6Tqe9QH54Wl6qVj12Hv4qh2yH5ejEflm2KQ==}
     engines: {node: '>=18.17.0'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
@@ -6148,20 +6161,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/shared@3.0.1':
-    resolution: {integrity: sha512-WGyzVQuwAr8/P4fhMGq8G4IVKxXZtPEVe6RVE9EEMjAHtD77MF9Bu/0Dfb8jHYeyHOGsJm73I7aaDbgDZDkJzw==}
-    engines: {node: '>=18.17.0'}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
-  '@clerk/shared@3.42.0':
-    resolution: {integrity: sha512-sJUur/7jnHHlAsdoDosxpOmfV05VR7K5rvqlFskj3GaAMFEJrvdOztw0hmhBGVSWiCpjTZfdGITegton8mo7mQ==}
+  '@clerk/shared@3.47.4':
+    resolution: {integrity: sha512-0O5/zgB5SO26PKarAIw7uj4j+4JsnT2/uiJ7SPI3LQMb62sM+AjDlVadcXuYc+4sY6w1szrAIVepI5Bkv57hnQ==}
     engines: {node: '>=18.17.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -11415,39 +11416,6 @@ packages:
     peerDependencies:
       react: ^18.0 || ^19.0 || ^19.0.0-rc
 
-  '@redis/bloom@5.11.0':
-    resolution: {integrity: sha512-KYiVilAhAFN3057afUb/tfYJpsEyTkQB+tQcn5gVVA7DgcNOAj8lLxe4j8ov8BF6I9C1Fe/kwlbuAICcTMX8Lw==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
-  '@redis/client@5.11.0':
-    resolution: {integrity: sha512-GHoprlNQD51Xq2Ztd94HHV94MdFZQ3CVrpA04Fz8MVoHM0B7SlbmPEVIjwTbcv58z8QyjnrOuikS0rWF03k5dQ==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@node-rs/xxhash': ^1.1.0
-    peerDependenciesMeta:
-      '@node-rs/xxhash':
-        optional: true
-
-  '@redis/json@5.11.0':
-    resolution: {integrity: sha512-1iAy9kAtcD0quB21RbPTbUqqy+T2Uu2JxucwE+B4A+VaDbIRvpZR6DMqV8Iqaws2YxJYB3GC5JVNzPYio2ErUg==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
-  '@redis/search@5.11.0':
-    resolution: {integrity: sha512-g1l7f3Rnyk/xI99oGHIgWHSKFl45Re5YTIcO8j/JE8olz389yUFyz2+A6nqVy/Zi031VgPDWscbbgOk8hlhZ3g==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
-  '@redis/time-series@5.11.0':
-    resolution: {integrity: sha512-TWFeOcU4xkj0DkndnOyhtxvX1KWD+78UHT3XX3x3XRBUGWeQrKo3jqzDsZwxbggUgf9yLJr/akFHXru66X5UQA==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
   '@reduxjs/toolkit@2.8.2':
     resolution: {integrity: sha512-MYlOhQ0sLdw4ud48FoC5w0dH9VfWQjtCjreKwYTT3l+r427qYC5Y8PihNutepr8XrNaBUDQo9khWUwQxZaqt5A==}
     peerDependencies:
@@ -15533,8 +15501,8 @@ packages:
     resolution: {integrity: sha512-CtGuTyWf3ig+sgRyC7uP6DM3N+5ur/p8L+FPfsd+BbIfIs74TFfCajZTHnCw6K5dqM0bZEbRIqRy1fAdiUJhTA==}
     engines: {node: '>= 0.6'}
 
-  basic-ftp@5.2.2:
-    resolution: {integrity: sha512-1tDrzKsdCg70WGvbFss/ulVAxupNauGnOlgpyjKzeQxzyllBLS0CGLV7tjIXTK3ZQA9/FBEm9qyFFN1bciA6pw==}
+  basic-ftp@5.3.0:
+    resolution: {integrity: sha512-5K9eNNn7ywHPsYnFwjKgYH8Hf8B5emh7JKcPaVjjrMJFQQwGpwowEnZNEtHs7DfR7hCZsmaK3VA4HUK0YarT+w==}
     engines: {node: '>=10.0.0'}
 
   bcrypt-pbkdf@1.0.2:
@@ -15970,6 +15938,9 @@ packages:
 
   chat@4.25.0:
     resolution: {integrity: sha512-QM8ex4Gpn8zYIPyQXh41Who6R9Wq3WcQeOjAy4EuR1m1ha0tASuzHkLQfjaTAGLgrgrThV0Zh5KKoH0S92iwNA==}
+
+  chat@4.26.0:
+    resolution: {integrity: sha512-QToDnIEGpyb8yQA6YLMHOSRK30YVk4RtsyFyuWFYyB2c4jQlyIrSWtwVK7qyvmvqzQp9uDwCdJRAhS8GtCHAGQ==}
 
   check-disk-space@3.4.0:
     resolution: {integrity: sha512-drVkSqfwA+TvuEhFipiR1OC9boEGZL5RrWvVsOthdcvQNXyCCuKkEiTOTXZ7qxSf/GLwq4GvzfrQD/Wz325hgw==}
@@ -17284,8 +17255,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.3.3:
-    resolution: {integrity: sha512-Oj6pzI2+RqBfFG+qOaOLbFXLQ90ARpcGG6UePL82bJLtdsa6CYJD7nmiU8MW9nQNOtCHV3lZ/Bzq1X0QYbBZCA==}
+  dompurify@3.4.0:
+    resolution: {integrity: sha512-nolgK9JcaUXMSmW+j1yaSvaEaoXYHwWyGJlkoCTghc97KgGDDSnpoU/PlEnw63Ah+TGKFOyY+X5LnxaWbCSfXg==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -20298,8 +20269,8 @@ packages:
     resolution: {integrity: sha512-QJv/h939gDpvT+9SiLVlY7tZC3xB2qK57v0J04Sh9wpMb6MP1q8gB21L3WIo8T5P1MSMg3Ep14L7KkDCFG3y4w==}
     engines: {node: '>=16.0.0'}
 
-  langsmith@0.5.18:
-    resolution: {integrity: sha512-3zuZUWffTHQ+73EAwnodADtf534VNEZUpXr9jC12qyG8/IQuJET7PRsCpTb9wX2lmBspakwLUpqpj3tNm/0bVA==}
+  langsmith@0.5.19:
+    resolution: {integrity: sha512-5tFoETuFMvGkbPGsINNlIE4Ab86CsPhdPOQZCGwNt/NX0h5NDKQLKOWS/G2XcRUBOQl4mCNbrayUvUTWaIRsCg==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -23351,12 +23322,12 @@ packages:
     resolution: {integrity: sha512-SAzp/O4Yh02jGdRc+uIrGoe87dkN/XtwxfZ4ZyafJHymd79ozp5VG5nyZ7ygqPM5+cpLDjjGnYFUkngonyDPOQ==}
     engines: {node: '>=14.0.0'}
 
-  protobufjs@7.5.4:
-    resolution: {integrity: sha512-CvexbZtbov6jW2eXAvLukXjXUW1TzFaivC46BpWc/3BpcCysb5Vffu+B3XHMm8lVEuy2Mm4XGex8hBSg1yapPg==}
+  protobufjs@7.5.5:
+    resolution: {integrity: sha512-3wY1AxV+VBNW8Yypfd1yQY9pXnqTAN+KwQxL8iYm3/BjKYMNg4i0owhEe26PWDOMaIrzeeF98Lqd5NGz4omiIg==}
     engines: {node: '>=12.0.0'}
 
-  protobufjs@8.0.0:
-    resolution: {integrity: sha512-jx6+sE9h/UryaCZhsJWbJtTEy47yXoGNYI4z8ZaRncM0zBKeRqjO2JEcOUYwrYGb1WLhXM1FfMzW3annvFv0rw==}
+  protobufjs@8.0.1:
+    resolution: {integrity: sha512-NWWCCscLjs+cOKF/s/XVNFRW7Yih0fdH+9brffR5NZCy8k42yRdl5KlWKMVXuI1vfCoy4o1z80XR/W/QUb3V3w==}
     engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
@@ -23828,10 +23799,6 @@ packages:
   redis-parser@3.0.0:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
     engines: {node: '>=4'}
-
-  redis@5.11.0:
-    resolution: {integrity: sha512-YwXjATVDT+AuxcyfOwZn046aml9jMlQPvU1VXIlLDVAExe0u93aTfPYSeRgG4p9Q/Jlkj+LXJ1XEoFV+j2JKcQ==}
-    engines: {node: '>= 18'}
 
   reduce-flatten@2.0.0:
     resolution: {integrity: sha512-EJ4UNY/U1t2P/2k6oqotuX2Cc3T6nxJwsM0N0asT7dhrtH1ltUxDn4NalSYmPE2rCkVpcf/X6R0wDwcFpzhd4w==}
@@ -25161,11 +25128,6 @@ packages:
 
   swap-case@1.1.2:
     resolution: {integrity: sha512-BAmWG6/bx8syfc6qXPprof3Mn5vQgf5dwdUNJhsNqU9WdPt5P+ES/wQ5bxfijy8zwZgZZHslC3iAsxsuQMCzJQ==}
-
-  swr@2.2.5:
-    resolution: {integrity: sha512-QtxqyclFeAsxEUeZIYmsaQ0UjimSq1RZ9Un7I68/0ClKK/U3LoyQunwkQfJZr2fc22DfIXLNDc2wFyTEikCUpg==}
-    peerDependencies:
-      react: ^16.11.0 || ^17.0.0 || ^18.0.0
 
   swr@2.3.4:
     resolution: {integrity: sha512-bYd2lrhc+VarcpkgWclcUi92wYCpOgMws9Sd1hG1ntAu0NEy+14CbotuFjshBU2kt9rYj9TSmDcybpxpeTU1fg==}
@@ -30755,12 +30717,11 @@ snapshots:
       - debug
       - supports-color
 
-  '@chat-adapter/state-redis@4.25.0':
+  '@chat-adapter/state-ioredis@4.26.0':
     dependencies:
-      chat: 4.25.0
-      redis: 5.11.0
+      chat: 4.26.0
+      ioredis: 5.10.1
     transitivePeerDependencies:
-      - '@node-rs/xxhash'
       - supports-color
 
   '@chat-adapter/teams@4.25.0':
@@ -30801,7 +30762,7 @@ snapshots:
 
   '@clerk/backend@1.25.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@clerk/shared': 3.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@clerk/shared': 3.47.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@clerk/types': 4.48.0
       cookie: 1.0.2
       snakecase-keys: 8.0.1
@@ -30812,7 +30773,7 @@ snapshots:
 
   '@clerk/clerk-react@5.59.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@clerk/shared': 3.42.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@clerk/shared': 3.47.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       tslib: 2.8.1
@@ -30820,7 +30781,7 @@ snapshots:
   '@clerk/express@1.3.53(express@5.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@clerk/backend': 1.25.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@clerk/shared': 3.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@clerk/shared': 3.47.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@clerk/types': 4.48.0
       express: 5.0.1
       tslib: 2.4.1
@@ -30828,31 +30789,19 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/shared@2.21.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@clerk/shared@2.22.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@clerk/types': 4.48.0
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
       js-cookie: 3.0.5
       std-env: 3.9.0
-      swr: 2.2.5(react@19.2.3)
+      swr: 2.3.4(react@19.2.3)
     optionalDependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  '@clerk/shared@3.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      '@clerk/types': 4.48.0
-      dequal: 2.0.3
-      glob-to-regexp: 0.4.1
-      js-cookie: 3.0.5
-      std-env: 3.9.0
-      swr: 2.2.5(react@19.2.3)
-    optionalDependencies:
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-
-  '@clerk/shared@3.42.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@clerk/shared@3.47.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       csstype: 3.1.3
       dequal: 2.0.3
@@ -30867,7 +30816,7 @@ snapshots:
   '@clerk/testing@1.4.22(@playwright/test@1.58.2)(cypress@13.10.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@clerk/backend': 1.25.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@clerk/shared': 2.21.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@clerk/shared': 2.22.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@clerk/types': 4.48.0
       dotenv: 16.4.7
     optionalDependencies:
@@ -32018,7 +31967,7 @@ snapshots:
       fast-deep-equal: 3.1.3
       functional-red-black-tree: 1.0.1
       google-gax: 4.6.0(encoding@0.1.13)
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -32130,14 +32079,14 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
       yargs: 17.7.2
 
   '@grpc/proto-loader@0.8.0':
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
       yargs: 17.7.2
 
   '@gwhitney/detect-indent@7.0.1': {}
@@ -32419,7 +32368,8 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.15
 
-  '@ioredis/commands@1.2.0': {}
+  '@ioredis/commands@1.2.0':
+    optional: true
 
   '@ioredis/commands@1.5.1': {}
 
@@ -33039,7 +32989,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.20.0)
+      langsmith: 0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.20.0)
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -33060,7 +33010,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0)
+      langsmith: 0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0)
       mustache: 4.2.0
       p-queue: 6.6.2
       uuid: 10.0.0
@@ -33079,7 +33029,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@4.3.5))(ws@8.20.0)
+      langsmith: 0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@4.3.5))(ws@8.20.0)
       mustache: 4.2.0
       p-queue: 6.6.2
       uuid: 10.0.0
@@ -35417,7 +35367,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.201.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
 
   '@opentelemetry/otlp-transformer@0.211.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -35428,7 +35378,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.211.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.5.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.5.0(@opentelemetry/api@1.9.0)
-      protobufjs: 8.0.0
+      protobufjs: 8.0.1
 
   '@opentelemetry/otlp-transformer@0.212.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -35439,7 +35389,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.212.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.5.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.5.1(@opentelemetry/api@1.9.0)
-      protobufjs: 8.0.0
+      protobufjs: 8.0.1
 
   '@opentelemetry/propagator-b3@2.5.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -38409,26 +38359,6 @@ snapshots:
   '@react-email/text@0.1.5(react@19.2.3)':
     dependencies:
       react: 19.2.3
-
-  '@redis/bloom@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
-  '@redis/client@5.11.0':
-    dependencies:
-      cluster-key-slot: 1.1.2
-
-  '@redis/json@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
-  '@redis/search@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
-  '@redis/time-series@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
 
   '@reduxjs/toolkit@2.8.2(react-redux@9.2.0(@types/react@19.2.8)(react@19.2.3)(redux@5.0.1))(react@19.2.3)':
     dependencies:
@@ -43879,7 +43809,7 @@ snapshots:
 
   basic-auth@1.1.0: {}
 
-  basic-ftp@5.2.2: {}
+  basic-ftp@5.3.0: {}
 
   bcrypt-pbkdf@1.0.2:
     dependencies:
@@ -44429,6 +44359,18 @@ snapshots:
   chardet@0.7.0: {}
 
   chat@4.25.0:
+    dependencies:
+      '@workflow/serde': 4.1.0-beta.2
+      mdast-util-to-string: 4.0.0
+      remark-gfm: 4.0.1
+      remark-parse: 11.0.0
+      remark-stringify: 11.0.0
+      remend: 1.3.0
+      unified: 11.0.5
+    transitivePeerDependencies:
+      - supports-color
+
+  chat@4.26.0:
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
@@ -45896,7 +45838,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.3.3:
+  dompurify@3.4.0:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -47402,7 +47344,7 @@ snapshots:
 
   get-uri@6.0.5:
     dependencies:
-      basic-ftp: 5.2.2
+      basic-ftp: 5.3.0
       data-uri-to-buffer: 6.0.2
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
@@ -47618,7 +47560,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
       object-hash: 3.0.0
       proto3-json-serializer: 2.0.2
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
       retry-request: 7.0.2(encoding@0.1.13)
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -48455,6 +48397,7 @@ snapshots:
       standard-as-callback: 2.1.0
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   ip-address@10.1.0: {}
 
@@ -50236,7 +50179,7 @@ snapshots:
       '@langchain/core': 1.1.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0)
       '@langchain/langgraph': 1.1.4(@langchain/core@1.1.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.1(zod@3.25.20))(zod@3.25.76)
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0))
-      langsmith: 0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0)
+      langsmith: 0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0)
       uuid: 10.0.0
       zod: 3.25.76
     transitivePeerDependencies:
@@ -50257,7 +50200,7 @@ snapshots:
       vscode-languageserver-textdocument: 1.0.12
       vscode-uri: 3.0.8
 
-  langsmith@0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.20.0):
+  langsmith@0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.20.0):
     dependencies:
       p-queue: 6.6.2
       uuid: 10.0.0
@@ -50268,7 +50211,7 @@ snapshots:
       openai: 4.78.1(encoding@0.1.13)(zod@4.3.5)
       ws: 8.20.0
 
-  langsmith@0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0):
+  langsmith@0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@3.25.20))(ws@8.20.0):
     dependencies:
       p-queue: 6.6.2
       uuid: 10.0.0
@@ -50279,7 +50222,7 @@ snapshots:
       openai: 6.17.0(ws@8.20.0)(zod@3.25.20)
       ws: 8.20.0
 
-  langsmith@0.5.18(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@4.3.5))(ws@8.20.0):
+  langsmith@0.5.19(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.17.0(ws@8.20.0)(zod@4.3.5))(ws@8.20.0):
     dependencies:
       p-queue: 6.6.2
       uuid: 10.0.0
@@ -51216,7 +51159,7 @@ snapshots:
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.13
       dayjs: 1.11.19
-      dompurify: 3.3.3
+      dompurify: 3.4.0
       katex: 0.16.28
       khroma: 2.1.0
       lodash-es: 4.18.1
@@ -53961,10 +53904,10 @@ snapshots:
 
   proto3-json-serializer@2.0.2:
     dependencies:
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
     optional: true
 
-  protobufjs@7.5.4:
+  protobufjs@7.5.5:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -53979,7 +53922,7 @@ snapshots:
       '@types/node': 22.15.13
       long: 5.2.3
 
-  protobufjs@8.0.0:
+  protobufjs@8.0.1:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -54577,16 +54520,6 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
-
-  redis@5.11.0:
-    dependencies:
-      '@redis/bloom': 5.11.0(@redis/client@5.11.0)
-      '@redis/client': 5.11.0
-      '@redis/json': 5.11.0(@redis/client@5.11.0)
-      '@redis/search': 5.11.0(@redis/client@5.11.0)
-      '@redis/time-series': 5.11.0(@redis/client@5.11.0)
-    transitivePeerDependencies:
-      - '@node-rs/xxhash'
 
   reduce-flatten@2.0.0: {}
 
@@ -56206,12 +56139,6 @@ snapshots:
     dependencies:
       lower-case: 1.1.4
       upper-case: 1.1.3
-
-  swr@2.2.5(react@19.2.3):
-    dependencies:
-      client-only: 0.0.1
-      react: 19.2.3
-      use-sync-external-store: 1.4.0(react@19.2.3)
 
   swr@2.3.4(react@18.3.1):
     dependencies:

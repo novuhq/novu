@@ -1,36 +1,28 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, ValidateIf } from 'class-validator';
+import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
-export class AgentReactionSettingsDto {
+export class AgentBehaviorDto {
   @ApiPropertyOptional({
-    description: 'Emoji reaction for incoming messages. Emoji name string to customize, null to disable. Default: "eyes" (👀)',
-    default: 'eyes',
+    description:
+      'Acknowledge incoming messages. On platforms that support a native typing indicator ' +
+      '(e.g. Slack, Microsoft Teams), shows a "Typing…" indicator while the agent processes the message. ' +
+      'On platforms that do not (e.g. WhatsApp), reacts with an "eyes" emoji to the first ' +
+      'inbound message in a thread. Default: true',
+    default: true,
   })
+  @IsBoolean()
   @IsOptional()
-  @ValidateIf((_, value) => value !== null)
-  @IsString()
-  onMessageReceived?: string | null;
+  acknowledgeOnReceived?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Emoji reaction when a conversation is resolved. Emoji name string to customize, null to disable. Default: "check" (✅)',
+    description:
+      'Cross-platform emoji name for resolved conversations (e.g. "check", "star"). ' +
+      'Set to null to disable. Default: "check"',
     default: 'check',
   })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
-  @IsString()
-  onResolved?: string | null;
-}
-
-export class AgentBehaviorDto {
-  @ApiPropertyOptional({ description: 'Show a "Thinking..." indicator while the agent is processing a message' })
-  @IsBoolean()
-  @IsOptional()
-  thinkingIndicatorEnabled?: boolean;
-
-  @ApiPropertyOptional({ type: AgentReactionSettingsDto, description: 'Automatic emoji reactions on messages' })
-  @ValidateNested()
-  @Type(() => AgentReactionSettingsDto)
-  @IsOptional()
-  reactions?: AgentReactionSettingsDto;
+  @IsWellKnownEmoji()
+  reactionOnResolved?: string | null;
 }
