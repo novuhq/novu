@@ -91,9 +91,9 @@ function InlineRouteForm({
   };
 
   return (
-    <TableRow>
+    <TableRow className="[&>td]:border-0">
       {/* Address */}
-      <TableCell>
+      <TableCell className="px-3 py-4">
         <div className="flex items-center gap-1">
           <Input
             className="h-7 w-28 text-sm"
@@ -106,7 +106,7 @@ function InlineRouteForm({
       </TableCell>
 
       {/* Destination */}
-      <TableCell>
+      <TableCell className="px-3 py-4">
         <div className="flex items-center gap-2">
           <Select
             value={form.type}
@@ -152,7 +152,7 @@ function InlineRouteForm({
       </TableCell>
 
       {/* Actions */}
-      <TableCell>
+      <TableCell className="px-3 py-4">
         <div className="flex items-center gap-1">
           <Button
             size="xs"
@@ -170,7 +170,7 @@ function InlineRouteForm({
         </div>
       </TableCell>
 
-      <TableCell className="w-12 text-right">
+      <TableCell className="w-12 px-3 py-4 text-right">
         <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" disabled />
       </TableCell>
     </TableRow>
@@ -202,11 +202,11 @@ function ExistingRouteRow({
     : (agentOptions.find((a) => a._id === route.destination)?.name ?? route.destination);
 
   return (
-    <TableRow>
-      <TableCell className="text-sm">
+    <TableRow className="[&>td]:border-0">
+      <TableCell className="px-3 py-4 text-sm">
         {route.address}@{domainName}
       </TableCell>
-      <TableCell className="text-foreground-600 max-w-[200px] truncate text-sm">
+      <TableCell className="text-foreground-600 max-w-[200px] truncate px-3 py-4 text-sm">
         {isWebhook ? (
           <span className="flex items-center gap-1">
             <RiWebhookLine className="size-4 shrink-0" />
@@ -219,10 +219,10 @@ function ExistingRouteRow({
           </span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="px-3 py-4">
         <span className="text-success text-sm">Active</span>
       </TableCell>
-      <TableCell className="w-12 text-right">
+      <TableCell className="w-12 px-3 py-4 text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" />
@@ -395,14 +395,14 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border bg-white">
-        <Table>
-          <TableHeader>
+      <div className="rounded-lg border bg-white p-3">
+        <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
+          <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
             <TableRow>
-              <TableHead>Address</TableHead>
-              <TableHead>Destination</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead />
+              <TableHead className="h-8 px-3 text-label-xs">Address</TableHead>
+              <TableHead className="h-8 px-3 text-label-xs">Destination</TableHead>
+              <TableHead className="h-8 px-3 text-label-xs">Status</TableHead>
+              <TableHead className="h-8 px-3 text-label-xs w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -443,8 +443,8 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
             )}
 
             {domain.routes.length === 0 && !isAdding && (
-              <TableRow>
-                <TableCell colSpan={4} className="py-16 text-center">
+              <TableRow className="[&>td]:border-0">
+                <TableCell colSpan={4} className="px-3 py-16 text-center">
                   <div className="flex flex-col items-center gap-6">
                     <RoutingEmptyIllustration />
                     <div className="space-y-1 text-center">
