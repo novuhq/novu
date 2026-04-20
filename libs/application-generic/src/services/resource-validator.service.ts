@@ -322,11 +322,8 @@ export class ResourceValidatorService {
   }
 
   async validateDomainsLimit(organizationId: string): Promise<void> {
-    const mailServerDomain = process.env.MAIL_SERVER_DOMAIN?.replace('https://', '').replace('/', '');
-
     const domainsCount = await this.domainRepository.count({
       _organizationId: organizationId,
-      ...(mailServerDomain ? { name: { $ne: mailServerDomain } } : {}),
     });
     const maxDomainsLimit = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_DOMAINS_LIMIT_NUMBER,

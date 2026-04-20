@@ -20,17 +20,10 @@ import {
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteDomain, useFetchDomains } from '@/hooks/use-domains';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { buildRoute, ROUTES } from '@/utils/routes';
-
-const DEMO_DOMAIN_SUFFIX = 'novu.co';
-
-function isDemoDomain(domainName: string): boolean {
-  return domainName.endsWith(`.${DEMO_DOMAIN_SUFFIX}`) || domainName === DEMO_DOMAIN_SUFFIX;
-}
 
 function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
   if (status === DomainStatusEnum.VERIFIED) {
@@ -51,7 +44,6 @@ function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
 function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; environmentSlug: string }) {
   const navigate = useNavigate();
   const deleteDomain = useDeleteDomain();
-  const isDemo = isDemoDomain(domain.name);
 
   const handleDelete = async (e: Event) => {
     e.stopPropagation();
@@ -72,11 +64,6 @@ function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; enviro
       <TableCell>
         <div className="flex items-center gap-2">
           <span className="font-code text-sm font-medium">{domain.name}</span>
-          {isDemo && (
-            <Badge variant="light" color="orange" size="sm">
-              DEMO
-            </Badge>
-          )}
         </div>
       </TableCell>
       <TableCell>
@@ -94,26 +81,13 @@ function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; enviro
             <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            {isDemo ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="block">
-                    <DropdownMenuItem disabled className="text-destructive focus:text-destructive">
-                      Delete domain
-                    </DropdownMenuItem>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>The demo domain cannot be deleted.</TooltipContent>
-              </Tooltip>
-            ) : (
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={handleDelete}
-                disabled={deleteDomain.isPending}
-              >
-                Delete domain
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={handleDelete}
+              disabled={deleteDomain.isPending}
+            >
+              Delete domain
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
