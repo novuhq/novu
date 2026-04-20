@@ -288,61 +288,59 @@ export function DomainDetailPage() {
                     Update your DNS records on Cloudflare to match the following:
                   </p>
 
-                  <div className="rounded-lg overflow-hidden border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs w-[60px]">Type</TableHead>
-                          <TableHead className="text-xs">Name</TableHead>
-                          <TableHead className="text-xs">Content</TableHead>
-                          <TableHead className="text-xs w-[75px]">TTL</TableHead>
-                          <TableHead className="text-xs w-[75px]">Priority</TableHead>
-                          <TableHead className="text-xs w-[150px]">Status</TableHead>
+                  <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
+                    <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
+                      <TableRow>
+                        <TableHead className="h-8 px-3 text-label-xs w-[60px]">Type</TableHead>
+                        <TableHead className="h-8 px-3 text-label-xs">Name</TableHead>
+                        <TableHead className="h-8 px-3 text-label-xs">Content</TableHead>
+                        <TableHead className="h-8 px-3 text-label-xs w-[75px]">TTL</TableHead>
+                        <TableHead className="h-8 px-3 text-label-xs w-[75px]">Priority</TableHead>
+                        <TableHead className="h-8 px-3 text-label-xs w-[150px]">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        <TableRow className="[&>td]:border-0">
+                          <TableCell colSpan={6} className="px-3 py-4">
+                            <Skeleton className="h-8 w-full" />
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {isLoading ? (
-                          <TableRow>
-                            <TableCell colSpan={6}>
-                              <Skeleton className="h-8 w-full" />
+                      ) : domain?.expectedDnsRecords?.length ? (
+                        domain.expectedDnsRecords.map((record, i) => (
+                          <TableRow key={i} className="[&>td]:border-0">
+                            <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">
+                              {record.type}
+                            </TableCell>
+                            <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">
+                              {record.name}
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate font-code text-code-xs text-text-sub px-3 py-4">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="block truncate">{record.content}</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm break-all font-code text-code-xs">
+                                  {record.content}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.ttl}</TableCell>
+                            <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.priority}</TableCell>
+                            <TableCell className="px-3 py-4">
+                              <MxRecordStatusBadge configured={domain.mxRecordConfigured} />
                             </TableCell>
                           </TableRow>
-                        ) : domain?.expectedDnsRecords?.length ? (
-                          domain.expectedDnsRecords.map((record, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="font-mono text-xs font-medium text-foreground-500">
-                                {record.type}
-                              </TableCell>
-                              <TableCell className="font-mono text-xs font-medium text-foreground-500">
-                                {record.name}
-                              </TableCell>
-                              <TableCell className="max-w-[200px] truncate font-mono text-xs font-medium text-foreground-500">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="block truncate">{record.content}</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-sm break-all font-mono text-xs">
-                                    {record.content}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TableCell>
-                              <TableCell className="text-xs text-foreground-500">{record.ttl}</TableCell>
-                              <TableCell className="text-xs text-foreground-500">{record.priority}</TableCell>
-                              <TableCell>
-                                <MxRecordStatusBadge configured={domain.mxRecordConfigured} />
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-foreground-400 text-center text-sm">
-                              No DNS records available.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        ))
+                      ) : (
+                        <TableRow className="[&>td]:border-0">
+                          <TableCell colSpan={6} className="text-text-soft px-3 py-4 text-center text-label-xs">
+                            No DNS records available.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </CollapsibleSection>
 
