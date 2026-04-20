@@ -49,7 +49,7 @@ export class HandleAgentReply {
       throw new NotFoundException('Conversation not found');
     }
 
-    const channel = this.getPrimaryChannel(conversation);
+    const channel = this.conversationService.getPrimaryChannel(conversation);
     const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
 
     if (command.edit) {
@@ -63,6 +63,8 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
+      this.ensureSerializedThread(channel);
+
       replyInfo = await this.deliverMessage(
         command,
         conversation,
@@ -111,13 +113,10 @@ export class HandleAgentReply {
     return agent.name;
   }
 
-  private getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
-    const channel = this.conversationService.getPrimaryChannel(conversation);
+  private ensureSerializedThread(channel: ConversationChannel): asserts channel is ConversationChannel & { serializedThread: Record<string, unknown> } {
     if (!channel.serializedThread) {
       throw new BadRequestException('Conversation has no serialized thread — unable to deliver reply');
     }
-
-    return channel;
   }
 
   private async deliverMessage(
