@@ -6,8 +6,7 @@
     "dev": "next dev -p 4011",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "send-email": "node scripts/send-email.mjs"
+    "lint": "next lint"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.0",
