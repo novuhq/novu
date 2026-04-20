@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RiAddLine, RiMore2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { DomainResponse } from '@/api/domains';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { AddDomainDialog } from '@/components/domains/add-domain-dialog';
 import { DomainsPaywallBanner } from '@/components/domains/domains-paywall-banner';
@@ -44,11 +45,17 @@ function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
 function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; environmentSlug: string }) {
   const navigate = useNavigate();
   const deleteDomain = useDeleteDomain();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const handleDelete = async (e: Event) => {
+  const handleDelete = (e: Event) => {
     e.stopPropagation();
+    setTimeout(() => setIsDeleteModalOpen(true), 0);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       await deleteDomain.mutateAsync(domain._id);
+      setIsDeleteModalOpen(false);
       showSuccessToast(`Domain "${domain.name}" deleted.`);
     } catch {
       showErrorToast('Failed to delete domain.');
@@ -60,38 +67,58 @@ function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; enviro
   };
 
   return (
-    <TableRow className="hover:bg-neutral-alpha-50 cursor-pointer" onClick={handleRowClick}>
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <span className="font-code text-sm font-medium">{domain.name}</span>
-        </div>
-      </TableCell>
-      <TableCell>
-        <DomainStatusBadge status={domain.status} />
-      </TableCell>
-      <TableCell className="text-foreground-500 text-sm">
-        {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
-      </TableCell>
-      <TableCell className="text-foreground-500 text-sm">
-        {formatDistanceToNow(new Date(domain.updatedAt), { addSuffix: true })}
-      </TableCell>
-      <TableCell className="w-12 text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onSelect={handleDelete}
-              disabled={deleteDomain.isPending}
-            >
-              Delete domain
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
+    <>
+      <TableRow className="hover:bg-neutral-alpha-50 cursor-pointer" onClick={handleRowClick}>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <span className="font-code text-sm font-medium">{domain.name}</span>
+          </div>
+        </TableCell>
+        <TableCell>
+          <DomainStatusBadge status={domain.status} />
+        </TableCell>
+        <TableCell className="text-foreground-500 text-sm">
+          {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
+        </TableCell>
+        <TableCell className="text-foreground-500 text-sm">
+          {formatDistanceToNow(new Date(domain.updatedAt), { addSuffix: true })}
+        </TableCell>
+        <TableCell className="w-12 text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleDelete(e);
+                }}
+                disabled={deleteDomain.isPending}
+              >
+                Delete domain
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete domain"
+        description={
+          <span>
+            Are you sure you want to delete <span className="font-bold">{domain.name}</span>? This action cannot be
+            undone.
+          </span>
+        }
+        confirmButtonText="Delete domain"
+        confirmButtonVariant="error"
+        isLoading={deleteDomain.isPending}
+      />
+    </>
   );
 }
 

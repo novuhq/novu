@@ -1,6 +1,6 @@
 import { DomainStatusEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   RiAddLine,
   RiAlertFill,
@@ -13,6 +13,7 @@ import {
 } from 'react-icons/ri';
 import { SiCloudflare } from 'react-icons/si';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
 import { RetryVerificationIcon } from '@/components/icons/retry-verification';
@@ -59,7 +60,7 @@ function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
   return (
     <span className="bg-warning-lighter text-warning-base inline-flex items-center gap-1 rounded-6 px-1 py-0.5 text-label-xs">
       <RiAlertFill className="size-4 shrink-0" />
-      Pending verified
+      Pending verification
     </span>
   );
 }
@@ -91,20 +92,34 @@ export function DomainDetailPage() {
   const { refresh: refreshDomain } = useRefreshDomain(domainId);
   const deleteDomain = useDeleteDomain();
   const routingRef = useRef<DomainRoutingHandle>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const domainsHref = currentEnvironment?.slug
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
     : ROUTES.DOMAINS;
 
-  const handleVerify = () => {
-    refreshDomain();
-    showSuccessToast('Verification status refreshed.');
+  const handleVerify = async () => {
+    try {
+      await refreshDomain();
+      showSuccessToast('Verification status refreshed.');
+    } catch {
+      showErrorToast('Failed to refresh verification status.');
+    }
   };
 
-  const handleDelete = async () => {
+  const handleRequestDelete = (e: Event) => {
+    e.stopPropagation();
     if (!domain) return;
+
+    setTimeout(() => setIsDeleteModalOpen(true), 0);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!domain) return;
+
     try {
       await deleteDomain.mutateAsync(domain._id);
+      setIsDeleteModalOpen(false);
       showSuccessToast(`Domain "${domain.name}" deleted.`);
       navigate(domainsHref);
     } catch {
@@ -188,8 +203,11 @@ export function DomainDetailPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
-                    onSelect={handleDelete}
-                    disabled={deleteDomain.isPending}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      handleRequestDelete(e);
+                    }}
+                    disabled={deleteDomain.isPending || !domain}
                   >
                     Delete domain
                   </DropdownMenuItem>
@@ -366,6 +384,22 @@ export function DomainDetailPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        title="Delete domain"
+        description={
+          <span>
+            Are you sure you want to delete <span className="font-bold">{domain?.name ?? ''}</span>? This action cannot
+            be undone.
+          </span>
+        }
+        confirmButtonText="Delete domain"
+        confirmButtonVariant="error"
+        isLoading={deleteDomain.isPending}
+      />
     </DashboardLayout>
   );
 }
