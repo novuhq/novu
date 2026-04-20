@@ -50,10 +50,9 @@ export class HandleAgentReply {
     }
 
     const channel = this.getPrimaryChannel(conversation);
+    const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
 
     if (command.edit) {
-      const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
-
       return this.deliverEdit(command, conversation, channel, command.edit, agentName);
     }
 
@@ -64,8 +63,6 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
-      const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
-
       replyInfo = await this.deliverMessage(
         command,
         conversation,

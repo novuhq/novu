@@ -75,7 +75,7 @@ export class AgentConversationService {
   ) {}
 
   getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
-    const channel = conversation.channels[0];
+    const channel = conversation.channels?.[0];
     if (!channel) {
       throw new BadRequestException(`Conversation ${conversation._id} has no channel`);
     }
