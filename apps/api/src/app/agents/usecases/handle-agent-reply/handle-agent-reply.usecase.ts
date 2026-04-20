@@ -56,7 +56,7 @@ export class HandleAgentReply {
       return this.deliverEdit(command, conversation, channel, command.edit, agentName);
     }
 
-    const needsConfig = !!(command.reply || command.resolve);
+    const needsConfig = !!(command.reply || command.resolve || command.signals?.length);
     const config = needsConfig
       ? await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier)
       : null;

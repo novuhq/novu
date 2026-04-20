@@ -1,10 +1,11 @@
 import { providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { ComponentProps } from 'react';
-import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { RiCheckboxCircleFill, RiForbidFill, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import { Link, useLocation } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CompactButton } from '@/components/primitives/button-compact';
+import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -132,6 +133,9 @@ function AgentsTableSkeletonRow() {
         </div>
       </TableCell>
       <TableCell className="p-3">
+        <Skeleton className="h-6 w-[9ch] rounded-md" />
+      </TableCell>
+      <TableCell className="p-3">
         <div className="flex min-h-[41px] items-center">
           <div className="flex items-center">
             <Skeleton className="border-static-white bg-bg-white size-6 shrink-0 rounded-full border border-solid shadow-xs" />
@@ -161,6 +165,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       <TableHeader>
         <TableRow>
           <TableHead className="h-11 px-3 py-2.5">Agent</TableHead>
+          <TableHead className="h-11 px-3 py-2.5">Status</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Integrations</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Last updated</TableHead>
           <TableHead className="h-11 w-[52px] px-3 py-2.5">
@@ -193,6 +198,19 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                       </span>
                     </div>
                   </div>
+                </AgentNavTableCell>
+                <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
+                  {agent.active ? (
+                    <StatusBadge variant="light" status="completed">
+                      <StatusBadgeIcon as={RiCheckboxCircleFill} />
+                      Active
+                    </StatusBadge>
+                  ) : (
+                    <StatusBadge variant="light" status="disabled">
+                      <StatusBadgeIcon as={RiForbidFill} />
+                      Inactive
+                    </StatusBadge>
+                  )}
                 </AgentNavTableCell>
                 <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
                   <AgentIntegrationsCell agent={agent} />
@@ -230,7 +248,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       {!isLoading && agents.length > 0 ? (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={4} className="p-0">
+            <TableCell colSpan={5} className="p-0">
               <TablePaginationFooter
                 pageSize={paginationProps.pageSize}
                 currentPageItemsCount={paginationProps.currentItemsCount}

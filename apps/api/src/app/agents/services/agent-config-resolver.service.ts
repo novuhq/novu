@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
+import { AgentInactiveException } from '../exceptions/agent-inactive.exception';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { esmImport } from '../utils/esm-import';
 import { resolveAgentPlatform } from '../utils/provider-to-platform';
@@ -75,6 +76,10 @@ export class AgentConfigResolver {
     const agent = await this.agentRepository.findByIdForWebhook(agentId);
     if (!agent) {
       throw new NotFoundException(`Agent ${agentId} not found`);
+    }
+
+    if (agent.active === false) {
+      throw new AgentInactiveException(agentId);
     }
 
     const { _environmentId: environmentId, _organizationId: organizationId } = agent;

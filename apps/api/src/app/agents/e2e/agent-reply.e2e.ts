@@ -316,4 +316,34 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(resolveActivity).to.exist;
     });
   });
+
+  describe('Inactive agent', () => {
+    it('should return 422 when agent is inactive', async () => {
+      const conversationId = await seedConversation(ctx);
+      const patchRes = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      expect(patchRes.status).to.equal(200);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        reply: { text: 'This should fail' },
+      });
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('should return 422 for signal-only requests when agent is inactive', async () => {
+      const conversationId = await seedConversation(ctx);
+      const patchRes = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      expect(patchRes.status).to.equal(200);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        signals: [{ type: 'metadata', key: 'blocked', value: true }],
+      });
+
+      expect(res.status).to.equal(422);
+    });
+  });
 });
