@@ -1,16 +1,13 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
-  ConversationRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import type { EmojiValue, Message, Thread } from 'chat';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
-import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
-import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
@@ -38,11 +35,8 @@ export class AgentInboundHandler {
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
-    private readonly conversationRepository: ConversationRepository,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly subscriberRepository: SubscriberRepository,
-    @Inject(forwardRef(() => HandleAgentReply))
-    private readonly handleAgentReply: HandleAgentReply
+    private readonly subscriberRepository: SubscriberRepository
   ) {}
 
   async handle(
@@ -115,8 +109,8 @@ export class AgentInboundHandler {
       organizationId: config.organizationId,
     });
 
-    const channel = conversation.channels?.[0];
-    const isFirstMessage = !channel?.firstPlatformMessageId;
+    const primaryChannel = this.conversationService.getPrimaryChannel(conversation);
+    const isFirstMessage = !primaryChannel.firstPlatformMessageId;
 
     if (config.acknowledgeOnReceived) {
       const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
@@ -131,7 +125,7 @@ export class AgentInboundHandler {
             this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
           });
 
-        this.conversationRepository
+        this.conversationService
           .setFirstPlatformMessageId(
             config.environmentId,
             config.organizationId,
@@ -177,17 +171,17 @@ export class AgentInboundHandler {
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
-        await this.handleAgentReply.execute(
-          HandleAgentReplyCommand.create({
-            userId: 'system',
-            environmentId: config.environmentId,
-            organizationId: config.organizationId,
-            conversationId: conversation._id,
-            agentIdentifier: config.agentIdentifier,
-            integrationIdentifier: config.integrationIdentifier,
-            reply: { text: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN },
-          })
-        );
+        const sent = await thread.post(ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN);
+        const channel = this.conversationService.getPrimaryChannel(conversation);
+        await this.conversationService.persistAgentMessage({
+          conversationId: conversation._id,
+          channel,
+          platformMessageId: (sent as { id?: string })?.id ?? '',
+          agentIdentifier: config.agentIdentifier,
+          content: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        });
 
         return;
       }
@@ -204,7 +198,7 @@ export class AgentInboundHandler {
       return;
     }
 
-    const conversation = await this.conversationRepository.findByPlatformThread(
+    const conversation = await this.conversationService.findByPlatformThread(
       config.environmentId,
       config.organizationId,
       threadId

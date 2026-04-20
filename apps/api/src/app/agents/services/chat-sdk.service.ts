@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { SentMessageInfo } from '@novu/framework';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
@@ -58,7 +58,6 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    @Inject(forwardRef(() => AgentInboundHandler))
     private readonly inboundHandler: AgentInboundHandler
   ) {
     this.instances = new LRUCache<string, CachedChat>({
