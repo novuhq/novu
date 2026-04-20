@@ -30,8 +30,7 @@ export type DomainResponse = {
 };
 
 export type CreateDomainBody = { name: string };
-export type CreateRouteBody = { address: string; destination?: string; type: DomainRouteTypeEnum };
-export type UpdateRouteBody = Partial<CreateRouteBody>;
+export type UpdateDomainBody = { routes?: DomainRouteResponse[] };
 
 export const fetchDomains = async (environment: IEnvironment): Promise<DomainResponse[]> => {
   const { data } = await get<{ data: DomainResponse[] }>(`/domains`, { environment });
@@ -54,36 +53,12 @@ export const createDomain = async (body: CreateDomainBody, environment: IEnviron
 export const deleteDomain = (domainId: string, environment: IEnvironment): Promise<void> =>
   del(`/domains/${domainId}`, { environment });
 
-export const createRoute = async (
+export const updateDomain = async (
   domainId: string,
-  body: CreateRouteBody,
+  body: UpdateDomainBody,
   environment: IEnvironment
 ): Promise<DomainResponse> => {
-  const { data } = await post<{ data: DomainResponse }>(`/domains/${domainId}/routes`, { body, environment });
-
-  return data;
-};
-
-export const updateRoute = async (
-  domainId: string,
-  routeIndex: number,
-  body: UpdateRouteBody,
-  environment: IEnvironment
-): Promise<DomainResponse> => {
-  const { data } = await patch<{ data: DomainResponse }>(`/domains/${domainId}/routes/${routeIndex}`, {
-    body,
-    environment,
-  });
-
-  return data;
-};
-
-export const deleteRoute = async (
-  domainId: string,
-  routeIndex: number,
-  environment: IEnvironment
-): Promise<DomainResponse> => {
-  const { data } = await del<{ data: DomainResponse }>(`/domains/${domainId}/routes/${routeIndex}`, { environment });
+  const { data } = await patch<{ data: DomainResponse }>(`/domains/${domainId}`, { body, environment });
 
   return data;
 };

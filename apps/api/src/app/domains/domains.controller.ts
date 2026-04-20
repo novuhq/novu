@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   UseInterceptors,
@@ -21,21 +20,17 @@ import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateDomainDto } from './dtos/create-domain.dto';
 import { DomainResponseDto } from './dtos/domain-response.dto';
-import { DomainRouteDto } from './dtos/domain-route.dto';
+import { UpdateDomainDto } from './dtos/update-domain.dto';
 import { CreateDomainCommand } from './usecases/create-domain/create-domain.command';
 import { CreateDomain } from './usecases/create-domain/create-domain.usecase';
-import { CreateRouteCommand } from './usecases/create-route/create-route.command';
-import { CreateRoute } from './usecases/create-route/create-route.usecase';
 import { DeleteDomainCommand } from './usecases/delete-domain/delete-domain.command';
 import { DeleteDomain } from './usecases/delete-domain/delete-domain.usecase';
-import { DeleteRouteCommand } from './usecases/delete-route/delete-route.command';
-import { DeleteRoute } from './usecases/delete-route/delete-route.usecase';
 import { GetDomainCommand } from './usecases/get-domain/get-domain.command';
 import { GetDomain } from './usecases/get-domain/get-domain.usecase';
 import { GetDomainsCommand } from './usecases/get-domains/get-domains.command';
 import { GetDomains } from './usecases/get-domains/get-domains.usecase';
-import { UpdateRouteCommand } from './usecases/update-route/update-route.command';
-import { UpdateRoute } from './usecases/update-route/update-route.usecase';
+import { UpdateDomainCommand } from './usecases/update-domain/update-domain.command';
+import { UpdateDomain } from './usecases/update-domain/update-domain.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -50,9 +45,7 @@ export class DomainsController {
     private readonly getDomainsUsecase: GetDomains,
     private readonly getDomainUsecase: GetDomain,
     private readonly deleteDomainUsecase: DeleteDomain,
-    private readonly createRouteUsecase: CreateRoute,
-    private readonly updateRouteUsecase: UpdateRoute,
-    private readonly deleteRouteUsecase: DeleteRoute
+    private readonly updateDomainUsecase: UpdateDomain
   ) {}
 
   @Get('/')
@@ -99,6 +92,25 @@ export class DomainsController {
     );
   }
 
+  @Patch('/:domainId')
+  @ApiOperation({ summary: 'Update a domain' })
+  @ApiResponse(DomainResponseDto, 200)
+  async updateDomain(
+    @Param('domainId') domainId: string,
+    @Body() body: UpdateDomainDto,
+    @UserSession() user: UserSessionData
+  ): Promise<DomainResponseDto> {
+    return this.updateDomainUsecase.execute(
+      UpdateDomainCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        domainId,
+        routes: body.routes,
+      })
+    );
+  }
+
   @Delete('/:domainId')
   @ApiOperation({ summary: 'Delete a domain' })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -110,69 +122,6 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domainId,
-      })
-    );
-  }
-
-  @Post('/:domainId/routes')
-  @ApiOperation({ summary: 'Add a route to a domain' })
-  @ApiResponse(DomainResponseDto, 201)
-  async createRoute(
-    @Param('domainId') domainId: string,
-    @Body() body: DomainRouteDto,
-    @UserSession() user: UserSessionData
-  ): Promise<DomainResponseDto> {
-    return this.createRouteUsecase.execute(
-      CreateRouteCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        domainId,
-        address: body.address,
-        destination: body.destination,
-        type: body.type,
-      })
-    );
-  }
-
-  @Patch('/:domainId/routes/:routeIndex')
-  @ApiOperation({ summary: 'Update a route on a domain' })
-  @ApiResponse(DomainResponseDto, 200)
-  async updateRoute(
-    @Param('domainId') domainId: string,
-    @Param('routeIndex', ParseIntPipe) routeIndex: number,
-    @Body() body: Partial<DomainRouteDto>,
-    @UserSession() user: UserSessionData
-  ): Promise<DomainResponseDto> {
-    return this.updateRouteUsecase.execute(
-      UpdateRouteCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        domainId,
-        routeIndex,
-        address: body.address,
-        destination: body.destination,
-        type: body.type,
-      })
-    );
-  }
-
-  @Delete('/:domainId/routes/:routeIndex')
-  @ApiOperation({ summary: 'Delete a route from a domain' })
-  @ApiResponse(DomainResponseDto, 200)
-  async deleteRoute(
-    @Param('domainId') domainId: string,
-    @Param('routeIndex', ParseIntPipe) routeIndex: number,
-    @UserSession() user: UserSessionData
-  ): Promise<DomainResponseDto> {
-    return this.deleteRouteUsecase.execute(
-      DeleteRouteCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        domainId,
-        routeIndex,
       })
     );
   }

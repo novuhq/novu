@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useCreateRoute, useDeleteRoute, useUpdateRoute } from '@/hooks/use-domain-routes';
+import { useUpdateDomain } from '@/hooks/use-domain-routes';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { RoutingEmptyIllustration } from './routing-empty-illustration';
 
@@ -336,9 +336,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 ) {
   const { currentEnvironment } = useEnvironment();
   const { data: agents = [] } = useAgents();
-  const createRoute = useCreateRoute(domain._id);
-  const updateRoute = useUpdateRoute(domain._id);
-  const deleteRoute = useDeleteRoute(domain._id);
+  const updateDomain = useUpdateDomain(domain._id);
 
   const [isAdding, setIsAdding] = useState(false);
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
@@ -361,7 +359,12 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleCreate = async (values: RouteFormState) => {
     try {
-      await createRoute.mutateAsync(values);
+      const newRoute: DomainRouteResponse = {
+        address: values.address,
+        type: values.type,
+        ...(values.destination ? { destination: values.destination } : {}),
+      };
+      await updateDomain.mutateAsync({ routes: [...domain.routes, newRoute] });
       cancelAdding();
     } catch {
       showErrorToast('Failed to add route.');
@@ -370,7 +373,13 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleUpdate = async (index: number, values: RouteFormState) => {
     try {
-      await updateRoute.mutateAsync({ routeIndex: index, body: values });
+      const updatedRoute: DomainRouteResponse = {
+        address: values.address,
+        type: values.type,
+        ...(values.destination ? { destination: values.destination } : {}),
+      };
+      const routes = domain.routes.map((r, idx) => (idx === index ? updatedRoute : r));
+      await updateDomain.mutateAsync({ routes });
       setEditingIndex(null);
     } catch {
       showErrorToast('Failed to update route.');
@@ -379,7 +388,8 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleDelete = async (index: number) => {
     try {
-      await deleteRoute.mutateAsync(index);
+      const routes = domain.routes.filter((_, idx) => idx !== index);
+      await updateDomain.mutateAsync({ routes });
     } catch {
       showErrorToast('Failed to delete route.');
     }
@@ -418,7 +428,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                   agentOptions={agentOptions}
                   onSave={(values) => handleUpdate(index, values)}
                   onCancel={() => setEditingIndex(null)}
-                  isSaving={updateRoute.isPending}
+                  isSaving={updateDomain.isPending}
                 />
               ) : (
                 <ExistingRouteRow
@@ -429,7 +439,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                   agentOptions={agentOptions}
                   onDelete={handleDelete}
                   onEdit={setEditingIndex}
-                  isDeleting={deleteRoute.isPending}
+                  isDeleting={updateDomain.isPending}
                 />
               )
             )}
@@ -441,7 +451,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 agentOptions={agentOptions}
                 onSave={handleCreate}
                 onCancel={cancelAdding}
-                isSaving={createRoute.isPending}
+                isSaving={updateDomain.isPending}
               />
             )}
 
