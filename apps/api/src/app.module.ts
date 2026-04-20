@@ -123,7 +123,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   OrganizationModule,
   ActivityModule,
   AgentsModule,
-  DomainsModule,
+  DomainsModule.forRoot(),
   UserModule,
   IntegrationModule,
   InternalModule,

@@ -280,7 +280,7 @@ export const SideNavigation = () => {
                     </NavigationLink>
                   </Protect>
                 )}
-                {isDomainsPageEnabled && (
+                {isDomainsPageEnabled && IS_ENTERPRISE && (
                   <NavigationLink
                     to={
                       currentEnvironment?.slug
