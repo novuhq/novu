@@ -4,6 +4,8 @@ import { useRef } from 'react';
 import {
   RiAddLine,
   RiAlertFill,
+  RiArrowLeftSLine,
+  RiEarthLine,
   RiInformationLine,
   RiMore2Fill,
   RiRefreshLine,
@@ -107,26 +109,43 @@ export function DomainDetailPage() {
     }
   };
 
+  const headerStartItems = (
+    <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+      <CompactButton
+        size="lg"
+        className="mr-1 shrink-0"
+        variant="ghost"
+        icon={RiArrowLeftSLine}
+        type="button"
+        aria-label="Back to domains"
+        onClick={() => navigate(domainsHref)}
+      />
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink to={domainsHref}>Domains</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem className="min-w-0">
+            {isLoading ? (
+              <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
+            ) : (
+              <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+                <RiEarthLine className="text-text-sub size-4 shrink-0" aria-hidden />
+                <span className="truncate">{domain?.name ?? ''}</span>
+              </BreadcrumbPage>
+            )}
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
+  );
+
   return (
-    <DashboardLayout>
+    <DashboardLayout headerStartItems={headerStartItems}>
       <PageMeta title={domain?.name ?? 'Domain'} />
 
       <div className="flex h-full flex-col">
-        {/* Top bar */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink to={domainsHref}>Domains</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{isLoading ? <Skeleton className="h-4 w-24" /> : (domain?.name ?? '')}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-
         {/* Header */}
         <div className="flex items-start justify-between border-b px-6 py-4">
           <div>
