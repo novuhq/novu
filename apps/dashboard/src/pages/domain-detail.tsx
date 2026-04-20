@@ -11,6 +11,7 @@ import {
   RiRefreshLine,
   RiShieldCheckLine,
 } from 'react-icons/ri';
+import { SiCloudflare } from 'react-icons/si';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
@@ -35,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
@@ -47,17 +49,18 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
   if (status === DomainStatusEnum.VERIFIED) {
     return (
-      <Badge variant="light" color="green">
-        <RiShieldCheckLine className="mr-1 size-3" />
+      <span className="bg-success-lighter text-success-base inline-flex items-center gap-1 rounded-6 px-1 py-0.5 text-label-xs">
+        <RiShieldCheckLine className="size-4 shrink-0" />
         Verified
-      </Badge>
+      </span>
     );
   }
 
   return (
-    <Badge variant="light" color="orange">
+    <span className="bg-warning-lighter text-warning-base inline-flex items-center gap-1 rounded-6 px-1 py-0.5 text-label-xs">
+      <RiAlertFill className="size-4 shrink-0" />
       Pending verified
-    </Badge>
+    </span>
   );
 }
 
@@ -191,37 +194,52 @@ export function DomainDetailPage() {
         <div className="flex-1 overflow-auto">
           <div className="flex gap-0 h-full">
             {/* Left: metadata */}
-            <div className="w-72 shrink-0 px-6 py-8 space-y-3">
-              <MetaRow label="Status">
-                {isLoading ? (
-                  <Skeleton className="h-5 w-20" />
-                ) : domain ? (
-                  <DomainStatusBadge status={domain.status} />
-                ) : null}
-              </MetaRow>
-              <MetaRow label="Domain">
-                {isLoading ? <Skeleton className="h-4 w-32" /> : <span className="text-sm">{domain?.name}</span>}
-              </MetaRow>
-              <MetaRow label="Provider">
-                {isLoading ? (
-                  <Skeleton className="h-4 w-24" />
-                ) : (
-                  <span className="text-sm">{domain?.dnsProvider ?? 'Unknown'}</span>
+            <div className="w-[340px] shrink-0 px-6 py-8">
+              <div className="flex w-[300px] flex-col gap-2.5">
+                <div className="bg-bg-weak rounded-4 p-1">
+                  <MetaRow label="Status">
+                    {isLoading ? (
+                      <Skeleton className="h-5 w-28" />
+                    ) : domain ? (
+                      <DomainStatusBadge status={domain.status} />
+                    ) : null}
+                  </MetaRow>
+                  <MetaRow label="Domain">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-32" />
+                    ) : (
+                      <span className="text-text-sub text-label-xs">{domain?.name}</span>
+                    )}
+                  </MetaRow>
+                  <MetaRow label="Provider">
+                    {isLoading ? <Skeleton className="h-4 w-24" /> : <ProviderValue provider={domain?.dnsProvider} />}
+                  </MetaRow>
+                  <MetaRow label="Created on">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-28" />
+                    ) : domain ? (
+                      <span className="text-text-sub font-code text-code-xs">
+                        {new Date(domain.createdAt).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    ) : null}
+                  </MetaRow>
+                </div>
+
+                {!isLoading && domain && (
+                  <p className="text-text-soft text-label-xs">
+                    Last updated{' '}
+                    <span className="text-text-sub">
+                      {formatDistanceToNow(new Date(domain.updatedAt), { addSuffix: true })}
+                    </span>
+                  </p>
                 )}
-              </MetaRow>
-              <MetaRow label="Created on">
-                {isLoading ? (
-                  <Skeleton className="h-4 w-28" />
-                ) : domain ? (
-                  <span className="text-sm">
-                    {new Date(domain.createdAt).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                ) : null}
-              </MetaRow>
+
+                <Separator />
+              </div>
             </div>
 
             {/* Right: warning + DNS records + routing */}
@@ -347,9 +365,23 @@ export function DomainDetailPage() {
 
 function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-1">
-      <p className="text-foreground-400 shrink-0 text-sm">{label}</p>
-      <div className="text-foreground-900 text-right">{children}</div>
+    <div className="py-1">
+      <div className="flex h-6 items-center justify-between gap-4 px-1.5">
+        <p className="text-text-soft text-label-xs shrink-0">{label}</p>
+        <div className="flex items-center text-right">{children}</div>
+      </div>
     </div>
+  );
+}
+
+function ProviderValue({ provider }: { provider?: string }) {
+  const label = provider ?? 'Unknown';
+  const isCloudflare = provider?.toLowerCase() === 'cloudflare';
+
+  return (
+    <span className="text-text-sub flex items-center gap-1.5 font-code text-code-xs">
+      {isCloudflare && <SiCloudflare className="size-4 shrink-0 text-[#f38020]" aria-hidden />}
+      {label}
+    </span>
   );
 }
