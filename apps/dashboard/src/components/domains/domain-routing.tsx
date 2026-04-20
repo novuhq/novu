@@ -258,8 +258,7 @@ function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookFo
           <RiWebhookLine className="text-foreground-400 size-4 shrink-0" />
           <p className="text-foreground-600 text-xs">
             Enable webhooks to receive inbound emails via the{' '}
-            <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.inbound_received</code>{' '}
-            event.
+            <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.received</code> event.
           </p>
         </div>
         <Link
@@ -278,8 +277,8 @@ function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookFo
         <RiWebhookLine className="text-foreground-400 size-4 shrink-0" />
         <p className="text-foreground-600 text-xs">
           Inbound emails with a webhook route fire the{' '}
-          <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.inbound_received</code> event
-          on your webhook endpoints.
+          <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.received</code> event on your
+          webhook endpoints.
         </p>
       </div>
       <Link

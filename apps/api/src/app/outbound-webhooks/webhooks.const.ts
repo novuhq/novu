@@ -213,8 +213,8 @@ const webhookEventRecord = {
     payloadDto: WebhookPreferenceDto,
     objectType: WebhookObjectTypeEnum.PREFERENCE,
   },
-  [WebhookEventEnum.EMAIL_INBOUND_RECEIVED]: {
-    event: WebhookEventEnum.EMAIL_INBOUND_RECEIVED,
+  [WebhookEventEnum.EMAIL_RECEIVED]: {
+    event: WebhookEventEnum.EMAIL_RECEIVED,
     payloadDto: WebhookInboundEmailDto,
     objectType: WebhookObjectTypeEnum.EMAIL_INBOUND,
   },

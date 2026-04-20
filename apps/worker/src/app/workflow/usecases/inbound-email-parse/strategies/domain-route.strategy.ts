@@ -109,14 +109,14 @@ export class DomainRouteStrategy {
     await this.sendWebhookMessage.execute({
       environmentId: domain._environmentId,
       organizationId: domain._organizationId,
-      eventType: WebhookEventEnum.EMAIL_INBOUND_RECEIVED,
+      eventType: WebhookEventEnum.EMAIL_RECEIVED,
       objectType: WebhookObjectTypeEnum.EMAIL_INBOUND,
       payload: { object: payload as unknown as Record<string, unknown> },
     });
 
     Logger.log(
       { toAddress: command.to[0].address, domain: domain.name },
-      'Fired email.inbound_received webhook event',
+      'Fired email.received webhook event',
       LOG_CONTEXT
     );
   }

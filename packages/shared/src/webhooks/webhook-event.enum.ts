@@ -22,7 +22,7 @@ export enum WebhookEventEnum {
   PREFERENCE_UPDATED = 'preference.updated',
 
   // Email Inbound
-  EMAIL_INBOUND_RECEIVED = 'email.inbound_received',
+  EMAIL_RECEIVED = 'email.received',
 }
 
 export enum WebhookObjectTypeEnum {
