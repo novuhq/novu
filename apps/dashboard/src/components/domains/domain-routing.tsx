@@ -1,5 +1,6 @@
 import { DomainRouteTypeEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { RiAddLine, RiMore2Fill, RiRobot2Line, RiWebhookLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -331,6 +332,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   };
 
   const agentOptions = agents.map((a) => ({ _id: a._id, name: a.name, identifier: a.identifier }));
+  const hasWebhookRoute = domain.routes.some((route) => route.type === DomainRouteTypeEnum.WEBHOOK);
 
   return (
     <div className="space-y-3">
@@ -403,12 +405,23 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         </Table>
       </div>
 
-      {currentEnvironment?.slug && (
-        <WebhookForwardingBanner
-          environmentSlug={currentEnvironment.slug}
-          webhooksEnabled={!!currentEnvironment.webhookAppId}
-        />
-      )}
+      <AnimatePresence initial={false}>
+        {hasWebhookRoute && currentEnvironment?.slug && (
+          <motion.div
+            key="webhook-forwarding-banner"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <WebhookForwardingBanner
+              environmentSlug={currentEnvironment.slug}
+              webhooksEnabled={!!currentEnvironment.webhookAppId}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
