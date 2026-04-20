@@ -149,46 +149,55 @@ export function DomainDetailPage() {
       <PageMeta title={domain?.name ?? 'Domain'} />
 
       <div className="flex h-full flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between border-b px-6 py-4">
-          <div>
-            {isLoading ? <Skeleton className="h-6 w-40" /> : <h1 className="text-xl font-semibold">{domain?.name}</h1>}
-            {!isLoading && domain && (
-              <p className="text-foreground-400 mt-0.5 text-sm">
-                Created {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
-              </p>
-            )}
+        <header className="border-b px-4 pt-2 pb-2 md:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex min-w-0 flex-col gap-1">
+              {isLoading ? (
+                <Skeleton className="h-6 w-40" />
+              ) : (
+                <h1 className="text-text-strong text-[18px] font-medium leading-6 tracking-tight">{domain?.name}</h1>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                mode="outline"
+                variant="secondary"
+                size="xs"
+                onClick={handleVerify}
+                disabled={isFetching || isLoading}
+                className="text-[12px] leading-[16px]"
+              >
+                <div className="flex h-4 items-center">
+                  <RetryVerificationIcon className="size-3 mr-2" />
+                  Retry verification
+                </div>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    mode="outline"
+                    size="xs"
+                    leadingIcon={RiMore2Fill}
+                    type="button"
+                    className="text-text-sub size-8 min-w-8 shrink-0 gap-0 rounded-md px-0"
+                  >
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onSelect={handleDelete}
+                    disabled={deleteDomain.isPending}
+                  >
+                    Delete domain
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              mode="outline"
-              variant="secondary"
-              size="sm"
-              onClick={handleVerify}
-              disabled={isFetching || isLoading}
-              className="text-[12px] leading-[16px]"
-            >
-              <div className="flex h-4 items-center">
-                <RetryVerificationIcon className="size-3 mr-2" />
-                Retry verification
-              </div>
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <CompactButton icon={RiMore2Fill} variant="stroke" className="h-8 w-8 p-0" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onSelect={handleDelete}
-                  disabled={deleteDomain.isPending}
-                >
-                  Delete domain
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+        </header>
 
         {/* Body */}
         <div className="flex-1 overflow-auto">
