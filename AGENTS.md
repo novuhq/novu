@@ -23,7 +23,7 @@ Run `pnpm build` after changes to `packages/` or `enterprise/`. Direct changes t
 ### Never
 - Inactive apps — do not touch: `apps/webhook`
 - Auto-generated — never edit: `libs/internal-sdk`
-- Read-only dirs: `.idea/`, `.github/`, `scripts/`, `docker/`
+- Read-only dirs: `.idea/`, `playground/`, `.github/`, `scripts/`, `docker/`
 - UI: reuse existing Radix/shadcn components only; do not copy patterns from `playground/` into production
 
 <!-- Infrastructure & services: see .cursor/rules/infrastructure.mdc -->
