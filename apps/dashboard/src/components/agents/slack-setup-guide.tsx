@@ -266,6 +266,7 @@ export function SlackSetupGuide({
                 connectionMode="subscriber"
                 connectLabel={`Install ${agent.name} ↗`}
                 connectedLabel="Connected to Slack"
+                onConnectSuccess={handleSlackWorkspaceConnected}
               />
             </NovuProvider>
           ) : null

@@ -19,6 +19,7 @@ import {
 } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
+import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
@@ -271,8 +272,19 @@ export class HandleAgentReply {
     channel: ConversationChannel,
     signals: Array<{ type: 'metadata'; key: string; value: unknown }>
   ): Promise<void> {
-    const merged = { ...(conversation.metadata ?? {}) };
+    // Defense in depth: the DTO validator already enforces this for HTTP callers,
+    // but commands can also be constructed internally (e.g. by the inbound handler).
+    // Reject prototype-pollution gadgets, keys that wouldn't survive a clean
+    // round-trip through downstream consumers, and undefined values (which would
+    // be silently dropped by JSON.stringify and never reach storage).
+    const merged: Record<string, unknown> = { ...(conversation.metadata ?? {}) };
     for (const signal of signals) {
+      if (!isValidMetadataSignalKey(signal.key)) {
+        throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
+      }
+      if (signal.value === undefined) {
+        throw new BadRequestException(`Metadata signal "${signal.key}" must have a defined value`);
+      }
       merged[signal.key] = signal.value;
     }
 
@@ -346,7 +358,7 @@ export class HandleAgentReply {
     channel: ConversationChannel
   ): Promise<void> {
     const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId || !config.reactionOnMessageReceived) return;
+    if (!firstMessageId || !config.acknowledgeOnReceived) return;
 
     await this.chatSdkService.removeReaction(
       conversation._agentId,
@@ -354,7 +366,7 @@ export class HandleAgentReply {
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
-      config.reactionOnMessageReceived
+      'eyes'
     );
   }
 

@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
@@ -34,9 +34,9 @@ function resolveProviderSetupGuide(providerId: string) {
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
-  const [isProviderComplete, setIsProviderComplete] = useState(false);
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
+  const queryClient = useQueryClient();
 
   const agentIntegrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -49,14 +49,15 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
     enabled: Boolean(currentEnvironment && agent.identifier),
   });
 
+  // Only reveal "2/2 Connect your code" once an integration link has actually been
+  // marked connected by the backend (connectedAt set). The OAuth success handler
+  // below refetches the list so this updates promptly after the user finishes the flow.
   const hasConnectedIntegration = useMemo(() => {
-    if (isProviderComplete) return true;
-
     const links = agentIntegrationsQuery.data?.data;
     if (!links?.length) return false;
 
     return links.some((link) => Boolean(link.connectedAt));
-  }, [isProviderComplete, agentIntegrationsQuery.data?.data]);
+  }, [agentIntegrationsQuery.data?.data]);
 
   const defaultFromAgent = agent.integrations?.[0];
 
@@ -82,8 +83,10 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
 
   const handleProviderStepsCompleted = useCallback(() => {
-    setIsProviderComplete(true);
-  }, []);
+    queryClient.invalidateQueries({
+      queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+    });
+  }, [queryClient, currentEnvironment?._id, agent.identifier]);
 
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">

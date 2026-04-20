@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { validateUrlSsrf } from '@novu/application-generic';
 import { AgentRepository, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import type { AgentResponseDto } from '../../dtos';
@@ -14,9 +15,8 @@ export class UpdateAgent {
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
     const hasBehaviorFields =
-      command.behavior?.thinkingIndicatorEnabled !== undefined ||
-      command.behavior?.reactions?.onMessageReceived !== undefined ||
-      command.behavior?.reactions?.onResolved !== undefined;
+      command.behavior?.acknowledgeOnReceived !== undefined ||
+      command.behavior?.reactionOnResolved !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -35,6 +35,13 @@ export class UpdateAgent {
     if (command.devBridgeActive === true || (command.devBridgeUrl !== undefined && command.devBridgeUrl !== null)) {
       await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
     }
+
+    // The bridge executor `fetch()`s these URLs from inside the API process on every
+    // inbound chat event with a Novu HMAC and sensitive payload (subscriber + history).
+    // Without an SSRF guard, an authenticated AGENT_WRITE caller can repoint the bridge
+    // at internal hosts (loopback, RFC1918, link-local 169.254.169.254, cloud metadata).
+    await this.assertSafeBridgeUrl(command.bridgeUrl, 'bridgeUrl');
+    await this.assertSafeBridgeUrl(command.devBridgeUrl, 'devBridgeUrl');
 
     const existing = await this.agentRepository.findOne(
       {
@@ -64,17 +71,11 @@ export class UpdateAgent {
     }
 
     if (hasBehaviorFields) {
-      if (command.behavior!.thinkingIndicatorEnabled !== undefined) {
-        $set['behavior.thinkingIndicatorEnabled'] = command.behavior!.thinkingIndicatorEnabled;
+      if (command.behavior!.acknowledgeOnReceived !== undefined) {
+        $set['behavior.acknowledgeOnReceived'] = command.behavior!.acknowledgeOnReceived;
       }
-
-      if (command.behavior!.reactions !== undefined) {
-        if (command.behavior!.reactions.onMessageReceived !== undefined) {
-          $set['behavior.reactions.onMessageReceived'] = command.behavior!.reactions.onMessageReceived;
-        }
-        if (command.behavior!.reactions.onResolved !== undefined) {
-          $set['behavior.reactions.onResolved'] = command.behavior!.reactions.onResolved;
-        }
+      if (command.behavior!.reactionOnResolved !== undefined) {
+        $set['behavior.reactionOnResolved'] = command.behavior!.reactionOnResolved;
       }
     }
 
@@ -123,6 +124,17 @@ export class UpdateAgent {
 
     if (environment?.type === EnvironmentTypeEnum.PROD) {
       throw new ForbiddenException('Dev bridge cannot be activated on production environments.');
+    }
+  }
+
+  private async assertSafeBridgeUrl(url: string | undefined | null, field: string): Promise<void> {
+    if (!url) {
+      return;
+    }
+
+    const ssrfError = await validateUrlSsrf(url);
+    if (ssrfError) {
+      throw new BadRequestException(`${field}: ${ssrfError}`);
     }
   }
 }

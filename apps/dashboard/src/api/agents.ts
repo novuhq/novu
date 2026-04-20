@@ -36,12 +36,18 @@ export type AgentIntegrationSummary = {
   active: boolean;
 };
 
+export type AgentBehavior = {
+  acknowledgeOnReceived?: boolean;
+  reactionOnResolved?: string | null;
+};
+
 export type AgentResponse = {
   _id: string;
   name: string;
   identifier: string;
   description?: string;
   active: boolean;
+  behavior?: AgentBehavior;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -71,6 +77,7 @@ export type UpdateAgentBody = {
   name?: string;
   description?: string;
   active?: boolean;
+  behavior?: AgentBehavior;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;

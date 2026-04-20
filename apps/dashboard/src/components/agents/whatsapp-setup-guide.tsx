@@ -85,14 +85,14 @@ export function WhatsAppSetupGuide({
 
   const firstIncompleteStep = useMemo(() => {
     if (isConnected) {
-      return base + 3;
+      return base + 5;
     }
 
     if (!isCredentialsSaved) {
       return base;
     }
 
-    return base + 2;
+    return base + 3;
   }, [base, isCredentialsSaved, isConnected]);
 
   const stepsColumn = (
@@ -100,44 +100,78 @@ export function WhatsAppSetupGuide({
       <SetupStep
         index={base}
         status={deriveStepStatus(base, firstIncompleteStep)}
-        title="Create a Meta app and get credentials"
+        title="Create a Meta app"
         description={
           <span>
-            {'Go to the '}
+            {'Open the '}
             <a
               href="https://developers.facebook.com/apps/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-text-sub underline"
             >
-              Meta Developer Portal
+              Meta App Dashboard
             </a>
-            {', click '}
+            {' and click '}
             <strong className="text-text-sub">Create App</strong>
-            {' and select the '}
-            <strong className="text-text-sub">Business</strong>
-            {
-              ' type. Add the WhatsApp product to your app, then copy these values from your app dashboard into the credentials form:'
+            {'. Select the '}
+            <strong className="text-text-sub">Connect with customers through WhatsApp</strong>
+            {' use case, then pick or create a business portfolio.'}
+          </span>
+        }
+        rightContent={
+          <SetupButton
+            href="https://developers.facebook.com/apps/"
+            leadingIcon={
+              <ProviderIcon
+                providerId={ChatProviderIdEnum.WhatsAppBusiness}
+                providerDisplayName="WhatsApp Business"
+                className="size-4 shrink-0"
+              />
             }
+          >
+            Meta App Dashboard
+          </SetupButton>
+        }
+      />
+
+      <SetupStep
+        index={base + 1}
+        status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        title="Get your API credentials"
+        description={
+          <span>
+            {'After creating the app you land on the Quickstart page. Go to '}
+            <strong className="text-text-sub">WhatsApp &gt; API Setup</strong>
+            {' and collect these four values:'}
           </span>
         }
         extraContent={
-          <ul className="text-text-soft text-label-xs mt-1.5 list-inside list-disc space-y-0.5 font-medium leading-4">
+          <ol className="text-text-soft text-label-xs mt-1.5 list-inside list-decimal space-y-0.5 font-medium leading-4">
             <li>
-              <strong className="text-text-sub">Access Token</strong> — WhatsApp &gt; API Setup
+              <strong className="text-text-sub">Access Token</strong> — click &quot;Generate access token&quot; on the
+              API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">Phone Number ID</strong> — WhatsApp &gt; API Setup
+              <strong className="text-text-sub">Phone Number ID</strong> — shown under your selected phone number on the
+              API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">App Secret</strong> — App Settings &gt; Basic
+              <strong className="text-text-sub">App Secret</strong> — found under App Settings &gt; Basic
             </li>
             <li>
-              <strong className="text-text-sub">Verify Token</strong> — a secret string of your choice (you'll reuse it
-              in the next step)
+              <strong className="text-text-sub">Verify Token</strong> — choose any secret string (you will reuse it when
+              configuring the webhook)
             </li>
-          </ul>
+          </ol>
         }
+      />
+
+      <SetupStep
+        index={base + 2}
+        status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        title="Save credentials in Novu"
+        description="Open the credentials form and enter the four values from the previous step."
         rightContent={
           <div className="flex flex-col gap-3">
             <SetupButton
@@ -165,40 +199,42 @@ export function WhatsAppSetupGuide({
       />
 
       <SetupStep
-        index={base + 1}
-        status={deriveStepStatus(base + 1, firstIncompleteStep)}
-        title="Configure the webhook in Meta"
+        index={base + 3}
+        status={deriveStepStatus(base + 3, firstIncompleteStep)}
+        title="Configure the webhook"
         description={
           <span>
             {'In your Meta app, go to '}
             <strong className="text-text-sub">WhatsApp &gt; Configuration</strong>
-            {
-              '. Paste the webhook URL below as the Callback URL, and set the Verify Token to the same secret string you entered in the previous step.'
-            }
+            {'. Set the '}
+            <strong className="text-text-sub">Callback URL</strong>
+            {' to the webhook URL below, and enter the same '}
+            <strong className="text-text-sub">Verify Token</strong>
+            {' you chose earlier.'}
           </span>
         }
         extraContent={
           <InlineToast
             className="mt-2 w-full"
             variant="tip"
-            title="Important:"
-            description="Subscribe to the 'messages' webhook field so your agent receives inbound messages."
+            title="Don't forget:"
+            description="Click 'Subscribe' next to the 'messages' webhook field — without it your agent won't receive incoming messages."
           />
         }
         rightContent={<WebhookUrlSection webhookUrl={webhookUrl} />}
       />
 
       <SetupStep
-        index={base + 2}
-        status={deriveStepStatus(base + 2, firstIncompleteStep)}
-        title="Verify by sending a message"
-        description="Send a WhatsApp message to your business phone number to confirm the webhook is connected and the agent responds."
+        index={base + 4}
+        status={deriveStepStatus(base + 4, firstIncompleteStep)}
+        title="Send a test message"
+        description="Open WhatsApp and send a message to your business phone number. If everything is configured correctly, your agent will respond."
         extraContent={
           <InlineToast
             className="mt-2 w-full"
             variant="tip"
-            title="Production tip:"
-            description="The access token from API Setup is temporary. For production, generate a permanent System User Token in your Meta Business Settings."
+            title="Before going live:"
+            description="The token from API Setup expires after 24 hours. For production, create a permanent System User Token in Meta Business Settings > System Users."
           />
         }
       />
@@ -210,8 +246,8 @@ export function WhatsAppSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
-      connectedMessage="Your WhatsApp Business account is connected. This agent is ready to receive messages."
-      listeningMessage="Send a WhatsApp message to your business number to verify configuration."
+      connectedMessage="WhatsApp is connected — your agent is ready to receive messages."
+      listeningMessage="Waiting for a message on your business number to confirm the webhook is working…"
     />
   );
 

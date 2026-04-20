@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ContextPayload } from '@novu/shared';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oauth-url.command';
 
@@ -119,13 +120,12 @@ export class GenerateMsTeamsOauthUrl {
       throw new BadRequestException('Failed to create OAuth state signature');
     }
 
-    return Buffer.from(`${payload}.${signature}`).toString('base64url');
+    return encodeOAuthState(payload, signature);
   }
 
   static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload, signature] = decoded.split('.');
+      const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
       if (signature !== expectedSignature) {
