@@ -7,7 +7,7 @@ import type { OrganizationId } from '../organization';
 export class DomainRoute {
   address: string;
 
-  destination: string;
+  destination?: string;
 
   type: DomainRouteTypeEnum;
 }

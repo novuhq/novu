@@ -3,7 +3,7 @@ import { del, get, patch, post } from './api.client';
 
 export type DomainRouteResponse = {
   address: string;
-  destination: string;
+  destination?: string;
   type: DomainRouteTypeEnum;
 };
 
@@ -30,7 +30,7 @@ export type DomainResponse = {
 };
 
 export type CreateDomainBody = { name: string };
-export type CreateRouteBody = { address: string; destination: string; type: DomainRouteTypeEnum };
+export type CreateRouteBody = { address: string; destination?: string; type: DomainRouteTypeEnum };
 export type UpdateRouteBody = Partial<CreateRouteBody>;
 
 export const fetchDomains = async (environment: IEnvironment): Promise<DomainResponse[]> => {

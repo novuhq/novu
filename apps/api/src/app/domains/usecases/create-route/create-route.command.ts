@@ -1,5 +1,5 @@
 import { DomainRouteTypeEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateRouteCommand extends EnvironmentWithUserCommand {
@@ -12,8 +12,8 @@ export class CreateRouteCommand extends EnvironmentWithUserCommand {
   address: string;
 
   @IsString()
-  @IsNotEmpty()
-  destination: string;
+  @IsOptional()
+  destination?: string;
 
   @IsEnum(DomainRouteTypeEnum)
   type: DomainRouteTypeEnum;

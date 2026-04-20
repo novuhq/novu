@@ -25,7 +25,7 @@ const domainSchema = new Schema<DomainDBModel>(
     routes: [
       {
         address: { type: Schema.Types.String, required: true },
-        destination: { type: Schema.Types.String, required: true },
+        destination: { type: Schema.Types.String },
         type: { type: Schema.Types.String, enum: Object.values(DomainRouteTypeEnum), required: true },
       },
     ],

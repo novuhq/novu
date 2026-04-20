@@ -25,11 +25,13 @@ import { RoutingEmptyIllustration } from './routing-empty-illustration';
 type RouteFormState = {
   address: string;
   destination: string;
+  type: DomainRouteTypeEnum;
 };
 
 const DEFAULT_ROUTE_FORM: RouteFormState = {
   address: '',
   destination: '',
+  type: DomainRouteTypeEnum.AGENT,
 };
 
 type DomainRoutingProps = {
@@ -76,8 +78,12 @@ function InlineRouteForm({
   const [form, setForm] = useState<RouteFormState>(initialValues);
 
   const handleSave = async () => {
-    if (!form.address.trim() || !form.destination.trim()) {
-      showErrorToast('Address and destination are required.');
+    if (!form.address.trim()) {
+      showErrorToast('Address is required.');
+      return;
+    }
+    if (form.type === DomainRouteTypeEnum.AGENT && !form.destination.trim()) {
+      showErrorToast('An agent must be selected for agent routes.');
       return;
     }
     await onSave(form);
@@ -100,18 +106,41 @@ function InlineRouteForm({
 
       {/* Destination */}
       <TableCell>
-        <Select value={form.destination} onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}>
-          <SelectTrigger className="h-7 w-56 text-sm" size="2xs">
-            <SelectValue placeholder="Select agent" />
-          </SelectTrigger>
-          <SelectContent>
-            {agentOptions.map((agent) => (
-              <SelectItem key={agent._id} value={agent._id}>
-                {agent.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select
+            value={form.type}
+            onValueChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                type: v as DomainRouteTypeEnum,
+                destination: v === DomainRouteTypeEnum.WEBHOOK ? '' : f.destination,
+              }))
+            }
+          >
+            <SelectTrigger className="h-7 w-28 text-sm" size="2xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={DomainRouteTypeEnum.AGENT}>Agent</SelectItem>
+              <SelectItem value={DomainRouteTypeEnum.WEBHOOK}>Webhook</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {form.type === DomainRouteTypeEnum.AGENT && (
+            <Select value={form.destination} onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}>
+              <SelectTrigger className="h-7 w-40 text-sm" size="2xs">
+                <SelectValue placeholder="Select agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agentOptions.map((agent) => (
+                  <SelectItem key={agent._id} value={agent._id}>
+                    {agent.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </TableCell>
 
       {/* Actions */}
@@ -159,7 +188,10 @@ function ExistingRouteRow({
   onEdit,
   isDeleting,
 }: ExistingRouteRowProps) {
-  const agentName = agentOptions.find((a) => a._id === route.destination)?.name ?? route.destination;
+  const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
+  const agentName = isWebhook
+    ? null
+    : (agentOptions.find((a) => a._id === route.destination)?.name ?? route.destination);
 
   return (
     <TableRow>
@@ -167,10 +199,17 @@ function ExistingRouteRow({
         {route.address}@{domainName}
       </TableCell>
       <TableCell className="text-foreground-600 max-w-[200px] truncate text-sm">
-        <span className="flex items-center gap-1">
-          <RiRobot2Line className="size-4 shrink-0" />
-          {agentName}
-        </span>
+        {isWebhook ? (
+          <span className="flex items-center gap-1">
+            <RiWebhookLine className="size-4 shrink-0" />
+            Webhook
+          </span>
+        ) : (
+          <span className="flex items-center gap-1">
+            <RiRobot2Line className="size-4 shrink-0" />
+            {agentName}
+          </span>
+        )}
       </TableCell>
       <TableCell>
         <span className="text-success text-sm">Active</span>
@@ -230,7 +269,7 @@ function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookFo
       <div className="flex items-center gap-2">
         <RiWebhookLine className="text-foreground-400 size-4 shrink-0" />
         <p className="text-foreground-600 text-xs">
-          All inbound emails fire the{' '}
+          Inbound emails with a webhook route fire the{' '}
           <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">email.inbound_received</code> event
           on your webhook endpoints.
         </p>
@@ -267,7 +306,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleCreate = async (values: RouteFormState) => {
     try {
-      await createRoute.mutateAsync({ ...values, type: DomainRouteTypeEnum.AGENT });
+      await createRoute.mutateAsync(values);
       setIsAdding(false);
     } catch {
       showErrorToast('Failed to add route.');
@@ -276,7 +315,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleUpdate = async (index: number, values: RouteFormState) => {
     try {
-      await updateRoute.mutateAsync({ routeIndex: index, body: { ...values, type: DomainRouteTypeEnum.AGENT } });
+      await updateRoute.mutateAsync({ routeIndex: index, body: values });
       setEditingIndex(null);
     } catch {
       showErrorToast('Failed to update route.');
@@ -300,7 +339,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           <TableHeader>
             <TableRow>
               <TableHead>Address</TableHead>
-              <TableHead>Agent</TableHead>
+              <TableHead>Destination</TableHead>
               <TableHead>Status</TableHead>
               <TableHead />
             </TableRow>
@@ -311,7 +350,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 <InlineRouteForm
                   key={index}
                   domainName={domain.name}
-                  initialValues={{ address: route.address, destination: route.destination }}
+                  initialValues={{ address: route.address, destination: route.destination ?? '', type: route.type }}
                   agentOptions={agentOptions}
                   onSave={(values) => handleUpdate(index, values)}
                   onCancel={() => setEditingIndex(null)}

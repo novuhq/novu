@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DomainRouteTypeEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class DomainRouteDto {
   @ApiProperty({ description: 'Email address prefix (e.g. "support", "*")' })
@@ -8,10 +8,10 @@ export class DomainRouteDto {
   @IsNotEmpty()
   address: string;
 
-  @ApiProperty({ description: 'Destination agent ID' })
+  @ApiPropertyOptional({ description: 'Destination agent ID (required when type is agent, unused for webhook)' })
   @IsString()
-  @IsNotEmpty()
-  destination: string;
+  @IsOptional()
+  destination?: string;
 
   @ApiProperty({ enum: DomainRouteTypeEnum })
   @IsEnum(DomainRouteTypeEnum)

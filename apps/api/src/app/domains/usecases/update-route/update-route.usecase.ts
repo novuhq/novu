@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DomainRepository } from '@novu/dal';
+import { DomainRouteTypeEnum } from '@novu/shared';
 
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
@@ -23,6 +24,25 @@ export class UpdateRoute {
 
     if (command.routeIndex >= domain.routes.length) {
       throw new BadRequestException(`Route index ${command.routeIndex} is out of bounds.`);
+    }
+
+    const existingRoute = domain.routes[command.routeIndex];
+    const effectiveType = command.type ?? existingRoute.type;
+    const effectiveDestination = command.destination ?? existingRoute.destination;
+
+    if (effectiveType === DomainRouteTypeEnum.AGENT && !effectiveDestination) {
+      throw new BadRequestException('destination is required for agent routes.');
+    }
+
+    const effectiveAddress = command.address ?? existingRoute.address;
+    const duplicate = domain.routes.some(
+      (r, i) => i !== command.routeIndex && r.address === effectiveAddress && r.type === effectiveType
+    );
+
+    if (duplicate) {
+      throw new ConflictException(
+        `A ${effectiveType} route for address "${effectiveAddress}" already exists on this domain.`
+      );
     }
 
     const setPayload: Record<string, unknown> = {};

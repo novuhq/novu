@@ -17,7 +17,7 @@ export type DomainRouteEmailPayload = {
     id: string;
     name: string;
   };
-  route?: {
+  route: {
     address: string;
   };
   mail: {
@@ -62,30 +62,34 @@ export class DomainRouteStrategy {
       this.throwError(`Domain ${domain.name} does not have MX records configured`);
     }
 
-    const route = domain.routes.find((r) => r.address === toAddress.split('@')[0]);
+    const localPart = toAddress.split('@')[0];
+    const matchByType = (type: DomainRouteTypeEnum) =>
+      domain.routes.find((r) => r.type === type && r.address === localPart) ??
+      domain.routes.find((r) => r.type === type && r.address === '*');
 
-    await this.fireWebhookEvent(command, domain, route);
+    const webhookRoute = matchByType(DomainRouteTypeEnum.WEBHOOK);
+    const agentRoute = matchByType(DomainRouteTypeEnum.AGENT);
 
-    if (!route) {
-      return;
+    if (webhookRoute) {
+      await this.fireWebhookEvent(command, domain, webhookRoute);
     }
 
-    if (route.type === DomainRouteTypeEnum.AGENT) {
-      await this.handleAgentRoute(command, domain, route, toAddress);
+    if (agentRoute) {
+      await this.handleAgentRoute(command, domain, agentRoute, toAddress);
     }
   }
 
   private async fireWebhookEvent(
     command: InboundEmailParseCommand,
     domain: RoutableDomain,
-    route: DomainRoute | undefined
+    route: DomainRoute
   ): Promise<void> {
     const payload: DomainRouteEmailPayload = {
       domain: {
         id: domain._id,
         name: domain.name,
       },
-      ...(route ? { route: { address: route.address } } : {}),
+      route: { address: route.address },
       mail: {
         from: command.from,
         to: command.to,
