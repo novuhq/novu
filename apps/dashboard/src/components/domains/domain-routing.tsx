@@ -2,7 +2,7 @@ import { DomainRouteTypeEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { forwardRef, useImperativeHandle, useState } from 'react';
-import { RiAddLine, RiMore2Fill, RiRobot2Line, RiWebhookLine } from 'react-icons/ri';
+import { RiAddLine, RiCloseLine, RiLightbulbFlashLine, RiMore2Fill, RiRobot2Line, RiWebhookLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { listAgents } from '@/api/agents';
 import type { DomainResponse, DomainRouteResponse } from '@/api/domains';
@@ -285,6 +285,45 @@ function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookFo
   );
 }
 
+const WILDCARD_HINT_DISPLAY_PROBABILITY = 0.35;
+
+type WildcardRouteHintProps = {
+  domainName: string;
+  onConfigureClick: () => void;
+  onDismiss: () => void;
+};
+
+function WildcardRouteHint({ domainName, onConfigureClick, onDismiss }: WildcardRouteHintProps) {
+  return (
+    <div className="border-information/20 bg-information/5 flex items-center justify-between gap-3 rounded-lg border px-4 py-3">
+      <div className="flex items-center gap-2">
+        <RiLightbulbFlashLine className="text-information size-4 shrink-0" />
+        <p className="text-foreground-600 text-xs">
+          <span className="text-foreground-950 font-medium">Tip:</span> Add a wildcard route{' '}
+          <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">*@{domainName}</code> to forward
+          every inbound email to your webhook endpoints.
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onConfigureClick}
+          className="text-foreground-900 hover:text-foreground-600 shrink-0 text-xs font-medium transition-colors"
+        >
+          Add wildcard route →
+        </button>
+        <CompactButton
+          icon={RiCloseLine}
+          variant="ghost"
+          className="text-foreground-400 hover:text-foreground-600 h-6 w-6 p-0"
+          onClick={onDismiss}
+          aria-label="Dismiss tip"
+        />
+      </div>
+    </div>
+  );
+}
+
 export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>(function DomainRouting(
   { domain },
   ref
@@ -296,19 +335,28 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const deleteRoute = useDeleteRoute(domain._id);
 
   const [isAdding, setIsAdding] = useState(false);
+  const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
+  const [isWildcardHintRolledIn] = useState(() => Math.random() < WILDCARD_HINT_DISPLAY_PROBABILITY);
 
-  const startAdding = () => {
+  const startAdding = (initialValues?: RouteFormState) => {
+    setAddInitialValues(initialValues);
     setIsAdding(true);
     setEditingIndex(null);
   };
 
-  useImperativeHandle(ref, () => ({ startAdding }));
+  const cancelAdding = () => {
+    setIsAdding(false);
+    setAddInitialValues(undefined);
+  };
+
+  useImperativeHandle(ref, () => ({ startAdding: () => startAdding() }));
 
   const handleCreate = async (values: RouteFormState) => {
     try {
       await createRoute.mutateAsync(values);
-      setIsAdding(false);
+      cancelAdding();
     } catch {
       showErrorToast('Failed to add route.');
     }
@@ -333,6 +381,11 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const agentOptions = agents.map((a) => ({ _id: a._id, name: a.name, identifier: a.identifier }));
   const hasWebhookRoute = domain.routes.some((route) => route.type === DomainRouteTypeEnum.WEBHOOK);
+  const hasWildcardWebhookRoute = domain.routes.some(
+    (route) => route.address === '*' && route.type === DomainRouteTypeEnum.WEBHOOK
+  );
+  const shouldShowWildcardHint =
+    isWildcardHintRolledIn && !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
 
   return (
     <div className="space-y-3">
@@ -375,9 +428,10 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
             {isAdding && (
               <InlineRouteForm
                 domainName={domain.name}
+                initialValues={addInitialValues}
                 agentOptions={agentOptions}
                 onSave={handleCreate}
-                onCancel={() => setIsAdding(false)}
+                onCancel={cancelAdding}
                 isSaving={createRoute.isPending}
               />
             )}
@@ -393,7 +447,13 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                         Configure routes to route incoming emails to relevant agents.
                       </p>
                     </div>
-                    <Button size="sm" mode="outline" variant="secondary" className="mx-auto" onClick={startAdding}>
+                    <Button
+                      size="sm"
+                      mode="outline"
+                      variant="secondary"
+                      className="mx-auto"
+                      onClick={() => startAdding()}
+                    >
                       <RiAddLine className="size-4" />
                       Add new route
                     </Button>
@@ -406,6 +466,22 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
       </div>
 
       <AnimatePresence initial={false}>
+        {shouldShowWildcardHint && (
+          <motion.div
+            key="wildcard-route-hint"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <WildcardRouteHint
+              domainName={domain.name}
+              onConfigureClick={() => startAdding({ address: '*', destination: '', type: DomainRouteTypeEnum.WEBHOOK })}
+              onDismiss={() => setIsWildcardHintDismissed(true)}
+            />
+          </motion.div>
+        )}
         {hasWebhookRoute && currentEnvironment?.slug && (
           <motion.div
             key="webhook-forwarding-banner"
