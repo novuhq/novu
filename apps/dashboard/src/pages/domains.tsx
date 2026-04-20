@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum, DomainStatusEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
-import { RiAddLine, RiMore2Fill, RiSearchLine } from 'react-icons/ri';
+import { RiAddLine, RiMore2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { DomainResponse } from '@/api/domains';
 import { DashboardLayout } from '@/components/dashboard-layout';
@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { Input } from '@/components/primitives/input';
+import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -120,16 +120,15 @@ export function DomainsPage() {
         {!domainsEnabled && <DomainsPaywallBanner />}
 
         {domainsEnabled && (
-          <div className="flex items-center gap-3 px-6 py-4">
-            <div className="relative max-w-xs flex-1">
-              <RiSearchLine className="text-foreground-400 absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-              <Input
-                className="pl-9"
-                placeholder="Search domains..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+          <div className="flex items-center justify-between gap-3 px-6 py-4">
+            <FacetedFormFilter
+              type="text"
+              size="small"
+              title="Search"
+              value={search}
+              onChange={setSearch}
+              placeholder="Search domains..."
+            />
             <Button onClick={() => setIsAddDialogOpen(true)}>
               <RiAddLine className="size-4" />
               Add domain
