@@ -10,7 +10,7 @@ export function useFetchDomain(domainId: string | undefined) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery<DomainResponse>({
-    queryKey: [QueryKeys.fetchDomain, domainId],
+    queryKey: [QueryKeys.fetchDomain, domainId, currentEnvironment?._id],
     queryFn: () => fetchDomain(domainId!, currentEnvironment!),
     enabled: !!domainId && !!currentEnvironment,
     refetchInterval: (query) => {
@@ -27,11 +27,12 @@ export function useFetchDomain(domainId: string | undefined) {
 
 export function useRefreshDomain(domainId: string | undefined) {
   const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
 
   return {
     refresh: () =>
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchDomain, domainId],
+        queryKey: [QueryKeys.fetchDomain, domainId, currentEnvironment?._id],
       }),
   };
 }

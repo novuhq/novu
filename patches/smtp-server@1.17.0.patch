@@ -1,6 +1,3 @@
-diff --git a/.npmignore b/.npmignore
-deleted file mode 100644
-index 299aea956162c367a90694914df37eef627ec46a..0000000000000000000000000000000000000000
 diff --git a/lib/smtp-connection.js b/lib/smtp-connection.js
 index f57f7009b49fb2087224f8d17930fc8d0d1b7f74..668b1c2e170002c57fff44caa9f8f1db6835ca33 100644
 --- a/lib/smtp-connection.js

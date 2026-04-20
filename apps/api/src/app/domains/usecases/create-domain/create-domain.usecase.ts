@@ -1,12 +1,16 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { ResourceValidatorService } from '@novu/application-generic';
-import { DomainRepository } from '@novu/dal';
+import { DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { detectDnsProvider } from '../../utils/dns-provider';
 import { CreateDomainCommand } from './create-domain.command';
+
+function isDuplicateKeyError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000;
+}
 
 @Injectable()
 export class CreateDomain {
@@ -33,15 +37,25 @@ export class CreateDomain {
 
     const dnsProvider = await detectDnsProvider(command.name);
 
-    const domain = await this.domainRepository.create({
-      name: command.name,
-      status: DomainStatusEnum.PENDING,
-      mxRecordConfigured: false,
-      dnsProvider: dnsProvider ?? undefined,
-      routes: [],
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
+    let domain: DomainEntity;
+
+    try {
+      domain = await this.domainRepository.create({
+        name: command.name,
+        status: DomainStatusEnum.PENDING,
+        mxRecordConfigured: false,
+        dnsProvider: dnsProvider ?? undefined,
+        routes: [],
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      });
+    } catch (err: unknown) {
+      if (isDuplicateKeyError(err)) {
+        throw new ConflictException(`A domain with name "${command.name}" already exists.`);
+      }
+
+      throw err;
+    }
 
     return toDomainResponse(domain);
   }

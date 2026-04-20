@@ -161,10 +161,18 @@ function InlineRouteForm({
             className="size-7 text-success"
             onClick={handleSave}
             disabled={isSaving}
+            aria-label="Save route"
           >
             ✓
           </Button>
-          <Button size="xs" mode="ghost" variant="secondary" className="text-destructive size-7" onClick={onCancel}>
+          <Button
+            size="xs"
+            mode="ghost"
+            variant="secondary"
+            className="text-destructive size-7"
+            onClick={onCancel}
+            aria-label="Cancel editing"
+          >
             ✕
           </Button>
         </div>

@@ -38,24 +38,23 @@ export class UpdateDomain {
         seen.add(key);
       }
 
-      await this.domainRepository.update(
+      const updated = await this.domainRepository.findOneAndUpdate(
         {
           _id: command.domainId,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
-        { $set: { routes: command.routes } }
+        { $set: { routes: command.routes } },
+        { new: true }
       );
 
-      const updated = await this.domainRepository.findOneByIdAndEnvironment(
-        command.domainId,
-        command.environmentId,
-        command.organizationId
-      );
+      if (!updated) {
+        throw new NotFoundException(`Domain with id "${command.domainId}" not found.`);
+      }
 
       return {
-        ...toDomainResponse(updated!),
-        expectedDnsRecords: buildExpectedDnsRecords(updated!.name),
+        ...toDomainResponse(updated),
+        expectedDnsRecords: buildExpectedDnsRecords(updated.name),
       };
     }
 

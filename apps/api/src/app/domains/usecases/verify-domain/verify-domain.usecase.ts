@@ -1,5 +1,6 @@
 import { promises as dnsPromises, type MxRecord } from 'node:dns';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 
@@ -10,7 +11,12 @@ import { VerifyDomainCommand } from './verify-domain.command';
 
 @Injectable()
 export class VerifyDomain {
-  constructor(private readonly domainRepository: DomainRepository) {}
+  constructor(
+    private readonly domainRepository: DomainRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: VerifyDomainCommand): Promise<DomainResponseDto> {
     const domain = await this.domainRepository.findOneByIdAndEnvironment(
@@ -59,8 +65,13 @@ export class VerifyDomain {
     try {
       const records: MxRecord[] = await dnsPromises.resolveMx(lookupDomain);
 
-      return records.some((record) => record.exchange === expectedExchange);
-    } catch {
+      return records.some((record) => record.exchange.toLowerCase() === expectedExchange.toLowerCase());
+    } catch (error) {
+      this.logger.warn(
+        { err: error, lookupDomain, expectedExchange },
+        'Failed to resolve MX records for domain verification'
+      );
+
       return false;
     }
   }

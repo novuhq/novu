@@ -13,6 +13,7 @@ class RouteCommand {
   destination?: string;
 
   @IsEnum(DomainRouteTypeEnum)
+  @IsNotEmpty()
   type: DomainRouteTypeEnum;
 }
 

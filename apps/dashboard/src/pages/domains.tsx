@@ -129,6 +129,9 @@ export function DomainsPage() {
   const [search, setSearch] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
+  const environmentSlug = currentEnvironment?.slug;
+  const isTableLoading = isLoading || !environmentSlug;
+
   const domainsEnabled = getFeatureForTierAsBoolean(
     FeatureNameEnum.DOMAINS_BOOLEAN,
     subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
@@ -165,7 +168,7 @@ export function DomainsPage() {
         </div>
 
         <div className="flex-1 overflow-auto px-6 pb-6">
-          <Table isLoading={isLoading} loadingRowsCount={3}>
+          <Table isLoading={isTableLoading} loadingRowsCount={3}>
             <TableHeader>
               <TableRow>
                 <TableHead>Domain</TableHead>
@@ -175,7 +178,7 @@ export function DomainsPage() {
                 <TableHead />
               </TableRow>
             </TableHeader>
-            {!isLoading && (
+            {!isTableLoading && environmentSlug && (
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
@@ -187,7 +190,7 @@ export function DomainsPage() {
                   </TableRow>
                 ) : (
                   filtered.map((domain) => (
-                    <DomainRow key={domain._id} domain={domain} environmentSlug={currentEnvironment?.slug ?? ''} />
+                    <DomainRow key={domain._id} domain={domain} environmentSlug={environmentSlug} />
                   ))
                 )}
               </TableBody>

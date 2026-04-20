@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ExpectedDnsRecordDto {
   @ApiProperty({ example: 'MX' })
@@ -13,6 +13,6 @@ export class ExpectedDnsRecordDto {
   @ApiProperty({ example: 'Auto' })
   ttl: string;
 
-  @ApiProperty({ example: 10 })
-  priority: number;
+  @ApiPropertyOptional({ example: 10 })
+  priority?: number;
 }
