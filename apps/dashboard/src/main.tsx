@@ -77,6 +77,11 @@ import { overrideZodErrorMap } from './utils/validation';
 initializeSentry();
 overrideZodErrorMap();
 
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  window.location.reload();
+});
+
 const router = createBrowserRouter([
   {
     element: <RootRoute />,
