@@ -62,6 +62,12 @@ export class TranslationPluginView {
       const start = match.index;
       const end = start + match[0].length;
 
+      const startLine = view.state.doc.lineAt(start).number;
+      const endLine = view.state.doc.lineAt(end > start ? end - 1 : end).number;
+      if (startLine !== endLine) {
+        continue;
+      }
+
       if (this.isTypingTranslation && pos > start && pos < end) {
         continue;
       }

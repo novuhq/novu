@@ -48,7 +48,6 @@ export class VariablePluginView {
 
     const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
 
-    // Iterate through all variable matches in the content and add the pills
     while ((match = regex.exec(content)) !== null) {
       const parsedVariable = parseVariable(match[0]);
 
@@ -59,6 +58,12 @@ export class VariablePluginView {
       const { fullLiquidExpression, name, filtersArray } = parsedVariable;
       const start = match.index;
       const end = start + match[0].length;
+
+      const startLine = view.state.doc.lineAt(start).number;
+      const endLine = view.state.doc.lineAt(end > start ? end - 1 : end).number;
+      if (startLine !== endLine) {
+        continue;
+      }
 
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way
