@@ -22,7 +22,6 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
-import { DEFAULT_REGION, REGIONS } from '@/context/region/region-config';
 import { useDeleteDomain, useFetchDomains } from '@/hooks/use-domains';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -46,23 +45,6 @@ function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
     <Badge variant="light" color="orange">
       Pending
     </Badge>
-  );
-}
-
-function RegionCell() {
-  const region = REGIONS.find((r) => r.code === DEFAULT_REGION) ?? REGIONS[0];
-
-  if (!region) {
-    return null;
-  }
-
-  const regionLabel = region.awsRegion ? `${region.name} (${region.awsRegion})` : region.name;
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-base leading-none">{region.flag}</span>
-      <span>{regionLabel}</span>
-    </div>
   );
 }
 
@@ -99,9 +81,6 @@ function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; enviro
       </TableCell>
       <TableCell>
         <DomainStatusBadge status={domain.status} />
-      </TableCell>
-      <TableCell className="text-foreground-500 text-sm">
-        <RegionCell />
       </TableCell>
       <TableCell className="text-foreground-500 text-sm">
         {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
@@ -190,7 +169,6 @@ export function DomainsPage() {
               <TableRow>
                 <TableHead>Domain</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Region</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last updated</TableHead>
                 <TableHead />
@@ -200,7 +178,7 @@ export function DomainsPage() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-foreground-400 py-16 text-center">
+                    <TableCell colSpan={5} className="text-foreground-400 py-16 text-center">
                       {search
                         ? 'No domains match your search.'
                         : 'No domains yet. Add your first domain to get started.'}
