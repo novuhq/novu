@@ -127,20 +127,27 @@ function InlineRouteForm({
             </SelectContent>
           </Select>
 
-          {form.type === DomainRouteTypeEnum.AGENT && (
-            <Select value={form.destination} onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}>
-              <SelectTrigger className="h-7 w-40 text-sm" size="2xs">
-                <SelectValue placeholder="Select agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {agentOptions.map((agent) => (
-                  <SelectItem key={agent._id} value={agent._id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Select
+            value={form.destination}
+            onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}
+            disabled={form.type !== DomainRouteTypeEnum.AGENT}
+          >
+            <SelectTrigger
+              className={`h-7 w-40 text-sm ${form.type === DomainRouteTypeEnum.AGENT ? '' : 'invisible'}`}
+              size="2xs"
+              aria-hidden={form.type !== DomainRouteTypeEnum.AGENT}
+              tabIndex={form.type === DomainRouteTypeEnum.AGENT ? undefined : -1}
+            >
+              <SelectValue placeholder="Select agent" />
+            </SelectTrigger>
+            <SelectContent>
+              {agentOptions.map((agent) => (
+                <SelectItem key={agent._id} value={agent._id}>
+                  {agent.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </TableCell>
 
