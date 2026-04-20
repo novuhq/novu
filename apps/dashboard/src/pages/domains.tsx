@@ -109,32 +109,33 @@ export function DomainsPage() {
 
   const filtered = (domains ?? []).filter((d) => d.name.toLowerCase().includes(search.toLowerCase()));
 
+  if (!domainsEnabled) {
+    return (
+      <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Domains</h1>}>
+        <PageMeta title="Domains" />
+        <DomainsPaywallBanner />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout>
+    <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Domains</h1>}>
       <PageMeta title="Domains" />
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h1 className="text-xl font-semibold">Domains</h1>
+        <div className="flex items-center justify-between gap-3 px-6 py-4">
+          <FacetedFormFilter
+            type="text"
+            size="small"
+            title="Search"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search domains..."
+          />
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <RiAddLine className="size-4" />
+            Add domain
+          </Button>
         </div>
-
-        {!domainsEnabled && <DomainsPaywallBanner />}
-
-        {domainsEnabled && (
-          <div className="flex items-center justify-between gap-3 px-6 py-4">
-            <FacetedFormFilter
-              type="text"
-              size="small"
-              title="Search"
-              value={search}
-              onChange={setSearch}
-              placeholder="Search domains..."
-            />
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <RiAddLine className="size-4" />
-              Add domain
-            </Button>
-          </div>
-        )}
 
         <div className="flex-1 overflow-auto px-6 pb-6">
           <Table isLoading={isLoading} loadingRowsCount={3}>
@@ -168,7 +169,7 @@ export function DomainsPage() {
         </div>
       </div>
 
-      {domainsEnabled && <AddDomainDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />}
+      <AddDomainDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </DashboardLayout>
   );
 }

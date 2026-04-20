@@ -14,24 +14,27 @@ export function DomainsPaywallBanner() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-bg-weak mx-2.5 mb-2 flex items-center gap-6 overflow-hidden rounded-xl p-3">
-      <div className="bg-bg-white flex shrink-0 items-center justify-center self-stretch rounded-xl p-6">
-        <DomainsIllustrationSvg />
-      </div>
-
-      <div className="flex flex-col gap-8 self-stretch py-3">
-        <div className="flex flex-col gap-2">
-          <p className="text-label-md text-foreground-900 font-medium">Need more domains?</p>
-          <p className="text-label-sm text-text-soft max-w-[500px]">
-            Create additional domains to test, stage, or experiment without affecting your live systems.
-          </p>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-4">
+      <div className="flex w-full max-w-[480px] flex-col items-center gap-6 text-center">
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex flex-col items-center gap-2">
+            <div className="mb-[50px]">
+              <DomainsIllustrationSvg />
+            </div>
+            <h2 className="text-foreground-900 text-label-md">Domains</h2>
+            <p className="text-text-soft text-label-xs mb-3 max-w-[300px]">
+              Send email from a domain you own - better deliverability, stronger brand.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-text-soft text-label-xs mb-3 text-center">To create domains, upgrade your plan.</p>
           <Button
             variant="primary"
             mode="gradient"
             size="xs"
+            className="mb-3.5"
             onClick={() => {
               track(TelemetryEvent.UPGRADE_TO_TEAM_TIER_CLICK, {
                 source: 'domains-page',
