@@ -392,19 +392,22 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   );
   const shouldShowWildcardHint =
     isWildcardHintRolledIn && !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
+  const isEmpty = domain.routes.length === 0 && !isAdding;
 
   return (
     <div className="space-y-3">
       <div className="rounded-lg border bg-white p-3">
         <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
-          <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
-            <TableRow>
-              <TableHead className="h-8 px-3 text-label-xs">Address</TableHead>
-              <TableHead className="h-8 px-3 text-label-xs">Destination</TableHead>
-              <TableHead className="h-8 px-3 text-label-xs">Status</TableHead>
-              <TableHead className="h-8 px-3 text-label-xs w-12" />
-            </TableRow>
-          </TableHeader>
+          {!isEmpty && (
+            <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
+              <TableRow>
+                <TableHead className="h-8 px-3 text-label-xs">Address</TableHead>
+                <TableHead className="h-8 px-3 text-label-xs">Destination</TableHead>
+                <TableHead className="h-8 px-3 text-label-xs">Status</TableHead>
+                <TableHead className="h-8 px-3 text-label-xs w-12" />
+              </TableRow>
+            </TableHeader>
+          )}
           <TableBody>
             {domain.routes.map((route, index) =>
               editingIndex === index ? (
