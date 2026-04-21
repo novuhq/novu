@@ -19,6 +19,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
+import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
@@ -182,11 +183,19 @@ export function AgentDetailsPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem className="min-w-0">
             {isLoading ? (
-              <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
+                <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
+                  BETA
+                </Badge>
+              </div>
             ) : (
               <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
                 <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
                 <span className="truncate">{breadcrumbCurrentLabel}</span>
+                <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
+                  BETA
+                </Badge>
               </BreadcrumbPage>
             )}
           </BreadcrumbItem>

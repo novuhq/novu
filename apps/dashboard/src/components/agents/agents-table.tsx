@@ -231,7 +231,9 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem
                           className="text-destructive cursor-pointer"
-                          onClick={() => onRequestDelete(agent)}
+                          onClick={() => {
+                            setTimeout(() => onRequestDelete(agent), 0);
+                          }}
                         >
                           Delete
                         </DropdownMenuItem>
