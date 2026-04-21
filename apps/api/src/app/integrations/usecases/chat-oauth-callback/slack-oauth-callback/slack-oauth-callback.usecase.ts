@@ -17,6 +17,7 @@ import { CreateChannelConnectionCommand } from '../../../../channel-connections/
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -231,9 +232,7 @@ export class SlackOauthCallback {
 
   private async decodeSlackState(state: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload] = decoded.split('.');
-      const preliminaryData = JSON.parse(payload);
+      const preliminaryData = peekOAuthStatePayload<Partial<StateData>>(state);
 
       if (!preliminaryData.environmentId) {
         throw new BadRequestException('Invalid Slack state: missing environmentId');

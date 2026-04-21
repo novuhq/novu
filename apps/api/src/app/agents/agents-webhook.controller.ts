@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -17,6 +18,7 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
+import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
@@ -49,11 +51,21 @@ export class AgentsWebhookController {
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
-        update: body.update,
+        edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
       })
     );
+  }
+
+  @Get('/:agentId/webhook/:integrationIdentifier')
+  async handleWebhookVerification(
+    @Param('agentId') agentId: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    return this.routeWebhook(agentId, integrationIdentifier, req, res);
   }
 
   @Post('/:agentId/webhook/:integrationIdentifier')
@@ -64,12 +76,20 @@ export class AgentsWebhookController {
     @Req() req: Request,
     @Res() res: Response
   ) {
+    return this.routeWebhook(agentId, integrationIdentifier, req, res);
+  }
+
+  private async routeWebhook(agentId: string, integrationIdentifier: string, req: Request, res: Response) {
     try {
-      console.log('handleInboundWebhook', agentId, integrationIdentifier);
       await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res);
-      console.log('handleInboundWebhook success');
     } catch (err) {
-      console.log(err);
+      if (err instanceof AgentInactiveException) {
+        // Return 200 to avoid retries by the delivery provider
+        res.status(HttpStatus.OK).json({});
+
+        return;
+      }
+
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {

@@ -8,8 +8,8 @@ export type ConversationalProvider = {
 
 export const CONVERSATIONAL_PROVIDERS: ConversationalProvider[] = [
   { providerId: ChatProviderIdEnum.Slack, displayName: 'Slack' },
-  { providerId: ChatProviderIdEnum.MsTeams, displayName: 'MS Teams', comingSoon: true },
-  { providerId: ChatProviderIdEnum.WhatsAppBusiness, displayName: 'WhatsApp Business', comingSoon: true },
+  { providerId: ChatProviderIdEnum.MsTeams, displayName: 'MS Teams' },
+  { providerId: ChatProviderIdEnum.WhatsAppBusiness, displayName: 'WhatsApp Business' },
   { providerId: 'telegram', displayName: 'Telegram', comingSoon: true },
   { providerId: 'google-chat', displayName: 'Google Chat', comingSoon: true },
   { providerId: 'linear', displayName: 'Linear', comingSoon: true },

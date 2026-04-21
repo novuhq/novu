@@ -1,5 +1,6 @@
 import { Sema } from 'async-sema';
 import { async as glob } from 'fast-glob';
+import { readFileSync } from 'fs';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
@@ -8,6 +9,22 @@ import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
 
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
+
+function resolveFrameworkVersion(): string {
+  const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
+  if (distIndex === -1) return 'latest';
+
+  const pkgRoot = __dirname.slice(0, distIndex);
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
+    const ver = pkg.dependencies?.['@novu/framework'];
+    if (!ver || ver.startsWith('workspace:')) return 'latest';
+
+    return ver;
+  } catch {
+    return 'latest';
+  }
+}
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -74,7 +91,9 @@ export const installTemplate = async ({
 
   if (template === TemplateTypeEnum.APP_AGENT && agentIdentifier) {
     if (!/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
-      throw new Error(`Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`);
+      throw new Error(
+        `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
+      );
     }
     const agentFile = path.join(root, 'app', 'novu', 'agents', 'support-agent.tsx');
     await fs.writeFile(
@@ -194,7 +213,7 @@ export const installTemplate = async ({
     react: '^19',
     'react-dom': '^19',
     next: version,
-    '@novu/framework': 'latest',
+    '@novu/framework': resolveFrameworkVersion(),
   };
 
   if (!isAgentTemplate) {

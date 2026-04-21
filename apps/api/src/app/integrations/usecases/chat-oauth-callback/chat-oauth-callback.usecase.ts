@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { peekOAuthStatePayload } from '../generate-chat-oath-url/chat-oauth-state.util';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ChatOauthCallbackResult } from './chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback/msteams-oauth-callback.command';
@@ -51,15 +52,13 @@ export class ChatOauthCallback {
 
   private extractProviderIdFromState(state: string): ChatProviderIdEnum {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload] = decoded.split('.');
-      const preliminaryData = JSON.parse(payload);
+      const preliminaryData = peekOAuthStatePayload<{ providerId?: ChatProviderIdEnum }>(state);
 
       if (!preliminaryData.providerId) {
         throw new BadRequestException('Invalid state: missing providerId');
       }
 
-      return preliminaryData.providerId as ChatProviderIdEnum;
+      return preliminaryData.providerId;
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;

@@ -6,6 +6,7 @@ import {
 } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
+import type { EmojiValue } from 'chat';
 import sinon from 'sinon';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentConfigResolver } from '../services/agent-config-resolver.service';
@@ -18,7 +19,11 @@ import {
   seedChannelEndpoint,
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
-import { buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
+import { buildSlackAppMention, buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
+
+function mockEmoji(name: string): EmojiValue {
+  return { name, toJSON: () => `{{emoji:${name}}}`, toString: () => `{{emoji:${name}}}` };
+}
 
 function mockSentMessage() {
   return {
@@ -265,6 +270,47 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
     });
   });
 
+  describe('Inactive agent', () => {
+    it('should return 200 and not process inbound when agent is inactive', async () => {
+      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+
+      const body = JSON.stringify(
+        buildSlackAppMention({ userId: 'U_INACTIVE', channel: 'C_TEST', threadTs: `T_INACTIVE_${Date.now()}` })
+      );
+      const timestamp = Math.floor(Date.now() / 1000);
+      const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+
+      const res = await ctx.session.testAgent
+        .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+        .set(headers)
+        .set('content-type', 'application/json')
+        .send(body);
+
+      expect(res.status).to.equal(200);
+      expect(bridgeCalls.length).to.equal(0);
+    });
+
+    it('should process inbound again after reactivation', async () => {
+      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: true });
+
+      const body = JSON.stringify(
+        buildSlackAppMention({ userId: 'U_REACTIVATED', channel: 'C_TEST', threadTs: `T_REACTIVATE_${Date.now()}` })
+      );
+      const timestamp = Math.floor(Date.now() / 1000);
+      const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+
+      const res = await ctx.session.testAgent
+        .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+        .set(headers)
+        .set('content-type', 'application/json')
+        .send(body);
+
+      expect(res.status).to.equal(200);
+      expect(bridgeCalls.length).to.equal(1);
+    });
+  });
+
   describe('Conversation lifecycle', () => {
     it('should reopen resolved conversation on new inbound message', async () => {
       const threadId = `T_REOPEN_${Date.now()}`;
@@ -359,7 +405,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       bridgeCalls = [];
 
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'thumbs_up' },
+        emoji: mockEmoji('thumbs_up'),
         added: true,
         messageId: msg.id,
         message: msg as any,
@@ -379,7 +425,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
     it('should skip reaction when no conversation exists for the thread', async () => {
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'wave' },
+        emoji: mockEmoji('wave'),
         added: true,
         messageId: 'msg-orphan',
         thread: mockThread(`T_NOCONV_${Date.now()}`) as any,
@@ -392,7 +438,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
     it('should skip reaction when thread context is missing', async () => {
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'fire' },
+        emoji: mockEmoji('fire'),
         added: false,
         messageId: 'msg-no-thread',
       };
@@ -410,7 +456,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       bridgeCalls = [];
 
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'tada' },
+        emoji: mockEmoji('tada'),
         added: true,
         messageId: msg.id,
         message: msg as any,
@@ -443,7 +489,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       );
 
       const reactionEvent: InboundReactionEvent = {
-        emoji: { name: 'heart' },
+        emoji: mockEmoji('heart'),
         added: true,
         messageId: msg.id,
         message: msg as any,

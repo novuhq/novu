@@ -1,7 +1,9 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
-import { type AgentResponse } from '@/api/agents';
+import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
@@ -9,6 +11,8 @@ import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SlackSetupGuide } from './slack-setup-guide';
+import { TeamsSetupGuide } from './teams-setup-guide';
+import { WhatsAppSetupGuide } from './whatsapp-setup-guide';
 
 type AgentSetupGuideProps = {
   agent: AgentResponse;
@@ -18,6 +22,10 @@ function resolveProviderSetupGuide(providerId: string) {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
       return SlackSetupGuide;
+    case ChatProviderIdEnum.MsTeams:
+      return TeamsSetupGuide;
+    case ChatProviderIdEnum.WhatsAppBusiness:
+      return WhatsAppSetupGuide;
     default:
       return null;
   }
@@ -26,20 +34,42 @@ function resolveProviderSetupGuide(providerId: string) {
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
-  const [isProviderComplete, setIsProviderComplete] = useState(false);
+  const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
+  const queryClient = useQueryClient();
 
-  const slackFromAgent = agent.integrations?.find((i) => i.providerId === ChatProviderIdEnum.Slack);
+  const agentIntegrationsQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier: agent.identifier,
+        limit: 100,
+      }),
+    enabled: Boolean(currentEnvironment && agent.identifier),
+  });
 
-  const effectiveIntegrationId = selectedIntegrationId ?? slackFromAgent?.integrationId;
+  // Only reveal "2/2 Connect your code" once an integration link has actually been
+  // marked connected by the backend (connectedAt set). The OAuth success handler
+  // below refetches the list so this updates promptly after the user finishes the flow.
+  const hasConnectedIntegration = useMemo(() => {
+    const links = agentIntegrationsQuery.data?.data;
+    if (!links?.length) return false;
+
+    return links.some((link) => Boolean(link.connectedAt));
+  }, [agentIntegrationsQuery.data?.data]);
+
+  const defaultFromAgent = agent.integrations?.[0];
+
+  const effectiveIntegrationId = selectedIntegrationId ?? defaultFromAgent?.integrationId;
 
   const selectedProviderId = useMemo(() => {
     if (selectedIntegrationId) {
       return integrations?.find((i) => i._id === selectedIntegrationId)?.providerId;
     }
 
-    return slackFromAgent?.providerId;
-  }, [integrations, selectedIntegrationId, slackFromAgent?.providerId]);
+    return defaultFromAgent?.providerId;
+  }, [integrations, selectedIntegrationId, defaultFromAgent?.providerId]);
 
   const hasProviderSelected = Boolean(effectiveIntegrationId);
 
@@ -53,8 +83,10 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
 
   const handleProviderStepsCompleted = useCallback(() => {
-    setIsProviderComplete(true);
-  }, []);
+    queryClient.invalidateQueries({
+      queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+    });
+  }, [queryClient, currentEnvironment?._id, agent.identifier]);
 
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
@@ -86,7 +118,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               rightContent={
                 <ProviderDropdown
                   agentIdentifier={agent.identifier}
-                  selectedIntegrationId={selectedIntegrationId ?? slackFromAgent?.integrationId}
+                  selectedIntegrationId={selectedIntegrationId ?? defaultFromAgent?.integrationId}
                   linkedIntegrationIds={linkedIntegrationIds}
                   onSelect={(_providerId, integration) => {
                     if (integration?._id) {
@@ -107,7 +139,9 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               />
             ) : null}
 
-            <AgentCodeSetupSection agent={agent} stepOffset={5} isProviderComplete={isProviderComplete} />
+            {hasConnectedIntegration && (
+              <AgentCodeSetupSection agent={agent} stepOffset={5} providerId={selectedProviderId} />
+            )}
           </div>
         </div>
       )}

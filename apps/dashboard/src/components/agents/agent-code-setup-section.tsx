@@ -1,11 +1,12 @@
+import { ChatProviderIdEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiFileCopyLine } from 'react-icons/ri';
-import { useQueryClient } from '@tanstack/react-query';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
-import { ExternalLink } from '@/components/shared/external-link';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -14,6 +15,9 @@ import { deriveStepStatus } from './setup-guide-step-utils';
 
 const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
+
+// TODO: change to 'latest' when agents are GA and IS_CONVERSATIONAL_AGENTS_ENABLED flag is removed
+const CLI_PACKAGE_TAG = 'rc';
 
 function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
@@ -31,7 +35,7 @@ function buildInitCommand({
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
-  const parts = [`npx novu@latest init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${key}`];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${key}`];
 
   if (apiUrl) {
     parts.push(`-a ${apiUrl}`);
@@ -49,7 +53,11 @@ function buildInitCopyCommand({
   secretKey: string;
   apiUrl: string | null;
 }): string {
-  const parts = [`npx novu@latest init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${secretKey}`];
+  const parts = [
+    `npx novu@${CLI_PACKAGE_TAG} init -t agent`,
+    `--agent-identifier ${agentIdentifier}`,
+    `-s ${secretKey}`,
+  ];
 
   if (apiUrl) {
     parts.push(`-a ${apiUrl}`);
@@ -104,12 +112,25 @@ function TerminalBlock({ displayCommand, copyCommand }: { displayCommand: string
   );
 }
 
+function getProviderCallToAction(providerId: string | undefined): string {
+  switch (providerId) {
+    case ChatProviderIdEnum.Slack:
+      return 'Head back to Slack and mention your bot again — this time your agent server will handle the message.';
+    case ChatProviderIdEnum.WhatsAppBusiness:
+      return 'Send a message to your WhatsApp number again — this time your agent server will handle it.';
+    default:
+      return 'Send a message to your bot from the connected provider again — this time your agent server will handle it.';
+  }
+}
+
 function BridgeConnectionStatus({
   agent,
   agentIdentifier,
+  providerId,
 }: {
   agent: AgentResponse;
   agentIdentifier: string;
+  providerId: string | undefined;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -162,11 +183,12 @@ function BridgeConnectionStatus({
       <div className="flex flex-col gap-2 py-4 pl-8">
         <div className="flex items-center gap-1">
           <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
-          <span className="text-text-strong text-label-sm font-medium">Bridge connected</span>
+          <span className="text-text-strong text-label-sm font-medium">Bridge connected — try your agent</span>
         </div>
+        <p className="text-text-soft text-label-xs font-medium leading-4">{getProviderCallToAction(providerId)}</p>
         <p className="text-text-soft text-label-xs font-medium leading-4">
-          Your agent is receiving events. Edit{' '}
-          <code className="font-code text-[12px] tracking-[-0.24px]">app/novu/agents/</code> to customize the handler.
+          Edit <code className="font-code text-[12px] tracking-[-0.24px]">app/novu/agents/</code> to customize how your
+          agent responds.
         </p>
         <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
           Agent documentation
@@ -193,10 +215,10 @@ function BridgeConnectionStatus({
 type AgentCodeSetupSectionProps = {
   agent: AgentResponse;
   stepOffset: number;
-  isProviderComplete: boolean;
+  providerId?: string;
 };
 
-export function AgentCodeSetupSection({ agent, stepOffset, isProviderComplete }: AgentCodeSetupSectionProps) {
+export function AgentCodeSetupSection({ agent, stepOffset, providerId }: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
 
@@ -205,14 +227,9 @@ export function AgentCodeSetupSection({ agent, stepOffset, isProviderComplete }:
 
   const isBridgeConnected = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
 
-  let firstIncompleteStep: number;
-  if (isBridgeConnected) {
-    firstIncompleteStep = stepOffset + 2;
-  } else if (isProviderComplete) {
-    firstIncompleteStep = stepOffset;
-  } else {
-    firstIncompleteStep = stepOffset + 3;
-  }
+  // The caller only renders this section once a provider integration is
+  // connected, so the "2/2 Connect your code" steps start out active.
+  const firstIncompleteStep = isBridgeConnected ? stepOffset + 2 : stepOffset;
 
   return (
     <>
@@ -255,20 +272,20 @@ export function AgentCodeSetupSection({ agent, stepOffset, isProviderComplete }:
         title="Start the dev tunnel"
         description={
           <span>
-            Start your app with{' '}
-            <code className="font-code text-[12px] tracking-[-0.24px]">npm run dev</code>, then run this in a second
-            terminal from your project directory. It creates a tunnel and registers the bridge URL with Novu.
+            Start your app with <code className="font-code text-[12px] tracking-[-0.24px]">npm run dev</code>, then run
+            this in a second terminal from your project directory. It creates a tunnel and registers the bridge URL with
+            Novu.
           </span>
         }
         rightContent={
           <TerminalBlock
-            displayCommand="npx novu@latest dev -p 4000 --no-studio"
-            copyCommand="npx novu@latest dev -p 4000 --no-studio"
+            displayCommand={`npx novu@${CLI_PACKAGE_TAG} dev -p 4000 --no-studio`}
+            copyCommand={`npx novu@${CLI_PACKAGE_TAG} dev -p 4000 --no-studio`}
           />
         }
       />
 
-      <BridgeConnectionStatus agent={agent} agentIdentifier={agent.identifier} />
+      <BridgeConnectionStatus agent={agent} agentIdentifier={agent.identifier} providerId={providerId} />
     </>
   );
 }

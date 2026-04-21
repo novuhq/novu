@@ -90,7 +90,7 @@
     "got": "^11.8.6",
     "handlebars": "4.7.9",
     "i18next": "^23.7.6",
-    "ioredis": "^5.2.4",
+    "ioredis": "^5.4.1",
     "json-logic-js": "^2.0.5",
     "json-schema-to-ts": "^3.0.0",
     "json-schema-faker": "^0.5.6",

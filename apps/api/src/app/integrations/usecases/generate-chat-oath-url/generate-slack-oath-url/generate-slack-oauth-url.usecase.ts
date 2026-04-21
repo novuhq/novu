@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, GetNovuProviderCredentials, GetNovuProviderCredentialsCommand } from '@novu/application-generic';
+import {
+  createHash,
+  GetNovuProviderCredentials,
+  GetNovuProviderCredentialsCommand,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   EnvironmentRepository,
@@ -10,6 +15,7 @@ import {
 import { ChatProviderIdEnum, ConnectionMode, ContextPayload, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
 export type OAuthMode = 'connect' | 'link_user';
@@ -46,26 +52,27 @@ export class GenerateSlackOauthUrl {
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
     private subscriberRepository: SubscriberRepository,
-    private agentIntegrationRepository: AgentIntegrationRepository
-  ) {}
+    private agentIntegrationRepository: AgentIntegrationRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(GenerateSlackOauthUrl.name);
+  }
 
   async execute(command: GenerateSlackOauthUrlCommand): Promise<string> {
     this.validateSubscriberIdOrContext(command);
     await this.assertResourceExists(command);
 
     const { clientId } = await this.getIntegrationCredentials(command.integration);
-    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
     const secureState = await this.createSecureState(
       command.integration,
-      subscriberId,
+      command.subscriberId,
       command.context,
       command.connectionIdentifier,
       command.mode,
       command.connectionMode
     );
 
-    const resolvedScope =
-      command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
+    const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
 
     return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
   }
@@ -181,13 +188,16 @@ export class GenerateSlackOauthUrl {
       throw new BadRequestException('Failed to create OAuth state signature');
     }
 
-    return Buffer.from(`${payload}.${signature}`).toString('base64url');
+    const base64EncodedState = encodeOAuthState(payload, signature);
+
+    this.logger.info({ stateData, base64EncodedState }, 'Slack OAuth secure state generated');
+
+    return base64EncodedState;
   }
 
   static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload, signature] = decoded.split('.');
+      const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
       if (signature !== expectedSignature) {

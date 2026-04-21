@@ -9,8 +9,10 @@ import {
 } from 'react-icons/ri';
 import { ConversationActivityDto } from '@/api/conversations';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationTimelineProps = {
   activities: ConversationActivityDto[];
@@ -18,8 +20,17 @@ type ConversationTimelineProps = {
   totalCount: number;
 };
 
-function formatActivityTimestamp(dateStr: string): string {
+function formatActivityTimestamp(dateStr: string | undefined): string {
+  if (!dateStr?.trim()) {
+    return '—';
+  }
+
   const d = new Date(dateStr);
+
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
+
   const day = String(d.getDate()).padStart(2, '0');
   const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
   const year = String(d.getFullYear()).slice(2);
@@ -54,7 +65,7 @@ function SenderHeader({ activity }: { activity: ConversationActivityDto }) {
         {isAgent ? (
           <RiRobot2Line className="text-text-sub size-4 shrink-0" />
         ) : (
-          <div className="bg-neutral-200 size-4 shrink-0 rounded-full" />
+          <SubscriberFallbackAvatar className="size-4" />
         )}
         <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{name}</span>
       </div>
@@ -87,7 +98,7 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
         {activity.platform && (
           <div className="border-stroke-soft bg-bg-weak flex items-center gap-[3px] rounded border px-1 py-0.5">
             <img
-              src={`/images/providers/light/square/${activity.platform}.svg`}
+              src={`/images/providers/light/square/${getProviderSquareIconFileName(activity.platform)}.svg`}
               alt={activity.platform}
               className="size-3.5 object-contain"
             />
@@ -95,7 +106,6 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
           </div>
         )}
       </div>
-      <RiExpandUpDownLine className="text-text-soft size-4 shrink-0" />
     </div>
   );
 }

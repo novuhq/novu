@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
@@ -47,7 +47,14 @@ export class TestHttpEndpointUsecase {
 
     const compileContext = this.buildCompileContext(previewPayload);
 
-    const compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+    let compiled: typeof controlValues;
+    try {
+      compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Unknown error';
+
+      throw new BadRequestException(`HTTP request step template compilation failed: ${message}`);
+    }
 
     const resolvedUrl = (compiled.url as string) ?? '';
     const method = (compiled.method as string) ?? 'GET';
@@ -145,7 +152,7 @@ export class TestHttpEndpointUsecase {
     try {
       return JSON.parse(compiled);
     } catch {
-      return values;
+      throw new Error('Rendered template output is not valid JSON');
     }
   }
 }

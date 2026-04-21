@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { FileRef } from '@novu/framework';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -14,13 +15,56 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 
+export type { FileRef } from '@novu/framework';
+
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
-export interface FileRef {
-  filename: string;
-  mimeType?: string;
-  data?: string;
-  url?: string;
+/**
+ * Allowed characters for a metadata signal key.
+ *
+ * Metadata is merged into `conversation.metadata` (a plain object) and re-hydrated by
+ * every downstream consumer, so we forbid anything that could produce a prototype
+ * pollution gadget (`__proto__`, `constructor`, `prototype`) or break key handling
+ * for storage/serialization (dots, brackets, control chars). The shape mirrors
+ * SLUG_IDENTIFIER_REGEX with an additional `:` for namespacing (e.g. `crm:ticketId`).
+ */
+const METADATA_SIGNAL_KEY_REGEX = /^[a-zA-Z0-9]+(?:[-_:][a-zA-Z0-9]+)*$/;
+const FORBIDDEN_METADATA_SIGNAL_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const MAX_METADATA_SIGNAL_KEY_LENGTH = 128;
+
+export function isValidMetadataSignalKey(key: unknown): key is string {
+  if (typeof key !== 'string' || key.length === 0 || key.length > MAX_METADATA_SIGNAL_KEY_LENGTH) {
+    return false;
+  }
+
+  if (FORBIDDEN_METADATA_SIGNAL_KEYS.has(key)) return false;
+
+  return METADATA_SIGNAL_KEY_REGEX.test(key);
+}
+
+@ValidatorConstraint({ name: 'isValidSignal', async: false })
+export class IsValidSignal implements ValidatorConstraintInterface {
+  validate(signal: SignalDto): boolean {
+    if (!signal?.type) return false;
+
+    if (signal.type === 'metadata') {
+      return isValidMetadataSignalKey(signal.key) && signal.value !== undefined;
+    }
+
+    if (signal.type === 'trigger') {
+      return typeof signal.workflowId === 'string' && signal.workflowId.length > 0;
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return (
+      'metadata signals require a key 1-128 chars of letters, digits and "-", "_", ":" separators ' +
+      '(no leading, trailing or consecutive separators) plus a defined value; ' +
+      'trigger signals require workflowId.'
+    );
+  }
 }
 
 @ValidatorConstraint({ name: 'isValidReplyContent', async: false })
@@ -68,6 +112,20 @@ export class ReplyContentDto {
   @IsOptional()
   @IsArray()
   files?: FileRef[];
+}
+
+export class EditPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+
+  @ApiProperty({ type: ReplyContentDto })
+  @IsObject()
+  @ValidateNested()
+  @Validate(IsValidReplyContent)
+  @Type(() => ReplyContentDto)
+  content: ReplyContentDto;
 }
 
 export class ResolveDto {
@@ -127,13 +185,12 @@ export class AgentReplyPayloadDto {
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
 
-  @ApiPropertyOptional({ type: ReplyContentDto })
+  @ApiPropertyOptional({ type: EditPayloadDto })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Validate(IsValidReplyContent)
-  @Type(() => ReplyContentDto)
-  update?: ReplyContentDto;
+  @Type(() => EditPayloadDto)
+  edit?: EditPayloadDto;
 
   @ApiPropertyOptional({ type: ResolveDto })
   @IsOptional()
@@ -146,6 +203,7 @@ export class AgentReplyPayloadDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
+  @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
 }

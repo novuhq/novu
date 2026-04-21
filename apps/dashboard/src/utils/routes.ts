@@ -82,7 +82,7 @@ export const ROUTES = {
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
 
-export const AGENT_DETAILS_TABS = ['overview', 'integrations', 'activity'] as const;
+export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
 
 export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
 
