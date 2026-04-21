@@ -174,7 +174,7 @@ export class AgentContextImpl implements AgentContext {
   }
 
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void {
-    this._signals.push({ type: 'trigger', workflowId, ...opts });
+    this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
   /**

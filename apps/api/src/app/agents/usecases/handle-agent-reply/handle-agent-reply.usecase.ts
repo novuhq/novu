@@ -9,7 +9,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
-import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum, type TriggerRecipientsPayload } from '@novu/shared';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
@@ -243,7 +243,7 @@ export class HandleAgentReply {
     );
 
     for (const signal of signals) {
-      const to = signal.to ?? subscriberParticipant?.id;
+      const to = (signal.to as TriggerRecipientsPayload | undefined) ?? subscriberParticipant?.id;
 
       if (!to) {
         this.logger.warn(
@@ -253,6 +253,7 @@ export class HandleAgentReply {
         continue;
       }
 
+      let transactionId: string;
       try {
         const result = await this.parseEventRequest.execute(
           ParseEventRequestMulticastCommand.create({
@@ -268,21 +269,30 @@ export class HandleAgentReply {
             requestId: randomUUID(),
           })
         );
+        transactionId = result.transactionId;
+      } catch (err) {
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
+          `[agent:${command.agentIdentifier}] Failed to dispatch trigger for workflow "${signal.workflowId}"`
+        );
+        continue;
+      }
 
+      try {
         await this.conversationService.persistTriggerSignal({
           conversationId: conversation._id,
           channel,
           agentIdentifier: command.agentIdentifier,
           workflowId: signal.workflowId,
           to,
-          transactionId: result.transactionId,
+          transactionId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
         });
       } catch (err) {
         this.logger.warn(
-          { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
-          `[agent:${command.agentIdentifier}] Failed to trigger workflow "${signal.workflowId}"`
+          { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId, transactionId },
+          `[agent:${command.agentIdentifier}] Workflow "${signal.workflowId}" was enqueued (txn: ${transactionId}) but failed to persist activity`
         );
       }
     }
