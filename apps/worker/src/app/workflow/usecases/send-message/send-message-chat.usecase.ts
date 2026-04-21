@@ -1,9 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  type CardElementLike,
+  ChatContentCompiler,
   ChatFactory,
   CompileTemplate,
   CompileTemplateCommand,
+  type CompiledChatContent,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -36,7 +39,7 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { ChannelData, ISendMessageSuccessResponse } from '@novu/stateless';
+import { ChannelData, IChatOptions, ISendMessageSuccessResponse } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
@@ -59,6 +62,15 @@ type MessageContext = {
   command: SendMessageChannelCommand;
   step: NotificationStepEntity;
   content: string;
+  /**
+   * Structured card tree (shape of `CardElement`) forwarded from the bridge
+   * outputs / dashboard renderer. Already Liquid-rendered by the time we see
+   * it. When present, the send path compiles provider-specific payloads per
+   * channel; `content` stays the universal text fallback.
+   */
+  card?: CardElementLike;
+  /** Disable text fallback on providers that can't render `card`. */
+  disableFallback?: boolean;
   i18nInstance: unknown;
 };
 
@@ -76,7 +88,8 @@ export class SendMessageChat extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     protected moduleRef: ModuleRef,
     private sendWebhookMessage: SendWebhookMessage,
-    private resolveChannelEndpoints: ResolveChannelEndpoints
+    private resolveChannelEndpoints: ResolveChannelEndpoints,
+    private chatContentCompiler: ChatContentCompiler
   ) {
     super(
       messageRepository,
@@ -161,8 +174,12 @@ export class SendMessageChat extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeOutput = command.bridgeData?.outputs as ChatOutput | undefined;
+    const bridgeOutput = command.bridgeData?.outputs as
+      | (ChatOutput & { card?: CardElementLike; disableFallback?: boolean })
+      | undefined;
     let content: string = bridgeOutput?.body || '';
+    const card = bridgeOutput?.card;
+    const disableFallback = bridgeOutput?.disableFallback;
 
     try {
       if (!command.bridgeData) {
@@ -179,7 +196,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, i18nInstance };
+    return { command, step, content, card, disableFallback, i18nInstance };
   }
 
   /**
@@ -228,14 +245,18 @@ export class SendMessageChat extends SendMessageBase {
             messageContext.command,
             channel.data as IntegrationEndpoints,
             messageContext.step,
-            messageContext.content
+            messageContext.content,
+            messageContext.card,
+            messageContext.disableFallback
           );
         } else {
           result = await this.sendChannelMessageLegacy(
             messageContext.command,
             channel.data as IChannelSettings,
             messageContext.step,
-            messageContext.content
+            messageContext.content,
+            messageContext.card,
+            messageContext.disableFallback
           );
         }
 
@@ -320,7 +341,9 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     integrationChannelData: IntegrationEndpoints,
     step: NotificationStepEntity,
-    content: string
+    content: string,
+    card: CardElementLike | undefined,
+    disableFallback: boolean | undefined
   ): Promise<SendMessageResult> {
     const { integration, error } = await this.getAndValidateIntegration(
       command,
@@ -330,21 +353,25 @@ export class SendMessageChat extends SendMessageBase {
     );
     if (error) return error;
 
+    const compiled = await this.compileForProvider(card, integration.providerId);
+    const effectiveContent = this.resolveEffectiveContent(content, compiled, disableFallback);
+
     const message = await this.createMessage(
       command,
       step,
-      content,
+      effectiveContent,
       integrationChannelData.providerId,
       integration,
       {},
-      integrationChannelData.channelData
+      integrationChannelData.channelData,
+      card
     );
 
     let status: SendMessageStatus = SendMessageStatus.FAILED;
 
     for (const channelData of integrationChannelData.channelData) {
       try {
-        const result = await this.sendMessage(channelData, integration, content, message, command);
+        const result = await this.sendMessage(channelData, integration, effectiveContent, message, command, compiled);
 
         if (result.status === SendMessageStatus.SUCCESS) {
           status = SendMessageStatus.SUCCESS;
@@ -372,7 +399,9 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
-    content: string
+    content: string,
+    card: CardElementLike | undefined,
+    disableFallback: boolean | undefined
   ): Promise<SendMessageResult> {
     /**
      * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
@@ -404,24 +433,68 @@ export class SendMessageChat extends SendMessageBase {
     // transform the legacy channel (chatWebhookUrl, phoneNumber, channelSpecification) to new channelData interface
     const channelData = this.buildLegacyChannelData(subscriberChannel, combinedOverrides, command);
 
+    const compiled = await this.compileForProvider(card, integration.providerId);
+    const effectiveContent = this.resolveEffectiveContent(content, compiled, disableFallback);
+
     const message = await this.createMessage(
       command,
       step,
-      content,
+      effectiveContent,
       subscriberChannel.providerId,
       integration,
       {
         chatWebhookUrl,
         phone: phoneNumber,
       },
-      channelData ? [channelData] : undefined
+      channelData ? [channelData] : undefined,
+      card
     );
 
     if (channelData) {
-      return await this.sendMessage(channelData, integration, content, message, command);
+      return await this.sendMessage(channelData, integration, effectiveContent, message, command, compiled);
     }
 
     return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
+  }
+
+  /**
+   * Compile a `CardElement` once for the concrete provider, cheap-no-oping
+   * when no card is set. Keeps the hot text-only path unchanged.
+   */
+  private async compileForProvider(
+    card: CardElementLike | undefined,
+    providerId: string
+  ): Promise<CompiledChatContent | undefined> {
+    if (!card) return undefined;
+    try {
+      return await this.chatContentCompiler.compileFor(card, providerId);
+    } catch (e) {
+      Logger.error(e, `Chat card compile failed for ${providerId}, falling back to text`, LOG_CONTEXT);
+
+      return undefined;
+    }
+  }
+
+  /**
+   * Decide what `content: string` the provider will actually see.
+   *
+   * Default behavior (backwards compatible): use the compiled text flattening
+   * when a card was compiled, otherwise the raw `content` from `body` /
+   * template compilation.
+   *
+   * With `disableFallback: true` the caller opted out of text degradation,
+   * so providers that ignore `blocks` / `adaptiveCard` / `embeds` will send
+   * an empty string — forcing rich-only delivery.
+   */
+  private resolveEffectiveContent(
+    content: string,
+    compiled: CompiledChatContent | undefined,
+    disableFallback: boolean | undefined
+  ): string {
+    if (disableFallback) return '';
+    if (compiled?.text && compiled.text.length > 0) return compiled.text;
+
+    return content;
   }
 
   private buildLegacyChannelData(
@@ -535,7 +608,8 @@ export class SendMessageChat extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
-    command: SendMessageChannelCommand
+    command: SendMessageChannelCommand,
+    compiled: CompiledChatContent | undefined
   ): Promise<SendMessageResult> {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
@@ -556,6 +630,15 @@ export class SendMessageChat extends SendMessageBase {
         bridgeProviderData: combinedOverrides,
         customData: overrides,
         content,
+        /**
+         * Rich-content payloads. Each provider picks the one it understands
+         * and ignores the others; providers unaware of these fields (older
+         * integrations, generic webhook providers) simply drop them and
+         * read `content` as today.
+         */
+        ...(compiled?.slackBlocks && { blocks: compiled.slackBlocks as IChatOptions['blocks'] }),
+        ...(compiled?.adaptiveCard && { adaptiveCard: compiled.adaptiveCard }),
+        ...(compiled?.discordEmbeds && { embeds: compiled.discordEmbeds }),
       });
 
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
@@ -580,7 +663,8 @@ export class SendMessageChat extends SendMessageBase {
     providerId: ProvidersIdEnum,
     integration: IntegrationEntity,
     additionalFields: Partial<MessageEntity> = {},
-    channelData?: ChannelData[]
+    channelData?: ChannelData[],
+    card?: CardElementLike
   ): Promise<MessageEntity> {
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -598,6 +682,13 @@ export class SendMessageChat extends SendMessageBase {
       severity: command.severity,
       stepId: command.step.stepId,
       contextKeys: command.contextKeys,
+      /*
+       * Persist the original card tree alongside the compiled text so the
+       * activity feed, resend flow, and any future analytics can reconstruct
+       * the rich message exactly as authored. `content` remains the stable
+       * plain-text representation for everything that doesn't understand cards.
+       */
+      ...(card && this.storeContent() && { data: { card } }),
       ...(channelData &&
         channelData.length > 0 && { channelData: channelData.map((data) => this.redactChannelData(data)) }),
       ...additionalFields,

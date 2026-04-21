@@ -19,6 +19,7 @@ import { ThrottleThreshold } from '@/components/workflow-editor/steps/throttle/t
 import { ThrottleWindow } from '@/components/workflow-editor/steps/throttle/throttle-window';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflow } from '../workflow-provider';
+import { ChatRichBody } from './chat/rich-body';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
 import { DataObject } from './base/data-object';
@@ -125,6 +126,9 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.CHAT_BODY: {
       return <BaseBody />;
+    }
+    case UiComponentEnum.CHAT_RICH_BODY: {
+      return <ChatRichBody />;
     }
 
     case UiComponentEnum.LAYOUT_SELECT: {

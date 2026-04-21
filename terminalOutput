@@ -1,0 +1,48 @@
+
+> @novu/react-native@3.15.0 build /workspace/packages/react-native
+> tsup && pnpm run check:exports
+
+[34mCLI[39m Building entry: src/index.ts
+[34mCLI[39m Using tsconfig: tsconfig.json
+[34mCLI[39m tsup v8.2.1
+[34mCLI[39m Using tsup config: /workspace/packages/react-native/tsup.config.ts
+[34mCLI[39m Target: esnext
+[34mCLI[39m Cleaning output folder
+[34mESM[39m Build start
+[34mCJS[39m Build start
+[32mCJS[39m [1mdist/client/index.js     [22m[32m1.09 KB[39m
+[32mCJS[39m [1mdist/client/index.js.map [22m[32m171.00 B[39m
+[32mCJS[39m ⚡️ Build success in 23ms
+[32mESM[39m [1mdist/client/index.mjs     [22m[32m69.00 B[39m
+[32mESM[39m [1mdist/client/index.mjs.map [22m[32m139.00 B[39m
+[32mESM[39m ⚡️ Build success in 23ms
+[34mDTS[39m Build start
+[32mDTS[39m ⚡️ Build success in 1223ms
+[32mDTS[39m [1mdist/client/index.d.mts [22m[32m35.00 B[39m
+[32mDTS[39m [1mdist/client/index.d.ts  [22m[32m35.00 B[39m
+
+> @novu/react-native@3.15.0 check:exports /workspace/packages/react-native
+> attw --pack .
+
+
+@novu/react-native v3.15.0
+
+Build tools:
+- @arethetypeswrong/cli@^0.17.4
+- typescript@5.6.2
+- tsup@^8.2.1
+
+[0m No problems found 🌟[0m
+
+
+[90m┌───────────────────[39m[90m┬──────────────────────┐[39m
+[90m│[39m[31m                   [39m[90m│[39m[31m [1m[92m"@novu/react-native"[31m[22m [39m[90m│[39m
+[90m├───────────────────[39m[90m┼──────────────────────┤[39m
+[90m│[39m node10            [90m│[39m 🟢                   [90m│[39m
+[90m├───────────────────[39m[90m┼──────────────────────┤[39m
+[90m│[39m node16 (from CJS) [90m│[39m 🟢 (CJS)             [90m│[39m
+[90m├───────────────────[39m[90m┼──────────────────────┤[39m
+[90m│[39m node16 (from ESM) [90m│[39m 🟢 (ESM)             [90m│[39m
+[90m├───────────────────[39m[90m┼──────────────────────┤[39m
+[90m│[39m bundler           [90m│[39m 🟢                   [90m│[39m
+[90m└───────────────────[39m[90m┴──────────────────────┘[39m

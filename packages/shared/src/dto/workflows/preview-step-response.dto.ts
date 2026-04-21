@@ -4,8 +4,31 @@ import { JSONSchemaDto } from './json-schema-dto';
 
 export class RenderOutput {}
 
+/**
+ * Compiled, per-platform chat payloads produced by `ChatContentCompiler`.
+ * Consumed by the dashboard Preview tab to render provider-accurate previews
+ * (Slack Block Kit, Teams Adaptive Card, Discord embeds) without round-tripping
+ * through a real send.
+ */
+export class ChatCompiledPreviews {
+  text?: string;
+  slack?: unknown;
+  teams?: unknown;
+  discord?: unknown;
+}
+
 export class ChatRenderOutput extends RenderOutput {
   body: string;
+  /**
+   * Structured card tree (shape mirrors `CardElement` from `chat`). Populated
+   * by the rich chat editor. Absent for legacy text-only chat steps.
+   */
+  card?: Record<string, unknown>;
+  /**
+   * Compiled per-platform payloads — populated when `card` is present so the
+   * preview UI doesn't need to run the compiler itself.
+   */
+  compiledPreviews?: ChatCompiledPreviews;
 }
 
 export class SmsRenderOutput extends RenderOutput {

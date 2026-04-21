@@ -35,38 +35,64 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const { channelData, content } = data;
+    const { channelData, content, adaptiveCard } = data;
 
     if (!channelData) {
       throw new Error('Channel data is required for MS Teams provider');
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.WEBHOOK)) {
-      return await this.sendWebhookMessage(channelData.endpoint.url, content, bridgeProviderData);
+      return await this.sendWebhookMessage(channelData.endpoint.url, content, bridgeProviderData, adaptiveCard);
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.MS_TEAMS_CHANNEL)) {
-      return await this.sendChannelMessage(channelData, content);
+      return await this.sendChannelMessage(channelData, content, adaptiveCard);
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.MS_TEAMS_USER)) {
-      return await this.sendUserMessage(channelData, content);
+      return await this.sendUserMessage(channelData, content, adaptiveCard);
     }
 
     throw new Error(`Invalid channel data type for MsTeams provider`);
   }
 
+  /**
+   * Wraps an Adaptive Card in the Bot Framework attachment envelope that
+   * both webhook and Bot Framework endpoints accept.
+   */
+  private adaptiveCardAttachment(adaptiveCard: unknown) {
+    return {
+      contentType: 'application/vnd.microsoft.card.adaptive',
+      content: adaptiveCard,
+    };
+  }
+
   private async sendWebhookMessage(
     webhookUrl: string,
     content: string,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>,
+    adaptiveCard?: unknown
   ): Promise<ISendMessageSuccessResponse> {
     let payload: Record<string, unknown>;
 
-    try {
-      payload = { ...JSON.parse(content) };
-    } catch {
-      payload = { text: content };
+    if (adaptiveCard) {
+      /*
+       * When a compiled Adaptive Card is present we send the canonical
+       * incoming-webhook envelope with an attachment. Keeps the legacy
+       * `JSON.parse(content)` escape hatch working for pre-existing
+       * customers — they fall through to the catch branch below.
+       */
+      payload = {
+        type: 'message',
+        attachments: [this.adaptiveCardAttachment(adaptiveCard)],
+        ...(content && { text: content }),
+      };
+    } else {
+      try {
+        payload = { ...JSON.parse(content) };
+      } catch {
+        payload = { text: content };
+      }
     }
 
     payload = this.transform(bridgeProviderData, payload).body;
@@ -81,7 +107,8 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
 
   private async sendChannelMessage(
     channelData: MsTeamsChannelData,
-    content: string
+    content: string,
+    adaptiveCard?: unknown
   ): Promise<ISendMessageSuccessResponse> {
     const { endpoint, subscriberTenantId, token } = channelData;
     const { teamId, channelId } = endpoint;
@@ -89,6 +116,7 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     const payload = {
       type: 'message',
       text: content,
+      ...(adaptiveCard && { attachments: [this.adaptiveCardAttachment(adaptiveCard)] }),
       channelData: {
         tenant: { id: subscriberTenantId },
         team: { id: teamId },
@@ -118,7 +146,11 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     }
   }
 
-  private async sendUserMessage(channelData: MsTeamsUserData, content: string): Promise<ISendMessageSuccessResponse> {
+  private async sendUserMessage(
+    channelData: MsTeamsUserData,
+    content: string,
+    adaptiveCard?: unknown
+  ): Promise<ISendMessageSuccessResponse> {
     const { endpoint, subscriberTenantId, token, clientId } = channelData;
     const { userId } = endpoint;
 
@@ -150,6 +182,7 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
       const messagePayload = {
         type: 'message',
         text: content,
+        ...(adaptiveCard && { attachments: [this.adaptiveCardAttachment(adaptiveCard)] }),
       };
 
       const messageResponse = await this.axiosInstance.post(

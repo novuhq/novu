@@ -39,6 +39,13 @@ export class DiscordProvider extends BaseProvider implements IChatProvider {
       url.toString(),
       this.transform(bridgeProviderData, {
         content: data.content,
+        /**
+         * Discord supports up to 10 embeds per webhook message. When we have
+         * compiled embeds from a `CardElement`, forward them; Discord renders
+         * the card as one or more embed blocks alongside the plain-text
+         * `content`. Existing customers not passing `embeds` are unaffected.
+         */
+        ...(data.embeds && { embeds: data.embeds }),
         ...(data.customData || {}),
       }).body
     );

@@ -5,3 +5,4 @@ export * from './actions/throttle.schema';
 export * from './channels';
 export * from './empty.schema';
 export * from './trigger.schema';
+export * from '../shared';

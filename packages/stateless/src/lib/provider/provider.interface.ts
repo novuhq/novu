@@ -102,6 +102,17 @@ export interface IChatOptions {
   channelData?: ChannelData;
   content: string;
   blocks?: IBlock[];
+  /**
+   * Microsoft Teams Adaptive Card JSON. Compiled from a `CardElement` tree
+   * by `ChatContentCompiler`. Providers that don't understand this (i.e.
+   * everything except Teams) ignore the field.
+   */
+  adaptiveCard?: unknown;
+  /**
+   * Discord webhook embeds. Compiled from a `CardElement` tree by
+   * `ChatContentCompiler`. Ignored by non-Discord providers.
+   */
+  embeds?: unknown[];
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }

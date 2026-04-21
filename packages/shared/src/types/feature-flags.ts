@@ -98,6 +98,12 @@ export enum FeatureFlagsKeysEnum {
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
+  /**
+   * Enable rich chat content authoring (Card/Block Kit/Adaptive Cards).
+   * When off, chat steps fall back to the plain-text `body` editor and
+   * `card` outputs are ignored at send time.
+   */
+  IS_CHAT_RICH_CONTENT_ENABLED = 'IS_CHAT_RICH_CONTENT_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

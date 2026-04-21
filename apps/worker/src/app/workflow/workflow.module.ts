@@ -3,6 +3,7 @@ import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-refe
 import {
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
+  ChatContentCompiler,
   CompileEmailTemplate,
   CompileInAppTemplate,
   CompileTemplate,
@@ -203,6 +204,7 @@ const USE_CASES = [
   GetPreferences,
   GetSubscriberSchedule,
   ResolveChannelEndpoints,
+  ChatContentCompiler,
 ];
 
 const PROVIDERS: Provider[] = [RedisThrottleService];

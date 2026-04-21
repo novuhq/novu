@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   AnalyticsService,
+  ChatContentCompiler,
   ClickHouseService,
   CreateExecutionDetails,
   CreateVariablesObject,
@@ -87,6 +88,7 @@ export const featureFlagsService = {
     CreateExecutionDetails,
     featureFlagsService,
     InMemoryLRUCacheService,
+    ChatContentCompiler,
   ],
 })
 export class NovuBridgeModule {}

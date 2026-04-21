@@ -1,9 +1,11 @@
+import { cardElementJsonSchema } from '../../shared/card-element.schema';
 import type { JsonSchema } from '../../../types/schema.types';
 
 const chatOutputSchema = {
   type: 'object',
   properties: {
     body: { type: 'string' },
+    card: cardElementJsonSchema,
   },
   required: ['body'],
   additionalProperties: false,

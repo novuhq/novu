@@ -1,5 +1,6 @@
 export * from './channel.factory';
 export * from './chat/chat.factory';
+export * from './chat/content-compiler';
 export * from './mail/interfaces';
 export * from './mail/mail.factory';
 export * from './push/interfaces/push.handler.interface';
