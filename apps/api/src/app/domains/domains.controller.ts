@@ -12,8 +12,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
-
+import { RequirePermissions } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -49,6 +49,7 @@ export class DomainsController {
   ) {}
 
   @Get('/')
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List domains for an environment' })
   @ApiResponse(DomainResponseDto, 200, true)
   async listDomains(@UserSession() user: UserSessionData): Promise<DomainResponseDto[]> {
@@ -62,6 +63,7 @@ export class DomainsController {
   }
 
   @Post('/')
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a new domain' })
   @ApiResponse(DomainResponseDto, 201)
   async createDomain(@Body() body: CreateDomainDto, @UserSession() user: UserSessionData): Promise<DomainResponseDto> {
@@ -76,6 +78,7 @@ export class DomainsController {
   }
 
   @Get('/:domainId')
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get a domain by ID' })
   @ApiResponse(DomainResponseDto, 200)
   async getDomain(
@@ -93,6 +96,7 @@ export class DomainsController {
   }
 
   @Patch('/:domainId')
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain' })
   @ApiResponse(DomainResponseDto, 200)
   async updateDomain(
@@ -112,6 +116,7 @@ export class DomainsController {
   }
 
   @Delete('/:domainId')
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Delete a domain' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
