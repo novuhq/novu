@@ -111,19 +111,24 @@ export class EnrichOrganizationBrand {
 
       enrichment.industry = brandData.industry;
 
-      const generationDispatched = await this.triggerWorkflowGeneration(command, brandData);
-
       await this.organizationRepository.update(
         { _id: command.user.organizationId },
         {
           $set: {
             brandEnrichment: enrichment,
-            onboardingWorkflowsStatus: generationDispatched
-              ? ('pending' as OnboardingWorkflowsStatus)
-              : ('skipped' as OnboardingWorkflowsStatus),
+            onboardingWorkflowsStatus: 'pending' as OnboardingWorkflowsStatus,
           },
         }
       );
+
+      const generationDispatched = await this.triggerWorkflowGeneration(command, brandData);
+
+      if (!generationDispatched) {
+        await this.organizationRepository.update(
+          { _id: command.user.organizationId },
+          { $set: { onboardingWorkflowsStatus: 'skipped' as OnboardingWorkflowsStatus } }
+        );
+      }
     } catch (error) {
       this.logger.error(error, 'Failed to enrich organization brand');
       captureException(error, {
@@ -181,17 +186,28 @@ export class EnrichOrganizationBrand {
         return false;
       }
 
-      usecase.execute(generateCommand).catch((error: unknown) => {
+      usecase.execute(generateCommand).catch(async (error: unknown) => {
         this.logger.error(error, 'Failed to generate onboarding workflows (fire-and-forget)');
         captureException(error, {
           tags: { feature: 'onboarding-workflows' },
           extra: { organizationId: command.user.organizationId },
         });
 
-        return this.organizationRepository.update(
-          { _id: command.user.organizationId },
-          { $set: { onboardingWorkflowsStatus: 'skipped' as OnboardingWorkflowsStatus } }
-        );
+        try {
+          await this.organizationRepository.update(
+            { _id: command.user.organizationId },
+            { $set: { onboardingWorkflowsStatus: 'skipped' as OnboardingWorkflowsStatus } }
+          );
+        } catch (updateError) {
+          this.logger.error(
+            updateError,
+            'Failed to update onboardingWorkflowsStatus to skipped after generation failure'
+          );
+          captureException(updateError, {
+            tags: { feature: 'onboarding-workflows' },
+            extra: { organizationId: command.user.organizationId },
+          });
+        }
       });
 
       return true;
