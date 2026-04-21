@@ -87,6 +87,8 @@ describe('Inbound Mail Service', () => {
   describe('Cluster mode', () => {
     beforeEach(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST ??= '127.0.0.1';
+      process.env.MEMORY_DB_CLUSTER_SERVICE_PORT ??= '7000';
 
       inboundMailService = new InboundMailService();
       await inboundMailService.inboundParseQueueService.queue.obliterate();
@@ -95,6 +97,8 @@ describe('Inbound Mail Service', () => {
     afterEach(async () => {
       await inboundMailService.inboundParseQueueService.gracefulShutdown();
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+      delete process.env.MEMORY_DB_CLUSTER_SERVICE_HOST;
+      delete process.env.MEMORY_DB_CLUSTER_SERVICE_PORT;
     });
 
     it('should have prefix in cluster mode', async () => {
