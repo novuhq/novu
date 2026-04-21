@@ -154,6 +154,17 @@ export const ChatMaily = ({
             .tippy-box {
               pointer-events: auto;
             }
+            /*
+             * @novu/maily-core's global stylesheet paints a rgba(35, 131, 226, 0.14)
+             * wash over every selected node via \`.mly-editable .ProseMirror-selectednode::after\`.
+             * That blue overlay is designed for the email editor and looks out of place
+             * on a chat card — kill it and lean on the subtle primary ring we set in
+             * \`chat-maily-config\`'s \`contentClassName\` instead.
+             */
+            .mly-editable .ProseMirror-selectednode::after {
+              content: none !important;
+              background: transparent !important;
+            }
           `}
         </style>
         <MailyEditor

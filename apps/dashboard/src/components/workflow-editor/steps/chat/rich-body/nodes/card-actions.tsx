@@ -1,7 +1,7 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import { NodeViewContent, NodeViewProps, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import { useState } from 'react';
-import { RiAddLine, RiCloseLine } from 'react-icons/ri';
+import { RiAddLine, RiCloseLine, RiExternalLinkLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
@@ -49,6 +49,12 @@ function actionButtonVariant(style: CardActionStyle | undefined) {
 export const CardActionItemExtension = Node.create({
   name: CARD_ACTION_ITEM_NODE_NAME,
   group: 'cardActionItem',
+  /**
+   * Inline + atom so ProseMirror lays the items out on a single wrapped
+   * line (`flex flex-wrap` in the parent), instead of stacking each
+   * action in its own block row.
+   */
+  inline: true,
   atom: true,
   selectable: true,
 
@@ -86,7 +92,7 @@ export const CardActionItemExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(CardActionItemView);
+    return ReactNodeViewRenderer(CardActionItemView, { as: 'span' });
   },
 });
 
@@ -148,21 +154,36 @@ function CardActionsView({ node, editor, getPos }: NodeViewProps) {
       .run();
   };
 
+  /**
+   * `flex flex-wrap` on the wrapper keeps every action (real buttons +
+   * trailing "+ Add") on the same visual row, wrapping as a group when
+   * they overflow. `NodeViewContent` uses `display: contents` so the
+   * cardActionItem spans become direct flex children rather than being
+   * stuck inside an intermediate block. cardActionItem itself is inline
+   * + atom (see its extension) and carries its own `me-1.5 mb-1.5` for
+   * per-item spacing — more reliable than flex `gap` across the
+   * `contents` boundary in browsers.
+   */
   return (
-    <NodeViewWrapper as="div" className="group/actions" contentEditable={false}>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <NodeViewContent className="contents" contentEditable={false} />
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={addButton}
-          className="flex h-8 items-center gap-1 rounded-lg border border-dashed border-neutral-200 px-3 text-xs font-medium text-text-soft transition-all hover:border-primary-base hover:bg-primary-alpha-10 hover:text-primary-base"
-          aria-label="Add button"
-        >
-          <RiAddLine className="size-3.5" />
-          <span>Add</span>
-        </button>
-      </div>
+    <NodeViewWrapper as="div" className="group/actions flex flex-wrap items-center">
+      <NodeViewContent as="span" className="contents" />
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={addButton}
+        contentEditable={false}
+        /*
+         * `px-4!` is important because @novu/maily-core ships a preflight
+         * rule (`:where(.mly-editor) button { padding: 0 }`) that wins
+         * over the regular `px-4` utility for buttons inside the editor
+         * canvas. The bang forces our horizontal padding through.
+         */
+        className="mb-1.5 inline-flex h-8 items-center gap-1 rounded-lg border border-dashed border-neutral-200 px-4! align-middle text-xs font-medium text-text-soft transition-all hover:border-primary-base hover:bg-primary-alpha-10 hover:text-primary-base"
+        aria-label="Add button"
+      >
+        <RiAddLine className="size-3.5" />
+        <span>Add</span>
+      </button>
     </NodeViewWrapper>
   );
 }
@@ -175,7 +196,19 @@ function CardActionItemView({ node, updateAttributes, editor, deleteNode }: Node
   const hasLabel = attrs.label.length > 0;
 
   return (
-    <NodeViewWrapper as="span" className="inline-flex" contentEditable={false}>
+    <NodeViewWrapper
+      as="span"
+      /*
+       * `me-1.5` gives us a right-gap between each button and between
+       * the last button and the trailing "+ Add" affordance.
+       * `mb-1.5` handles vertical spacing when the row wraps. Inline
+       * margins are more reliable than flex gap here because `NodeViewContent`
+       * is rendered as a single span and the browser doesn't pass flex gap
+       * through to grandchildren.
+       */
+      className="me-1.5 mb-1.5 inline-flex align-middle"
+      contentEditable={false}
+    >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           {hasLabel ? (
@@ -185,19 +218,21 @@ function CardActionItemView({ node, updateAttributes, editor, deleteNode }: Node
               variant={variant.variant}
               mode={variant.mode}
               onMouseDown={(e) => e.preventDefault()}
-              className="max-w-[220px] font-medium"
+              className="max-w-[220px] px-4! font-medium"
             >
               <span className="truncate">{attrs.label}</span>
+              <RiExternalLinkLine className="size-3 opacity-70" />
             </Button>
           ) : (
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               className={cn(
-                'inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed px-3 text-xs font-medium transition-all',
+                'inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed px-4! text-xs font-medium transition-all',
                 attrs.style === 'primary' && 'border-primary-200 text-primary-base hover:bg-primary-alpha-10',
                 attrs.style === 'danger' && 'border-error-base/40 text-error-base hover:bg-red-alpha-10',
-                (!attrs.style || attrs.style === 'default') && 'border-neutral-200 text-text-soft hover:border-neutral-300 hover:text-text-sub'
+                (!attrs.style || attrs.style === 'default') &&
+                  'border-neutral-200 text-text-soft hover:border-neutral-300 hover:text-text-sub'
               )}
             >
               <span className="truncate">Button</span>
