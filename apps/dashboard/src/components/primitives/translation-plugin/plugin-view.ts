@@ -62,6 +62,10 @@ export class TranslationPluginView {
       const start = match.index;
       const end = start + match[0].length;
 
+      if (match[0].includes('\n')) {
+        continue;
+      }
+
       if (this.isTypingTranslation && pos > start && pos < end) {
         continue;
       }

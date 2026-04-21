@@ -60,6 +60,10 @@ export class VariablePluginView {
       const start = match.index;
       const end = start + match[0].length;
 
+      if (match[0].includes('\n')) {
+        continue;
+      }
+
       // Skip creating pills for variables that are currently being edited
       // This allows users to modify variables without the pill getting in the way
       if (this.isTypingVariable && pos > start && pos < end) {
