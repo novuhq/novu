@@ -28,6 +28,14 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
     super(moduleRef, logger);
   }
 
+  /**
+   * Note: return type is intentionally cast via `any` at the call site
+   * boundary (`construct-framework-workflow.usecase.ts`) because
+   * `ChatRenderOutput.card` is typed as `Record<string, unknown>` while
+   * the framework's `ChatOutputUnvalidated` requires the strict inferred
+   * shape from `chatChannelSchemas`. The runtime payload is identical —
+   * see e2e coverage in `card-liquid.utils.spec.ts` for the round-trip.
+   */
   @InstrumentUsecase()
   async execute(renderCommand: ChatOutputRendererCommand): Promise<ChatRenderOutput> {
     const { skip, ...outputControls } = renderCommand.controlValues ?? {};

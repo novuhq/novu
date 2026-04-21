@@ -634,11 +634,14 @@ export class SendMessageChat extends SendMessageBase {
          * Rich-content payloads. Each provider picks the one it understands
          * and ignores the others; providers unaware of these fields (older
          * integrations, generic webhook providers) simply drop them and
-         * read `content` as today.
+         * read `content` as today. `adaptiveCard` and `discordEmbeds` are
+         * `unknown`-typed on `CompiledChatContent`, so we use a ternary
+         * (instead of `&&`-spread) to satisfy TS's requirement that spread
+         * sources be object types.
          */
-        ...(compiled?.slackBlocks && { blocks: compiled.slackBlocks as IChatOptions['blocks'] }),
-        ...(compiled?.adaptiveCard && { adaptiveCard: compiled.adaptiveCard }),
-        ...(compiled?.discordEmbeds && { embeds: compiled.discordEmbeds }),
+        ...(compiled?.slackBlocks ? { blocks: compiled.slackBlocks as IChatOptions['blocks'] } : {}),
+        ...(compiled?.adaptiveCard ? { adaptiveCard: compiled.adaptiveCard } : {}),
+        ...(compiled?.discordEmbeds ? { embeds: compiled.discordEmbeds } : {}),
       });
 
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);

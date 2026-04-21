@@ -29,6 +29,27 @@ function uid(prefix = 'b'): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/**
+ * Block ids are embedded inside the `CardElement` JSON as a passthrough
+ * property so they survive the form → JSON → form round-trip. Without
+ * this, every keystroke would regenerate ids, remount `BlockListItem`,
+ * and steal focus from the input the user is typing into.
+ *
+ * The upstream `cardElementJsonSchema` uses `additionalProperties: true`
+ * on every node, and the runtime Liquid renderer / compiler ignore any
+ * unknown fields, so this is safe to carry end-to-end.
+ */
+const ID_KEY = '_editorId';
+
+function readId(raw: unknown, fallbackPrefix: string): string {
+  if (raw && typeof raw === 'object') {
+    const val = (raw as Record<string, unknown>)[ID_KEY];
+    if (typeof val === 'string' && val.length > 0) return val;
+  }
+
+  return uid(fallbackPrefix);
+}
+
 function parseChildren(children: unknown[]): CardBlock[] {
   const blocks: CardBlock[] = [];
 
@@ -40,12 +61,12 @@ function parseChildren(children: unknown[]): CardBlock[] {
         const block: TextBlock | HeadingBlock =
           node.style === 'bold'
             ? {
-                id: uid('h'),
+                id: readId(node, 'h'),
                 kind: 'heading',
                 content: String(node.content ?? ''),
               }
             : {
-                id: uid('t'),
+                id: readId(node, 't'),
                 kind: 'text',
                 content: String(node.content ?? ''),
                 style: (node.style as TextBlock['style']) ?? 'plain',
@@ -54,13 +75,13 @@ function parseChildren(children: unknown[]): CardBlock[] {
         break;
       }
       case 'divider': {
-        const block: DividerBlock = { id: uid('d'), kind: 'divider' };
+        const block: DividerBlock = { id: readId(node, 'd'), kind: 'divider' };
         blocks.push(block);
         break;
       }
       case 'link': {
         const block: LinkBlock = {
-          id: uid('l'),
+          id: readId(node, 'l'),
           kind: 'link',
           label: String(node.label ?? ''),
           url: String(node.url ?? ''),
@@ -70,7 +91,7 @@ function parseChildren(children: unknown[]): CardBlock[] {
       }
       case 'image': {
         const block: ImageBlock = {
-          id: uid('i'),
+          id: readId(node, 'i'),
           kind: 'image',
           url: String(node.url ?? ''),
           alt: typeof node.alt === 'string' ? node.alt : undefined,
@@ -81,7 +102,7 @@ function parseChildren(children: unknown[]): CardBlock[] {
       case 'fields': {
         const fieldChildren = Array.isArray(node.children) ? node.children : [];
         const block: FieldsBlock = {
-          id: uid('f'),
+          id: readId(node, 'f'),
           kind: 'fields',
           fields: fieldChildren.flatMap((raw) => {
             if (!raw || typeof raw !== 'object') return [];
@@ -89,7 +110,7 @@ function parseChildren(children: unknown[]): CardBlock[] {
 
             return [
               {
-                id: uid('fe'),
+                id: readId(f, 'fe'),
                 label: String(f.label ?? ''),
                 value: String(f.value ?? ''),
               },
@@ -102,14 +123,14 @@ function parseChildren(children: unknown[]): CardBlock[] {
       case 'actions': {
         const actionsChildren = Array.isArray(node.children) ? node.children : [];
         const block: CardBlock = {
-          id: uid('a'),
+          id: readId(node, 'a'),
           kind: 'actions',
           actions: actionsChildren.flatMap((raw): ActionEntry[] => {
             if (!raw || typeof raw !== 'object') return [];
             const a = raw as Record<string, unknown>;
             if (a.type === 'link-button') {
               const entry: UrlActionEntry = {
-                id: uid('lb'),
+                id: readId(a, 'lb'),
                 kind: 'link-button',
                 label: String(a.label ?? ''),
                 url: String(a.url ?? ''),
@@ -120,7 +141,7 @@ function parseChildren(children: unknown[]): CardBlock[] {
             }
             if (a.type === 'button') {
               const entry: CallbackActionEntry = {
-                id: uid('btn'),
+                id: readId(a, 'btn'),
                 kind: 'button',
                 actionId: String(a.id ?? ''),
                 label: String(a.label ?? ''),
@@ -164,21 +185,31 @@ export function cardElementToDoc(card: CardElementLikeJson | undefined | null): 
 }
 
 function blockToElement(block: CardBlock): Record<string, unknown> | null {
+  // Every element carries its editor id as a passthrough property — see
+  // `ID_KEY` comment above for why.
+  const id = { [ID_KEY]: block.id };
+
   switch (block.kind) {
     case 'text':
-      return { type: 'text', content: block.content, ...(block.style && { style: block.style }) };
+      return { type: 'text', content: block.content, ...(block.style && { style: block.style }), ...id };
     case 'heading':
-      return { type: 'text', content: block.content, style: 'bold' };
+      return { type: 'text', content: block.content, style: 'bold', ...id };
     case 'divider':
-      return { type: 'divider' };
+      return { type: 'divider', ...id };
     case 'link':
-      return { type: 'link', label: block.label, url: block.url };
+      return { type: 'link', label: block.label, url: block.url, ...id };
     case 'image':
-      return { type: 'image', url: block.url, ...(block.alt && { alt: block.alt }) };
+      return { type: 'image', url: block.url, ...(block.alt && { alt: block.alt }), ...id };
     case 'fields':
       return {
         type: 'fields',
-        children: block.fields.map(({ label, value }) => ({ type: 'field', label, value })),
+        children: block.fields.map(({ id: fieldId, label, value }) => ({
+          type: 'field',
+          label,
+          value,
+          [ID_KEY]: fieldId,
+        })),
+        ...id,
       };
     case 'actions':
       return {
@@ -190,6 +221,7 @@ function blockToElement(block: CardBlock): Record<string, unknown> | null {
               label: action.label,
               url: action.url,
               ...(action.style && { style: action.style }),
+              [ID_KEY]: action.id,
             };
           }
 
@@ -198,8 +230,10 @@ function blockToElement(block: CardBlock): Record<string, unknown> | null {
             id: action.actionId,
             label: action.label,
             ...(action.style && { style: action.style }),
+            [ID_KEY]: action.id,
           };
         }),
+        ...id,
       };
     default:
       return null;
@@ -208,11 +242,15 @@ function blockToElement(block: CardBlock): Record<string, unknown> | null {
 
 /**
  * Serializes the editor document to the backend `CardElement` JSON.
- * Empty / blank blocks are filtered to keep the payload tight.
+ *
+ * We deliberately do NOT filter empty blocks here — an author-in-progress
+ * text block with no content yet is a valid intermediate state, and
+ * dropping it would silently discard the user's click on "Add text" before
+ * they type anything. The runtime Liquid renderer / compiler handle empty
+ * strings gracefully; emptiness can be filtered at send time if needed.
  */
 export function docToCardElement(doc: ChatCardDoc): CardElementLikeJson {
   const children = doc.blocks
-    .filter((block) => !isBlockEmpty(block))
     .map(blockToElement)
     .filter((n): n is Record<string, unknown> => n !== null);
 
@@ -225,26 +263,6 @@ export function docToCardElement(doc: ChatCardDoc): CardElementLikeJson {
   };
 }
 
-function isBlockEmpty(block: CardBlock): boolean {
-  switch (block.kind) {
-    case 'text':
-    case 'heading':
-      return block.content.trim().length === 0;
-    case 'link':
-      return block.url.trim().length === 0;
-    case 'image':
-      return block.url.trim().length === 0;
-    case 'fields':
-      return block.fields.every((f) => !f.label.trim() && !f.value.trim());
-    case 'actions':
-      return block.actions.length === 0 || block.actions.every((a) => !a.label.trim());
-    case 'divider':
-      return false;
-    default:
-      return false;
-  }
-}
-
 /**
  * Flattens the editor document to a plain-text representation.
  *
@@ -255,6 +273,10 @@ function isBlockEmpty(block: CardBlock): boolean {
  *
  * Mirrors the backend `cardChildToFallbackText` behaviour so what the
  * author sees locally matches what a fallback recipient will see.
+ *
+ * Skips blocks whose content is empty so we don't emit trailing blank
+ * lines for half-typed blocks — this is purely a presentation pass, it
+ * doesn't affect what's stored in `card`.
  */
 export function docToFallbackText(doc: ChatCardDoc): string {
   const lines: string[] = [];

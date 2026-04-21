@@ -272,14 +272,23 @@ export class ConstructFrameworkWorkflow {
       case StepTypeEnum.CHAT:
         return step.chat(
           stepId,
+          /*
+           * Cast return type to any to bridge the shape difference between
+           * `ChatRenderOutput.card: Record<string, unknown>` (shared DTO,
+           * loose for wire compatibility) and the framework's strictly-
+           * inferred `ChatOutputUnvalidated.card` (from our `CardElement`
+           * JSON schema). Runtime payload matches both.
+           */
           async (controlValues) => {
-            return this.chatOutputRendererUseCase.execute({
+            const result = await this.chatOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
               organization,
               locale,
             });
+
+            return result as unknown as Awaited<ReturnType<Parameters<typeof step.chat>[1]>>;
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
