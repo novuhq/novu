@@ -19,7 +19,7 @@ import {
   seedChannelEndpoint,
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
-import { buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
+import { buildSlackAppMention, buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
 
 function mockEmoji(name: string): EmojiValue {
   return { name, toJSON: () => `{{emoji:${name}}}`, toString: () => `{{emoji:${name}}}` };
@@ -267,6 +267,47 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         .send(body);
 
       expect(res.status).to.not.equal(200);
+    });
+  });
+
+  describe('Inactive agent', () => {
+    it('should return 200 and not process inbound when agent is inactive', async () => {
+      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+
+      const body = JSON.stringify(
+        buildSlackAppMention({ userId: 'U_INACTIVE', channel: 'C_TEST', threadTs: `T_INACTIVE_${Date.now()}` })
+      );
+      const timestamp = Math.floor(Date.now() / 1000);
+      const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+
+      const res = await ctx.session.testAgent
+        .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+        .set(headers)
+        .set('content-type', 'application/json')
+        .send(body);
+
+      expect(res.status).to.equal(200);
+      expect(bridgeCalls.length).to.equal(0);
+    });
+
+    it('should process inbound again after reactivation', async () => {
+      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: true });
+
+      const body = JSON.stringify(
+        buildSlackAppMention({ userId: 'U_REACTIVATED', channel: 'C_TEST', threadTs: `T_REACTIVATE_${Date.now()}` })
+      );
+      const timestamp = Math.floor(Date.now() / 1000);
+      const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+
+      const res = await ctx.session.testAgent
+        .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+        .set(headers)
+        .set('content-type', 'application/json')
+        .send(body);
+
+      expect(res.status).to.equal(200);
+      expect(bridgeCalls.length).to.equal(1);
     });
   });
 

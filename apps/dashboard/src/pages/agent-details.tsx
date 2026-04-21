@@ -11,6 +11,7 @@ import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { Badge } from '@/components/primitives/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -182,11 +183,19 @@ export function AgentDetailsPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem className="min-w-0">
             {isLoading ? (
-              <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
+                <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
+                  BETA
+                </Badge>
+              </div>
             ) : (
               <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
                 <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
                 <span className="truncate">{breadcrumbCurrentLabel}</span>
+                <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
+                  BETA
+                </Badge>
               </BreadcrumbPage>
             )}
           </BreadcrumbItem>

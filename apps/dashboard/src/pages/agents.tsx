@@ -19,6 +19,7 @@ import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
@@ -408,7 +409,16 @@ export function AgentsPage() {
       {!isConversationalAgentsEnabled ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Agents</h1>}>
+      <DashboardLayout
+        headerStartItems={
+          <h1 className="text-foreground-950 flex items-center gap-1">
+            Agents{' '}
+            <Badge color="gray" size="sm" variant="lighter">
+              BETA
+            </Badge>
+          </h1>
+        }
+      >
         {isConversationalAgentsEnabled ? (
           <AgentsList />
         ) : (

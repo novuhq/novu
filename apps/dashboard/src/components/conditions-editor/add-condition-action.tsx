@@ -3,8 +3,19 @@ import { ActionWithRulesAndAddersProps } from 'react-querybuilder';
 
 import { Button } from '@/components/primitives/button';
 
-export const AddConditionAction = ({ label, title, rules, handleOnClick, context }: ActionWithRulesAndAddersProps) => {
+export const AddConditionAction = ({
+  label,
+  title,
+  rules,
+  handleOnClick,
+  context,
+  disabled,
+}: ActionWithRulesAndAddersProps) => {
   if (rules && rules.length >= 10) {
+    return null;
+  }
+
+  if (disabled) {
     return null;
   }
 
