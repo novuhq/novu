@@ -313,6 +313,7 @@
       "unrs-resolver",
       "workerd"
     ],
+    "allowUnusedPatches": true,
     "patchedDependencies": {
       "smtp-server@1.17.0": "patches/smtp-server@1.17.0.patch"
     }
