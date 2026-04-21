@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
@@ -7,7 +8,8 @@ import {
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
@@ -15,6 +17,10 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-c
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
+import {
+  ParseEventRequest,
+  ParseEventRequestMulticastCommand,
+} from '../../../events/usecases/parse-event-request';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -26,7 +32,8 @@ export class HandleAgentReply {
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly parseEventRequest: ParseEventRequest
   ) {}
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
@@ -219,9 +226,53 @@ export class HandleAgentReply {
       });
     }
 
-    const triggerSignals = (signals ?? []).filter((s) => s.type === 'trigger');
+    const triggerSignals = (signals ?? []).filter((s): s is TriggerSignal => s.type === 'trigger');
     if (triggerSignals.length) {
-      // TODO: execute trigger signals — requires wiring TriggerEvent or ParseEventRequest from EventsModule
+      await this.executeTriggerSignals(command, conversation, triggerSignals);
+    }
+  }
+
+  private async executeTriggerSignals(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    signals: TriggerSignal[]
+  ): Promise<void> {
+    const subscriberParticipant = conversation.participants.find(
+      (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+    );
+
+    for (const signal of signals) {
+      const to = signal.to ?? subscriberParticipant?.id;
+
+      if (!to) {
+        this.logger.warn(
+          { agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
+          `[agent:${command.agentIdentifier}] Skipping trigger signal for "${signal.workflowId}" — no recipient and conversation has no resolved subscriber`
+        );
+        continue;
+      }
+
+      try {
+        await this.parseEventRequest.execute(
+          ParseEventRequestMulticastCommand.create({
+            userId: command.userId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            identifier: signal.workflowId,
+            payload: signal.payload ?? {},
+            overrides: {},
+            to,
+            addressingType: AddressingTypeEnum.MULTICAST,
+            requestCategory: TriggerRequestCategoryEnum.SINGLE,
+            requestId: randomUUID(),
+          })
+        );
+      } catch (err) {
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
+          `[agent:${command.agentIdentifier}] Failed to trigger workflow "${signal.workflowId}"`
+        );
+      }
     }
   }
 
