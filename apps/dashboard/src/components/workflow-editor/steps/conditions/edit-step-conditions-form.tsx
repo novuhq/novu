@@ -1,5 +1,5 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { ContentIssueEnum, type StepUpdateDto } from '@novu/shared';
+import { ContentIssueEnum, EnvironmentTypeEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -18,6 +18,7 @@ import { isRelativeDateOperator } from '@/components/conditions-editor/field-typ
 import { Form, FormField } from '@/components/primitives/form/form';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -186,6 +187,8 @@ const getConditionsSchema = (
 export const EditStepConditionsForm = () => {
   const track = useTelemetry();
   const { workflow, step, update, digestStepBeforeCurrent } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
+  const isReadOnly = currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
   const hasConditions = !!step?.controls.values.skip;
   const query = useMemo(
     () =>
@@ -323,33 +326,32 @@ export const EditStepConditionsForm = () => {
   }, [form, step]);
 
   return (
-    <>
-      <Form {...form}>
-        <EditStepConditionsLayout
-          stepName={step?.name}
-          onBlur={onBlur}
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          <FormField
-            control={form.control}
-            name="query"
-            render={({ field }) => (
-              <ConditionsEditor
-                saveForm={saveForm}
-                query={field.value as RuleGroupType}
-                onQueryChange={field.onChange}
-                fields={fields}
-                variables={variables}
-                isAllowedVariable={isAllowedVariable}
-                enhancedVariables={filteredEnhancedVariables}
-              />
-            )}
-          />
-        </EditStepConditionsLayout>
-      </Form>
-    </>
+    <Form {...form}>
+      <EditStepConditionsLayout
+        stepName={step?.name}
+        onBlur={onBlur}
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        <FormField
+          control={form.control}
+          name="query"
+          render={({ field }) => (
+            <ConditionsEditor
+              saveForm={saveForm}
+              query={field.value as RuleGroupType}
+              onQueryChange={field.onChange}
+              fields={fields}
+              variables={variables}
+              isAllowedVariable={isAllowedVariable}
+              enhancedVariables={filteredEnhancedVariables}
+              disabled={isReadOnly}
+            />
+          )}
+        />
+      </EditStepConditionsLayout>
+    </Form>
   );
 };
