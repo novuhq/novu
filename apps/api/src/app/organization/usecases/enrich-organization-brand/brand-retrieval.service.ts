@@ -13,6 +13,17 @@ export interface BrandData {
 
 const LOG_CONTEXT = 'BrandRetrievalService';
 
+const LOGO_TYPES = new Set<IBrandLogo['type']>(['icon', 'logo']);
+const LOGO_MODES = new Set<IBrandLogo['mode']>(['light', 'dark', 'has_opaque_background']);
+
+function isLogoType(value: unknown): value is IBrandLogo['type'] {
+  return typeof value === 'string' && LOGO_TYPES.has(value as IBrandLogo['type']);
+}
+
+function isLogoMode(value: unknown): value is IBrandLogo['mode'] {
+  return typeof value === 'string' && LOGO_MODES.has(value as IBrandLogo['mode']);
+}
+
 @Injectable()
 export class BrandRetrievalService {
   private client: ContextDev | null = null;
@@ -47,18 +58,16 @@ export class BrandRetrievalService {
 
     if (!brand) return {};
 
-    const industry = brand.industries?.eic?.map((ind) => ({
-      industry: ind.industry ?? '',
-      subindustry: ind.subindustry ?? '',
-    }));
+    const industry = brand.industries?.eic
+      ?.filter((ind) => !!ind.industry && !!ind.subindustry)
+      .map((ind) => ({ industry: ind.industry, subindustry: ind.subindustry }));
 
     const logos: IBrandLogo[] | undefined = brand.logos
-      ?.filter((l) => !!l.url && !!l.type && !!l.mode)
-      .map((l) => ({
-        url: l.url as IBrandLogo['url'],
-        type: l.type as IBrandLogo['type'],
-        mode: l.mode as IBrandLogo['mode'],
-      }));
+      ?.filter(
+        (l): l is { url: string; type: IBrandLogo['type']; mode: IBrandLogo['mode'] } =>
+          typeof l.url === 'string' && !!l.url && isLogoType(l.type) && isLogoMode(l.mode)
+      )
+      .map((l) => ({ url: l.url, type: l.type, mode: l.mode }));
 
     const colors: IBrandColor[] | undefined = brand.colors
       ?.filter((c): c is { hex: string; name: string } => !!c.hex && !!c.name)

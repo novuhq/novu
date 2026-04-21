@@ -96,6 +96,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
         status: {
           type: Schema.Types.String,
           enum: ['pending', 'completed', 'failed', 'not_available'],
+          required: true,
         },
       },
       required: false,

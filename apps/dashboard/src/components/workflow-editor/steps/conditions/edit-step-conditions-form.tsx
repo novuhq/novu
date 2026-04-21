@@ -187,8 +187,8 @@ const getConditionsSchema = (
 export const EditStepConditionsForm = () => {
   const track = useTelemetry();
   const { workflow, step, update, digestStepBeforeCurrent } = useWorkflow();
-  const { currentEnvironment } = useEnvironment();
-  const isReadOnly = currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+  const { currentEnvironment, readOnly } = useEnvironment();
+  const isReadOnly = readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
   const hasConditions = !!step?.controls.values.skip;
   const query = useMemo(
     () =>
@@ -253,6 +253,7 @@ export const EditStepConditionsForm = () => {
     form,
     shouldClientValidate: true,
     save: (data) => {
+      if (isReadOnly) return;
       if (!step || !workflow) return;
 
       const skip = formatQuery(data.query as unknown as RuleGroupType, {

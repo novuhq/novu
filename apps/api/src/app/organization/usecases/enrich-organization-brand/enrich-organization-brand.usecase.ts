@@ -67,6 +67,25 @@ export class EnrichOrganizationBrand {
 
       const brandData = await this.brandRetrievalService.retrieveBrand(domain);
 
+      const hasBrandData =
+        !!brandData.companyTitle ||
+        !!brandData.companyDescription ||
+        !!brandData.logos?.length ||
+        !!brandData.colors?.length ||
+        !!brandData.industry?.length;
+      if (!hasBrandData) {
+        await this.organizationRepository.update(
+          { _id: command.user.organizationId },
+          {
+            $set: {
+              'brandEnrichment.status': 'not_available' as BrandEnrichmentStatus,
+              onboardingWorkflowsStatus: 'skipped' as OnboardingWorkflowsStatus,
+            },
+          }
+        );
+        return;
+      }
+
       const enrichment: IBrandEnrichment = {
         companyTitle: brandData.companyTitle,
         companyDescription: brandData.companyDescription,
@@ -92,17 +111,19 @@ export class EnrichOrganizationBrand {
 
       enrichment.industry = brandData.industry;
 
+      const generationDispatched = await this.triggerWorkflowGeneration(command, brandData);
+
       await this.organizationRepository.update(
         { _id: command.user.organizationId },
         {
           $set: {
             brandEnrichment: enrichment,
-            onboardingWorkflowsStatus: 'pending' as OnboardingWorkflowsStatus,
+            onboardingWorkflowsStatus: generationDispatched
+              ? ('pending' as OnboardingWorkflowsStatus)
+              : ('skipped' as OnboardingWorkflowsStatus),
           },
         }
       );
-
-      await this.triggerWorkflowGeneration(command, brandData);
     } catch (error) {
       this.logger.error(error, 'Failed to enrich organization brand');
       captureException(error, {
@@ -135,7 +156,7 @@ export class EnrichOrganizationBrand {
   private async triggerWorkflowGeneration(
     command: EnrichOrganizationBrandCommand,
     brandData: BrandData
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       const eeAi = require('@novu/ee-ai');
       const { GenerateOnboardingWorkflowsUseCase } = eeAi;
@@ -143,7 +164,7 @@ export class EnrichOrganizationBrand {
       if (!GenerateOnboardingWorkflowsUseCase) {
         this.logger.warn('GenerateOnboardingWorkflowsUseCase not available, skipping workflow generation');
 
-        return;
+        return false;
       }
 
       const usecase = this.moduleRef.get(GenerateOnboardingWorkflowsUseCase, { strict: false });
@@ -157,7 +178,7 @@ export class EnrichOrganizationBrand {
       if (!generateCommand) {
         this.logger.warn('GenerateOnboardingWorkflowsCommand not available, skipping workflow generation');
 
-        return;
+        return false;
       }
 
       usecase.execute(generateCommand).catch((error: unknown) => {
@@ -166,9 +187,18 @@ export class EnrichOrganizationBrand {
           tags: { feature: 'onboarding-workflows' },
           extra: { organizationId: command.user.organizationId },
         });
+
+        return this.organizationRepository.update(
+          { _id: command.user.organizationId },
+          { $set: { onboardingWorkflowsStatus: 'skipped' as OnboardingWorkflowsStatus } }
+        );
       });
+
+      return true;
     } catch {
       this.logger.warn('AI module not available, skipping workflow generation');
+
+      return false;
     }
   }
 }
