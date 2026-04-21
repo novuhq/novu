@@ -19,11 +19,8 @@ const agentSchema = new Schema<AgentDBModel>(
       default: true,
     },
     behavior: {
-      thinkingIndicatorEnabled: Schema.Types.Boolean,
-      reactions: {
-        onMessageReceived: Schema.Types.Mixed,
-        onResolved: Schema.Types.Mixed,
-      },
+      acknowledgeOnReceived: Schema.Types.Boolean,
+      reactionOnResolved: Schema.Types.String,
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,

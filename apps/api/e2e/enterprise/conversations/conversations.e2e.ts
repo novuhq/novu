@@ -39,13 +39,15 @@ describe('Conversations API - /conversations #novu-v2', () => {
     agentId = agent._id;
   });
 
-  async function seedConversation(overrides: Partial<{
-    status: ConversationStatusEnum;
-    title: string;
-    metadata: Record<string, unknown>;
-    identifier: string;
-    subscriberId: string;
-  }> = {}) {
+  async function seedConversation(
+    overrides: Partial<{
+      status: ConversationStatusEnum;
+      title: string;
+      metadata: Record<string, unknown>;
+      identifier: string;
+      subscriberId: string;
+    }> = {}
+  ) {
     const identifier = overrides.identifier ?? `conv-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const participants: Array<{ type: ConversationParticipantTypeEnum; id: string }> = [
@@ -76,11 +78,14 @@ describe('Conversations API - /conversations #novu-v2', () => {
     });
   }
 
-  async function seedActivity(conversationId: string, overrides: Partial<{
-    content: string;
-    senderType: ConversationActivitySenderTypeEnum;
-    type: ConversationActivityTypeEnum;
-  }> = {}) {
+  async function seedActivity(
+    conversationId: string,
+    overrides: Partial<{
+      content: string;
+      senderType: ConversationActivitySenderTypeEnum;
+      type: ConversationActivityTypeEnum;
+    }> = {}
+  ) {
     return activityRepository.create({
       identifier: `act-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       _conversationId: conversationId,
@@ -245,18 +250,14 @@ describe('Conversations API - /conversations #novu-v2', () => {
     it('should return unchanged conversation when no fields are sent', async () => {
       const conversation = await seedConversation({ title: 'Unchanged' });
 
-      const res = await session.testAgent
-        .patch(`/v1/conversations/${conversation.identifier}`)
-        .send({});
+      const res = await session.testAgent.patch(`/v1/conversations/${conversation.identifier}`).send({});
 
       expect(res.status).to.equal(200);
       expect(res.body.data.title).to.equal('Unchanged');
     });
 
     it('should return 404 for non-existent conversation', async () => {
-      const res = await session.testAgent
-        .patch('/v1/conversations/nonexistent-identifier')
-        .send({ title: 'Nope' });
+      const res = await session.testAgent.patch('/v1/conversations/nonexistent-identifier').send({ title: 'Nope' });
 
       expect(res.status).to.equal(404);
     });

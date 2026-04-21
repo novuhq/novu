@@ -106,9 +106,7 @@ export function AgentDetailsPage() {
     },
   });
 
-  const integrationIdentifier = integrationIdentifierParam
-    ? decodeURIComponent(integrationIdentifierParam)
-    : undefined;
+  const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
   if (!isConversationalAgentsEnabled) {

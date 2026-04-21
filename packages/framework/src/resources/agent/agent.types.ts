@@ -84,7 +84,7 @@ export interface FileRef {
 }
 
 /**
- * Content accepted by ctx.reply() and ctx.update().
+ * Content accepted by ctx.reply() and handle.edit().
  *
  * - `string` — plain text
  * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
@@ -117,6 +117,20 @@ export interface AgentReaction {
   message: AgentMessage | null;
 }
 
+/**
+ * Handle to a message posted via ctx.reply(). Mirrors the chat SDK's `SentMessage`
+ * primitive: edits apply in-place on the platform (same platform message, content changes)
+ * and never post a new message.
+ */
+export interface ReplyHandle {
+  /** Platform-native message id (e.g. Slack ts, Teams activityId). */
+  readonly messageId: string;
+  /** Platform-native thread id this message lives in. */
+  readonly platformThreadId: string;
+  /** Edit this message in place with new content. Returns the same handle for chaining. */
+  edit(content: MessageContent): Promise<ReplyHandle>;
+}
+
 export interface AgentContext {
   readonly event: string;
   readonly action: AgentAction | null;
@@ -128,8 +142,16 @@ export interface AgentContext {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
 
-  reply(content: MessageContent): Promise<void>;
-  update(content: MessageContent): Promise<void>;
+  /**
+   * Post a message to the conversation and return a handle to it.
+   * Use the handle to edit the message in place later — no second post.
+   *
+   * @example
+   *   const msg = await ctx.reply('Thinking…');
+   *   // ... do work ...
+   *   await msg.edit('Here is the answer');
+   */
+  reply(content: MessageContent): Promise<ReplyHandle>;
   resolve(summary?: string): void;
   metadata: {
     set(key: string, value: unknown): void;
@@ -176,11 +198,23 @@ export type MetadataSignal = { type: 'metadata'; key: string; value: unknown };
 export type TriggerSignal = { type: 'trigger'; workflowId: string; to?: string; payload?: Record<string, unknown> };
 export type Signal = MetadataSignal | TriggerSignal;
 
+/** In-place edit of a previously posted agent message. Identified by platform message id. */
+export interface EditPayload {
+  messageId: string;
+  content: ReplyContent;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
   reply?: ReplyContent;
-  update?: ReplyContent;
+  edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+}
+
+/** Shape returned by /agents/:id/reply when a reply or edit was delivered. */
+export interface SentMessageInfo {
+  messageId: string;
+  platformThreadId: string;
 }

@@ -2,28 +2,11 @@ import type { Context } from '../types';
 
 export type ChannelConnectionResponse = {
   identifier: string;
-  integrationIdentifier: string;
-  providerId: string;
-  channel: string;
-  subscriberId?: string;
-  contextKeys: string[];
-  workspace: { id: string; name?: string };
-  createdAt: string;
-  updatedAt: string;
 };
 
 export type ChannelEndpointResponse = {
   identifier: string;
-  integrationIdentifier: string;
-  connectionIdentifier?: string;
-  providerId: string;
-  channel: string;
-  subscriberId: string;
-  contextKeys: string[];
   type: string;
-  endpoint: Record<string, string>;
-  createdAt: string;
-  updatedAt: string;
 };
 
 export type OAuthMode = 'connect' | 'link_user';

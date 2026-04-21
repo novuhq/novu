@@ -217,8 +217,8 @@ export function useOrganization() {
     throw new Error('useOrganization must be used within ClerkProvider');
   }
 
-  return {
-    organization: context.organization
+  const organization = useMemo(() => {
+    return context.organization
       ? {
           id: context.organization.id,
           name: context.organization.name,
@@ -232,7 +232,11 @@ export function useOrganization() {
             return Promise.resolve();
           },
         }
-      : null,
+      : null;
+  }, [context.organization]);
+
+  return {
+    organization,
     isLoaded: context.isLoaded,
   };
 }

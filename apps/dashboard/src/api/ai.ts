@@ -148,3 +148,23 @@ export async function cancelStream({
 
   return responseData;
 }
+
+export type OnboardingSuggestionsResponse = {
+  status: 'pending' | 'generating' | 'completed' | 'failed' | 'skipped' | null;
+  suggestions: WorkflowResponseDto[];
+};
+
+export async function fetchOnboardingWorkflowSuggestions({
+  environment,
+}: {
+  environment: IEnvironment;
+}): Promise<OnboardingSuggestionsResponse> {
+  const { data: responseData } = await getV2<{ data: OnboardingSuggestionsResponse }>(
+    '/ai/workflow-suggestions/onboarding',
+    {
+      environment,
+    }
+  );
+
+  return responseData;
+}

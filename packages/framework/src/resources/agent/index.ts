@@ -28,10 +28,13 @@ export type {
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  EditPayload,
   FileRef,
   MessageContent,
   MetadataSignal,
   ReplyContent,
+  ReplyHandle,
+  SentMessageInfo,
   Signal,
   TriggerSignal,
 } from './agent.types';

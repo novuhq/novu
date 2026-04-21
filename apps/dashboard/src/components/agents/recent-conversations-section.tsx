@@ -1,89 +1,229 @@
-import { RiRobot2Line } from 'react-icons/ri';
+import { RiArrowRightLine, RiCheckboxCircleFill, RiRobot2Line } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import type { AgentResponse } from '@/api/agents';
+import type { ConversationDto } from '@/api/conversations';
+import { ConversationStatusBadge } from '@/components/conversations/conversation-status-badge';
+import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
+import { SubscriberFallbackAvatar } from '@/components/conversations/subscriber-fallback-avatar';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { IS_ENTERPRISE } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchConversations } from '@/hooks/use-fetch-conversations';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 
-function SkeletonBar({ className }: { className?: string }) {
-  return (
-    <div
-      className={className}
-      style={{
-        background: 'linear-gradient(90deg, #f1efef 24%, #f9f8f8 43%, rgba(249,248,248,0.75) 115%)',
-      }}
-    />
-  );
-}
+const RECENT_CONVERSATIONS_DISPLAY_LIMIT = 5;
 
-function SkeletonMessageCard({ className }: { className?: string }) {
-  return (
-    <div className={`border-stroke-soft rounded border bg-white p-2 ${className ?? ''}`}>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1">
-          <div className="bg-bg-weak size-3 rounded-full" />
-          <SkeletonBar className="h-2 w-11 rounded-sm" />
-        </div>
-        <div className="flex flex-wrap gap-x-0.5 gap-y-[3px]">
-          <SkeletonBar className="h-1.5 w-[77px] rounded-full" />
-          <SkeletonBar className="h-1.5 min-w-0 flex-1 rounded-full" />
-          <SkeletonBar className="h-1.5 min-w-[50px] flex-1 rounded-full" />
-          <SkeletonBar className="h-1.5 w-[91px] rounded-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
+type RecentConversationsSectionProps = {
+  agent: AgentResponse;
+};
 
-function NovuIcon() {
-  return (
-    <svg className="size-3" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8Zm3.53 11.53L8 8.06l-3.53 3.47L3.06 10.12 6.53 6.65 3.06 3.18l1.41-1.41L8 5.24l3.53-3.47 1.41 1.41L9.47 6.65l3.47 3.47-1.41 1.41Z"
-        fill="currentColor"
-        className="text-text-soft"
-      />
-    </svg>
-  );
-}
+export function RecentConversationsSection({ agent }: RecentConversationsSectionProps) {
+  const { currentEnvironment } = useEnvironment();
 
-function EmptyStateIllustration() {
-  return (
-    <div className="flex flex-col items-center gap-12">
-      <div className="flex flex-col items-center">
-        <div className="border-stroke-weak rounded-lg border p-1">
-          <SkeletonMessageCard className="w-[197px]" />
-        </div>
-      </div>
+  const conversationsPath = currentEnvironment?.slug
+    ? buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug })
+    : undefined;
 
-      <div className="flex items-center gap-[50px]">
-        <div className="border-stroke-weak w-[136px] rounded-lg border border-dashed p-0.5">
-          <div className="border-stroke-soft bg-bg-white flex h-[47px] items-center justify-center gap-6 rounded-md border p-3">
-            <RiRobot2Line className="text-text-soft size-4" />
-            <NovuIcon />
-          </div>
-        </div>
-
-        <div className="border-stroke-weak rounded-lg border p-1">
-          <SkeletonMessageCard className="w-[197px]" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function RecentConversationsSection() {
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
       <div className="flex items-center justify-between px-2 py-1.5">
         <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
           Recent conversations
         </span>
+        {IS_ENTERPRISE && conversationsPath ? (
+          <Link
+            to={conversationsPath}
+            className="text-text-sub hover:text-text-strong text-label-xs flex items-center gap-0.5 rounded-lg p-1.5 font-medium transition-colors"
+          >
+            View all
+            <RiArrowRightLine className="size-4" />
+          </Link>
+        ) : null}
       </div>
 
-      <div className="bg-bg-white flex h-[300px] flex-col items-center justify-center overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
-          <EmptyStateIllustration />
-          <p className="text-text-soft text-label-xs max-w-[400px] text-center font-medium leading-4">
-            No conversations, agent conversations will appear here once the agent starts responding to messages.
-          </p>
-        </div>
+      <div className="bg-bg-white flex h-[300px] flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
+        {IS_ENTERPRISE ? (
+          <RecentConversationsContent agent={agent} />
+        ) : (
+          <ConversationsUpgradeCta source="agent-overview" variant="compact" />
+        )}
       </div>
     </div>
   );
+}
+
+function RecentConversationsContent({ agent }: { agent: AgentResponse }) {
+  const { currentEnvironment } = useEnvironment();
+
+  const { conversations, isLoading, isError } = useFetchConversations({
+    limit: RECENT_CONVERSATIONS_DISPLAY_LIMIT,
+    filters: { agentId: agent.identifier },
+  });
+
+  if (isLoading) {
+    return <RecentConversationsSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4 text-center">
+        <p className="text-text-soft text-label-xs max-w-[320px] font-medium leading-4">
+          We couldn't load recent conversations. Please try again in a moment.
+        </p>
+      </div>
+    );
+  }
+
+  if (conversations.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4 text-center">
+        <p className="text-text-soft text-label-xs max-w-[320px] font-medium leading-4">
+          No conversations yet. Once this agent starts replying to messages, they'll show up here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="flex flex-1 flex-col divide-y divide-stroke-soft overflow-auto">
+      {conversations.map((conversation) => (
+        <li key={conversation._id}>
+          <RecentConversationItem conversation={conversation} environmentSlug={currentEnvironment?.slug} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type RecentConversationItemProps = {
+  conversation: ConversationDto;
+  environmentSlug: string | undefined;
+};
+
+function RecentConversationItem({ conversation, environmentSlug }: RecentConversationItemProps) {
+  const subscriber = getSubscriberLabel(conversation);
+  const subscriberParticipant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
+  const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
+  const isFailed = conversation.status === 'failed';
+
+  const baseClassName = 'flex flex-col gap-1.5 px-3 py-2';
+  const interactiveClassName =
+    'group transition-colors hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none';
+
+  const content = (
+    <>
+      <div className="flex items-center gap-8">
+        <div className="flex min-w-0 flex-1 items-center gap-1">
+          <RiCheckboxCircleFill
+            className={cn('size-4 shrink-0', isFailed ? 'text-destructive-base' : 'text-success-base')}
+          />
+          <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">
+            {conversation.title || 'Untitled conversation'}
+          </span>
+        </div>
+        <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">
+          {formatTimestamp(conversation.lastActivityAt || conversation.createdAt)}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1">
+          <RiRobot2Line className="text-text-soft size-4 shrink-0" />
+          <span className="text-text-soft font-code truncate text-xs font-medium tracking-tight">
+            {getAgentName(conversation)}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {subscriber && (
+            <>
+              <div className="border-stroke-soft flex max-w-[150px] items-center gap-1 rounded border bg-[#fbfbfb] px-1 py-0.5">
+                {subscriberAvatar ? (
+                  <img src={subscriberAvatar} alt="" className="size-4 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <SubscriberFallbackAvatar className="size-4" />
+                )}
+                <span className="text-text-strong font-code min-w-0 truncate text-xs font-medium">{subscriber}</span>
+              </div>
+              <span className="text-text-soft font-code text-[11px] leading-normal">•</span>
+            </>
+          )}
+          <ConversationStatusBadge status={conversation.status} />
+        </div>
+      </div>
+    </>
+  );
+
+  if (!environmentSlug) {
+    return <div className={baseClassName}>{content}</div>;
+  }
+
+  const detailPath = `${buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug })}?conversationItemId=${encodeURIComponent(conversation.identifier)}`;
+
+  return (
+    <Link to={detailPath} className={cn(baseClassName, interactiveClassName)}>
+      {content}
+    </Link>
+  );
+}
+
+function RecentConversationsSkeleton() {
+  return (
+    <ul className="flex flex-1 flex-col divide-y divide-stroke-soft">
+      {Array.from({ length: RECENT_CONVERSATIONS_DISPLAY_LIMIT }, (_, index) => (
+        <li key={`skeleton-${index}`} className="flex flex-col gap-1.5 px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Skeleton className="size-4 rounded-full" />
+              <Skeleton className="h-3.5 w-40" />
+            </div>
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-3.5 w-20" />
+            <div className="flex items-center gap-1">
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="h-4 w-12 rounded-md" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function getSubscriberLabel(conversation: ConversationDto): string | undefined {
+  const participant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
+  if (!participant) return undefined;
+
+  const sub = participant.subscriber;
+  if (sub?.firstName || sub?.lastName) {
+    return [sub.firstName, sub.lastName].filter(Boolean).join(' ');
+  }
+
+  return sub?.subscriberId ?? participant.id;
+}
+
+function getAgentName(conversation: ConversationDto): string {
+  const agent = (conversation.participants ?? []).find((p) => p.type === 'agent');
+
+  return agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
+}
+
+function formatTimestamp(dateStr: string | undefined): string {
+  if (!dateStr?.trim()) {
+    return '—';
+  }
+
+  const d = new Date(dateStr);
+
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
+
+  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  const day = d.getDate();
+  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+  return `${month} ${day} ${time}`;
 }

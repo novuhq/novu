@@ -117,7 +117,6 @@ type IntegrationsHubPlaceholderProps = {
 };
 
 function IntegrationsHubPlaceholder({ title, description }: IntegrationsHubPlaceholderProps) {
-
   return (
     <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
       <p className="text-text-strong text-label-sm font-medium">{title}</p>
@@ -159,12 +158,10 @@ function IntegrationsMainPanel({
 
   if (integrationIdentifier) {
     if (isLoading) {
-
       return guideSkeleton;
     }
 
     if (!selectedIntegration) {
-
       return (
         <IntegrationsHubPlaceholder
           title="Integration not found"
@@ -187,12 +184,10 @@ function IntegrationsMainPanel({
   }
 
   if (isLoading) {
-
     return guideSkeleton;
   }
 
   if (links.length > 0) {
-
     return (
       <IntegrationsHubPlaceholder
         title="Select a provider"

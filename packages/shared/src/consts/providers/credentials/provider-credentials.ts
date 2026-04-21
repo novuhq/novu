@@ -1293,7 +1293,8 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'App Secret',
-    description: 'Found under App Settings > Basic in your Meta app dashboard — used to verify inbound webhook signatures',
+    description:
+      'Found under App Settings > Basic in your Meta app dashboard — used to verify inbound webhook signatures',
     type: 'string',
     required: false,
   },

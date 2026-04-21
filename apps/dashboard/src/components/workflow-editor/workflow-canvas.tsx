@@ -21,10 +21,12 @@ const WorkflowCanvasChild = ({
   steps,
   showStepPreview,
   isReadOnly,
+  areConditionsClickable = true,
 }: {
   steps: Step[];
   showStepPreview?: boolean;
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
@@ -84,6 +86,7 @@ const WorkflowCanvasChild = ({
   const dragContextValue = useMemo(() => {
     return {
       isReadOnly,
+      areConditionsClickable,
       showStepPreview,
       isCodeFirstWorkflow,
       onNodeDragStart,
@@ -102,6 +105,7 @@ const WorkflowCanvasChild = ({
     };
   }, [
     isReadOnly,
+    areConditionsClickable,
     showStepPreview,
     isCodeFirstWorkflow,
     onNodeDragStart,
@@ -175,10 +179,12 @@ export const WorkflowCanvas = ({
   steps,
   showStepPreview,
   isReadOnly,
+  areConditionsClickable = true,
 }: {
   steps: Step[];
   showStepPreview?: boolean;
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
 }) => {
   const has = useHasPermission();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
@@ -209,6 +215,7 @@ export const WorkflowCanvas = ({
           steps={currentWorkflow?.steps || steps || []}
           showStepPreview={showStepPreview}
           isReadOnly={isReadOnly}
+          areConditionsClickable={areConditionsClickable}
         />
 
         {showReadOnlyOverlay && (

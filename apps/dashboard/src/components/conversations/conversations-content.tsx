@@ -5,8 +5,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { ConversationFilters } from '@/components/conversations/conversations-filters';
 import { ConversationsTable } from '@/components/conversations/conversations-table';
+import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
+import { IS_ENTERPRISE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConversationUrlState } from '@/hooks/use-conversation-url-state';
 import { cn } from '@/utils/ui';
@@ -20,6 +22,25 @@ type ConversationsContentProps = {
 };
 
 export function ConversationsContent({
+  className,
+  contentHeight = 'h-[calc(100vh-140px)]',
+}: ConversationsContentProps) {
+  if (!IS_ENTERPRISE) {
+    return (
+      <div className={cn('p-2.5', className)}>
+        <div className={cn('flex', contentHeight)}>
+          <div className="border-stroke-soft flex flex-1 items-center justify-center rounded-lg border bg-white">
+            <ConversationsUpgradeCta source="activity-feed-conversations" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <EnterpriseConversationsContent className={className} contentHeight={contentHeight} />;
+}
+
+function EnterpriseConversationsContent({
   className,
   contentHeight = 'h-[calc(100vh-140px)]',
 }: ConversationsContentProps) {

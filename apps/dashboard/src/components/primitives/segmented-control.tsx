@@ -85,17 +85,4 @@ const SegmentedControlTrigger = React.forwardRef<
 });
 SegmentedControlTrigger.displayName = 'SegmentedControlTrigger';
 
-const SegmentedControlContent = React.forwardRef<
-  React.ComponentRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ ...rest }, forwardedRef) => {
-  return <TabsPrimitive.Content ref={forwardedRef} {...rest} />;
-});
-SegmentedControlContent.displayName = 'SegmentedControlContent';
-
-export {
-  SegmentedControlRoot as SegmentedControl,
-  SegmentedControlList,
-  SegmentedControlTrigger,
-  SegmentedControlContent,
-};
+export { SegmentedControlRoot as SegmentedControl, SegmentedControlList, SegmentedControlTrigger };
