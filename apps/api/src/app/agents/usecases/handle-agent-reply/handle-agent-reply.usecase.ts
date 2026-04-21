@@ -228,13 +228,14 @@ export class HandleAgentReply {
 
     const triggerSignals = (signals ?? []).filter((s): s is TriggerSignal => s.type === 'trigger');
     if (triggerSignals.length) {
-      await this.executeTriggerSignals(command, conversation, triggerSignals);
+      await this.executeTriggerSignals(command, conversation, channel, triggerSignals);
     }
   }
 
   private async executeTriggerSignals(
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
+    channel: ConversationChannel,
     signals: TriggerSignal[]
   ): Promise<void> {
     const subscriberParticipant = conversation.participants.find(
@@ -253,7 +254,7 @@ export class HandleAgentReply {
       }
 
       try {
-        await this.parseEventRequest.execute(
+        const result = await this.parseEventRequest.execute(
           ParseEventRequestMulticastCommand.create({
             userId: command.userId,
             environmentId: command.environmentId,
@@ -267,6 +268,17 @@ export class HandleAgentReply {
             requestId: randomUUID(),
           })
         );
+
+        await this.conversationService.persistTriggerSignal({
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: command.agentIdentifier,
+          workflowId: signal.workflowId,
+          to,
+          transactionId: result.transactionId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
       } catch (err) {
         this.logger.warn(
           { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
