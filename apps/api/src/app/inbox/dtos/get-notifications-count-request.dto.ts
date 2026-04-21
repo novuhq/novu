@@ -1,24 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
-import { SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum, type TagsFilter } from '@novu/shared';
 import { plainToClass, Transform, Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsBoolean,
-  IsDefined,
-  IsEnum,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsDefined, IsOptional, ValidateNested } from 'class-validator';
 import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 import { NotificationFilter } from '../utils/types';
+import { IsTagsFilter } from '../validators/is-tags-filter.validator';
 
 export class NotificationsFilter implements NotificationFilter {
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsTagsFilter()
+  tags?: TagsFilter;
 
   @IsOptional()
   @IsBoolean()

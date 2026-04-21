@@ -25,7 +25,7 @@ import {
 } from './nodes';
 
 // y distance = node height + space between nodes
-export const NODE_Y_OFFSET = 50;
+const NODE_Y_OFFSET = 50;
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
 export const nodeTypes = {
@@ -65,8 +65,22 @@ export const edgeTypes = {
 export const mapStepToNodeContent = (
   stepType: StepTypeEnum,
   controlValues: Record<string, unknown>,
-  workflowOrigin: ResourceOriginEnum
+  workflowOrigin: ResourceOriginEnum,
+  stepResolverHash?: string
 ): string => {
+  if (stepResolverHash) {
+    switch (stepType) {
+      case StepTypeEnum.DELAY:
+        return 'Delay duration controlled by code';
+      case StepTypeEnum.DIGEST:
+        return 'Digest window controlled by code';
+      case StepTypeEnum.THROTTLE:
+        return 'Throttle rules controlled by code';
+      default:
+        break;
+    }
+  }
+
   switch (stepType) {
     case StepTypeEnum.TRIGGER:
       return 'This step triggers this workflow';
@@ -183,7 +197,7 @@ export const mapStepToNode = ({
   step: Step;
   workflowOrigin?: ResourceOriginEnum;
 }): Node<NodeData, keyof typeof nodeTypes> => {
-  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin);
+  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin, step.stepResolverHash);
 
   const error = step.issues
     ? getFirstErrorMessage(step.issues, 'controls') || getFirstErrorMessage(step.issues, 'integration')
@@ -277,7 +291,7 @@ export const createAddNode = (
   return addNode;
 };
 
-export const createNodes = (
+const createNodes = (
   steps: Step[],
   currentWorkflow?: WorkflowResponseDto,
   currentEnvironment?: IEnvironment,
@@ -304,7 +318,7 @@ export const createNodes = (
   return [...allNodes, addNode];
 };
 
-export const generateNodesAndEdges = (
+const generateNodesAndEdges = (
   steps: Step[],
   showStepPreview?: boolean,
   currentWorkflow?: WorkflowResponseDto,

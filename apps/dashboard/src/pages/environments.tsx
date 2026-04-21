@@ -1,6 +1,6 @@
-import { PageMeta } from '@/components/page-meta';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useEffect } from 'react';
+import { PageMeta } from '@/components/page-meta';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { CreateEnvironmentButton } from '../components/environments/create-environment-button';
 import { FreeTierState } from '../components/environments/environments-free-state';

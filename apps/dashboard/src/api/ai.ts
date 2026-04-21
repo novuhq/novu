@@ -97,18 +97,6 @@ export async function fetchLatestChat({
   return responseData;
 }
 
-export async function fetchChat({
-  environment,
-  id,
-}: {
-  environment: IEnvironment;
-  id: string;
-}): Promise<AiChatResponseDto> {
-  const { data: responseData } = await getV2<{ data: AiChatResponseDto }>(`/ai/chat/${id}`, { environment });
-
-  return responseData;
-}
-
 export function getChatStreamUrl(): string {
   return `${getApiBaseUrl()}/v2/ai/chat-stream`;
 }
@@ -181,6 +169,26 @@ export async function cancelStream({
     environment,
     body: { chatId },
   });
+
+  return responseData;
+}
+
+export type OnboardingSuggestionsResponse = {
+  status: 'pending' | 'generating' | 'completed' | 'failed' | 'skipped' | null;
+  suggestions: WorkflowResponseDto[];
+};
+
+export async function fetchOnboardingWorkflowSuggestions({
+  environment,
+}: {
+  environment: IEnvironment;
+}): Promise<OnboardingSuggestionsResponse> {
+  const { data: responseData } = await getV2<{ data: OnboardingSuggestionsResponse }>(
+    '/ai/workflow-suggestions/onboarding',
+    {
+      environment,
+    }
+  );
 
   return responseData;
 }

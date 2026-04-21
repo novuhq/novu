@@ -12,7 +12,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -25,7 +25,9 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   CreateEnvironmentVariableRequestDto,
@@ -70,7 +72,7 @@ export class EnvironmentVariablesController {
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ApiResponse(EnvironmentVariableResponseDto, 200, true)
   @ApiOperation({
-    summary: 'List environment variables',
+    summary: 'List all variables',
     description: 'Returns all environment variables for the current organization. Secret values are masked.',
   })
   async listEnvironmentVariables(
@@ -86,49 +88,61 @@ export class EnvironmentVariablesController {
     );
   }
 
-  @Get('/:variableId/usage')
+  @Get('/:variableKey/usage')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @SdkMethodName('usage')
+  @ApiParam({
+    name: 'variableKey',
+    description: 'The unique key of the environment variable (e.g. BASE_URL)',
+    type: String,
+    example: 'BASE_URL',
+  })
   @ApiResponse(GetEnvironmentVariableUsageResponseDto)
   @ApiOperation({
-    summary: 'Get environment variable usage',
+    summary: 'Retrieve a variable usage',
     description:
-      'Returns the workflows that reference this environment variable via {{env.KEY}} in their step controls.',
+      'Returns the workflows that reference this environment variable via `{{env.KEY}}` in their step controls. **variableId** is required.',
   })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
   async getEnvironmentVariableUsage(
     @UserSession() user: UserSessionData,
-    @Param('variableId') variableId: string
+    @Param('variableKey') variableKey: string
   ): Promise<GetEnvironmentVariableUsageResponseDto> {
     return this.getEnvironmentVariableUsageUsecase.execute(
       GetEnvironmentVariableUsageCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        variableId,
+        variableKey,
       })
     );
   }
 
-  @Get('/:variableId')
+  @Get('/:variableKey')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @SdkMethodName('retrieve')
+  @ApiParam({
+    name: 'variableKey',
+    description: 'The unique key of the environment variable (e.g. BASE_URL)',
+    type: String,
+    example: 'BASE_URL',
+  })
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Get environment variable',
-    description: 'Returns a single environment variable by id. Secret values are masked.',
+    description: 'Returns a single environment variable by key. Secret values are masked.',
   })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
   async getEnvironmentVariable(
     @UserSession() user: UserSessionData,
-    @Param('variableId') variableId: string
+    @Param('variableKey') variableKey: string
   ): Promise<EnvironmentVariableResponseDto> {
     return this.getEnvironmentVariableUsecase.execute(
       GetEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        variableId,
+        variableKey,
       })
     );
   }
@@ -138,7 +152,7 @@ export class EnvironmentVariablesController {
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
-    summary: 'Create environment variable',
+    summary: 'Create a variable',
     description:
       'Creates a new environment variable. Keys must be uppercase with underscores only (e.g. BASE_URL). ' +
       'Secret variables are encrypted at rest and masked in API responses.',
@@ -160,26 +174,32 @@ export class EnvironmentVariablesController {
     );
   }
 
-  @Patch('/:variableId')
+  @Patch('/:variableKey')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @ApiParam({
+    name: 'variableKey',
+    description: 'The unique key of the environment variable (e.g. BASE_URL)',
+    type: String,
+    example: 'BASE_URL',
+  })
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
-    summary: 'Update environment variable',
+    summary: 'Update a variable',
     description:
       'Updates an existing environment variable. Providing values replaces all existing per-environment values.',
   })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
   async updateEnvironmentVariable(
     @UserSession() user: UserSessionData,
-    @Param('variableId') variableId: string,
+    @Param('variableKey') variableKey: string,
     @Body() body: UpdateEnvironmentVariableRequestDto
   ): Promise<EnvironmentVariableResponseDto> {
     return this.updateEnvironmentVariableUsecase.execute(
       UpdateEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        variableId,
+        variableKey,
         key: body.key,
         type: body.type,
         isSecret: body.isSecret,
@@ -188,25 +208,31 @@ export class EnvironmentVariablesController {
     );
   }
 
-  @Delete('/:variableId')
+  @Delete('/:variableKey')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @ApiParam({
+    name: 'variableKey',
+    description: 'The unique key of the environment variable (e.g. BASE_URL)',
+    type: String,
+    example: 'BASE_URL',
+  })
   @ApiOperation({
     summary: 'Delete environment variable',
-    description: 'Deletes an environment variable by id.',
+    description: 'Deletes an environment variable by key.',
   })
   @ApiNoContentResponse({ description: 'The environment variable has been deleted.' })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteEnvironmentVariable(
     @UserSession() user: UserSessionData,
-    @Param('variableId') variableId: string
+    @Param('variableKey') variableKey: string
   ): Promise<void> {
     return this.deleteEnvironmentVariableUsecase.execute(
       DeleteEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        variableId,
+        variableKey,
       })
     );
   }

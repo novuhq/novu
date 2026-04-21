@@ -70,7 +70,7 @@ const AmountInputField = ({
   return (
     <InputPure
       type="number"
-      className="font-code h-[28px] min-w-[40px] border-0 border-r-0 pl-2 shadow-none ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      className="font-code h-[28px] min-w-[40px] border-0 border-r-0 pl-2 shadow-none ring-0 mask-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       placeholder={placeholder}
       disabled={disabled}
       value={value}

@@ -11,7 +11,6 @@ import { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiArrowLeftSLine, RiCloseFill, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { z } from 'zod';
 
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { PageMeta } from '@/components/page-meta';
@@ -460,7 +459,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
             <Card className="bg-information/10 border-information/40 border px-2.5 py-2">
               <CardContent className="flex flex-nowrap items-center gap-2 p-0">
                 <div className="size-5">
-                  <RiInformationFill className="text-information m-0.5 size-4" />
+                  <RiInformationFill className="text-information m-0.5 size-3" />
                 </div>
                 <span className="text-2xs">
                   Preferences defined in code have been overridden. Disable overrides to restore original.

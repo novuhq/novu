@@ -183,7 +183,7 @@ export class WorkflowRunService {
         deliveryLifecycleStatus = providedStatus;
         deliveryLifecycleDetail = providedDetail;
       } else {
-        const result = this.buildDeliveryLifecycle(jobs, messages);
+        const result = this.buildDeliveryLifecycle(notificationId, jobs, messages);
         deliveryLifecycleStatus = result.deliveryLifecycleStatus;
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
       }
@@ -328,7 +328,7 @@ export class WorkflowRunService {
         deliveryLifecycleStatus = providedStatus;
         deliveryLifecycleDetail = providedDetail;
       } else {
-        const result = this.buildDeliveryLifecycle(jobs, messages);
+        const result = this.buildDeliveryLifecycle(notificationId, jobs, messages);
         deliveryLifecycleStatus = result.deliveryLifecycleStatus;
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
       }
@@ -475,7 +475,7 @@ export class WorkflowRunService {
         this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
       ]);
 
-      return this.buildDeliveryLifecycle(jobs, messages);
+      return this.buildDeliveryLifecycle(notificationId, jobs, messages);
     } catch (error) {
       this.logger.error(
         {
@@ -839,6 +839,7 @@ export class WorkflowRunService {
    * 8. PENDING - If any step has PENDING, QUEUED, RUNNING, or DELAYED status
    */
   private buildDeliveryLifecycle(
+    notificationId: string,
     jobs: JobResult[],
     messages: MessageResult[]
   ): {
@@ -848,7 +849,24 @@ export class WorkflowRunService {
     // Filter for channel jobs (exclude non-channel jobs like trigger, delay, digest, custom)
     const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
 
+    const logResolution = (status: DeliveryLifecycleStatusEnum, extra?: Record<string, unknown>) => {
+      this.logger.info(
+        {
+          notificationId,
+          resolvedStatus: status,
+          channelJobStatuses: channelJobs.map((j) => ({ id: j._id, status: j.status })),
+          messageCount: messages.length,
+          ...extra,
+        },
+        'Delivery lifecycle resolved'
+      );
+    };
+
     if (channelJobs.length === 0) {
+      logResolution(DeliveryLifecycleStatusEnum.ERRORED, {
+        detail: DeliveryLifecycleDetail.WORKFLOW_MISSING_CHANNEL_STEP,
+      });
+
       return {
         deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
         deliveryLifecycleDetail: DeliveryLifecycleDetail.WORKFLOW_MISSING_CHANNEL_STEP,
@@ -861,11 +879,15 @@ export class WorkflowRunService {
     );
 
     if (hasInteractedMessage) {
+      logResolution(DeliveryLifecycleStatusEnum.INTERACTED);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.INTERACTED };
     }
 
     // Priority 2: DELIVERED - If any message has been delivered (has deliveredAt) and no interaction found
     if (messages.some((message) => !!message.deliveredAt)) {
+      logResolution(DeliveryLifecycleStatusEnum.DELIVERED);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.DELIVERED };
     }
 
@@ -875,6 +897,8 @@ export class WorkflowRunService {
       return messages.some((message) => message._jobId === job._id);
     });
     if (messageSent) {
+      logResolution(DeliveryLifecycleStatusEnum.SENT);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SENT };
     }
 
@@ -922,6 +946,8 @@ export class WorkflowRunService {
         selectedDetail = skippedJobs[0].deliveryLifecycleState?.detail;
       }
 
+      logResolution(DeliveryLifecycleStatusEnum.SKIPPED, { detail: selectedDetail });
+
       return {
         deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
         deliveryLifecycleDetail: selectedDetail,
@@ -933,6 +959,8 @@ export class WorkflowRunService {
       (job) => isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatusEnum.CANCELED
     );
     if (hasUserCanceled) {
+      logResolution(DeliveryLifecycleStatusEnum.CANCELED);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.CANCELED };
     }
 
@@ -940,6 +968,8 @@ export class WorkflowRunService {
     const allStepsFailed = channelJobs.every((job) => job.status === JobStatusEnum.FAILED);
 
     if (allStepsFailed) {
+      logResolution(DeliveryLifecycleStatusEnum.ERRORED);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED };
     }
 
@@ -948,27 +978,34 @@ export class WorkflowRunService {
       (job) => job.status === JobStatusEnum.MERGED || (job.status === JobStatusEnum.SKIPPED && !!job._mergedDigestId)
     );
     if (allStepsMerged) {
+      logResolution(DeliveryLifecycleStatusEnum.MERGED);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED };
     }
 
-    // Priority 8: PENDING - If any step is pending (pending, queued, delayed)
+    // Priority 8: PENDING - If any step is still in-flight (pending, queued, running, delayed)
     const hasPendingSteps = channelJobs.some(
       (job) =>
         job.status === JobStatusEnum.PENDING ||
         job.status === JobStatusEnum.QUEUED ||
+        job.status === JobStatusEnum.RUNNING ||
         job.status === JobStatusEnum.DELAYED
     );
     if (hasPendingSteps) {
+      logResolution(DeliveryLifecycleStatusEnum.PENDING);
+
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.PENDING };
     }
 
     this.logger.warn(
       {
-        jobIds: channelJobs.map((job) => job._id),
-        statuses: channelJobs.map((job) => ({
+        notificationId,
+        channelJobStatuses: channelJobs.map((job) => ({
+          id: job._id,
           status: job.status,
-          deliveryLifecycleState: job.deliveryLifecycleState,
+          type: job.type,
         })),
+        messageJobIds: messages.map((m) => m._jobId),
       },
       'No matching delivery lifecycle found for jobs, falling back to ERRORED'
     );

@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, IndustryEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -67,12 +67,45 @@ const organizationSchema = new Schema<OrganizationDBModel>(
         default: false,
       },
     },
-    industry: {
-      type: Schema.Types.String,
-      enum: IndustryEnum,
-    },
     externalId: Schema.Types.String,
     stripeCustomerId: Schema.Types.String,
+    brandEnrichment: {
+      type: {
+        industry: [
+          {
+            industry: Schema.Types.String,
+            subindustry: Schema.Types.String,
+          },
+        ],
+        companyTitle: Schema.Types.String,
+        companyDescription: Schema.Types.String,
+        logos: [
+          {
+            url: Schema.Types.String,
+            type: { type: Schema.Types.String, enum: ['icon', 'logo'] },
+            mode: { type: Schema.Types.String, enum: ['light', 'dark', 'has_opaque_background'] },
+          },
+        ],
+        colors: [
+          {
+            hex: Schema.Types.String,
+            name: Schema.Types.String,
+          },
+        ],
+        enrichedAt: Schema.Types.String,
+        status: {
+          type: Schema.Types.String,
+          enum: ['pending', 'completed', 'failed', 'not_available'],
+          required: true,
+        },
+      },
+      required: false,
+    },
+    onboardingWorkflowsStatus: {
+      type: Schema.Types.String,
+      enum: ['pending', 'generating', 'completed', 'failed', 'skipped'],
+      required: false,
+    },
   },
   schemaOptions
 );

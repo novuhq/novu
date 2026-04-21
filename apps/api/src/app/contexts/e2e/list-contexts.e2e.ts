@@ -134,9 +134,25 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       data: {},
     });
 
-    const response = await novuClient.contexts.list({ search: 'list-test-4.*acme' });
+    const response = await novuClient.contexts.list({ search: 'acme' });
 
     expect(response.result.data.length).to.equal(2);
+  });
+
+  it('should handle regex metacharacters in search without crashing', async () => {
+    await contextRepository.create({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+      type: 'tenant',
+      id: 'list-test-regex-org-1',
+      key: 'tenant:list-test-regex-org-1',
+      data: {},
+    });
+
+    const response = await novuClient.contexts.list({ search: '[invalid' });
+
+    expect(response.result.data).to.be.an('array');
+    expect(response.result.data.length).to.equal(0);
   });
 
   it('should support cursor-based pagination with limit', async () => {

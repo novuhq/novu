@@ -30,6 +30,8 @@ import { Result } from "../types/fp.js";
  *
  * @remarks
  * Retrieve chart data for activity analytics and metrics visualization.
+ *
+ * This operation requires {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function activityChartsRetrieve(
   client: NovuCore,
@@ -111,7 +113,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1]);
 
   const context = {
     options: client._options,

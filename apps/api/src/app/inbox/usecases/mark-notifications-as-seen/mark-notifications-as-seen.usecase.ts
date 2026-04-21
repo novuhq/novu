@@ -14,7 +14,13 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
-import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleStatusEnum,
+  normalizeTagGroups,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WebSocketEventEnum,
+} from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -113,7 +119,7 @@ export class MarkNotificationsAsSeen {
 
       const fromFilters: Record<string, unknown> = {};
       if (tags) {
-        fromFilters.tags = tags;
+        fromFilters.tagGroups = normalizeTagGroups(tags);
       }
       if (parsedData) {
         fromFilters.data = parsedData;

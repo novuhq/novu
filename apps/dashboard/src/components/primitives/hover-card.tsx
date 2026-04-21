@@ -26,6 +26,4 @@ HoverCardContent.displayName = HoverCardPrimitive.Content.displayName;
 
 const HoverCardPortal = HoverCardPrimitive.Portal;
 
-const HoverCardArrow = HoverCardPrimitive.Arrow;
-
-export { HoverCard, HoverCardArrow, HoverCardContent, HoverCardPortal, HoverCardTrigger };
+export { HoverCard, HoverCardContent, HoverCardPortal, HoverCardTrigger };

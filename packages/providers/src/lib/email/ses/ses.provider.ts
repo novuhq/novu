@@ -1,4 +1,4 @@
-import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
@@ -11,7 +11,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { createVerify } from 'crypto';
-import nodemailer from 'nodemailer';
+import nodemailer, { SendMailOptions } from 'nodemailer';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { SESConfig } from './ses.config';
@@ -20,11 +20,11 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.SES;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private readonly ses: SESClient;
+  private readonly sesClient: SESv2Client;
 
   constructor(private readonly config: SESConfig) {
     super();
-    this.ses = new SESClient({
+    this.sesClient = new SESv2Client({
       region: this.config.region,
       credentials: {
         accessKeyId: this.config.accessKeyId,
@@ -38,28 +38,28 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     const transporter = nodemailer.createTransport({
-      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
+      SES: { sesClient: this.sesClient, SendEmailCommand },
     });
 
-    return await transporter.sendMail(
-      this.transform(bridgeProviderData, {
-        to,
-        html,
-        text,
-        subject,
-        attachments,
-        from: {
-          address: from,
-          name: senderName,
-        },
-        cc,
-        bcc,
-        replyTo,
-        ...(this.config.configurationSetName && {
-          ses: { ConfigurationSetName: this.config.configurationSetName },
-        }),
-      }).body
-    );
+    const mailOptions = this.transform(bridgeProviderData, {
+      to,
+      html,
+      text,
+      subject,
+      attachments,
+      from: {
+        address: from,
+        name: senderName,
+      },
+      cc,
+      bcc,
+      replyTo,
+      ...(this.config.configurationSetName && {
+        ses: { ConfigurationSetName: this.config.configurationSetName },
+      }),
+    }).body as SendMailOptions;
+
+    return await transporter.sendMail(mailOptions);
   }
 
   async sendMessage(

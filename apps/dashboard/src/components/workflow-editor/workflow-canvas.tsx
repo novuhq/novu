@@ -21,10 +21,12 @@ const WorkflowCanvasChild = ({
   steps,
   showStepPreview,
   isReadOnly,
+  areConditionsClickable = true,
 }: {
   steps: Step[];
   showStepPreview?: boolean;
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
@@ -56,28 +58,37 @@ const WorkflowCanvasChild = ({
   });
 
   useEffect(() => {
-    const oldClientWidth = reactFlowWrapper.current?.clientWidth ?? 0;
-    const listener = () => {
-      const currentClientWidth = reactFlowWrapper.current?.clientWidth;
-      if (!currentClientWidth || currentClientWidth === oldClientWidth) return;
+    const element = reactFlowWrapper.current;
+    if (!element) return;
 
-      const difference = currentClientWidth - oldClientWidth;
-      const newX = difference / 2;
+    let previousWidth = element.clientWidth;
 
-      reactFlowInstance.setViewport({ x: newX, y: 0, zoom: 1 });
-    };
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newWidth = entry.contentRect.width;
+        if (newWidth === previousWidth) continue;
 
-    window.addEventListener('resize', listener);
+        const difference = newWidth - previousWidth;
+        const { x, y, zoom } = reactFlowInstance.getViewport();
+        reactFlowInstance.setViewport({ x: x + difference / 2, y, zoom });
 
-    return () => {
-      window.removeEventListener('resize', listener);
-    };
+        previousWidth = newWidth;
+      }
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
   }, [reactFlowInstance]);
+
+  const isCodeFirstWorkflow = workflow?.origin === ResourceOriginEnum.EXTERNAL;
 
   const dragContextValue = useMemo(() => {
     return {
       isReadOnly,
+      areConditionsClickable,
       showStepPreview,
+      isCodeFirstWorkflow,
       onNodeDragStart,
       onNodeDragMove,
       onNodeDragEnd,
@@ -94,7 +105,9 @@ const WorkflowCanvasChild = ({
     };
   }, [
     isReadOnly,
+    areConditionsClickable,
     showStepPreview,
+    isCodeFirstWorkflow,
     onNodeDragStart,
     onNodeDragMove,
     onNodeDragEnd,
@@ -166,10 +179,12 @@ export const WorkflowCanvas = ({
   steps,
   showStepPreview,
   isReadOnly,
+  areConditionsClickable = true,
 }: {
   steps: Step[];
   showStepPreview?: boolean;
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
 }) => {
   const has = useHasPermission();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
@@ -200,6 +215,7 @@ export const WorkflowCanvas = ({
           steps={currentWorkflow?.steps || steps || []}
           showStepPreview={showStepPreview}
           isReadOnly={isReadOnly}
+          areConditionsClickable={areConditionsClickable}
         />
 
         {showReadOnlyOverlay && (

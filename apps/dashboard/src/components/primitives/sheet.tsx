@@ -110,8 +110,6 @@ export {
   SheetFooter,
   SheetHeader,
   SheetMain,
-  SheetOverlay,
   SheetPortal,
   SheetTitle,
-  SheetTrigger,
 };

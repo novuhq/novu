@@ -34,6 +34,7 @@ export const cronService = {
        * @see https://github.com/pulsecron/pulse#name
        */
       name: `${os.hostname}-${process.pid}`,
+      resumeOnRestart: false,
     });
     const service = new PulseCronService(metricsService, activeCronJobs, pulse);
 

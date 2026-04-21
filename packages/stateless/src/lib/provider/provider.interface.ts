@@ -51,6 +51,8 @@ export interface IPushOptions {
   title: string;
   content: string;
   payload: object;
+  /** Novu message id; used by some providers (e.g. APNS) for collapse-id when not set in overrides. */
+  messageId?: string;
   overrides?: {
     type?: 'notification' | 'data';
     data?: { [key: string]: string };
@@ -73,6 +75,7 @@ export interface IPushOptions {
     channelId?: string;
     categoryId?: string;
     mutableContent?: boolean;
+    collapseId?: string;
     android?: { [key: string]: { [key: string]: string } | string };
     apns?: {
       headers?: { [key: string]: string };

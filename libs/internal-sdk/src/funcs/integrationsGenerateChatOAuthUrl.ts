@@ -33,6 +33,8 @@ import { Result } from "../types/fp.js";
  * Generate an OAuth URL for chat integrations like Slack and MS Teams.
  *     This URL allows subscribers to authorize the integration, enabling the system to send messages
  *     through their chat workspace. The generated URL expires after 5 minutes.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function integrationsGenerateChatOAuthUrl(
   client: NovuCore,
@@ -118,7 +120,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

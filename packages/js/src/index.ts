@@ -1,4 +1,17 @@
 export type * from 'json-logic-js';
+export type {
+  ChannelConnectionResponse,
+  ChannelEndpointResponse,
+  CreateChannelConnectionArgs,
+  CreateChannelEndpointArgs,
+  DeleteChannelConnectionArgs,
+  DeleteChannelEndpointArgs,
+  GenerateChatOAuthUrlArgs,
+  GetChannelConnectionArgs,
+  GetChannelEndpointArgs,
+  ListChannelConnectionsArgs,
+  ListChannelEndpointsArgs,
+} from './channel-connections';
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { Novu } from './novu';
 export type {
@@ -43,6 +56,9 @@ export {
   SocketTypeOption,
   StandardNovuOptions,
   Subscriber,
+  TagsFilter,
+  TagsFilterAndForm,
+  TagsFilterOrGroup,
   TimeRange,
   UnreadCount,
   WebSocketEvent,
@@ -56,4 +72,5 @@ export {
   checkNotificationDataFilter,
   checkNotificationMatchesFilter,
   isSameFilter,
+  normalizeTagGroups,
 } from './utils/notification-utils';

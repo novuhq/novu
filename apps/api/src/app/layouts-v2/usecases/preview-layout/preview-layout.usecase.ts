@@ -11,15 +11,17 @@ import {
   InstrumentUsecase,
   LayoutControlType,
   PayloadMergerService,
+  PlatformException,
   PreviewPayloadProcessorService,
   PreviewStep,
   PreviewStepCommand,
   resolveEnvironmentVariables,
 } from '@novu/application-generic';
-import { EnvironmentVariableRepository, JsonSchemaTypeEnum } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentVariableRepository, JsonSchemaTypeEnum } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
+  EnvironmentSystemVariables,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
   ResourceOriginEnum,
@@ -37,7 +39,8 @@ export class PreviewLayoutUsecase {
     private payloadProcessor: PreviewPayloadProcessorService,
     private payloadMerger: PayloadMergerService,
     private previewStepUsecase: PreviewStep,
-    private readonly environmentVariableRepository: EnvironmentVariableRepository
+    private readonly environmentVariableRepository: EnvironmentVariableRepository,
+    private readonly environmentRepository: EnvironmentRepository
   ) {}
 
   @InstrumentUsecase()
@@ -89,11 +92,22 @@ export class PreviewLayoutUsecase {
       const editorType = email?.editorType ?? 'block';
       const body = email?.body ?? (editorType === 'block' ? '{}' : '');
 
-      const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
-        command.user.organizationId,
-        command.user.environmentId
-      );
-      const envVars = resolveEnvironmentVariables(rawEnvVars);
+      const [rawEnvVars, environmentEntity] = await Promise.all([
+        this.environmentVariableRepository.findByEnvironment(command.user.organizationId, command.user.environmentId),
+        this.environmentRepository.findByIdAndOrganization(command.user.environmentId, command.user.organizationId),
+      ]);
+
+      if (!environmentEntity) throw new PlatformException('EnvironmentEntity not found');
+
+      const environmentSystemVars: EnvironmentSystemVariables = {
+        name: environmentEntity.name,
+        type: environmentEntity.type,
+      };
+
+      const envVars = {
+        ...resolveEnvironmentVariables(rawEnvVars),
+        ...environmentSystemVars,
+      };
 
       const executeOutput = await this.previewStepUsecase.execute(
         PreviewStepCommand.create({

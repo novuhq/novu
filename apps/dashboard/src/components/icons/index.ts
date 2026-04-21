@@ -1,4 +1,3 @@
-export * from './arrow-right';
 export * from './bell';
 export * from './inbox-arrow-down';
 export * from './inbox-bell';

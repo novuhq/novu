@@ -20,6 +20,11 @@ import { Preferences } from "./preferences.js";
 import { Properties } from "./properties.js";
 
 export class Subscribers extends ClientSDK {
+  private _notifications?: NovuNotifications;
+  get notifications(): NovuNotifications {
+    return (this._notifications ??= new NovuNotifications(this._options));
+  }
+
   private _preferences?: Preferences;
   get preferences(): Preferences {
     return (this._preferences ??= new Preferences(this._options));
@@ -38,11 +43,6 @@ export class Subscribers extends ClientSDK {
   private _messages?: NovuMessages;
   get messages(): NovuMessages {
     return (this._messages ??= new NovuMessages(this._options));
-  }
-
-  private _notifications?: NovuNotifications;
-  get notifications(): NovuNotifications {
-    return (this._notifications ??= new NovuNotifications(this._options));
   }
 
   private _properties?: Properties;

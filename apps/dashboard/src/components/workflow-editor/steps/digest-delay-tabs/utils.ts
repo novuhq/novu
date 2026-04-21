@@ -36,12 +36,12 @@ export type UiCronFields = {
   month: number[];
 };
 
-export const EVERY_SECOND = range(0, 59);
-export const EVERY_MINUTE = range(0, 59);
-export const EVERY_HOUR = range(0, 23);
-export const EVERY_DAY_OF_MONTH = range(1, 31);
-export const EVERY_MONTH = range(1, 12);
-export const EVERY_DAY_OF_WEEK = range(0, 7);
+const EVERY_SECOND = range(0, 59);
+const EVERY_MINUTE = range(0, 59);
+const EVERY_HOUR = range(0, 23);
+const EVERY_DAY_OF_MONTH = range(1, 31);
+const EVERY_MONTH = range(1, 12);
+const EVERY_DAY_OF_WEEK = range(0, 7);
 
 export const EVERY_MINUTE_CRON = '* * * * *';
 
@@ -80,7 +80,7 @@ const WEEK_UNIT: Unit = {
   total: 7,
 };
 
-export const UNITS: Unit[] = [MINUTE_UNIT, HOUR_UNIT, DAY_UNIT, MONTH_UNIT, WEEK_UNIT];
+const UNITS: Unit[] = [MINUTE_UNIT, HOUR_UNIT, DAY_UNIT, MONTH_UNIT, WEEK_UNIT];
 
 function isEveryMinute(minute: number[]) {
   return minute.length === 0 || minute.length === MINUTE_UNIT.total;

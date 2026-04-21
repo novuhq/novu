@@ -1,9 +1,9 @@
-FROM node:22.22.1-alpine3.22 AS dev_base
+FROM node:22.22-alpine3.23 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
 # Install global dependencies
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.16.1&& \
+RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0&& \
     pnpm --version
 
 # Set non-root user
@@ -38,33 +38,41 @@ RUN cp src/.env.production dist/.env.production
 
 WORKDIR /usr/src/app
 
-# ------- ASSETS BUILD ----------
-FROM dev AS assets
+# ------- DEPLOY ----------
+FROM dev AS deploy
 
 WORKDIR /usr/src/app
-
-# Remove source files but KEEP node_modules (already compiled)
-RUN pnpm recursive exec -- rm -rf ./src
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    pnpm --filter @novu/ws deploy --legacy --prod /usr/src/deploy && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
+      cd $(mktemp -d) && \
+      echo "@taskforcesh:registry=https://npm.taskforce.sh/" > .npmrc && \
+      echo "//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" >> .npmrc && \
+      npm init -y > /dev/null 2>&1 && \
+      npm install @taskforcesh/bullmq-pro@6.11.0 2>/dev/null && \
+      cp -r node_modules/@taskforcesh /usr/src/deploy/node_modules/@taskforcesh && \
+      rm -rf node_modules/@taskforcesh && \
+      mv node_modules /usr/src/deploy/node_modules/@taskforcesh/bullmq-pro/node_modules; \
+    fi
 
 # ------- PRODUCTION BUILD ----------
-FROM node:22.22.1-alpine3.22 AS prod
-
-ARG PACKAGE_PATH
+FROM node:22.22-alpine3.23 AS prod
 
 ENV CI=true
-ENV NX_DAEMON=false
 
-# Install only runtime tools (NO Python, NO build tools)
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.16.1
+RUN apk upgrade --no-cache && \
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 musl musl-utils && \
+    npm --no-update-notifier --no-fund --global install pm2 && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Set non-root user
 USER 1000
 WORKDIR /usr/src/app
 
-COPY --chown=1000:1000 ./meta .
+# Flat node_modules from pnpm deploy (no symlinks, no hoisting issues)
+COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 
-# Copy build artifacts AND pre-compiled node_modules from assets
-COPY --chown=1000:1000 --from=assets /usr/src/app .
+# Built output (not included by pnpm deploy because dist is gitignored)
+COPY --chown=1000:1000 --from=dev /usr/src/app/apps/ws/dist ./dist
 
-WORKDIR /usr/src/app/apps/ws
 ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]

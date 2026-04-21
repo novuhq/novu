@@ -144,6 +144,7 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
             <CreateLayoutFormSkeleton />
           ) : (
             <CreateLayoutForm
+              disableIdentifierSlugSync={mode === 'duplicate'}
               onSubmit={(formData) => {
                 if (mode === 'create') {
                   createLayout({
@@ -151,17 +152,23 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
                     name: formData.name,
                     isTranslationEnabled: formData.isTranslationEnabled,
                     __source: LayoutCreationSourceEnum.DASHBOARD,
-                  });
+                  }).catch(() => {});
+
+                  return;
+                }
+
+                if (!layoutId) {
                   return;
                 }
 
                 duplicateLayout({
                   data: {
                     name: formData.name,
+                    layoutId: formData.layoutId,
                     isTranslationEnabled: formData.isTranslationEnabled,
                   },
-                  layoutSlug: layoutId!,
-                });
+                  layoutSlug: layoutId,
+                }).catch(() => {});
               }}
               template={template}
             />

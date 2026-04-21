@@ -27,6 +27,9 @@ export const STEP_RESOLVER_SUPPORTED_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.DELAY,
+  StepTypeEnum.DIGEST,
+  StepTypeEnum.THROTTLE,
 ];
 
 export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
@@ -58,7 +61,6 @@ export const DEFAULT_CONTROL_THROTTLE_TYPE = 'fixed';
 export const DEFAULT_CONTROL_THROTTLE_WINDOW = 1;
 export const DEFAULT_CONTROL_THROTTLE_UNIT = TimeUnitEnum.MINUTES;
 export const DEFAULT_CONTROL_THROTTLE_THRESHOLD = 1;
-export const DEFAULT_CONTROL_THROTTLE_KEY = '';
 
 export const DEFAULT_CONTROL_HTTP_REQUEST_METHOD = 'POST';
 export const DEFAULT_CONTROL_HTTP_REQUEST_HEADERS: unknown[] = [];

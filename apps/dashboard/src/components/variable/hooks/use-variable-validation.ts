@@ -3,7 +3,7 @@ import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { getVariableErrorMessage } from '../utils/get-variable-error-message';
 
-export const extractVariableKey = (variableName: string): string => {
+const extractVariableKey = (variableName: string): string => {
   return variableName?.replace(/^(current\.)?payload\./, '') || '';
 };
 

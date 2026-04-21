@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function assertContextExists<T>(contextVal: unknown, msgOrCtx: string | React.Context<T>): asserts contextVal {
+function assertContextExists<T>(contextVal: unknown, msgOrCtx: string | React.Context<T>): asserts contextVal {
   if (!contextVal) {
     throw typeof msgOrCtx === 'string' ? new Error(msgOrCtx) : new Error(`${msgOrCtx.displayName} not found`);
   }

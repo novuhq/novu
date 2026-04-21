@@ -32,6 +32,8 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Create a new context with the specified type, id, and data. Returns 409 if context already exists.
  *       **type** and **id** are required fields, **data** is optional, if the context already exists, it returns the 409 response
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function contextsCreate(
   client: NovuCore,
@@ -118,7 +120,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

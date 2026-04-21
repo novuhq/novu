@@ -1,4 +1,10 @@
-import { ApiServiceLevelEnum, IndustryEnum, IOrganizationEntity, ProductUseCases } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  IBrandEnrichment,
+  IOrganizationEntity,
+  OnboardingWorkflowsStatus,
+  ProductUseCases,
+} from '@novu/shared';
 
 export class OrganizationEntity implements IOrganizationEntity {
   _id: string;
@@ -11,6 +17,7 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   isTrial?: boolean;
 
+  /** User-configured notification appearance (logo, colors, fonts) in the Novu dashboard. */
   branding?: Branding;
 
   partnerConfigurations?: IPartnerConfiguration[];
@@ -23,11 +30,15 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   productUseCases?: ProductUseCases;
 
-  industry?: IndustryEnum;
-
   language?: string[];
 
   removeNovuBranding?: boolean;
+
+  /** External brand profile (industry, assets, copy) + enrichment pipeline status; used for AI onboarding, not in-app branding. */
+  brandEnrichment?: IBrandEnrichment;
+
+  /** Lifecycle of AI-generated onboarding workflow templates (snapshots). */
+  onboardingWorkflowsStatus?: OnboardingWorkflowsStatus;
 
   createdAt: string;
 

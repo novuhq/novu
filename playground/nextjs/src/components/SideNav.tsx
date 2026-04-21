@@ -15,6 +15,7 @@ const LINKS: LinkType[] = [
   { href: '/render-notification', label: 'Render Notification', category: 'Components' },
   { href: '/notifications', label: 'Notifications', category: 'Components' },
   { href: '/preferences', label: 'Preferences', category: 'Components' },
+  { href: '/connect-chat', label: 'Connect Chat', category: 'Components' },
   { href: '/subscription', label: 'Subscription', category: 'Components' },
   { href: '/subscription-components', label: 'Subscription Components', category: 'Components' },
   { href: '/subscription-hooks', label: 'Subscription Hooks', category: 'Components' },

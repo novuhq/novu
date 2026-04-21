@@ -1,7 +1,7 @@
 import type { MessageEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum, SeverityLevelEnum } from '@novu/shared';
 
-import type { InboxNotification, Subscriber } from './types';
+import { InboxNotificationDto, InboxSubscriberResponseDto } from '../dtos/inbox-notification.dto';
 
 const mapSingleItem = ({
   _id,
@@ -25,8 +25,8 @@ const mapSingleItem = ({
   data,
   template,
   transactionId,
-}: MessageEntity): InboxNotification => {
-  const to: Subscriber = {
+}: MessageEntity): InboxNotificationDto => {
+  const to: InboxSubscriberResponseDto = {
     id: subscriber?._id ?? '',
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
@@ -106,8 +106,8 @@ const mapSingleItem = ({
  * Currently the message entity has a generic interface for the messages from the different channels,
  * so we need to map it to a Notification DTO that is specific message interface for the in-app channel.
  */
-export function mapToDto(notification: MessageEntity): InboxNotification;
-export function mapToDto(notification: MessageEntity[]): InboxNotification[];
-export function mapToDto(notification: MessageEntity | MessageEntity[]): InboxNotification | InboxNotification[] {
+export function mapToDto(notification: MessageEntity): InboxNotificationDto;
+export function mapToDto(notification: MessageEntity[]): InboxNotificationDto[];
+export function mapToDto(notification: MessageEntity | MessageEntity[]): InboxNotificationDto | InboxNotificationDto[] {
   return Array.isArray(notification) ? notification.map((el) => mapSingleItem(el)) : mapSingleItem(notification);
 }

@@ -20,13 +20,20 @@ export class ExecuteBridgeRequest {
     command: ExecuteBridgeRequestCommand
   ): Promise<ExecuteBridgeRequestDto<T>> {
     if (command.stepResolverHash) {
-      const isStepResolverEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-      });
+      const [isStepResolverEnabled, isActionStepResolverEnabled] = await Promise.all([
+        this.featureFlagsService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_STEP_RESOLVER_ENABLED,
+          defaultValue: false,
+          organization: { _id: command.organizationId },
+        }),
+        this.featureFlagsService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED,
+          defaultValue: false,
+          organization: { _id: command.organizationId },
+        }),
+      ]);
 
-      if (isStepResolverEnabled) {
+      if (isStepResolverEnabled || isActionStepResolverEnabled) {
         if (![PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(command.action as PostActionEnum)) {
           throw new BadRequestException(
             `Step Resolver only supports EXECUTE and PREVIEW actions, got: ${command.action}`

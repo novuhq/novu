@@ -5,7 +5,7 @@ function escapeString(str: string): string {
   return String(str).replace(/'/g, "\\'");
 }
 
-export function formatParamValue(param: string, type?: string) {
+function formatParamValue(param: string, type?: string) {
   if (type === 'number') {
     return param;
   }
@@ -14,10 +14,12 @@ export function formatParamValue(param: string, type?: string) {
 }
 
 export function formatLiquidVariable(name: string, defaultValue: string, filters: FilterWithParam[]) {
-  const parts = [name.trim()];
+  const safeName = typeof name === 'string' ? name : String(name ?? '');
+  const parts = [safeName.trim()];
 
   if (defaultValue) {
-    parts.push(`default: '${escapeString(defaultValue.trim())}'`);
+    const safeDefault = typeof defaultValue === 'string' ? defaultValue : String(defaultValue);
+    parts.push(`default: '${escapeString(safeDefault.trim())}'`);
   }
 
   filters.forEach((t) => {
@@ -55,7 +57,7 @@ export function validateEnhancedDigestFilters(filters: string[]): {
   return null;
 }
 
-export const parseParams = (input: string) => {
+const parseParams = (input: string) => {
   if (!input) return '';
   return input
     .split(',')

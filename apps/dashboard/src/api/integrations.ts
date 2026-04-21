@@ -7,7 +7,7 @@ export type CreateIntegrationData = {
   credentials: Record<string, unknown>;
   configurations: Record<string, string>;
   name: string;
-  identifier: string;
+  identifier?: string;
   active: boolean;
   primary?: boolean;
   _environmentId: string;

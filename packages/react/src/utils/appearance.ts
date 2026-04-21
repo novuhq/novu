@@ -1,9 +1,9 @@
 import type { AllAppearance, AllIconKey, AllIconOverrides } from '@novu/js/ui';
 import { MountedElement } from '../context/RendererContext';
-import type { ReactIconRenderer, ReactInboxAppearance, ReactSubscriptionAppearance } from './types';
+import type { ReactAllAppearance, ReactIconRenderer, ReactInboxAppearance, ReactSubscriptionAppearance } from './types';
 
 export function adaptAppearanceForJs(
-  appearance: ReactInboxAppearance | ReactSubscriptionAppearance,
+  appearance: ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance,
   mountElement: (el: HTMLElement, mountedElement: MountedElement) => () => void
 ): AllAppearance | undefined {
   if (!appearance) {

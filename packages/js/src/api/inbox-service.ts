@@ -1,4 +1,13 @@
 import type { RulesLogic } from 'json-logic-js';
+import type {
+  ChannelConnectionResponse,
+  ChannelEndpointResponse,
+  CreateChannelConnectionArgs,
+  CreateChannelEndpointArgs,
+  GenerateChatOAuthUrlArgs,
+  ListChannelConnectionsArgs,
+  ListChannelEndpointsArgs,
+} from '../channel-connections/types';
 import type { PreferenceFilter } from '../subscriptions/types';
 import type {
   ActionTypeEnum,
@@ -12,6 +21,7 @@ import type {
   Subscriber,
   SubscriptionPreferenceResponse,
   SubscriptionResponse,
+  TagsFilter,
   WeeklySchedule,
   WorkflowCriticalityEnum,
 } from '../types';
@@ -22,6 +32,86 @@ export type InboxServiceOptions = HttpClientOptions;
 
 const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
+const CHAT_OAUTH_ROUTE = `${INBOX_ROUTE}/chat/oauth`;
+const CHANNEL_CONNECTIONS_ROUTE = `${INBOX_ROUTE}/channel-connections`;
+const CHANNEL_ENDPOINTS_ROUTE = `${INBOX_ROUTE}/channel-endpoints`;
+
+type ChannelListBaseArgs = {
+  subscriberId?: string;
+  integrationIdentifier?: string;
+  connectionIdentifier?: string;
+  channel?: string;
+  providerId?: string;
+  contextKeys?: string[];
+  limit?: number;
+  after?: string;
+  before?: string;
+};
+
+function buildChannelListSearchParams(args: ChannelListBaseArgs): string {
+  const searchParams = new URLSearchParams();
+  if (args.subscriberId) searchParams.append('subscriberId', args.subscriberId);
+  if (args.integrationIdentifier) searchParams.append('integrationIdentifier', args.integrationIdentifier);
+  if (args.connectionIdentifier) searchParams.append('connectionIdentifier', args.connectionIdentifier);
+  if (args.channel) searchParams.append('channel', args.channel);
+  if (args.providerId) searchParams.append('providerId', args.providerId);
+  if (args.contextKeys !== undefined) {
+    if (args.contextKeys.length === 0) {
+      searchParams.append('contextKeys', '');
+    } else {
+      for (const key of args.contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    }
+  }
+  if (args.limit) searchParams.append('limit', String(args.limit));
+  if (args.after) searchParams.append('after', args.after);
+  if (args.before) searchParams.append('before', args.before);
+
+  return searchParams.size ? `?${searchParams.toString()}` : '';
+}
+
+function appendTagsToSearchParams(searchParams: URLSearchParams, tags: TagsFilter | undefined): void {
+  if (tags === undefined) {
+    return;
+  }
+
+  if (Array.isArray(tags)) {
+    if (tags.length === 0) {
+      return;
+    }
+
+    for (const tag of tags) {
+      searchParams.append('tags[]', tag);
+    }
+
+    return;
+  }
+
+  if ('or' in tags) {
+    if (tags.or.length === 0) {
+      return;
+    }
+
+    for (const tag of tags.or) {
+      searchParams.append('tags[]', tag);
+    }
+
+    return;
+  }
+
+  if ('and' in tags) {
+    if (tags.and.length === 0) {
+      return;
+    }
+
+    tags.and.forEach((group, groupIndex) => {
+      for (const tag of group.or) {
+        searchParams.append(`tags[${groupIndex}][]`, tag);
+      }
+    });
+  }
+}
 
 export class InboxService {
   isSessionInitialized = false;
@@ -75,7 +165,7 @@ export class InboxService {
     createdGte,
     createdLte,
   }: {
-    tags?: string[];
+    tags?: TagsFilter;
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
@@ -95,11 +185,7 @@ export class InboxService {
     if (offset) {
       searchParams.append('offset', `${offset}`);
     }
-    if (tags) {
-      for (const tag of tags) {
-        searchParams.append('tags[]', tag);
-      }
-    }
+    appendTagsToSearchParams(searchParams, tags);
     if (read !== undefined) {
       searchParams.append('read', `${read}`);
     }
@@ -136,7 +222,7 @@ export class InboxService {
     filters,
   }: {
     filters: Array<{
-      tags?: string[];
+      tags?: TagsFilter;
       read?: boolean;
       archived?: boolean;
       snoozed?: boolean;
@@ -183,21 +269,21 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unsnooze`);
   }
 
-  readAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  readAll({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  archiveAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  archiveAll({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  archiveAllRead({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
@@ -208,7 +294,7 @@ export class InboxService {
     return this.#httpClient.delete(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/delete`);
   }
 
-  deleteAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+  deleteAll({ tags, data }: { tags?: TagsFilter; data?: Record<string, unknown> }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/delete`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
@@ -221,7 +307,7 @@ export class InboxService {
     data,
   }: {
     notificationIds?: string[];
-    tags?: string[];
+    tags?: TagsFilter;
     data?: Record<string, unknown>;
   }): Promise<void> {
     return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/seen`, {
@@ -454,5 +540,101 @@ export class InboxService {
 
   deleteSubscription({ topicKey, identifier }: { topicKey: string; identifier: string }): Promise<void> {
     return this.#httpClient.delete(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
+  }
+
+  generateChatOAuthUrl({
+    integrationIdentifier,
+    connectionIdentifier,
+    subscriberId,
+    context,
+    scope,
+    userScope,
+    mode,
+    connectionMode,
+  }: GenerateChatOAuthUrlArgs): Promise<{ url: string }> {
+    return this.#httpClient.post(CHAT_OAUTH_ROUTE, {
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      scope,
+      userScope,
+      mode,
+      connectionMode,
+    });
+  }
+
+  listChannelConnections(args: ListChannelConnectionsArgs = {}): Promise<{
+    data: ChannelConnectionResponse[];
+    next?: string;
+    previous?: string;
+  }> {
+    const query = buildChannelListSearchParams(args);
+
+    return this.#httpClient.get(`${CHANNEL_CONNECTIONS_ROUTE}${query}`, undefined, false);
+  }
+
+  getChannelConnection(identifier: string): Promise<ChannelConnectionResponse> {
+    return this.#httpClient.get(`${CHANNEL_CONNECTIONS_ROUTE}/${identifier}`);
+  }
+
+  createChannelConnection({
+    identifier,
+    integrationIdentifier,
+    subscriberId,
+    context,
+    workspace,
+    auth,
+  }: CreateChannelConnectionArgs): Promise<ChannelConnectionResponse> {
+    return this.#httpClient.post(CHANNEL_CONNECTIONS_ROUTE, {
+      identifier,
+      integrationIdentifier,
+      subscriberId,
+      context,
+      workspace,
+      auth,
+    });
+  }
+
+  deleteChannelConnection(identifier: string): Promise<void> {
+    return this.#httpClient.delete(`${CHANNEL_CONNECTIONS_ROUTE}/${identifier}`);
+  }
+
+  listChannelEndpoints(args: ListChannelEndpointsArgs = {}): Promise<{
+    data: ChannelEndpointResponse[];
+    next?: string;
+    previous?: string;
+  }> {
+    const query = buildChannelListSearchParams(args);
+
+    return this.#httpClient.get(`${CHANNEL_ENDPOINTS_ROUTE}${query}`, undefined, false);
+  }
+
+  getChannelEndpoint(identifier: string): Promise<ChannelEndpointResponse> {
+    return this.#httpClient.get(`${CHANNEL_ENDPOINTS_ROUTE}/${identifier}`);
+  }
+
+  createChannelEndpoint({
+    identifier,
+    integrationIdentifier,
+    connectionIdentifier,
+    subscriberId,
+    context,
+    type,
+    endpoint,
+  }: CreateChannelEndpointArgs): Promise<ChannelEndpointResponse> {
+    return this.#httpClient.post(CHANNEL_ENDPOINTS_ROUTE, {
+      identifier,
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      type,
+      endpoint,
+    });
+  }
+
+  deleteChannelEndpoint(identifier: string): Promise<void> {
+    return this.#httpClient.delete(`${CHANNEL_ENDPOINTS_ROUTE}/${identifier}`);
   }
 }

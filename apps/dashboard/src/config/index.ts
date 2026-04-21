@@ -4,8 +4,6 @@ export const MODE = import.meta.env.MODE;
 
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID = import.meta.env.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
-export const HUBSPOT_PORTAL_ID = import.meta.env.VITE_HUBSPOT_EMBED;
-
 export const EE_AUTH_PROVIDER = (window._env_?.VITE_EE_AUTH_PROVIDER ||
   import.meta.env.VITE_EE_AUTH_PROVIDER ||
   'clerk') as 'clerk' | 'better-auth';

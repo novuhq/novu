@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -8,6 +8,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { validateConnectionMode } from '../channel-connection.utils';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -50,11 +51,11 @@ export class CreateChannelConnection {
   }
 
   private validateResourceOrContext(command: CreateChannelConnectionCommand) {
-    const { subscriberId, context } = command;
-
-    if (!subscriberId && !context) {
-      throw new BadRequestException('Either subscriberId or context must be provided');
-    }
+    validateConnectionMode({
+      connectionMode: command.connectionMode,
+      subscriberId: command.subscriberId,
+      context: command.context,
+    });
   }
 
   private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
@@ -110,6 +111,8 @@ export class CreateChannelConnection {
     integration: IntegrationEntity,
     contextKeys: string[]
   ): Promise<ChannelConnectionEntity> {
+    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
+
     const channelConnection = await this.channelConnectionRepository.create({
       identifier,
       integrationIdentifier: integration.identifier,
@@ -117,7 +120,7 @@ export class CreateChannelConnection {
       channel: integration.channel,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
+      subscriberId,
       contextKeys,
       workspace: command.workspace,
       auth: command.auth,
@@ -157,6 +160,6 @@ export class CreateChannelConnection {
   }
 
   private generateIdentifier(): string {
-    return `chconn-${shortId(6)}`;
+    return `chconn_${shortId(12)}`;
   }
 }

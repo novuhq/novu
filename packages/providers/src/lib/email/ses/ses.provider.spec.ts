@@ -1,4 +1,4 @@
-import { SESClient } from '@aws-sdk/client-ses';
+import { SESv2Client } from '@aws-sdk/client-sesv2';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { describe, expect, test, vi } from 'vitest';
 import { SESEmailProvider } from './ses.provider';
@@ -91,14 +91,14 @@ const mockSESMessage = {
 
 test('should trigger ses library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = vi.spyOn(SESClient.prototype, 'send').mockImplementation(async () => {
+  const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
     return mockResponse as any;
   });
 
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage);
 
-  const bufferArray = spy.mock.calls[0][0].input['RawMessage']['Data'];
+  const bufferArray = spy.mock.calls[0][0].input['Content']['Raw']['Data'];
   const buffer = Buffer.from(bufferArray);
   const emailContent = buffer.toString();
 
@@ -109,7 +109,7 @@ test('should trigger ses library correctly', async () => {
 
 test('should trigger ses library correctly with _passthrough', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = vi.spyOn(SESClient.prototype, 'send').mockImplementation(async () => {
+  const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
     return mockResponse as any;
   });
 
@@ -122,7 +122,7 @@ test('should trigger ses library correctly with _passthrough', async () => {
     },
   });
 
-  const bufferArray = spy.mock.calls[0][0].input['RawMessage']['Data'];
+  const bufferArray = spy.mock.calls[0][0].input['Content']['Raw']['Data'];
   const buffer = Buffer.from(bufferArray);
   const emailContent = buffer.toString();
 

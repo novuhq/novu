@@ -6,8 +6,12 @@ import { useFetchIntegrations } from '../../../hooks/use-fetch-integrations';
 import { TableIntegration } from '../types';
 import { IntegrationChannelGroup } from './integration-channel-group';
 
+type IntegrationsListVariant = 'default' | 'connectSheet';
+
 type IntegrationsListProps = {
   onItemClick: (item: TableIntegration) => void;
+  excludeIntegrationIds?: string[];
+  variant?: IntegrationsListVariant;
 };
 
 function IntegrationCardSkeleton() {
@@ -33,7 +37,32 @@ function IntegrationCardSkeleton() {
   );
 }
 
-function IntegrationChannelGroupSkeleton() {
+function ConnectSheetTileSkeleton() {
+  return (
+    <div className="flex min-w-0 flex-1 basis-[calc(50%-0.5rem)] flex-col gap-1.5">
+      <Skeleton className="border-stroke-soft h-20 w-full rounded-lg border" />
+      <Skeleton className="h-4 w-24" />
+    </div>
+  );
+}
+
+function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsListVariant }) {
+  if (variant === 'connectSheet') {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-3 w-24 rounded" />
+        <div className="flex flex-wrap gap-4 p-1.5">
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+          <ConnectSheetTileSkeleton />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -49,7 +78,7 @@ function IntegrationChannelGroupSkeleton() {
   );
 }
 
-export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
+export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant = 'default' }: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
   const availableIntegrations = novuProviders;
@@ -73,15 +102,15 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
 
   if (isLoading || !currentEnvironment) {
     return (
-      <div className="space-y-6">
-        <IntegrationChannelGroupSkeleton />
-        <IntegrationChannelGroupSkeleton />
+      <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
+        <IntegrationChannelGroupSkeleton variant={variant} />
+        {variant === 'default' ? <IntegrationChannelGroupSkeleton variant={variant} /> : null}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
       {Object.entries(groupedIntegrations || {}).map(([channel, channelIntegrations]) => (
         <IntegrationChannelGroup
           key={channel}
@@ -90,6 +119,8 @@ export function IntegrationsList({ onItemClick }: IntegrationsListProps) {
           providers={availableIntegrations}
           environments={environments}
           onItemClick={onItemClick}
+          excludeIntegrationIds={excludeIntegrationIds}
+          variant={variant}
         />
       ))}
     </div>

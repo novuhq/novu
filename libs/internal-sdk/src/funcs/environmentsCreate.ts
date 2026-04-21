@@ -33,6 +33,8 @@ import { Result } from "../types/fp.js";
  * Creates a new environment within the current organization.
  *     Environments allow you to manage different stages of your application development lifecycle.
  *     Each environment has its own set of API keys and configurations.
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function environmentsCreate(
   client: NovuCore,
@@ -118,7 +120,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

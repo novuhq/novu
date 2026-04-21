@@ -288,7 +288,11 @@
     },
     {
       "includes": ["**/*.dto.ts"],
-      "plugins": ["./biome-plugins/api-property-record-type.grit"]
+      "plugins": [
+        "./biome-plugins/api-property-record-type.grit",
+        "./biome-plugins/api-property-optionality.grit",
+        "./biome-plugins/api-property-optionality-required-prop.grit"
+      ]
     },
     {
       "includes": ["**/*.command.ts"],

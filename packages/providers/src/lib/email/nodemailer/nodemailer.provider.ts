@@ -98,7 +98,8 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const info = await this.transports.sendMail(this.transform(bridgeProviderData, mailData).body);
+    const merged = this.transform(bridgeProviderData, mailData);
+    const info = await this.transports.sendMail(merged.body);
 
     return {
       id: info?.messageId,
