@@ -1,16 +1,16 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Variable } from '@novu/maily-core/extensions';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Editor, NodeViewProps } from '@tiptap/core';
 import { useCallback } from 'react';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { VariableFrom } from '@/components/maily/types';
+import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { BaseBody } from '@/components/workflow-editor/steps/base/base-body';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
-import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
-import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { VariableFrom } from '@/components/maily/types';
 import { CardHeaderEditor } from './card-header-editor';
 import { ChatMaily } from './chat-maily';
 import { useCardDocSync } from './use-card-doc-sync';
@@ -77,8 +77,21 @@ function ChatRichBodyEditor() {
     []
   );
 
+  /*
+   * Maily's `ContentMenu` renders a `+` / `::` drag handle via a tippy
+   * popup anchored to the active block with `offset: [0, 0]` and the
+   * default `left` placement — i.e. the handle's right edge sits at
+   * the block's left edge. The email editor gives the card almost no
+   * inner left padding, so the handle sits flush against the card.
+   *
+   * We match that here: `pl-8` on the body shifts the ProseMirror block
+   * 32px in from the card's border so the handle can float into the
+   * inner gutter (and stay visible — the card is *not* `overflow-hidden`
+   * so the tippy popup can spill slightly past the rounded border if
+   * needed). The header keeps `px-4` since it has no handle.
+   */
   return (
-    <div className="shadow-xs flex flex-col overflow-hidden rounded-xl border border-neutral-100 bg-white">
+    <div className="shadow-xs flex flex-col rounded-xl border border-neutral-100 bg-white">
       <div className="border-b border-neutral-100 px-4 py-3">
         <CardHeaderEditor
           header={header}
@@ -88,7 +101,7 @@ function ChatRichBodyEditor() {
         />
       </div>
 
-      <div className="px-4 py-3">
+      <div className="py-3 pl-[52px] pr-4">
         <ChatMaily
           initialContent={initialEditorContent}
           onChange={onEditorUpdate}
