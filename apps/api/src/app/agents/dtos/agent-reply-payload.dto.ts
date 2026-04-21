@@ -19,13 +19,36 @@ export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
 
+/**
+ * Allowed characters for a metadata signal key.
+ *
+ * Metadata is merged into `conversation.metadata` (a plain object) and re-hydrated by
+ * every downstream consumer, so we forbid anything that could produce a prototype
+ * pollution gadget (`__proto__`, `constructor`, `prototype`) or break key handling
+ * for storage/serialization (dots, brackets, control chars). The shape mirrors
+ * SLUG_IDENTIFIER_REGEX with an additional `:` for namespacing (e.g. `crm:ticketId`).
+ */
+const METADATA_SIGNAL_KEY_REGEX = /^[a-zA-Z0-9]+(?:[-_:][a-zA-Z0-9]+)*$/;
+const FORBIDDEN_METADATA_SIGNAL_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const MAX_METADATA_SIGNAL_KEY_LENGTH = 128;
+
+export function isValidMetadataSignalKey(key: unknown): key is string {
+  if (typeof key !== 'string' || key.length === 0 || key.length > MAX_METADATA_SIGNAL_KEY_LENGTH) {
+    return false;
+  }
+
+  if (FORBIDDEN_METADATA_SIGNAL_KEYS.has(key)) return false;
+
+  return METADATA_SIGNAL_KEY_REGEX.test(key);
+}
+
 @ValidatorConstraint({ name: 'isValidSignal', async: false })
 export class IsValidSignal implements ValidatorConstraintInterface {
   validate(signal: SignalDto): boolean {
     if (!signal?.type) return false;
 
     if (signal.type === 'metadata') {
-      return typeof signal.key === 'string' && signal.key.length > 0 && signal.value !== undefined;
+      return isValidMetadataSignalKey(signal.key) && signal.value !== undefined;
     }
 
     if (signal.type === 'trigger') {
@@ -36,7 +59,11 @@ export class IsValidSignal implements ValidatorConstraintInterface {
   }
 
   defaultMessage(): string {
-    return 'metadata signals require key + value; trigger signals require workflowId.';
+    return (
+      'metadata signals require a key 1-128 chars of letters, digits and "-", "_", ":" separators ' +
+      '(no leading, trailing or consecutive separators) plus a defined value; ' +
+      'trigger signals require workflowId.'
+    );
   }
 }
 

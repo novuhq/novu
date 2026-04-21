@@ -1,19 +1,19 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, ValidateIf } from 'class-validator';
 import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
-export class AgentReactionSettingsDto {
+export class AgentBehaviorDto {
   @ApiPropertyOptional({
     description:
-      'Cross-platform emoji name for incoming messages (e.g. "eyes", "thumbs_up"). ' +
-      'Set to null to disable. Default: "eyes"',
-    default: 'eyes',
+      'Acknowledge incoming messages. On platforms that support a native typing indicator ' +
+      '(e.g. Slack, Microsoft Teams), shows a "Typing…" indicator while the agent processes the message. ' +
+      'On platforms that do not (e.g. WhatsApp), reacts with an "eyes" emoji to the first ' +
+      'inbound message in a thread. Default: true',
+    default: true,
   })
+  @IsBoolean()
   @IsOptional()
-  @ValidateIf((_, value) => value !== null)
-  @IsWellKnownEmoji()
-  onMessageReceived?: string | null;
+  acknowledgeOnReceived?: boolean;
 
   @ApiPropertyOptional({
     description:
@@ -24,18 +24,5 @@ export class AgentReactionSettingsDto {
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsWellKnownEmoji()
-  onResolved?: string | null;
-}
-
-export class AgentBehaviorDto {
-  @ApiPropertyOptional({ description: 'Show a "Thinking..." indicator while the agent is processing a message' })
-  @IsBoolean()
-  @IsOptional()
-  thinkingIndicatorEnabled?: boolean;
-
-  @ApiPropertyOptional({ type: AgentReactionSettingsDto, description: 'Automatic emoji reactions on messages' })
-  @ValidateNested()
-  @Type(() => AgentReactionSettingsDto)
-  @IsOptional()
-  reactions?: AgentReactionSettingsDto;
+  reactionOnResolved?: string | null;
 }

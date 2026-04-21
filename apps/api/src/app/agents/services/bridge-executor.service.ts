@@ -4,6 +4,7 @@ import {
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
+  validateUrlSsrf,
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
@@ -17,6 +18,7 @@ import type {
   AgentSubscriber,
 } from '@novu/framework';
 import { AgentEventEnum } from '@novu/framework';
+import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
@@ -99,12 +101,27 @@ export class BridgeExecutorService {
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // Re-validate per attempt to defend against (a) agents whose bridgeUrl was
+      // stored before the update-time SSRF guard was added, and (b) DNS rebinding
+      // — a hostname that resolved to a public IP at update-time can later resolve
+      // to a private one. validateUrlSsrf caches DNS lookups for 5 minutes, so
+      // the per-attempt cost is amortized across retries.
+      const ssrfError = await validateUrlSsrf(url);
+      if (ssrfError) {
+        throw new Error(`Bridge URL blocked by SSRF protection: ${ssrfError}`);
+      }
+
       try {
         const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-novu-signature': signatureHeader,
+            // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
+            // this exact header to verify the HMAC. Sending any other name (e.g.
+            // `x-novu-signature`) silently disables signature verification on the
+            // bridge and lets a forged AgentBridgeRequest exfiltrate the secret key
+            // via an attacker-controlled `replyUrl`.
+            [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
           body,
         });

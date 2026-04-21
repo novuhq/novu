@@ -18,6 +18,7 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
+import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
@@ -82,6 +83,13 @@ export class AgentsWebhookController {
     try {
       await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res);
     } catch (err) {
+      if (err instanceof AgentInactiveException) {
+        // Return 200 to avoid retries by the delivery provider
+        res.status(HttpStatus.OK).json({});
+
+        return;
+      }
+
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {

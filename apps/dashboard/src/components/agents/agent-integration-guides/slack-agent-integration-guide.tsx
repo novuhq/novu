@@ -40,8 +40,8 @@ export function SlackAgentIntegrationGuide({
       <AgentIntegrationGuideSection title="Overview">
         {isConnected ? (
           <p>
-            This agent is connected to Slack. Tag the bot in any channel it has been invited to, or DM it directly, to
-            send and receive chat messages through your workspace.
+            This agent is connected to Slack. To send and receive chat messages through your workspace, tag the bot in
+            any channel it has been invited to.
           </p>
         ) : (
           <p>

@@ -15,6 +15,7 @@ import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { cn } from '@/utils/ui';
@@ -130,6 +131,8 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
+
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [name, setName] = useState(agent.name);
@@ -266,7 +269,11 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
             checked={agent.active}
             disabled={!canWrite || isUpdatePending}
             onCheckedChange={(checked) => {
-              void updateAgentAsync({ active: checked });
+              if (!checked) {
+                setIsDeactivateModalOpen(true);
+              } else {
+                void updateAgentAsync({ active: true });
+              }
             }}
           />
         </SidebarRow>
@@ -418,6 +425,24 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
         <span className="text-text-soft">Last updated </span>
         <span className="text-text-sub">{formatDistanceToNow(new Date(agent.updatedAt), { addSuffix: true })}</span>
       </p>
+
+      <ConfirmationModal
+        open={isDeactivateModalOpen}
+        onOpenChange={setIsDeactivateModalOpen}
+        onConfirm={() => {
+          void updateAgentAsync({ active: false }).finally(() => setIsDeactivateModalOpen(false));
+        }}
+        title="Deactivate agent?"
+        description={
+          <>
+            Deactivating <span className="font-semibold">{agent.name}</span> will immediately stop it from processing
+            new inbound messages. The agent can be reactivated at any time.
+          </>
+        }
+        confirmButtonText="Deactivate"
+        isLoading={isUpdatePending}
+        confirmButtonVariant="error"
+      />
     </div>
   );
 }
