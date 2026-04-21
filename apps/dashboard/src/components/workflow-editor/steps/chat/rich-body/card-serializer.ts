@@ -206,6 +206,18 @@ function pmNodeToCardChild(node: JSONContent): Record<string, unknown> | null {
 
       return result;
     }
+    /**
+     * `paragraph` can briefly appear in the editor because Maily's `+`
+     * drag-handle button inserts a transient paragraph to trigger the
+     * slash menu. If the user dismisses the slash menu without picking
+     * a block (or starts typing directly into the paragraph), we still
+     * want a coherent serialization — treat it as a plain cardText.
+     */
+    case 'paragraph': {
+      const content = inlineContentToString(node.content);
+
+      return { type: 'text', content };
+    }
     case CARD_DIVIDER_NODE_NAME:
       return { type: 'divider' };
     case CARD_LINK_NODE_NAME:
@@ -296,7 +308,8 @@ export function pmToFallbackText(
   const nodes = Array.isArray(doc.content) ? doc.content : [];
   for (const node of nodes) {
     switch (node.type) {
-      case CARD_TEXT_NODE_NAME: {
+      case CARD_TEXT_NODE_NAME:
+      case 'paragraph': {
         const text = inlineContentToString(node.content);
         if (text.trim()) lines.push(text);
         break;

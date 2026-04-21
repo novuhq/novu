@@ -87,6 +87,7 @@
     "@tiptap/extension-dropcursor": "^2.11.5",
     "@tiptap/extension-gapcursor": "^2.11.5",
     "@tiptap/extension-history": "^2.11.5",
+    "@tiptap/extension-paragraph": "^2.11.5",
     "@tiptap/extension-placeholder": "^2.11.5",
     "@tiptap/extension-text": "^2.11.5",
     "@tiptap/extension-text-style": "^2.11.5",

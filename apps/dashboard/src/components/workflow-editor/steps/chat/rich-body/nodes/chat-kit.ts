@@ -4,6 +4,7 @@ import Document from '@tiptap/extension-document';
 import Dropcursor from '@tiptap/extension-dropcursor';
 import Gapcursor from '@tiptap/extension-gapcursor';
 import History from '@tiptap/extension-history';
+import Paragraph from '@tiptap/extension-paragraph';
 import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import TextStyle from '@tiptap/extension-text-style';
@@ -14,8 +15,20 @@ import { CARD_IMAGE_NODE_NAME } from './card-image';
 import { CARD_FIELDS_NODE_NAME } from './card-fields';
 import { CARD_ACTIONS_NODE_NAME } from './card-actions';
 
+/**
+ * `paragraph` isn't part of the card's wire schema — authored text always
+ * serializes to `cardText`. We register it anyway because Maily's
+ * `ContentMenu` "+" button hardcodes `state.schema.nodes.paragraph.create(...)`
+ * to insert a placeholder that then triggers the slash menu. Without a
+ * paragraph node the click silently no-ops.
+ *
+ * The paragraph is only a transient — our slash commands replace it with
+ * a real card block, and the serializer treats any paragraph that survives
+ * the round-trip as a `cardText` with `style: plain`.
+ */
 const CARD_BLOCK_TYPES = [
   CARD_TEXT_NODE_NAME,
+  'paragraph',
   CARD_DIVIDER_NODE_NAME,
   CARD_LINK_NODE_NAME,
   CARD_IMAGE_NODE_NAME,
@@ -39,6 +52,7 @@ export const ChatKit = Extension.create({
       Document.extend({
         content: `(${CARD_BLOCK_TYPES})+`,
       }),
+      Paragraph,
       Text,
       /**
        * TextStyle + Color aren't used for chat authoring (we have no

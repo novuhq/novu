@@ -101,7 +101,7 @@ function ChatRichBodyEditor() {
         />
       </div>
 
-      <div className="py-3 pl-[52px] pr-4">
+      <div className="py-3 pl-[56px] pr-4">
         <ChatMaily
           initialContent={initialEditorContent}
           onChange={onEditorUpdate}
