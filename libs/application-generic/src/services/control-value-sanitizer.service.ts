@@ -166,14 +166,20 @@ export class ControlValueSanitizerService {
   }
 
   private sanitizeControlValuesByLiquidCompilationFailure(key: string, value: unknown): unknown {
+    if (key === 'card' && value !== null && typeof value === 'object') {
+      return value;
+    }
+
     const parserEngine = buildLiquidParser();
 
     try {
       parserEngine.parse(JSON.stringify(value));
 
       return value;
-    } catch (error) {
-      return get(previewControlValueDefault, key);
+    } catch {
+      const fallback = get(previewControlValueDefault, key);
+
+      return fallback !== undefined ? fallback : value;
     }
   }
 }

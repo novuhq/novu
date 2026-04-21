@@ -121,6 +121,8 @@ function sanitizeChat(controlValues: ChatControlType) {
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
+    ...(controlValues.card != null ? { card: controlValues.card } : {}),
+    ...(controlValues.disableFallback !== undefined ? { disableFallback: controlValues.disableFallback } : {}),
   };
 
   return filterNullishValues(mappedValues);

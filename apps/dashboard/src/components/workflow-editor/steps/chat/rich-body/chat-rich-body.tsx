@@ -6,7 +6,9 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { AddBlockMenu } from './add-block-menu';
 import { BlockListItem } from './block-list-item';
+import { BLOCK_ICONS, BLOCK_LABEL } from './block-icons';
 import { CardHeaderEditor } from './card-header-editor';
+import { generateBlockId } from './card-serializer';
 import { UpgradeBanner } from './upgrade-banner';
 import { useCardDocSync } from './use-card-doc-sync';
 import type { CardBlock } from './card-types';
@@ -117,7 +119,7 @@ function ChatRichBodyEditor() {
       {doc.blocks.length === 0 ? (
         <EmptyState onAdd={appendBlock} />
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0.5 pl-8">
           {doc.blocks.map((block, index) => (
             <BlockListItem
               key={block.id}
@@ -139,22 +141,64 @@ function ChatRichBodyEditor() {
         </div>
       )}
 
-      <div className="flex justify-start">
-        <AddBlockMenu onAdd={appendBlock} />
-      </div>
+      {doc.blocks.length > 0 && (
+        <div className="flex justify-start pl-8">
+          <AddBlockMenu onAdd={appendBlock} />
+        </div>
+      )}
     </div>
   );
 }
 
+const QUICK_INSERT_KINDS: CardBlock['kind'][] = ['heading', 'text', 'actions'];
+
+function makeQuickBlock(kind: CardBlock['kind']): CardBlock {
+  switch (kind) {
+    case 'heading':
+      return { id: generateBlockId('h'), kind: 'heading', content: '' };
+    case 'text':
+      return { id: generateBlockId('t'), kind: 'text', content: '' };
+    case 'actions':
+      return {
+        id: generateBlockId('a'),
+        kind: 'actions',
+        actions: [{ id: generateBlockId('lb'), kind: 'link-button', label: '', url: '' }],
+      };
+    default:
+      return { id: generateBlockId('t'), kind: 'text', content: '' };
+  }
+}
+
 function EmptyState({ onAdd }: { onAdd: (block: CardBlock) => void }) {
   return (
-    <div className="flex flex-col items-start gap-2 rounded-lg border border-dashed border-neutral-100 bg-bg-weak p-4 text-xs text-foreground-600">
-      <div className="font-medium text-foreground-950">Empty card</div>
-      <div>
-        Add a heading, text, or interactive buttons. Novu compiles the result to Slack Block Kit, Microsoft Teams
-        Adaptive Cards, and Discord embeds automatically.
+    <div className="flex flex-col gap-3 rounded-lg border border-dashed border-neutral-100 bg-bg-weak/50 p-4">
+      <div className="flex flex-col gap-1">
+        <div className="text-sm font-medium text-foreground-950">Start your message</div>
+        <div className="text-xs text-foreground-600">
+          Add a heading, text, or buttons. Novu compiles the result to Slack Block Kit, Microsoft Teams Adaptive Cards,
+          and Discord embeds automatically.
+        </div>
       </div>
-      <AddBlockMenu onAdd={onAdd} />
+      <div className="grid grid-cols-3 gap-2">
+        {QUICK_INSERT_KINDS.map((kind) => {
+          const Icon = BLOCK_ICONS[kind];
+
+          return (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => onAdd(makeQuickBlock(kind))}
+              className="flex flex-col items-center justify-center gap-1.5 rounded-md border border-neutral-100 bg-white px-2 py-3 text-xs text-foreground-700 transition-colors hover:border-primary-200 hover:bg-primary-alpha-10 hover:text-primary-base"
+            >
+              <Icon className="size-4" />
+              {BLOCK_LABEL[kind]}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex justify-start">
+        <AddBlockMenu onAdd={onAdd} label="More blocks" />
+      </div>
     </div>
   );
 }

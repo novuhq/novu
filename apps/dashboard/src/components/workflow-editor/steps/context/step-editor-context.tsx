@@ -31,6 +31,25 @@ type StepEditorContextType = {
 
 export const StepEditorContext = createContext<StepEditorContextType | null>(null);
 
+/**
+ * Step editor forms use two shapes:
+ * - Nested (configure-step-form): `{ name, stepId, controlValues: { body, card, … } }`
+ * - Flat (edit-step-template-v2): controls only `{ skip, body, card, … }`
+ *
+ * Preview must send the inner control object — the API expects
+ * `generatePreviewRequestDto.controlValues` to match `step.controls.values`.
+ */
+function getStepControlValuesForPreview(formValues: Record<string, unknown>): Record<string, unknown> {
+  const nested = formValues.controlValues;
+  if (nested !== undefined && nested !== null && typeof nested === 'object' && !Array.isArray(nested)) {
+    return nested as Record<string, unknown>;
+  }
+
+  const { name: _n, stepId: _s, ...flatControls } = formValues;
+
+  return flatControls;
+}
+
 type StepEditorProviderProps = {
   children: ReactNode;
   workflow: WorkflowResponseDto;
@@ -39,7 +58,8 @@ type StepEditorProviderProps = {
 
 export function StepEditorProvider({ children, workflow, step }: StepEditorProviderProps) {
   const form = useFormContext();
-  const controlValues = form.watch();
+  const formValues = form.watch() as Record<string, unknown>;
+  const controlValues = getStepControlValuesForPreview(formValues);
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const location = useLocation();
 
