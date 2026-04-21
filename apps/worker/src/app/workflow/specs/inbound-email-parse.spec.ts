@@ -5,7 +5,8 @@ import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
-import { InboundEmailParse, IUserWebhookPayload } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { IUserWebhookPayload } from '../usecases/inbound-email-parse/strategies/reply-to.strategy';
 
 const axiosInstance = axios.create();
 
