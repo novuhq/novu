@@ -1,21 +1,21 @@
-import type {
-  ActionEntry,
-  CardBlock,
-  CallbackActionEntry,
-  ChatCardDoc,
-  DividerBlock,
-  FieldsBlock,
-  HeadingBlock,
-  ImageBlock,
-  LinkBlock,
-  TextBlock,
-  UrlActionEntry,
-} from './card-types';
+import type { JSONContent } from '@tiptap/react';
+import {
+  CARD_ACTION_ITEM_NODE_NAME,
+  CARD_ACTIONS_NODE_NAME,
+  CARD_DIVIDER_NODE_NAME,
+  CARD_FIELD_NODE_NAME,
+  CARD_FIELDS_NODE_NAME,
+  CARD_IMAGE_NODE_NAME,
+  CARD_LINK_NODE_NAME,
+  CARD_TEXT_NODE_NAME,
+  type CardActionStyle,
+  type CardTextStyle,
+} from './nodes';
 
 /**
  * Shapes accepted from/produced for the backend `CardElement` JSON.
- * We type loose because the schema is a union and we only need to read
- * the fields relevant to the editor.
+ * Typed loosely because the schema is a union and we only read the
+ * subset the editor authors.
  */
 export interface CardElementLikeJson {
   type: 'card';
@@ -25,290 +25,313 @@ export interface CardElementLikeJson {
   children: unknown[];
 }
 
-function uid(prefix = 'b'): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-}
+/* -------------------------------------------------------------------------- */
+/*                          CardElement → ProseMirror                          */
+/* -------------------------------------------------------------------------- */
 
 /**
- * Block ids are embedded inside the `CardElement` JSON as a passthrough
- * property so they survive the form → JSON → form round-trip. Without
- * this, every keystroke would regenerate ids, remount `BlockListItem`,
- * and steal focus from the input the user is typing into.
+ * A text value stored on the wire may contain Liquid expressions like
+ * `{{ payload.foo }}`. When we hydrate the editor we need to split those
+ * back out into ProseMirror text + inline `variable` atoms so the user
+ * sees pills instead of raw mustaches.
  *
- * The upstream `cardElementJsonSchema` uses `additionalProperties: true`
- * on every node, and the runtime Liquid renderer / compiler ignore any
- * unknown fields, so this is safe to carry end-to-end.
+ * The regex matches `{{ ... }}` blocks (non-greedy). We deliberately
+ * don't try to parse Liquid filters here — anything between the
+ * mustaches becomes the variable `id`, matching how the variable pill
+ * roundtrips in the email editor.
  */
-const ID_KEY = '_editorId';
+const VARIABLE_PATTERN = /\{\{\s*([^}]+?)\s*\}\}/g;
 
-function readId(raw: unknown, fallbackPrefix: string): string {
-  if (raw && typeof raw === 'object') {
-    const val = (raw as Record<string, unknown>)[ID_KEY];
-    if (typeof val === 'string' && val.length > 0) return val;
+function stringToInlineContent(input: string): JSONContent[] {
+  if (!input) return [];
+  const nodes: JSONContent[] = [];
+  let lastIndex = 0;
+
+  for (const match of input.matchAll(VARIABLE_PATTERN)) {
+    const start = match.index ?? 0;
+    if (start > lastIndex) {
+      nodes.push({ type: 'text', text: input.slice(lastIndex, start) });
+    }
+    nodes.push({
+      type: 'variable',
+      attrs: { id: match[1], label: null, fallback: null, required: false },
+    });
+    lastIndex = start + match[0].length;
   }
 
-  return uid(fallbackPrefix);
+  if (lastIndex < input.length) {
+    nodes.push({ type: 'text', text: input.slice(lastIndex) });
+  }
+
+  return nodes;
 }
 
-function parseChildren(children: unknown[]): CardBlock[] {
-  const blocks: CardBlock[] = [];
+function cardChildToPmNode(child: unknown): JSONContent | null {
+  if (!child || typeof child !== 'object') return null;
+  const node = child as Record<string, unknown>;
 
-  for (const child of children) {
-    if (!child || typeof child !== 'object') continue;
-    const node = child as Record<string, unknown>;
-    switch (node.type) {
-      case 'text': {
-        const block: TextBlock | HeadingBlock =
-          node.style === 'bold'
-            ? {
-                id: readId(node, 'h'),
-                kind: 'heading',
-                content: String(node.content ?? ''),
-              }
-            : {
-                id: readId(node, 't'),
-                kind: 'text',
-                content: String(node.content ?? ''),
-                style: (node.style as TextBlock['style']) ?? 'plain',
-              };
-        blocks.push(block);
-        break;
-      }
-      case 'divider': {
-        const block: DividerBlock = { id: readId(node, 'd'), kind: 'divider' };
-        blocks.push(block);
-        break;
-      }
-      case 'link': {
-        const block: LinkBlock = {
-          id: readId(node, 'l'),
-          kind: 'link',
+  switch (node.type) {
+    case 'text': {
+      const content = String(node.content ?? '');
+      const style = (node.style as CardTextStyle | undefined) ?? 'plain';
+
+      return {
+        type: CARD_TEXT_NODE_NAME,
+        attrs: { style },
+        content: stringToInlineContent(content),
+      };
+    }
+    case 'divider':
+      return { type: CARD_DIVIDER_NODE_NAME };
+    case 'link':
+      return {
+        type: CARD_LINK_NODE_NAME,
+        attrs: {
           label: String(node.label ?? ''),
           url: String(node.url ?? ''),
-        };
-        blocks.push(block);
-        break;
-      }
-      case 'image': {
-        const block: ImageBlock = {
-          id: readId(node, 'i'),
-          kind: 'image',
-          url: String(node.url ?? ''),
-          alt: typeof node.alt === 'string' ? node.alt : undefined,
-        };
-        blocks.push(block);
-        break;
-      }
-      case 'fields': {
-        const fieldChildren = Array.isArray(node.children) ? node.children : [];
-        const block: FieldsBlock = {
-          id: readId(node, 'f'),
-          kind: 'fields',
-          fields: fieldChildren.flatMap((raw) => {
-            if (!raw || typeof raw !== 'object') return [];
-            const f = raw as { label?: unknown; value?: unknown };
-
-            return [
-              {
-                id: readId(f, 'fe'),
-                label: String(f.label ?? ''),
-                value: String(f.value ?? ''),
-              },
-            ];
-          }),
-        };
-        blocks.push(block);
-        break;
-      }
-      case 'actions': {
-        const actionsChildren = Array.isArray(node.children) ? node.children : [];
-        const block: CardBlock = {
-          id: readId(node, 'a'),
-          kind: 'actions',
-          actions: actionsChildren.flatMap((raw): ActionEntry[] => {
-            if (!raw || typeof raw !== 'object') return [];
-            const a = raw as Record<string, unknown>;
-            if (a.type === 'link-button') {
-              const entry: UrlActionEntry = {
-                id: readId(a, 'lb'),
-                kind: 'link-button',
-                label: String(a.label ?? ''),
-                url: String(a.url ?? ''),
-                style: a.style as UrlActionEntry['style'],
-              };
-
-              return [entry];
-            }
-            if (a.type === 'button') {
-              const entry: CallbackActionEntry = {
-                id: readId(a, 'btn'),
-                kind: 'button',
-                actionId: String(a.id ?? ''),
-                label: String(a.label ?? ''),
-                style: a.style as CallbackActionEntry['style'],
-              };
-
-              return [entry];
-            }
-
-            return [];
-          }),
-        };
-        blocks.push(block);
-        break;
-      }
-      default:
-        // Unknown element type — drop silently. Authors can re-add via
-        // the slash menu; we don't want to surface opaque JSON to them.
-        break;
-    }
-  }
-
-  return blocks;
-}
-
-/**
- * Converts the backend `CardElement` JSON into the editor's document shape.
- * Tolerates partial / legacy payloads by ignoring anything it can't map.
- */
-export function cardElementToDoc(card: CardElementLikeJson | undefined | null): ChatCardDoc {
-  if (!card || card.type !== 'card') {
-    return { blocks: [] };
-  }
-
-  return {
-    title: card.title,
-    subtitle: card.subtitle,
-    imageUrl: card.imageUrl,
-    blocks: parseChildren(Array.isArray(card.children) ? card.children : []),
-  };
-}
-
-function blockToElement(block: CardBlock): Record<string, unknown> | null {
-  // Every element carries its editor id as a passthrough property — see
-  // `ID_KEY` comment above for why.
-  const id = { [ID_KEY]: block.id };
-
-  switch (block.kind) {
-    case 'text':
-      return { type: 'text', content: block.content, ...(block.style && { style: block.style }), ...id };
-    case 'heading':
-      return { type: 'text', content: block.content, style: 'bold', ...id };
-    case 'divider':
-      return { type: 'divider', ...id };
-    case 'link':
-      return { type: 'link', label: block.label, url: block.url, ...id };
-    case 'image':
-      return { type: 'image', url: block.url, ...(block.alt && { alt: block.alt }), ...id };
-    case 'fields':
-      return {
-        type: 'fields',
-        children: block.fields.map(({ id: fieldId, label, value }) => ({
-          type: 'field',
-          label,
-          value,
-          [ID_KEY]: fieldId,
-        })),
-        ...id,
+        },
       };
-    case 'actions':
+    case 'image':
       return {
-        type: 'actions',
-        children: block.actions.map((action) => {
-          if (action.kind === 'link-button') {
-            return {
-              type: 'link-button',
-              label: action.label,
-              url: action.url,
-              ...(action.style && { style: action.style }),
-              [ID_KEY]: action.id,
-            };
-          }
+        type: CARD_IMAGE_NODE_NAME,
+        attrs: {
+          url: String(node.url ?? ''),
+          alt: typeof node.alt === 'string' ? node.alt : '',
+        },
+      };
+    case 'fields': {
+      const fieldChildren = Array.isArray(node.children) ? node.children : [];
+      const fields = fieldChildren
+        .map((raw): JSONContent | null => {
+          if (!raw || typeof raw !== 'object') return null;
+          const f = raw as { label?: unknown; value?: unknown };
 
           return {
-            type: 'button',
-            id: action.actionId,
-            label: action.label,
-            ...(action.style && { style: action.style }),
-            [ID_KEY]: action.id,
+            type: CARD_FIELD_NODE_NAME,
+            attrs: {
+              label: String(f.label ?? ''),
+              value: String(f.value ?? ''),
+            },
           };
-        }),
-        ...id,
-      };
+        })
+        .filter((n): n is JSONContent => n !== null);
+
+      if (fields.length === 0) {
+        fields.push({ type: CARD_FIELD_NODE_NAME, attrs: { label: '', value: '' } });
+      }
+
+      return { type: CARD_FIELDS_NODE_NAME, content: fields };
+    }
+    case 'actions': {
+      const actionChildren = Array.isArray(node.children) ? node.children : [];
+      const actions = actionChildren
+        .map((raw): JSONContent | null => {
+          if (!raw || typeof raw !== 'object') return null;
+          const a = raw as Record<string, unknown>;
+          if (a.type !== 'link-button') return null;
+
+          return {
+            type: CARD_ACTION_ITEM_NODE_NAME,
+            attrs: {
+              kind: 'link-button',
+              label: String(a.label ?? ''),
+              url: String(a.url ?? ''),
+              style: (a.style as CardActionStyle | undefined) ?? 'default',
+            },
+          };
+        })
+        .filter((n): n is JSONContent => n !== null);
+
+      if (actions.length === 0) {
+        actions.push({
+          type: CARD_ACTION_ITEM_NODE_NAME,
+          attrs: { kind: 'link-button', label: '', url: '', style: 'default' },
+        });
+      }
+
+      return { type: CARD_ACTIONS_NODE_NAME, content: actions };
+    }
     default:
       return null;
   }
 }
 
 /**
- * Serializes the editor document to the backend `CardElement` JSON.
- *
- * We deliberately do NOT filter empty blocks here — an author-in-progress
- * text block with no content yet is a valid intermediate state, and
- * dropping it would silently discard the user's click on "Add text" before
- * they type anything. The runtime Liquid renderer / compiler handle empty
- * strings gracefully; emptiness can be filtered at send time if needed.
+ * Seeds the Tiptap editor from a persisted `CardElement` tree.
+ * The card's `title`, `subtitle`, and `imageUrl` are NOT included here —
+ * they live outside the editor (see `CardHeaderEditor`).
  */
-export function docToCardElement(doc: ChatCardDoc): CardElementLikeJson {
-  const children = doc.blocks
-    .map(blockToElement)
-    .filter((n): n is Record<string, unknown> => n !== null);
+export function cardElementToPmJson(card: CardElementLikeJson | undefined | null): JSONContent {
+  const children = card && card.type === 'card' && Array.isArray(card.children) ? card.children : [];
+  const content = children.map(cardChildToPmNode).filter((n): n is JSONContent => n !== null);
+
+  return {
+    type: 'doc',
+    content,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          ProseMirror → CardElement                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Walk a Tiptap node's content, re-emitting text nodes as-is and inline
+ * `variable` atoms as `{{<id>}}` Liquid expressions so the result is the
+ * same string shape the backend Liquid renderer expects.
+ */
+function inlineContentToString(content: JSONContent[] | undefined): string {
+  if (!content) return '';
+  let out = '';
+
+  for (const child of content) {
+    if (child.type === 'text' && typeof child.text === 'string') {
+      out += child.text;
+    } else if (child.type === 'variable') {
+      const id = child.attrs?.id;
+      if (typeof id === 'string') out += `{{${id}}}`;
+    }
+  }
+
+  return out;
+}
+
+function pmNodeToCardChild(node: JSONContent): Record<string, unknown> | null {
+  switch (node.type) {
+    case CARD_TEXT_NODE_NAME: {
+      const content = inlineContentToString(node.content);
+      const style = (node.attrs?.style as CardTextStyle | undefined) ?? 'plain';
+      const result: Record<string, unknown> = { type: 'text', content };
+      if (style !== 'plain') result.style = style;
+
+      return result;
+    }
+    case CARD_DIVIDER_NODE_NAME:
+      return { type: 'divider' };
+    case CARD_LINK_NODE_NAME:
+      return {
+        type: 'link',
+        label: String(node.attrs?.label ?? ''),
+        url: String(node.attrs?.url ?? ''),
+      };
+    case CARD_IMAGE_NODE_NAME: {
+      const url = String(node.attrs?.url ?? '');
+      const alt = String(node.attrs?.alt ?? '');
+      const result: Record<string, unknown> = { type: 'image', url };
+      if (alt) result.alt = alt;
+
+      return result;
+    }
+    case CARD_FIELDS_NODE_NAME: {
+      const fields = (node.content ?? [])
+        .filter((c) => c.type === CARD_FIELD_NODE_NAME)
+        .map((c) => ({
+          type: 'field',
+          label: String(c.attrs?.label ?? ''),
+          value: String(c.attrs?.value ?? ''),
+        }));
+
+      return { type: 'fields', children: fields };
+    }
+    case CARD_ACTIONS_NODE_NAME: {
+      const actions = (node.content ?? [])
+        .filter((c) => c.type === CARD_ACTION_ITEM_NODE_NAME)
+        .map((c) => {
+          const attrs = c.attrs ?? {};
+          const result: Record<string, unknown> = {
+            type: 'link-button',
+            label: String(attrs.label ?? ''),
+            url: String(attrs.url ?? ''),
+          };
+          if (attrs.style && attrs.style !== 'default') result.style = attrs.style;
+
+          return result;
+        });
+
+      return { type: 'actions', children: actions };
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * Serializes the editor's ProseMirror doc to the backend `CardElement`
+ * children array. Header fields (title/subtitle/imageUrl) are supplied
+ * by the caller and merged in.
+ *
+ * We deliberately do NOT filter empty blocks — an in-progress text block
+ * with no content yet is a valid intermediate state and the backend
+ * Liquid renderer handles empty strings gracefully.
+ */
+export function pmToCardElement(
+  doc: JSONContent,
+  header?: { title?: string; subtitle?: string; imageUrl?: string }
+): CardElementLikeJson {
+  const content = Array.isArray(doc.content) ? doc.content : [];
+  const children = content.map(pmNodeToCardChild).filter((n): n is Record<string, unknown> => n !== null);
 
   return {
     type: 'card',
-    ...(doc.title && { title: doc.title }),
-    ...(doc.subtitle && { subtitle: doc.subtitle }),
-    ...(doc.imageUrl && { imageUrl: doc.imageUrl }),
+    ...(header?.title && { title: header.title }),
+    ...(header?.subtitle && { subtitle: header.subtitle }),
+    ...(header?.imageUrl && { imageUrl: header.imageUrl }),
     children,
   };
 }
 
 /**
- * Flattens the editor document to a plain-text representation.
- *
- * Used for two things:
- *   1. Keeping `controlValues.body` in sync (the text fallback stored on
- *      the workflow for providers that can't render rich content).
- *   2. The Text preview tab in the editor.
- *
- * Mirrors the backend `cardChildToFallbackText` behaviour so what the
- * author sees locally matches what a fallback recipient will see.
- *
- * Skips blocks whose content is empty so we don't emit trailing blank
- * lines for half-typed blocks — this is purely a presentation pass, it
- * doesn't affect what's stored in `card`.
+ * Flattens the editor doc (+ header) to a plain-text representation for
+ * the `body` control value. Mirrors the backend `cardChildToFallbackText`
+ * so the fallback recipient sees the same ordering as the author.
  */
-export function docToFallbackText(doc: ChatCardDoc): string {
+export function pmToFallbackText(
+  doc: JSONContent,
+  header?: { title?: string; subtitle?: string }
+): string {
   const lines: string[] = [];
-  if (doc.title) lines.push(doc.title);
-  if (doc.subtitle) lines.push(doc.subtitle);
+  if (header?.title) lines.push(header.title);
+  if (header?.subtitle) lines.push(header.subtitle);
 
-  for (const block of doc.blocks) {
-    switch (block.kind) {
-      case 'text':
-      case 'heading':
-        if (block.content.trim()) lines.push(block.content);
+  const nodes = Array.isArray(doc.content) ? doc.content : [];
+  for (const node of nodes) {
+    switch (node.type) {
+      case CARD_TEXT_NODE_NAME: {
+        const text = inlineContentToString(node.content);
+        if (text.trim()) lines.push(text);
         break;
-      case 'divider':
+      }
+      case CARD_DIVIDER_NODE_NAME:
         lines.push('---');
         break;
-      case 'link':
-        if (block.label && block.url) lines.push(`${block.label} (${block.url})`);
+      case CARD_LINK_NODE_NAME: {
+        const label = String(node.attrs?.label ?? '');
+        const url = String(node.attrs?.url ?? '');
+        if (label && url) lines.push(`${label} (${url})`);
         break;
-      case 'image':
-        if (block.alt) lines.push(block.alt);
+      }
+      case CARD_IMAGE_NODE_NAME: {
+        const alt = String(node.attrs?.alt ?? '');
+        if (alt) lines.push(alt);
         break;
-      case 'fields':
-        for (const f of block.fields) {
-          if (f.label || f.value) lines.push(`${f.label}: ${f.value}`);
+      }
+      case CARD_FIELDS_NODE_NAME: {
+        for (const field of node.content ?? []) {
+          const label = String(field.attrs?.label ?? '');
+          const value = String(field.attrs?.value ?? '');
+          if (label || value) lines.push(`${label}: ${value}`);
         }
         break;
-      case 'actions':
-        for (const a of block.actions) {
-          if (a.kind === 'link-button' && a.label && a.url) lines.push(`[${a.label}](${a.url})`);
-          else if (a.kind === 'button' && a.label) lines.push(`[${a.label}]`);
+      }
+      case CARD_ACTIONS_NODE_NAME: {
+        for (const action of node.content ?? []) {
+          const label = String(action.attrs?.label ?? '');
+          const url = String(action.attrs?.url ?? '');
+          if (label && url) lines.push(`[${label}](${url})`);
+          else if (label) lines.push(`[${label}]`);
         }
         break;
+      }
       default:
         break;
     }
@@ -316,5 +339,3 @@ export function docToFallbackText(doc: ChatCardDoc): string {
 
   return lines.filter((l) => l.length > 0).join('\n');
 }
-
-export { uid as generateBlockId };

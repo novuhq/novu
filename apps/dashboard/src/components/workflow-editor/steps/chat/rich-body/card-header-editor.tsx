@@ -3,25 +3,30 @@ import { RiImageLine, RiPencilLine } from 'react-icons/ri';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
-import type { ChatCardDoc } from './card-types';
+
+export type CardHeaderValue = {
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+};
 
 export function CardHeaderEditor({
-  doc,
+  header,
   variables,
   isAllowedVariable,
   onUpdate,
 }: {
-  doc: ChatCardDoc;
+  header: CardHeaderValue;
   variables: React.ComponentProps<typeof ControlInput>['variables'];
   isAllowedVariable: React.ComponentProps<typeof ControlInput>['isAllowedVariable'];
-  onUpdate: (patch: Partial<ChatCardDoc>) => void;
+  onUpdate: (patch: Partial<CardHeaderValue>) => void;
 }) {
   const [imageOpen, setImageOpen] = useState(false);
-  const hasImage = (doc.imageUrl ?? '').length > 0;
-  const isStaticImage = hasImage && !(doc.imageUrl ?? '').includes('{{');
+  const hasImage = (header.imageUrl ?? '').length > 0;
+  const isStaticImage = hasImage && !(header.imageUrl ?? '').includes('{{');
 
   return (
-    <div className="flex items-start gap-3 rounded-lg bg-bg-weak/50 p-3">
+    <div className="flex items-start gap-3">
       <Popover open={imageOpen} onOpenChange={setImageOpen}>
         <PopoverTrigger asChild>
           <button
@@ -34,7 +39,7 @@ export function CardHeaderEditor({
           >
             {isStaticImage ? (
               <img
-                src={doc.imageUrl}
+                src={header.imageUrl}
                 alt=""
                 className="size-full object-cover"
                 onError={(e) => {
@@ -54,7 +59,7 @@ export function CardHeaderEditor({
           <ControlInput
             variables={variables}
             isAllowedVariable={isAllowedVariable}
-            value={doc.imageUrl ?? ''}
+            value={header.imageUrl ?? ''}
             onChange={(imageUrl) => onUpdate({ imageUrl })}
             placeholder="https://…"
             autoFocus
@@ -63,23 +68,23 @@ export function CardHeaderEditor({
         </PopoverContent>
       </Popover>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
         <ControlInput
-          className="min-h-7 px-0 py-0 text-base font-semibold leading-tight text-text-strong [&_.cm-editor]:bg-transparent! [&_.cm-content]:px-0! [&_.cm-content]:py-0!"
+          className="min-h-6 px-0 py-0 text-sm font-semibold leading-tight text-foreground-950 [&_.cm-editor]:bg-transparent! [&_.cm-content]:px-0! [&_.cm-content]:py-0!"
           variables={variables}
           isAllowedVariable={isAllowedVariable}
-          value={doc.title ?? ''}
+          value={header.title ?? ''}
           onChange={(title) => onUpdate({ title })}
-          placeholder="Card title (optional)"
+          placeholder="Card title"
           enableTranslations
         />
         <ControlInput
-          className="min-h-5 px-0 py-0 text-xs leading-snug text-text-soft [&_.cm-editor]:bg-transparent! [&_.cm-content]:px-0! [&_.cm-content]:py-0!"
+          className="min-h-5 px-0 py-0 text-xs leading-snug text-foreground-600 [&_.cm-editor]:bg-transparent! [&_.cm-content]:px-0! [&_.cm-content]:py-0!"
           variables={variables}
           isAllowedVariable={isAllowedVariable}
-          value={doc.subtitle ?? ''}
+          value={header.subtitle ?? ''}
           onChange={(subtitle) => onUpdate({ subtitle })}
-          placeholder="Subtitle (optional)"
+          placeholder="Subtitle"
           enableTranslations
         />
       </div>

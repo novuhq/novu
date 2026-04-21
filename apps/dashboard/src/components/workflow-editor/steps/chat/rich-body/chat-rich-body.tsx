@@ -1,25 +1,27 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useCallback, useState } from 'react';
+import type { Variable } from '@novu/maily-core/extensions';
+import type { Editor, NodeViewProps } from '@tiptap/core';
+import { useCallback } from 'react';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { BaseBody } from '@/components/workflow-editor/steps/base/base-body';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { AddBlockMenu } from './add-block-menu';
-import { BlockListItem } from './block-list-item';
-import { BLOCK_ICONS, BLOCK_LABEL } from './block-icons';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
+import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { VariableFrom } from '@/components/maily/types';
 import { CardHeaderEditor } from './card-header-editor';
-import { generateBlockId } from './card-serializer';
-import { UpgradeBanner } from './upgrade-banner';
+import { ChatMaily } from './chat-maily';
 import { useCardDocSync } from './use-card-doc-sync';
-import type { CardBlock } from './card-types';
 
 /**
  * Rich chat body editor entry point.
  *
- * The flag check lives at the top of the component so the inner editor
- * (and all its hooks) is gated as a unit. When the flag is off we render
- * the legacy single-textarea body editor, preserving today's behaviour
- * byte-for-byte.
+ * Off flag → legacy single-textarea body editor (`BaseBody`).
+ * On flag  → `ChatRichBodyEditor` below, a Tiptap editor restricted to
+ *            the chat card block set plus a small card header section
+ *            rendered above the editor.
  */
 export function ChatRichBody() {
   const isRichChatEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_RICH_CONTENT_ENABLED, false);
@@ -32,173 +34,133 @@ export function ChatRichBody() {
 }
 
 /**
- * The actual rich editor. Extracted so hooks stay unconditional — the
- * feature flag acts as a mount/unmount boundary above this component.
- *
  * Authors a structured `CardElement` tree (stored in `controlValues.card`)
  * alongside a plain-text fallback (stored in `controlValues.body`). Both
  * fields are kept in sync by `useCardDocSync` so providers that don't
  * understand rich content still receive a coherent text message.
  *
- * The editor deliberately uses a flat block-list UX rather than a WYSIWYG
- * canvas — chat Cards are semantically block-based (Block Kit, Adaptive
- * Cards) so matching that mental model avoids the impedance mismatch you
- * get trying to fit a prose editor onto a structured layout surface.
+ * The editor uses `@novu/maily-core`'s Tiptap editor configured through
+ * `ChatMaily`. The card header (title/subtitle/imageUrl) sits above the
+ * editor as a separate form section — modeling it inside the PM schema
+ * would add complexity without buying any UX.
  */
 function ChatRichBodyEditor() {
   const { step, digestStepBeforeCurrent } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { isPayloadSchemaEnabled } = useWorkflowSchema();
+  const parsedVariables = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
-  const { doc, updateDoc, isLegacyUpgrade } = useCardDocSync();
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const { handleCreateNewVariable } = useCreateVariable();
 
-  const updateHeader = useCallback(
-    (patch: Partial<typeof doc>) => {
-      updateDoc((draft) => ({ ...draft, ...patch }));
-    },
-    [updateDoc]
-  );
+  const { initialEditorContent, onEditorUpdate, header, updateHeader } = useCardDocSync();
 
-  const appendBlock = useCallback(
-    (block: CardBlock) => {
-      updateDoc((draft) => ({ ...draft, blocks: [...draft.blocks, block] }));
-      setSelectedBlockId(block.id);
-    },
-    [updateDoc]
-  );
-
-  const updateBlock = useCallback(
-    (index: number, next: CardBlock) => {
-      updateDoc((draft) => {
-        const blocks = [...draft.blocks];
-        blocks[index] = next;
-
-        return { ...draft, blocks };
-      });
-    },
-    [updateDoc]
-  );
-
-  const removeBlock = useCallback(
-    (index: number) => {
-      updateDoc((draft) => {
-        const blocks = draft.blocks.filter((_, i) => i !== index);
-
-        return { ...draft, blocks };
-      });
-    },
-    [updateDoc]
-  );
-
-  const moveBlock = useCallback(
-    (index: number, direction: -1 | 1) => {
-      updateDoc((draft) => {
-        const target = index + direction;
-        if (target < 0 || target >= draft.blocks.length) return draft;
-        const blocks = [...draft.blocks];
-        const [item] = blocks.splice(index, 1);
-        blocks.splice(target, 0, item);
-
-        return { ...draft, blocks };
-      });
-    },
-    [updateDoc]
-  );
-
-  return (
-    <div className="flex flex-col gap-3">
-      {isLegacyUpgrade && <UpgradeBanner />}
-
-      <CardHeaderEditor
-        doc={doc}
-        variables={variables}
-        isAllowedVariable={isAllowedVariable}
-        onUpdate={updateHeader}
+  const renderVariable = useCallback(
+    (opts: {
+      variable: Variable;
+      fallback?: string;
+      editor: Editor;
+      from: 'content-variable' | 'bubble-variable' | 'button-variable';
+    }) => (
+      <ChatBubbleVariablePill
+        opts={opts}
+        variables={parsedVariables.variables}
+        isAllowedVariable={parsedVariables.isAllowedVariable}
       />
+    ),
+    [parsedVariables.variables, parsedVariables.isAllowedVariable]
+  );
 
-      {doc.blocks.length === 0 ? (
-        <EmptyState onAdd={appendBlock} />
-      ) : (
-        <div className="flex flex-col gap-0.5 pl-8">
-          {doc.blocks.map((block, index) => (
-            <BlockListItem
-              key={block.id}
-              block={block}
-              index={index}
-              totalBlocks={doc.blocks.length}
-              variables={variables}
-              isAllowedVariable={isAllowedVariable}
-              onUpdate={(next) => updateBlock(index, next)}
-              onRemove={() => {
-                removeBlock(index);
-                if (selectedBlockId === block.id) setSelectedBlockId(null);
-              }}
-              onMove={(direction) => moveBlock(index, direction)}
-              onSelect={() => setSelectedBlockId(block.id)}
-              isSelected={selectedBlockId === block.id}
-            />
-          ))}
-        </div>
-      )}
+  const createVariableNodeView = useCallback(
+    (variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) =>
+      function ChatVariableView(props: NodeViewProps) {
+        return <ChatNodeVariablePill {...props} variables={variables} isAllowedVariable={isAllowedVariable} />;
+      },
+    []
+  );
 
-      {doc.blocks.length > 0 && (
-        <div className="flex justify-start pl-8">
-          <AddBlockMenu onAdd={appendBlock} />
-        </div>
-      )}
+  return (
+    <div className="shadow-xs flex flex-col overflow-hidden rounded-xl border border-neutral-100 bg-white">
+      <div className="border-b border-neutral-100 px-4 py-3">
+        <CardHeaderEditor
+          header={header}
+          variables={parsedVariables.variables}
+          isAllowedVariable={parsedVariables.isAllowedVariable}
+          onUpdate={updateHeader}
+        />
+      </div>
+
+      <div className="px-4 py-3">
+        <ChatMaily
+          initialContent={initialEditorContent}
+          onChange={onEditorUpdate}
+          variables={parsedVariables}
+          isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+          onCreateNewVariable={handleCreateNewVariable}
+          renderVariable={renderVariable}
+          createVariableNodeView={createVariableNodeView}
+        />
+      </div>
     </div>
   );
 }
 
-const QUICK_INSERT_KINDS: CardBlock['kind'][] = ['heading', 'text', 'actions'];
+/**
+ * Minimal workflow-aware bubble variable pill. Reuses the Maily
+ * `BubbleMenuVariablePill` but without the payload-schema drawer
+ * overlay — that overlay is tied to the email authoring UX and pulls
+ * in hooks we don't need for chat authoring today. When we want drawer
+ * integration for chat, lift the shared overlay wiring into a common
+ * hook.
+ */
+function ChatBubbleVariablePill({
+  opts,
+  variables,
+  isAllowedVariable,
+}: {
+  opts: {
+    variable: Variable;
+    fallback?: string;
+    editor: Editor;
+    from: 'content-variable' | 'bubble-variable' | 'button-variable';
+  };
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+}) {
+  const { digestStepBeforeCurrent } = useWorkflow();
+  const { isPayloadSchemaEnabled, getSchemaPropertyByKey } = useWorkflowSchema();
+  const { handleCreateNewVariable, openSchemaDrawer } = useCreateVariable();
 
-function makeQuickBlock(kind: CardBlock['kind']): CardBlock {
-  switch (kind) {
-    case 'heading':
-      return { id: generateBlockId('h'), kind: 'heading', content: '' };
-    case 'text':
-      return { id: generateBlockId('t'), kind: 'text', content: '' };
-    case 'actions':
-      return {
-        id: generateBlockId('a'),
-        kind: 'actions',
-        actions: [{ id: generateBlockId('lb'), kind: 'link-button', label: '', url: '' }],
-      };
-    default:
-      return { id: generateBlockId('t'), kind: 'text', content: '' };
-  }
+  return (
+    <BubbleMenuVariablePill
+      isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+      digestStepName={digestStepBeforeCurrent?.stepId}
+      variableName={opts.variable.name}
+      className="h-5 text-xs"
+      editor={opts.editor}
+      from={opts.from as VariableFrom}
+      variables={variables}
+      isAllowedVariable={isAllowedVariable}
+      getSchemaPropertyByKey={getSchemaPropertyByKey}
+      openSchemaDrawer={openSchemaDrawer}
+      handleCreateNewVariable={handleCreateNewVariable}
+    />
+  );
 }
 
-function EmptyState({ onAdd }: { onAdd: (block: CardBlock) => void }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-dashed border-neutral-100 bg-bg-weak/50 p-4">
-      <div className="flex flex-col gap-1">
-        <div className="text-sm font-medium text-foreground-950">Start your message</div>
-        <div className="text-xs text-foreground-600">
-          Add a heading, text, or buttons. Novu compiles the result to Slack Block Kit, Microsoft Teams Adaptive Cards,
-          and Discord embeds automatically.
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {QUICK_INSERT_KINDS.map((kind) => {
-          const Icon = BLOCK_ICONS[kind];
+function ChatNodeVariablePill(
+  props: NodeViewProps & { variables: LiquidVariable[]; isAllowedVariable: IsAllowedVariable }
+) {
+  const { digestStepBeforeCurrent } = useWorkflow();
+  const { isPayloadSchemaEnabled, getSchemaPropertyByKey } = useWorkflowSchema();
+  const { handleCreateNewVariable, openSchemaDrawer } = useCreateVariable();
 
-          return (
-            <button
-              key={kind}
-              type="button"
-              onClick={() => onAdd(makeQuickBlock(kind))}
-              className="flex flex-col items-center justify-center gap-1.5 rounded-md border border-neutral-100 bg-white px-2 py-3 text-xs text-foreground-700 transition-colors hover:border-primary-200 hover:bg-primary-alpha-10 hover:text-primary-base"
-            >
-              <Icon className="size-4" />
-              {BLOCK_LABEL[kind]}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex justify-start">
-        <AddBlockMenu onAdd={onAdd} label="More blocks" />
-      </div>
-    </div>
+  return (
+    <NodeVariablePill
+      {...props}
+      isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+      digestStepName={digestStepBeforeCurrent?.stepId}
+      getSchemaPropertyByKey={getSchemaPropertyByKey}
+      openSchemaDrawer={openSchemaDrawer}
+      handleCreateNewVariable={handleCreateNewVariable}
+    />
   );
 }
