@@ -30,11 +30,13 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - id: setup
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-             echo "has_token=true" >> $GITHUB_OUTPUT
+          if [ -n "${SUBMODULES_TOKEN:-}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
           else
-             echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
           fi
       # checkout with submodules if token is provided
       - uses: actions/checkout@v5

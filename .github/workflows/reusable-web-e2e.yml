@@ -44,11 +44,13 @@ jobs:
     steps:
       - id: determine_run_type
         name: Determing community vs enterprise run
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "enterprise_run=true" >> $GITHUB_OUTPUT
+          if [ -n "${SUBMODULES_TOKEN:-}" ]; then
+            echo "enterprise_run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "enterprise_run=false" >> $GITHUB_OUTPUT
+            echo "enterprise_run=false" >> "$GITHUB_OUTPUT"
           fi
 
       - id: checkout-enterprise-code
