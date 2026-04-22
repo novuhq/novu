@@ -104,11 +104,7 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
                 <>
                   <div className="flex max-w-[150px] items-center gap-1 rounded border border-stroke-soft bg-[#fbfbfb] px-1 py-0.5">
                     {subscriberAvatar ? (
-                      <img
-                        src={subscriberAvatar}
-                        alt=""
-                        className="size-4 shrink-0 rounded-full object-cover"
-                      />
+                      <img src={subscriberAvatar} alt="" className="size-4 shrink-0 rounded-full object-cover" />
                     ) : (
                       <SubscriberFallbackAvatar className="size-4" />
                     )}

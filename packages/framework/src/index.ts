@@ -30,8 +30,8 @@ export type {
 } from './resources';
 export {
   Actions,
-  agent,
   AgentEventEnum,
+  agent,
   Button,
   Card,
   CardLink,

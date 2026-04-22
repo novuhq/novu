@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
+import type { TriggerRecipientsPayload } from '@novu/shared';
 import {
   ConversationActivityEntity,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
+  ConversationChannel,
   ConversationEntity,
   ConversationParticipantTypeEnum,
   ConversationRepository,
@@ -38,6 +41,38 @@ export interface PersistInboundMessageParams {
   organizationId: string;
 }
 
+export interface ConversationActivityContext {
+  conversationId: string;
+  channel: ConversationChannel;
+  agentIdentifier: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export interface PersistAgentActivityParams extends ConversationActivityContext {
+  platformMessageId: string;
+  /** Overrides channel.platformThreadId when delivery returns a different thread ID */
+  platformThreadId?: string;
+  agentName?: string;
+  content: string;
+  richContent?: Record<string, unknown>;
+}
+
+export interface UpdateMetadataParams extends ConversationActivityContext {
+  currentMetadata: Record<string, unknown>;
+  signals: Array<{ key: string; value: unknown }>;
+}
+
+export interface ResolveConversationParams extends ConversationActivityContext {
+  summary?: string;
+}
+
+export interface PersistTriggerSignalParams extends ConversationActivityContext {
+  workflowId: string;
+  to: TriggerRecipientsPayload;
+  transactionId: string;
+}
+
 @Injectable()
 export class AgentConversationService {
   constructor(
@@ -45,6 +80,15 @@ export class AgentConversationService {
     private readonly activityRepository: ConversationActivityRepository,
     private readonly logger: PinoLogger
   ) {}
+
+  getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
+    const channel = conversation.channels?.[0];
+    if (!channel) {
+      throw new BadRequestException(`Conversation ${conversation._id} has no channel`);
+    }
+
+    return channel;
+  }
 
   async createOrGetConversation(params: CreateOrGetConversationParams): Promise<ConversationEntity> {
     const { environmentId, organizationId, platformThreadId } = params;
@@ -57,7 +101,12 @@ export class AgentConversationService {
 
     if (existing) {
       if (existing.status === ConversationStatusEnum.RESOLVED) {
-        await this.conversationRepository.updateStatus(environmentId, organizationId, existing._id, ConversationStatusEnum.ACTIVE);
+        await this.conversationRepository.updateStatus(
+          environmentId,
+          organizationId,
+          existing._id,
+          ConversationStatusEnum.ACTIVE
+        );
         existing.status = ConversationStatusEnum.ACTIVE;
 
         this.logger.debug(`Reopened resolved conversation ${existing._id} for thread ${platformThreadId}`);
@@ -146,7 +195,12 @@ export class AgentConversationService {
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       }),
-      this.conversationRepository.touchActivity(params.environmentId, params.organizationId, params.conversationId, params.content),
+      this.conversationRepository.touchActivity(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        params.content
+      ),
     ]);
 
     return activity;
@@ -163,6 +217,167 @@ export class AgentConversationService {
     platformThreadId: string,
     serializedThread: Record<string, unknown>
   ): Promise<void> {
-    await this.conversationRepository.updateChannelThread(environmentId, organizationId, conversationId, platformThreadId, serializedThread);
+    await this.conversationRepository.updateChannelThread(
+      environmentId,
+      organizationId,
+      conversationId,
+      platformThreadId,
+      serializedThread
+    );
+  }
+
+  async getConversation(
+    conversationId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<ConversationEntity | null> {
+    return this.conversationRepository.findOne(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      '*'
+    );
+  }
+
+  async findByPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string
+  ): Promise<ConversationEntity | null> {
+    return this.conversationRepository.findByPlatformThread(environmentId, organizationId, platformThreadId);
+  }
+
+  async setFirstPlatformMessageId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    platformThreadId: string,
+    messageId: string
+  ): Promise<void> {
+    await this.conversationRepository.setFirstPlatformMessageId(
+      environmentId,
+      organizationId,
+      conversationId,
+      platformThreadId,
+      messageId
+    );
+  }
+
+  async persistAgentMessage(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
+    return this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+  }
+
+  async persistAgentEdit(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
+    return this.persistAgentActivity(params, ConversationActivityTypeEnum.EDIT, 'preview');
+  }
+
+  private async persistAgentActivity(
+    params: PersistAgentActivityParams,
+    type: ConversationActivityTypeEnum,
+    touch: 'activity' | 'preview'
+  ): Promise<ConversationActivityEntity> {
+    const threadId = params.platformThreadId ?? params.channel.platformThreadId;
+
+    const touchFn =
+      touch === 'activity'
+        ? this.conversationRepository.touchActivity.bind(this.conversationRepository)
+        : this.conversationRepository.touchPreview.bind(this.conversationRepository);
+
+    const [activity] = await Promise.all([
+      this.activityRepository.createAgentActivity({
+        identifier: `act_${shortId(12)}`,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: threadId,
+        platformMessageId: params.platformMessageId,
+        agentId: params.agentIdentifier,
+        senderName: params.agentName,
+        content: params.content,
+        richContent: params.richContent,
+        type,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      }),
+      touchFn(params.environmentId, params.organizationId, params.conversationId, params.content),
+    ]);
+
+    return activity;
+  }
+
+  async updateMetadata(params: UpdateMetadataParams): Promise<void> {
+    const merged: Record<string, unknown> = { ...(params.currentMetadata ?? {}) };
+    for (const signal of params.signals) {
+      merged[signal.key] = signal.value;
+    }
+
+    const serialized = JSON.stringify(merged);
+    if (Buffer.byteLength(serialized) > 65_536) {
+      throw new BadRequestException('Conversation metadata exceeds 64KB limit');
+    }
+
+    await Promise.all([
+      this.conversationRepository.updateMetadata(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        merged
+      ),
+      this.activityRepository.createSignalActivity({
+        identifier: `act_${shortId(12)}`,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.channel.platformThreadId,
+        agentId: params.agentIdentifier,
+        content: `Metadata updated: ${params.signals.map((s) => s.key).join(', ')}`,
+        signalData: { type: 'metadata', payload: merged },
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      }),
+    ]);
+  }
+
+  async resolveConversation(params: ResolveConversationParams): Promise<void> {
+    await Promise.all([
+      this.conversationRepository.updateStatus(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        ConversationStatusEnum.RESOLVED
+      ),
+      this.activityRepository.createSignalActivity({
+        identifier: `act_${shortId(12)}`,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.channel.platformThreadId,
+        agentId: params.agentIdentifier,
+        content: params.summary ?? 'Conversation resolved',
+        signalData: { type: 'resolve', payload: params.summary ? { summary: params.summary } : undefined },
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      }),
+    ]);
+  }
+
+  async persistTriggerSignal(params: PersistTriggerSignalParams): Promise<void> {
+    await this.activityRepository.createSignalActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      agentId: params.agentIdentifier,
+      content: `Triggered workflow: ${params.workflowId}`,
+      signalData: {
+        type: 'trigger',
+        payload: {
+          workflowId: params.workflowId,
+          to: params.to,
+          transactionId: params.transactionId,
+        },
+      },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
   }
 }

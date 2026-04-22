@@ -5,8 +5,8 @@ import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { openInNewTab } from '@/utils/url';
 import { cn } from '@/utils/ui';
+import { openInNewTab } from '@/utils/url';
 import { Button } from '../primitives/button';
 
 type ConversationsUpgradeCtaProps = {
@@ -55,10 +55,7 @@ export function ConversationsUpgradeCta({ source, variant = 'default', className
 
       <div className="flex flex-col items-center gap-2">
         <span
-          className={cn(
-            'text-text-sub block font-medium',
-            variant === 'compact' ? 'text-label-sm' : 'text-label-md'
-          )}
+          className={cn('text-text-sub block font-medium', variant === 'compact' ? 'text-label-sm' : 'text-label-md')}
         >
           {copy.title}
         </span>

@@ -15,8 +15,7 @@ export class UpdateAgent {
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
     const hasBehaviorFields =
-      command.behavior?.acknowledgeOnReceived !== undefined ||
-      command.behavior?.reactionOnResolved !== undefined;
+      command.behavior?.acknowledgeOnReceived !== undefined || command.behavior?.reactionOnResolved !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -24,9 +23,7 @@ export class UpdateAgent {
       command.active !== undefined ||
       hasBehaviorFields;
     const hasBridgeFields =
-      command.bridgeUrl !== undefined ||
-      command.devBridgeUrl !== undefined ||
-      command.devBridgeActive !== undefined;
+      command.bridgeUrl !== undefined || command.devBridgeUrl !== undefined || command.devBridgeActive !== undefined;
 
     if (!hasGeneralFields && !hasBridgeFields) {
       throw new BadRequestException('At least one field must be provided.');

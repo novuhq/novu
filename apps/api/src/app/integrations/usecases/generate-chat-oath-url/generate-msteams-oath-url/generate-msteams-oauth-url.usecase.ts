@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ContextPayload } from '@novu/shared';
-import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oauth-url.command';
 
 export type StateData = {

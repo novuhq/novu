@@ -1,12 +1,12 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiFileCopyLine } from 'react-icons/ri';
-import { useQueryClient } from '@tanstack/react-query';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
-import { ExternalLink } from '@/components/shared/external-link';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -53,7 +53,11 @@ function buildInitCopyCommand({
   secretKey: string;
   apiUrl: string | null;
 }): string {
-  const parts = [`npx novu@${CLI_PACKAGE_TAG} init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${secretKey}`];
+  const parts = [
+    `npx novu@${CLI_PACKAGE_TAG} init -t agent`,
+    `--agent-identifier ${agentIdentifier}`,
+    `-s ${secretKey}`,
+  ];
 
   if (apiUrl) {
     parts.push(`-a ${apiUrl}`);
@@ -268,9 +272,9 @@ export function AgentCodeSetupSection({ agent, stepOffset, providerId }: AgentCo
         title="Start the dev tunnel"
         description={
           <span>
-            Start your app with{' '}
-            <code className="font-code text-[12px] tracking-[-0.24px]">npm run dev</code>, then run this in a second
-            terminal from your project directory. It creates a tunnel and registers the bridge URL with Novu.
+            Start your app with <code className="font-code text-[12px] tracking-[-0.24px]">npm run dev</code>, then run
+            this in a second terminal from your project directory. It creates a tunnel and registers the bridge URL with
+            Novu.
           </span>
         }
         rightContent={

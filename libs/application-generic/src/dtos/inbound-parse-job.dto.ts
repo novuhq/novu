@@ -6,6 +6,8 @@ export interface IInboundParseDataDto {
   headers: IHeaders;
   subject: string;
   messageId: string;
+  inReplyTo?: string;
+  references?: string | string[];
   priority: string;
   from: IFrom[];
   to: ITo[];
@@ -27,6 +29,8 @@ export interface IHeaders {
   to: string;
   subject: string;
   'message-id': string;
+  'in-reply-to'?: string;
+  references?: string;
   date: string;
   'mime-version': string;
 }
