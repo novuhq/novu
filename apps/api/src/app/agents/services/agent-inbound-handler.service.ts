@@ -108,6 +108,20 @@ export class AgentInboundHandler {
     const primaryChannel = this.conversationService.getPrimaryChannel(conversation);
     const isFirstMessage = !primaryChannel.firstPlatformMessageId;
 
+    if (isFirstMessage && message.id) {
+      this.conversationService
+        .setFirstPlatformMessageId(
+          config.environmentId,
+          config.organizationId,
+          conversation._id,
+          thread.id,
+          message.id
+        )
+        .catch((err) => {
+          this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
+        });
+    }
+
     if (config.acknowledgeOnReceived) {
       const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
 
@@ -119,18 +133,6 @@ export class AgentInboundHandler {
           .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
           .catch((err) => {
             this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
-          });
-
-        this.conversationService
-          .setFirstPlatformMessageId(
-            config.environmentId,
-            config.organizationId,
-            conversation._id,
-            thread.id,
-            message.id
-          )
-          .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
           });
       }
     }
