@@ -66,6 +66,7 @@
     "@novu/framework": "workspace:*",
     "@novu/maily-render": "workspace:*",
     "@novu/notifications": "workspace:*",
+    "@novu/chat-adapter-email": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
