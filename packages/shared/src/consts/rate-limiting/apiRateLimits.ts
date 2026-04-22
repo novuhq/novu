@@ -11,6 +11,7 @@ export const ApiRateLimitCategoryToFeatureName: Record<ApiRateLimitCategoryEnum,
   [ApiRateLimitCategoryEnum.TRIGGER]: FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_TRIGGER_EVENTS,
   [ApiRateLimitCategoryEnum.CONFIGURATION]: FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_CONFIGURATION,
   [ApiRateLimitCategoryEnum.GLOBAL]: FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_GLOBAL,
+  [ApiRateLimitCategoryEnum.LLM]: FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_LLM,
 };
 export const DEFAULT_API_RATE_LIMIT_ALGORITHM_CONFIG: IApiRateLimitAlgorithm = {
   [ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE]: 0.1, // allow 10% burst

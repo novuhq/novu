@@ -32,6 +32,7 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
       [ApiRateLimitCategoryEnum.TRIGGER]: Schema.Types.Number,
       [ApiRateLimitCategoryEnum.CONFIGURATION]: Schema.Types.Number,
       [ApiRateLimitCategoryEnum.GLOBAL]: Schema.Types.Number,
+      [ApiRateLimitCategoryEnum.LLM]: Schema.Types.Number,
     },
     widget: {
       notificationCenterEncryption: {

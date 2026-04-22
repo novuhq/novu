@@ -14,6 +14,7 @@
     "resolveJsonModule": true,
     "sourceMap": false,
     "target": "es2017",
+    "lib": ["es2017", "es2018.asynciterable", "dom"],
     "types": ["node"]
   },
   "include": ["src/**/*", "src/**/*.d.ts"],

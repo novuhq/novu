@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.json && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates && cp -r src/commands/envoy/skills/content dist/src/commands/envoy/skills",
     "build:prod": "pnpm prebuild && pnpm build",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
@@ -66,6 +66,7 @@
     "vitest": "^1.2.1"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.114",
     "@babel/parser": "^7.29.0",
     "@novu/framework": "workspace:*",
     "@novu/ntfr-client": "^0.0.5",

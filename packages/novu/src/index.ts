@@ -3,6 +3,8 @@
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
+import { envoyCommand } from './commands/envoy';
+import { EnvoyCommandOptions } from './commands/envoy/types';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
@@ -88,6 +90,28 @@ program
     });
 
     return await devCommand(options, anonymousId);
+  });
+
+program
+  .command('envoy')
+  .description('Integrate Novu into your app with an AI agent (beta)')
+  .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key', NOVU_SECRET_KEY || '')
+  .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
+  .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
+  .option('--region <region>', 'us | eu', 'us')
+  .option('--model <model>', 'Override default model')
+  .option('--yes', 'Non-interactive mode (auto-accept edits)', false)
+  .option('--print', 'Print the final summary as JSON and exit', false)
+  .option('--skills-branch <branch>', 'Override the novuhq/skills git branch/tag/commit to install (default: main)')
+  .action(async (options: EnvoyCommandOptions) => {
+    analytics.track({
+      identity: {
+        anonymousId,
+      },
+      data: {},
+      event: 'Run Novu Envoy Command',
+    });
+    await envoyCommand(options, anonymousId);
   });
 
 program

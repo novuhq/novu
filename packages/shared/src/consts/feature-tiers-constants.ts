@@ -15,6 +15,7 @@ export enum FeatureNameEnum {
   PLATFORM_MAX_API_REQUESTS_TRIGGER_EVENTS = 'platformMaxApiRequestsTriggerEvents',
   PLATFORM_MAX_API_REQUESTS_CONFIGURATION = 'platformMaxApiRequestsConfiguration',
   PLATFORM_MAX_API_REQUESTS_GLOBAL = 'platformMaxApiRequestsGlobal',
+  PLATFORM_MAX_API_REQUESTS_LLM = 'platformMaxApiRequestsLlm',
   PLATFORM_COST_PER_ADDITIONAL_1K_EVENTS = 'platformCostPerAdditional1kEvents',
   PLATFORM_CHANNELS_SUPPORTED_BOOLEAN = 'platformChannelsSupportedBoolean',
   PLATFORM_SUPPORT_SLA = 'platformSupportSla',
@@ -199,6 +200,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: 300,
     [ApiServiceLevelEnum.ENTERPRISE]: 3000,
     [ApiServiceLevelEnum.UNLIMITED]: 3000,
+  },
+  [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_LLM]: {
+    [ApiServiceLevelEnum.FREE]: 0,
+    [ApiServiceLevelEnum.PRO]: 0,
+    [ApiServiceLevelEnum.BUSINESS]: 30,
+    [ApiServiceLevelEnum.ENTERPRISE]: 300,
+    [ApiServiceLevelEnum.UNLIMITED]: 300,
   },
   [FeatureNameEnum.PLATFORM_COST_PER_ADDITIONAL_1K_EVENTS]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No additional events', value: null },
