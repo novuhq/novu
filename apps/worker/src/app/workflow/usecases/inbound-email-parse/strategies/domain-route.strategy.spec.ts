@@ -1,5 +1,5 @@
-import { SendWebhookMessage } from '@novu/application-generic';
-import { DomainRepository } from '@novu/dal';
+import { GetDecryptedSecretKey, HttpClientService, SendWebhookMessage } from '@novu/application-generic';
+import { AgentIntegrationRepository, DomainRepository, IntegrationRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -50,6 +50,10 @@ function makeCommand(localPart: string): InboundEmailParseCommand {
 describe('DomainRouteStrategy', () => {
   let domainRepository: sinon.SinonStubbedInstance<DomainRepository>;
   let sendWebhookMessage: sinon.SinonStubbedInstance<SendWebhookMessage>;
+  let httpClientService: sinon.SinonStubbedInstance<HttpClientService>;
+  let getDecryptedSecretKey: sinon.SinonStubbedInstance<GetDecryptedSecretKey>;
+  let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
+  let agentIntegrationRepository: sinon.SinonStubbedInstance<AgentIntegrationRepository>;
   let strategy: DomainRouteStrategy;
   let sandbox: sinon.SinonSandbox;
 
@@ -57,7 +61,26 @@ describe('DomainRouteStrategy', () => {
     sandbox = sinon.createSandbox();
     domainRepository = sandbox.createStubInstance(DomainRepository);
     sendWebhookMessage = sandbox.createStubInstance(SendWebhookMessage);
-    strategy = new DomainRouteStrategy(domainRepository as any, sendWebhookMessage as any);
+    httpClientService = sandbox.createStubInstance(HttpClientService);
+    getDecryptedSecretKey = sandbox.createStubInstance(GetDecryptedSecretKey);
+    integrationRepository = sandbox.createStubInstance(IntegrationRepository);
+    agentIntegrationRepository = sandbox.createStubInstance(AgentIntegrationRepository);
+
+    getDecryptedSecretKey.execute.resolves('test-secret-key');
+    agentIntegrationRepository.findLinksForAgents.resolves([
+      { _integrationId: 'integration-001', _agentId: 'agent-001' } as any,
+    ]);
+    integrationRepository.findOne.resolves({ identifier: 'novu-email-agent-test' } as any);
+    httpClientService.request.resolves({ body: {}, statusCode: 200, headers: {} });
+
+    strategy = new DomainRouteStrategy(
+      domainRepository as any,
+      sendWebhookMessage as any,
+      httpClientService as any,
+      getDecryptedSecretKey as any,
+      integrationRepository as any,
+      agentIntegrationRepository as any
+    );
   });
 
   afterEach(() => {

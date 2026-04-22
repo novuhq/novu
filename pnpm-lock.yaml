@@ -3323,6 +3323,9 @@ importers:
 
   packages/chat-adapter-email:
     dependencies:
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@react-email/components':
         specifier: 1.0.12
         version: 1.0.12(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

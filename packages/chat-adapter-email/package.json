@@ -17,6 +17,7 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
+    "@novu/shared": "workspace:*",
     "@react-email/components": "1.0.12",
     "@react-email/render": "2.0.7",
     "hast-util-to-html": "9.0.5",

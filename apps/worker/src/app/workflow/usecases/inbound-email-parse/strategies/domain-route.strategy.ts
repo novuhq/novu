@@ -1,9 +1,21 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { SendWebhookMessage } from '@novu/application-generic';
-import { DomainEntity, DomainRepository, DomainRoute } from '@novu/dal';
-import { DomainRouteTypeEnum, DomainStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import {
+  buildNovuSignatureHeader,
+  GetDecryptedSecretKey,
+  GetDecryptedSecretKeyCommand,
+  HttpClientService,
+  SendWebhookMessage,
+} from '@novu/application-generic';
+import { AgentIntegrationRepository, DomainEntity, DomainRepository, DomainRoute, IntegrationRepository } from '@novu/dal';
+import {
+  DomainRouteTypeEnum,
+  DomainStatusEnum,
+  EmailWebhookPayload,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+} from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
-import { normalizeReferences, resolveThreadId } from './resolve-thread-id';
+import { normalizeReferences } from './resolve-thread-id';
 
 type RoutableDomain = Pick<
   DomainEntity,
@@ -40,7 +52,11 @@ export type DomainRouteEmailPayload = {
 export class DomainRouteStrategy {
   constructor(
     private domainRepository: DomainRepository,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private httpClientService: HttpClientService,
+    private getDecryptedSecretKey: GetDecryptedSecretKey,
+    private integrationRepository: IntegrationRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository
   ) {}
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
@@ -123,26 +139,95 @@ export class DomainRouteStrategy {
 
   private async handleAgentRoute(
     command: InboundEmailParseCommand,
-    _domain: RoutableDomain,
+    domain: RoutableDomain,
     route: DomainRoute,
     toAddress: string
   ): Promise<void> {
-    const threadInfo = {
-      threadId: resolveThreadId(toAddress, command.messageId, command.inReplyTo, command.references),
-      messageId: command.messageId,
-      inReplyTo: command.inReplyTo ?? null,
-      references: normalizeReferences(command.references),
-      subject: command.subject,
-      isReply: !!command.inReplyTo,
-    };
+    const agentId = route.destination;
+    if (!agentId) {
+      this.throwError(`Agent route for ${toAddress} has no destination`);
+    }
 
-    // TODO: Implement agent request in next step
-    // await this.sendToAgent(route.destination, _agentPayload, threadInfo);
+    const integrationIdentifier = await this.resolveIntegrationIdentifier(
+      agentId,
+      domain._environmentId,
+      domain._organizationId
+    );
+
+    const payload = this.buildWebhookPayload(command);
+
+    const secretKey = await this.getDecryptedSecretKey.execute(
+      GetDecryptedSecretKeyCommand.create({ environmentId: domain._environmentId })
+    );
+
+    const signature = buildNovuSignatureHeader(secretKey, payload);
+    const apiBaseUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
+    const url = `${apiBaseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+
+    await this.httpClientService.request({
+      url,
+      method: 'POST',
+      body: payload,
+      headers: { 'novu-signature': signature, 'content-type': 'application/json' },
+      timeout: 30_000,
+    });
+
     Logger.log(
-      { toAddress, destination: route.destination, threadInfo },
-      'Agent route — thread info collected, forwarding not yet implemented',
+      { toAddress, agentId, integrationIdentifier },
+      'Forwarded inbound email to agent webhook',
       LOG_CONTEXT
     );
+  }
+
+  private async resolveIntegrationIdentifier(
+    agentId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<string> {
+    const links = await this.agentIntegrationRepository.findLinksForAgents({
+      organizationId,
+      environmentId,
+      agentIds: [agentId],
+    });
+
+    if (links.length === 0) {
+      this.throwError(`No integration linked to agent ${agentId}`);
+    }
+
+    const integration = await this.integrationRepository.findOne(
+      { _id: links[0]._integrationId, _environmentId: environmentId },
+      'identifier'
+    );
+    if (!integration) {
+      this.throwError(`Integration ${links[0]._integrationId} not found for agent ${agentId}`);
+    }
+
+    return integration.identifier;
+  }
+
+  private buildWebhookPayload(command: InboundEmailParseCommand): EmailWebhookPayload {
+    const from = command.from[0];
+    const refs = normalizeReferences(command.references);
+
+    return {
+      messageId: command.messageId,
+      inReplyTo: command.inReplyTo ?? undefined,
+      references: refs.length > 0 ? refs.join(' ') : undefined,
+      from: { address: from.address, name: from.name },
+      to: command.to.map((t: { address: string; name?: string }) => ({
+        address: t.address,
+        name: t.name,
+      })),
+      subject: command.subject,
+      text: command.text || undefined,
+      html: command.html || undefined,
+      attachments: command.attachments?.map((a: { filename: string; contentType: string; url?: string }) => ({
+        filename: a.filename,
+        contentType: a.contentType,
+        url: a.url,
+      })),
+      date: command.date instanceof Date ? command.date.toISOString() : new Date().toISOString(),
+    };
   }
 
   private throwError(error: string): never {

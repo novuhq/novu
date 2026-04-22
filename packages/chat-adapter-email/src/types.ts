@@ -1,4 +1,5 @@
-import type { Adapter, FetchResult, RawMessage, FormattedContent, ChatInstance, WebhookOptions } from 'chat';
+import type { Adapter } from 'chat';
+export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
 
 export interface NovuEmailAdapterConfig {
   fromAddress: string;
@@ -32,26 +33,7 @@ export interface NovuEmailRawMessage {
   html?: string;
   headers?: Record<string, string>;
   createdAt: string;
-  attachments?: NovuEmailAttachment[];
-}
-
-export interface NovuEmailAttachment {
-  filename: string;
-  contentType: string;
-  url?: string;
-}
-
-export interface EmailWebhookPayload {
-  messageId: string;
-  inReplyTo?: string;
-  references?: string;
-  from: { address: string; name?: string };
-  to: { address: string; name?: string }[];
-  subject: string;
-  text?: string;
-  html?: string;
-  attachments?: NovuEmailAttachment[];
-  date: string;
+  attachments?: import('@novu/shared').NovuEmailAttachment[];
 }
 
 export type NovuEmailAdapter = Adapter<NovuEmailThreadId, NovuEmailRawMessage>;
