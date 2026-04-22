@@ -54,4 +54,6 @@ export interface ICredentials {
   servicePlanId?: string;
   tenantId?: string;
   signingSecret?: string;
+  replyDomain?: string;
+  outboundIntegrationId?: string;
 }
