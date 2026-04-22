@@ -55,31 +55,41 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Validate Selected Services
+        env:
+          INPUT_BUILD_API: ${{ github.event.inputs.build_api }}
+          INPUT_BUILD_WORKER: ${{ github.event.inputs.build_worker }}
+          INPUT_BUILD_DASHBOARD: ${{ github.event.inputs.build_dashboard }}
+          INPUT_BUILD_WS: ${{ github.event.inputs.build_ws }}
         run: |
-          if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_ws }}" != "true" ]; then
+          if [ "$INPUT_BUILD_API" != "true" ] && \
+             [ "$INPUT_BUILD_WORKER" != "true" ] && \
+             [ "$INPUT_BUILD_DASHBOARD" != "true" ] && \
+             [ "$INPUT_BUILD_WS" != "true" ]; then
             echo "Error: At least one service must be selected for building."
             exit 1
           fi
 
       - name: Generate Build Matrix
         id: set-matrix
+        env:
+          INPUT_BUILD_API: ${{ github.event.inputs.build_api }}
+          INPUT_BUILD_WORKER: ${{ github.event.inputs.build_worker }}
+          INPUT_BUILD_DASHBOARD: ${{ github.event.inputs.build_dashboard }}
+          INPUT_BUILD_WS: ${{ github.event.inputs.build_ws }}
         run: |
           services=()
 
-          if [ "${{ github.event.inputs.build_api }}" == "true" ]; then
+          if [ "$INPUT_BUILD_API" == "true" ]; then
             services+=("\"api-ee\"")
           fi
-          if [ "${{ github.event.inputs.build_worker }}" == "true" ]; then
+          if [ "$INPUT_BUILD_WORKER" == "true" ]; then
             services+=("\"worker-ee\"")
           fi
-          if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
+          if [ "$INPUT_BUILD_DASHBOARD" == "true" ]; then
             services+=("\"dashboard-ee-clerk\"")
             services+=("\"dashboard-ee-betterauth\"")
           fi
-          if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
+          if [ "$INPUT_BUILD_WS" == "true" ]; then
             services+=("\"ws-ee\"")
           fi
 
@@ -107,9 +117,15 @@ jobs:
 
       - name: Variables
         shell: bash
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
+          if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]]; then
+            echo "Error: version must be semver (e.g. 1.2.3 or 1.2.3-rc.1), got: $INPUT_VERSION"
+            exit 1
+          fi
           SERVICE_NAME="${{ matrix.name }}"
-          LATEST_VERSION="${{ github.event.inputs.version }}"
+          LATEST_VERSION="$INPUT_VERSION"
 
           # Extract auth provider if present
           if [[ "$SERVICE_NAME" == *"-clerk" ]]; then
@@ -171,9 +187,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+          role-session-name: gha-ee-release-${{ github.run_id }}
 
       - name: Login to Amazon ECR
         id: login-ecr
