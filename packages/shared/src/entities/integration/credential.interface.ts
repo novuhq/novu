@@ -56,4 +56,6 @@ export interface ICredentials {
   signingSecret?: string;
   replyDomain?: string;
   outboundIntegrationId?: string;
+  inboundAddress?: string;
+  inboundDomain?: string;
 }

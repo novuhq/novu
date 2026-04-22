@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
@@ -7,6 +7,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
+import { EmailSetupGuide } from './email-setup-guide';
 import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
@@ -26,6 +27,8 @@ function resolveProviderSetupGuide(providerId: string) {
       return TeamsSetupGuide;
     case ChatProviderIdEnum.WhatsAppBusiness:
       return WhatsAppSetupGuide;
+    case EmailProviderIdEnum.NovuAgent:
+      return EmailSetupGuide;
     default:
       return null;
   }
