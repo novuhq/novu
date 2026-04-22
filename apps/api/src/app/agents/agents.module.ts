@@ -7,6 +7,7 @@ import {
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
+import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentsController } from './agents.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
@@ -19,7 +20,7 @@ import { ChatSdkService } from './services/chat-sdk.service';
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [SharedModule, AuthModule],
+  imports: [SharedModule, AuthModule, EventsModule],
   controllers: [AgentsController, AgentsWebhookController],
   providers: [
     ...USE_CASES,

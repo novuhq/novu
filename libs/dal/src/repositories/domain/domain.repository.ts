@@ -12,6 +12,59 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     super(Domain, DomainEntity);
   }
 
+  async findOneByIdAndEnvironment(
+    id: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<DomainEntity | null> {
+    return this.findOne(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      '*'
+    );
+  }
+
+  /**
+   * Looks up a domain by a route address (e.g. "support@customer.com").
+   * Domain names are globally unique, so no environment/org filter is needed —
+   * the cast bypasses the EnforceEnvOrOrgIds constraint intentionally.
+   */
+  async findByRouteAddress(
+    address: string
+  ): Promise<Pick<
+    DomainEntity,
+    '_id' | 'name' | 'status' | 'mxRecordConfigured' | 'routes' | '_environmentId' | '_organizationId'
+  > | null> {
+    const domainName = address.split('@')[1];
+
+    if (!domainName) {
+      return null;
+    }
+
+    return this.findOne({ name: domainName } as unknown as FilterQuery<DomainDBModel> & EnforceEnvOrOrgIds, [
+      '_id',
+      'name',
+      'status',
+      'mxRecordConfigured',
+      'routes',
+      '_environmentId',
+      '_organizationId',
+    ]);
+  }
+
+  async findByEnvironment(environmentId: string, organizationId: string): Promise<DomainEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      '*'
+    );
+  }
+
   async listDomains({
     organizationId,
     environmentId,
@@ -45,13 +98,15 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     const id = before || after;
 
     if (id) {
+      const cursorFields = sortBy === '_id' ? ['_id'] : ['_id', sortBy];
+
       domain = await this.findOne(
         {
           _environmentId: environmentId,
           _organizationId: organizationId,
           _id: id,
         },
-        '*'
+        cursorFields as (keyof DomainEntity)[]
       );
 
       if (!domain) {

@@ -40,4 +40,6 @@ export const QueryKeys = Object.freeze({
   fetchEnvironmentVariableUsage: 'fetchEnvironmentVariableUsage',
   stepResolversCount: 'stepResolversCount',
   fetchWorkflowSuggestions: 'fetchWorkflowSuggestions',
+  fetchDomains: 'fetchDomains',
+  fetchDomain: 'fetchDomain',
 });

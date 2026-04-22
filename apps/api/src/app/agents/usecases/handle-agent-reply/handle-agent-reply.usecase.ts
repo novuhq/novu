@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
@@ -7,7 +8,9 @@ import {
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
+import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
@@ -26,7 +29,8 @@ export class HandleAgentReply {
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly parseEventRequest: ParseEventRequest
   ) {}
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
@@ -219,9 +223,75 @@ export class HandleAgentReply {
       });
     }
 
-    const triggerSignals = (signals ?? []).filter((s) => s.type === 'trigger');
+    const triggerSignals = (signals ?? []).filter((s): s is TriggerSignal => s.type === 'trigger');
     if (triggerSignals.length) {
-      // TODO: execute trigger signals — requires wiring TriggerEvent or ParseEventRequest from EventsModule
+      await this.executeTriggerSignals(command, conversation, channel, triggerSignals);
+    }
+  }
+
+  private async executeTriggerSignals(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    signals: TriggerSignal[]
+  ): Promise<void> {
+    const subscriberParticipant = conversation.participants.find(
+      (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+    );
+
+    for (const signal of signals) {
+      const to = (signal.to as TriggerRecipientsPayload | undefined) ?? subscriberParticipant?.id;
+
+      if (!to) {
+        this.logger.warn(
+          { agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
+          `[agent:${command.agentIdentifier}] Skipping trigger signal for "${signal.workflowId}" — no recipient and conversation has no resolved subscriber`
+        );
+        continue;
+      }
+
+      let transactionId: string;
+      try {
+        const result = await this.parseEventRequest.execute(
+          ParseEventRequestMulticastCommand.create({
+            userId: command.userId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            identifier: signal.workflowId,
+            payload: signal.payload ?? {},
+            overrides: {},
+            to,
+            addressingType: AddressingTypeEnum.MULTICAST,
+            requestCategory: TriggerRequestCategoryEnum.SINGLE,
+            requestId: randomUUID(),
+          })
+        );
+        transactionId = result.transactionId;
+      } catch (err) {
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
+          `[agent:${command.agentIdentifier}] Failed to dispatch trigger for workflow "${signal.workflowId}"`
+        );
+        continue;
+      }
+
+      try {
+        await this.conversationService.persistTriggerSignal({
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: command.agentIdentifier,
+          workflowId: signal.workflowId,
+          to,
+          transactionId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+      } catch (err) {
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId, transactionId },
+          `[agent:${command.agentIdentifier}] Workflow "${signal.workflowId}" was enqueued (txn: ${transactionId}) but failed to persist activity`
+        );
+      }
     }
   }
 
