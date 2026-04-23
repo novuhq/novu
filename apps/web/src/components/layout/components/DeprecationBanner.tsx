@@ -1,9 +1,16 @@
 import { Group } from '@mantine/core';
 import { colors, Text, Warning } from '@novu/design-system';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { differenceInDays, startOfDay } from 'date-fns';
 import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 
 const MIGRATION_GUIDE_URL = 'https://go.novu.co/migration-guide';
+
+const DASHBOARD_DEPRECATION_DATE = new Date(2026, 4, 31);
+
+function getDaysUntilDashboardDeprecation(): number {
+  return Math.max(0, differenceInDays(startOfDay(DASHBOARD_DEPRECATION_DATE), startOfDay(new Date())));
+}
 
 export function DeprecationBanner() {
   const { apiServiceLevel, isLoading } = useSubscription();
@@ -11,6 +18,12 @@ export function DeprecationBanner() {
   if (isLoading || apiServiceLevel === ApiServiceLevelEnum.FREE) {
     return null;
   }
+
+  const daysLeft = getDaysUntilDashboardDeprecation();
+  const timePhrase =
+    daysLeft === 0
+      ? 'today'
+      : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
 
   return (
     <div
@@ -28,7 +41,7 @@ export function DeprecationBanner() {
       <Group spacing={8}>
         <Warning color={colors.white} />
         <Text color={colors.white}>
-          This dashboard will be deprecated after May 31. To avoid disruption, please migrate to the new dashboard in
+          This dashboard will be deprecated {timePhrase}. After 31st May, you will loose support SLA for this dashboard. To avoid disruption, please migrate to the new dashboard in
           advance.{' '}
           <a
             href={MIGRATION_GUIDE_URL}
