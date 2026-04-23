@@ -286,8 +286,6 @@ function OutboundProviderSelect({
   );
 }
 
-const ADD_DOMAIN_VALUE = '__add_domain__';
-
 function InboundAddressConfig({
   localPart,
   domainName,
@@ -303,6 +301,7 @@ function InboundAddressConfig({
   onLocalPartBlur: () => void;
   onDomainChange: (v: string) => void;
 }) {
+  const [domainOpen, setDomainOpen] = useState(false);
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
 
@@ -313,15 +312,6 @@ function InboundAddressConfig({
   const verifiedDomains = domains.filter(
     (d) => d.status === DomainStatusEnum.VERIFIED && d.mxRecordConfigured
   );
-
-  function handleDomainSelect(value: string) {
-    if (value === ADD_DOMAIN_VALUE) {
-      navigate(domainsPath);
-
-      return;
-    }
-    onDomainChange(value);
-  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -337,23 +327,70 @@ function InboundAddressConfig({
           />
         </div>
         <span className="text-text-soft text-label-xs font-medium">@</span>
-        <div className="border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs">
-          <select
-            className="text-text-sub text-label-xs h-full min-w-[180px] bg-transparent px-2 font-medium outline-none"
-            value={domainName}
-            onChange={(e) => handleDomainSelect(e.target.value)}
-          >
-            <option value="" disabled>
-              Select domain...
-            </option>
-            {verifiedDomains.map((d) => (
-              <option key={d._id} value={d.name}>
-                {d.name}
-              </option>
-            ))}
-            <option value={ADD_DOMAIN_VALUE}>+ Add domain</option>
-          </select>
-        </div>
+        <Popover open={domainOpen} onOpenChange={setDomainOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="border-stroke-soft bg-bg-white flex h-8 min-w-[180px] items-center justify-between overflow-hidden rounded-lg border px-2 shadow-xs"
+            >
+              {domainName ? (
+                <span className="text-text-sub text-label-xs font-medium leading-4">{domainName}</span>
+              ) : (
+                <span className="text-text-soft text-label-xs font-medium leading-4">Select domain...</span>
+              )}
+              <RiExpandUpDownLine className="text-text-soft size-3 shrink-0" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="min-w-[180px] overflow-hidden p-0" align="start">
+            <Command>
+              <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
+                <CommandInput
+                  placeholder="Search domain"
+                  size="xs"
+                  inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
+                  inputWrapperClassName="h-4 min-h-4 bg-transparent px-0 py-0 hover:[&:not(&:has(input:focus))]:bg-transparent has-[input:disabled]:bg-transparent"
+                  className="text-text-sub text-label-xs leading-4 placeholder:text-text-sub h-4 min-h-4 py-0"
+                />
+                <RiSearchLine className="text-text-soft size-3 shrink-0" />
+              </div>
+              <CommandList className="max-h-[200px] p-1">
+                <CommandEmpty className="text-text-soft text-label-xs py-4">No domains found.</CommandEmpty>
+                <CommandGroup
+                  heading="Domains"
+                  className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
+                >
+                  {verifiedDomains.map((d) => (
+                    <CommandItem
+                      key={d._id}
+                      value={d.name}
+                      onSelect={() => {
+                        onDomainChange(d.name);
+                        setDomainOpen(false);
+                      }}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md p-1',
+                        d.name === domainName && 'bg-bg-muted'
+                      )}
+                    >
+                      <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">{d.name}</span>
+                    </CommandItem>
+                  ))}
+                  <CommandItem
+                    value="__add_domain__"
+                    onSelect={() => {
+                      setDomainOpen(false);
+                      navigate(domainsPath);
+                    }}
+                    className="flex items-center gap-2 rounded-md p-1"
+                  >
+                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add domain</span>
+                    <RiAddLine className="text-text-soft size-3 shrink-0" />
+                  </CommandItem>
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
       <p className="text-text-soft text-label-xs font-medium leading-4">
         <Link to={domainsPath} className="text-text-sub underline">
