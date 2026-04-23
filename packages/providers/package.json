@@ -77,7 +77,7 @@
     "svix": "^1.29.0",
     "telnyx": "^1.23.0",
     "twilio": "^4.19.3",
-    "uuid": "^9.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.2",
@@ -94,7 +94,7 @@
     "ts-node": "~10.9.1",
     "typedoc": "^0.24.0",
     "typescript": "5.6.2",
-    "uuid": "^9.0.0",
+    "uuid": "^14.0.0",
     "vitest": "2.1.9"
   },
   "nx": {
