@@ -440,7 +440,7 @@ export function EmailSetupGuide({
   );
 
   const serverCredentials = emailIntegration?.credentials ?? {};
-  const credentialsRef = useRef<Record<string, unknown>>(serverCredentials);
+  const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
   useEffect(() => {
     credentialsRef.current = { ...credentialsRef.current, ...serverCredentials };
   }, [emailIntegration]);
