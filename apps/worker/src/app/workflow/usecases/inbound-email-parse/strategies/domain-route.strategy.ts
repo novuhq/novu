@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   buildNovuSignatureHeader,
-  GetDecryptedSecretKey,
-  GetDecryptedSecretKeyCommand,
+  decryptSecret,
   HttpClientService,
   SendWebhookMessage,
 } from '@novu/application-generic';
@@ -54,7 +53,6 @@ export class DomainRouteStrategy {
     private domainRepository: DomainRepository,
     private sendWebhookMessage: SendWebhookMessage,
     private httpClientService: HttpClientService,
-    private getDecryptedSecretKey: GetDecryptedSecretKey,
     private integrationRepository: IntegrationRepository,
     private agentIntegrationRepository: AgentIntegrationRepository
   ) {}
@@ -148,18 +146,13 @@ export class DomainRouteStrategy {
       this.throwError(`Agent route for ${toAddress} has no destination`);
     }
 
-    const integrationIdentifier = await this.resolveIntegrationIdentifier(
+    const { identifier: integrationIdentifier, secretKey } = await this.resolveIntegration(
       agentId,
       domain._environmentId,
       domain._organizationId
     );
 
     const payload = this.buildWebhookPayload(command);
-
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({ environmentId: domain._environmentId })
-    );
-
     const signature = buildNovuSignatureHeader(secretKey, payload);
     const apiBaseUrl = process.env.API_ROOT_URL;
     if (!apiBaseUrl) {
@@ -182,11 +175,11 @@ export class DomainRouteStrategy {
     );
   }
 
-  private async resolveIntegrationIdentifier(
+  private async resolveIntegration(
     agentId: string,
     environmentId: string,
     organizationId: string
-  ): Promise<string> {
+  ): Promise<{ identifier: string; secretKey: string }> {
     const links = await this.agentIntegrationRepository.findLinksForAgents({
       organizationId,
       environmentId,
@@ -199,13 +192,18 @@ export class DomainRouteStrategy {
 
     const integration = await this.integrationRepository.findOne(
       { _id: links[0]._integrationId, _environmentId: environmentId, _organizationId: organizationId },
-      'identifier'
+      'identifier credentials'
     );
     if (!integration) {
       this.throwError(`Integration ${links[0]._integrationId} not found for agent ${agentId}`);
     }
 
-    return integration.identifier;
+    const encryptedSecret = integration.credentials?.secretKey;
+    if (!encryptedSecret) {
+      this.throwError(`Integration ${integration.identifier} is missing its webhook secret — re-link the email integration to regenerate it`);
+    }
+
+    return { identifier: integration.identifier, secretKey: decryptSecret(encryptedSecret) };
   }
 
   private buildWebhookPayload(command: InboundEmailParseCommand): EmailWebhookPayload {

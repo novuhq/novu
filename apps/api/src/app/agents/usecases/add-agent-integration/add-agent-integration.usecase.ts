@@ -1,5 +1,6 @@
+import { randomBytes } from 'node:crypto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { encryptSecret, GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
+import { encryptSecret } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 
@@ -12,8 +13,7 @@ export class AddAgentIntegration {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly getDecryptedSecretKey: GetDecryptedSecretKey
+    private readonly agentIntegrationRepository: AgentIntegrationRepository
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -121,13 +121,11 @@ export class AddAgentIntegration {
     environmentId: string,
     organizationId: string
   ): Promise<void> {
-    const apiKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({ environmentId })
-    );
+    const dedicatedSecret = randomBytes(32).toString('hex');
 
     await this.integrationRepository.update(
       { _id: integrationId, _environmentId: environmentId, _organizationId: organizationId },
-      { $set: { 'credentials.secretKey': encryptSecret(apiKey) } }
+      { $set: { 'credentials.secretKey': encryptSecret(dedicatedSecret) } }
     );
   }
 }
