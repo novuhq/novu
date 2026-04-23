@@ -21,7 +21,7 @@ Run `pnpm build` after changes to `packages/` or `enterprise/`. Direct changes t
 - Before modifying MongoDB models, ClickHouse table definitions, or anything in `enterprise/` or `packages/providers/`
 
 ### Never
-- Inactive apps — do not touch: `apps/inbound-mail`, `apps/webhook`
+- Inactive apps — do not touch: `apps/webhook`
 - Auto-generated — never edit: `libs/internal-sdk`
 - Read-only dirs: `.idea/`, `playground/`, `.github/`, `scripts/`, `docker/`
 - UI: reuse existing Radix/shadcn components only; do not copy patterns from `playground/` into production

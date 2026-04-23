@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { FileRef } from '@novu/framework';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -13,7 +14,6 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import type { FileRef } from '@novu/framework';
 
 export type { FileRef } from '@novu/framework';
 

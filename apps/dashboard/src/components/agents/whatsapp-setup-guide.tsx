@@ -76,10 +76,7 @@ export function WhatsAppSetupGuide({
     return row?.identifier ?? '';
   }, [integrations, integrationId]);
 
-  const webhookUrl = buildAgentWebhookUrl(
-    agent._id,
-    selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER'
-  );
+  const webhookUrl = buildAgentWebhookUrl(agent._id, selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
 
   const base = stepOffset;
 

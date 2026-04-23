@@ -129,12 +129,7 @@ export class ConversationRepository extends BaseRepositoryV2<
    * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
    * but the conversation's timeline and preview should reflect the latest content.
    */
-  async touchPreview(
-    environmentId: string,
-    organizationId: string,
-    id: string,
-    messagePreview: string
-  ): Promise<void> {
+  async touchPreview(environmentId: string, organizationId: string, id: string, messagePreview: string): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       {
@@ -245,13 +240,9 @@ export class ConversationRepository extends BaseRepositoryV2<
     }
 
     const afterCursor =
-      after && conversation
-        ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id }
-        : undefined;
+      after && conversation ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id } : undefined;
     const beforeCursor =
-      before && conversation
-        ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id }
-        : undefined;
+      before && conversation ? { sortBy: conversation[validatedSortBy], paginateField: conversation._id } : undefined;
 
     const query: FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,

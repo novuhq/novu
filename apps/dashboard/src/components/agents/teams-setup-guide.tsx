@@ -11,9 +11,9 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { API_HOSTNAME } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
-import { downloadTeamsAppPackage } from './teams-app-package';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { downloadTeamsAppPackage } from './teams-app-package';
 
 export type TeamsSetupGuideProps = {
   agent: AgentResponse;
@@ -301,9 +301,7 @@ export function TeamsSetupGuide({
               <code className="font-code text-[11px]">.zip</code>
               {' file.'}
             </p>
-            <p>
-              {'Once installed, @mention the bot in a channel or send it a direct message to confirm it responds.'}
-            </p>
+            <p>{'Once installed, @mention the bot in a channel or send it a direct message to confirm it responds.'}</p>
           </div>
         }
         extraContent={

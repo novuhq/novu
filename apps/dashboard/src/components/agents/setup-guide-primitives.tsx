@@ -20,7 +20,7 @@ import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import type { StepStatus } from './setup-guide-step-utils';
 
-export function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
+function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
   if (status === 'completed') {
     return (
       <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-success-dark bg-success-base shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))]">

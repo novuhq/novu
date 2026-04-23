@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { jsx } from 'chat/jsx-runtime';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
@@ -539,7 +538,10 @@ describe('agent dispatch via NovuRequestHandler', () => {
   it('should serialize JSX Card elements on reply', async () => {
     const jsxCard = jsx(Card, {
       title: 'JSX Card',
-      children: [jsx(CardText, { children: 'Hello from JSX' }), jsx(Button, { id: 'ok', label: 'OK', style: 'primary' })],
+      children: [
+        jsx(CardText, { children: 'Hello from JSX' }),
+        jsx(Button, { id: 'ok', label: 'OK', style: 'primary' }),
+      ],
     });
 
     const testBot = agent('test-bot', {

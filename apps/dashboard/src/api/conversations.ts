@@ -131,7 +131,11 @@ export type ConversationActivityDto = {
   senderId: string;
   senderName?: string;
   platformMessageId?: string;
-  signalData?: { type: string; payload?: Record<string, unknown> };
+  signalData?:
+    | { type: 'metadata'; payload?: Record<string, unknown> }
+    | { type: 'trigger'; payload?: { workflowId?: string; transactionId?: string; to?: unknown } }
+    | { type: 'resolve'; payload?: Record<string, unknown> }
+    | { type: string; payload?: Record<string, unknown> };
   _environmentId: string;
   _organizationId: string;
   createdAt: string;

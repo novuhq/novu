@@ -23,6 +23,8 @@ const LINKS: LinkType[] = [
   { href: '/custom-popover', label: 'Custom Popover', category: 'Customization' },
   { href: '/custom-subject-body', label: 'Custom Subject Body', category: 'Customization' },
   { href: '/custom-icons', label: 'Custom Icons', category: 'Customization' },
+  { href: '/send-email', label: 'Send Test Email', category: 'Tools' },
+  { href: '/send-email-thread', label: 'Send Email Thread', category: 'Tools' },
   { href: '/hooks', label: 'Hooks', category: 'Advanced' },
 ];
 

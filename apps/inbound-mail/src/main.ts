@@ -23,6 +23,8 @@ export default mailin.start(
     smtpOptions: env.smtpOptions,
   },
   (err) => {
+    logger.error(err);
+
     if (err) process.exit(1);
 
     if (mailin.configuration.disableDkim) logger.info('Dkim checking is disabled');

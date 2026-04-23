@@ -66,6 +66,9 @@ export enum FeatureNameEnum {
 
   // Environment Variables Features
   ENVIRONMENT_VARIABLES = 'environmentVariables',
+
+  // Domains Features
+  DOMAINS_BOOLEAN = 'domainsBoolean',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -480,6 +483,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Standard DPA', value: false },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom DPA', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom DPA', value: true },
+  },
+  [FeatureNameEnum.DOMAINS_BOOLEAN]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'Custom domains', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'Custom domains', value: false },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom domains', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom domains', value: true },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom domains', value: true },
   },
 };
 

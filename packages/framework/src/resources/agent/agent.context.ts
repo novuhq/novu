@@ -15,6 +15,7 @@ import type {
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  TriggerRecipientsPayload,
 } from './agent.types';
 
 function isCardElement(content: object): content is import('chat').CardElement {
@@ -172,8 +173,8 @@ export class AgentContextImpl implements AgentContext {
     this._resolveSignal = { summary };
   }
 
-  trigger(workflowId: string, opts?: { to?: string; payload?: Record<string, unknown> }): void {
-    this._signals.push({ type: 'trigger', workflowId, ...opts });
+  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void {
+    this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
   /**

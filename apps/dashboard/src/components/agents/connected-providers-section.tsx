@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { RiAddLine, RiArrowRightLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  type AgentResponse,
   type AgentIntegrationLink,
+  type AgentResponse,
   getAgentIntegrationsQueryKey,
   listAgentIntegrations,
 } from '@/api/agents';
@@ -31,11 +31,7 @@ function ProviderCard({ link }: { link: AgentIntegrationLink }) {
         }}
       >
         <div className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-[0px_0.75px_1px_0.5px_rgba(41,41,41,0.04),0px_1.5px_1.5px_-0.75px_rgba(41,41,41,0.02),0px_3px_3px_-1.5px_rgba(41,41,41,0.04),0px_6px_6px_-3px_rgba(41,41,41,0.04),0px_12px_12px_-6px_rgba(41,41,41,0.04),0px_24px_24px_-12px_rgba(41,41,41,0.04),0px_0px_0px_8px_rgba(41,41,41,0.04)]">
-          <ProviderIcon
-            providerId={link.integration.providerId}
-            providerDisplayName={displayName}
-            className="size-5"
-          />
+          <ProviderIcon providerId={link.integration.providerId} providerDisplayName={displayName} className="size-5" />
         </div>
       </div>
       <span className="text-text-strong text-label-xs font-medium leading-4">{displayName}</span>

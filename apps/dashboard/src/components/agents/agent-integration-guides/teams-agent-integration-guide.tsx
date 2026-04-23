@@ -23,7 +23,6 @@ export function TeamsAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: TeamsAgentIntegrationGuideProps) {
-
   return (
     <AgentIntegrationGuideLayout
       providerId={ChatProviderIdEnum.MsTeams}

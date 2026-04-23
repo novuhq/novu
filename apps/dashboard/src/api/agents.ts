@@ -11,12 +11,10 @@ const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
-
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
 }
 
 export function getAgentIntegrationsQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
-
   return [AGENT_INTEGRATIONS_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
@@ -255,10 +253,9 @@ export function removeAgentIntegration(
   agentIdentifier: string,
   agentIntegrationId: string
 ): Promise<void> {
-  return del(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`,
-    { environment }
-  );
+  return del(`/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`, {
+    environment,
+  });
 }
 
 export type AgentEmojiEntry = {
