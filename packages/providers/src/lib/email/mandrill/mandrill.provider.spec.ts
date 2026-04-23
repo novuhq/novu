@@ -50,6 +50,7 @@ test('should send a standard email through Mandrill', async () => {
 test('should forward custom headers in message.headers', async () => {
   const provider = new MandrillProvider(mockConfig);
   const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
+
     return [{}] as any;
   });
 
@@ -78,6 +79,7 @@ test('should forward custom headers in message.headers', async () => {
 test('should not add headers to message when no custom headers provided', async () => {
   const provider = new MandrillProvider(mockConfig);
   const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
+
     return [{}] as any;
   });
 
@@ -87,13 +89,9 @@ test('should not add headers to message when no custom headers provided', async 
     html: '<div> Mail Content </div>',
   });
 
-  expect(spy).toHaveBeenCalledWith(
-    expect.objectContaining({
-      message: expect.not.objectContaining({
-        headers: expect.anything(),
-      }),
-    })
-  );
+  const payload = spy.mock.calls[0][0];
+
+  expect(payload.message).not.toHaveProperty('headers');
 });
 
 test('should send an email using a Mandrill template', async () => {

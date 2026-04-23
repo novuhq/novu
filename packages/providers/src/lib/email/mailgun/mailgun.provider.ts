@@ -106,14 +106,18 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
         }),
     };
 
-    if (emailOptions.replyTo) {
-      data['h:Reply-To'] = emailOptions.replyTo;
-    }
-
     if (emailOptions.headers) {
       for (const [key, value] of Object.entries(emailOptions.headers)) {
+        if (emailOptions.replyTo && key.toLowerCase() === 'reply-to') {
+          continue;
+        }
+
         data[`h:${key}`] = value;
       }
+    }
+
+    if (emailOptions.replyTo) {
+      data['h:Reply-To'] = emailOptions.replyTo;
     }
 
     const mailgunMessageData: Partial<MailgunMessageData> = this.transform(bridgeProviderData, data).body;

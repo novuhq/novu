@@ -96,27 +96,6 @@ describe.skip('NodemailerProvider', () => {
       });
     });
 
-    test('should forward custom headers to sendMail', async () => {
-      const provider = new NodemailerProvider(mockConfig);
-      await provider.sendMessage({
-        ...mockNovuMessage,
-        headers: {
-          'In-Reply-To': '<original-message-id@example.com>',
-          References: '<original-message-id@example.com>',
-        },
-      });
-
-      expect(sendMailMock).toHaveBeenCalled();
-      expect(sendMailMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: {
-            'In-Reply-To': '<original-message-id@example.com>',
-            References: '<original-message-id@example.com>',
-          },
-        })
-      );
-    });
-
     test('should check provider integration correctly', async () => {
       const provider = new NodemailerProvider(mockConfig);
       const response = await provider.checkIntegration(mockNovuMessage);
@@ -223,5 +202,42 @@ describe.skip('NodemailerProvider', () => {
         );
       }
     });
+  });
+});
+
+describe('NodemailerProvider header forwarding', () => {
+  afterEach(() => {
+    sendMailMock.mockReset();
+  });
+
+  test('should forward custom headers to sendMail', async () => {
+    const mockConfig = {
+      host: 'test.test.email',
+      port: 587,
+      secure: false,
+      from: 'test@test.com',
+      senderName: 'John Doe',
+      user: 'test@test.com',
+      password: 'test123',
+    };
+
+    const provider = new NodemailerProvider(mockConfig);
+    await provider.sendMessage({
+      ...mockNovuMessage,
+      headers: {
+        'In-Reply-To': '<original-message-id@example.com>',
+        References: '<original-message-id@example.com>',
+      },
+    });
+
+    expect(sendMailMock).toHaveBeenCalled();
+    expect(sendMailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: {
+          'In-Reply-To': '<original-message-id@example.com>',
+          References: '<original-message-id@example.com>',
+        },
+      })
+    );
   });
 });

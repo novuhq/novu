@@ -110,6 +110,7 @@ test('should trigger ses library correctly', async () => {
 test('should forward custom headers in raw email content', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
   const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
+
     return mockResponse as any;
   });
 

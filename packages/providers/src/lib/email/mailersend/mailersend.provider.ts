@@ -76,7 +76,9 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
       emailParams.setReplyTo(replyTo);
     }
 
-    const inReplyTo = options.headers?.['In-Reply-To'];
+    const inReplyTo = Object.entries(options.headers ?? {}).find(
+      ([headerName]) => headerName.toLowerCase() === 'in-reply-to'
+    )?.[1];
 
     if (inReplyTo) {
       emailParams.setInReplyTo(inReplyTo);
