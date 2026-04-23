@@ -97,6 +97,10 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       sendMailOptions.replyTo = options.replyTo;
     }
 
+    if (options.headers && Object.keys(options.headers).length > 0) {
+      sendMailOptions.headers = options.headers;
+    }
+
     return sendMailOptions;
   }
 }

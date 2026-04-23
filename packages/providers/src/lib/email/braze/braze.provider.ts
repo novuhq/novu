@@ -69,7 +69,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
           bcc: options.bcc?.join(','),
           plaintext_body: options.text || null,
           extras: options.payloadDetails || {},
-          headers: {},
+          headers: options.headers || {},
           should_inline_css: true,
           attachments: [],
         },

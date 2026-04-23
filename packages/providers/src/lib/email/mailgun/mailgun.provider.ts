@@ -110,6 +110,12 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
       data['h:Reply-To'] = emailOptions.replyTo;
     }
 
+    if (emailOptions.headers) {
+      for (const [key, value] of Object.entries(emailOptions.headers)) {
+        data[`h:${key}`] = value;
+      }
+    }
+
     const mailgunMessageData: Partial<MailgunMessageData> = this.transform(bridgeProviderData, data).body;
 
     const response = await this.mailgunClient.messages.create(

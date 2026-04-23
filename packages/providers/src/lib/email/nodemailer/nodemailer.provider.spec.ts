@@ -96,6 +96,27 @@ describe.skip('NodemailerProvider', () => {
       });
     });
 
+    test('should forward custom headers to sendMail', async () => {
+      const provider = new NodemailerProvider(mockConfig);
+      await provider.sendMessage({
+        ...mockNovuMessage,
+        headers: {
+          'In-Reply-To': '<original-message-id@example.com>',
+          References: '<original-message-id@example.com>',
+        },
+      });
+
+      expect(sendMailMock).toHaveBeenCalled();
+      expect(sendMailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: {
+            'In-Reply-To': '<original-message-id@example.com>',
+            References: '<original-message-id@example.com>',
+          },
+        })
+      );
+    });
+
     test('should check provider integration correctly', async () => {
       const provider = new NodemailerProvider(mockConfig);
       const response = await provider.checkIntegration(mockNovuMessage);
