@@ -1,16 +1,18 @@
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { ApplyChange, ApplyChangeCommand } from '../apply-change';
+import { ApplyChangeCommand } from '../apply-change/apply-change.command';
+import { applyChangeForwardRef } from '../apply-change/apply-change.forward-ref';
+import type { ApplyChange } from '../apply-change/apply-change.usecase';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
 @Injectable()
 export class PromoteTranslationGroupChange {
   constructor(
     private moduleRef: ModuleRef,
-    @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
+    @Inject(applyChangeForwardRef) private applyChange: ApplyChange,
     private changeRepository: ChangeRepository,
     private logger: PinoLogger
   ) {
