@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptSecret } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AgentIntegrationRepository, AgentRepository, CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, EmailProviderIdEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto } from '../../dtos';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
@@ -13,7 +13,8 @@ export class AddAgentIntegration {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly organizationRepository: CommunityOrganizationRepository
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -58,6 +59,7 @@ export class AddAgentIntegration {
     }
 
     if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+      await this.enforceEmailTier(command.organizationId);
       await this.prepareNovuEmailIntegration(agent._id, integration._id, command);
     }
 
@@ -69,6 +71,16 @@ export class AddAgentIntegration {
     });
 
     return toAgentIntegrationResponse(link, integration);
+  }
+
+  private async enforceEmailTier(organizationId: string): Promise<void> {
+    const organization = await this.organizationRepository.findById(organizationId);
+    const tier = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
+    const allowed = getFeatureForTierAsBoolean(FeatureNameEnum.AGENT_EMAIL_INTEGRATION, tier);
+
+    if (!allowed) {
+      throw new HttpException('Payment Required', HttpStatus.PAYMENT_REQUIRED);
+    }
   }
 
   /**
