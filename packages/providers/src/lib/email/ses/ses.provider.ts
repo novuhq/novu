@@ -34,7 +34,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   private async sendMail(
-    { html, text, to, from, senderName, subject, attachments, cc, bcc, replyTo, headers },
+    { html, text, to, from, senderName, subject, attachments, cc, bcc, replyTo, headers = {} },
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     const transporter = nodemailer.createTransport({
