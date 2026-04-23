@@ -24,7 +24,7 @@ export function EmailAgentIntegrationGuide({
   isRemovingIntegration,
 }: EmailAgentIntegrationGuideProps) {
   const isConnected = Boolean(integrationLink?.connectedAt);
-  const integrationId = integrationLink?.integration._id;
+  const integrationId = integrationLink?.integration?._id;
 
   return (
     <AgentIntegrationGuideLayout

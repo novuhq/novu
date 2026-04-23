@@ -161,8 +161,11 @@ export class DomainRouteStrategy {
     );
 
     const signature = buildNovuSignatureHeader(secretKey, payload);
-    const apiBaseUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
-    const url = `${apiBaseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+    const apiBaseUrl = process.env.API_ROOT_URL;
+    if (!apiBaseUrl) {
+      this.throwError('API_ROOT_URL environment variable is not set — cannot forward inbound email to agent webhook');
+    }
+    const url = `${apiBaseUrl}/v1/agents/${encodeURIComponent(agentId)}/webhook/${encodeURIComponent(integrationIdentifier)}`;
 
     await this.httpClientService.request({
       url,
@@ -195,7 +198,7 @@ export class DomainRouteStrategy {
     }
 
     const integration = await this.integrationRepository.findOne(
-      { _id: links[0]._integrationId, _environmentId: environmentId },
+      { _id: links[0]._integrationId, _environmentId: environmentId, _organizationId: organizationId },
       'identifier'
     );
     if (!integration) {
@@ -226,7 +229,7 @@ export class DomainRouteStrategy {
         contentType: a.contentType,
         url: a.url,
       })),
-      date: command.date instanceof Date ? command.date.toISOString() : new Date().toISOString(),
+      date: (() => { const d = new Date(command.date as unknown as string); return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); })(),
     };
   }
 

@@ -53,6 +53,10 @@ export enum CredentialsKeyEnum {
   ServicePlanId = 'servicePlanId',
   TenantId = 'tenantId',
   SigningSecret = 'signingSecret',
+  ReplyDomain = 'replyDomain',
+  OutboundIntegrationId = 'outboundIntegrationId',
+  InboundAddress = 'inboundAddress',
+  InboundDomain = 'inboundDomain',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

@@ -40,7 +40,7 @@ export class ThreadResolver {
   }
 
   encodeThreadId(id: NovuEmailThreadId): string {
-    return `email:${id.recipientAddress}:${id.rootMessageIdHash}`;
+    return `email:${encodeURIComponent(id.recipientAddress)}:${id.rootMessageIdHash}`;
   }
 
   decodeThreadId(threadId: string): NovuEmailThreadId {
@@ -50,7 +50,7 @@ export class ThreadResolver {
     }
 
     return {
-      recipientAddress: parts[1],
+      recipientAddress: decodeURIComponent(parts[1]),
       rootMessageIdHash: parts[2],
     };
   }

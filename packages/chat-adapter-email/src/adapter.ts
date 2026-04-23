@@ -132,7 +132,11 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     const messageId = generateMessageId(this.config.fromAddress);
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
-    const subject = storedSubject ? `Re: ${storedSubject}` : 'New message';
+    const subject = storedSubject
+      ? /^re:/i.test(storedSubject)
+        ? storedSubject
+        : `Re: ${storedSubject}`
+      : 'New message';
 
     const result = await this.config.sendEmail({
       to: decoded.recipientAddress,
@@ -217,13 +221,11 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   async openDM(email: string): Promise<string> {
     const messageId = generateMessageId(email);
     const hash = hashMessageId(messageId);
-    const threadId = this.threadResolver.encodeThreadId({
+
+    return this.threadResolver.encodeThreadId({
       recipientAddress: email,
       rootMessageIdHash: hash,
     });
-    await this.threadResolver.trackMessage(threadId, messageId);
-
-    return threadId;
   }
 
   // -- Unsupported operations --

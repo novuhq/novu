@@ -31,6 +31,19 @@ export interface CardNode {
   props?: Record<string, unknown>;
 }
 
+const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
+
+function safeUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+
+    return SAFE_URL_PROTOCOLS.has(url.protocol) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function renderChildren(children: CardNode[] | undefined): React.ReactNode {
   if (!children || children.length === 0) return null;
 
@@ -50,7 +63,7 @@ function renderNode(node: CardNode): React.ReactNode {
           {node.subtitle && (
             <Text style={{ margin: '0 0 12px', color: '#666666' }}>{node.subtitle}</Text>
           )}
-          {node.imageUrl && <Img src={node.imageUrl} alt="" style={{ maxWidth: '100%', marginBottom: '12px' }} />}
+          {safeUrl(node.imageUrl) && <Img src={safeUrl(node.imageUrl)} alt="" style={{ maxWidth: '100%', marginBottom: '12px' }} />}
           {renderChildren(node.children)}
         </Container>
       );
@@ -64,7 +77,7 @@ function renderNode(node: CardNode): React.ReactNode {
     case 'image':
       return (
         <Img
-          src={node.url || node.imageUrl || ''}
+          src={safeUrl(node.url) ?? safeUrl(node.imageUrl) ?? ''}
           alt={node.label || ''}
           style={{ maxWidth: '100%', margin: '8px 0' }}
         />
@@ -75,15 +88,15 @@ function renderNode(node: CardNode): React.ReactNode {
 
     case 'link-button':
       return (
-        <Button href={node.url || ''} style={{ padding: '8px 16px', margin: '4px', backgroundColor: '#0066cc', color: '#ffffff', borderRadius: '4px', fontSize: '14px', textDecoration: 'none' }}>
+        <Button href={safeUrl(node.url) ?? '#'} style={{ padding: '8px 16px', margin: '4px', backgroundColor: '#0066cc', color: '#ffffff', borderRadius: '4px', fontSize: '14px', textDecoration: 'none' }}>
           {node.label || ''}
         </Button>
       );
 
     case 'button':
-      if (node.url) {
+      if (node.url && safeUrl(node.url)) {
         return (
-          <Button href={node.url} style={{ padding: '8px 16px', margin: '4px', backgroundColor: '#0066cc', color: '#ffffff', borderRadius: '4px', fontSize: '14px', textDecoration: 'none' }}>
+          <Button href={safeUrl(node.url)} style={{ padding: '8px 16px', margin: '4px', backgroundColor: '#0066cc', color: '#ffffff', borderRadius: '4px', fontSize: '14px', textDecoration: 'none' }}>
             {node.label || ''}
           </Button>
         );
@@ -92,7 +105,7 @@ function renderNode(node: CardNode): React.ReactNode {
       return <Text style={{ display: 'inline-block', padding: '8px 16px', margin: '4px', backgroundColor: '#e0e0e0', borderRadius: '4px', fontSize: '14px' }}>{node.label || ''}</Text>;
 
     case 'link':
-      return <Link href={node.url || ''} style={{ color: '#0066cc' }}>{node.label || ''}</Link>;
+      return <Link href={safeUrl(node.url) ?? '#'} style={{ color: '#0066cc' }}>{node.label || ''}</Link>;
 
     case 'section':
       return <Section style={{ margin: '8px 0' }}>{renderChildren(node.children)}</Section>;

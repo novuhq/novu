@@ -320,6 +320,7 @@ function InboundAddressConfig({
         <div className="border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs">
           <input
             type="text"
+            aria-label="Inbound email local part"
             className="text-text-sub text-label-xs h-full w-[120px] bg-transparent px-2 font-medium outline-none"
             placeholder="agent"
             value={localPart}
@@ -332,6 +333,7 @@ function InboundAddressConfig({
           <PopoverTrigger asChild>
             <button
               type="button"
+              aria-label="Select inbound domain"
               className="border-stroke-soft bg-bg-white flex h-8 min-w-[180px] items-center justify-between overflow-hidden rounded-lg border px-2 shadow-xs"
             >
               {domainName ? (
@@ -443,15 +445,19 @@ export function EmailSetupGuide({
     credentialsRef.current = { ...credentialsRef.current, ...serverCredentials };
   }, [emailIntegration]);
 
-  const [outboundId, setOutboundId] = useState<string>(
-    (serverCredentials.outboundIntegrationId as string) ?? ''
-  );
-  const [localPart, setLocalPart] = useState<string>(
-    (serverCredentials.inboundAddress as string) ?? ''
-  );
-  const [domainName, setDomainName] = useState<string>(
-    (serverCredentials.inboundDomain as string) ?? ''
-  );
+  const [outboundId, setOutboundId] = useState<string>('');
+  const [localPart, setLocalPart] = useState<string>('');
+  const [domainName, setDomainName] = useState<string>('');
+
+  const hasInitializedFromServer = useRef(false);
+  useEffect(() => {
+    if (!emailIntegration || hasInitializedFromServer.current) return;
+    hasInitializedFromServer.current = true;
+    const creds = emailIntegration.credentials ?? {};
+    if (creds.outboundIntegrationId) setOutboundId(creds.outboundIntegrationId as string);
+    if (creds.inboundAddress) setLocalPart(creds.inboundAddress as string);
+    if (creds.inboundDomain) setDomainName(creds.inboundDomain as string);
+  }, [emailIntegration]);
 
   const outboundIntegration = useMemo(
     () => (outboundId ? integrations?.find((i) => i._id === outboundId) : undefined),
@@ -460,7 +466,6 @@ export function EmailSetupGuide({
 
   const isOutboundDemo = outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
-  const needsInboundStep = isOutboundDemo;
 
   const outboundProviderConfig = useMemo(
     () => (outboundIntegration ? emailProviderConfigs.find((p) => p.id === outboundIntegration.providerId) : undefined),
@@ -498,7 +503,10 @@ export function EmailSetupGuide({
         })
       )
       .then(() => undefined)
-      .catch(() => undefined);
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Could not save credentials.';
+        showErrorToast(message, 'Settings not saved');
+      });
   }
 
   function upsertAgentRoute(address: string, domain: DomainResponse) {

@@ -14,6 +14,13 @@ import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
+/** Ensure a Message-ID value is wrapped in RFC 5322 angle brackets. */
+function wrapMsgId(id: string): string {
+  const trimmed = id.trim();
+
+  return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
+}
+
 /**
  * ICredentials field mapping per platform adapter:
  *
@@ -349,9 +356,9 @@ export class ChatSdkService implements OnModuleDestroy {
         from: config.credentials.replyDomain,
         senderName: config.credentials.senderName || undefined,
         headers: {
-          ...(params.messageId ? { 'Message-ID': params.messageId } : {}),
-          ...(params.inReplyTo ? { 'In-Reply-To': params.inReplyTo } : {}),
-          ...(params.references ? { References: params.references } : {}),
+          ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+          ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+          ...(params.references ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') } : {}),
         },
       };
 

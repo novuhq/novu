@@ -46,5 +46,5 @@ function escapeHtml(text: string): string {
 }
 
 function stripForText(html: string): string {
-  return html.replace(/<[^>]+>/g, '').trim();
+  return html.replace(/<[^<>]*>/g, '').trim();
 }

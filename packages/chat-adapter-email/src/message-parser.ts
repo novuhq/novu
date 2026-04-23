@@ -41,7 +41,7 @@ export class MessageParser {
         isMe: authorEmail === fromAddress,
       },
       metadata: {
-        dateSent: new Date(raw.createdAt),
+        dateSent: (() => { const d = new Date(raw.createdAt); return Number.isNaN(d.getTime()) ? new Date() : d; })(),
         edited: false,
       },
       attachments: (raw.attachments || []).map((a: { filename: string; contentType: string; url?: string }) => ({

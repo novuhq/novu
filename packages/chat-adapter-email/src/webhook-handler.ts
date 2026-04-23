@@ -3,6 +3,7 @@ import type { EmailWebhookPayload } from './types.js';
 
 const SIGNATURE_HEADER = 'novu-signature';
 const MAX_TIMESTAMP_AGE_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_FUTURE_SKEW_MS = 30 * 1000; // 30 seconds tolerance for clock drift
 
 interface VerifyResult {
   payload: EmailWebhookPayload | null;
@@ -56,7 +57,7 @@ export class WebhookHandler {
     const receivedHmac = hmacPart.slice(3);
 
     const age = Date.now() - Number(timestamp);
-    if (Number.isNaN(age) || age > MAX_TIMESTAMP_AGE_MS) {
+    if (Number.isNaN(age) || age > MAX_TIMESTAMP_AGE_MS || age < -MAX_FUTURE_SKEW_MS) {
       return false;
     }
 
