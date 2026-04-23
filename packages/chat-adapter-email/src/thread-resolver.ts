@@ -128,7 +128,12 @@ export class ThreadResolver {
         try {
           const parsed = JSON.parse(trimmed);
           if (Array.isArray(parsed)) {
-            ids.push(...parsed.map((s: string) => s.trim()).filter(Boolean));
+            ids.push(
+              ...parsed
+                .filter((s): s is string => typeof s === 'string')
+                .map((s) => s.trim())
+                .filter(Boolean)
+            );
           }
         } catch {
           ids.push(...trimmed.split(WHITESPACE_RE).filter(Boolean));

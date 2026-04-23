@@ -30,5 +30,5 @@ export function generateMessageId(fromAddress: string): string {
 }
 
 export function stripHtml(html: string): string {
-  return html.replace(/<[^<>]*>/g, '').trim();
+  return html.replace(/<[^<>]*>/g, '').replace(/[<>]/g, '').trim();
 }

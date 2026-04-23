@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common
 import { CacheService, decryptCredentials, MailFactory, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
-import type { IEmailOptions } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
@@ -327,11 +327,18 @@ export class ChatSdkService implements OnModuleDestroy {
         _id: outboundIntegrationId,
         _environmentId: config.environmentId,
         _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.EMAIL,
       });
 
       if (!integration) {
         throw new BadRequestException(
           `Outbound email integration ${outboundIntegrationId} not found or does not belong to this environment`
+        );
+      }
+
+      if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+        throw new BadRequestException(
+          `Integration ${outboundIntegrationId} is the inbound NovuAgent provider and cannot be used as an outbound sender`
         );
       }
 
