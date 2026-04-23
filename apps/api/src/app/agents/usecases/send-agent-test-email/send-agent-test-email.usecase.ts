@@ -14,11 +14,14 @@ export class SendAgentTestEmail {
 
   @InstrumentUsecase()
   async execute(command: SendAgentTestEmailCommand): Promise<{ success: boolean }> {
-    const agent = await this.agentRepository.findOne({
-      identifier: command.agentIdentifier,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: command.agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      '*'
+    );
 
     if (!agent) {
       throw new NotFoundException(`Agent "${command.agentIdentifier}" not found.`);
