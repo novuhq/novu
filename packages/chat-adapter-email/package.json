@@ -1,0 +1,40 @@
+{
+  "name": "@novu/chat-adapter-email",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Email adapter for Novu conversational agents (Chat SDK)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc -p tsconfig.json",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@novu/shared": "workspace:*",
+    "@react-email/components": "1.0.12",
+    "@react-email/render": "2.0.7",
+    "hast-util-to-html": "9.0.5",
+    "mdast-util-to-hast": "13.2.1"
+  },
+  "peerDependencies": {
+    "chat": ">=4.25.0",
+    "react": ">=18.0.0 || >=19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "rimraf": "~3.0.2",
+    "typescript": "5.6.2"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

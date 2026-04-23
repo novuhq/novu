@@ -21,6 +21,7 @@ export enum AiMessageRoleEnum {
 export enum SnapshotSourceTypeEnum {
   AI_CHAT = 'ai-chat',
   ONBOARDING_WORKFLOWS = 'onboarding-workflows',
+  WORKFLOW_SUGGESTIONS = 'workflow-suggestions',
 }
 
 export enum AiWorkflowToolsEnum {

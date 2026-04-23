@@ -1,8 +1,10 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
+import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
 import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
@@ -72,6 +74,24 @@ export function ResolveAgentIntegrationGuide({
   if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
     return (
       <WhatsAppAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  if (providerId === EmailProviderIdEnum.NovuAgent && !integrationLink.connectedAt) {
+    return <EmailSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+  }
+
+  if (providerId === EmailProviderIdEnum.NovuAgent) {
+    return (
+      <EmailAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}

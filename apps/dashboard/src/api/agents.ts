@@ -258,6 +258,13 @@ export function removeAgentIntegration(
   });
 }
 
+export async function sendAgentTestEmail(
+  environment: IEnvironment,
+  agentIdentifier: string
+): Promise<{ success: boolean }> {
+  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/test-email`, { environment });
+}
+
 export type AgentEmojiEntry = {
   name: string;
   unicode: string;

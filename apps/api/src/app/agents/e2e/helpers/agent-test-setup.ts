@@ -1,3 +1,4 @@
+import { encryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -10,7 +11,6 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { encryptCredentials } from '@novu/application-generic';
 
 const SIGNING_SECRET = 'test-slack-signing-secret';
 const BOT_TOKEN = 'xoxb-fake-bot-token-for-e2e';

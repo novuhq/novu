@@ -110,13 +110,7 @@ export class AgentInboundHandler {
 
     if (isFirstMessage && message.id) {
       this.conversationService
-        .setFirstPlatformMessageId(
-          config.environmentId,
-          config.organizationId,
-          conversation._id,
-          thread.id,
-          message.id
-        )
+        .setFirstPlatformMessageId(config.environmentId, config.organizationId, conversation._id, thread.id, message.id)
         .catch((err) => {
           this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
         });

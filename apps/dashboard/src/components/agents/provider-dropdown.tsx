@@ -1,6 +1,7 @@
 import {
   CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
+  EmailProviderIdEnum,
   type IIntegration,
   providers as novuProviders,
   PROVIDER_ID_TO_CHANNEL_MAP,
@@ -88,11 +89,14 @@ function buildDropdownItems(
       }
     }
 
-    supported.push({
-      providerId: cp.providerId,
-      displayName: providerConfig?.displayName || cp.displayName,
-      comingSoon: false,
-    });
+    const isSingleton = cp.providerId === EmailProviderIdEnum.NovuAgent;
+    if (!(isSingleton && existing?.length)) {
+      supported.push({
+        providerId: cp.providerId,
+        displayName: providerConfig?.displayName || cp.displayName,
+        comingSoon: false,
+      });
+    }
   }
 
   return { supported, comingSoon };
@@ -134,13 +138,27 @@ export function ProviderDropdown({
     [integrations]
   );
 
+  const hasLinkedNovuAgent = useMemo(() => {
+    if (!linkedIntegrationIds?.size || !integrations?.length) return false;
+
+    return integrations.some(
+      (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
+    );
+  }, [integrations, linkedIntegrationIds]);
+
   const supported = useMemo(() => {
-    if (!excludeLinked || !linkedIntegrationIds?.size) {
-      return allSupported;
+    let items = allSupported;
+
+    if (excludeLinked && linkedIntegrationIds?.size) {
+      items = items.filter((item) => !item.integration || !linkedIntegrationIds.has(item.integration._id));
     }
 
-    return allSupported.filter((item) => !item.integration || !linkedIntegrationIds.has(item.integration._id));
-  }, [allSupported, excludeLinked, linkedIntegrationIds]);
+    if (hasLinkedNovuAgent) {
+      items = items.filter((item) => item.providerId !== EmailProviderIdEnum.NovuAgent);
+    }
+
+    return items;
+  }, [allSupported, excludeLinked, linkedIntegrationIds, hasLinkedNovuAgent]);
 
   const selected = useMemo(() => {
     if (selectedIntegrationId) {
@@ -248,8 +266,9 @@ export function ProviderDropdown({
         onSelect(item.providerId, item.integration);
         setOpen(false);
       } else {
+        const isSingletonProvider = item.providerId === EmailProviderIdEnum.NovuAgent;
         const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
-        const uniqueName = `${item.displayName} ${sameProviderCount + 1}`;
+        const uniqueName = isSingletonProvider ? item.displayName : `${item.displayName} ${sameProviderCount + 1}`;
 
         const created = await createIntegrationMutation.mutateAsync({
           providerId: item.providerId,
@@ -359,13 +378,15 @@ export function ProviderDropdown({
                       </span>
                     </div>
 
-                    {isRowPending ? (
+                    {isRowPending && (
                       <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
-                    ) : item.integration ? (
+                    )}
+                    {!isRowPending && item.integration && item.providerId !== EmailProviderIdEnum.NovuAgent && (
                       <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
                         {item.integration.identifier}
                       </span>
-                    ) : (
+                    )}
+                    {!isRowPending && !item.integration && (
                       <RiAddLine className="text-text-soft size-3 shrink-0" />
                     )}
                   </CommandItem>
@@ -429,7 +450,6 @@ export function ProviderDropdown({
         </Popover>
       </div>
 
-      <p className="text-text-soft text-label-xs font-medium leading-4">{'💡 You can always add more providers.'}</p>
     </div>
   );
 }

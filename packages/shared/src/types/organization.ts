@@ -23,6 +23,32 @@ export enum ProductUseCasesEnum {
 
 export type ProductUseCases = Partial<Record<ProductUseCasesEnum, boolean>>;
 
+export enum IndustryEnum {
+  ECOMMERCE = 'ecommerce',
+  FINTECH = 'fintech',
+  SAAS = 'saas',
+  HEALTHCARE = 'healthcare',
+  EDUCATION = 'education',
+  MEDIA = 'media',
+  MARKETPLACE = 'marketplace',
+  GAMING = 'gaming',
+  TRAVEL = 'travel',
+  REAL_ESTATE = 'real_estate',
+  LOGISTICS = 'logistics',
+  FOOD_AND_BEVERAGE = 'food_and_beverage',
+  INSURANCE = 'insurance',
+  GOVERNMENT = 'government',
+  NON_PROFIT = 'non_profit',
+  TELECOMMUNICATIONS = 'telecommunications',
+  RETAIL = 'retail',
+  AUTOMOTIVE = 'automotive',
+  CONSTRUCTION = 'construction',
+  ENERGY = 'energy',
+  AGRICULTURE = 'agriculture',
+  LEGAL = 'legal',
+  OTHER = 'other',
+}
+
 export type OrganizationPublicMetadata = {
   externalOrgId?: string;
   domain?: string;
@@ -30,4 +56,5 @@ export type OrganizationPublicMetadata = {
   language?: string[];
   defaultLocale?: string;
   companySize?: string;
+  industry?: IndustryEnum;
 };

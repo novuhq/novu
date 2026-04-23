@@ -41,9 +41,7 @@ export class AgentSubscriberResolver {
     });
 
     if (endpoint) {
-      this.logger.debug(
-        `Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`
-      );
+      this.logger.debug(`Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`);
 
       return endpoint.subscriberId;
     }

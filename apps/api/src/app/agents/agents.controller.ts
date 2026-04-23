@@ -56,6 +56,8 @@ import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
+import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
+import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
@@ -79,7 +81,8 @@ export class AgentsController {
     private readonly listAgentIntegrationsUsecase: ListAgentIntegrations,
     private readonly updateAgentIntegrationUsecase: UpdateAgentIntegration,
     private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
-    private readonly listAgentEmojiUsecase: ListAgentEmoji
+    private readonly listAgentEmojiUsecase: ListAgentEmoji,
+    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail
   ) {}
 
   @Get('/emoji')
@@ -253,6 +256,31 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         agentIntegrationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/test-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send a test email to the agent inbound address',
+    description:
+      'Sends a test email to the configured inbound address using the agent outbound provider (or the Novu demo integration as fallback). Used to verify the inbound email pipeline.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentTestEmail(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<{ success: boolean }> {
+    return this.sendAgentTestEmailUsecase.execute(
+      SendAgentTestEmailCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
       })
     );
   }
