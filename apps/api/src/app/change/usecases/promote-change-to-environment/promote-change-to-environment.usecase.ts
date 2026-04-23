@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
@@ -7,10 +7,14 @@ import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 import { PromoteLayoutChange } from '../promote-layout-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
-import { PromoteTranslationChange } from '../promote-translation-change';
-import { PromoteTranslationGroupChange } from '../promote-translation-group-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { INotificationTemplateChangeService } from '../shared';
+import {
+  INotificationTemplateChangeService,
+  ITranslationChangeService,
+  ITranslationGroupChangeService,
+  TRANSLATION_CHANGE_SERVICE,
+  TRANSLATION_GROUP_CHANGE_SERVICE,
+} from '../shared';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 
 function sanitizeDiff(diff: unknown): rdiffResult[] {
@@ -30,8 +34,10 @@ export class PromoteChangeToEnvironment {
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
     private promoteFeedChange: PromoteFeedChange,
-    private promoteTranslationChange: PromoteTranslationChange,
-    private promoteTranslationGroupChange: PromoteTranslationGroupChange,
+    @Inject(TRANSLATION_CHANGE_SERVICE)
+    private promoteTranslationChange: ITranslationChangeService,
+    @Inject(TRANSLATION_GROUP_CHANGE_SERVICE)
+    private promoteTranslationGroupChange: ITranslationGroupChangeService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);

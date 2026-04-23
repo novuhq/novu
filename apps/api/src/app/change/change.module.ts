@@ -12,6 +12,9 @@ import { SharedModule } from '../shared/shared.module';
 import { ChangesController } from './changes.controller';
 import { USE_CASES } from './usecases';
 import { PromoteNotificationTemplateChange } from './usecases/promote-notification-template-change/promote-notification-template-change.usecase';
+import { PromoteTranslationChange } from './usecases/promote-translation-change/promote-translation-change.usecase';
+import { PromoteTranslationGroupChange } from './usecases/promote-translation-group-change/promote-translation-group-change.usecase';
+import { TRANSLATION_CHANGE_SERVICE, TRANSLATION_GROUP_CHANGE_SERVICE } from './usecases/shared';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -31,6 +34,14 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     {
       provide: 'INotificationTemplateChangeService',
       useExisting: PromoteNotificationTemplateChange,
+    },
+    {
+      provide: TRANSLATION_CHANGE_SERVICE,
+      useExisting: PromoteTranslationChange,
+    },
+    {
+      provide: TRANSLATION_GROUP_CHANGE_SERVICE,
+      useExisting: PromoteTranslationGroupChange,
     },
   ],
   exports: [...USE_CASES],

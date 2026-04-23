@@ -1,18 +1,17 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { ApplyChangeCommand } from '../apply-change/apply-change.command';
-import { applyChangeForwardRef } from '../apply-change/apply-change.forward-ref';
-import type { ApplyChange } from '../apply-change/apply-change.usecase';
+import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { ITranslationChangeService } from '../shared';
 
 @Injectable()
-export class PromoteTranslationChange {
+export class PromoteTranslationChange implements ITranslationChangeService {
   constructor(
     private moduleRef: ModuleRef,
-    @Inject(applyChangeForwardRef) private applyChange: ApplyChange,
+    private applyChange: ApplyChange,
     private changeRepository: ChangeRepository,
     private logger: PinoLogger
   ) {
