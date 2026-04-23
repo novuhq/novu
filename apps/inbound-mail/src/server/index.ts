@@ -75,10 +75,6 @@ class Mailin extends events.EventEmitter {
       shell.mkdir('-p', configuration.tmp);
     }
 
-    if (configuration.debug) {
-      configuration.smtpOptions.debug = true;
-    }
-
     /* Basic memory profiling. */
     if (configuration.profile) {
       logger.info('Enable memory profiling', LOG_CONTEXT);
@@ -538,7 +534,6 @@ interface ISmtpOptions {
   logger: boolean;
   disabledCommands: string[];
   secure?: boolean;
-  debug?: boolean;
 }
 
 interface IConfiguration {
