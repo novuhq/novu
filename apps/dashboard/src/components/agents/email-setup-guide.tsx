@@ -1,5 +1,6 @@
 import {
   ChannelTypeEnum,
+  DomainRouteTypeEnum,
   DomainStatusEnum,
   emailProviders as emailProviderConfigs,
   EmailProviderIdEnum,
@@ -9,8 +10,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiExpandUpDownLine, RiKey2Line, RiLoader4Line, RiMailSendLine, RiSearchLine } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
-import type { AgentResponse } from '@/api/agents';
-import { type DomainResponse, fetchDomains } from '@/api/domains';
+import { type AgentResponse, sendAgentTestEmail } from '@/api/agents';
+import { type DomainResponse, fetchDomains, updateDomain } from '@/api/domains';
 import { createIntegration } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
@@ -22,7 +23,7 @@ import {
   CommandList,
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
@@ -416,6 +417,21 @@ export function EmailSetupGuide({
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
 
+  const testEmailMutation = useMutation({
+    mutationFn: async () => {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      return sendAgentTestEmail(environment, agent.identifier);
+    },
+    onSuccess: () => {
+      showSuccessToast('Test email sent to the configured inbound address.');
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Could not send test email.';
+      showErrorToast(message, 'Test email failed');
+    },
+  });
+
   const emailIntegration = useMemo(
     () => integrations?.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent),
     [integrations, integrationId]
@@ -485,6 +501,27 @@ export function EmailSetupGuide({
       .catch(() => undefined);
   }
 
+  function upsertAgentRoute(address: string, domain: DomainResponse) {
+    if (!currentEnvironment || !agent._id) return;
+
+    const existingRoutes = domain.routes ?? [];
+    const hasRoute = existingRoutes.some(
+      (r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id
+    );
+
+    if (hasRoute) return;
+
+    const updatedRoutes = existingRoutes.filter(
+      (r) => !(r.address === address && r.type === DomainRouteTypeEnum.AGENT)
+    );
+
+    updatedRoutes.push({ address, type: DomainRouteTypeEnum.AGENT, destination: agent._id });
+
+    updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment).catch(() => {
+      showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
+    });
+  }
+
   function handleOutboundSelect(id: string) {
     setOutboundId(id);
     setIsCredentialsSaved(false);
@@ -496,12 +533,22 @@ export function EmailSetupGuide({
 
     const replyDomain = domainName ? `${localPart}@${domainName}` : undefined;
     saveCredentials({ inboundAddress: localPart, ...(replyDomain ? { replyDomain } : {}) });
+
+    if (domainName) {
+      const domain = domains.find((d) => d.name === domainName);
+      if (domain) upsertAgentRoute(localPart, domain);
+    }
   }
 
   function handleDomainChange(name: string) {
     setDomainName(name);
     const replyDomain = localPart ? `${localPart}@${name}` : undefined;
     saveCredentials({ inboundDomain: name, ...(replyDomain ? { replyDomain } : {}) });
+
+    if (localPart) {
+      const domain = domains.find((d) => d.name === name);
+      if (domain) upsertAgentRoute(localPart, domain);
+    }
   }
 
   const base = stepOffset;
@@ -597,10 +644,17 @@ export function EmailSetupGuide({
         description="Send an email to the inbound address and verify it reaches your agent handler."
         rightContent={
           <SetupButton
-            leadingIcon={<RiMailSendLine className="size-3.5" />}
-            disabled={firstIncompleteStep < testStepIndex}
+            leadingIcon={
+              testEmailMutation.isPending ? (
+                <RiLoader4Line className="size-3.5 animate-spin" />
+              ) : (
+                <RiMailSendLine className="size-3.5" />
+              )
+            }
+            disabled={firstIncompleteStep < testStepIndex || testEmailMutation.isPending}
+            onClick={() => testEmailMutation.mutate()}
           >
-            Send test email
+            {testEmailMutation.isPending ? 'Sending...' : 'Send test email'}
           </SetupButton>
         }
       />
