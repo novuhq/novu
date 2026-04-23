@@ -42,13 +42,13 @@ export class SendAgentTestEmail {
       agentIds: [agent._id],
     });
 
-    const emailLink = links.find((l) => l._integrationId);
-    if (!emailLink) {
+    const integrationIds = links.map((l) => l._integrationId).filter(Boolean);
+    if (integrationIds.length === 0) {
       throw new BadRequestException('No email integration linked to this agent.');
     }
 
     const emailIntegration = await this.integrationRepository.findOne({
-      _id: emailLink._integrationId,
+      _id: { $in: integrationIds } as unknown as string,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       providerId: EmailProviderIdEnum.NovuAgent,
@@ -80,7 +80,7 @@ export class SendAgentTestEmail {
     const escapedName = escapeHtml(agent.name);
     const mailOptions: IEmailOptions = {
       to: [to],
-      subject: `Test email for agent "${escapedName}"`,
+      subject: `Test email for agent "${agent.name}"`,
       html: [
         '<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">',
         '<h2 style="margin: 0 0 12px;">Test Email</h2>',

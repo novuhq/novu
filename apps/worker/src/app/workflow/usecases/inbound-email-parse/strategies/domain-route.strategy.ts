@@ -7,8 +7,10 @@ import {
 } from '@novu/application-generic';
 import { AgentIntegrationRepository, DomainEntity, DomainRepository, DomainRoute, IntegrationRepository } from '@novu/dal';
 import {
+  ChannelTypeEnum,
   DomainRouteTypeEnum,
   DomainStatusEnum,
+  EmailProviderIdEnum,
   EmailWebhookPayload,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -186,16 +188,23 @@ export class DomainRouteStrategy {
       agentIds: [agentId],
     });
 
-    if (links.length === 0) {
+    const integrationIds = links.map((l) => l._integrationId).filter(Boolean);
+    if (integrationIds.length === 0) {
       this.throwError(`No integration linked to agent ${agentId}`);
     }
 
     const integration = await this.integrationRepository.findOne(
-      { _id: links[0]._integrationId, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        _id: { $in: integrationIds } as unknown as string,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+      },
       'identifier credentials'
     );
     if (!integration) {
-      this.throwError(`Integration ${links[0]._integrationId} not found for agent ${agentId}`);
+      this.throwError(`No active NovuAgent email integration found for agent ${agentId}`);
     }
 
     const encryptedSecret = integration.credentials?.secretKey;
