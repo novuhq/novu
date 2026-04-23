@@ -206,22 +206,20 @@ describe.skip('NodemailerProvider', () => {
 });
 
 describe('NodemailerProvider header forwarding', () => {
-  afterEach(() => {
-    sendMailMock.mockReset();
-  });
+  const mockConfig = {
+    host: 'test.test.email',
+    port: 587,
+    secure: false,
+    from: 'test@test.com',
+    senderName: 'John Doe',
+    user: 'test@test.com',
+    password: 'test123',
+  };
 
   test('should forward custom headers to sendMail', async () => {
-    const mockConfig = {
-      host: 'test.test.email',
-      port: 587,
-      secure: false,
-      from: 'test@test.com',
-      senderName: 'John Doe',
-      user: 'test@test.com',
-      password: 'test123',
-    };
-
     const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+
     await provider.sendMessage({
       ...mockNovuMessage,
       headers: {
@@ -230,8 +228,7 @@ describe('NodemailerProvider header forwarding', () => {
       },
     });
 
-    expect(sendMailMock).toHaveBeenCalled();
-    expect(sendMailMock).toHaveBeenCalledWith(
+    expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
         headers: {
           'In-Reply-To': '<original-message-id@example.com>',
@@ -239,5 +236,16 @@ describe('NodemailerProvider header forwarding', () => {
         },
       })
     );
+  });
+
+  test('should not include headers field when no custom headers provided', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+
+    await provider.sendMessage(mockNovuMessage);
+
+    const payload = spy.mock.calls[0][0] as Record<string, unknown>;
+
+    expect(payload).not.toHaveProperty('headers');
   });
 });
