@@ -267,7 +267,6 @@ export class AgentsController {
     description:
       'Sends a test email to the configured inbound address using the agent outbound provider (or the Novu demo integration as fallback). Used to verify the inbound email pipeline.',
   })
-  @ApiResponse({ status: 200, description: 'Test email sent successfully.', schema: { properties: { success: { type: 'boolean' } } } })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
   })

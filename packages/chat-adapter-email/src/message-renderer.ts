@@ -46,5 +46,13 @@ function escapeHtml(text: string): string {
 }
 
 function stripForText(html: string): string {
-  return html.replace(/<[^<>]*>/g, '').replace(/[<>]/g, '').trim();
+  const chars: string[] = [];
+  let depth = 0;
+  for (const ch of html) {
+    if (ch === '<') { depth++; continue; }
+    if (ch === '>') { if (depth > 0) depth--; continue; }
+    if (depth === 0) chars.push(ch);
+  }
+
+  return chars.join('').replace(/\s+/g, ' ').trim();
 }

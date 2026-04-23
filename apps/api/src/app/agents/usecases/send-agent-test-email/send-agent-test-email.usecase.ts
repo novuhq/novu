@@ -80,7 +80,7 @@ export class SendAgentTestEmail {
     const escapedName = escapeHtml(agent.name);
     const mailOptions: IEmailOptions = {
       to: [to],
-      subject: `Test email for agent "${agent.name}"`,
+      subject: `Test email for agent "${escapedName}"`,
       html: [
         '<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">',
         '<h2 style="margin: 0 0 12px;">Test Email</h2>',
@@ -112,21 +112,23 @@ export class SendAgentTestEmail {
         active: true,
       });
 
-      if (configured) {
-        if (configured.providerId === EmailProviderIdEnum.Novu) {
-          return {
-            ...configured,
-            credentials: {
-              apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-              from: 'no-reply@novu.co',
-              senderName: 'Novu',
-              ipPoolName: 'Demo',
-            },
-          };
-        }
-
-        return { ...configured, credentials: decryptCredentials(configured.credentials ?? {}) };
+      if (!configured) {
+        throw new BadRequestException('Configured outbound integration not found or inactive.');
       }
+
+      if (configured.providerId === EmailProviderIdEnum.Novu) {
+        return {
+          ...configured,
+          credentials: {
+            apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+            from: 'no-reply@novu.co',
+            senderName: 'Novu',
+            ipPoolName: 'Demo',
+          },
+        };
+      }
+
+      return { ...configured, credentials: decryptCredentials(configured.credentials ?? {}) };
     }
 
     const novuDemo = await this.integrationRepository.findOne({
