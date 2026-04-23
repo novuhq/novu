@@ -1,4 +1,6 @@
 import type { CardElement, ChatElement } from 'chat';
+import type { TriggerRecipientsPayload } from '../../shared';
+export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
@@ -156,7 +158,27 @@ export interface AgentContext {
   metadata: {
     set(key: string, value: unknown): void;
   };
-  trigger(workflowId: string, opts?: { to?: string; payload?: Record<string, unknown> }): void;
+  /**
+   * Trigger a Novu workflow from within this agent handler.
+   *
+   * Signals are batched and flushed with the next `ctx.reply()`, or automatically when the
+   * handler completes. The workflow executes asynchronously — the agent reply is not blocked.
+   *
+   * @param workflowId - Workflow identifier (e.g. `'escalation-email'`).
+   * @param opts.to - Recipient(s). Omit to target the conversation's resolved subscriber.
+   * @param opts.payload - Data forwarded to the workflow payload schema.
+   *
+   * @example
+   *   // Target the conversation subscriber automatically
+   *   ctx.trigger('follow-up-email', { payload: { reason: 'unresolved' } });
+   *
+   *   // Explicit recipient
+   *   ctx.trigger('escalation-email', { to: 'agent-inbox', payload: { priority: 'high' } });
+   *
+   *   // Topic broadcast
+   *   ctx.trigger('team-alert', { to: { type: 'Topic', topicKey: 'support-team' } });
+   */
+  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
 }
 
 export interface AgentHandlers {
@@ -195,7 +217,23 @@ export interface AgentBridgeRequest {
 }
 
 export type MetadataSignal = { type: 'metadata'; key: string; value: unknown };
-export type TriggerSignal = { type: 'trigger'; workflowId: string; to?: string; payload?: Record<string, unknown> };
+
+/**
+ * Queued by `ctx.trigger()` — instructs Novu to fire a workflow from inside an agent handler.
+ *
+ * - `workflowId` — the workflow identifier (same string used in `novu.events.trigger()`).
+ * - `to` — recipient(s) for the workflow. Accepts a subscriberId string, a subscriber object,
+ *   a topic, or arrays thereof. When omitted, Novu falls back to the conversation's resolved
+ *   subscriber. If no subscriber can be resolved, the trigger is skipped and a warning is logged.
+ * - `payload` — arbitrary data forwarded to the workflow's payload schema.
+ */
+export type TriggerSignal = {
+  type: 'trigger';
+  workflowId: string;
+  to?: TriggerRecipientsPayload;
+  payload?: Record<string, unknown>;
+};
+
 export type Signal = MetadataSignal | TriggerSignal;
 
 /** In-place edit of a previously posted agent message. Identified by platform message id. */

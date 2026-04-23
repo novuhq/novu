@@ -1,5 +1,6 @@
 import { Fragment, useId, useState } from 'react';
 import {
+  RiArrowRightUpLine,
   RiCheckboxCircleFill,
   RiExpandUpDownLine,
   RiReplyLine,
@@ -7,9 +8,12 @@ import {
   RiRouteFill,
   RiShareForwardLine,
 } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ConversationActivityDto } from '@/api/conversations';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { useEnvironment } from '@/context/environment/hooks';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
@@ -163,7 +167,17 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
 
 function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
   const isAgentAction = activity.senderType === 'agent' || activity.senderType === 'system';
-  const signalType = activity.signalData?.type;
+  const signalData = activity.signalData;
+  const signalType = signalData?.type;
+  const { currentEnvironment } = useEnvironment();
+
+  const transactionId =
+    signalType === 'trigger' && signalData?.type === 'trigger' ? signalData.payload?.transactionId : undefined;
+
+  const activityFeedLink =
+    transactionId && currentEnvironment?.slug
+      ? `${buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug })}?transactionId=${transactionId}`
+      : undefined;
 
   const icon =
     signalType === 'trigger' ? (
@@ -180,6 +194,15 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
       <span className="text-text-soft shrink-0 text-[10px] font-medium leading-[14px]">
         {formatActivityTimestamp(activity.createdAt)}
       </span>
+      {activityFeedLink && (
+        <Link
+          to={activityFeedLink}
+          className="text-text-soft hover:text-text-sub ml-auto shrink-0 rounded p-0.5 transition-colors"
+          aria-label="View workflow run in activity feed"
+        >
+          <RiArrowRightUpLine className="size-3.5" />
+        </Link>
+      )}
     </div>
   );
 }

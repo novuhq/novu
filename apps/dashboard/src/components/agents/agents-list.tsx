@@ -2,6 +2,7 @@ import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
@@ -22,11 +23,14 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
 
 export function AgentsList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
@@ -80,9 +84,19 @@ export function AgentsList() {
   const createMutation = useMutation({
     mutationFn: (body: CreateAgentBody) =>
       createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
-    onSuccess: async () => {
+    onSuccess: async (createdAgent) => {
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
+      setCreateOpen(false);
+
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+        environmentSlug: environment.slug ?? '',
+        agentIdentifier: encodeURIComponent(createdAgent.identifier),
+        agentTab: AGENT_DETAILS_DEFAULT_TAB,
+      })}${location.search}`;
+
+      navigate(agentDetailsPath);
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';

@@ -10,8 +10,13 @@ export const AddGroupAction = ({
   rules,
   handleOnClick,
   context,
+  disabled,
 }: ActionWithRulesAndAddersProps) => {
   if (level === 1 || (rules && rules.length >= 10)) {
+    return null;
+  }
+
+  if (disabled) {
     return null;
   }
 

@@ -1,0 +1,44 @@
+diff --git a/lib/smtp-connection.js b/lib/smtp-connection.js
+index f57f7009b49fb2087224f8d17930fc8d0d1b7f74..668b1c2e170002c57fff44caa9f8f1db6835ca33 100644
+--- a/lib/smtp-connection.js
++++ b/lib/smtp-connection.js
+@@ -232,7 +232,7 @@ SMTPConnection.prototype._setListeners = function () {
+  */
+ SMTPConnection.prototype._onClose = function ( /* hadError */ ) {
+     if (this._parser) {
+-        this._parser.closed = true;
++        this._parser._smtpClosed = true;
+         this._socket.unpipe(this._parser);
+         this._parser = false;
+     }
+diff --git a/lib/smtp-stream.js b/lib/smtp-stream.js
+index 04151fade709472c2c9376d4f040f1036e9d5d8d..6a68f3199e0dd09caf8d0089fa33c5ed235c8663 100755
+--- a/lib/smtp-stream.js
++++ b/lib/smtp-stream.js
+@@ -35,7 +35,7 @@ function SMTPStream(options) {
+     // unprocessed bytes from the last parsing iteration (used in data mode)
+     this._lastBytes = false;
+ 
+-    this.closed = false;
++    this._smtpClosed = false;
+     // once the input stream ends, flush all output without expecting the newline
+     this.on('finish', this._flushData.bind(this));
+ }
+@@ -99,7 +99,7 @@ SMTPStream.prototype._write = function (chunk, encoding, next) {
+         next.apply(null, args);
+     };
+ 
+-    if (this.closed) {
++    if (this._smtpClosed) {
+         return done();
+     }
+ 
+@@ -244,7 +244,7 @@ SMTPStream.prototype._feedDataStream = function (chunk, done) {
+  */
+ SMTPStream.prototype._flushData = function () {
+     var line;
+-    if (this._remainder && !this.closed) {
++    if (this._remainder && !this._smtpClosed) {
+         line = this._remainder;
+         this._remainder = '';
+         this.oncommand(new Buffer(line, 'binary'));

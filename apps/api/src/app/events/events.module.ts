@@ -15,6 +15,7 @@ import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { WidgetsModule } from '../widgets/widgets.module';
 import { EventsController } from './events.controller';
+import { ParseEventRequest } from './usecases/parse-event-request';
 import { USE_CASES } from './usecases';
 
 const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOrganizationRepository];
@@ -35,5 +36,6 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOr
   ],
   controllers: [EventsController],
   providers: [...PROVIDERS, ...USE_CASES, CommunityUserRepository],
+  exports: [ParseEventRequest],
 })
 export class EventsModule {}

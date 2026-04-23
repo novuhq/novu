@@ -72,7 +72,12 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => onRequestDelete(agent)}>
+                <DropdownMenuItem
+                  className="text-destructive cursor-pointer"
+                  onClick={() => {
+                    setTimeout(() => onRequestDelete(agent), 0);
+                  }}
+                >
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>

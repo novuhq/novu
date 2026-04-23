@@ -153,11 +153,7 @@ export class BridgeExecutorService {
     });
   }
 
-  private resolveBridgeUrl(
-    config: ResolvedAgentConfig,
-    agentIdentifier: string,
-    event: AgentEventEnum
-  ): string | null {
+  private resolveBridgeUrl(config: ResolvedAgentConfig, agentIdentifier: string, event: AgentEventEnum): string | null {
     let baseUrl: string | undefined;
 
     if (config.devBridgeActive && config.devBridgeUrl) {

@@ -1,19 +1,15 @@
-import {
-  ConversationActivitySenderTypeEnum,
-  ConversationActivityTypeEnum,
-  ConversationStatusEnum,
-} from '@novu/dal';
+import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum, ConversationStatusEnum } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { BridgeExecutorService, BridgeExecutorParams } from '../services/bridge-executor.service';
+import { BridgeExecutorParams, BridgeExecutorService } from '../services/bridge-executor.service';
 import { ChatSdkService } from '../services/chat-sdk.service';
 import {
-  setupAgentTestContext,
-  seedConversation,
-  conversationRepository,
-  activityRepository,
   AgentTestContext,
+  activityRepository,
+  conversationRepository,
+  seedConversation,
+  setupAgentTestContext,
 } from './helpers/agent-test-setup';
 
 describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
@@ -45,9 +41,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
   });
 
   function postReply(body: Record<string, unknown>) {
-    return ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentIdentifier}/reply`)
-      .send(body);
+    return ctx.session.testAgent.post(`/v1/agents/${ctx.agentIdentifier}/reply`).send(body);
   }
 
   describe('Delivery and persistence', () => {
@@ -75,12 +69,10 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(convAfter!.messageCount).to.equal(countBefore + 1);
       expect(convAfter!.lastMessagePreview).to.equal('Hello from agent');
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const agentActivity = activities.find(
-        (a) => a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
+        (a) =>
+          a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
       );
       expect(agentActivity).to.exist;
       expect(agentActivity!.content).to.equal('Hello from agent');
@@ -122,10 +114,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.body.data.messageId).to.equal('platform-msg-1');
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const editActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.EDIT);
       expect(editActivity).to.exist;
       expect(editActivity!.content).to.equal('Edited content');
@@ -200,14 +189,10 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       );
       expect(conversation!.metadata).to.have.property('sentiment', 'positive');
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const signalActivity = activities.find(
         (a) =>
-          a.type === ConversationActivityTypeEnum.SIGNAL &&
-          a.senderType === ConversationActivitySenderTypeEnum.SYSTEM
+          a.type === ConversationActivityTypeEnum.SIGNAL && a.senderType === ConversationActivitySenderTypeEnum.SYSTEM
       );
       expect(signalActivity).to.exist;
       expect(signalActivity!.signalData).to.exist;
@@ -249,10 +234,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       );
       expect(conversation!.status).to.equal(ConversationStatusEnum.RESOLVED);
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const resolveActivity = activities.find(
         (a) => a.type === ConversationActivityTypeEnum.SIGNAL && a.signalData?.type === 'resolve'
       );
@@ -294,13 +276,11 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(convAfter!.metadata).to.have.property('resolved_by', 'bot');
       expect(convAfter!.status).to.equal(ConversationStatusEnum.RESOLVED);
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
 
       const messageActivity = activities.find(
-        (a) => a.type === ConversationActivityTypeEnum.MESSAGE && a.senderType === ConversationActivitySenderTypeEnum.AGENT
+        (a) =>
+          a.type === ConversationActivityTypeEnum.MESSAGE && a.senderType === ConversationActivitySenderTypeEnum.AGENT
       );
       expect(messageActivity).to.exist;
       expect(messageActivity!.content).to.equal('Here is your answer');
@@ -314,6 +294,36 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         (a) => a.type === ConversationActivityTypeEnum.SIGNAL && a.signalData?.type === 'resolve'
       );
       expect(resolveActivity).to.exist;
+    });
+  });
+
+  describe('Inactive agent', () => {
+    it('should return 422 when agent is inactive', async () => {
+      const conversationId = await seedConversation(ctx);
+      const patchRes = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      expect(patchRes.status).to.equal(200);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        reply: { text: 'This should fail' },
+      });
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('should return 422 for signal-only requests when agent is inactive', async () => {
+      const conversationId = await seedConversation(ctx);
+      const patchRes = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      expect(patchRes.status).to.equal(200);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        signals: [{ type: 'metadata', key: 'blocked', value: true }],
+      });
+
+      expect(res.status).to.equal(422);
     });
   });
 });

@@ -129,7 +129,11 @@ export async function downloadTeamsAppPackage(manifestJson: string, agentName: s
   const url = URL.createObjectURL(zip);
   const a = document.createElement('a');
   a.href = url;
-  const safeName = (agentName || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'novu-agent';
+  const safeName =
+    (agentName || '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '') || 'novu-agent';
   a.download = `${safeName}-teams-app.zip`;
   document.body.appendChild(a);
   a.click();

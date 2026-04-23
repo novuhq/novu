@@ -13,7 +13,6 @@ scripts/
 docker/
 
 # Inactive apps — no longer under active development
-apps/inbound-mail/
 apps/webhook/
 
 # Auto-generated code — do not read or modify directly

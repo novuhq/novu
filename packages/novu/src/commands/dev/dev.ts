@@ -203,7 +203,6 @@ async function discoverAgents(endpointUrl: string): Promise<string[]> {
 
     return (data.agents ?? []).map((a) => a.agentId);
   } catch {
-
     return [];
   }
 }

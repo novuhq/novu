@@ -11,7 +11,7 @@ import path from 'path';
 import shell from 'shelljs';
 import { SMTPServer } from 'smtp-server';
 import util from 'util';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 import { InboundMailService } from './inbound-mail.service';
 import logger from './logger';
@@ -154,7 +154,8 @@ class Mailin extends events.EventEmitter {
                 validateViaLocal();
               });
             } catch (e) {
-              return reject(e);
+              logger.error(e, 'Exception occurred while validating DNS', LOG_CONTEXT);
+              return reject(new Error(e));
             }
           };
 
@@ -164,6 +165,7 @@ class Mailin extends events.EventEmitter {
             validateViaDNS();
           }
         } catch (e) {
+          logger.error(e, 'Exception occurred while validating address', LOG_CONTEXT);
           reject(e);
         }
       });
@@ -340,6 +342,25 @@ class Mailin extends events.EventEmitter {
       parsedEmail.envelopeFrom = connection.envelope.mailFrom;
       parsedEmail.envelopeTo = connection.envelope.rcptTo;
 
+      /*
+       * Preserve threading headers so downstream consumers can correlate
+       * replies back to the original outbound message.
+       * mailparser@0.6.x stores both fields as string[] — normalise them to
+       * the shapes expected by IInboundParseDataDto / InboundEmailParseCommand
+       * so class-validator's @IsString() / @IsOptional() passes correctly.
+       * inReplyTo  → string | null  (RFC 5322 allows only one message-id)
+       * references → string[] | null
+       */
+      parsedEmail.inReplyTo = Array.isArray(parsedEmail.inReplyTo)
+        ? (parsedEmail.inReplyTo[0] ?? null)
+        : (parsedEmail.inReplyTo ?? null);
+
+      parsedEmail.references = Array.isArray(parsedEmail.references)
+        ? parsedEmail.references.length > 0
+          ? parsedEmail.references
+          : null
+        : (parsedEmail.references ?? null);
+
       _this.emit('message', connection, parsedEmail, rawEmail);
 
       return parsedEmail;
@@ -354,12 +375,20 @@ class Mailin extends events.EventEmitter {
         const toAddress = getAddressTo(finalizedMessage);
         const parts: string[] = toAddress.split('@');
         const username: string = parts[0];
-        const environmentId = username.split('-nv-e=').at(-1);
+        const domainPart: string = parts[1];
+
+        /*
+         * Legacy reply-to addresses encode the environmentId in the username segment
+         * (e.g. parse+txnId-nv-e=envId@domain). For plain domain-route addresses
+         * (e.g. support@customer.com) fall back to the domain part as the groupId
+         * so BullMQ can still bucket concurrent jobs by domain.
+         */
+        const groupId = username.includes('-nv-e=') ? username.split('-nv-e=').at(-1) : domainPart;
 
         inboundMailService.inboundParseQueueService.add({
           name: finalizedMessage.messageId,
           data: finalizedMessage,
-          groupId: environmentId,
+          groupId,
         });
 
         return resolve();
@@ -378,7 +407,7 @@ class Mailin extends events.EventEmitter {
       try {
         _session = session;
         const connection = _.cloneDeep(session);
-        connection.id = uuid.v4();
+        connection.id = uuidv4();
         const mailPath = path.join(configuration.tmp, connection.id);
         connection.mailPath = mailPath;
 
@@ -407,8 +436,7 @@ class Mailin extends events.EventEmitter {
           _this.emit('error', connection, error);
         });
       } catch (error) {
-        logger.error('Exception occurred while performing onData callback', LOG_CONTEXT);
-        logger.error(error);
+        logger.error(error, 'Exception occurred while performing onData callback', LOG_CONTEXT);
       }
     }
 

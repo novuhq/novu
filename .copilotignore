@@ -4,7 +4,6 @@
 .idea/
 
 # Playground / demo apps — not production code
-playground/
 
 # CI/CD, build infrastructure, and Docker configs
 .github/
@@ -13,7 +12,6 @@ docker/
 .source/
 
 # Inactive apps — no longer under active development
-apps/inbound-mail/
 apps/webhook/
 
 # Auto-generated code — do not read or modify directly

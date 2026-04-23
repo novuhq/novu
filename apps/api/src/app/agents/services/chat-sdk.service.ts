@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { SentMessageInfo } from '@novu/framework';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
@@ -58,7 +58,6 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    @Inject(forwardRef(() => AgentInboundHandler))
     private readonly inboundHandler: AgentInboundHandler
   ) {
     this.instances = new LRUCache<string, CachedChat>({
@@ -360,7 +359,9 @@ export class ChatSdkService implements OnModuleDestroy {
       }
       case AgentPlatformEnum.TEAMS: {
         if (!credentials.clientId || !credentials.secretKey || !credentials.tenantId) {
-          throw new BadRequestException('Teams agent integration requires appId, appPassword, and appTenantId credentials');
+          throw new BadRequestException(
+            'Teams agent integration requires appId, appPassword, and appTenantId credentials'
+          );
         }
 
         const { createTeamsAdapter } = await esmImport('@chat-adapter/teams');
@@ -374,7 +375,12 @@ export class ChatSdkService implements OnModuleDestroy {
         };
       }
       case AgentPlatformEnum.WHATSAPP: {
-        if (!credentials.apiToken || !credentials.secretKey || !credentials.token || !credentials.phoneNumberIdentification) {
+        if (
+          !credentials.apiToken ||
+          !credentials.secretKey ||
+          !credentials.token ||
+          !credentials.phoneNumberIdentification
+        ) {
           throw new BadRequestException(
             'WhatsApp agent integration requires accessToken, appSecret, verifyToken, and phoneNumberId credentials'
           );

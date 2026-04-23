@@ -131,17 +131,14 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const { emojiList, unicodeMap } = useAgentEmoji();
 
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
-  const reactionOnResolved = agent.behavior?.reactionOnResolved === undefined
-    ? DEFAULT_REACTION_ON_RESOLVED
-    : agent.behavior.reactionOnResolved;
+  const reactionOnResolved =
+    agent.behavior?.reactionOnResolved === undefined ? DEFAULT_REACTION_ON_RESOLVED : agent.behavior.reactionOnResolved;
 
   const { mutate, isPending } = useMutation({
     mutationFn: (body: { acknowledgeOnReceived?: boolean; reactionOnResolved?: string | null }) =>
-      updateAgent(
-        requireEnvironment(currentEnvironment, 'No environment selected'),
-        agent.identifier,
-        { behavior: body }
-      ),
+      updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
+        behavior: body,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agent.identifier),
