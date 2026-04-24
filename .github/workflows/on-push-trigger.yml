@@ -103,20 +103,14 @@ jobs:
             fi
           fi
 
-          # Determine whether each downstream workflow needs to run
           TRIGGER_DEPLOY=false
-          if [ "$DEPLOY_API" = "true" ] || [ "$DEPLOY_WORKER" = "true" ] || [ "$DEPLOY_WS" = "true" ]; then
+          if [ "$DEPLOY_API" = "true" ] || [ "$DEPLOY_WORKER" = "true" ] || [ "$DEPLOY_WS" = "true" ] || \
+             [ "$DEPLOY_WEBHOOK" = "true" ] || [ "$DEPLOY_INBOUND_MAIL" = "true" ]; then
             TRIGGER_DEPLOY=true
-          fi
-
-          TRIGGER_DEPLOY_LEGACY=false
-          if [ "$DEPLOY_WEBHOOK" = "true" ] || [ "$DEPLOY_INBOUND_MAIL" = "true" ]; then
-            TRIGGER_DEPLOY_LEGACY=true
           fi
 
           echo "skip_deployment=$SKIP_DEPLOYMENT" >> $GITHUB_OUTPUT
           echo "trigger_deploy=$TRIGGER_DEPLOY" >> $GITHUB_OUTPUT
-          echo "trigger_deploy_legacy=$TRIGGER_DEPLOY_LEGACY" >> $GITHUB_OUTPUT
           echo "deploy_api=$DEPLOY_API" >> $GITHUB_OUTPUT
           echo "deploy_worker=$DEPLOY_WORKER" >> $GITHUB_OUTPUT
           echo "deploy_ws=$DEPLOY_WS" >> $GITHUB_OUTPUT
@@ -141,15 +135,6 @@ jobs:
             -f environment=staging \
             -f deploy_api=${{ steps.determine-services.outputs.deploy_api }} \
             -f deploy_worker=${{ steps.determine-services.outputs.deploy_worker }} \
-            -f deploy_ws=${{ steps.determine-services.outputs.deploy_ws }}
-
-      - name: Trigger Legacy Deploy Workflow via GitHub CLI
-        if: steps.determine-services.outputs.skip_deployment == 'false' && steps.determine-services.outputs.trigger_deploy_legacy == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh workflow run "deploy-legacy.yml" \
-            --ref next \
-            -f environment=staging \
+            -f deploy_ws=${{ steps.determine-services.outputs.deploy_ws }} \
             -f deploy_webhook=${{ steps.determine-services.outputs.deploy_webhook }} \
             -f deploy_inbound_mail=${{ steps.determine-services.outputs.deploy_inbound_mail }}
