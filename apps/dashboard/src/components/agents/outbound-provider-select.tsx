@@ -155,7 +155,7 @@ export function OutboundProviderSelect({
     <div className="flex w-full flex-col gap-1">
       <div className="flex items-center gap-px">
         <span className="text-text-sub text-label-xs font-medium leading-4">Send emails via</span>
-        <span className="text-text-soft ml-0.5 text-[10px]">&#9432;</span>
+        <span aria-hidden="true" className="text-text-soft ml-0.5 text-[10px]">&#9432;</span>
       </div>
 
       <div className="w-full max-w-[320px]">

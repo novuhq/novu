@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, DomainRepository, IntegrationRepository } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
-import { ClientSession } from 'mongoose';
 
 import { DeleteAgentCommand } from './delete-agent.command';
 
@@ -32,37 +31,23 @@ export class DeleteAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    await this.agentRepository.withTransaction(async (session) => {
-      await this.cleanupEmailResources(agent._id, command, session);
+    await this.cleanupEmailResources(agent._id, command);
 
-      await this.agentIntegrationRepository.delete(
-        {
-          _agentId: agent._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session }
-      );
+    await this.agentIntegrationRepository.delete({
+      _agentId: agent._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
 
-      await this.agentRepository.delete(
-        {
-          _id: agent._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session }
-      );
+    await this.agentRepository.delete({
+      _id: agent._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
     });
   }
 
-  private async cleanupEmailResources(
-    agentId: string,
-    command: DeleteAgentCommand,
-    session: ClientSession | null
-  ): Promise<void> {
-    await this.domainRepository.removeRoutesByDestination(command.environmentId, command.organizationId, agentId, {
-      session,
-    });
+  private async cleanupEmailResources(agentId: string, command: DeleteAgentCommand): Promise<void> {
+    await this.domainRepository.removeRoutesByDestination(command.environmentId, command.organizationId, agentId, {});
 
     const links = await this.agentIntegrationRepository.find(
       {
@@ -70,8 +55,7 @@ export class DeleteAgent {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_integrationId'],
-      { session }
+      ['_integrationId']
     );
 
     const integrationIds = links.map((l) => l._integrationId).filter(Boolean);
@@ -84,19 +68,15 @@ export class DeleteAgent {
         _organizationId: command.organizationId,
         providerId: EmailProviderIdEnum.NovuAgent,
       },
-      '_id',
-      { session }
+      '_id'
     );
 
     for (const integration of novuEmailIntegrations) {
-      await this.integrationRepository.delete(
-        {
-          _id: integration._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session }
-      );
+      await this.integrationRepository.delete({
+        _id: integration._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      });
       this.logger.info(
         { agentId, integrationId: integration._id },
         'Deleted orphaned NovuAgent integration',

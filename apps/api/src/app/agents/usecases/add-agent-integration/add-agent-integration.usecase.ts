@@ -66,6 +66,10 @@ export class AddAgentIntegration {
       return this.findOrCreateNovuEmailLink(agent._id, command);
     }
 
+    if (!command.integrationIdentifier) {
+      throw new BadRequestException('integrationIdentifier is required when providerId is not NovuAgent.');
+    }
+
     return this.linkExistingIntegration(agent._id, command);
   }
 
@@ -256,7 +260,12 @@ export class AddAgentIntegration {
     organizationId: string
   ): Promise<void> {
     await this.integrationRepository.update(
-      { _id: integrationId, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        _id: integrationId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        'credentials.secretKey': { $exists: false },
+      },
       { $set: { 'credentials.secretKey': encryptSecret(randomBytes(32).toString('hex')) } }
     );
   }
