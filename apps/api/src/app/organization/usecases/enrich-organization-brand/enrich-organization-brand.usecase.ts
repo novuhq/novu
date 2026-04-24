@@ -16,6 +16,7 @@ const FREE_EMAIL_DOMAINS = new Set([
   'icloud.com',
   'mail.com',
   'protonmail.com',
+  'proton.me',
   'zoho.com',
   'yandex.com',
   'live.com',
@@ -23,7 +24,31 @@ const FREE_EMAIL_DOMAINS = new Set([
   'me.com',
   'gmx.com',
   'inbox.com',
+  '163.com',
+  'qq.com',
+  'mail.ru',
+  'emailsink.dev',
 ]);
+
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'minitts.net',
+  'azsc.us',
+  'emaildisruptor.com',
+  'skymail.ink',
+  'tutamail.com',
+  'kksk.uk',
+  'gtempaccount.com',
+  'privaterelay.appleid.com',
+]);
+
+function isBlockedEmailDomain(domain: string): boolean {
+  const normalized = domain.toLowerCase();
+  if (FREE_EMAIL_DOMAINS.has(normalized) || DISPOSABLE_EMAIL_DOMAINS.has(normalized)) {
+    return true;
+  }
+
+  return normalized.includes('.edu.');
+}
 
 @Injectable()
 export class EnrichOrganizationBrand {
@@ -45,7 +70,7 @@ export class EnrichOrganizationBrand {
     if (!isEnabled) return;
 
     const domain = this.extractDomain(command.domain);
-    if (!domain || FREE_EMAIL_DOMAINS.has(domain.toLowerCase())) {
+    if (!domain || isBlockedEmailDomain(domain)) {
       await this.organizationRepository.update(
         { _id: command.user.organizationId },
         {
