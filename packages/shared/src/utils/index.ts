@@ -2,6 +2,7 @@ export * from './bridge.utils';
 export * from './buildWorkflowPreferences';
 export * from './checkIsResponseError';
 export * from './env';
+export * from './freeEmailDomains';
 export * from './issues';
 export * from './locales';
 export * from './normalizeEmail';
