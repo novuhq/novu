@@ -41,13 +41,17 @@ const DISPOSABLE_EMAIL_DOMAINS = new Set([
   'privaterelay.appleid.com',
 ]);
 
-function isBlockedEmailDomain(domain: string): boolean {
+function isBlockedOrganizationDomain(domain: string): boolean {
   const normalized = domain.toLowerCase();
   if (FREE_EMAIL_DOMAINS.has(normalized) || DISPOSABLE_EMAIL_DOMAINS.has(normalized)) {
     return true;
   }
 
-  return normalized.includes('.edu.');
+  const labels = normalized.split('.');
+  const lastLabel = labels[labels.length - 1];
+  const secondToLastLabel = labels.length >= 2 ? labels[labels.length - 2] : undefined;
+
+  return lastLabel === 'edu' || secondToLastLabel === 'edu';
 }
 
 @Injectable()
@@ -70,7 +74,7 @@ export class EnrichOrganizationBrand {
     if (!isEnabled) return;
 
     const domain = this.extractDomain(command.domain);
-    if (!domain || isBlockedEmailDomain(domain)) {
+    if (!domain || isBlockedOrganizationDomain(domain)) {
       await this.organizationRepository.update(
         { _id: command.user.organizationId },
         {
