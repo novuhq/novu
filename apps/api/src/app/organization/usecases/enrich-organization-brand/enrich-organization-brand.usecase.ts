@@ -47,11 +47,12 @@ function isBlockedOrganizationDomain(domain: string): boolean {
     return true;
   }
 
+  // Block country-coded .edu domains like foo.edu.au, bar.edu.br.
+  // Top-level .edu (e.g., mit.edu) is intentionally not blocked.
   const labels = normalized.split('.');
-  const lastLabel = labels[labels.length - 1];
-  const secondToLastLabel = labels.length >= 2 ? labels[labels.length - 2] : undefined;
+  const eduIdx = labels.indexOf('edu');
 
-  return lastLabel === 'edu' || secondToLastLabel === 'edu';
+  return eduIdx > 0 && eduIdx < labels.length - 1;
 }
 
 @Injectable()
