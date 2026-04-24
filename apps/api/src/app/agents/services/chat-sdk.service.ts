@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
-import { CacheService, PinoLogger } from '@novu/application-generic';
+import { CacheService, decryptCredentials, MailFactory, PinoLogger } from '@novu/application-generic';
+import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
+import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
@@ -11,6 +13,13 @@ import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
+
+/** Ensure a Message-ID value is wrapped in RFC 5322 angle brackets. */
+function wrapMsgId(id: string): string {
+  const trimmed = id.trim();
+
+  return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
+}
 
 /**
  * ICredentials field mapping per platform adapter:
@@ -58,7 +67,8 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly inboundHandler: AgentInboundHandler
+    private readonly inboundHandler: AgentInboundHandler,
+    private readonly integrationRepository: IntegrationRepository
   ) {
     this.instances = new LRUCache<string, CachedChat>({
       max: MAX_CACHED_INSTANCES,
@@ -296,7 +306,73 @@ export class ChatSdkService implements OnModuleDestroy {
       token: c.token ?? null,
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
+      replyDomain: c.replyDomain ?? null,
+      outboundIntegrationId: c.outboundIntegrationId ?? null,
     });
+  }
+
+  private buildSendEmailCallback(
+    config: ResolvedAgentConfig,
+    outboundIntegrationId: string | undefined
+  ): (params: { to: string; subject: string; html: string; text?: string; inReplyTo?: string; references?: string; messageId?: string }) => Promise<{ messageId: string }> {
+    return async (params) => {
+      if (!outboundIntegrationId) {
+        throw new BadRequestException(
+          'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
+            'Configure one in the agent email setup.'
+        );
+      }
+
+      const integration = await this.integrationRepository.findOne({
+        _id: outboundIntegrationId,
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      if (!integration) {
+        throw new BadRequestException(
+          `Outbound email integration ${outboundIntegrationId} not found or does not belong to this environment`
+        );
+      }
+
+      if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+        throw new BadRequestException(
+          `Integration ${outboundIntegrationId} is the inbound NovuAgent provider and cannot be used as an outbound sender`
+        );
+      }
+
+      if (!integration.active) {
+        throw new BadRequestException(
+          `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
+        );
+      }
+
+      const decrypted = decryptCredentials(integration.credentials);
+      const mailFactory = new MailFactory();
+      const handler = mailFactory.getHandler(
+        { ...integration, credentials: decrypted },
+        config.credentials.replyDomain
+      );
+
+      const mailOptions: IEmailOptions = {
+        to: [params.to],
+        subject: params.subject,
+        html: params.html,
+        text: params.text,
+        from: config.credentials.replyDomain,
+        senderName: config.credentials.senderName || undefined,
+        headers: {
+          ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+          ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+          ...(params.references ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') } : {}),
+        },
+      };
+
+      const result = await handler.send(mailOptions);
+
+      return { messageId: result?.id || params.messageId || '' };
+    };
   }
 
   private async createChatInstance(
@@ -394,6 +470,26 @@ export class ChatSdkService implements OnModuleDestroy {
             appSecret: credentials.secretKey,
             verifyToken: credentials.token,
             phoneNumberId: credentials.phoneNumberIdentification,
+          }),
+        };
+      }
+      case AgentPlatformEnum.EMAIL: {
+        const { replyDomain, senderName, outboundIntegrationId } = credentials;
+
+        if (!replyDomain || !credentials.secretKey) {
+          throw new BadRequestException(
+            'Email agent integration requires replyDomain and secretKey credentials'
+          );
+        }
+
+        const { createNovuEmailAdapter } = await esmImport('@novu/chat-adapter-email');
+
+        return {
+          email: createNovuEmailAdapter({
+            fromAddress: replyDomain,
+            fromName: senderName,
+            signingSecret: credentials.secretKey,
+            sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
           }),
         };
       }

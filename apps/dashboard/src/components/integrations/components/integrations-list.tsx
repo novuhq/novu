@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, providers as novuProviders } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, providers as novuProviders } from '@novu/shared';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -84,20 +84,22 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
   const availableIntegrations = novuProviders;
 
   const groupedIntegrations = useMemo(() => {
-    return integrations?.reduce(
-      (acc, integration) => {
-        const channel = integration.channel;
+    return integrations
+      ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
+      .reduce(
+        (acc, integration) => {
+          const channel = integration.channel;
 
-        if (!acc[channel]) {
-          acc[channel] = [];
-        }
+          if (!acc[channel]) {
+            acc[channel] = [];
+          }
 
-        acc[channel].push(integration);
+          acc[channel].push(integration);
 
-        return acc;
-      },
-      {} as Record<ChannelTypeEnum, typeof integrations>
-    );
+          return acc;
+        },
+        {} as Record<ChannelTypeEnum, typeof integrations>
+      );
   }, [integrations]);
 
   if (isLoading || !currentEnvironment) {

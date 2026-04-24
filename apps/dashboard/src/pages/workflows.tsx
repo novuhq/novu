@@ -5,6 +5,7 @@ import {
   PermissionsEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import type { Variants } from 'motion/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -19,6 +20,7 @@ import {
   RiRouteFill,
 } from 'react-icons/ri';
 import { Link, Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { fetchWorkflowSuggestions } from '@/api/ai';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { AiThinking } from '@/components/icons/ai-thinking';
@@ -53,6 +55,7 @@ import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { itemVariants } from '@/utils/animation';
+import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -209,6 +212,17 @@ export const WorkflowsPage = () => {
 
   const { currentEnvironment } = useEnvironment();
   const { tags } = useTags();
+  // fetch workflow suggestions on the page visit to populate quicker
+  useQuery({
+    queryKey: [QueryKeys.fetchWorkflowSuggestions, currentEnvironment?._id],
+    queryFn: () => {
+      if (!currentEnvironment) throw new Error('Environment not loaded');
+
+      return fetchWorkflowSuggestions({ environment: currentEnvironment });
+    },
+    enabled: !!currentEnvironment,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
 
   const queryParam = searchParams.get('query') || '';
   const hasActiveFilters =

@@ -97,9 +97,7 @@ export class ListAgentIntegrations {
         const integration = idToIntegration.get(link._integrationId);
 
         if (!integration) {
-          throw new Error(
-            `Integration "${link._integrationId}" missing for agent-integration link "${link._id}".`
-          );
+          throw new Error(`Integration "${link._integrationId}" missing for agent-integration link "${link._id}".`);
         }
 
         return toAgentIntegrationResponse(link, integration);

@@ -9,7 +9,8 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
-import { AddressingTypeEnum, TriggerRequestCategoryEnum, type TriggerRecipientsPayload } from '@novu/shared';
+import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
@@ -17,10 +18,6 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-c
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import {
-  ParseEventRequest,
-  ParseEventRequestMulticastCommand,
-} from '../../../events/usecases/parse-event-request';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()

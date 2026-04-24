@@ -69,6 +69,9 @@ export enum FeatureNameEnum {
 
   // Domains Features
   DOMAINS_BOOLEAN = 'domainsBoolean',
+
+  // Agent Features
+  AGENT_EMAIL_INTEGRATION = 'agentEmailIntegration',
 }
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
@@ -490,6 +493,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom domains', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom domains', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom domains', value: true },
+  },
+  [FeatureNameEnum.AGENT_EMAIL_INTEGRATION]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'Agent email integration', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'Agent email integration', value: false },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Agent email integration', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Agent email integration', value: true },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Agent email integration', value: true },
   },
 };
 

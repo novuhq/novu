@@ -1,4 +1,4 @@
-import { ENDPOINT_TYPES, ChannelEndpointType } from '@novu/shared';
+import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 
 interface PlatformEndpointMapping {
