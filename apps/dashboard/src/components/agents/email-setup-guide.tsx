@@ -83,17 +83,7 @@ export function EmailSetupGuide({
     if (!testConnected) return testStepIndex;
 
     return testStepIndex + 1;
-  }, [
-    base,
-    outboundId,
-    needsCredentialsStep,
-    hasOutboundCredentials,
-    credentialsStepIndex,
-    hasAddresses,
-    inboundStepIndex,
-    testStepIndex,
-    testConnected,
-  ]);
+  }, [base, outboundId, needsCredentialsStep, hasOutboundCredentials, credentialsStepIndex, hasAddresses, inboundStepIndex, testStepIndex, testConnected]);
 
   const stepsColumn = (
     <>

@@ -1,3 +1,4 @@
+
 FROM node:22.22.1-alpine3.22 as dev_base
 RUN apk add g++ make py3-pip
 
@@ -32,6 +33,7 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
+RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
@@ -53,6 +55,14 @@ ARG PACKAGE_PATH
 
 ENV CI=true
 
+# Allow the non-root USER 1000 to bind to privileged ports (SMTP :25).
+# NET_BIND_SERVICE is in Fargate's default container capability set, so the
+# kernel honors this file capability on exec without any linuxParameters changes.
+USER root
+RUN apk add --no-cache libcap && \
+    setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(which node)")"
+USER 1000
+
 WORKDIR /usr/src/app
 
 COPY --chown=1000:1000 ./meta .
@@ -68,4 +78,4 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --reporter=silent
 
 WORKDIR /usr/src/app/apps/inbound-mail
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/src/main.js" ]
