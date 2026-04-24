@@ -55,6 +55,14 @@ ARG PACKAGE_PATH
 
 ENV CI=true
 
+# Allow the non-root USER 1000 to bind to privileged ports (SMTP :25).
+# NET_BIND_SERVICE is in Fargate's default container capability set, so the
+# kernel honors this file capability on exec without any linuxParameters changes.
+USER root
+RUN apk add --no-cache libcap && \
+    setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(which node)")"
+USER 1000
+
 WORKDIR /usr/src/app
 
 COPY --chown=1000:1000 ./meta .
