@@ -45,6 +45,10 @@ export class AddAgentIntegration {
       throw new BadRequestException('Either integrationIdentifier or providerId must be provided.');
     }
 
+    if (command.integrationIdentifier && command.providerId) {
+      throw new BadRequestException('Provide exactly one of integrationIdentifier or providerId, not both.');
+    }
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.agentIdentifier,

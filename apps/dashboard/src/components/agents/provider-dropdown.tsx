@@ -296,7 +296,8 @@ export function ProviderDropdown({
     try {
       if (item.providerId === EmailProviderIdEnum.NovuAgent) {
         const link = await addAgentIntegrationMutation.mutateAsync({ providerId: item.providerId });
-        onSelect(item.providerId, link.integration);
+        showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
+        onSelect(item.providerId, link.integration as unknown as IIntegration);
         setOpen(false);
       } else if (item.integration) {
         const alreadyLinked = linkedIntegrationIds?.has(item.integration._id);
