@@ -1,24 +1,24 @@
 import {
   DomainRouteTypeEnum,
+  DomainStatusEnum,
   emailProviders as emailProviderConfigs,
   EmailProviderIdEnum,
   type IIntegration,
 } from '@novu/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type AgentResponse } from '@/api/agents';
-import { type DomainResponse, type UpdateDomainBody, fetchDomains, updateDomain } from '@/api/domains';
+import { type DomainResponse, fetchDomains, updateDomain } from '@/api/domains';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { QueryKeys } from '@/utils/query-keys';
 
-export const CATCH_ALL_ADDRESS = '*';
-
-function deriveReplyDomain(localPart: string, domain: string): string | undefined {
-  if (!localPart || !domain || localPart === CATCH_ALL_ADDRESS) return undefined;
-  return `${localPart}@${domain}`;
-}
+export type ConfiguredAddress = {
+  address: string;
+  domain: string;
+  domainId: string;
+};
 
 export function useEmailSetupCredentials({
   emailIntegration,
@@ -31,52 +31,22 @@ export function useEmailSetupCredentials({
 }) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
-  const queryClient = useQueryClient();
-
-  // domainId is a mutation variable (not a closure) so upsertAgentRoute can be
-  // called with any domain at event time — useUpdateDomain can't be used here
-  // because it bakes a single domainId into its mutationFn closure at call time.
-  const { mutate: updateDomainRoutes } = useMutation({
-    // biome-ignore lint/style/noNonNullAssertion: currentEnvironment is guaranteed non-null when triggered from a user interaction
-    mutationFn: ({ domainId, body }: { domainId: string; body: UpdateDomainBody }) =>
-      updateDomain(domainId, body, currentEnvironment!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id] });
-    },
-    onError: () => {
-      showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
-    },
-  });
 
   const [outboundId, setOutboundId] = useState('');
-  const [localPart, setLocalPart] = useState('');
-  const [domainName, setDomainName] = useState('');
-  const [replyFrom, setReplyFrom] = useState('');
 
-  // Write-through cache keeps the full credentials snapshot between queued saves
   const serverCredentials = emailIntegration?.credentials ?? {};
   const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
   useEffect(() => {
     credentialsRef.current = { ...credentialsRef.current, ...serverCredentials };
   }, [emailIntegration]);
 
-  // Initialize from server state once per unique integration ID.
-  // Keying off _id (not the object) ensures re-hydration when the user switches
-  // between integrations without the component remounting.
-  const initializedForId = useRef<string | undefined>(undefined);
+  const hasInitializedFromServer = useRef(false);
   useEffect(() => {
-    if (!emailIntegration || initializedForId.current === emailIntegration._id) return;
-    initializedForId.current = emailIntegration._id;
+    if (!emailIntegration || hasInitializedFromServer.current) return;
+    hasInitializedFromServer.current = true;
     const creds = emailIntegration.credentials ?? {};
     if (creds.outboundIntegrationId) setOutboundId(creds.outboundIntegrationId as string);
-    if (creds.inboundAddress) setLocalPart(creds.inboundAddress as string);
-    if (creds.inboundDomain) setDomainName(creds.inboundDomain as string);
-    // Catch-all replyDomain can't be auto-computed, so restore it explicitly
-    if (creds.inboundAddress === CATCH_ALL_ADDRESS && creds.replyDomain) {
-      setReplyFrom(creds.replyDomain as string);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailIntegration?._id]);
+  }, [emailIntegration]);
 
   const domainsQuery = useQuery<DomainResponse[]>({
     queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id],
@@ -85,18 +55,38 @@ export function useEmailSetupCredentials({
   });
   const domains = domainsQuery.data ?? [];
 
+  const configuredAddresses = useMemo<ConfiguredAddress[]>(() => {
+    if (!agent._id) return [];
+
+    const result: ConfiguredAddress[] = [];
+    for (const domain of domains) {
+      for (const route of domain.routes ?? []) {
+        if (route.type === DomainRouteTypeEnum.AGENT && route.destination === agent._id) {
+          result.push({ address: route.address, domain: domain.name, domainId: domain._id });
+        }
+      }
+    }
+
+    return result;
+  }, [domains, agent._id]);
+
   const outboundIntegration = useMemo(
     () => (outboundId ? integrations?.find((i) => i._id === outboundId) : undefined),
     [integrations, outboundId]
   );
   const isOutboundDemo = outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
+  const hasOutboundCredentials = useMemo(() => {
+    if (!outboundIntegration) return false;
+    const creds = outboundIntegration.credentials ?? {};
+
+    return Object.values(creds).some((v) => v !== undefined && v !== null && v !== '');
+  }, [outboundIntegration]);
   const outboundProviderConfig = useMemo(
     () => (outboundIntegration ? emailProviderConfigs.find((p) => p.id === outboundIntegration.providerId) : undefined),
     [outboundIntegration]
   );
 
-  // Serialized save queue prevents out-of-order writes when multiple fields change quickly
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   function saveCredentials(patch: Record<string, unknown>) {
@@ -125,74 +115,76 @@ export function useEmailSetupCredentials({
       });
   }
 
-  function upsertAgentRoute(address: string, domain: DomainResponse) {
-    if (!currentEnvironment || !agent._id) return;
-    const existingRoutes = domain.routes ?? [];
-    if (existingRoutes.some((r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id)) {
-      return;
-    }
-    const updatedRoutes = [
-      // Remove same-address AGENT routes AND any orphaned routes from this agent
-      // (e.g. leftover 'wine-bot' route when the user switches to a different address)
-      ...existingRoutes.filter(
-        (r) => !(r.type === DomainRouteTypeEnum.AGENT && (r.address === address || r.destination === agent._id))
-      ),
-      { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id },
-    ];
-    updateDomainRoutes({ domainId: domain._id, body: { routes: updatedRoutes } });
-  }
+  const addAddress = useCallback(
+    (address: string, domain: DomainResponse) => {
+      if (!currentEnvironment || !agent._id) return;
+      const existingRoutes = domain.routes ?? [];
+
+      const ownRoute = existingRoutes.find(
+        (r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id
+      );
+      if (ownRoute) return;
+
+      const conflicting = existingRoutes.find(
+        (r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination !== agent._id
+      );
+      if (conflicting) {
+        showErrorToast(
+          `"${address}@${domain.name}" is already routed to another agent. Each address can only route to one agent.`,
+          'Address already in use'
+        );
+
+        return;
+      }
+
+      const updatedRoutes = [
+        ...existingRoutes,
+        { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id },
+      ];
+      updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment)
+        .then(() => domainsQuery.refetch())
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Could not create inbound route on the domain.';
+          showErrorToast(message, 'Route creation failed');
+        });
+    },
+    [currentEnvironment, agent._id, domains, domainsQuery]
+  );
+
+  const removeAddress = useCallback(
+    (address: string, domainId: string) => {
+      if (!currentEnvironment || !agent._id) return;
+      const domain = domains.find((d) => d._id === domainId);
+      if (!domain) return;
+      const updatedRoutes = (domain.routes ?? []).filter(
+        (r) => !(r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id)
+      );
+      updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment)
+        .then(() => domainsQuery.refetch())
+        .catch(() => {
+          showErrorToast('Could not remove inbound route from the domain.', 'Route removal failed');
+        });
+    },
+    [currentEnvironment, agent._id, domains, domainsQuery]
+  );
 
   function onOutboundSelect(id: string) {
     setOutboundId(id);
     saveCredentials({ outboundIntegrationId: id });
   }
 
-  function onLocalPartBlur() {
-    if (!localPart || localPart === credentialsRef.current.inboundAddress) return;
-    const isCatchAll = localPart === CATCH_ALL_ADDRESS;
-    if (!isCatchAll) setReplyFrom('');
-    const replyDomain = deriveReplyDomain(localPart, domainName);
-    const patch: Record<string, unknown> = { inboundAddress: localPart };
-    if (replyDomain) patch.replyDomain = replyDomain;
-    // Explicitly clear any previously auto-computed replyDomain when entering catch-all mode
-    else if (isCatchAll) patch.replyDomain = '';
-    saveCredentials(patch);
-    if (domainName) {
-      const domain = domains.find((d) => d.name === domainName);
-      if (domain) upsertAgentRoute(localPart, domain);
-    }
-  }
-
-  function onDomainChange(name: string) {
-    setDomainName(name);
-    const replyDomain = deriveReplyDomain(localPart, name);
-    saveCredentials({ inboundDomain: name, ...(replyDomain ? { replyDomain } : {}) });
-    if (localPart) {
-      const domain = domains.find((d) => d.name === name);
-      if (domain) upsertAgentRoute(localPart, domain);
-    }
-  }
-
-  function onReplyFromBlur() {
-    if (!replyFrom || replyFrom === credentialsRef.current.replyDomain) return;
-    saveCredentials({ replyDomain: replyFrom });
-  }
-
   return {
     outboundId,
-    localPart,
-    domainName,
-    replyFrom,
+    configuredAddresses,
     domains,
     outboundIntegration,
     isOutboundDemo,
     needsCredentialsStep,
+    hasOutboundCredentials,
     outboundProviderConfig,
-    setLocalPart,
-    setReplyFrom,
     onOutboundSelect,
-    onLocalPartBlur,
-    onDomainChange,
-    onReplyFromBlur,
+    addAddress,
+    removeAddress,
+    refetchDomains: domainsQuery.refetch,
   };
 }

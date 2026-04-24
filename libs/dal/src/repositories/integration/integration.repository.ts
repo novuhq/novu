@@ -1,5 +1,5 @@
 import { NOVU_PROVIDERS } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds, IDeleteResult } from '../../types';
@@ -64,12 +64,15 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     });
   }
 
-  async create(data: IntegrationQuery): Promise<IntegrationEntity> {
-    return await super.create(data);
+  async create(data: IntegrationQuery, options: { session?: ClientSession | null } = {}): Promise<IntegrationEntity> {
+    return await super.create(data, options);
   }
 
-  async delete(query: IntegrationQuery) {
-    return await this.integration.delete({ _id: query._id, _organizationId: query._organizationId });
+  async delete(query: IntegrationQuery, options: { session?: ClientSession | null } = {}) {
+    const q = this.integration.delete({ _id: query._id, _organizationId: query._organizationId });
+    if (options.session) q.session(options.session);
+
+    return await q;
   }
 
   async deleteMany(query: IntegrationQuery): Promise<IDeleteResult> {

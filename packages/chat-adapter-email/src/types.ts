@@ -1,14 +1,15 @@
 import type { Adapter } from 'chat';
+
 export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
 
 export interface NovuEmailAdapterConfig {
-  fromAddress: string;
-  fromName?: string;
+  senderName?: string;
   signingSecret: string;
   sendEmail: (params: SendEmailParams) => Promise<{ messageId: string }>;
 }
 
 export interface SendEmailParams {
+  from: string;
   to: string;
   subject: string;
   html: string;

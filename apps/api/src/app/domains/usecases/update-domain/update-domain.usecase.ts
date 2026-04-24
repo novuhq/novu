@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DomainRepository } from '@novu/dal';
+import { AgentRepository, DomainRepository } from '@novu/dal';
 import { DomainRouteTypeEnum } from '@novu/shared';
 
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
@@ -9,7 +9,10 @@ import { UpdateDomainCommand } from './update-domain.command';
 
 @Injectable()
 export class UpdateDomain {
-  constructor(private readonly domainRepository: DomainRepository) {}
+  constructor(
+    private readonly domainRepository: DomainRepository,
+    private readonly agentRepository: AgentRepository
+  ) {}
 
   async execute(command: UpdateDomainCommand): Promise<DomainResponseDto> {
     const domain = await this.domainRepository.findOneByIdAndEnvironment(
@@ -38,6 +41,8 @@ export class UpdateDomain {
         seen.add(key);
       }
 
+      await this.validateAgentDestinations(command);
+
       const updated = await this.domainRepository.findOneAndUpdate(
         {
           _id: command.domainId,
@@ -62,5 +67,30 @@ export class UpdateDomain {
       ...toDomainResponse(domain),
       expectedDnsRecords: buildExpectedDnsRecords(domain.name),
     };
+  }
+
+  private async validateAgentDestinations(command: UpdateDomainCommand): Promise<void> {
+    const agentDestinations = [
+      ...new Set(
+        command.routes!.filter((r) => r.type === DomainRouteTypeEnum.AGENT && r.destination).map((r) => r.destination!)
+      ),
+    ];
+
+    if (agentDestinations.length === 0) return;
+
+    for (const agentId of agentDestinations) {
+      const agent = await this.agentRepository.findOne(
+        {
+          _id: agentId,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_id']
+      );
+
+      if (!agent) {
+        throw new NotFoundException(`Agent "${agentId}" referenced in route destination does not exist.`);
+      }
+    }
   }
 }

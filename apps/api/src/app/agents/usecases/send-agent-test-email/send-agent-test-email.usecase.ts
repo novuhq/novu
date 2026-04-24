@@ -5,14 +5,8 @@ import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/share
 
 import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
 
-const CATCH_ALL_ADDRESS = '*';
-
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 @Injectable()
@@ -61,18 +55,6 @@ export class SendAgentTestEmail {
       throw new BadRequestException('No Novu Email integration found for this agent.');
     }
 
-    const inboundAddress = emailIntegration.credentials?.inboundAddress as string | undefined;
-    const inboundDomain = emailIntegration.credentials?.inboundDomain as string | undefined;
-
-    if (!inboundAddress || !inboundDomain) {
-      throw new BadRequestException('Inbound address is not configured. Set the address and domain first.');
-    }
-
-    // Wildcard catch-all routes cannot be emailed directly — use a synthetic local part
-    // that will still match the catch-all route in DomainRouteStrategy
-    const effectiveLocalPart =
-      inboundAddress === CATCH_ALL_ADDRESS ? `novu-test-${agent._id.slice(-8)}` : inboundAddress;
-    const to = `${effectiveLocalPart}@${inboundDomain}`;
     const outboundIntegrationId = emailIntegration.credentials?.outboundIntegrationId as string | undefined;
 
     const senderIntegration = await this.findSenderIntegration(
@@ -85,7 +67,7 @@ export class SendAgentTestEmail {
 
     const escapedName = escapeHtml(agent.name);
     const mailOptions: IEmailOptions = {
-      to: [to],
+      to: [command.targetAddress],
       subject: `Test email for agent "${agent.name}"`,
       html: [
         '<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">',

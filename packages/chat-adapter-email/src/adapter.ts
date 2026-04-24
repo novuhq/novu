@@ -40,7 +40,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   constructor(config: NovuEmailAdapterConfig) {
     this.config = config;
-    this.userName = config.fromAddress;
+    this.userName = config.senderName ?? 'email-agent';
     this.webhookHandler = new WebhookHandler(config.signingSecret);
   }
 
@@ -90,7 +90,11 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       references: payload.references,
     });
 
-    await this.threadResolver.trackSubject(threadId, payload.subject);
+    const agentAddress = payload.to[0]?.address;
+    await Promise.all([
+      this.threadResolver.trackSubject(threadId, payload.subject),
+      agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
+    ]);
 
     const message = this.parseMessage(this.toRawMessage(payload, threadId));
     this.chat.processMessage(this, threadId, message, options);
@@ -115,7 +119,9 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   // -- Message parsing --
 
   parseMessage(raw: NovuEmailRawMessage): Message<NovuEmailRawMessage> {
-    return this.messageParser.parse(raw, this.config.fromAddress);
+    const agentAddress = raw.to[0] ?? '';
+
+    return this.messageParser.parse(raw, agentAddress);
   }
 
   // -- Outbound --
@@ -125,11 +131,16 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     const decoded = this.threadResolver.decodeThreadId(threadId);
     const rendered = await renderMessage(normalized);
 
-    const fromHeader = this.config.fromName
-      ? `${this.config.fromName} <${this.config.fromAddress}>`
-      : this.config.fromAddress;
+    const agentAddress = await this.threadResolver.getAgentAddress(threadId);
+    if (!agentAddress) {
+      throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for reply`);
+    }
 
-    const messageId = generateMessageId(this.config.fromAddress);
+    const fromHeader = this.config.senderName
+      ? `${this.config.senderName} <${agentAddress}>`
+      : agentAddress;
+
+    const messageId = generateMessageId(agentAddress);
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
     const subject = storedSubject
@@ -139,6 +150,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       : 'New message';
 
     const result = await this.config.sendEmail({
+      from: agentAddress,
       to: decoded.recipientAddress,
       subject,
       html: rendered.html,

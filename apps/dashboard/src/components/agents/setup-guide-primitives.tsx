@@ -283,7 +283,7 @@ export function IntegrationCredentialsSidebar({
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSaveSuccess: () => void;
+  onSaveSuccess?: () => void;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -310,7 +310,7 @@ export function IntegrationCredentialsSidebar({
       });
 
       showSuccessToast('Integration updated successfully');
-      onSaveSuccess();
+      onSaveSuccess?.();
       onClose();
     } catch (error: unknown) {
       handleIntegrationError(error, 'update');

@@ -1,8 +1,31 @@
 import { randomBytes } from 'node:crypto';
-import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { encryptSecret } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, EmailProviderIdEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import {
+  AgentIntegrationRepository,
+  AgentRepository,
+  CommunityOrganizationRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  providers,
+  slugify,
+} from '@novu/shared';
+import { ClientSession } from 'mongoose';
+import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../dtos';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
@@ -18,6 +41,10 @@ export class AddAgentIntegration {
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
+    if (!command.integrationIdentifier && !command.providerId) {
+      throw new BadRequestException('Either integrationIdentifier or providerId must be provided.');
+    }
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.agentIdentifier,
@@ -31,6 +58,22 @@ export class AddAgentIntegration {
       throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
     }
 
+    if (command.providerId === EmailProviderIdEnum.NovuAgent) {
+      return this.findOrCreateNovuEmailLink(agent._id, command);
+    }
+
+    return this.linkExistingIntegration(agent._id, command);
+  }
+
+  /**
+   * Standard path: link an existing integration (by identifier) to the agent.
+   * Used for Slack, Teams, WhatsApp, and any provider where the Integration
+   * document already exists.
+   */
+  private async linkExistingIntegration(
+    agentId: string,
+    command: AddAgentIntegrationCommand
+  ): Promise<AgentIntegrationResponseDto> {
     const integration = await this.integrationRepository.findOne(
       {
         identifier: command.integrationIdentifier,
@@ -44,31 +87,118 @@ export class AddAgentIntegration {
       throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
     }
 
+    if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+      await this.enforceEmailTier(command.organizationId);
+      await this.enforceSingletonEmail(agentId, command);
+      await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
+    }
+
+    return this.createLink(agentId, integration, command);
+  }
+
+  /**
+   * Auto-creation path for NovuAgent email: find the agent's existing
+   * NovuAgent integration link, or create a new Integration + link atomically.
+   * Idempotent — safe to call multiple times for the same agent.
+   */
+  private async findOrCreateNovuEmailLink(
+    agentId: string,
+    command: AddAgentIntegrationCommand
+  ): Promise<AgentIntegrationResponseDto> {
+    await this.enforceEmailTier(command.organizationId);
+
+    const existingLink = await this.findExistingNovuEmailLink(agentId, command);
+    if (existingLink) {
+      return existingLink;
+    }
+
+    return this.agentIntegrationRepository.withTransaction(async (session) => {
+      const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
+      const identifier = `${slugify(displayName)}-${shortid.generate()}`;
+
+      const integration = await this.integrationRepository.create(
+        {
+          providerId: EmailProviderIdEnum.NovuAgent,
+          channel: ChannelTypeEnum.EMAIL,
+          credentials: { secretKey: encryptSecret(randomBytes(32).toString('hex')) },
+          configurations: {},
+          name: displayName,
+          identifier,
+          active: true,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        } as any,
+        { session }
+      );
+
+      return this.createLink(agentId, integration, command, session);
+    });
+  }
+
+  private async findExistingNovuEmailLink(
+    agentId: string,
+    command: AddAgentIntegrationCommand
+  ): Promise<AgentIntegrationResponseDto | null> {
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _agentId: agentId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      '*'
+    );
+
+    if (links.length === 0) return null;
+
+    const linkedIntegrationIds = links.map((l) => l._integrationId);
+    const emailIntegration = await this.integrationRepository.findOne(
+      {
+        _id: { $in: linkedIntegrationIds } as unknown as string,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        providerId: EmailProviderIdEnum.NovuAgent,
+      },
+      '_id identifier name providerId channel active'
+    );
+
+    if (!emailIntegration) return null;
+
+    const link = links.find((l) => l._integrationId === emailIntegration._id);
+    if (!link) return null;
+
+    return toAgentIntegrationResponse(link, emailIntegration);
+  }
+
+  private async createLink(
+    agentId: string,
+    integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>,
+    command: AddAgentIntegrationCommand,
+    session: ClientSession | null = null
+  ): Promise<AgentIntegrationResponseDto> {
     const existingLink = await this.agentIntegrationRepository.findOne(
       {
-        _agentId: agent._id,
+        _agentId: agentId,
         _integrationId: integration._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id']
+      ['_id'],
+      { session }
     );
 
     if (existingLink) {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
-    if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
-      await this.enforceEmailTier(command.organizationId);
-      await this.prepareNovuEmailIntegration(agent._id, integration._id, command);
-    }
-
-    const link = await this.agentIntegrationRepository.create({
-      _agentId: agent._id,
-      _integrationId: integration._id,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
+    const link = await this.agentIntegrationRepository.create(
+      {
+        _agentId: agentId,
+        _integrationId: integration._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      { session }
+    );
 
     return toAgentIntegrationResponse(link, integration);
   }
@@ -83,25 +213,8 @@ export class AddAgentIntegration {
     }
   }
 
-  /**
-   * Enforces the singleton constraint (one NovuAgent email integration per
-   * agent) and seeds the `secretKey` credential the email adapter needs for
-   * HMAC verification of inbound webhook payloads.
-   */
-  private async prepareNovuEmailIntegration(
-    agentId: string,
-    integrationId: string,
-    command: AddAgentIntegrationCommand
-  ): Promise<void> {
-    await this.enforceSingletonEmail(agentId, command);
-    await this.seedEmailSecretKey(integrationId, command.environmentId, command.organizationId);
-  }
-
-  private async enforceSingletonEmail(
-    agentId: string,
-    command: AddAgentIntegrationCommand
-  ): Promise<void> {
-    const existingLinks = await this.agentIntegrationRepository.find(
+  private async enforceSingletonEmail(agentId: string, command: AddAgentIntegrationCommand): Promise<void> {
+    const links = await this.agentIntegrationRepository.find(
       {
         _agentId: agentId,
         _environmentId: command.environmentId,
@@ -110,10 +223,10 @@ export class AddAgentIntegration {
       '*'
     );
 
-    if (existingLinks.length === 0) return;
+    if (links.length === 0) return;
 
-    const linkedIntegrationIds = existingLinks.map((link) => link._integrationId);
-    const linkedEmailIntegrations = await this.integrationRepository.find(
+    const linkedIntegrationIds = links.map((l) => l._integrationId);
+    const existing = await this.integrationRepository.find(
       {
         _id: { $in: linkedIntegrationIds },
         _environmentId: command.environmentId,
@@ -123,7 +236,7 @@ export class AddAgentIntegration {
       '_id'
     );
 
-    if (linkedEmailIntegrations.length > 0) {
+    if (existing.length > 0) {
       throw new ConflictException('Only one email integration per agent is allowed.');
     }
   }
@@ -133,11 +246,9 @@ export class AddAgentIntegration {
     environmentId: string,
     organizationId: string
   ): Promise<void> {
-    const dedicatedSecret = randomBytes(32).toString('hex');
-
     await this.integrationRepository.update(
       { _id: integrationId, _environmentId: environmentId, _organizationId: organizationId },
-      { $set: { 'credentials.secretKey': encryptSecret(dedicatedSecret) } }
+      { $set: { 'credentials.secretKey': encryptSecret(randomBytes(32).toString('hex')) } }
     );
   }
 }

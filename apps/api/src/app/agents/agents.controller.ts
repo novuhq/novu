@@ -16,7 +16,13 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -40,6 +46,7 @@ import {
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
@@ -166,6 +173,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
+        providerId: body.providerId,
       })
     );
   }
@@ -274,7 +282,8 @@ export class AgentsController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   sendAgentTestEmail(
     @UserSession() user: UserSessionData,
-    @Param('identifier') identifier: string
+    @Param('identifier') identifier: string,
+    @Body() body: SendAgentTestEmailRequestDto
   ): Promise<{ success: boolean }> {
     return this.sendAgentTestEmailUsecase.execute(
       SendAgentTestEmailCommand.create({
@@ -282,6 +291,7 @@ export class AgentsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         agentIdentifier: identifier,
+        targetAddress: body.targetAddress,
       })
     );
   }
