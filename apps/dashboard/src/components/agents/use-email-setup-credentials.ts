@@ -4,10 +4,10 @@ import {
   EmailProviderIdEnum,
   type IIntegration,
 } from '@novu/shared';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type AgentResponse } from '@/api/agents';
-import { type DomainResponse, fetchDomains, updateDomain } from '@/api/domains';
+import { type DomainResponse, type UpdateDomainBody, fetchDomains, updateDomain } from '@/api/domains';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
@@ -32,6 +32,21 @@ export function useEmailSetupCredentials({
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const queryClient = useQueryClient();
+
+  // domainId is a mutation variable (not a closure) so upsertAgentRoute can be
+  // called with any domain at event time — useUpdateDomain can't be used here
+  // because it bakes a single domainId into its mutationFn closure at call time.
+  const { mutate: updateDomainRoutes } = useMutation({
+    // biome-ignore lint/style/noNonNullAssertion: currentEnvironment is guaranteed non-null when triggered from a user interaction
+    mutationFn: ({ domainId, body }: { domainId: string; body: UpdateDomainBody }) =>
+      updateDomain(domainId, body, currentEnvironment!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id] });
+    },
+    onError: () => {
+      showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
+    },
+  });
 
   const [outboundId, setOutboundId] = useState('');
   const [localPart, setLocalPart] = useState('');
@@ -124,13 +139,7 @@ export function useEmailSetupCredentials({
       ),
       { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id },
     ];
-    updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment)
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains, currentEnvironment._id] });
-      })
-      .catch(() => {
-        showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
-      });
+    updateDomainRoutes({ domainId: domain._id, body: { routes: updatedRoutes } });
   }
 
   function onOutboundSelect(id: string) {
