@@ -1,3 +1,4 @@
+
 FROM node:22.22.1-alpine3.22 as dev_base
 RUN apk add g++ make py3-pip
 
@@ -32,6 +33,7 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
+RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
@@ -68,4 +70,4 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --reporter=silent
 
 WORKDIR /usr/src/app/apps/inbound-mail
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/src/main.js" ]

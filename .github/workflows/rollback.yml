@@ -6,9 +6,7 @@ run-name: >
   }}${{
     github.event.inputs.rollback_worker == 'true' && 'worker, ' || ''
   }}${{
-    github.event.inputs.rollback_ws == 'true' && 'ws, ' || ''
-  }}${{
-    github.event.inputs.rollback_webhook == 'true' && 'webhook ' || ''
+    github.event.inputs.rollback_ws == 'true' && 'ws ' || ''
   }}on ${{ github.event.inputs.environment }} (${{
     github.event.inputs.revisions_to_rollback
   }} revisions)
@@ -55,12 +53,6 @@ on:
         type: boolean
         default: true
 
-      rollback_webhook:
-        description: "Rollback Webhook"
-        required: true
-        type: boolean
-        default: true
-
       revisions_to_rollback:
         description: "Number of revisions to rollback (default: 1)"
         required: true
@@ -89,8 +81,7 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.rollback_api }}" != "true" ] && \
              [ "${{ github.event.inputs.rollback_worker }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_ws }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_webhook }}" != "true" ]; then
+             [ "${{ github.event.inputs.rollback_ws }}" != "true" ]; then
             echo "Error: At least one service must be selected for rollback."
             exit 1
           fi
@@ -154,9 +145,6 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rollback_ws }}" == "true" ]; then
             services+=("\"ws\"")
-          fi
-          if [ "${{ github.event.inputs.rollback_webhook }}" == "true" ]; then
-            services+=("\"webhook\"")
           fi
 
           # Parse service secrets and generate rollback_matrix
@@ -228,13 +216,6 @@ jobs:
               service_name=ws-service
               task_name=ws-task
               image=ws
-              rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
-            elif [ "$service" == "\"webhook\"" ]; then
-              cluster_name=webhook-cluster
-              container_name=webhook-container
-              service_name=webhook-service
-              task_name=webhook-task
-              image=webhook
               rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
             fi
           done
