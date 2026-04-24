@@ -286,6 +286,8 @@ function OutboundProviderSelect({
   );
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function InboundAddressConfig({
   localPart,
   domainName,
@@ -320,6 +322,14 @@ function InboundAddressConfig({
   );
 
   const isCatchAll = localPart === CATCH_ALL_ADDRESS;
+  const [replyFromError, setReplyFromError] = useState(false);
+
+  function handleReplyFromBlur() {
+    if (!replyFrom) return;
+    const valid = EMAIL_PATTERN.test(replyFrom);
+    setReplyFromError(!valid);
+    if (valid) onReplyFromBlur();
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -403,29 +413,40 @@ function InboundAddressConfig({
         </Popover>
       </div>
       {isCatchAll && (
-        <p className="text-text-soft text-label-xs font-medium leading-4">
-          Catch-all: every email sent to this domain routes to this agent.
-        </p>
-      )}
-
-      {isCatchAll && (
-        <div className="flex flex-col gap-1">
-          <span className="text-text-sub text-label-xs font-medium leading-4">Reply-from address</span>
-          <div className="border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs">
-            <input
-              type="text"
-              aria-label="Reply-from email address"
-              className="text-text-sub text-label-xs h-full w-full bg-transparent px-2 font-medium outline-none"
-              placeholder={domainName ? `agent@${domainName}` : 'agent@yourdomain.com'}
-              value={replyFrom}
-              onChange={(e) => onReplyFromChange(e.target.value)}
-              onBlur={onReplyFromBlur}
-            />
-          </div>
+        <>
           <p className="text-text-soft text-label-xs font-medium leading-4">
-            The From address shown to recipients in outbound replies.
+            Catch-all: every email sent to this domain routes to this agent.
           </p>
-        </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-sub text-label-xs font-medium leading-4">Reply-from address</span>
+            <div
+              className={cn(
+                'border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs',
+                replyFromError && 'border-destructive'
+              )}
+            >
+              <input
+                type="email"
+                aria-label="Reply-from email address"
+                className="text-text-sub text-label-xs h-full w-full bg-transparent px-2 font-medium outline-none"
+                placeholder={domainName ? `agent@${domainName}` : 'agent@yourdomain.com'}
+                value={replyFrom}
+                onChange={(e) => {
+                  setReplyFromError(false);
+                  onReplyFromChange(e.target.value);
+                }}
+                onBlur={handleReplyFromBlur}
+              />
+            </div>
+            {replyFromError ? (
+              <p className="text-destructive text-label-xs font-medium leading-4">Enter a valid email address.</p>
+            ) : (
+              <p className="text-text-soft text-label-xs font-medium leading-4">
+                The From address shown to recipients in outbound replies.
+              </p>
+            )}
+          </div>
+        </>
       )}
 
       <p className="text-text-soft text-label-xs font-medium leading-4">
@@ -477,8 +498,6 @@ export function EmailSetupGuide({
     domainName,
     replyFrom,
     domains,
-    outboundIntegration,
-    isOutboundDemo,
     needsCredentialsStep,
     outboundProviderConfig,
     setLocalPart,

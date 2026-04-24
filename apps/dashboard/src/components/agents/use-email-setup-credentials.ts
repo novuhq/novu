@@ -4,7 +4,7 @@ import {
   EmailProviderIdEnum,
   type IIntegration,
 } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type AgentResponse } from '@/api/agents';
 import { type DomainResponse, fetchDomains, updateDomain } from '@/api/domains';
@@ -31,6 +31,7 @@ export function useEmailSetupCredentials({
 }) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
+  const queryClient = useQueryClient();
 
   const [outboundId, setOutboundId] = useState('');
   const [localPart, setLocalPart] = useState('');
@@ -44,11 +45,13 @@ export function useEmailSetupCredentials({
     credentialsRef.current = { ...credentialsRef.current, ...serverCredentials };
   }, [emailIntegration]);
 
-  // One-time initialization from server state on first load
-  const hasInitializedFromServer = useRef(false);
+  // Initialize from server state once per unique integration ID.
+  // Keying off _id (not the object) ensures re-hydration when the user switches
+  // between integrations without the component remounting.
+  const initializedForId = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (!emailIntegration || hasInitializedFromServer.current) return;
-    hasInitializedFromServer.current = true;
+    if (!emailIntegration || initializedForId.current === emailIntegration._id) return;
+    initializedForId.current = emailIntegration._id;
     const creds = emailIntegration.credentials ?? {};
     if (creds.outboundIntegrationId) setOutboundId(creds.outboundIntegrationId as string);
     if (creds.inboundAddress) setLocalPart(creds.inboundAddress as string);
@@ -57,7 +60,8 @@ export function useEmailSetupCredentials({
     if (creds.inboundAddress === CATCH_ALL_ADDRESS && creds.replyDomain) {
       setReplyFrom(creds.replyDomain as string);
     }
-  }, [emailIntegration]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailIntegration?._id]);
 
   const domainsQuery = useQuery<DomainResponse[]>({
     queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id],
@@ -113,12 +117,20 @@ export function useEmailSetupCredentials({
       return;
     }
     const updatedRoutes = [
-      ...existingRoutes.filter((r) => !(r.address === address && r.type === DomainRouteTypeEnum.AGENT)),
+      // Remove same-address AGENT routes AND any orphaned routes from this agent
+      // (e.g. leftover 'wine-bot' route when the user switches to a different address)
+      ...existingRoutes.filter(
+        (r) => !(r.type === DomainRouteTypeEnum.AGENT && (r.address === address || r.destination === agent._id))
+      ),
       { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id },
     ];
-    updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment).catch(() => {
-      showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
-    });
+    updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains, currentEnvironment._id] });
+      })
+      .catch(() => {
+        showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
+      });
   }
 
   function onOutboundSelect(id: string) {
@@ -128,9 +140,14 @@ export function useEmailSetupCredentials({
 
   function onLocalPartBlur() {
     if (!localPart || localPart === credentialsRef.current.inboundAddress) return;
-    if (localPart !== CATCH_ALL_ADDRESS) setReplyFrom('');
+    const isCatchAll = localPart === CATCH_ALL_ADDRESS;
+    if (!isCatchAll) setReplyFrom('');
     const replyDomain = deriveReplyDomain(localPart, domainName);
-    saveCredentials({ inboundAddress: localPart, ...(replyDomain ? { replyDomain } : {}) });
+    const patch: Record<string, unknown> = { inboundAddress: localPart };
+    if (replyDomain) patch.replyDomain = replyDomain;
+    // Explicitly clear any previously auto-computed replyDomain when entering catch-all mode
+    else if (isCatchAll) patch.replyDomain = '';
+    saveCredentials(patch);
     if (domainName) {
       const domain = domains.find((d) => d.name === domainName);
       if (domain) upsertAgentRoute(localPart, domain);
