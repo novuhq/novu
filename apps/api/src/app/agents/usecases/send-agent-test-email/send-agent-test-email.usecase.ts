@@ -5,6 +5,8 @@ import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/share
 
 import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
 
+const CATCH_ALL_ADDRESS = '*';
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -66,7 +68,11 @@ export class SendAgentTestEmail {
       throw new BadRequestException('Inbound address is not configured. Set the address and domain first.');
     }
 
-    const to = `${inboundAddress}@${inboundDomain}`;
+    // Wildcard catch-all routes cannot be emailed directly — use a synthetic local part
+    // that will still match the catch-all route in DomainRouteStrategy
+    const effectiveLocalPart =
+      inboundAddress === CATCH_ALL_ADDRESS ? `novu-test-${agent._id.slice(-8)}` : inboundAddress;
+    const to = `${effectiveLocalPart}@${inboundDomain}`;
     const outboundIntegrationId = emailIntegration.credentials?.outboundIntegrationId as string | undefined;
 
     const senderIntegration = await this.findSenderIntegration(

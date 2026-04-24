@@ -1,17 +1,16 @@
 import {
   ChannelTypeEnum,
-  DomainRouteTypeEnum,
   DomainStatusEnum,
   emailProviders as emailProviderConfigs,
   EmailProviderIdEnum,
   type IIntegration,
 } from '@novu/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { RiAddLine, RiExpandUpDownLine, RiKey2Line, RiLoader4Line, RiMailSendLine, RiSearchLine } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { type AgentResponse, sendAgentTestEmail } from '@/api/agents';
-import { type DomainResponse, fetchDomains, updateDomain } from '@/api/domains';
+import { type DomainResponse } from '@/api/domains';
 import { createIntegration } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
@@ -26,12 +25,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { CATCH_ALL_ADDRESS, useEmailSetupCredentials } from './use-email-setup-credentials';
 
 export type EmailSetupGuideProps = {
   agent: AgentResponse;
@@ -291,16 +290,22 @@ function InboundAddressConfig({
   localPart,
   domainName,
   domains,
+  replyFrom,
   onLocalPartChange,
   onLocalPartBlur,
   onDomainChange,
+  onReplyFromChange,
+  onReplyFromBlur,
 }: {
   localPart: string;
   domainName: string;
   domains: DomainResponse[];
+  replyFrom: string;
   onLocalPartChange: (v: string) => void;
   onLocalPartBlur: () => void;
   onDomainChange: (v: string) => void;
+  onReplyFromChange: (v: string) => void;
+  onReplyFromBlur: () => void;
 }) {
   const [domainOpen, setDomainOpen] = useState(false);
   const { currentEnvironment } = useEnvironment();
@@ -313,6 +318,8 @@ function InboundAddressConfig({
   const verifiedDomains = domains.filter(
     (d) => d.status === DomainStatusEnum.VERIFIED && d.mxRecordConfigured
   );
+
+  const isCatchAll = localPart === CATCH_ALL_ADDRESS;
 
   return (
     <div className="flex flex-col gap-2">
@@ -395,6 +402,32 @@ function InboundAddressConfig({
           </PopoverContent>
         </Popover>
       </div>
+      {isCatchAll && (
+        <p className="text-text-soft text-label-xs font-medium leading-4">
+          Catch-all: every email sent to this domain routes to this agent.
+        </p>
+      )}
+
+      {isCatchAll && (
+        <div className="flex flex-col gap-1">
+          <span className="text-text-sub text-label-xs font-medium leading-4">Reply-from address</span>
+          <div className="border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs">
+            <input
+              type="text"
+              aria-label="Reply-from email address"
+              className="text-text-sub text-label-xs h-full w-full bg-transparent px-2 font-medium outline-none"
+              placeholder={domainName ? `agent@${domainName}` : 'agent@yourdomain.com'}
+              value={replyFrom}
+              onChange={(e) => onReplyFromChange(e.target.value)}
+              onBlur={onReplyFromBlur}
+            />
+          </div>
+          <p className="text-text-soft text-label-xs font-medium leading-4">
+            The From address shown to recipients in outbound replies.
+          </p>
+        </div>
+      )}
+
       <p className="text-text-soft text-label-xs font-medium leading-4">
         <Link to={domainsPath} className="text-text-sub underline">
           Configure custom domains
@@ -414,7 +447,6 @@ export function EmailSetupGuide({
 }: EmailSetupGuideProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
-  const { mutateAsync: updateIntegration } = useUpdateIntegration();
 
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
@@ -439,124 +471,27 @@ export function EmailSetupGuide({
     [integrations, integrationId]
   );
 
-  const serverCredentials = emailIntegration?.credentials ?? {};
-  const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
-  useEffect(() => {
-    credentialsRef.current = { ...credentialsRef.current, ...serverCredentials };
-  }, [emailIntegration]);
-
-  const [outboundId, setOutboundId] = useState<string>('');
-  const [localPart, setLocalPart] = useState<string>('');
-  const [domainName, setDomainName] = useState<string>('');
-
-  const hasInitializedFromServer = useRef(false);
-  useEffect(() => {
-    if (!emailIntegration || hasInitializedFromServer.current) return;
-    hasInitializedFromServer.current = true;
-    const creds = emailIntegration.credentials ?? {};
-    if (creds.outboundIntegrationId) setOutboundId(creds.outboundIntegrationId as string);
-    if (creds.inboundAddress) setLocalPart(creds.inboundAddress as string);
-    if (creds.inboundDomain) setDomainName(creds.inboundDomain as string);
-  }, [emailIntegration]);
-
-  const outboundIntegration = useMemo(
-    () => (outboundId ? integrations?.find((i) => i._id === outboundId) : undefined),
-    [integrations, outboundId]
-  );
-
-  const isOutboundDemo = outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
-  const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
-
-  const outboundProviderConfig = useMemo(
-    () => (outboundIntegration ? emailProviderConfigs.find((p) => p.id === outboundIntegration.providerId) : undefined),
-    [outboundIntegration]
-  );
-
-  const domainsQuery = useQuery<DomainResponse[]>({
-    queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id],
-    queryFn: () => fetchDomains(requireEnvironment(currentEnvironment, 'No environment selected')),
-    enabled: Boolean(currentEnvironment),
-  });
-  const domains = domainsQuery.data ?? [];
-
-  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
-
-  function saveCredentials(patch: Record<string, unknown>) {
-    if (!emailIntegration) return;
-
-    credentialsRef.current = { ...credentialsRef.current, ...patch };
-    const snapshot = { ...credentialsRef.current };
-
-    saveQueueRef.current = saveQueueRef.current
-      .then(() =>
-        updateIntegration({
-          integrationId: emailIntegration._id,
-          data: {
-            name: emailIntegration.name,
-            identifier: emailIntegration.identifier,
-            active: emailIntegration.active,
-            primary: emailIntegration.primary ?? false,
-            credentials: snapshot,
-            configurations: {},
-            check: false,
-          },
-        })
-      )
-      .then(() => undefined)
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : 'Could not save credentials.';
-        showErrorToast(message, 'Settings not saved');
-      });
-  }
-
-  function upsertAgentRoute(address: string, domain: DomainResponse) {
-    if (!currentEnvironment || !agent._id) return;
-
-    const existingRoutes = domain.routes ?? [];
-    const hasRoute = existingRoutes.some(
-      (r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id
-    );
-
-    if (hasRoute) return;
-
-    const updatedRoutes = existingRoutes.filter(
-      (r) => !(r.address === address && r.type === DomainRouteTypeEnum.AGENT)
-    );
-
-    updatedRoutes.push({ address, type: DomainRouteTypeEnum.AGENT, destination: agent._id });
-
-    updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment).catch(() => {
-      showErrorToast('Could not create inbound route on the domain.', 'Route creation failed');
-    });
-  }
+  const {
+    outboundId,
+    localPart,
+    domainName,
+    replyFrom,
+    domains,
+    outboundIntegration,
+    isOutboundDemo,
+    needsCredentialsStep,
+    outboundProviderConfig,
+    setLocalPart,
+    setReplyFrom,
+    onOutboundSelect,
+    onLocalPartBlur,
+    onDomainChange,
+    onReplyFromBlur,
+  } = useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
   function handleOutboundSelect(id: string) {
-    setOutboundId(id);
     setIsCredentialsSaved(false);
-    saveCredentials({ outboundIntegrationId: id });
-  }
-
-  function handleLocalPartBlur() {
-    if (!localPart || localPart === credentialsRef.current.inboundAddress) return;
-
-    const replyDomain = domainName ? `${localPart}@${domainName}` : undefined;
-    saveCredentials({ inboundAddress: localPart, ...(replyDomain ? { replyDomain } : {}) });
-
-    if (domainName) {
-      const domain = domains.find((d) => d.name === domainName);
-      if (domain) upsertAgentRoute(localPart, domain);
-    }
-  }
-
-  function handleDomainChange(name: string) {
-    setDomainName(name);
-    const replyDomain = localPart ? `${localPart}@${name}` : undefined;
-    saveCredentials({ inboundDomain: name, ...(replyDomain ? { replyDomain } : {}) });
-
-    if (localPart) {
-      const domain = domains.find((d) => d.name === name);
-      if (domain) upsertAgentRoute(localPart, domain);
-    }
+    onOutboundSelect(id);
   }
 
   const base = stepOffset;
@@ -569,9 +504,10 @@ export function EmailSetupGuide({
     if (!outboundId) return base;
     if (needsCredentialsStep && !isCredentialsSaved) return base + 1;
     if (!localPart || !domainName) return inboundStepIndex;
+    if (localPart === CATCH_ALL_ADDRESS && !replyFrom) return inboundStepIndex;
 
     return testStepIndex;
-  }, [base, outboundId, needsCredentialsStep, isCredentialsSaved, localPart, domainName, inboundStepIndex, testStepIndex]);
+  }, [base, outboundId, needsCredentialsStep, isCredentialsSaved, localPart, domainName, replyFrom, inboundStepIndex, testStepIndex]);
 
   const stepsColumn = (
     <>
@@ -638,9 +574,12 @@ export function EmailSetupGuide({
             localPart={localPart}
             domainName={domainName}
             domains={domains}
+            replyFrom={replyFrom}
             onLocalPartChange={setLocalPart}
-            onLocalPartBlur={handleLocalPartBlur}
-            onDomainChange={handleDomainChange}
+            onLocalPartBlur={onLocalPartBlur}
+            onDomainChange={onDomainChange}
+            onReplyFromChange={setReplyFrom}
+            onReplyFromBlur={onReplyFromBlur}
           />
         }
       />
