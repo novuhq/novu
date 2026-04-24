@@ -268,6 +268,7 @@ export class ChatSdkService implements OnModuleDestroy {
     adapterFingerprint: string
   ): Promise<Chat> {
     const chat = await this.createChatInstance(instanceKey, platform, config);
+    await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
     this.registerEventHandlers(agentId, cached);
     this.instances.set(instanceKey, cached);
