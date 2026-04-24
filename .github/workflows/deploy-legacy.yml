@@ -1,7 +1,6 @@
-name: Deploy Legacy Services (Webhook & Inbound Mail)
+name: Deploy Legacy Services
 run-name: >
-  Deploying
-  ${{
+  Deploying ${{
     github.event.inputs.deploy_webhook == 'true' && 'webhook, ' || ''
   }}${{
     github.event.inputs.deploy_inbound_mail == 'true' && 'inbound-mail ' || ''
@@ -158,7 +157,8 @@ jobs:
           driver-opts: "image=moby/buildkit:v0.13.1"
 
       - name: Prepare Variables
-        run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+        run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >>
+          $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -190,7 +190,7 @@ jobs:
           docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
 
   deploy:
-    needs: [build, prepare-matrix]
+    needs: [ build, prepare-matrix ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -221,7 +221,8 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
-          image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.service.image }}:${{ github.sha }}
+          image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.service.image
+            }}:${{ github.sha }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
