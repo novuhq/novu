@@ -40,11 +40,15 @@ export function InboundAddressConfig({
 
   const verifiedDomains = domains.filter((d) => d.status === DomainStatusEnum.VERIFIED && d.mxRecordConfigured);
 
+  const LOCAL_PART_RE = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/;
+
   function handleAdd() {
-    if (!localPart || !domainName) return;
+    const trimmed = localPart.trim();
+    if (!trimmed || !domainName) return;
+    if (!LOCAL_PART_RE.test(trimmed)) return;
     const domain = domains.find((d) => d.name === domainName);
     if (!domain) return;
-    onAddAddress(localPart, domain);
+    onAddAddress(trimmed, domain);
     setLocalPart('');
   }
 
@@ -85,7 +89,7 @@ export function InboundAddressConfig({
             className="text-text-sub text-label-xs h-full w-[120px] bg-transparent px-2 font-medium outline-none"
             placeholder="agent"
             value={localPart}
-            onChange={(e) => setLocalPart(e.target.value)}
+            onChange={(e) => setLocalPart(e.target.value.replace(/\s/g, ''))}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleAdd();
             }}
