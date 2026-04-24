@@ -134,10 +134,14 @@ export function OutboundProviderSelect({
       if (item.integration) {
         onSelect(item.integration._id);
       } else {
-        const count = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
+        const existingNames = new Set(
+          (integrations ?? []).filter((i) => i.providerId === item.providerId).map((i) => i.name)
+        );
+        let suffix = existingNames.size + 1;
+        while (existingNames.has(`${item.displayName} ${suffix}`)) suffix += 1;
         const created = await createMutation.mutateAsync({
           providerId: item.providerId,
-          name: `${item.displayName} ${count + 1}`,
+          name: `${item.displayName} ${suffix}`,
         });
         await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
         onSelect(created._id);
