@@ -139,7 +139,7 @@ export function OutboundProviderSelect({
           providerId: item.providerId,
           name: `${item.displayName} ${count + 1}`,
         });
-        await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment._id] });
+        await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
         onSelect(created._id);
       }
       setOpen(false);

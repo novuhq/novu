@@ -20,7 +20,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
   async find(
     query: IntegrationQuery,
     select = '',
-    options: { limit?: number; sort?: any; skip?: number } = {}
+    options: { limit?: number; sort?: any; skip?: number; session?: ClientSession | null } = {}
   ): Promise<IntegrationEntity[]> {
     return super.find(query, select, options);
   }

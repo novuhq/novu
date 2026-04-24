@@ -1,6 +1,5 @@
 import {
   DomainRouteTypeEnum,
-  DomainStatusEnum,
   emailProviders as emailProviderConfigs,
   EmailProviderIdEnum,
   type IIntegration,

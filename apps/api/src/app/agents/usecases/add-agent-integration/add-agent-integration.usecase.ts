@@ -113,6 +113,11 @@ export class AddAgentIntegration {
     }
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
+      const recheck = await this.findExistingNovuEmailLink(agentId, command);
+      if (recheck) {
+        return recheck;
+      }
+
       const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
       const identifier = `${slugify(displayName)}-${shortid.generate()}`;
 
