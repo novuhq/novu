@@ -192,7 +192,7 @@
     "@types/react": "^19.2.8",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.4.47",
+    "postcss": "^8.5.10",
     "postcss-replace": "^2.0.1",
     "@novu/maily-tailwind-config": "workspace:*",
     "@novu/maily-tsconfig": "workspace:*",
