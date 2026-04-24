@@ -151,23 +151,25 @@ export function DomainsPage() {
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Domains</h1>}>
       <PageMeta title="Domains" />
-      <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between gap-3 px-6 py-4">
-          <FacetedFormFilter
-            type="text"
-            size="small"
-            title="Search"
-            value={search}
-            onChange={setSearch}
-            placeholder="Search domains..."
-          />
+      <div className="flex h-full w-full flex-col">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2 py-2.5">
+            <FacetedFormFilter
+              type="text"
+              size="small"
+              title="Search"
+              value={search}
+              onChange={setSearch}
+              placeholder="Search domains..."
+            />
+          </div>
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <RiAddLine className="size-4" />
             Add domain
           </Button>
         </div>
 
-        <div className="flex-1 overflow-auto px-6 pb-6">
+        <div className="flex-1 overflow-auto">
           <Table isLoading={isTableLoading} loadingRowsCount={3}>
             <TableHeader>
               <TableRow>
