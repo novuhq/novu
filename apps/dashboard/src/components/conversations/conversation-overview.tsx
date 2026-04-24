@@ -1,31 +1,16 @@
-import { RiRobot2Line } from 'react-icons/ri';
+import { RiArrowRightUpLine, RiRobot2Line } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ConversationDto } from '@/api/conversations';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useEnvironment } from '@/context/environment/hooks';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationOverviewProps = {
   conversation: ConversationDto;
 };
-
-function formatTimestamp(dateStr: string | undefined): string {
-  if (!dateStr?.trim()) {
-    return '—';
-  }
-
-  const d = new Date(dateStr);
-
-  if (Number.isNaN(d.getTime())) {
-    return '—';
-  }
-
-  const month = d.toLocaleDateString('en-US', { month: 'short' });
-  const day = d.getDate();
-  const year = d.getFullYear();
-  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  return `${month} ${day} ${year} ${time}`;
-}
 
 function MetaRow({ label, children, isLast }: { label: string; children: React.ReactNode; isLast?: boolean }) {
   return (
@@ -39,11 +24,17 @@ function MetaRow({ label, children, isLast }: { label: string; children: React.R
 }
 
 export function ConversationOverview({ conversation }: ConversationOverviewProps) {
+  const { currentEnvironment } = useEnvironment();
   const participants = conversation.participants ?? [];
   const channels = conversation.channels ?? [];
   const subscriber = participants.find((p) => p.type === 'subscriber');
   const agent = participants.find((p) => p.type === 'agent');
   const agentName = agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
+  const agentIdentifier = agent?.agent?.identifier ?? agent?.id;
+  const agentLink =
+    agentIdentifier && currentEnvironment?.slug
+      ? buildRoute(ROUTES.AGENT_DETAILS, { environmentSlug: currentEnvironment.slug, agentIdentifier })
+      : undefined;
   const platforms = [...new Set(channels.map((c) => c.platform))];
 
   const sourceRequestId = (conversation.metadata?.sourceRequestId as string) ?? undefined;
@@ -61,13 +52,29 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
             <span className="font-normal">{conversation.identifier}</span>
           </MetaRow>
           <MetaRow label="Thread started">
-            <span className="font-normal">{formatTimestamp(conversation.createdAt)}</span>
+            <TimeDisplayHoverCard date={conversation.createdAt} className="font-normal">
+              {conversation.createdAt ? new Date(conversation.createdAt).toLocaleString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+              }) : '—'}
+            </TimeDisplayHoverCard>
           </MetaRow>
           <MetaRow label="Agent">
-            <span className="flex items-center gap-1 font-medium">
-              <RiRobot2Line className="size-3.5" />
-              {agentName} ↗
-            </span>
+            {agentLink ? (
+              <Link
+                to={agentLink}
+                className="flex items-center gap-1 font-medium underline decoration-dashed underline-offset-[3px] decoration-[currentColor]/40 transition-colors hover:text-text-strong hover:decoration-[currentColor]/70"
+              >
+                <RiRobot2Line className="size-3.5" />
+                {agentName}
+                <RiArrowRightUpLine className="size-3" />
+              </Link>
+            ) : (
+              <span className="flex items-center gap-1 font-medium">
+                <RiRobot2Line className="size-3.5" />
+                {agentName}
+              </span>
+            )}
           </MetaRow>
           <MetaRow label="Providers">
             <div className="flex items-center gap-1">
