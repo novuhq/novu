@@ -521,17 +521,14 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
    */
   async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
     const session = await this._model.db.startSession();
-    let executed = false;
 
     try {
       return await session.withTransaction(async (txnSession) => {
-        executed = true;
-
         return fn(txnSession);
       });
     } catch (error) {
       const errorMessage = (error as Error)?.message || '';
-      if (errorMessage === 'Transaction numbers are only allowed on a replica set member or mongos' && !executed) {
+      if (errorMessage.includes('Transaction numbers are only allowed on')) {
         return fn(null);
       }
 
