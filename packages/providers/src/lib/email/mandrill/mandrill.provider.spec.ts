@@ -47,6 +47,53 @@ test('should send a standard email through Mandrill', async () => {
   });
 });
 
+test('should forward custom headers in message.headers', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
+
+    return [{}] as any;
+  });
+
+  await provider.sendMessage({
+    to: ['test2@test.com'],
+    subject: 'test subject',
+    html: '<div> Mail Content </div>',
+    headers: {
+      'In-Reply-To': '<original-message-id@example.com>',
+      References: '<original-message-id@example.com>',
+    },
+  });
+
+  expect(spy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      message: expect.objectContaining({
+        headers: {
+          'In-Reply-To': '<original-message-id@example.com>',
+          References: '<original-message-id@example.com>',
+        },
+      }),
+    })
+  );
+});
+
+test('should not add headers to message when no custom headers provided', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
+
+    return [{}] as any;
+  });
+
+  await provider.sendMessage({
+    to: ['test2@test.com'],
+    subject: 'test subject',
+    html: '<div> Mail Content </div>',
+  });
+
+  const payload = spy.mock.calls[0][0];
+
+  expect(payload.message).not.toHaveProperty('headers');
+});
+
 test('should send an email using a Mandrill template', async () => {
   const provider = new MandrillProvider(mockConfig);
   const spy = vi.spyOn(provider['transporter'].messages, 'sendTemplate').mockImplementation(async () => {

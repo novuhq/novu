@@ -3,6 +3,7 @@ import {
   AiMessageRoleEnum,
   AiResourceTypeEnum,
   IEnvironment,
+  StepTypeEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { UIMessage } from 'ai';
@@ -132,6 +133,29 @@ export async function revertMessage({
     environment,
     body: { chatId, messageId, type },
   });
+}
+
+export type WorkflowSuggestionResponse = {
+  id: string;
+  title: string;
+  description: string;
+  examplePrompt: string;
+  steps: StepTypeEnum[];
+};
+
+export async function fetchWorkflowSuggestions({
+  environment,
+  refresh,
+}: {
+  environment: IEnvironment;
+  refresh?: boolean;
+}): Promise<WorkflowSuggestionResponse[]> {
+  const endpoint = refresh ? '/ai/workflow-suggestions?refresh=true' : '/ai/workflow-suggestions';
+  const { data: responseData } = await getV2<{ data: WorkflowSuggestionResponse[] }>(endpoint, {
+    environment,
+  });
+
+  return responseData;
 }
 
 export async function cancelStream({

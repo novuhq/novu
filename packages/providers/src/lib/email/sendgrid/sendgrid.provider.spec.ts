@@ -1,6 +1,6 @@
+import { EmailEventStatusEnum } from '@novu/stateless';
 import { Client } from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
-import { EmailEventStatusEnum } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { SendgridEmailProvider } from './sendgrid.provider';
 

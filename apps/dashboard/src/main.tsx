@@ -47,6 +47,8 @@ import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
+import { DomainDetailPage } from './pages/domain-detail';
+import { DomainsPage } from './pages/domains';
 import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
 import { EditContextPage } from './pages/edit-context';
 import { EditLayoutPage } from './pages/edit-layout';
@@ -378,6 +380,14 @@ const router = createBrowserRouter([
                     <AgentDetailsPage />
                   </ProtectedRoute>
                 ),
+              },
+              {
+                path: ROUTES.DOMAINS,
+                element: IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+              },
+              {
+                path: ROUTES.DOMAIN_DETAIL,
+                element: IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.API_KEYS,

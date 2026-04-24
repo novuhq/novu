@@ -6,6 +6,7 @@ import {
   RiCodeSSlashLine,
   RiDatabase2Line,
   RiDiscussLine,
+  RiEarthLine,
   RiGroup2Line,
   RiKey2Line,
   RiLayout5Line,
@@ -90,6 +91,7 @@ export const SideNavigation = () => {
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
+  const isDomainsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAINS_PAGE_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
   const isVariablesPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_VARIABLES_PAGE_ENABLED, false);
@@ -277,6 +279,18 @@ export const SideNavigation = () => {
                       <span className="flex items-center gap-2">Webhooks</span>
                     </NavigationLink>
                   </Protect>
+                )}
+                {isDomainsPageEnabled && IS_ENTERPRISE && (
+                  <NavigationLink
+                    to={
+                      currentEnvironment?.slug
+                        ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                        : undefined
+                    }
+                  >
+                    <RiEarthLine className="size-4" />
+                    <span>Domains</span>
+                  </NavigationLink>
                 )}
                 <NavigationLink
                   to={

@@ -5,6 +5,7 @@ const featureAccessAtoFeatureNameMapping: Record<ProductFeatureKeyEnum, FeatureN
   [ProductFeatureKeyEnum.TRANSLATIONS]: FeatureNameEnum.AUTO_TRANSLATIONS,
   [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
   [ProductFeatureKeyEnum.WEBHOOKS]: FeatureNameEnum.WEBHOOKS,
+  [ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION]: FeatureNameEnum.AGENT_EMAIL_INTEGRATION,
 } as const;
 
 function createProductFeatureMap(): Record<ProductFeatureKeyEnum, ApiServiceLevelEnum[]> {
@@ -12,6 +13,7 @@ function createProductFeatureMap(): Record<ProductFeatureKeyEnum, ApiServiceLeve
     [ProductFeatureKeyEnum.TRANSLATIONS]: [],
     [ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS]: [],
     [ProductFeatureKeyEnum.WEBHOOKS]: [],
+    [ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION]: [],
   };
 
   for (const apiServiceLevel of Object.values(ApiServiceLevelEnum)) {

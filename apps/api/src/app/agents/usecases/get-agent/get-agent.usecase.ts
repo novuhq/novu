@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AgentRepository } from '@novu/dal';
-
-import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import type { AgentResponseDto } from '../../dtos';
+import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import { GetAgentCommand } from './get-agent.command';
 
 @Injectable()

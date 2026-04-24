@@ -40,7 +40,9 @@ export class AgentIntegrationResponseDto {
   @ApiProperty()
   _organizationId: string;
 
-  @ApiPropertyOptional({ description: 'Set when the agent–integration link has been used (e.g. first credential resolution).' })
+  @ApiPropertyOptional({
+    description: 'Set when the agent–integration link has been used (e.g. first credential resolution).',
+  })
   connectedAt?: string | null;
 
   @ApiProperty()

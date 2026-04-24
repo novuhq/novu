@@ -11,6 +11,7 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
 } from '@novu/dal';
+import type { TriggerRecipientsPayload } from '@novu/shared';
 
 export interface CreateOrGetConversationParams {
   environmentId: string;
@@ -64,6 +65,12 @@ export interface UpdateMetadataParams extends ConversationActivityContext {
 
 export interface ResolveConversationParams extends ConversationActivityContext {
   summary?: string;
+}
+
+export interface PersistTriggerSignalParams extends ConversationActivityContext {
+  workflowId: string;
+  to: TriggerRecipientsPayload;
+  transactionId: string;
 }
 
 @Injectable()
@@ -350,5 +357,27 @@ export class AgentConversationService {
         organizationId: params.organizationId,
       }),
     ]);
+  }
+
+  async persistTriggerSignal(params: PersistTriggerSignalParams): Promise<void> {
+    await this.activityRepository.createSignalActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      agentId: params.agentIdentifier,
+      content: `Triggered workflow: ${params.workflowId}`,
+      signalData: {
+        type: 'trigger',
+        payload: {
+          workflowId: params.workflowId,
+          to: params.to,
+          transactionId: params.transactionId,
+        },
+      },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
   }
 }

@@ -11,6 +11,7 @@ import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { Badge } from '@/components/primitives/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,7 +20,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
-import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
