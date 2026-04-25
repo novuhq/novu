@@ -17,7 +17,7 @@ import type {
 } from '../notifications';
 import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
 import { createNotification } from '../ui/internal/createNotification';
-import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
+import { areDataEqual, areTagsEqual, checkNotificationMatchesFilter, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
@@ -157,6 +157,19 @@ export class NotificationsCache {
       return false;
     }
 
+    const parsedFilter = getFilter(key);
+
+    // A state transition can make an existing item stop matching the cached filter
+    // (for example, an unread-only list after marking the notification as read).
+    // In that case we remove it from that filtered cache instead of keeping stale data around.
+    if (!checkNotificationMatchesFilter(data, parsedFilter)) {
+      const updatedNotifications = notificationsResponse.notifications.filter((notification) => notification.id !== data.id);
+
+      this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
+
+      return true;
+    }
+
     const updatedNotifications = [...notificationsResponse.notifications];
     updatedNotifications[index] = data;
 
@@ -186,6 +199,14 @@ export class NotificationsCache {
 
     return true;
   };
+
+  private getCacheKeysForFilter(filter: NotificationFilter): string[] {
+    return this.#cache.keys().filter((key) => {
+      const parsedFilter = getFilter(key);
+
+      return isSameFilter(parsedFilter, filter);
+    });
+  }
 
   private handleNotificationEvent =
     ({ remove }: { remove: boolean } = { remove: false }) =>
@@ -251,28 +272,35 @@ export class NotificationsCache {
     };
 
   private getAggregated(filter: NotificationFilter): ListNotificationsResponse {
-    const cacheKeys = this.#cache.keys().filter((key) => {
-      const parsedFilter = getFilter(key);
+    const cacheKeys = this.getCacheKeysForFilter(filter);
+    const notificationsById = new Map<string, Notification>();
+    let hasMore = false;
+    let aggregatedFilter: NotificationFilter = filter;
 
-      return isSameFilter(parsedFilter, filter);
-    });
+    for (const key of cacheKeys) {
+      const cachedResponse = this.#cache.get(key);
+      if (!cachedResponse) {
+        continue;
+      }
 
-    return cacheKeys
-      .map((key) => this.#cache.get(key))
-      .reduce<ListNotificationsResponse>(
-        (acc, el) => {
-          if (!el) {
-            return acc;
-          }
+      hasMore = hasMore || cachedResponse.hasMore;
+      aggregatedFilter = cachedResponse.filter;
 
-          return {
-            hasMore: el.hasMore,
-            filter: el.filter,
-            notifications: [...acc.notifications, ...el.notifications],
-          };
-        },
-        { hasMore: false, filter: {}, notifications: [] }
-      );
+      // getAll() merges every cached page for the same logical filter (different limits/offsets/afters).
+      // We dedupe by notification id here so callers do not see the same notification multiple times
+      // when overlapping pages or repeated realtime inserts populate more than one cache entry.
+      for (const notification of cachedResponse.notifications) {
+        if (!notificationsById.has(notification.id)) {
+          notificationsById.set(notification.id, notification);
+        }
+      }
+    }
+
+    return {
+      hasMore,
+      filter: aggregatedFilter,
+      notifications: Array.from(notificationsById.values()),
+    };
   }
 
   get(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
@@ -301,9 +329,34 @@ export class NotificationsCache {
       inboxService: this.#inboxService,
     });
 
+    // Realtime delivery can race with an already cached first page.
+    // We drop older copies across every cached page for the same filter before prepending
+    // into the first page, otherwise getAll() can still surface duplicates from sibling pages.
+    const dedupedNotifications = cachedData.notifications.filter(
+      (cachedNotification) => cachedNotification.id !== notificationInstance.id
+    );
+    const filter = getFilter(cacheKey);
+    const cacheKeysForFilter = this.getCacheKeysForFilter(filter);
+
+    for (const key of cacheKeysForFilter) {
+      if (key === cacheKey) {
+        continue;
+      }
+
+      const value = this.#cache.get(key);
+      if (!value) {
+        continue;
+      }
+
+      const notifications = value.notifications.filter((cachedNotification) => cachedNotification.id !== notificationInstance.id);
+      if (notifications.length !== value.notifications.length) {
+        this.#cache.set(key, { ...value, notifications });
+      }
+    }
+
     this.update(args, {
       ...cachedData,
-      notifications: [notificationInstance, ...cachedData.notifications],
+      notifications: [notificationInstance, ...dedupedNotifications],
     });
   }
 
