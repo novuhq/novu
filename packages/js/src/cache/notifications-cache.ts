@@ -84,6 +84,16 @@ const getFilter = (key: string): NotificationFilter => {
   return JSON.parse(key);
 };
 
+const getNotificationTimestamp = (notification: Notification): number => {
+  const timestamp = new Date(notification.createdAt).getTime();
+
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const sortNotifications = (notifications: Notification[]): Notification[] => {
+  return [...notifications].sort((left, right) => getNotificationTimestamp(right) - getNotificationTimestamp(left));
+};
+
 // these events should update the notification in the cache
 const updateEvents: NotificationEvents[] = [
   'notification.read.pending',
@@ -180,11 +190,16 @@ export class NotificationsCache {
       // When a notification starts matching again (for example, read -> unread),
       // we restore it into the first cached page for that filter so badge/list state
       // can recover without waiting for a manual refetch.
-      const notifications = [data, ...notificationsResponse.notifications];
+      const notifications = sortNotifications([data, ...notificationsResponse.notifications]);
       const { limit } = parsedFilter;
       const boundedNotifications = typeof limit === 'number' ? notifications.slice(0, limit) : notifications;
+      const isBounded = typeof limit === 'number' && notifications.length > limit;
 
-      this.#cache.set(key, { ...notificationsResponse, notifications: boundedNotifications });
+      this.#cache.set(key, {
+        ...notificationsResponse,
+        hasMore: notificationsResponse.hasMore || isBounded,
+        notifications: boundedNotifications,
+      });
 
       return true;
     }

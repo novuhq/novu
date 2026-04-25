@@ -294,6 +294,45 @@ describe('NotificationsCache', () => {
     });
   });
 
+  it('should restore notifications in createdAt order and mark the cache as partial when the first page is full', () => {
+    const newest = new Notification(
+      { ...notification1, id: 'newest', tags: ['tag1'], createdAt: '2026-04-25T10:00:00.000Z' },
+      mockEmitter,
+      mockInboxService
+    );
+    const middle = new Notification(
+      { ...notification1, id: 'middle', tags: ['tag1'], createdAt: '2026-04-25T09:00:00.000Z' },
+      mockEmitter,
+      mockInboxService
+    );
+    const older = new Notification(
+      { ...notification1, id: 'older', tags: ['tag1'], createdAt: '2026-04-25T08:00:00.000Z' },
+      mockEmitter,
+      mockInboxService
+    );
+    const restored = new Notification(
+      { ...notification1, id: 'restored', tags: ['tag1'], createdAt: '2026-04-25T09:30:00.000Z' },
+      mockEmitter,
+      mockInboxService
+    );
+    const args: ListNotificationsArgs = { limit: 3, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const filter = { tags: ['tag1'], read: false, archived: false };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter,
+      notifications: [newest, middle, older],
+    });
+
+    (notificationsCache as any).handleNotificationEvent()({ data: restored });
+
+    expect(notificationsCache.getAll(args)).toEqual({
+      hasMore: true,
+      filter,
+      notifications: [newest, restored, middle],
+    });
+  });
+
   it('should remove notification and emit single event', () => {
     const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
     const filter = { tags: ['tag1'], read: false, archived: false };
