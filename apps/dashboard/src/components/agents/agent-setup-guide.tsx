@@ -2,13 +2,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
-import {
-  type AgentResponse,
-  getAgentDetailQueryKey,
-  getAgentIntegrationsQueryKey,
-  listAgentIntegrations,
-  removeAgentIntegration,
-} from '@/api/agents';
+import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
@@ -108,35 +102,6 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
     });
   }, [queryClient, currentEnvironment?._id, agent.identifier]);
 
-  const handleProviderSelect = useCallback(
-    (_providerId: string, integration: { _id: string } | undefined) => {
-      if (!integration?._id || !currentEnvironment) return;
-
-      setSelectedIntegrationId(integration._id);
-      sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
-
-      const staleLinks = (agentIntegrationsQuery.data?.data ?? []).filter(
-        (link) => !link.connectedAt && link.integration._id !== integration._id
-      );
-
-      if (!staleLinks.length) return;
-
-      void Promise.all(
-        staleLinks.map((link) =>
-          removeAgentIntegration(currentEnvironment, agent.identifier, link._id).catch(() => {})
-        )
-      ).then(() => {
-        queryClient.invalidateQueries({
-          queryKey: getAgentIntegrationsQueryKey(currentEnvironment._id, agent.identifier),
-        });
-        queryClient.invalidateQueries({
-          queryKey: getAgentDetailQueryKey(currentEnvironment._id, agent.identifier),
-        });
-      });
-    },
-    [agent.identifier, agentIntegrationsQuery.data?.data, currentEnvironment, queryClient]
-  );
-
   return (
     <div className="bg-bg-weak flex min-w-0 flex-1 flex-col rounded-[10px] p-1">
       <button
@@ -169,7 +134,12 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
                   agentIdentifier={agent.identifier}
                   selectedIntegrationId={selectedIntegrationId ?? defaultFromAgent?.integrationId}
                   linkedIntegrationIds={linkedIntegrationIds}
-                  onSelect={handleProviderSelect}
+                  onSelect={(_providerId, integration) => {
+                    if (integration?._id) {
+                      setSelectedIntegrationId(integration._id);
+                      sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
+                    }
+                  }}
                 />
               }
             />
