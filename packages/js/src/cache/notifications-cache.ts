@@ -146,26 +146,45 @@ export class NotificationsCache {
     this.#cache = new InMemoryCache();
   }
 
+  private isFirstPageCacheKey(key: string): boolean {
+    const { after, offset } = getFilter(key) as ListNotificationsArgs;
+
+    return after === undefined && (offset === undefined || offset === 0);
+  }
+
   private updateNotification = (key: string, data: Notification): boolean => {
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
     }
 
-    const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
-    if (index === -1) {
-      return false;
-    }
-
     const parsedFilter = getFilter(key);
+    const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
 
     // A state transition can make an existing item stop matching the cached filter
     // (for example, an unread-only list after marking the notification as read).
     // In that case we remove it from that filtered cache instead of keeping stale data around.
-    if (!checkNotificationMatchesFilter(data, parsedFilter)) {
+    if (index !== -1 && !checkNotificationMatchesFilter(data, parsedFilter)) {
       const updatedNotifications = notificationsResponse.notifications.filter((notification) => notification.id !== data.id);
 
       this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
+
+      return true;
+    }
+
+    if (index === -1) {
+      if (!checkNotificationMatchesFilter(data, parsedFilter) || !this.isFirstPageCacheKey(key)) {
+        return false;
+      }
+
+      // When a notification starts matching again (for example, read -> unread),
+      // we restore it into the first cached page for that filter so badge/list state
+      // can recover without waiting for a manual refetch.
+      const notifications = [data, ...notificationsResponse.notifications];
+      const limit = (getFilter(key) as ListNotificationsArgs).limit;
+      const boundedNotifications = typeof limit === 'number' ? notifications.slice(0, limit) : notifications;
+
+      this.#cache.set(key, { ...notificationsResponse, notifications: boundedNotifications });
 
       return true;
     }
@@ -283,7 +302,9 @@ export class NotificationsCache {
         continue;
       }
 
-      hasMore = hasMore || cachedResponse.hasMore;
+      // Preserve "latest loaded page wins" semantics so hasMore can settle to false
+      // after the terminal page is cached, instead of being stuck true forever.
+      hasMore = cachedResponse.hasMore;
       aggregatedFilter = cachedResponse.filter;
 
       // getAll() merges every cached page for the same logical filter (different limits/offsets/afters).

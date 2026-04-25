@@ -270,6 +270,30 @@ describe('NotificationsCache', () => {
     });
   });
 
+  it('should re-add a notification to the first cached page when it starts matching the filter again', () => {
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const unreadNotification = new Notification(
+      { ...notification1, tags: ['tag1'], isRead: false, body: 'Unread again' },
+      mockEmitter,
+      mockInboxService
+    );
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter,
+      notifications: [],
+    });
+
+    (notificationsCache as any).handleNotificationEvent()({ data: unreadNotification });
+
+    expect(notificationsCache.getAll(args)).toEqual({
+      hasMore: false,
+      filter,
+      notifications: [unreadNotification],
+    });
+  });
+
   it('should remove notification and emit single event', () => {
     const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
     const filter = { tags: ['tag1'], read: false, archived: false };
@@ -582,7 +606,30 @@ describe('NotificationsCache', () => {
 
     const result = notificationsCache.getAll(firstPageArgs);
 
-    expect(result?.hasMore).toBe(true);
+    expect(result?.hasMore).toBe(false);
+    expect(result?.notifications).toEqual([sharedNotification, uniqueNotification]);
+  });
+
+  it('should use the latest cached page hasMore value when aggregating pages for the same filter', () => {
+    const firstPageArgs: ListNotificationsArgs = { limit: 10, tags: ['tag1'] };
+    const secondPageArgs: ListNotificationsArgs = { limit: 10, tags: ['tag1'], after: notification1.id };
+    const sharedNotification = new Notification({ ...notification1, tags: ['tag1'] }, mockEmitter, mockInboxService);
+    const uniqueNotification = new Notification({ ...notification2, tags: ['tag1'] }, mockEmitter, mockInboxService);
+
+    notificationsCache.set(firstPageArgs, {
+      hasMore: true,
+      filter: { tags: ['tag1'] },
+      notifications: [sharedNotification],
+    });
+    notificationsCache.set(secondPageArgs, {
+      hasMore: false,
+      filter: { tags: ['tag1'] },
+      notifications: [uniqueNotification],
+    });
+
+    const result = notificationsCache.getAll(firstPageArgs);
+
+    expect(result?.hasMore).toBe(false);
     expect(result?.notifications).toEqual([sharedNotification, uniqueNotification]);
   });
 
