@@ -30,7 +30,7 @@ type OutboundDropdownItem = {
   integration?: IIntegration;
 };
 
-const EXCLUDED_OUTBOUND_PROVIDERS = new Set([EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu]);
+const EXCLUDED_OUTBOUND_PROVIDERS = new Set<string>([EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu]);
 const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter((p) => !EXCLUDED_OUTBOUND_PROVIDERS.has(p.id));
 
 function buildOutboundItems(allIntegrations: IIntegration[] | undefined): OutboundDropdownItem[] {
