@@ -217,7 +217,12 @@ export class ConstructFrameworkWorkflow {
     const stepControls = stepTemplate.controls;
 
     if (!stepControls) {
-      throw new InternalServerErrorException(`Step controls not found for step ${staticStep.stepId}`);
+      this.logger.warn(`Step controls not found for step ${stepId}, skipping step`, LOG_CONTEXT);
+
+      return step.custom(stepId, async () => ({}), {
+        controlSchema: PERMISSIVE_EMPTY_SCHEMA,
+        skip: () => true,
+      });
     }
 
     switch (stepType) {
