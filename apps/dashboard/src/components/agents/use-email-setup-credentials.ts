@@ -4,10 +4,10 @@ import {
   EmailProviderIdEnum,
   type IIntegration,
 } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type AgentResponse } from '@/api/agents';
-import { type DomainResponse, fetchDomains, updateDomain } from '@/api/domains';
+import { type DomainResponse, type UpdateDomainBody, fetchDomains, updateDomain } from '@/api/domains';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
@@ -30,13 +30,21 @@ export function useEmailSetupCredentials({
 }) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
+  const queryClient = useQueryClient();
 
   const [outboundId, setOutboundId] = useState('');
 
   const serverCredentials = emailIntegration?.credentials ?? {};
   const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
+  const pendingKeysRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    credentialsRef.current = { ...credentialsRef.current, ...serverCredentials };
+    const merged = { ...serverCredentials } as Record<string, unknown>;
+    for (const [key, value] of Object.entries(credentialsRef.current)) {
+      if (pendingKeysRef.current.has(key)) {
+        merged[key] = value;
+      }
+    }
+    credentialsRef.current = merged;
   }, [emailIntegration]);
 
   const hasInitializedFromServer = useRef(false);
@@ -77,9 +85,17 @@ export function useEmailSetupCredentials({
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
   const hasOutboundCredentials = useMemo(() => {
     if (!outboundIntegration) return false;
-    const creds = outboundIntegration.credentials ?? {};
+    const providerConfig = emailProviderConfigs.find((p) => p.id === outboundIntegration.providerId);
+    if (!providerConfig) return false;
+    const requiredKeys = providerConfig.credentials.filter((c) => c.required).map((c) => c.key);
+    if (requiredKeys.length === 0) return true;
+    const creds = (outboundIntegration.credentials ?? {}) as Record<string, unknown>;
 
-    return Object.values(creds).some((v) => v !== undefined && v !== null && v !== '');
+    return requiredKeys.every((key) => {
+      const val = creds[key];
+
+      return val !== undefined && val !== null && val !== '';
+    });
   }, [outboundIntegration]);
   const outboundProviderConfig = useMemo(
     () => (outboundIntegration ? emailProviderConfigs.find((p) => p.id === outboundIntegration.providerId) : undefined),
@@ -91,7 +107,9 @@ export function useEmailSetupCredentials({
   function saveCredentials(patch: Record<string, unknown>) {
     if (!emailIntegration) return;
     credentialsRef.current = { ...credentialsRef.current, ...patch };
+    for (const key of Object.keys(patch)) pendingKeysRef.current.add(key);
     const snapshot = { ...credentialsRef.current };
+    const patchKeys = Object.keys(patch);
     saveQueueRef.current = saveQueueRef.current
       .then(() =>
         updateIntegration({
@@ -107,12 +125,23 @@ export function useEmailSetupCredentials({
           },
         })
       )
-      .then(() => undefined)
+      .then(() => {
+        for (const key of patchKeys) pendingKeysRef.current.delete(key);
+      })
       .catch((err: unknown) => {
+        for (const key of patchKeys) pendingKeysRef.current.delete(key);
         const message = err instanceof Error ? err.message : 'Could not save credentials.';
         showErrorToast(message, 'Settings not saved');
       });
   }
+
+  const { mutate: mutateDomainRoutes } = useMutation({
+    mutationFn: ({ domainId, body }: { domainId: string; body: UpdateDomainBody }) =>
+      updateDomain(domainId, body, requireEnvironment(currentEnvironment, 'No environment selected')),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id] });
+    },
+  });
 
   const addAddress = useCallback(
     (address: string, domain: DomainResponse) => {
@@ -136,18 +165,22 @@ export function useEmailSetupCredentials({
         return;
       }
 
-      const updatedRoutes = [
-        ...existingRoutes,
-        { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id },
-      ];
-      updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment)
-        .then(() => domainsQuery.refetch())
-        .catch((err: unknown) => {
-          const message = err instanceof Error ? err.message : 'Could not create inbound route on the domain.';
-          showErrorToast(message, 'Route creation failed');
-        });
+      mutateDomainRoutes(
+        {
+          domainId: domain._id,
+          body: {
+            routes: [...existingRoutes, { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id }],
+          },
+        },
+        {
+          onError: (err) => {
+            const message = err instanceof Error ? err.message : 'Could not create inbound route on the domain.';
+            showErrorToast(message, 'Route creation failed');
+          },
+        }
+      );
     },
-    [currentEnvironment, agent._id, domains, domainsQuery]
+    [currentEnvironment, agent._id, mutateDomainRoutes]
   );
 
   const removeAddress = useCallback(
@@ -158,13 +191,16 @@ export function useEmailSetupCredentials({
       const updatedRoutes = (domain.routes ?? []).filter(
         (r) => !(r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id)
       );
-      updateDomain(domain._id, { routes: updatedRoutes }, currentEnvironment)
-        .then(() => domainsQuery.refetch())
-        .catch(() => {
-          showErrorToast('Could not remove inbound route from the domain.', 'Route removal failed');
-        });
+      mutateDomainRoutes(
+        { domainId: domain._id, body: { routes: updatedRoutes } },
+        {
+          onError: () => {
+            showErrorToast('Could not remove inbound route from the domain.', 'Route removal failed');
+          },
+        }
+      );
     },
-    [currentEnvironment, agent._id, domains, domainsQuery]
+    [currentEnvironment, agent._id, domains, mutateDomainRoutes]
   );
 
   function onOutboundSelect(id: string) {
@@ -184,6 +220,5 @@ export function useEmailSetupCredentials({
     onOutboundSelect,
     addAddress,
     removeAddress,
-    refetchDomains: domainsQuery.refetch,
   };
 }

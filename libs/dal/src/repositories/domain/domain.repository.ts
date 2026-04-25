@@ -65,10 +65,10 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     destination: string,
     options: { session?: ClientSession | null } = {}
   ): Promise<void> {
-    await this.MongooseModel.updateMany(
+    await this.update(
       { _environmentId: environmentId, _organizationId: organizationId, 'routes.destination': destination },
-      { $pull: { routes: { destination } } } as any,
-      options.session ? { session: options.session } : {}
+      { $pull: { routes: { destination } } },
+      { session: options.session }
     );
   }
 

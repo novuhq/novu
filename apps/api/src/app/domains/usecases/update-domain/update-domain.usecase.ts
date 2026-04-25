@@ -78,19 +78,20 @@ export class UpdateDomain {
 
     if (agentDestinations.length === 0) return;
 
-    for (const agentId of agentDestinations) {
-      const agent = await this.agentRepository.findOne(
-        {
-          _id: agentId,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        ['_id']
-      );
+    const found = await this.agentRepository.find(
+      {
+        _id: { $in: agentDestinations },
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
 
-      if (!agent) {
-        throw new NotFoundException(`Agent "${agentId}" referenced in route destination does not exist.`);
-      }
+    const foundIds = new Set(found.map((a) => a._id));
+    const missing = agentDestinations.filter((id) => !foundIds.has(id));
+
+    if (missing.length > 0) {
+      throw new NotFoundException(`Agent(s) ${missing.join(', ')} referenced in route destinations do not exist.`);
     }
   }
 }

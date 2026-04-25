@@ -48,6 +48,7 @@ export function InboundAddressConfig({
     if (!LOCAL_PART_RE.test(trimmed)) return;
     const domain = domains.find((d) => d.name === domainName);
     if (!domain) return;
+    if (configuredAddresses.some((a) => a.address === trimmed && a.domain === domainName)) return;
     onAddAddress(trimmed, domain);
     setLocalPart('');
   }

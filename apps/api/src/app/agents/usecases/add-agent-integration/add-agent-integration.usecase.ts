@@ -17,18 +17,14 @@ import {
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
-  ChannelTypeEnum,
   EmailProviderIdEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
-  providers,
-  slugify,
 } from '@novu/shared';
-import { ClientSession } from 'mongoose';
-import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../dtos';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+import { FindOrCreateNovuEmail } from '../find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 
 @Injectable()
@@ -37,7 +33,8 @@ export class AddAgentIntegration {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly organizationRepository: CommunityOrganizationRepository
+    private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -63,7 +60,7 @@ export class AddAgentIntegration {
     }
 
     if (command.providerId === EmailProviderIdEnum.NovuAgent) {
-      return this.findOrCreateNovuEmailLink(agent._id, command);
+      return this.findOrCreateNovuEmail.execute(agent._id, command.environmentId, command.organizationId);
     }
 
     if (!command.integrationIdentifier) {
@@ -73,11 +70,6 @@ export class AddAgentIntegration {
     return this.linkExistingIntegration(agent._id, command);
   }
 
-  /**
-   * Standard path: link an existing integration (by identifier) to the agent.
-   * Used for Slack, Teams, WhatsApp, and any provider where the Integration
-   * document already exists.
-   */
   private async linkExistingIntegration(
     agentId: string,
     command: AddAgentIntegrationCommand
@@ -104,89 +96,10 @@ export class AddAgentIntegration {
     return this.createLink(agentId, integration, command);
   }
 
-  /**
-   * Auto-creation path for NovuAgent email: find the agent's existing
-   * NovuAgent integration link, or create a new Integration + link atomically.
-   * Idempotent — safe to call multiple times for the same agent.
-   */
-  private async findOrCreateNovuEmailLink(
-    agentId: string,
-    command: AddAgentIntegrationCommand
-  ): Promise<AgentIntegrationResponseDto> {
-    await this.enforceEmailTier(command.organizationId);
-
-    const existingLink = await this.findExistingNovuEmailLink(agentId, command);
-    if (existingLink) {
-      return existingLink;
-    }
-
-    return this.agentIntegrationRepository.withTransaction(async (session) => {
-      const recheck = await this.findExistingNovuEmailLink(agentId, command);
-      if (recheck) {
-        return recheck;
-      }
-
-      const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
-      const identifier = `${slugify(displayName)}-${shortid.generate()}`;
-
-      const integration = await this.integrationRepository.create(
-        {
-          providerId: EmailProviderIdEnum.NovuAgent,
-          channel: ChannelTypeEnum.EMAIL,
-          credentials: { secretKey: encryptSecret(randomBytes(32).toString('hex')) },
-          configurations: {},
-          name: displayName,
-          identifier,
-          active: true,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        } as any,
-        { session }
-      );
-
-      return this.createLink(agentId, integration, command, session);
-    });
-  }
-
-  private async findExistingNovuEmailLink(
-    agentId: string,
-    command: AddAgentIntegrationCommand
-  ): Promise<AgentIntegrationResponseDto | null> {
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: agentId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      '*'
-    );
-
-    if (links.length === 0) return null;
-
-    const linkedIntegrationIds = links.map((l) => l._integrationId);
-    const emailIntegration = await this.integrationRepository.findOne(
-      {
-        _id: { $in: linkedIntegrationIds } as unknown as string,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
-      },
-      '_id identifier name providerId channel active'
-    );
-
-    if (!emailIntegration) return null;
-
-    const link = links.find((l) => l._integrationId === emailIntegration._id);
-    if (!link) return null;
-
-    return toAgentIntegrationResponse(link, emailIntegration);
-  }
-
   private async createLink(
     agentId: string,
     integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>,
-    command: AddAgentIntegrationCommand,
-    session: ClientSession | null = null
+    command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
     const existingLink = await this.agentIntegrationRepository.findOne(
       {
@@ -195,23 +108,19 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id'],
-      { session }
+      ['_id']
     );
 
     if (existingLink) {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
-    const link = await this.agentIntegrationRepository.create(
-      {
-        _agentId: agentId,
-        _integrationId: integration._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      { session }
-    );
+    const link = await this.agentIntegrationRepository.create({
+      _agentId: agentId,
+      _integrationId: integration._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
 
     return toAgentIntegrationResponse(link, integration);
   }
