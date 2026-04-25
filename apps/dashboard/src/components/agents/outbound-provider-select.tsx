@@ -28,24 +28,16 @@ type OutboundDropdownItem = {
   providerId: string;
   displayName: string;
   integration?: IIntegration;
-  isDemo: boolean;
 };
 
-const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter((p) => p.id !== EmailProviderIdEnum.NovuAgent);
-
-function DemoBadge() {
-  return (
-    <span className="bg-warning-lighter text-warning-dark rounded px-1 py-px text-[9px] font-semibold uppercase leading-3">
-      Demo
-    </span>
-  );
-}
+const EXCLUDED_OUTBOUND_PROVIDERS = new Set([EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu]);
+const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter((p) => !EXCLUDED_OUTBOUND_PROVIDERS.has(p.id));
 
 function buildOutboundItems(allIntegrations: IIntegration[] | undefined): OutboundDropdownItem[] {
   const integrationsByProvider = new Map<string, IIntegration[]>();
   for (const i of allIntegrations ?? []) {
     if (i.channel !== ChannelTypeEnum.EMAIL) continue;
-    if (i.providerId === EmailProviderIdEnum.NovuAgent) continue;
+    if (EXCLUDED_OUTBOUND_PROVIDERS.has(i.providerId)) continue;
     const list = integrationsByProvider.get(i.providerId) ?? [];
     list.push(i);
     integrationsByProvider.set(i.providerId, list);
@@ -54,20 +46,16 @@ function buildOutboundItems(allIntegrations: IIntegration[] | undefined): Outbou
   const items: OutboundDropdownItem[] = [];
   for (const cfg of OUTBOUND_EMAIL_PROVIDERS) {
     const existing = integrationsByProvider.get(cfg.id);
-    const isDemo = cfg.id === EmailProviderIdEnum.Novu;
     if (existing?.length) {
       for (const integration of existing) {
         items.push({
           providerId: cfg.id,
           displayName: integration.name || cfg.displayName,
           integration,
-          isDemo,
         });
       }
     }
-    if (!isDemo) {
-      items.push({ providerId: cfg.id, displayName: cfg.displayName, isDemo: false });
-    }
+    items.push({ providerId: cfg.id, displayName: cfg.displayName });
   }
 
   return items;
@@ -178,7 +166,6 @@ export function OutboundProviderSelect({
                     className="size-4 shrink-0"
                   />
                   <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
-                  {selected.isDemo && <DemoBadge />}
                 </div>
               ) : (
                 <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>
@@ -239,7 +226,6 @@ export function OutboundProviderSelect({
                           <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
                             {item.displayName}
                           </span>
-                          {item.isDemo && <DemoBadge />}
                         </div>
                         {isRowPending && (
                           <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
@@ -260,12 +246,6 @@ export function OutboundProviderSelect({
         </Popover>
       </div>
 
-      {selected?.isDemo && (
-        <p className="text-warning-dark text-label-xs max-w-[320px] font-medium leading-4">
-          This is a demo provider for development and testing. Switch to a production provider (e.g. Resend, SendGrid)
-          before going live.
-        </p>
-      )}
     </div>
   );
 }
