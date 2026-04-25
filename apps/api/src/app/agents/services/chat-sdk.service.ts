@@ -39,7 +39,7 @@ function wrapMsgId(id: string): string {
 
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
-const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<EmailProviderIdEnum>([
+const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
   EmailProviderIdEnum.CustomSMTP,
   EmailProviderIdEnum.Outlook365,
   EmailProviderIdEnum.SendGrid,
