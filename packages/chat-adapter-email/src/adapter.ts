@@ -21,8 +21,15 @@ import { WebhookHandler } from './webhook-handler.js';
 
 const GMAIL_REACTION_CONTENT_TYPE = 'text/vnd.google.email-reaction+json';
 const GMAIL_MESSAGE_ID_DOMAINS = new Set(['mail.gmail.com']);
+const MAX_REACTION_REFERENCE_IDS = 20;
+// The email acknowledgement flow currently emits "eyes"; other named reactions are intentionally supported only when
+// they have an explicit Unicode mapping that Gmail can validate as a single emoji.
 const EMAIL_REACTION_EMOJI_BY_NAME: Record<string, string> = {
   eyes: '👀',
+  thumbs_up: '👍',
+  heart: '❤️',
+  laugh: '😂',
+  tada: '🎉',
 };
 
 class NotImplementedError extends Error {
@@ -196,7 +203,13 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for reaction`);
     }
 
-    const reactionEmoji = this.toReactionEmoji(emoji);
+    let reactionEmoji: string;
+    try {
+      reactionEmoji = this.toReactionEmoji(emoji);
+    } catch {
+      return;
+    }
+
     const reactionMessageId = generateMessageId(agentAddress);
     const storedSubject = await this.threadResolver.getSubject(threadId);
     const subject = storedSubject ? this.toReplySubject(storedSubject) : 'New message';
@@ -303,7 +316,9 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     throw new NotImplementedError('deleteMessage');
   }
 
-  async removeReaction(_threadId: string, _messageId: string, _emoji: string): Promise<void> {}
+  async removeReaction(_threadId: string, _messageId: string, _emoji: string): Promise<void> {
+    // Gmail's email reaction MIME format only defines adding a reaction, so removeReaction is intentionally a no-op.
+  }
 
   private isGmailMessageId(messageId: string): boolean {
     const domain = messageId.trim().replace(/^<|>$/g, '').split('@').at(-1)?.toLowerCase();
@@ -321,11 +336,44 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       return EMAIL_REACTION_EMOJI_BY_NAME[emojiName];
     }
 
-    if (typeof emoji === 'string' && !/^[a-z0-9_+-]+$/i.test(emoji)) {
+    if (typeof emoji === 'string' && this.isSingleEmojiGrapheme(emoji)) {
       return emoji;
     }
 
     throw new Error(`Unsupported email reaction emoji: ${emojiName ?? String(emoji)}`);
+  }
+
+  private isSingleEmojiGrapheme(value: string): boolean {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return false;
+    }
+
+    const graphemes = this.segmentGraphemes(trimmed);
+    const [firstGrapheme] = graphemes;
+
+    return (
+      graphemes.length === 1 &&
+      firstGrapheme !== undefined &&
+      /[\p{Extended_Pictographic}\p{Emoji_Presentation}]/u.test(firstGrapheme)
+    );
+  }
+
+  private segmentGraphemes(value: string): string[] {
+    const Segmenter = (
+      Intl as unknown as {
+        Segmenter?: new (
+          locale: string,
+          options: { granularity: 'grapheme' }
+        ) => { segment(input: string): Iterable<{ segment: string }> };
+      }
+    ).Segmenter;
+
+    if (!Segmenter) {
+      return Array.from(value);
+    }
+
+    return Array.from(new Segmenter('en', { granularity: 'grapheme' }).segment(value), ({ segment }) => segment);
   }
 
   private toEmojiName(emoji: unknown): string | undefined {
@@ -346,6 +394,6 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       ids.push(messageId);
     }
 
-    return ids.join(' ');
+    return ids.slice(-MAX_REACTION_REFERENCE_IDS).join(' ');
   }
 }

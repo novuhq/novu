@@ -39,6 +39,9 @@ function wrapMsgId(id: string): string {
 
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
+// EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
+// alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
+// Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.
 const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
   EmailProviderIdEnum.CustomSMTP,
   EmailProviderIdEnum.Outlook365,
@@ -333,7 +336,7 @@ export class ChatSdkService implements OnModuleDestroy {
     inReplyTo?: string;
     references?: string;
     messageId?: string;
-  }) => Promise<{ messageId: string }> {
+  }) => Promise<{ messageId?: string }> {
     return async (params) => {
       if (!outboundIntegrationId) {
         throw new BadRequestException(
@@ -367,7 +370,23 @@ export class ChatSdkService implements OnModuleDestroy {
         );
       }
 
-      if (params.alternatives?.length && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(integration.providerId)) {
+      const hasUnsupportedAlternatives =
+        params.alternatives?.length && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(integration.providerId);
+      if (hasUnsupportedAlternatives) {
+        // NovuEmailAdapterImpl.addReaction supplies a reaction Message-ID; any custom MIME alternative caller must do
+        // the same so skipped unsupported sends don't claim provider delivery.
+        if (!params.messageId) {
+          this.logger.warn(
+            {
+              providerId: integration.providerId,
+              outboundIntegrationId,
+            },
+            'Skipping email with custom MIME alternatives because the outbound provider is unsupported and no messageId was supplied'
+          );
+
+          return { messageId: undefined };
+        }
+
         this.logger.warn(
           {
             providerId: integration.providerId,
@@ -376,7 +395,7 @@ export class ChatSdkService implements OnModuleDestroy {
           'Skipping email reaction because the outbound provider does not support custom MIME alternatives'
         );
 
-        return { messageId: params.messageId || '' };
+        return { messageId: params.messageId };
       }
 
       const decrypted = decryptCredentials(integration.credentials);

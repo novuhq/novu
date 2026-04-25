@@ -45,7 +45,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       to,
       html,
       text,
-      ...(alternatives?.length ? { alternatives } : {}),
+      ...(alternatives.length ? { alternatives } : {}),
       subject,
       attachments,
       from: {
