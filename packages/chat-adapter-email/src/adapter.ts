@@ -20,7 +20,7 @@ import { generateMessageId, hashMessageId, parseEmailAddress } from './utils.js'
 import { WebhookHandler } from './webhook-handler.js';
 
 const GMAIL_REACTION_CONTENT_TYPE = 'text/vnd.google.email-reaction+json';
-const GMAIL_REACTION_DOMAINS = new Set(['gmail.com', 'googlemail.com']);
+const GMAIL_MESSAGE_ID_DOMAINS = new Set(['mail.gmail.com']);
 const EMAIL_REACTION_EMOJI_BY_NAME: Record<string, string> = {
   eyes: '👀',
 };
@@ -187,7 +187,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   async addReaction(threadId: string, messageId: string, emoji: unknown): Promise<void> {
     const decoded = this.threadResolver.decodeThreadId(threadId);
-    if (!this.isGmailAddress(decoded.recipientAddress)) {
+    if (!this.isGmailMessageId(messageId)) {
       return;
     }
 
@@ -305,10 +305,10 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
   async removeReaction(_threadId: string, _messageId: string, _emoji: string): Promise<void> {}
 
-  private isGmailAddress(address: string): boolean {
-    const domain = parseEmailAddress(address).split('@').at(-1)?.toLowerCase();
+  private isGmailMessageId(messageId: string): boolean {
+    const domain = messageId.trim().replace(/^<|>$/g, '').split('@').at(-1)?.toLowerCase();
 
-    return !!domain && GMAIL_REACTION_DOMAINS.has(domain);
+    return !!domain && GMAIL_MESSAGE_ID_DOMAINS.has(domain);
   }
 
   private toReplySubject(subject: string): string {
