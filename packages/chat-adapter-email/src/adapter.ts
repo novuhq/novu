@@ -37,6 +37,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   private readonly messageParser = new MessageParser();
   private readonly formatConverter = new EmailFormatConverter();
   private readonly webhookHandler: WebhookHandler;
+  private parseMarkdownFn: ((md: string) => Root) | null = null;
 
   constructor(config: NovuEmailAdapterConfig) {
     this.config = config;
@@ -49,6 +50,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     this.threadResolver.setStateAdapter(chat.getState());
 
     const chatModule = await import('chat');
+    this.parseMarkdownFn = chatModule.parseMarkdown;
     this.messageParser.setChatModule(chatModule.Message as any, chatModule.parseMarkdown);
   }
 
@@ -187,8 +189,9 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     }
     if ('markdown' in message) {
       const md = (message as { markdown: string }).markdown;
+      const formatted = this.parseMarkdownFn ? this.parseMarkdownFn(md) : this.formatConverter.toAst(md);
 
-      return { formatted: this.formatConverter.toAst(md), text: md };
+      return { formatted, text: md };
     }
     if ('raw' in message) {
       return { text: (message as { raw: string }).raw };
