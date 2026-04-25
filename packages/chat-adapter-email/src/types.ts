@@ -8,12 +8,18 @@ export interface NovuEmailAdapterConfig {
   sendEmail: (params: SendEmailParams) => Promise<{ messageId: string }>;
 }
 
+export interface EmailAlternative {
+  contentType: string;
+  content: string | Buffer;
+}
+
 export interface SendEmailParams {
   from: string;
   to: string;
   subject: string;
   html: string;
   text?: string;
+  alternatives?: EmailAlternative[];
   inReplyTo?: string;
   references?: string;
   messageId?: string;

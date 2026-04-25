@@ -39,6 +39,12 @@ function wrapMsgId(id: string): string {
 
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
+const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<EmailProviderIdEnum>([
+  EmailProviderIdEnum.CustomSMTP,
+  EmailProviderIdEnum.Outlook365,
+  EmailProviderIdEnum.SendGrid,
+  EmailProviderIdEnum.SES,
+]);
 
 /**
  * Holds a cached Chat instance alongside a mutable pointer to the current
@@ -320,6 +326,10 @@ export class ChatSdkService implements OnModuleDestroy {
     subject: string;
     html: string;
     text?: string;
+    alternatives?: Array<{
+      contentType: string;
+      content: string | Buffer;
+    }>;
     inReplyTo?: string;
     references?: string;
     messageId?: string;
@@ -357,6 +367,18 @@ export class ChatSdkService implements OnModuleDestroy {
         );
       }
 
+      if (params.alternatives?.length && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(integration.providerId)) {
+        this.logger.warn(
+          {
+            providerId: integration.providerId,
+            outboundIntegrationId,
+          },
+          'Skipping email reaction because the outbound provider does not support custom MIME alternatives'
+        );
+
+        return { messageId: params.messageId || '' };
+      }
+
       const decrypted = decryptCredentials(integration.credentials);
       const mailFactory = new MailFactory();
       const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, params.from);
@@ -366,6 +388,7 @@ export class ChatSdkService implements OnModuleDestroy {
         subject: params.subject,
         html: params.html,
         text: params.text,
+        alternatives: params.alternatives,
         from: params.from,
         senderName: config.credentials.senderName || undefined,
         headers: {

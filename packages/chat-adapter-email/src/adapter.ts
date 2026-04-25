@@ -19,6 +19,12 @@ import type { NovuEmailAdapterConfig, NovuEmailRawMessage, NovuEmailThreadId } f
 import { generateMessageId, hashMessageId, parseEmailAddress } from './utils.js';
 import { WebhookHandler } from './webhook-handler.js';
 
+const GMAIL_REACTION_CONTENT_TYPE = 'text/vnd.google.email-reaction+json';
+const GMAIL_REACTION_DOMAINS = new Set(['gmail.com', 'googlemail.com']);
+const EMAIL_REACTION_EMOJI_BY_NAME: Record<string, string> = {
+  eyes: '👀',
+};
+
 class NotImplementedError extends Error {
   constructor(method: string) {
     super(`${method} is not supported by the email adapter`);
@@ -49,7 +55,10 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     this.threadResolver.setStateAdapter(chat.getState());
 
     const chatModule = await import('chat');
-    this.messageParser.setChatModule(chatModule.Message as any, chatModule.parseMarkdown);
+    this.messageParser.setChatModule(
+      chatModule.Message as unknown as Parameters<MessageParser['setChatModule']>[0],
+      chatModule.parseMarkdown
+    );
   }
 
   // -- Thread ID methods --
@@ -136,9 +145,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for reply`);
     }
 
-    const fromHeader = this.config.senderName
-      ? `${this.config.senderName} <${agentAddress}>`
-      : agentAddress;
+    const fromHeader = this.config.senderName ? `${this.config.senderName} <${agentAddress}>` : agentAddress;
 
     const messageId = generateMessageId(agentAddress);
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
@@ -176,6 +183,42 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     };
 
     return { id: sentMessageId, raw, threadId };
+  }
+
+  async addReaction(threadId: string, messageId: string, emoji: unknown): Promise<void> {
+    const decoded = this.threadResolver.decodeThreadId(threadId);
+    if (!this.isGmailAddress(decoded.recipientAddress)) {
+      return;
+    }
+
+    const agentAddress = await this.threadResolver.getAgentAddress(threadId);
+    if (!agentAddress) {
+      throw new Error(`No agent address found for thread ${threadId} — cannot determine From address for reaction`);
+    }
+
+    const reactionEmoji = this.toReactionEmoji(emoji);
+    const reactionMessageId = generateMessageId(agentAddress);
+    const storedSubject = await this.threadResolver.getSubject(threadId);
+    const subject = storedSubject ? this.toReplySubject(storedSubject) : 'New message';
+    const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
+    const references = this.buildReactionReferences(replyHeaders?.References, messageId);
+
+    await this.config.sendEmail({
+      from: agentAddress,
+      to: decoded.recipientAddress,
+      subject,
+      text: reactionEmoji,
+      html: `<p>${reactionEmoji}</p>`,
+      alternatives: [
+        {
+          contentType: GMAIL_REACTION_CONTENT_TYPE,
+          content: JSON.stringify({ version: 1, emoji: reactionEmoji }),
+        },
+      ],
+      messageId: reactionMessageId,
+      inReplyTo: messageId,
+      references,
+    });
   }
 
   /**
@@ -260,11 +303,49 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     throw new NotImplementedError('deleteMessage');
   }
 
-  async addReaction(_threadId: string, _messageId: string, _emoji: string): Promise<void> {
-    throw new NotImplementedError('addReaction');
+  async removeReaction(_threadId: string, _messageId: string, _emoji: string): Promise<void> {}
+
+  private isGmailAddress(address: string): boolean {
+    const domain = parseEmailAddress(address).split('@').at(-1)?.toLowerCase();
+
+    return !!domain && GMAIL_REACTION_DOMAINS.has(domain);
   }
 
-  async removeReaction(_threadId: string, _messageId: string, _emoji: string): Promise<void> {
-    throw new NotImplementedError('removeReaction');
+  private toReplySubject(subject: string): string {
+    return /^re:/i.test(subject) ? subject : `Re: ${subject}`;
+  }
+
+  private toReactionEmoji(emoji: unknown): string {
+    const emojiName = this.toEmojiName(emoji);
+    if (emojiName && EMAIL_REACTION_EMOJI_BY_NAME[emojiName]) {
+      return EMAIL_REACTION_EMOJI_BY_NAME[emojiName];
+    }
+
+    if (typeof emoji === 'string' && !/^[a-z0-9_+-]+$/i.test(emoji)) {
+      return emoji;
+    }
+
+    throw new Error(`Unsupported email reaction emoji: ${emojiName ?? String(emoji)}`);
+  }
+
+  private toEmojiName(emoji: unknown): string | undefined {
+    if (typeof emoji === 'string') {
+      return emoji;
+    }
+
+    if (emoji && typeof emoji === 'object' && 'name' in emoji && typeof emoji.name === 'string') {
+      return emoji.name;
+    }
+
+    return undefined;
+  }
+
+  private buildReactionReferences(references: string | undefined, messageId: string): string {
+    const ids = references?.split(/\s+/).filter(Boolean) ?? [];
+    if (!ids.includes(messageId)) {
+      ids.push(messageId);
+    }
+
+    return ids.join(' ');
   }
 }

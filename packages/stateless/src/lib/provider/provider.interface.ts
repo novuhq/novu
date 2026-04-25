@@ -23,6 +23,10 @@ export interface IEmailOptions {
   html: string;
   from?: string;
   text?: string;
+  alternatives?: Array<{
+    contentType: string;
+    content: string | Buffer;
+  }>;
   attachments?: IAttachmentOptions[];
   id?: string;
   replyTo?: string;
