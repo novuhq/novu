@@ -186,7 +186,9 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       return { text: message };
     }
     if ('markdown' in message) {
-      return { text: (message as { markdown: string }).markdown };
+      const md = (message as { markdown: string }).markdown;
+
+      return { formatted: this.formatConverter.toAst(md), text: md };
     }
     if ('raw' in message) {
       return { text: (message as { raw: string }).raw };
