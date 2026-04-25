@@ -146,8 +146,8 @@ export class NotificationsCache {
     this.#cache = new InMemoryCache();
   }
 
-  private isFirstPageCacheKey(key: string): boolean {
-    const { after, offset } = getFilter(key) as ListNotificationsArgs;
+  private isFirstPageCacheKey(args: ListNotificationsArgs): boolean {
+    const { after, offset } = args;
 
     return after === undefined && (offset === undefined || offset === 0);
   }
@@ -158,7 +158,7 @@ export class NotificationsCache {
       return false;
     }
 
-    const parsedFilter = getFilter(key);
+    const parsedFilter = getFilter(key) as ListNotificationsArgs;
     const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
 
     // A state transition can make an existing item stop matching the cached filter
@@ -173,7 +173,7 @@ export class NotificationsCache {
     }
 
     if (index === -1) {
-      if (!checkNotificationMatchesFilter(data, parsedFilter) || !this.isFirstPageCacheKey(key)) {
+      if (!checkNotificationMatchesFilter(data, parsedFilter) || !this.isFirstPageCacheKey(parsedFilter)) {
         return false;
       }
 
@@ -181,7 +181,7 @@ export class NotificationsCache {
       // we restore it into the first cached page for that filter so badge/list state
       // can recover without waiting for a manual refetch.
       const notifications = [data, ...notificationsResponse.notifications];
-      const limit = (getFilter(key) as ListNotificationsArgs).limit;
+      const { limit } = parsedFilter;
       const boundedNotifications = typeof limit === 'number' ? notifications.slice(0, limit) : notifications;
 
       this.#cache.set(key, { ...notificationsResponse, notifications: boundedNotifications });
@@ -302,8 +302,8 @@ export class NotificationsCache {
         continue;
       }
 
-      // Preserve "latest loaded page wins" semantics so hasMore can settle to false
-      // after the terminal page is cached, instead of being stuck true forever.
+      // Preserve the existing cache traversal semantics here so hasMore can still settle
+      // back to false after the terminal page is cached, instead of being stuck true forever.
       hasMore = cachedResponse.hasMore;
       aggregatedFilter = cachedResponse.filter;
 
