@@ -1,16 +1,30 @@
 import { EnvironmentTypeEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import {
+  SegmentedControl,
+  SegmentedControlList,
+  SegmentedControlTrigger,
+} from '@/components/primitives/segmented-control';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
-import { canMethodHaveBody } from './curl-utils';
+import {
+  type BodyEditorMode,
+  canMethodHaveBody,
+  formatJsonBodyString,
+  getInitialBodyEditorMode,
+  getKeyValuePairsFromBody,
+  getRawBodyString,
+  type HttpRequestBodyValue,
+  keyValuePairsToBodyString,
+} from './curl-utils';
 import { KeyValuePairList } from './key-value-pair-list';
 import { RawBodyEditor } from './raw-body-editor';
 import { RequestEndpoint } from './request-endpoint';
 import { ResponseBodySchema } from './response-body-schema';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 
 type HttpRequestEditorProps = {
   uiSchema: UiSchema;
@@ -18,10 +32,12 @@ type HttpRequestEditorProps = {
 
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   const { currentEnvironment } = useEnvironment();
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const method = watch('method');
-  const bodyMode = watch('bodyMode') || 'key-value';
+  const [bodyMode, setBodyMode] = useState<BodyEditorMode>(() =>
+    getInitialBodyEditorMode(getValues('body') as HttpRequestBodyValue)
+  );
   const hasBody = canMethodHaveBody(method);
 
   if (uiSchema.group !== UiSchemaGroupEnum.HTTP_REQUEST) {
@@ -32,20 +48,38 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
     return <StepEditorUnavailable />;
   }
 
-  const rawBody = watch('rawBody');
+  const handleBodyModeChange = (mode: BodyEditorMode) => {
+    const currentBody = getValues('body') as HttpRequestBodyValue;
 
-  const handleBodyModeChange = (mode: 'key-value' | 'raw') => {
-    if (mode === 'key-value' && bodyMode === 'raw' && rawBody?.trim()) {
-      const confirmed = window.confirm(
-        'Switching to Key-Value mode will discard your raw JSON body. Continue?'
-      );
-      if (!confirmed) return;
-      setValue('rawBody', '');
+    if (mode === 'raw') {
+      setValue('body', formatJsonBodyString(getRawBodyString(currentBody)), { shouldDirty: true });
+    } else {
+      setValue('body', keyValuePairsToBodyString(getKeyValuePairsFromBody(currentBody)), { shouldDirty: true });
     }
 
-    setValue('bodyMode', mode);
+    setBodyMode(mode);
     saveForm();
   };
+
+  const bodyModeControl = (
+    <SegmentedControl
+      value={bodyMode}
+      onValueChange={(value) => {
+        if (value === 'key-value' || value === 'raw') {
+          handleBodyModeChange(value);
+        }
+      }}
+    >
+      <SegmentedControlList className="w-fit min-w-[148px] rounded-md bg-neutral-alpha-100 p-0.5">
+        <SegmentedControlTrigger value="key-value" className="h-5 px-2 text-label-xs font-medium">
+          Key-value
+        </SegmentedControlTrigger>
+        <SegmentedControlTrigger value="raw" className="h-5 px-2 text-label-xs font-medium">
+          Raw JSON
+        </SegmentedControlTrigger>
+      </SegmentedControlList>
+    </SegmentedControl>
+  );
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -60,32 +94,15 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
 
         {hasBody && (
           <>
-            <ToggleGroup
-              type="single"
-              value={bodyMode}
-              onValueChange={(value) => {
-                if (value === 'key-value' || value === 'raw') {
-                  handleBodyModeChange(value);
-                }
-              }}
-              className="justify-start px-1"
-            >
-              <ToggleGroupItem value="key-value" aria-label="Key-Value mode" className="text-xs">
-                Key-Value
-              </ToggleGroupItem>
-              <ToggleGroupItem value="raw" aria-label="Raw JSON mode" className="text-xs">
-                Raw JSON
-              </ToggleGroupItem>
-            </ToggleGroup>
-
             {bodyMode === 'key-value' ? (
               <KeyValuePairList
                 fieldName="body"
                 label="Request body"
                 tooltip="Key-value pairs to include in the request body"
+                rightSlot={bodyModeControl}
               />
             ) : (
-              <RawBodyEditor />
+              <RawBodyEditor rightSlot={bodyModeControl} />
             )}
           </>
         )}

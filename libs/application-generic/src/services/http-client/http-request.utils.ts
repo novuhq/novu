@@ -1,4 +1,5 @@
 export type KeyValuePair = { key: string; value: string };
+export type HttpRequestBodyControl = string | KeyValuePair[] | undefined;
 
 export function toHeadersRecord(pairs: KeyValuePair[]): Record<string, string> {
   return pairs.reduce<Record<string, string>>((acc, { key, value }) => {
@@ -25,6 +26,18 @@ export function parseRawBody(raw: string): Record<string, unknown> | unknown[] {
   }
 
   return parsed as Record<string, unknown> | unknown[];
+}
+
+export function resolveHttpRequestBody(body: HttpRequestBodyControl): Record<string, unknown> | unknown[] | undefined {
+  if (typeof body === 'string') {
+    return body.trim() ? parseRawBody(body) : undefined;
+  }
+
+  if (Array.isArray(body)) {
+    return toBodyRecord(body);
+  }
+
+  return undefined;
 }
 
 export function shouldIncludeBody(

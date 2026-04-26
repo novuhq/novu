@@ -9,7 +9,7 @@ import {
   HttpRequestOptions,
   InstrumentUsecase,
   KeyValuePair,
-  parseRawBody,
+  resolveHttpRequestBody,
   shouldIncludeBody,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -60,9 +60,7 @@ export class TestHttpEndpointUsecase {
     const resolvedUrl = (compiled.url as string) ?? '';
     const method = (compiled.method as string) ?? 'GET';
     const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
-    const compiledBody = (compiled.body as KeyValuePair[]) ?? [];
-    const bodyMode = (compiled.bodyMode as string) ?? 'key-value';
-    const rawJsonBody = compiled.rawBody as string | undefined;
+    const compiledBody = compiled.body as string | KeyValuePair[] | undefined;
 
     const resolvedHeaders: Record<string, string> = Object.fromEntries(
       compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
@@ -72,13 +70,7 @@ export class TestHttpEndpointUsecase {
 
     let resolvedBody: Record<string, unknown> | unknown[];
     try {
-      if (bodyMode === 'raw') {
-        resolvedBody = rawJsonBody ? parseRawBody(rawJsonBody) : {};
-      } else {
-        resolvedBody = Object.fromEntries(
-          compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value])
-        );
-      }
+      resolvedBody = resolveHttpRequestBody(compiledBody) ?? {};
     } catch (parseError) {
       const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
 

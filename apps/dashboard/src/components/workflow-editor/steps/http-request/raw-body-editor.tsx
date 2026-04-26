@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine } from 'react-icons/ri';
 import { InputRoot } from '@/components/primitives/input';
@@ -6,6 +6,7 @@ import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { formatJsonBodyString, getRawBodyString, type HttpRequestBodyValue } from './curl-utils';
 import { SectionHeader } from './section-header';
 
 function validateJson(value: string): string | undefined {
@@ -29,7 +30,11 @@ function validateJson(value: string): string | undefined {
   }
 }
 
-export function RawBodyEditor() {
+type RawBodyEditorProps = {
+  rightSlot?: ReactNode;
+};
+
+export function RawBodyEditor({ rightSlot }: RawBodyEditorProps) {
   const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
@@ -37,17 +42,23 @@ export function RawBodyEditor() {
 
   // Local draft state — what the user is typing right now (may be invalid)
   // Initialized once from the form value to avoid resetting on each render
-  const initialValueRef = useRef<string>((getValues('rawBody') as string) ?? '');
+  const initialValueRef = useRef<string>(
+    formatJsonBodyString(getRawBodyString(getValues('body') as HttpRequestBodyValue))
+  );
   const [draft, setDraft] = useState<string>(initialValueRef.current);
 
   const jsonError = useMemo(() => validateJson(draft), [draft]);
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
-      <SectionHeader label="Request body (raw JSON)" tooltip="Paste or type raw JSON. Supports nested objects and LiquidJS variables." />
+      <SectionHeader
+        label="Request body"
+        tooltip="Paste or type raw JSON. Supports nested objects and LiquidJS variables."
+        rightSlot={rightSlot}
+      />
       <Controller
         control={control}
-        name="rawBody"
+        name="body"
         render={({ field }) => (
           <>
             <InputRoot className="min-h-[120px]" hasError={!!jsonError}>

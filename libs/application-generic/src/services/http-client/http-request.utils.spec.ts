@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { parseRawBody, toBodyRecord, toHeadersRecord } from './http-request.utils';
+import { parseRawBody, resolveHttpRequestBody, toBodyRecord, toHeadersRecord } from './http-request.utils';
 
 describe('http-request.utils', () => {
   describe('toBodyRecord', () => {
@@ -61,6 +61,31 @@ describe('http-request.utils', () => {
 
     it('should throw for JSON null', () => {
       expect(() => parseRawBody('null')).to.throw('Raw body must be a JSON object or array');
+    });
+  });
+
+  describe('resolveHttpRequestBody', () => {
+    it('should parse canonical raw JSON string bodies', () => {
+      expect(resolveHttpRequestBody('{"name":"test"}')).to.deep.equal({ name: 'test' });
+    });
+
+    it('should parse canonical top-level JSON arrays', () => {
+      expect(resolveHttpRequestBody('[{"id":1}]')).to.deep.equal([{ id: 1 }]);
+    });
+
+    it('should convert legacy key-value array bodies', () => {
+      expect(resolveHttpRequestBody([{ key: 'name', value: 'test' }])).to.deep.equal({ name: 'test' });
+    });
+
+    it('should return undefined for empty values', () => {
+      expect(resolveHttpRequestBody('')).to.equal(undefined);
+      expect(resolveHttpRequestBody('   ')).to.equal(undefined);
+      expect(resolveHttpRequestBody([])).to.equal(undefined);
+      expect(resolveHttpRequestBody(undefined)).to.equal(undefined);
+    });
+
+    it('should throw for invalid raw JSON string bodies', () => {
+      expect(() => resolveHttpRequestBody('not json')).to.throw();
     });
   });
 });

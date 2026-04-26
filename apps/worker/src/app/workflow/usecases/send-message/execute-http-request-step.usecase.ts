@@ -12,9 +12,8 @@ import {
   ICompileContext,
   InstrumentUsecase,
   PinoLogger,
-  parseRawBody,
+  resolveHttpRequestBody,
   shouldIncludeBody,
-  toBodyRecord,
   toHeadersRecord,
   validateUrlSsrf,
 } from '@novu/application-generic';
@@ -122,9 +121,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const url = compiled.url as string | undefined;
     const method = (compiled.method as string) ?? 'POST';
     const rawHeaders = (compiled.headers as Array<{ key: string; value: string }> | undefined) ?? [];
-    const bodyPairs = (compiled.body as Array<{ key: string; value: string }> | undefined) ?? [];
-    const bodyMode = (compiled.bodyMode as string | undefined) ?? 'key-value';
-    const rawJsonBody = compiled.rawBody as string | undefined;
+    const rawBody = compiled.body as string | Array<{ key: string; value: string }> | undefined;
     const timeout = (compiled.timeout as number | undefined) ?? 5000;
 
     if (!url) {
@@ -175,11 +172,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     let bodyObject: Record<string, unknown> | unknown[] | undefined;
     try {
-      if (bodyMode === 'raw') {
-        bodyObject = rawJsonBody ? parseRawBody(rawJsonBody) : undefined;
-      } else {
-        bodyObject = toBodyRecord(bodyPairs);
-      }
+      bodyObject = resolveHttpRequestBody(rawBody);
     } catch (parseError) {
       const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
 

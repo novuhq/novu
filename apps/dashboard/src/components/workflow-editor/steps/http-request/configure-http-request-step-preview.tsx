@@ -1,7 +1,7 @@
 import { RiGlobalLine } from 'react-icons/ri';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { CurlDisplay } from './curl-display';
-import { buildRawCurlString, getUrlDisplay, type KeyValuePair } from './curl-utils';
+import { buildRawCurlString, getUrlDisplay, type HttpRequestBodyValue, type KeyValuePair } from './curl-utils';
 
 type ConfigureHttpRequestStepPreviewProps = {
   controlValues: Record<string, unknown>;
@@ -12,12 +12,10 @@ export function ConfigureHttpRequestStepPreview({ controlValues, className }: Co
   const url = (controlValues.url as string) ?? '';
   const method = (controlValues.method as string) ?? 'GET';
   const headers = ((controlValues.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
-  const body = (controlValues.body as KeyValuePair[]) ?? [];
-  const rawBody = (controlValues.rawBody as string) ?? null;
-  const bodyMode = (controlValues.bodyMode as string) ?? null;
+  const body = controlValues.body as HttpRequestBodyValue;
 
   const urlDisplay = getUrlDisplay(url);
-  const curlString = buildRawCurlString(url, method, headers, body, undefined, rawBody, bodyMode);
+  const curlString = buildRawCurlString(url, method, headers, body);
 
   return (
     <div className={`overflow-hidden rounded-lg border border-[#e1e4ea] ${className ?? ''}`}>
@@ -30,7 +28,7 @@ export function ConfigureHttpRequestStepPreview({ controlValues, className }: Co
       </div>
 
       <div className="relative overflow-hidden bg-white p-2">
-        <CurlDisplay url={url} method={method} headers={headers} body={body} rawBody={rawBody} bodyMode={bodyMode} className="whitespace-pre text-[10px]" />
+        <CurlDisplay url={url} method={method} headers={headers} body={body} className="whitespace-pre text-[10px]" />
         <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-linear-to-r from-transparent to-white" />
       </div>
     </div>

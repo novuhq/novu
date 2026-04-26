@@ -9,7 +9,7 @@ import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
-import { parseRawBody, shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
+import { resolveHttpRequestBody, shouldIncludeBody } from '../../services/http-client/http-request.utils';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
@@ -212,17 +212,9 @@ export class PreviewUsecase {
         GetDecryptedSecretKeyCommand.create({ environmentId })
       );
 
-      const bodyPairs = resolvedOutputs?.body as Array<{ key: string; value: string }> | undefined;
-      const bodyMode = (resolvedOutputs?.bodyMode as string) ?? 'key-value';
-      const rawJsonBody = resolvedOutputs?.rawBody as string | undefined;
+      const body = resolvedOutputs?.body as string | Array<{ key: string; value: string }> | undefined;
       const method = (resolvedOutputs?.method as string) ?? 'GET';
-
-      let bodyRecord: Record<string, unknown> | unknown[] | undefined;
-      if (bodyMode === 'raw') {
-        bodyRecord = rawJsonBody ? parseRawBody(rawJsonBody) : undefined;
-      } else {
-        bodyRecord = bodyPairs ? toBodyRecord(bodyPairs) : undefined;
-      }
+      const bodyRecord = resolveHttpRequestBody(body);
       const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
 
       return buildNovuSignatureHeader(secretKey, payload);

@@ -12,7 +12,7 @@ import { showErrorToast, showToast } from '@/components/primitives/sonner-helper
 import { useStepEditor } from '../context/step-editor-context';
 import { parseJsonValue } from '../utils/preview-context.utils';
 import { CurlDisplay } from './curl-display';
-import { buildRawCurlString, type KeyValuePair } from './curl-utils';
+import { buildRawCurlString, type HttpRequestBodyValue, type KeyValuePair } from './curl-utils';
 import { useCopyPrompt } from './use-copy-prompt';
 import { useHttpRequestTest } from './use-http-request-test';
 
@@ -271,11 +271,9 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
   const url = (controlValues?.url as string) ?? '';
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = (controlValues?.headers as KeyValuePair[]) ?? [];
-  const body = (controlValues?.body as KeyValuePair[]) ?? [];
-  const controlRawBody = (controlValues?.rawBody as string) ?? null;
-  const controlBodyMode = (controlValues?.bodyMode as string) ?? null;
+  const body = controlValues?.body as HttpRequestBodyValue;
 
-  const curlString = buildRawCurlString(url, method, headers, body, novuSignature, controlRawBody, controlBodyMode);
+  const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
   const activeHeaders = headers.filter((h) => h.key);
 
   const handleCopyCurlSuccess = useCallback(() => {
@@ -333,7 +331,7 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
             </>
           }
         >
-          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} novuSignature={novuSignature} rawBody={controlRawBody} bodyMode={controlBodyMode} />
+          <CurlDisplay url={url} method={method} headers={activeHeaders} body={body} novuSignature={novuSignature} />
         </BrowserShell>
 
         <div className="flex items-center justify-between overflow-clip rounded-md border border-[#e1e4ea] bg-[#fbfbfb] px-2 py-1.5 ">
@@ -391,11 +389,9 @@ function ErrorState({
   const url = (controlValues?.url as string) ?? '';
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = ((controlValues?.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
-  const body = (controlValues?.body as KeyValuePair[]) ?? [];
-  const errorRawBody = (controlValues?.rawBody as string) ?? null;
-  const errorBodyMode = (controlValues?.bodyMode as string) ?? null;
+  const body = controlValues?.body as HttpRequestBodyValue;
 
-  const curlString = buildRawCurlString(url, method, headers, body, novuSignature, errorRawBody, errorBodyMode);
+  const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
 
   const responseToCopy = rawBody ? JSON.stringify(rawBody, null, 2) : error.message;
 
@@ -460,7 +456,7 @@ function ErrorState({
           </>
         }
       >
-        <CurlDisplay url={url} method={method} headers={headers} body={body} novuSignature={novuSignature} rawBody={errorRawBody} bodyMode={errorBodyMode} />
+        <CurlDisplay url={url} method={method} headers={headers} body={body} novuSignature={novuSignature} />
       </BrowserShell>
 
       <div className="flex flex-col gap-3">
@@ -511,8 +507,6 @@ export function HttpRequestConsolePreview() {
     method: controlValues?.method,
     headers: controlValues?.headers,
     body: controlValues?.body,
-    bodyMode: controlValues?.bodyMode,
-    rawBody: controlValues?.rawBody,
   });
   const prevControlsKeyRef = useRef<string | null>(null);
 
