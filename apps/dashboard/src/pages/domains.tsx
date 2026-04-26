@@ -141,7 +141,9 @@ export function DomainsPage() {
 
   if (!domainsEnabled) {
     return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Domains</h1>}>
+      <DashboardLayout
+        headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Inbound Email</h1>}
+      >
         <PageMeta title="Inbound Email" />
         <DomainsPaywallBanner />
       </DashboardLayout>

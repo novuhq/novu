@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { IsDomainConnectRedirectUrl } from '../validators/domain-connect-redirect-url.validator';
 
 export class CreateDomainConnectApplyUrlDto {
   @ApiPropertyOptional({
@@ -7,7 +8,7 @@ export class CreateDomainConnectApplyUrlDto {
   })
   @IsOptional()
   @IsString()
-  @IsUrl({ require_tld: false, require_protocol: true })
+  @IsDomainConnectRedirectUrl()
   redirectUri?: string;
 }
 

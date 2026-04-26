@@ -1,5 +1,6 @@
 import { createSign } from 'node:crypto';
 import { DomainEntity } from '@novu/dal';
+import { parse } from 'tldts';
 import { getMailServerDomain } from './dns-records';
 
 export const DOMAIN_CONNECT_PROVIDER_ID = 'novu.co';
@@ -180,6 +181,21 @@ export function hasDomainConnectRuntimeConfig(): boolean {
 export function getDomainConnectDiscoveryCandidates(domainName: string): string[] {
   const labels = domainName.toLowerCase().replace(/\.$/, '').split('.').filter(Boolean);
 
+  const registrableDomain = getRegistrableDomain(domainName);
+  if (registrableDomain) {
+    const rootLabels = registrableDomain.split('.');
+    const rootStartIndex = labels.length - rootLabels.length;
+
+    if (rootStartIndex >= 0) {
+      const candidates: string[] = [];
+      for (let index = rootStartIndex; index >= 0; index -= 1) {
+        candidates.push(labels.slice(index).join('.'));
+      }
+
+      return candidates;
+    }
+  }
+
   if (labels.length <= 2) {
     return [labels.join('.')];
   }
@@ -190,6 +206,14 @@ export function getDomainConnectDiscoveryCandidates(domainName: string): string[
   }
 
   return candidates;
+}
+
+function getRegistrableDomain(domainName: string): string | undefined {
+  try {
+    return parse(domainName).domain ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function buildRedirectUri({

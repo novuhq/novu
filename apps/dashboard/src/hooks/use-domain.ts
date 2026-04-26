@@ -1,4 +1,4 @@
-import { DomainStatusEnum } from '@novu/shared';
+import { DomainStatusEnum, type IEnvironment } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createDomainConnectApplyUrl,
@@ -12,7 +12,7 @@ import { QueryKeys } from '@/utils/query-keys';
 
 const VERIFICATION_POLL_INTERVAL_MS = 5_000;
 
-function requireDomainRequestArgs<TEnvironment>(
+function requireDomainRequestArgs<TEnvironment extends Pick<IEnvironment, '_id'>>(
   domainId: string | undefined,
   currentEnvironment: TEnvironment | undefined
 ) {
@@ -75,12 +75,20 @@ export function useFetchDomainConnectStatus(domainId: string | undefined, option
 
 export function useCreateDomainConnectApplyUrl(domainId: string | undefined) {
   const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (redirectUri?: string) => {
       const args = requireDomainRequestArgs(domainId, currentEnvironment);
 
       return createDomainConnectApplyUrl(args.domainId, { redirectUri }, args.currentEnvironment);
+    },
+    onSettled: () => {
+      if (!domainId || !currentEnvironment) return;
+
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchDomainConnectStatus, domainId, currentEnvironment._id],
+      });
     },
   });
 }

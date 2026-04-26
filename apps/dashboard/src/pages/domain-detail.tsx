@@ -114,8 +114,11 @@ export function DomainDetailPage() {
   const previousDomainStatusRef = useRef<DomainStatusEnum | undefined>(undefined);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [hasSubmittedDomainConnectReturn, setHasSubmittedDomainConnectReturn] = useState(false);
+  const [hasDomainConnectFailure, setHasDomainConnectFailure] = useState(false);
+  const [domainConnectApplyUrl, setDomainConnectApplyUrl] = useState<string | undefined>();
   const domainConnectReturnStatus = searchParams.get('domainConnect');
   const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
+  const domainConnectProviderName = domainConnectStatus?.providerName ?? 'your DNS provider';
 
   const domainsHref = currentEnvironment?.slug
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
@@ -133,6 +136,10 @@ export function DomainDetailPage() {
   const handleAutoConfigure = async () => {
     if (!domain) return;
 
+    setHasDomainConnectFailure(false);
+    setHasSubmittedDomainConnectReturn(false);
+    setDomainConnectApplyUrl(undefined);
+
     try {
       const currentUrl = new URL(window.location.href);
       currentUrl.searchParams.delete('domainConnect');
@@ -141,7 +148,14 @@ export function DomainDetailPage() {
       currentUrl.searchParams.delete('error_description');
 
       const response = await createDomainConnectApplyUrl.mutateAsync(currentUrl.toString());
-      window.location.assign(response.applyUrl);
+      try {
+        window.location.assign(response.applyUrl);
+      } catch {
+        createDomainConnectApplyUrl.reset();
+        setHasDomainConnectFailure(true);
+        setDomainConnectApplyUrl(response.applyUrl);
+        showErrorToast('Failed to open DNS provider. Use the setup link in the warning below.');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to start DNS auto-configuration.';
       showErrorToast(message);
@@ -166,12 +180,15 @@ export function DomainDetailPage() {
     hasHandledDomainConnectReturnRef.current = true;
 
     if (domainConnectError) {
+      setHasDomainConnectFailure(true);
       showErrorToast('DNS auto-configuration was cancelled or failed.');
       cleanDomainConnectParams();
 
       return;
     }
 
+    setHasDomainConnectFailure(false);
+    setDomainConnectApplyUrl(undefined);
     setHasSubmittedDomainConnectReturn(true);
     refreshDomain();
     cleanDomainConnectParams();
@@ -364,16 +381,33 @@ export function DomainDetailPage() {
                   description="Inbound email is ready for this domain."
                 />
               )}
-              {!isLoading && domainConnectError && domain?.status === DomainStatusEnum.PENDING && (
+              {!isLoading && hasDomainConnectFailure && domain?.status === DomainStatusEnum.PENDING && (
                 <InlineToast
                   variant="error"
                   title="Auto-configuration failed:"
-                  description="The DNS provider did not complete the setup. You can try again or add the MX record manually."
+                  description={
+                    domainConnectApplyUrl ? (
+                      <span>
+                        Failed to open the DNS provider.{' '}
+                        <a
+                          href={domainConnectApplyUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary-base font-medium underline"
+                        >
+                          Open setup link
+                        </a>{' '}
+                        or add the MX record manually.
+                      </span>
+                    ) : (
+                      'The DNS provider did not complete the setup. You can try again or add the MX record manually.'
+                    )
+                  }
                 />
               )}
               {!isLoading &&
                 hasSubmittedDomainConnectReturn &&
-                !domainConnectError &&
+                !hasDomainConnectFailure &&
                 domain?.status === DomainStatusEnum.PENDING && (
                   <InlineToast
                     variant="info"
@@ -382,7 +416,7 @@ export function DomainDetailPage() {
                   />
                 )}
               {!isLoading &&
-                !domainConnectError &&
+                !hasDomainConnectFailure &&
                 !hasSubmittedDomainConnectReturn &&
                 domain?.status === DomainStatusEnum.PENDING && (
                   <InlineToast
@@ -418,7 +452,7 @@ export function DomainDetailPage() {
                     <div className="border-stroke-soft bg-bg-weak flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
                       <div className="flex min-w-0 flex-col gap-1">
                         <p className="text-text-strong text-sm font-medium">
-                          Auto-configure with {domainConnectStatus.providerName}
+                          Auto-configure with {domainConnectProviderName}
                         </p>
                         <p className="text-text-sub text-xs">
                           Continue to your DNS provider to add the MX record automatically.
@@ -430,7 +464,7 @@ export function DomainDetailPage() {
                         onClick={handleAutoConfigure}
                         isLoading={createDomainConnectApplyUrl.isPending}
                       >
-                        Continue to {domainConnectStatus.providerName}
+                        Continue to {domainConnectProviderName}
                         <RiExternalLinkLine className="size-4" />
                       </Button>
                     </div>

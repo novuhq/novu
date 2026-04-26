@@ -42,6 +42,7 @@ export type DomainConnectStatusResponse = {
     | 'discovery_not_configured'
     | 'unsupported_provider'
     | 'incomplete_configuration'
+    | 'provider_settings_unavailable'
     | 'untrusted_provider_flow'
     | 'template_not_onboarded';
   manualRecords: ExpectedDnsRecord[];

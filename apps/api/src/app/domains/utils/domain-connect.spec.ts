@@ -63,6 +63,10 @@ describe('Domain Connect utils', () => {
       'grossman.io',
       'inbound.grossman.io',
     ]);
+    expect(getDomainConnectDiscoveryCandidates('inbound.example.co.uk')).to.deep.equal([
+      'example.co.uk',
+      'inbound.example.co.uk',
+    ]);
   });
 
   it('rejects provider settings URLs outside the discovered provider', () => {

@@ -1,10 +1,8 @@
 import { generateKeyPairSync } from 'node:crypto';
-import { promises as dnsPromises } from 'node:dns';
 import { BadRequestException } from '@nestjs/common';
 import type { DomainEntity } from '@novu/dal';
 import { DomainStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { of } from 'rxjs';
 import { restore, stub } from 'sinon';
 import { DomainConnectStatusReasonEnum } from '../dtos/domain-connect-status-response.dto';
 import { CreateDomainConnectApplyUrl } from './create-domain-connect-apply-url/create-domain-connect-apply-url.usecase';
@@ -27,9 +25,8 @@ describe('Domain Connect usecases', () => {
     userId: 'user-id',
   };
   let domainRepositoryMock;
-  let httpServiceMock;
   let featureFlagsServiceMock;
-  let loggerMock;
+  let domainConnectDiscoveryServiceMock;
 
   beforeEach(() => {
     const { privateKey } = generateKeyPairSync('rsa', {
@@ -44,15 +41,20 @@ describe('Domain Connect usecases', () => {
     domainRepositoryMock = {
       findOneByIdAndEnvironment: stub().resolves(domain),
     };
-    httpServiceMock = {
-      get: stub(),
-    };
     featureFlagsServiceMock = {
       getFlag: stub().resolves(true),
     };
-    loggerMock = {
-      setContext: stub(),
-      warn: stub(),
+    domainConnectDiscoveryServiceMock = {
+      discoverDomainConnectHost: stub().resolves({
+        domainName: 'example.com',
+        providerHost: 'domainconnect.vercel.com',
+      }),
+      fetchProviderSettings: stub().resolves({
+        providerDisplayName: 'Vercel',
+        urlSyncUX: 'https://vercel.com/domain-connect',
+        urlAPI: 'https://vercel.com/api/domain-connect',
+      }),
+      isTemplateSupported: stub().resolves(true),
     };
   });
 
@@ -62,12 +64,14 @@ describe('Domain Connect usecases', () => {
   });
 
   it('returns manual fallback for unsupported Domain Connect providers', async () => {
-    stub(dnsPromises, 'resolveTxt').resolves([['domainconnect.unsupported.example.com']]);
+    domainConnectDiscoveryServiceMock.discoverDomainConnectHost.resolves({
+      domainName: 'example.com',
+      providerHost: 'domainconnect.unsupported.example.com',
+    });
     const usecase = new GetDomainConnectStatus(
       domainRepositoryMock,
-      httpServiceMock,
       featureFlagsServiceMock,
-      loggerMock
+      domainConnectDiscoveryServiceMock
     );
 
     const result = await usecase.execute(command);
@@ -79,17 +83,15 @@ describe('Domain Connect usecases', () => {
         key: FeatureFlagsKeysEnum.IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED,
       })
     ).to.equal(true);
-    expect(httpServiceMock.get.called).to.equal(false);
+    expect(domainConnectDiscoveryServiceMock.fetchProviderSettings.called).to.equal(false);
   });
 
   it('returns manual fallback without discovery when Domain Connect is disabled', async () => {
     featureFlagsServiceMock.getFlag.resolves(false);
-    const resolveTxt = stub(dnsPromises, 'resolveTxt');
     const usecase = new GetDomainConnectStatus(
       domainRepositoryMock,
-      httpServiceMock,
       featureFlagsServiceMock,
-      loggerMock
+      domainConnectDiscoveryServiceMock
     );
 
     const result = await usecase.execute(command);
@@ -97,112 +99,101 @@ describe('Domain Connect usecases', () => {
     expect(result.available).to.equal(false);
     expect(result.reason).to.equal('Domain Connect auto-configuration is not enabled.');
     expect(result.reasonCode).to.equal(DomainConnectStatusReasonEnum.DISABLED);
-    expect(resolveTxt.called).to.equal(false);
-    expect(httpServiceMock.get.called).to.equal(false);
+    expect(domainConnectDiscoveryServiceMock.discoverDomainConnectHost.called).to.equal(false);
+    expect(domainConnectDiscoveryServiceMock.fetchProviderSettings.called).to.equal(false);
   });
 
   it('rejects untrusted provider settings URLs before checking template support', async () => {
-    stub(dnsPromises, 'resolveTxt').resolves([['domainconnect.vercel.com']]);
-    httpServiceMock.get.returns(
-      of({
-        data: {
-          urlSyncUX: 'https://vercel.com/domain-connect',
-          urlAPI: 'https://evil.example.com/api/domain-connect',
-        },
-      })
-    );
+    domainConnectDiscoveryServiceMock.fetchProviderSettings.resolves({
+      urlSyncUX: 'https://vercel.com/domain-connect',
+      urlAPI: 'https://evil.example.com/api/domain-connect',
+    });
     const usecase = new GetDomainConnectStatus(
       domainRepositoryMock,
-      httpServiceMock,
       featureFlagsServiceMock,
-      loggerMock
+      domainConnectDiscoveryServiceMock
     );
 
     const result = await usecase.execute(command);
 
     expect(result.available).to.equal(false);
     expect(result.reason).to.equal('This DNS provider did not return a trusted synchronous Domain Connect flow.');
-    expect(httpServiceMock.get.calledOnce).to.equal(true);
+    expect(domainConnectDiscoveryServiceMock.isTemplateSupported.called).to.equal(false);
   });
 
-  it('discovers Domain Connect settings on the root domain for submitted subdomains', async () => {
-    domainRepositoryMock.findOneByIdAndEnvironment.resolves({ ...domain, name: 'inbound.example.com' });
-    stub(dnsPromises, 'resolveTxt').resolves([['domainconnect.vercel.com']]);
-    httpServiceMock.get.onFirstCall().returns(
-      of({
-        data: {
-          providerDisplayName: 'Vercel',
-          urlSyncUX: 'https://vercel.com/domain-connect',
-          urlAPI: 'https://vercel.com/api/domain-connect',
-        },
-      })
-    );
-    httpServiceMock.get.onSecondCall().returns(of({ data: {} }));
+  it('returns distinct fallback when provider settings cannot be retrieved', async () => {
+    domainConnectDiscoveryServiceMock.fetchProviderSettings.resolves(undefined);
     const usecase = new GetDomainConnectStatus(
       domainRepositoryMock,
-      httpServiceMock,
       featureFlagsServiceMock,
-      loggerMock
+      domainConnectDiscoveryServiceMock
+    );
+
+    const result = await usecase.execute(command);
+
+    expect(result.available).to.equal(false);
+    expect(result.reasonCode).to.equal(DomainConnectStatusReasonEnum.PROVIDER_SETTINGS_UNAVAILABLE);
+    expect(result.reason).to.equal(
+      'Failed to retrieve provider settings. Please try manual setup or refresh the status.'
+    );
+  });
+
+  it('uses discovered root domain provider settings for submitted subdomains', async () => {
+    domainRepositoryMock.findOneByIdAndEnvironment.resolves({ ...domain, name: 'inbound.example.com' });
+    domainConnectDiscoveryServiceMock.discoverDomainConnectHost.resolves({
+      domainName: 'example.com',
+      providerHost: 'domainconnect.vercel.com',
+    });
+    const usecase = new GetDomainConnectStatus(
+      domainRepositoryMock,
+      featureFlagsServiceMock,
+      domainConnectDiscoveryServiceMock
     );
 
     const result = await usecase.execute(command);
 
     expect(result.available).to.equal(true);
-    expect(httpServiceMock.get.firstCall.args[0]).to.equal('https://domainconnect.vercel.com/v2/example.com/settings');
+    expect(
+      domainConnectDiscoveryServiceMock.fetchProviderSettings.calledWith('example.com', 'domainconnect.vercel.com')
+    ).to.equal(true);
   });
 
   it('rejects apply URL creation when signing config is missing', async () => {
     delete process.env.DOMAIN_CONNECT_PRIVATE_KEY;
-    stub(dnsPromises, 'resolveTxt').resolves([['domainconnect.vercel.com']]);
-    httpServiceMock.get.onFirstCall().returns(
-      of({
-        data: {
-          urlSyncUX: 'https://vercel.com/domain-connect',
-          urlAPI: 'https://vercel.com/api/domain-connect',
-        },
-      })
-    );
-    httpServiceMock.get.onSecondCall().returns(of({ data: {} }));
     const usecase = new CreateDomainConnectApplyUrl(
       domainRepositoryMock,
-      httpServiceMock,
       featureFlagsServiceMock,
-      loggerMock
+      domainConnectDiscoveryServiceMock
     );
 
-    try {
-      await usecase.execute(command);
-      throw new Error('Expected apply URL creation to fail.');
-    } catch (error) {
-      expect(error).to.be.instanceOf(BadRequestException);
-      expect((error as BadRequestException).message).to.equal('Domain Connect signing configuration is incomplete.');
-    }
+    await expectRejectedWith(
+      usecase.execute(command),
+      BadRequestException,
+      'Domain Connect signing configuration is incomplete.'
+    );
   });
 
   it('rejects cross-origin redirect URIs through apply URL creation', async () => {
-    stub(dnsPromises, 'resolveTxt').resolves([['domainconnect.vercel.com']]);
-    httpServiceMock.get.onFirstCall().returns(
-      of({
-        data: {
-          urlSyncUX: 'https://vercel.com/domain-connect',
-          urlAPI: 'https://vercel.com/api/domain-connect',
-        },
-      })
-    );
-    httpServiceMock.get.onSecondCall().returns(of({ data: {} }));
     const usecase = new CreateDomainConnectApplyUrl(
       domainRepositoryMock,
-      httpServiceMock,
       featureFlagsServiceMock,
-      loggerMock
+      domainConnectDiscoveryServiceMock
     );
 
-    try {
-      await usecase.execute({ ...command, redirectUri: 'https://evil.example.com/callback' });
-      throw new Error('Expected apply URL creation to fail.');
-    } catch (error) {
-      expect(error).to.be.instanceOf(BadRequestException);
-      expect((error as BadRequestException).message).to.equal('Domain Connect redirect URI origin is not allowed.');
-    }
+    await expectRejectedWith(
+      usecase.execute({ ...command, redirectUri: 'https://evil.example.com/callback' }),
+      BadRequestException,
+      'Domain Connect redirect URI origin is not allowed.'
+    );
   });
 });
+
+async function expectRejectedWith(promise: Promise<unknown>, errorClass: typeof BadRequestException, message: string) {
+  try {
+    await promise;
+    throw new Error('Expected promise to reject.');
+  } catch (error) {
+    expect(error).to.be.instanceOf(errorClass);
+    expect((error as Error).message).to.equal(message);
+  }
+}

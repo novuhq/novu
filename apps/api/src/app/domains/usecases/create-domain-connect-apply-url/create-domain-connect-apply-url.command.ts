@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { IsDomainConnectRedirectUrl } from '../../validators/domain-connect-redirect-url.validator';
 
 export class CreateDomainConnectApplyUrlCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -8,6 +9,6 @@ export class CreateDomainConnectApplyUrlCommand extends EnvironmentWithUserComma
 
   @IsOptional()
   @IsString()
-  @IsUrl({ require_tld: false, require_protocol: true })
+  @IsDomainConnectRedirectUrl()
   redirectUri?: string;
 }
