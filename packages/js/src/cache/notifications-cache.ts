@@ -317,8 +317,9 @@ export class NotificationsCache {
         continue;
       }
 
-      // Preserve the existing cache traversal semantics here so hasMore can still settle
-      // back to false after the terminal page is cached, instead of being stuck true forever.
+      // InMemoryCache keys are Map-backed, so this intentionally follows insertion order.
+      // Letting the latest cached page win allows hasMore to settle back to false after
+      // the terminal page is cached, instead of being stuck true forever.
       hasMore = cachedResponse.hasMore;
       aggregatedFilter = cachedResponse.filter;
 
