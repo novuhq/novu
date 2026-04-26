@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   EnvironmentRepository,
@@ -7,9 +7,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
   GenerateMsTeamsOauthUrl,
@@ -21,11 +24,13 @@ import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 @Injectable()
 export class MsTeamsOauthCallback {
   private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
+  private readonly MS_TEAMS_TOKEN_URL = 'https://login.microsoftonline.com';
 
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private createChannelConnection: CreateChannelConnection,
+    private createChannelEndpoint: CreateChannelEndpoint,
     private logger: PinoLogger
   ) {
     this.logger.setContext(MsTeamsOauthCallback.name);
@@ -36,6 +41,27 @@ export class MsTeamsOauthCallback {
     const integration = await this.getIntegration(stateData);
     const credentials = await this.getIntegrationCredentials(integration);
 
+    if (stateData.mode === 'link_user') {
+      await this.linkUserEndpoint(command, stateData, integration, credentials);
+    } else {
+      await this.createAdminConsentConnection(command, stateData, integration);
+    }
+
+    if (credentials.redirectUrl) {
+      return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
+    }
+
+    return {
+      type: ResponseTypeEnum.HTML,
+      result: this.SCRIPT_CLOSE_TAB,
+    };
+  }
+
+  private async createAdminConsentConnection(
+    command: MsTeamsOauthCallbackCommand,
+    stateData: StateData,
+    integration: IntegrationEntity
+  ): Promise<void> {
     if (!command.tenant) {
       throw new BadRequestException('Missing tenant parameter from MS Teams admin consent');
     }
@@ -52,14 +78,6 @@ export class MsTeamsOauthCallback {
      * - When sending: use client_credentials to get fresh app-only tokens
      * - Messages sent as bot/app identity, not as user
      */
-    const authData = {
-      accessToken: 'app-only',
-    };
-
-    const workspaceData = {
-      id: command.tenant,
-    };
-
     await this.createChannelConnection.execute(
       CreateChannelConnectionCommand.create({
         identifier: stateData.identifier,
@@ -68,19 +86,91 @@ export class MsTeamsOauthCallback {
         integrationIdentifier: integration.identifier,
         subscriberId: stateData.subscriberId,
         context: stateData.context,
-        auth: authData,
-        workspace: workspaceData,
+        auth: { accessToken: 'app-only' },
+        workspace: { id: command.tenant },
       })
     );
+  }
 
-    if (credentials.redirectUrl) {
-      return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
+  private async linkUserEndpoint(
+    command: MsTeamsOauthCallbackCommand,
+    stateData: StateData,
+    integration: IntegrationEntity,
+    credentials: ICredentialsEntity
+  ): Promise<void> {
+    if (!stateData.subscriberId) {
+      throw new BadRequestException('subscriberId is required for link_user mode');
     }
 
-    return {
-      type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
-    };
+    if (!command.providerCode) {
+      throw new BadRequestException('Missing authorization code for link_user mode');
+    }
+
+    const decrypted = decryptCredentials(credentials);
+    const oid = await this.exchangeCodeForAadObjectId(command.providerCode, decrypted);
+
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
+        connectionIdentifier: stateData.identifier,
+        subscriberId: stateData.subscriberId,
+        context: stateData.context,
+        type: ENDPOINT_TYPES.MS_TEAMS_USER,
+        endpoint: { userId: oid },
+      })
+    );
+  }
+
+  private async exchangeCodeForAadObjectId(code: string, credentials: ICredentialsEntity): Promise<string> {
+    const { clientId, secretKey, tenantId } = credentials;
+
+    if (!clientId || !secretKey || !tenantId) {
+      throw new BadRequestException(
+        'MS Teams integration missing required credentials (clientId, secretKey, tenantId)'
+      );
+    }
+
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      client_secret: secretKey,
+      code,
+      redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
+      scope: 'openid profile User.Read',
+    });
+
+    const response = await axios.post(
+      `${this.MS_TEAMS_TOKEN_URL}/${tenantId}/oauth2/v2.0/token`,
+      tokenParams.toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    const { id_token: idToken } = response.data;
+
+    if (!idToken) {
+      throw new BadRequestException('MS Teams OAuth response missing id_token');
+    }
+
+    const oid = this.extractOidFromIdToken(idToken);
+
+    if (!oid) {
+      throw new BadRequestException('MS Teams id_token missing oid claim — ensure the Azure app is single-tenant');
+    }
+
+    return oid;
+  }
+
+  private extractOidFromIdToken(idToken: string): string | undefined {
+    try {
+      const payload = idToken.split('.')[1];
+      const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+
+      return decoded.oid as string | undefined;
+    } catch {
+      throw new BadRequestException('Failed to decode MS Teams id_token');
+    }
   }
 
   private async getIntegration(stateData: StateData): Promise<IntegrationEntity> {

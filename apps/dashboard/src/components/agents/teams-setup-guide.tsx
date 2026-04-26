@@ -305,25 +305,47 @@ export function TeamsSetupGuide({
           </div>
         }
         extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Organization-wide:"
-            description={
-              <span>
-                {'For org deployment, use the '}
-                <a
-                  href="https://admin.teams.microsoft.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2"
-                >
-                  Teams Admin Center
-                </a>
-                {' → Teams apps → Manage apps → Upload new app.'}
-              </span>
-            }
-          />
+          <div className="mt-2 flex flex-col gap-2">
+            <InlineToast
+              className="w-full"
+              variant="tip"
+              title="Organization-wide:"
+              description={
+                <span>
+                  {'For org deployment, use the '}
+                  <a
+                    href="https://admin.teams.microsoft.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    Teams Admin Center
+                  </a>
+                  {' → Teams apps → Manage apps → Upload new app.'}
+                </span>
+              }
+            />
+            <InlineToast
+              className="w-full"
+              variant="tip"
+              title="Link individual users:"
+              description={
+                <>
+                  {'Novu provides a '}
+                  <code className="font-code text-[12px] tracking-[-0.24px]">{'<MsTeamsLinkUser />'}</code>
+                  {' component to let your subscribers link their Teams identity for direct-message notifications. '}
+                  <a
+                    href="https://docs.novu.co"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    Read docs
+                  </a>
+                </>
+              }
+            />
+          </div>
         }
       />
     </>

@@ -12,6 +12,8 @@ import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@no
 import axios from 'axios';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
+const CHANNEL_ENDPOINT_QUERY_LOG_PREFIX = '$$$$$$$$$$$$$';
+
 export type IntegrationEndpoints = {
   integrationIdentifier: string;
   providerId: ProvidersIdEnum;
@@ -65,13 +67,27 @@ export class ResolveChannelEndpoints {
   private async fetchChannelEndpoints(command: ResolveChannelEndpointsCommand): Promise<ChannelEndpointEntity[]> {
     const contextQuery = this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys);
 
-    return this.channelEndpointRepository.find({
+    const queryParams = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       subscriberId: command.subscriberId,
       channel: command.channelType,
       ...contextQuery,
-    });
+    };
+
+    const endpoints = await this.channelEndpointRepository.find(queryParams);
+
+    this.logger.log(
+      {
+        queryParams,
+        contextKeysFromCommand: command.contextKeys,
+        endpointCount: endpoints.length,
+        endpointsFetched: endpoints,
+      },
+      `${CHANNEL_ENDPOINT_QUERY_LOG_PREFIX} fetchChannelEndpoints: full query + all fetched rows`
+    );
+
+    return endpoints;
   }
 
   private async fetchConnectionMap(
@@ -209,6 +225,7 @@ export class ResolveChannelEndpoints {
 
     const decryptedCredentials = decryptCredentials(integration.credentials);
     const { clientId, secretKey, tenantId } = decryptedCredentials;
+
     if (!clientId || !secretKey || !tenantId) {
       throw new Error(`Integration ${endpoint.integrationIdentifier} missing required MS Teams credentials`);
     }
