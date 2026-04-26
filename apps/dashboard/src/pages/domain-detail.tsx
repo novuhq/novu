@@ -431,9 +431,12 @@ export function DomainDetailPage() {
                     </div>
                   )}
 
-                  {!isDomainConnectStatusLoading && !domainConnectStatus?.available && domainConnectStatus?.reason && (
-                    <InlineToast variant="tip" title="Manual setup:" description={domainConnectStatus.reason} />
-                  )}
+                  {!isDomainConnectStatusLoading &&
+                    !domainConnectStatus?.available &&
+                    domainConnectStatus?.reason &&
+                    domainConnectStatus.reasonCode !== 'disabled' && (
+                      <InlineToast variant="tip" title="Manual setup:" description={domainConnectStatus.reason} />
+                    )}
 
                   <p className="text-xs font-medium text-foreground-400">
                     Add the following MX record at your DNS provider:

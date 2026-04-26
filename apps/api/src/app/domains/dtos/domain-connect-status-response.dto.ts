@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ExpectedDnsRecordDto } from './expected-dns-record.dto';
 
+export enum DomainConnectStatusReasonEnum {
+  DISABLED = 'disabled',
+  DISCOVERY_NOT_CONFIGURED = 'discovery_not_configured',
+  UNSUPPORTED_PROVIDER = 'unsupported_provider',
+  INCOMPLETE_CONFIGURATION = 'incomplete_configuration',
+  UNTRUSTED_PROVIDER_FLOW = 'untrusted_provider_flow',
+  TEMPLATE_NOT_ONBOARDED = 'template_not_onboarded',
+}
+
 export class DomainConnectStatusResponseDto {
   @ApiProperty()
   available: boolean;
@@ -13,6 +22,9 @@ export class DomainConnectStatusResponseDto {
 
   @ApiPropertyOptional()
   reason?: string;
+
+  @ApiPropertyOptional({ enum: DomainConnectStatusReasonEnum })
+  reasonCode?: DomainConnectStatusReasonEnum;
 
   @ApiProperty({ type: [ExpectedDnsRecordDto] })
   manualRecords: ExpectedDnsRecordDto[];

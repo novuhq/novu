@@ -37,6 +37,13 @@ export type DomainConnectStatusResponse = {
   providerName?: string;
   providerId?: string;
   reason?: string;
+  reasonCode?:
+    | 'disabled'
+    | 'discovery_not_configured'
+    | 'unsupported_provider'
+    | 'incomplete_configuration'
+    | 'untrusted_provider_flow'
+    | 'template_not_onboarded';
   manualRecords: ExpectedDnsRecord[];
 };
 

@@ -5,7 +5,10 @@ import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { DomainRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { lastValueFrom } from 'rxjs';
-import { DomainConnectStatusResponseDto } from '../../dtos/domain-connect-status-response.dto';
+import {
+  DomainConnectStatusReasonEnum,
+  DomainConnectStatusResponseDto,
+} from '../../dtos/domain-connect-status-response.dto';
 import { buildExpectedDnsRecords } from '../../utils/dns-records';
 import {
   areProviderSettingsUrlsAllowed,
@@ -62,6 +65,7 @@ export class GetDomainConnectStatus {
       return {
         available: false,
         reason: 'Domain Connect auto-configuration is not enabled.',
+        reasonCode: DomainConnectStatusReasonEnum.DISABLED,
         manualRecords,
       };
     }
@@ -72,6 +76,7 @@ export class GetDomainConnectStatus {
       return {
         available: false,
         reason: 'Domain Connect discovery is not configured for this DNS provider.',
+        reasonCode: DomainConnectStatusReasonEnum.DISCOVERY_NOT_CONFIGURED,
         manualRecords,
       };
     }
@@ -81,6 +86,7 @@ export class GetDomainConnectStatus {
         available: false,
         providerName: getProviderNameForHost(discovery.providerHost),
         reason: 'Domain Connect auto-configuration currently supports Cloudflare and Vercel.',
+        reasonCode: DomainConnectStatusReasonEnum.UNSUPPORTED_PROVIDER,
         manualRecords,
       };
     }
@@ -90,6 +96,7 @@ export class GetDomainConnectStatus {
         available: false,
         providerName: getProviderNameForHost(discovery.providerHost),
         reason: 'Domain Connect signing configuration is incomplete.',
+        reasonCode: DomainConnectStatusReasonEnum.INCOMPLETE_CONFIGURATION,
         manualRecords,
       };
     }
@@ -101,6 +108,7 @@ export class GetDomainConnectStatus {
         available: false,
         providerName: getProviderNameForHost(discovery.providerHost),
         reason: 'This DNS provider did not return a trusted synchronous Domain Connect flow.',
+        reasonCode: DomainConnectStatusReasonEnum.UNTRUSTED_PROVIDER_FLOW,
         manualRecords,
       };
     }
@@ -113,6 +121,7 @@ export class GetDomainConnectStatus {
         settings.providerDisplayName || settings.providerName || getProviderNameForHost(discovery.providerHost),
       providerId: settings.providerId,
       reason: isTemplateSupported ? undefined : 'Novu inbound email is not onboarded with this DNS provider yet.',
+      reasonCode: isTemplateSupported ? undefined : DomainConnectStatusReasonEnum.TEMPLATE_NOT_ONBOARDED,
       manualRecords,
     };
   }

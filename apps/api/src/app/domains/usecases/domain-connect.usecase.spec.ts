@@ -6,6 +6,7 @@ import { DomainStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { of } from 'rxjs';
 import { restore, stub } from 'sinon';
+import { DomainConnectStatusReasonEnum } from '../dtos/domain-connect-status-response.dto';
 import { CreateDomainConnectApplyUrl } from './create-domain-connect-apply-url/create-domain-connect-apply-url.usecase';
 import { GetDomainConnectStatus } from './get-domain-connect-status/get-domain-connect-status.usecase';
 
@@ -95,6 +96,7 @@ describe('Domain Connect usecases', () => {
 
     expect(result.available).to.equal(false);
     expect(result.reason).to.equal('Domain Connect auto-configuration is not enabled.');
+    expect(result.reasonCode).to.equal(DomainConnectStatusReasonEnum.DISABLED);
     expect(resolveTxt.called).to.equal(false);
     expect(httpServiceMock.get.called).to.equal(false);
   });
