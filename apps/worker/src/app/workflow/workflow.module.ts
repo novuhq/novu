@@ -18,6 +18,7 @@ import {
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
   InMemoryProviderService,
+  MsTeamsTokenService,
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
@@ -205,7 +206,7 @@ const USE_CASES = [
   ResolveChannelEndpoints,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

@@ -189,14 +189,14 @@ export function TeamsSetupGuide({
 
   const firstIncomplete = useMemo(() => {
     if (isConnected) {
-      return base + 5;
+      return base + 6;
     }
 
     if (!hasCredentials) {
       return base;
     }
 
-    return base + 4;
+    return base + 5;
   }, [base, hasCredentials, isConnected]);
 
   const steps = (
@@ -248,14 +248,58 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncomplete)}
+        title="Grant required Azure API permissions"
+        description={
+          <div className="flex flex-col gap-2">
+            <p>
+              {'In the '}
+              <a
+                href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2"
+              >
+                Azure Portal
+              </a>
+              {
+                ', open your App Registration → API permissions → Add a permission → Microsoft Graph → Application permissions. Add the following two permissions, then click '
+              }
+              <strong>Grant admin consent</strong>
+              {':'}
+            </p>
+            <ul className="ml-4 list-disc space-y-1">
+              <li>
+                <code className="font-code text-[11px]">AppCatalog.Read.All</code>
+                {' — lets Novu find your Teams app in the catalog'}
+              </li>
+              <li>
+                <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForUser.All</code>
+                {' — lets Novu install the bot for each linked user automatically'}
+              </li>
+            </ul>
+          </div>
+        }
+        extraContent={
+          <InlineToast
+            className="mt-2 w-full"
+            variant="tip"
+            title="Why this is needed:"
+            description="When a user links their Teams account, Novu automatically installs the bot into their personal scope so they can receive direct-message notifications — no extra click required."
+          />
+        }
+      />
+
+      <SetupStep
+        index={base + 3}
+        status={deriveStepStatus(base + 3, firstIncomplete)}
         title="Set the messaging endpoint and enable Teams"
         description="In your Azure Bot, go to Configuration → paste the endpoint below. Then go to Channels → enable Microsoft Teams."
         rightContent={<WebhookUrlSection webhookUrl={webhookUrl} />}
       />
 
       <SetupStep
-        index={base + 3}
-        status={deriveStepStatus(base + 3, firstIncomplete)}
+        index={base + 4}
+        status={deriveStepStatus(base + 4, firstIncomplete)}
         title="Download the Teams app package"
         description="We've generated a ready-to-upload app package with your manifest and placeholder icons. Before deploying to production, replace the icons and update the developer fields in manifest.json with your company info."
         rightContent={
@@ -283,8 +327,8 @@ export function TeamsSetupGuide({
       />
 
       <SetupStep
-        index={base + 4}
-        status={deriveStepStatus(base + 4, firstIncomplete)}
+        index={base + 5}
+        status={deriveStepStatus(base + 5, firstIncomplete)}
         title="Upload to Teams and verify"
         description={
           <div className="flex flex-col gap-2">

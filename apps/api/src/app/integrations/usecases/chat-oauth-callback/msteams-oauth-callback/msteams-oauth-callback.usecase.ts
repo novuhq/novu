@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials, PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, MsTeamsTokenService, PinoLogger } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   EnvironmentRepository,
@@ -21,6 +21,8 @@ import {
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 
+const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
+
 @Injectable()
 export class MsTeamsOauthCallback {
   private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
@@ -31,7 +33,8 @@ export class MsTeamsOauthCallback {
     private environmentRepository: EnvironmentRepository,
     private createChannelConnection: CreateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private msTeamsTokenService: MsTeamsTokenService
   ) {
     this.logger.setContext(MsTeamsOauthCallback.name);
   }
@@ -42,7 +45,17 @@ export class MsTeamsOauthCallback {
     const credentials = await this.getIntegrationCredentials(integration);
 
     if (stateData.mode === 'link_user') {
-      await this.linkUserEndpoint(command, stateData, integration, credentials);
+      try {
+        await this.linkUserEndpoint(command, stateData, integration, credentials);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'An unexpected error occurred during bot installation.';
+
+        return {
+          type: ResponseTypeEnum.HTML,
+          result: this.buildErrorHtml(message),
+        };
+      }
     } else {
       await this.createAdminConsentConnection(command, stateData, integration);
     }
@@ -109,6 +122,8 @@ export class MsTeamsOauthCallback {
     const decrypted = decryptCredentials(credentials);
     const oid = await this.exchangeCodeForAadObjectId(command.providerCode, decrypted);
 
+    await this.installBotForUser(oid, decrypted);
+
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
         organizationId: stateData.organizationId,
@@ -121,6 +136,124 @@ export class MsTeamsOauthCallback {
         endpoint: { userId: oid },
       })
     );
+  }
+
+  private async installBotForUser(oid: string, credentials: ICredentialsEntity): Promise<void> {
+    const { clientId, secretKey, tenantId } = credentials;
+
+    const graphToken = await this.msTeamsTokenService.getGraphToken(
+      clientId as string,
+      secretKey as string,
+      tenantId as string
+    );
+
+    const teamsAppId = await this.resolveTeamsAppId(graphToken, clientId as string);
+
+    await this.installAppForUser(graphToken, oid, teamsAppId);
+  }
+
+  private async resolveTeamsAppId(graphToken: string, azureClientId: string): Promise<string> {
+    const url = `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=externalId eq '${azureClientId}'`;
+
+    let response: { data: { value: Array<{ id: string }> } };
+
+    try {
+      response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${graphToken}` },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        throw new BadRequestException(
+          'MS Teams bot installation failed: missing Azure permissions. ' +
+            'Please grant AppCatalog.Read.All and TeamsAppInstallation.ReadWriteSelfForUser.All ' +
+            'application permissions in Azure Portal and re-run admin consent.'
+        );
+      }
+
+      throw new BadRequestException(
+        `MS Teams bot installation failed while resolving Teams app ID: ${
+          axios.isAxiosError(error) ? error.message : String(error)
+        }`
+      );
+    }
+
+    const apps = response.data.value;
+
+    if (!apps || apps.length === 0) {
+      throw new BadRequestException(
+        'MS Teams bot installation failed: app not found in your organization catalog. ' +
+          'Please upload the Teams app manifest to your organization catalog first.'
+      );
+    }
+
+    return apps[0].id;
+  }
+
+  private async installAppForUser(graphToken: string, userOid: string, teamsAppId: string): Promise<void> {
+    const url = `${MS_GRAPH_BASE_URL}/users/${userOid}/teamwork/installedApps`;
+    const body = {
+      'teamsApp@odata.bind': `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps/${teamsAppId}`,
+    };
+
+    try {
+      await axios.post(url, body, {
+        headers: {
+          Authorization: `Bearer ${graphToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+
+        if (status === 409) {
+          return;
+        }
+
+        if (status === 403) {
+          throw new BadRequestException(
+            'MS Teams bot installation failed: missing Azure permissions. ' +
+              'Please grant TeamsAppInstallation.ReadWriteSelfForUser.All ' +
+              'application permission in Azure Portal and re-run admin consent.'
+          );
+        }
+
+        if (status === 404) {
+          throw new BadRequestException(
+            'MS Teams bot installation failed: user or app not found. ' +
+              'Ensure the app is published to your organization catalog and the user exists in the tenant.'
+          );
+        }
+      }
+
+      throw new BadRequestException(
+        `MS Teams bot installation failed: ${axios.isAxiosError(error) ? error.message : String(error)}`
+      );
+    }
+  }
+
+  private buildErrorHtml(message: string): string {
+    const escaped = message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MS Teams Setup Error</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 2rem; color: #1a1a1a; }
+    .error-box { background: #fff3f3; border: 1px solid #f5c6c6; border-radius: 8px; padding: 1.5rem; max-width: 560px; }
+    h2 { margin: 0 0 0.75rem; color: #c0392b; font-size: 1.1rem; }
+    p { margin: 0; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="error-box">
+    <h2>MS Teams Bot Installation Failed</h2>
+    <p>${escaped}</p>
+  </div>
+</body>
+</html>`;
   }
 
   private async exchangeCodeForAadObjectId(code: string, credentials: ICredentialsEntity): Promise<string> {
