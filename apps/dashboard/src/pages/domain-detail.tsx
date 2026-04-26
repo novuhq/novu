@@ -1,4 +1,4 @@
-import { DomainStatusEnum } from '@novu/shared';
+import { DomainStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -52,6 +52,7 @@ import {
   useRefreshDomain,
 } from '@/hooks/use-domain';
 import { useDeleteDomain } from '@/hooks/use-domains';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
@@ -97,8 +98,12 @@ export function DomainDetailPage() {
   const [searchParams] = useSearchParams();
 
   const { data: domain, isLoading, isFetching } = useFetchDomain(domainId);
+  const isDomainConnectInboundEmailEnabled = useFeatureFlag(
+    FeatureFlagsKeysEnum.IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED,
+    false
+  );
   const { data: domainConnectStatus, isLoading: isDomainConnectStatusLoading } = useFetchDomainConnectStatus(domainId, {
-    enabled: domain?.status === DomainStatusEnum.PENDING,
+    enabled: isDomainConnectInboundEmailEnabled && domain?.status === DomainStatusEnum.PENDING,
   });
   const { refresh: refreshDomain } = useRefreshDomain(domainId);
   const createDomainConnectApplyUrl = useCreateDomainConnectApplyUrl(domainId);
