@@ -281,6 +281,52 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     expect(response.result.workflows[0].channels).to.deep.equal({ inApp: true, email: false });
   });
 
+  it('should patch workflow preferences with organization context as string id (dashboard shape)', async () => {
+    const organizationContextId = `org_ctx_${randomBytes(6).toString('hex')}`;
+
+    const patchRes = await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences`)
+      .set('Authorization', `ApiKey ${session.apiKey}`)
+      .send({
+        workflowId: workflow._id,
+        channels: { email: false, inApp: true },
+        context: { organization: organizationContextId },
+      });
+
+    expect(patchRes.status).to.equal(200);
+
+    const listResponse = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: [`organization:${organizationContextId}`],
+    });
+
+    expect(listResponse.result.workflows[0].channels.email).to.equal(false);
+    expect(listResponse.result.workflows[0].channels.inApp).to.equal(true);
+  });
+
+  it('should patch workflow preferences with organization context as { id, data } object', async () => {
+    const organizationContextId = `org_ctx_${randomBytes(6).toString('hex')}`;
+
+    const patchRes = await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences`)
+      .set('Authorization', `ApiKey ${session.apiKey}`)
+      .send({
+        workflowId: workflow._id,
+        channels: { email: true, inApp: false },
+        context: { organization: { id: organizationContextId, data: { tier: 'pro' } } },
+      });
+
+    expect(patchRes.status).to.equal(200);
+
+    const listResponse = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: [`organization:${organizationContextId}`],
+    });
+
+    expect(listResponse.result.workflows[0].channels.email).to.equal(true);
+    expect(listResponse.result.workflows[0].channels.inApp).to.equal(false);
+  });
+
   it('should create separate preferences for different contexts', async () => {
     // Create preference for context A
     await novuClient.subscribers.preferences.update(
