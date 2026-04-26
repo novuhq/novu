@@ -153,7 +153,18 @@ export class MsTeamsOauthCallback {
   }
 
   private async resolveTeamsAppId(graphToken: string, azureClientId: string): Promise<string> {
-    const url = `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=externalId eq '${azureClientId}'`;
+    /*
+     * We scope the query to distributionMethod eq 'organization' to avoid picking up sideloaded
+     * copies of the same app. Filtering server-side guarantees a unique match: the org catalog
+     * allows only one published entry per externalId, so the combination is effectively unique.
+     *
+     * Edge case — store apps: globally-published Teams store apps use distributionMethod='store'
+     * and would be missed by this filter. That is intentional here: Novu customers supply their
+     * own Azure bot (clientId + secretKey), which is always an org-published custom app. Store
+     * apps use a different identity model. If store-app support is ever needed, expand the filter
+     * to: distributionMethod eq 'organization' or distributionMethod eq 'store'.
+     */
+    const url = `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=externalId eq '${azureClientId}' and distributionMethod eq 'organization'`;
 
     let response: { data: { value: Array<{ id: string }> } };
 
@@ -183,6 +194,12 @@ export class MsTeamsOauthCallback {
       throw new BadRequestException(
         'MS Teams bot installation failed: app not found in your organization catalog. ' +
           'Please upload the Teams app manifest to your organization catalog first.'
+      );
+    }
+
+    if (apps.length > 1) {
+      this.logger.warn(
+        `Multiple org-published Teams apps found for clientId ${azureClientId} — using first match (id=${apps[0].id})`
       );
     }
 
