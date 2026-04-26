@@ -102,7 +102,11 @@ function renderNode(node: CardNode): React.ReactNode {
         );
       }
 
-      return <Text style={{ display: 'inline-block', padding: '8px 16px', margin: '4px', backgroundColor: '#e0e0e0', borderRadius: '4px', fontSize: '14px' }}>{node.label || ''}</Text>;
+      return (
+        <Button href="#" style={{ padding: '8px 16px', margin: '4px', backgroundColor: '#0066cc', color: '#ffffff', borderRadius: '4px', fontSize: '14px', textDecoration: 'none' }}>
+          {node.label || ''}
+        </Button>
+      );
 
     case 'link':
       return <Link href={safeUrl(node.url) ?? '#'} style={{ color: '#0066cc' }}>{node.label || ''}</Link>;

@@ -12,7 +12,7 @@ const { env } = process;
 export default mailin.start(
   {
     port: env.PORT || 25,
-    host: env.HOST || '127.0.0.1',
+    host: env.HOST || '0.0.0.0',
     disableDkim: env.disableDkim,
     disableSpf: env.disableSpf,
     disableSpamScore: env.disableSpamScore,

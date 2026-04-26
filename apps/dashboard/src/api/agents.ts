@@ -230,7 +230,8 @@ export function listAgentIntegrations(params: ListAgentIntegrationsParams): Prom
 }
 
 export type AddAgentIntegrationBody = {
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
+  providerId?: string;
 };
 
 type AgentIntegrationLinkEnvelope = { data: AgentIntegrationLink };
@@ -260,9 +261,13 @@ export function removeAgentIntegration(
 
 export async function sendAgentTestEmail(
   environment: IEnvironment,
-  agentIdentifier: string
+  agentIdentifier: string,
+  targetAddress: string
 ): Promise<{ success: boolean }> {
-  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/test-email`, { environment });
+  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/test-email`, {
+    environment,
+    body: { targetAddress },
+  });
 }
 
 export type AgentEmojiEntry = {

@@ -8,7 +8,9 @@ run-name: >
   }}${{
     github.event.inputs.rollback_ws == 'true' && 'ws, ' || ''
   }}${{
-    github.event.inputs.rollback_webhook == 'true' && 'webhook ' || ''
+    github.event.inputs.rollback_webhook == 'true' && 'webhook, ' || ''
+  }}${{
+    github.event.inputs.rollback_inbound_mail == 'true' && 'inbound-mail ' || ''
   }}on ${{ github.event.inputs.environment }} (${{
     github.event.inputs.revisions_to_rollback
   }} revisions)
@@ -56,10 +58,16 @@ on:
         default: true
 
       rollback_webhook:
-        description: "Rollback Webhook"
+        description: "Rollback Webhook (staging / production-us / production-eu only)"
         required: true
         type: boolean
-        default: true
+        default: false
+
+      rollback_inbound_mail:
+        description: "Rollback Inbound Mail (staging / production-us / production-eu only)"
+        required: true
+        type: boolean
+        default: false
 
       revisions_to_rollback:
         description: "Number of revisions to rollback (default: 1)"
@@ -90,9 +98,23 @@ jobs:
           if [ "${{ github.event.inputs.rollback_api }}" != "true" ] && \
              [ "${{ github.event.inputs.rollback_worker }}" != "true" ] && \
              [ "${{ github.event.inputs.rollback_ws }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_webhook }}" != "true" ]; then
+             [ "${{ github.event.inputs.rollback_webhook }}" != "true" ] && \
+             [ "${{ github.event.inputs.rollback_inbound_mail }}" != "true" ]; then
             echo "Error: At least one service must be selected for rollback."
             exit 1
+          fi
+
+          # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
+          if [ "${{ github.event.inputs.rollback_webhook }}" = "true" ] || \
+             [ "${{ github.event.inputs.rollback_inbound_mail }}" = "true" ]; then
+            case "${{ github.event.inputs.environment }}" in
+              staging|production-us|production-eu|production-us-and-eu) ;;
+              *)
+                echo "Error: webhook and inbound-mail can only rollback in staging, production-us, production-eu, or production-us-and-eu."
+                echo "Selected environment: ${{ github.event.inputs.environment }}"
+                exit 1
+                ;;
+            esac
           fi
 
       - name: Generate Environment, Service, and Rollback Matrices
@@ -157,6 +179,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rollback_webhook }}" == "true" ]; then
             services+=("\"webhook\"")
+          fi
+          if [ "${{ github.event.inputs.rollback_inbound_mail }}" == "true" ]; then
+            services+=("\"inbound-mail\"")
           fi
 
           # Parse service secrets and generate rollback_matrix
@@ -235,6 +260,13 @@ jobs:
               service_name=webhook-service
               task_name=webhook-task
               image=webhook
+              rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+            elif [ "$service" == "\"inbound-mail\"" ]; then
+              cluster_name=inbound-mail-cluster
+              container_name=inbound-mail-container
+              service_name=inbound-mail-service
+              task_name=inbound-mail-task
+              image=inbound-mail
               rollback_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
             fi
           done

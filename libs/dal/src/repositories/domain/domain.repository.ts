@@ -1,5 +1,5 @@
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { ClientSession, FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
@@ -53,6 +53,23 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
       '_environmentId',
       '_organizationId',
     ]);
+  }
+
+  /**
+   * Removes all routes that point to a given agent destination across all
+   * domains in the environment. Used for cascade cleanup on agent deletion.
+   */
+  async removeRoutesByDestination(
+    environmentId: string,
+    organizationId: string,
+    destination: string,
+    options: { session?: ClientSession | null } = {}
+  ): Promise<void> {
+    await this.update(
+      { _environmentId: environmentId, _organizationId: organizationId, 'routes.destination': destination },
+      { $pull: { routes: { destination } } },
+      { session: options.session }
+    );
   }
 
   async findByEnvironment(environmentId: string, organizationId: string): Promise<DomainEntity[]> {

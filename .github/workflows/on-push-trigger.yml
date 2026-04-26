@@ -56,6 +56,7 @@ jobs:
           DEPLOY_WORKER=false
           DEPLOY_WS=false
           DEPLOY_WEBHOOK=false
+          DEPLOY_INBOUND_MAIL=false
           SKIP_DEPLOYMENT=false
 
           # Check if only CI/CD label exists (standalone)
@@ -88,20 +89,33 @@ jobs:
               DEPLOY_WEBHOOK=true
               echo "Found @novu/webhook label"
             fi
+
+            if echo "$LABELS" | grep -q "@novu/inbound-mail"; then
+              DEPLOY_INBOUND_MAIL=true
+              echo "Found @novu/inbound-mail label"
+            fi
             
             # If no service labels found, deploy api and worker by default
-            if [ "$DEPLOY_API" = "false" ] && [ "$DEPLOY_WORKER" = "false" ] && [ "$DEPLOY_WS" = "false" ] && [ "$DEPLOY_WEBHOOK" = "false" ]; then
+            if [ "$DEPLOY_API" = "false" ] && [ "$DEPLOY_WORKER" = "false" ] && [ "$DEPLOY_WS" = "false" ] && [ "$DEPLOY_WEBHOOK" = "false" ] && [ "$DEPLOY_INBOUND_MAIL" = "false" ]; then
               echo "No service labels found, deploying api and worker by default"
               DEPLOY_API=true
               DEPLOY_WORKER=true
             fi
           fi
 
+          TRIGGER_DEPLOY=false
+          if [ "$DEPLOY_API" = "true" ] || [ "$DEPLOY_WORKER" = "true" ] || [ "$DEPLOY_WS" = "true" ] || \
+             [ "$DEPLOY_WEBHOOK" = "true" ] || [ "$DEPLOY_INBOUND_MAIL" = "true" ]; then
+            TRIGGER_DEPLOY=true
+          fi
+
           echo "skip_deployment=$SKIP_DEPLOYMENT" >> $GITHUB_OUTPUT
+          echo "trigger_deploy=$TRIGGER_DEPLOY" >> $GITHUB_OUTPUT
           echo "deploy_api=$DEPLOY_API" >> $GITHUB_OUTPUT
           echo "deploy_worker=$DEPLOY_WORKER" >> $GITHUB_OUTPUT
           echo "deploy_ws=$DEPLOY_WS" >> $GITHUB_OUTPUT
           echo "deploy_webhook=$DEPLOY_WEBHOOK" >> $GITHUB_OUTPUT
+          echo "deploy_inbound_mail=$DEPLOY_INBOUND_MAIL" >> $GITHUB_OUTPUT
 
           echo "Final deployment configuration:"
           echo "  Skip: $SKIP_DEPLOYMENT"
@@ -109,9 +123,10 @@ jobs:
           echo "  Worker: $DEPLOY_WORKER"
           echo "  WS: $DEPLOY_WS"
           echo "  Webhook: $DEPLOY_WEBHOOK"
+          echo "  Inbound Mail: $DEPLOY_INBOUND_MAIL"
 
       - name: Trigger Deploy Workflow via GitHub CLI
-        if: steps.determine-services.outputs.skip_deployment == 'false'
+        if: steps.determine-services.outputs.skip_deployment == 'false' && steps.determine-services.outputs.trigger_deploy == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -121,4 +136,5 @@ jobs:
             -f deploy_api=${{ steps.determine-services.outputs.deploy_api }} \
             -f deploy_worker=${{ steps.determine-services.outputs.deploy_worker }} \
             -f deploy_ws=${{ steps.determine-services.outputs.deploy_ws }} \
-            -f deploy_webhook=${{ steps.determine-services.outputs.deploy_webhook }}
+            -f deploy_webhook=${{ steps.determine-services.outputs.deploy_webhook }} \
+            -f deploy_inbound_mail=${{ steps.determine-services.outputs.deploy_inbound_mail }}

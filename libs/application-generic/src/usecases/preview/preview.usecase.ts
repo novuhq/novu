@@ -9,7 +9,7 @@ import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
-import { shouldIncludeBody, toBodyRecord } from '../../services/http-client/http-request.utils';
+import { resolveHttpRequestBody, shouldIncludeBody } from '../../services/http-client/http-request.utils';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
@@ -212,9 +212,9 @@ export class PreviewUsecase {
         GetDecryptedSecretKeyCommand.create({ environmentId })
       );
 
-      const rawBody = resolvedOutputs?.body as Array<{ key: string; value: string }> | undefined;
+      const body = resolvedOutputs?.body as string | Array<{ key: string; value: string }> | undefined;
       const method = (resolvedOutputs?.method as string) ?? 'GET';
-      const bodyRecord = rawBody ? toBodyRecord(rawBody) : undefined;
+      const bodyRecord = resolveHttpRequestBody(body);
       const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
 
       return buildNovuSignatureHeader(secretKey, payload);

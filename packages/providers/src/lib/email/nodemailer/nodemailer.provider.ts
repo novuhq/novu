@@ -137,6 +137,7 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      ...(options.alternatives?.length ? { alternatives: options.alternatives } : {}),
       cc: options.cc,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,

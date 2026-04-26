@@ -16,6 +16,7 @@ const FREE_EMAIL_DOMAINS = new Set([
   'icloud.com',
   'mail.com',
   'protonmail.com',
+  'proton.me',
   'zoho.com',
   'yandex.com',
   'live.com',
@@ -23,7 +24,36 @@ const FREE_EMAIL_DOMAINS = new Set([
   'me.com',
   'gmx.com',
   'inbox.com',
+  '163.com',
+  'qq.com',
+  'mail.ru',
+  'emailsink.dev',
 ]);
+
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'minitts.net',
+  'azsc.us',
+  'emaildisruptor.com',
+  'skymail.ink',
+  'tutamail.com',
+  'kksk.uk',
+  'gtempaccount.com',
+  'privaterelay.appleid.com',
+]);
+
+function isBlockedOrganizationDomain(domain: string): boolean {
+  const normalized = domain.toLowerCase();
+  if (FREE_EMAIL_DOMAINS.has(normalized) || DISPOSABLE_EMAIL_DOMAINS.has(normalized)) {
+    return true;
+  }
+
+  // Block country-coded .edu domains like foo.edu.au, bar.edu.br.
+  // Top-level .edu (e.g., mit.edu) is intentionally not blocked.
+  const labels = normalized.split('.');
+  const eduIdx = labels.indexOf('edu');
+
+  return eduIdx > 0 && eduIdx < labels.length - 1;
+}
 
 @Injectable()
 export class EnrichOrganizationBrand {
@@ -45,7 +75,7 @@ export class EnrichOrganizationBrand {
     if (!isEnabled) return;
 
     const domain = this.extractDomain(command.domain);
-    if (!domain || FREE_EMAIL_DOMAINS.has(domain.toLowerCase())) {
+    if (!domain || isBlockedOrganizationDomain(domain)) {
       await this.organizationRepository.update(
         { _id: command.user.organizationId },
         {
