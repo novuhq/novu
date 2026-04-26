@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 
@@ -12,7 +12,8 @@ export class ListAgentIntegrations {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -92,16 +93,25 @@ export class ListAgentIntegrations {
       idToIntegration = new Map(integrations.map((i) => [i._id, i]));
     }
 
+    const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
+      const integration = idToIntegration.get(link._integrationId);
+
+      if (!integration) {
+        this.logger.warn(
+          { agentIntegrationLinkId: link._id, integrationId: link._integrationId },
+          'Skipping agent-integration link whose integration no longer exists'
+        );
+
+        return acc;
+      }
+
+      acc.push(toAgentIntegrationResponse(link, integration));
+
+      return acc;
+    }, []);
+
     return {
-      data: pagination.links.map((link) => {
-        const integration = idToIntegration.get(link._integrationId);
-
-        if (!integration) {
-          throw new Error(`Integration "${link._integrationId}" missing for agent-integration link "${link._id}".`);
-        }
-
-        return toAgentIntegrationResponse(link, integration);
-      }),
+      data,
       next: pagination.next,
       previous: pagination.previous,
       totalCount: pagination.totalCount,
