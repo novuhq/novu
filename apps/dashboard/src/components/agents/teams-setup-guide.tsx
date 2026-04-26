@@ -1,3 +1,5 @@
+import { useUser } from '@clerk/clerk-react';
+import { MsTeamsConnectButton, NovuProvider } from '@novu/react';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { Download } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -9,7 +11,9 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { API_HOSTNAME } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
@@ -41,6 +45,10 @@ function getApiHostname(): string {
 
 function buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
   return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+}
+
+function buildOAuthCallbackUrl(): string {
+  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
 function buildManifest(appId: string, agentName: string): Record<string, unknown> {
@@ -85,6 +93,24 @@ function buildManifest(appId: string, agentName: string): Record<string, unknown
 // ---------------------------------------------------------------------------
 // Small presentational pieces
 // ---------------------------------------------------------------------------
+
+function RedirectUriSection({ redirectUri }: { redirectUri: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-text-sub text-label-xs font-medium leading-5">OAuth callback URL</p>
+      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+        <input
+          type="text"
+          readOnly
+          value={redirectUri}
+          aria-label="OAuth callback URL"
+          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
+        />
+        <CopyButton valueToCopy={redirectUri} size="xs" className="shrink-0 border-l border-stroke-soft" />
+      </div>
+    </div>
+  );
+}
 
 function WebhookUrlSection({ webhookUrl }: { webhookUrl: string }) {
   return (
@@ -147,6 +173,8 @@ export function TeamsSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: TeamsSetupGuideProps) {
+  const { user } = useUser();
+  const { currentEnvironment } = useEnvironment();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -189,14 +217,14 @@ export function TeamsSetupGuide({
 
   const firstIncomplete = useMemo(() => {
     if (isConnected) {
-      return base + 6;
+      return base + 7;
     }
 
     if (!hasCredentials) {
       return base;
     }
 
-    return base + 5;
+    return base + 6;
   }, [base, hasCredentials, isConnected]);
 
   const steps = (
@@ -225,6 +253,74 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncomplete)}
+        title="Add Microsoft Graph API permissions"
+        description={
+          <span>
+            {'In your App Registration, go to '}
+            <strong>API permissions</strong>
+            {' → '}
+            <strong>Add a permission</strong>
+            {' → '}
+            <strong>Microsoft Graph</strong>
+            {' → '}
+            <strong>Application permissions</strong>
+            {'. Search for and add: '}
+            <code className="font-code text-[11px]">Team.ReadBasic.All</code>
+            {', '}
+            <code className="font-code text-[11px]">Channel.ReadBasic.All</code>
+            {', '}
+            <code className="font-code text-[11px]">AppCatalog.Read.All</code>
+            {'. Then click '}
+            <strong>Grant admin consent</strong>
+            {' for your organization.'}
+          </span>
+        }
+        rightContent={
+          <SetupButton href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps">
+            Open App Registrations
+          </SetupButton>
+        }
+        extraContent={
+          <InlineToast
+            className="mt-2 w-full"
+            variant="tip"
+            title="Required permissions:"
+            description={
+              <span>
+                {'These Graph permissions let your bot discover Teams and channels. Optionally add '}
+                <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForTeam.All</code>
+                {' and '}
+                <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForUser.All</code>
+                {' to enable programmatic app installation.'}
+              </span>
+            }
+          />
+        }
+      />
+
+      <SetupStep
+        index={base + 2}
+        status={deriveStepStatus(base + 2, firstIncomplete)}
+        title="Add Novu's redirect URI"
+        description={
+          <span>
+            {'In your App Registration, go to '}
+            <strong>Authentication</strong>
+            {' → '}
+            <strong>Add a platform</strong>
+            {' → '}
+            <strong>Web</strong>
+            {'. Paste the URL below as the Redirect URI, then click '}
+            <strong>Configure</strong>
+            {'. This is where Microsoft sends the user after they grant admin consent.'}
+          </span>
+        }
+        rightContent={<RedirectUriSection redirectUri={buildOAuthCallbackUrl()} />}
+      />
+
+      <SetupStep
+        index={base + 3}
+        status={deriveStepStatus(base + 3, firstIncomplete)}
         title="Configure credentials"
         description="Copy the App ID, Client Secret, and Tenant ID from your Azure Bot registration into the integration."
         rightContent={
@@ -246,60 +342,16 @@ export function TeamsSetupGuide({
       />
 
       <SetupStep
-        index={base + 2}
-        status={deriveStepStatus(base + 2, firstIncomplete)}
-        title="Grant required Azure API permissions"
-        description={
-          <div className="flex flex-col gap-2">
-            <p>
-              {'In the '}
-              <a
-                href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2"
-              >
-                Azure Portal
-              </a>
-              {
-                ', open your App Registration → API permissions → Add a permission → Microsoft Graph → Application permissions. Add the following two permissions, then click '
-              }
-              <strong>Grant admin consent</strong>
-              {':'}
-            </p>
-            <ul className="ml-4 list-disc space-y-1">
-              <li>
-                <code className="font-code text-[11px]">AppCatalog.Read.All</code>
-                {' — lets Novu find your Teams app in the catalog'}
-              </li>
-              <li>
-                <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForUser.All</code>
-                {' — lets Novu install the bot for each linked user automatically'}
-              </li>
-            </ul>
-          </div>
-        }
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Why this is needed:"
-            description="When a user links their Teams account, Novu automatically installs the bot into their personal scope so they can receive direct-message notifications — no extra click required."
-          />
-        }
-      />
-
-      <SetupStep
-        index={base + 3}
-        status={deriveStepStatus(base + 3, firstIncomplete)}
+        index={base + 4}
+        status={deriveStepStatus(base + 4, firstIncomplete)}
         title="Set the messaging endpoint and enable Teams"
         description="In your Azure Bot, go to Configuration → paste the endpoint below. Then go to Channels → enable Microsoft Teams."
         rightContent={<WebhookUrlSection webhookUrl={webhookUrl} />}
       />
 
       <SetupStep
-        index={base + 4}
-        status={deriveStepStatus(base + 4, firstIncomplete)}
+        index={base + 5}
+        status={deriveStepStatus(base + 5, firstIncomplete)}
         title="Download the Teams app package"
         description="We've generated a ready-to-upload app package with your manifest and placeholder icons. Before deploying to production, replace the icons and update the developer fields in manifest.json with your company info."
         rightContent={
@@ -327,8 +379,8 @@ export function TeamsSetupGuide({
       />
 
       <SetupStep
-        index={base + 5}
-        status={deriveStepStatus(base + 5, firstIncomplete)}
+        index={base + 6}
+        status={deriveStepStatus(base + 6, firstIncomplete)}
         title="Upload to Teams and verify"
         description={
           <div className="flex flex-col gap-2">
@@ -343,10 +395,32 @@ export function TeamsSetupGuide({
               <strong>Upload a custom app</strong>
               {' and select the downloaded '}
               <code className="font-code text-[11px]">.zip</code>
-              {' file.'}
+              {' file. Then use the button to grant admin consent and verify the connection.'}
             </p>
-            <p>{'Once installed, @mention the bot in a channel or send it a direct message to confirm it responds.'}</p>
           </div>
+        }
+        rightContent={
+          user?.externalId && currentEnvironment?.identifier ? (
+            <NovuProvider
+              subscriber={{
+                subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
+                firstName: user.firstName ?? '',
+                lastName: user.lastName ?? '',
+                avatar: user.imageUrl ?? '',
+              }}
+              applicationIdentifier={currentEnvironment.identifier}
+              apiUrl={apiHostnameManager.getHostname()}
+              socketUrl={apiHostnameManager.getWebSocketHostname()}
+            >
+              <MsTeamsConnectButton
+                integrationIdentifier={integrationIdentifier}
+                // connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
+                connectLabel={`Connect ${agent.name} ↗`}
+                connectedLabel="Connected to MS Teams"
+                onConnectSuccess={handleConnected}
+              />
+            </NovuProvider>
+          ) : null
         }
         extraContent={
           <div className="mt-2 flex flex-col gap-2">
