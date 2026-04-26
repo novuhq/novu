@@ -454,11 +454,8 @@ export class NotificationsCache {
   }
 
   clear(filter: NotificationFilter): void {
-    const keys = this.#cache.keys();
-    keys.forEach((key) => {
-      if (isSameFilter(getFilter(key), filter)) {
-        this.#cache.remove(key);
-      }
+    this.getCacheKeysForFilter(filter).forEach((key) => {
+      this.#cache.remove(key);
     });
   }
 
