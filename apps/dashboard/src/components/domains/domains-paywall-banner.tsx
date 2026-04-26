@@ -23,7 +23,7 @@ export function DomainsPaywallBanner() {
             </div>
             <h2 className="text-foreground-900 text-label-md">Domains</h2>
             <p className="text-text-soft text-label-xs mb-3 max-w-[300px]">
-              Send email from a domain you own - better deliverability, stronger brand.
+              Receive emails on your domain and route them to agents or webhooks.
             </p>
           </div>
         </div>
