@@ -70,12 +70,20 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
 
   const effectiveIntegrationId = selectedIntegrationId ?? defaultFromAgent?.integrationId;
 
-  // Once the server has the integration link, sessionStorage is no longer needed.
+  // Once the server reflects the same integration as in sessionStorage, drop the session copy.
   useEffect(() => {
-    if (defaultFromAgent?.integrationId) {
+    const stored = sessionStorage.getItem(SESSION_KEY(agent.identifier));
+
+    if (!stored) {
+      return;
+    }
+
+    const serverHasStoredLink = agent.integrations?.some((i) => i.integrationId === stored) ?? false;
+
+    if (serverHasStoredLink) {
       sessionStorage.removeItem(SESSION_KEY(agent.identifier));
     }
-  }, [defaultFromAgent?.integrationId, agent.identifier]);
+  }, [agent.integrations, agent.identifier]);
 
   const selectedProviderId = useMemo(() => {
     if (selectedIntegrationId) {

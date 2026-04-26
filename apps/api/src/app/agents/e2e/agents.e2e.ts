@@ -216,6 +216,16 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(addRes.body.data.integration.identifier).to.equal(emailIntegrationIdentifier);
     const linkId = addRes.body.data._id as string;
 
+    const getAgentAfterLink = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getAgentAfterLink.status).to.equal(200);
+    expect(getAgentAfterLink.body.data.integrations).to.be.an('array');
+    expect(
+      getAgentAfterLink.body.data.integrations.some(
+        (i: { integrationId: string }) => i.integrationId === emailIntegration._id
+      )
+    ).to.be.true;
+
     const listRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/integrations`);
 
     expect(listRes.status).to.equal(200);
