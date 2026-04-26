@@ -289,7 +289,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       .set('Authorization', `ApiKey ${session.apiKey}`)
       .send({
         workflowId: workflow._id,
-        channels: { email: false, inApp: true },
+        channels: { email: false, in_app: true },
         context: { organization: organizationContextId },
       });
 
@@ -300,8 +300,9 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       contextKeys: [`organization:${organizationContextId}`],
     });
 
-    expect(listResponse.result.workflows[0].channels.email).to.equal(false);
-    expect(listResponse.result.workflows[0].channels.inApp).to.equal(true);
+    expect(listResponse.result.workflows).to.have.lengthOf(1);
+    expect(listResponse.result.workflows[0].workflow.identifier).to.equal(workflow.triggers[0].identifier);
+    expect(listResponse.result.workflows[0].channels).to.deep.include({ email: false, inApp: true });
   });
 
   it('should patch workflow preferences with organization context as { id, data } object', async () => {
@@ -312,7 +313,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       .set('Authorization', `ApiKey ${session.apiKey}`)
       .send({
         workflowId: workflow._id,
-        channels: { email: true, inApp: false },
+        channels: { email: true, in_app: false },
         context: { organization: { id: organizationContextId, data: { tier: 'pro' } } },
       });
 
@@ -323,8 +324,9 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       contextKeys: [`organization:${organizationContextId}`],
     });
 
-    expect(listResponse.result.workflows[0].channels.email).to.equal(true);
-    expect(listResponse.result.workflows[0].channels.inApp).to.equal(false);
+    expect(listResponse.result.workflows).to.have.lengthOf(1);
+    expect(listResponse.result.workflows[0].workflow.identifier).to.equal(workflow.triggers[0].identifier);
+    expect(listResponse.result.workflows[0].channels).to.deep.include({ email: true, inApp: false });
   });
 
   it('should create separate preferences for different contexts', async () => {
