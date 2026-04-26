@@ -68,9 +68,9 @@ export class TestHttpEndpointUsecase {
 
     const startTime = performance.now();
 
-    let resolvedBody: Record<string, unknown> | unknown[];
+    let resolvedBody: Record<string, unknown> | unknown[] | undefined;
     try {
-      resolvedBody = resolveHttpRequestBody(compiledBody) ?? {};
+      resolvedBody = resolveHttpRequestBody(compiledBody);
     } catch (parseError) {
       const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
 
