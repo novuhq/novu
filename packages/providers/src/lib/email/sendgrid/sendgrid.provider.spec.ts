@@ -131,6 +131,39 @@ test('should trigger sendgrid correctly with _passthrough', async () => {
   });
 });
 
+test('should send custom MIME alternatives in content array', async () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const spy = vi.spyOn(MailService.prototype, 'send').mockImplementation(async () => {
+    return {} as any;
+  });
+  const reactionAlternative = {
+    contentType: 'text/vnd.google.email-reaction+json',
+    content: JSON.stringify({ version: 1, emoji: '👀' }),
+  };
+
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    text: '👀',
+    html: '<p>👀</p>',
+    alternatives: [reactionAlternative],
+  });
+
+  const payload = spy.mock.calls[0][0] as unknown as Record<string, unknown>;
+  expect(payload).not.toHaveProperty('html');
+  expect(payload).toEqual(
+    expect.objectContaining({
+      content: [
+        { type: 'text/plain', value: '👀' },
+        { type: 'text/html', value: '<p>👀</p>' },
+        {
+          type: 'text/vnd.google.email-reaction+json',
+          value: JSON.stringify({ version: 1, emoji: '👀' }),
+        },
+      ],
+    })
+  );
+});
+
 test('should check provider integration correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
   const spy = vi.spyOn(MailService.prototype, 'send').mockImplementation(async () => {
