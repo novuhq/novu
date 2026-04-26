@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, MsTeamsTokenService } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -10,8 +10,6 @@ import {
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
-
-const CHANNEL_ENDPOINT_QUERY_LOG_PREFIX = '$$$$$$$$$$$$$';
 
 export type IntegrationEndpoints = {
   integrationIdentifier: string;
@@ -42,8 +40,6 @@ export type IntegrationEndpoints = {
  */
 @Injectable()
 export class ResolveChannelEndpoints {
-  private readonly logger = new Logger(ResolveChannelEndpoints.name);
-
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
@@ -67,27 +63,13 @@ export class ResolveChannelEndpoints {
   private async fetchChannelEndpoints(command: ResolveChannelEndpointsCommand): Promise<ChannelEndpointEntity[]> {
     const contextQuery = this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys);
 
-    const queryParams = {
+    return this.channelEndpointRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       subscriberId: command.subscriberId,
       channel: command.channelType,
       ...contextQuery,
-    };
-
-    const endpoints = await this.channelEndpointRepository.find(queryParams);
-
-    this.logger.log(
-      {
-        queryParams,
-        contextKeysFromCommand: command.contextKeys,
-        endpointCount: endpoints.length,
-        endpointsFetched: endpoints,
-      },
-      `${CHANNEL_ENDPOINT_QUERY_LOG_PREFIX} fetchChannelEndpoints: full query + all fetched rows`
-    );
-
-    return endpoints;
+    });
   }
 
   private async fetchConnectionMap(

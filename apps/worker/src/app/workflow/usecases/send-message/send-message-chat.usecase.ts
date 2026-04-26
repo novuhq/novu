@@ -49,27 +49,6 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
-const INTEGRATION_DEBUG_LOG_PREFIX = '###########';
-
-// #region agent log
-function postChatDebugIngest(location: string, message: string, data: Record<string, unknown>): void {
-  void fetch('http://127.0.0.1:7648/ingest/1b0b4318-8b33-4b0c-8337-05101d753eae', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'edf67b' },
-    body: JSON.stringify({
-      sessionId: 'edf67b',
-      location,
-      message: `${INTEGRATION_DEBUG_LOG_PREFIX} ${message}`,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-}
-
-function logChatDebug(meta: Record<string, unknown>, message: string): void {
-  Logger.log(meta, `${INTEGRATION_DEBUG_LOG_PREFIX} ${LOG_CONTEXT} — ${message}`);
-}
-// #endregion
 
 type UnifiedChannel = {
   type: 'new' | 'legacy';
@@ -113,22 +92,6 @@ export class SendMessageChat extends SendMessageBase {
   @InstrumentUsecase()
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     try {
-      // #region agent log
-      const executeDebugBase = {
-        hypothesisId: 'flow',
-        jobId: String(command.job?._id ?? ''),
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        contextKeysCount: command.contextKeys.length,
-        notificationId: String(command.notificationId ?? ''),
-        hasSubscriberId: Boolean(command.subscriberId),
-      };
-      postChatDebugIngest('send-message-chat.usecase.ts:execute', 'execute: start (before prepareMessageContext)', {
-        ...executeDebugBase,
-      });
-      logChatDebug(executeDebugBase, 'execute: start (before prepareMessageContext)');
-      // #endregion
-
       // Phase 1: Prepare message context (template processing, content compilation)
       const messageContext = await this.prepareMessageContext(command);
 
@@ -136,14 +99,6 @@ export class SendMessageChat extends SendMessageBase {
       const channels = await this.resolveAllChannels(command);
 
       if (channels.length === 0) {
-        // #region agent log
-        postChatDebugIngest('send-message-chat.usecase.ts:execute', 'execute: no unified channels, skipping send', {
-          hypothesisId: 'flow',
-          hasContextKeys: command.contextKeys.length > 0,
-        });
-        logChatDebug({ hasContextKeys: command.contextKeys.length > 0 }, 'execute: no unified channels, skipping send');
-        // #endregion
-
         if (command.contextKeys.length > 0) {
           await this.createExecutionDetail(
             command,
@@ -252,30 +207,6 @@ export class SendMessageChat extends SendMessageBase {
       });
     }
 
-    // #region agent log
-    const newEndpointsMeta = integrationChannelGroups.map((g) => ({
-      providerId: g.providerId,
-      hasIntegrationIdentifier: Boolean(g.integrationIdentifier),
-      channelDataCount: g.channelData?.length ?? 0,
-    }));
-    const legacyMeta = legacyChatChannels.map((c) => ({
-      providerId: c.providerId,
-      hasIntegrationId: Boolean(c._integrationId),
-    }));
-    const resolveData = {
-      hypothesisId: 'flow',
-      newGroupCount: integrationChannelGroups.length,
-      legacyCount: legacyChatChannels.length,
-      totalUnified: unifiedChannels.length,
-      newEndpoints: newEndpointsMeta,
-      legacyChannels: legacyMeta,
-    };
-    postChatDebugIngest('send-message-chat.usecase.ts:resolveAllChannels', 'resolveAllChannels: unified channel list', {
-      ...resolveData,
-    });
-    logChatDebug(resolveData, 'resolveAllChannels: unified channel list');
-    // #endregion
-
     return unifiedChannels;
   }
 
@@ -286,31 +217,6 @@ export class SendMessageChat extends SendMessageBase {
     channels: UnifiedChannel[],
     messageContext: MessageContext
   ): Promise<SendMessageStatus> {
-    // #region agent log
-    const sendAllData = {
-      hypothesisId: 'flow',
-      jobId: String(messageContext.command.job?._id ?? ''),
-      channelCount: channels.length,
-      channelIndexSnapshot: channels.map((c) =>
-        c.type === 'new'
-          ? {
-              type: 'new' as const,
-              providerId: (c.data as IntegrationEndpoints).providerId,
-              hasIntegrationIdentifier: Boolean((c.data as IntegrationEndpoints).integrationIdentifier),
-            }
-          : {
-              type: 'legacy' as const,
-              providerId: (c.data as IChannelSettings).providerId,
-              hasIntegrationId: Boolean((c.data as IChannelSettings)._integrationId),
-            }
-      ),
-    };
-    postChatDebugIngest('send-message-chat.usecase.ts:sendToAllChannels', 'sendToAllChannels: start', {
-      ...sendAllData,
-    });
-    logChatDebug(sendAllData, 'sendToAllChannels: start');
-    // #endregion
-
     let status: SendMessageStatus = SendMessageStatus.FAILED;
 
     for (const channel of channels) {
@@ -416,24 +322,6 @@ export class SendMessageChat extends SendMessageBase {
     step: NotificationStepEntity,
     content: string
   ): Promise<SendMessageResult> {
-    // #region agent log
-    const newPathData = {
-      hypothesisId: 'H2',
-      providerId: integrationChannelData.providerId,
-      hasIntegrationIdentifier: Boolean(integrationChannelData.integrationIdentifier),
-      channelDataCount: integrationChannelData.channelData?.length ?? 0,
-      jobId: String(command.job?._id ?? ''),
-    };
-    postChatDebugIngest(
-      'send-message-chat.usecase.ts:sendChannelMessage',
-      'sendChannelMessage (new path): before getAndValidate',
-      {
-        ...newPathData,
-      }
-    );
-    logChatDebug(newPathData, 'sendChannelMessage (new path): before getAndValidate');
-    // #endregion
-
     const { integration, error } = await this.getAndValidateIntegration(
       command,
       integrationChannelData.providerId,
@@ -494,29 +382,6 @@ export class SendMessageChat extends SendMessageBase {
         ? subscriberChannel._integrationId
         : undefined;
 
-    // #region agent log
-    const hasSubscriberWebhook = Boolean(command.payload?.webhookUrl || subscriberChannel.credentials?.webhookUrl);
-    const legacyEntryData = {
-      hypothesisId: 'H-legacy',
-      providerId: subscriberChannel.providerId,
-      hasIntegrationId: Boolean(integrationId),
-      isWhatsAppBusiness: subscriberChannel.providerId === ChatProviderIdEnum.WhatsAppBusiness,
-      hasSubscriberCredentialsWebhook: Boolean(subscriberChannel.credentials?.webhookUrl),
-      hasPayloadWebhook: Boolean(command.payload?.webhookUrl),
-      hasSubscriberWebhook,
-      hasPhoneNumber: Boolean(subscriberChannel.credentials?.phoneNumber),
-      jobId: String(command.job?._id ?? ''),
-    };
-    postChatDebugIngest(
-      'send-message-chat.usecase.ts:sendChannelMessageLegacy',
-      'sendChannelMessageLegacy: before getAndValidate',
-      {
-        ...legacyEntryData,
-      }
-    );
-    logChatDebug(legacyEntryData, 'sendChannelMessageLegacy: before getAndValidate');
-    // #endregion
-
     const { integration, error } = await this.getAndValidateIntegration(
       command,
       subscriberChannel.providerId,
@@ -555,23 +420,6 @@ export class SendMessageChat extends SendMessageBase {
     if (channelData) {
       return await this.sendMessage(channelData, integration, content, message, command);
     }
-
-    // #region agent log
-    const toSendErrors = {
-      hypothesisId: 'H-legacy-sendErrors',
-      hasChatWebhookUrl: Boolean(chatWebhookUrl),
-      hasPhoneNumber: Boolean(phoneNumber),
-      providerId: subscriberChannel.providerId,
-    };
-    postChatDebugIngest(
-      'send-message-chat.usecase.ts:sendChannelMessageLegacy',
-      'sendChannelMessageLegacy: no built channelData, calling sendErrors',
-      {
-        ...toSendErrors,
-      }
-    );
-    logChatDebug(toSendErrors, 'sendChannelMessageLegacy: no built channelData, calling sendErrors');
-    // #endregion
 
     return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
   }
@@ -654,22 +502,13 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     if (!integration) {
-      // #region agent log
-      postChatDebugIngest('send-message-chat.usecase.ts:sendErrors', 'sendErrors branch !integration (legacy path)', {
-        hypothesisId: 'H4',
-        hasChatWebhookUrl: Boolean(chatWebhookUrl),
-        hasPhoneNumber: Boolean(phoneNumber),
-        messageId: String(message?._id ?? ''),
-      });
-      // #endregion
-
       Logger.warn(
         {
           hasChatWebhookUrl: Boolean(chatWebhookUrl),
           hasPhoneNumber: Boolean(phoneNumber),
           messageId: String(message?._id ?? ''),
         },
-        `${INTEGRATION_DEBUG_LOG_PREFIX} ${LOG_CONTEXT} — sendErrors: missing integration (unexpected if getAndValidateIntegration succeeded)`
+        `${LOG_CONTEXT} — sendErrors: missing integration (unexpected if getAndValidateIntegration succeeded)`
       );
 
       await this.sendErrorStatus(
@@ -805,28 +644,6 @@ export class SendMessageChat extends SendMessageBase {
       ...(integrationIdentifier && { identifier: integrationIdentifier }),
     };
 
-    // #region agent log
-    const getIntegrationLookupMeta = {
-      hypothesisId: 'H1-pre',
-      providerId,
-      hasIntegrationId: Boolean(integrationId),
-      hasIntegrationIdentifier: Boolean(integrationIdentifier),
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      jobId: String(command.job?._id ?? ''),
-      hasJobTenant: Boolean(command.job.tenant),
-    };
-    postChatDebugIngest(
-      'send-message-chat.usecase.ts:getAndValidateIntegration',
-      'getAndValidateIntegration: getIntegration lookup params (before getIntegration)',
-      { ...getIntegrationLookupMeta }
-    );
-    logChatDebug(
-      getIntegrationLookupMeta,
-      'getAndValidateIntegration: getIntegration lookup params (before getIntegration)'
-    );
-    // #endregion
-
     const integration = await this.getIntegration(getIntegrationParams);
 
     if (!integration) {
@@ -835,23 +652,6 @@ export class SendMessageChat extends SendMessageBase {
         : integrationId
           ? `Integration with integrationId: ${integrationId} is either deleted or not active`
           : `Integration is either deleted or not active`;
-
-      // #region agent log
-      postChatDebugIngest(
-        'send-message-chat.usecase.ts:getAndValidateIntegration',
-        'getIntegration returned no integration',
-        {
-          hypothesisId: 'H1',
-          providerId,
-          hasIntegrationId: Boolean(integrationId),
-          hasIntegrationIdentifier: Boolean(integrationIdentifier),
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          jobId: String(command.job?._id ?? ''),
-          hasJobTenant: Boolean(command.job.tenant),
-        }
-      );
-      // #endregion
 
       Logger.warn(
         {
@@ -864,7 +664,7 @@ export class SendMessageChat extends SendMessageBase {
           jobId: String(command.job?._id ?? ''),
           hasJobTenant: Boolean(command.job.tenant),
         },
-        `${INTEGRATION_DEBUG_LOG_PREFIX} ${LOG_CONTEXT} — getAndValidateIntegration: no integration from SelectIntegration`
+        `${LOG_CONTEXT} — getAndValidateIntegration: no integration from SelectIntegration`
       );
 
       await this.createExecutionDetail(
@@ -882,23 +682,6 @@ export class SendMessageChat extends SendMessageBase {
         },
       };
     }
-
-    // #region agent log
-    const okMeta = {
-      hypothesisId: 'H1-ok',
-      providerId: integration.providerId,
-      integrationId: String(integration._id ?? ''),
-      hasIntegrationIdentifier: Boolean(integration.identifier),
-    };
-    postChatDebugIngest(
-      'send-message-chat.usecase.ts:getAndValidateIntegration',
-      'getAndValidateIntegration: integration resolved',
-      {
-        ...okMeta,
-      }
-    );
-    logChatDebug(okMeta, 'getAndValidateIntegration: integration resolved');
-    // #endregion
 
     return { integration };
   }
