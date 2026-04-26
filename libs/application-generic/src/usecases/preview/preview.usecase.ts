@@ -204,7 +204,7 @@ export class PreviewUsecase {
       return variablePath.split('.').pop() ?? 'example';
     }
 
-    return value.trim().replace(/\s+/g, '-');
+    return encodeURI(value.trim().replace(/\s+/g, '-'));
   }
 
   private async initializePreviewContext(command: PreviewCommand) {
