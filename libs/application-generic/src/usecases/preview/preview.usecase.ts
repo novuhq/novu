@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, EnvironmentSystemVariables, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { get, set } from 'es-toolkit/compat';
 import { PinoLogger } from 'nestjs-pino';
 import { GeneratePreviewResponseDto } from '../../dtos/workflow/generate-preview-response.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
@@ -10,6 +11,7 @@ import { resolveEnvironmentVariables } from '../../encryption/encrypt-environmen
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
 import { resolveHttpRequestBody, shouldIncludeBody } from '../../services/http-client/http-request.utils';
+import { buildVariables } from '../../utils/build-variables';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
@@ -70,6 +72,13 @@ export class PreviewUsecase {
         payloadExample: previewTemplateData.payloadExample,
         userPayloadExample: command.generatePreviewRequestDto.previewPayload,
         user: command.user,
+      });
+
+      payloadExample = this.applyUrlSafePreviewValues({
+        payloadExample,
+        controlValues: sanitizedControls,
+        variableSchema: context.variableSchema,
+        stepType: context.stepData.type,
       });
 
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
@@ -137,6 +146,65 @@ export class PreviewUsecase {
       // Return default response for non-existent workflows/steps or other critical errors
       return this.errorHandler.createErrorResponse();
     }
+  }
+
+  private applyUrlSafePreviewValues({
+    payloadExample,
+    controlValues,
+    variableSchema,
+    stepType,
+  }: {
+    payloadExample: Record<string, unknown>;
+    controlValues: Record<string, unknown>;
+    variableSchema: StepResponseDto['variables'];
+    stepType: StepResponseDto['type'];
+  }): Record<string, unknown> {
+    if (stepType !== StepTypeEnum.IN_APP) {
+      return payloadExample;
+    }
+
+    const redirectVariablePaths = this.getInAppRedirectVariablePaths(controlValues, variableSchema);
+    if (redirectVariablePaths.length === 0) {
+      return payloadExample;
+    }
+
+    for (const variablePath of redirectVariablePaths) {
+      const currentValue = get(payloadExample, variablePath);
+      const urlSafeValue = this.toUrlSafePreviewValue(currentValue, variablePath);
+
+      set(payloadExample, variablePath, urlSafeValue);
+    }
+
+    return payloadExample;
+  }
+
+  private getInAppRedirectVariablePaths(
+    controlValues: Record<string, unknown>,
+    variableSchema: StepResponseDto['variables']
+  ): string[] {
+    const redirectUrlControlPaths = ['redirect.url', 'primaryAction.redirect.url', 'secondaryAction.redirect.url'];
+    const variablePaths = redirectUrlControlPaths.flatMap((controlPath) => {
+      const redirectUrl = get(controlValues, controlPath);
+      if (typeof redirectUrl !== 'string') {
+        return [];
+      }
+
+      return buildVariables({
+        variableSchema,
+        controlValue: redirectUrl,
+        logger: this.logger,
+      }).validVariables.map((variable) => variable.name);
+    });
+
+    return [...new Set(variablePaths)].filter((variablePath) => variablePath.startsWith('payload.'));
+  }
+
+  private toUrlSafePreviewValue(value: unknown, variablePath: string): string {
+    if (typeof value !== 'string') {
+      return variablePath.split('.').pop() ?? 'example';
+    }
+
+    return encodeURI(value.trim().replace(/\s+/g, '-'));
   }
 
   private async initializePreviewContext(command: PreviewCommand) {

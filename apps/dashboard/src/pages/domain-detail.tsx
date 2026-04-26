@@ -210,11 +210,10 @@ export function DomainDetailPage() {
     previousDomainStatusRef.current = domain.status;
   }, [domain, hasSubmittedDomainConnectReturn]);
 
-  const handleRequestDelete = (e: Event) => {
-    e.stopPropagation();
+  const handleRequestDelete = () => {
     if (!domain) return;
 
-    setTimeout(() => setIsDeleteModalOpen(true), 0);
+    setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -305,10 +304,9 @@ export function DomainDetailPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      handleRequestDelete(e);
+                    className="text-destructive cursor-pointer"
+                    onClick={() => {
+                      setTimeout(() => handleRequestDelete(), 0);
                     }}
                     disabled={deleteDomain.isPending || !domain}
                   >

@@ -299,8 +299,6 @@ function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookFo
   );
 }
 
-const WILDCARD_HINT_DISPLAY_PROBABILITY = 0.35;
-
 type WildcardRouteHintProps = {
   domainName: string;
   onConfigureClick: () => void;
@@ -350,7 +348,6 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
-  const [isWildcardHintRolledIn] = useState(() => Math.random() < WILDCARD_HINT_DISPLAY_PROBABILITY);
 
   const startAdding = (initialValues?: RouteFormState) => {
     setAddInitialValues(initialValues);
@@ -408,8 +405,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const hasWildcardWebhookRoute = domain.routes.some(
     (route) => route.address === '*' && route.type === DomainRouteTypeEnum.WEBHOOK
   );
-  const shouldShowWildcardHint =
-    isWildcardHintRolledIn && !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
+  const shouldShowWildcardHint = !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
   const isEmpty = domain.routes.length === 0 && !isAdding;
 
   return (

@@ -42,83 +42,58 @@ function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
   );
 }
 
-function DomainRow({ domain, environmentSlug }: { domain: DomainResponse; environmentSlug: string }) {
+function DomainRow({
+  domain,
+  environmentSlug,
+  onRequestDelete,
+  isDeleting,
+}: {
+  domain: DomainResponse;
+  environmentSlug: string;
+  onRequestDelete: (domain: DomainResponse) => void;
+  isDeleting: boolean;
+}) {
   const navigate = useNavigate();
-  const deleteDomain = useDeleteDomain();
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const handleDelete = (e: Event) => {
-    e.stopPropagation();
-    setTimeout(() => setIsDeleteModalOpen(true), 0);
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      await deleteDomain.mutateAsync(domain._id);
-      setIsDeleteModalOpen(false);
-      showSuccessToast(`Domain "${domain.name}" deleted.`);
-    } catch {
-      showErrorToast('Failed to delete domain.');
-    }
-  };
 
   const handleRowClick = () => {
     navigate(buildRoute(ROUTES.DOMAIN_DETAIL, { environmentSlug, domainId: domain._id }));
   };
 
   return (
-    <>
-      <TableRow className="hover:bg-neutral-alpha-50 cursor-pointer" onClick={handleRowClick}>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <span className="font-code text-sm font-medium">{domain.name}</span>
-          </div>
-        </TableCell>
-        <TableCell>
-          <DomainStatusBadge status={domain.status} />
-        </TableCell>
-        <TableCell className="text-foreground-500 text-sm">
-          {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
-        </TableCell>
-        <TableCell className="text-foreground-500 text-sm">
-          {formatDistanceToNow(new Date(domain.updatedAt), { addSuffix: true })}
-        </TableCell>
-        <TableCell className="w-12 text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  handleDelete(e);
-                }}
-                disabled={deleteDomain.isPending}
-              >
-                Delete domain
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
-      <ConfirmationModal
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
-        onConfirm={handleConfirmDelete}
-        title="Delete domain"
-        description={
-          <span>
-            Are you sure you want to delete <span className="font-bold">{domain.name}</span>? This action cannot be
-            undone.
-          </span>
-        }
-        confirmButtonText="Delete domain"
-        confirmButtonVariant="error"
-        isLoading={deleteDomain.isPending}
-      />
-    </>
+    <TableRow className="hover:bg-neutral-alpha-50 cursor-pointer" onClick={handleRowClick}>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <span className="font-code text-sm font-medium">{domain.name}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <DomainStatusBadge status={domain.status} />
+      </TableCell>
+      <TableCell className="text-foreground-500 text-sm">
+        {formatDistanceToNow(new Date(domain.createdAt), { addSuffix: true })}
+      </TableCell>
+      <TableCell className="text-foreground-500 text-sm">
+        {formatDistanceToNow(new Date(domain.updatedAt), { addSuffix: true })}
+      </TableCell>
+      <TableCell className="w-12 text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem
+              className="text-destructive cursor-pointer"
+              onClick={() => {
+                setTimeout(() => onRequestDelete(domain), 0);
+              }}
+              disabled={isDeleting}
+            >
+              Delete domain
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -126,8 +101,10 @@ export function DomainsPage() {
   const { currentEnvironment } = useEnvironment();
   const { data: domains, isLoading } = useFetchDomains();
   const { subscription } = useFetchSubscription();
+  const deleteDomain = useDeleteDomain();
   const [search, setSearch] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [domainToDelete, setDomainToDelete] = useState<DomainResponse | null>(null);
 
   const environmentSlug = currentEnvironment?.slug;
   const isTableLoading = isLoading || !environmentSlug;
@@ -136,8 +113,25 @@ export function DomainsPage() {
     FeatureNameEnum.DOMAINS_BOOLEAN,
     subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
   );
-
   const filtered = (domains ?? []).filter((d) => d.name.toLowerCase().includes(search.toLowerCase()));
+
+  const handleRequestDelete = (domain: DomainResponse) => {
+    setDomainToDelete(domain);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!domainToDelete) {
+      return;
+    }
+
+    try {
+      await deleteDomain.mutateAsync(domainToDelete._id);
+      setDomainToDelete(null);
+      showSuccessToast(`Domain "${domainToDelete.name}" deleted.`);
+    } catch {
+      showErrorToast('Failed to delete domain.');
+    }
+  };
 
   if (!domainsEnabled) {
     return (
@@ -194,7 +188,13 @@ export function DomainsPage() {
                   </TableRow>
                 ) : (
                   filtered.map((domain) => (
-                    <DomainRow key={domain._id} domain={domain} environmentSlug={environmentSlug} />
+                    <DomainRow
+                      key={domain._id}
+                      domain={domain}
+                      environmentSlug={environmentSlug}
+                      onRequestDelete={handleRequestDelete}
+                      isDeleting={deleteDomain.isPending}
+                    />
                   ))
                 )}
               </TableBody>
@@ -204,6 +204,25 @@ export function DomainsPage() {
       </div>
 
       <AddDomainDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <ConfirmationModal
+        open={!!domainToDelete}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDomainToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete domain"
+        description={
+          <span>
+            Are you sure you want to delete <span className="font-bold">{domainToDelete?.name ?? ''}</span>? This action
+            cannot be undone.
+          </span>
+        }
+        confirmButtonText="Delete domain"
+        confirmButtonVariant="error"
+        isLoading={deleteDomain.isPending}
+      />
     </DashboardLayout>
   );
 }
