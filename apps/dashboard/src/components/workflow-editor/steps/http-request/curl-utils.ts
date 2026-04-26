@@ -127,7 +127,7 @@ export function buildRawCurlString(
     }
   }
   const parts = [
-    `novu $ curl --location --request '${escapeShellSingleQuoted(method.toUpperCase())}' '${escapeShellSingleQuoted(url || 'https://api.example.com/endpoint')}'`,
+    `curl --location --request '${escapeShellSingleQuoted(method.toUpperCase())}' '${escapeShellSingleQuoted(url || 'https://api.example.com/endpoint')}'`,
     headerArgs,
     bodyStr,
   ].filter(Boolean);
