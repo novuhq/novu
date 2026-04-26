@@ -20,10 +20,14 @@ export enum WebhookEventEnum {
 
   // Preference
   PREFERENCE_UPDATED = 'preference.updated',
+
+  // Email Inbound
+  EMAIL_RECEIVED = 'email.received',
 }
 
 export enum WebhookObjectTypeEnum {
   WORKFLOW = 'workflow',
   MESSAGE = 'message',
   PREFERENCE = 'preference',
+  EMAIL_INBOUND = 'email_inbound',
 }

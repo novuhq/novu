@@ -1,0 +1,275 @@
+import { createResource, createSignal, onCleanup, onMount, Show } from 'solid-js';
+import type { ChannelEndpointResponse } from '../../../channel-connections/types';
+import type { Context } from '../../../types';
+import { useNovu } from '../../context';
+import { useStyle } from '../../helpers/useStyle';
+import { CheckCircleFill } from '../../icons/CheckCircleFill';
+import { Loader } from '../../icons/Loader';
+import { SlackColored } from '../../icons/SlackColored';
+import type { SlackLinkUserAppearanceCallback } from '../../types';
+import { Button, Motion } from '../primitives';
+import { IconRendererWrapper } from '../shared/IconRendererWrapper';
+import { DEFAULT_CONNECTION_IDENTIFIER, DEFAULT_INTEGRATION_IDENTIFIER } from '../slack-constants';
+
+export type SlackLinkUserProps = {
+  integrationIdentifier?: string;
+  connectionIdentifier?: string;
+  subscriberId?: string;
+  context?: Context;
+  onLinkSuccess?: (endpoint: { identifier: string }) => void;
+  onLinkError?: (error: unknown) => void;
+  onUnlinkSuccess?: () => void;
+  onUnlinkError?: (error: unknown) => void;
+  linkLabel?: string;
+  unlinkLabel?: string;
+};
+
+const POLL_INTERVAL_MS = 2500;
+const POLL_TIMEOUT_MS = 120_000;
+
+export const SlackLinkUser = (props: SlackLinkUserProps) => {
+  const style = useStyle();
+  const novuAccessor = useNovu();
+  const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_INTEGRATION_IDENTIFIER;
+  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_CONNECTION_IDENTIFIER;
+
+  const [endpoint, setEndpoint] = createSignal<ChannelEndpointResponse | null>(null);
+  const [loading, setLoading] = createSignal(true);
+  const [actionLoading, setActionLoading] = createSignal(false);
+
+  let pollingIntervalId: ReturnType<typeof setInterval> | undefined;
+
+  onCleanup(() => {
+    clearInterval(pollingIntervalId);
+  });
+
+  const isLinked = () => !!endpoint();
+  const isLoading = () => loading() || actionLoading();
+
+  createResource(
+    () => ({
+      integrationIdentifier: integrationIdentifier(),
+      connectionIdentifier: connectionIdentifier(),
+    }),
+    async ({ integrationIdentifier: intId, connectionIdentifier: connId }) => {
+      setLoading(true);
+
+      try {
+        const response = await novuAccessor().channelEndpoints.list({
+          integrationIdentifier: intId,
+          connectionIdentifier: connId,
+        });
+        const existing = response.data?.find((ep) => ep.type === 'slack_user') ?? null;
+        setEndpoint(existing);
+      } catch {
+        setEndpoint(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+  );
+
+  onMount(() => {
+    const currentNovu = novuAccessor();
+
+    const cleanupDelete = currentNovu.on('channel-endpoint.delete.resolved', ({ args }) => {
+      if (args?.identifier && args.identifier === endpoint()?.identifier) {
+        setEndpoint(null);
+      }
+    });
+
+    onCleanup(() => {
+      cleanupDelete();
+    });
+  });
+
+  const startPolling = () => {
+    const startedAt = Date.now();
+
+    pollingIntervalId = setInterval(async () => {
+      try {
+        const response = await novuAccessor().channelEndpoints.list({
+          integrationIdentifier: integrationIdentifier(),
+          connectionIdentifier: connectionIdentifier(),
+        });
+        const found = response.data?.find((ep) => ep.type === 'slack_user') ?? null;
+
+        if (found) {
+          clearInterval(pollingIntervalId);
+          setActionLoading(false);
+          setEndpoint(found);
+          props.onLinkSuccess?.({ identifier: found.identifier });
+
+          return;
+        }
+      } catch {
+        // ignore transient errors during polling
+      }
+
+      if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+        clearInterval(pollingIntervalId);
+        setActionLoading(false);
+        props.onLinkError?.(new Error('Slack OAuth timed out. Please try again.'));
+      }
+    }, POLL_INTERVAL_MS);
+  };
+
+  const handleClick = async () => {
+    if (isLinked()) {
+      const identifier = endpoint()?.identifier;
+      if (!identifier) return;
+
+      setActionLoading(true);
+      const result = await novuAccessor().channelEndpoints.delete({ identifier });
+      setActionLoading(false);
+
+      if (result.error) {
+        props.onUnlinkError?.(result.error);
+      } else {
+        setEndpoint(null);
+        props.onUnlinkSuccess?.();
+      }
+    } else {
+      setActionLoading(true);
+
+      const result = await novuAccessor().channelConnections.generateOAuthUrl({
+        integrationIdentifier: integrationIdentifier(),
+        connectionIdentifier: connectionIdentifier(),
+        subscriberId: props.subscriberId ?? novuAccessor().subscriberId,
+        context: props.context,
+        mode: 'link_user',
+        userScope: ['identity.basic'],
+      });
+
+      if (result.error) {
+        setActionLoading(false);
+        props.onLinkError?.(result.error);
+
+        return;
+      }
+
+      if (result.data?.url) {
+        window.open(result.data.url, '_blank', 'noopener,noreferrer');
+        startPolling();
+      }
+    }
+  };
+
+  return (
+    <div
+      class={style({
+        key: 'linkSlackUserContainer',
+        className: 'nt-flex nt-items-center nt-gap-2',
+        context: { linked: isLinked() } satisfies Parameters<
+          SlackLinkUserAppearanceCallback['linkSlackUserContainer']
+        >[0],
+      })}
+    >
+      <Button
+        class={style({
+          key: 'linkSlackUserButton',
+          className: 'nt-transition-[width] nt-duration-800 nt-will-change-[width]',
+          context: { linked: isLinked() } satisfies Parameters<
+            SlackLinkUserAppearanceCallback['linkSlackUserButton']
+          >[0],
+        })}
+        variant="secondary"
+        onClick={handleClick}
+        disabled={isLoading()}
+      >
+        <span
+          class={style({
+            key: 'linkSlackUserButtonContainer',
+            className: 'nt-relative nt-overflow-hidden nt-inline-flex nt-items-center nt-justify-center nt-gap-1',
+            context: { linked: isLinked() } satisfies Parameters<
+              SlackLinkUserAppearanceCallback['linkSlackUserButtonContainer']
+            >[0],
+          })}
+        >
+          <Motion.span
+            initial={{ opacity: 1 }}
+            animate={{ opacity: isLoading() ? 0 : 1 }}
+            transition={{ easing: 'ease-in-out', duration: 0.2 }}
+            class="nt-inline-flex nt-items-center nt-gap-1"
+          >
+            <Show
+              when={isLinked()}
+              fallback={
+                <IconRendererWrapper
+                  iconKey="channelConnect"
+                  class={style({
+                    key: 'linkSlackUserButtonIcon',
+                    className: 'nt-size-4 nt-shrink-0',
+                    iconKey: 'channelConnect',
+                    context: { linked: false } satisfies Parameters<
+                      SlackLinkUserAppearanceCallback['linkSlackUserButtonIcon']
+                    >[0],
+                  })}
+                  fallback={
+                    <SlackColored
+                      class={style({
+                        key: 'linkSlackUserButtonIcon',
+                        className: 'nt-size-4 nt-shrink-0',
+                        iconKey: 'channelConnect',
+                        context: { linked: false } satisfies Parameters<
+                          SlackLinkUserAppearanceCallback['linkSlackUserButtonIcon']
+                        >[0],
+                      })}
+                    />
+                  }
+                />
+              }
+            >
+              <IconRendererWrapper
+                iconKey="channelConnected"
+                class={style({
+                  key: 'linkSlackUserButtonIcon',
+                  className:
+                    'nt-inline-flex nt-items-center nt-justify-center nt-size-4 nt-shrink-0 nt-rounded-full nt-bg-white nt-shadow-[0_1px_2px_0_rgba(10,13,20,0.03)]',
+                  iconKey: 'channelConnected',
+                  context: { linked: true } satisfies Parameters<
+                    SlackLinkUserAppearanceCallback['linkSlackUserButtonIcon']
+                  >[0],
+                })}
+                fallback={
+                  <span
+                    class={style({
+                      key: 'linkSlackUserButtonIcon',
+                      className:
+                        'nt-inline-flex nt-items-center nt-justify-center nt-size-4 nt-shrink-0 nt-rounded-full nt-bg-white nt-shadow-[0_1px_2px_0_rgba(10,13,20,0.03)]',
+                      iconKey: 'channelConnected',
+                      context: { linked: true } satisfies Parameters<
+                        SlackLinkUserAppearanceCallback['linkSlackUserButtonIcon']
+                      >[0],
+                    })}
+                  >
+                    <CheckCircleFill class="nt-size-full" />
+                  </span>
+                }
+              />
+            </Show>
+            <span
+              class={style({
+                key: 'linkSlackUserButtonLabel',
+                className: '[line-height:16px]',
+                context: { linked: isLinked() } satisfies Parameters<
+                  SlackLinkUserAppearanceCallback['linkSlackUserButtonLabel']
+                >[0],
+              })}
+            >
+              {isLinked() ? (props.unlinkLabel ?? 'Unlink') : (props.linkLabel ?? 'Link User')}
+            </span>
+          </Motion.span>
+          <Motion.span
+            initial={{ opacity: 1 }}
+            animate={{ opacity: isLoading() ? 1 : 0 }}
+            transition={{ easing: 'ease-in-out', duration: 0.2 }}
+            class="nt-absolute nt-left-0 nt-inline-flex nt-items-center"
+          >
+            <Loader class="nt-text-foreground-alpha-600 nt-size-3.5 nt-animate-spin" />
+          </Motion.span>
+        </span>
+      </Button>
+    </div>
+  );
+};

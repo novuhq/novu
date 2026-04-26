@@ -1,4 +1,6 @@
 export * from './dal.service';
+export * from './repositories/agent';
+export * from './repositories/agent-integration';
 export * from './repositories/ai-chat';
 export * from './repositories/base-repository';
 export * from './repositories/base-repository-v2';
@@ -7,6 +9,9 @@ export * from './repositories/channel-connection';
 export * from './repositories/channel-endpoint';
 export * from './repositories/context';
 export * from './repositories/control-values';
+export * from './repositories/conversation';
+export * from './repositories/conversation-activity';
+export * from './repositories/domain';
 export * from './repositories/environment';
 export * from './repositories/environment-variable';
 export * from './repositories/execution-details';

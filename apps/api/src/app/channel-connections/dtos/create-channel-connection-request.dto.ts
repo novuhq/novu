@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
-import { ContextPayload } from '@novu/shared';
+import { ConnectionMode, ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsDefined, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class CreateChannelConnectionRequestDto {
@@ -29,6 +29,20 @@ export class CreateChannelConnectionRequestDto {
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
+
+  @ApiPropertyOptional({
+    description:
+      'Connection mode that determines how the channel connection is scoped. ' +
+      'Use "subscriber" (default) to associate the connection with a specific subscriber. ' +
+      'Use "shared" to associate the connection with a context instead of a subscriber — ' +
+      'subscriberId will not be stored on the connection.',
+    enum: ['subscriber', 'shared'],
+    example: 'shared',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['subscriber', 'shared'])
+  connectionMode?: ConnectionMode;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel connection.',

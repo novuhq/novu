@@ -1,3 +1,4 @@
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { cn } from '../../../utils/ui';
 
 interface ProviderIconProps {
@@ -9,9 +10,9 @@ interface ProviderIconProps {
 export function ProviderIcon({ providerId, providerDisplayName, className }: ProviderIconProps) {
   return (
     <img
-      src={`/images/providers/light/square/${providerId}.svg`}
+      src={`/images/providers/light/square/${getProviderSquareIconFileName(providerId)}.svg`}
       alt={providerDisplayName}
-      className={cn('h-6 w-6', className)}
+      className={cn('h-6 w-6 object-contain', className)}
     />
   );
 }

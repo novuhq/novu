@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
+import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
+import { ApiAuthSchemeEnum, MemberRoleEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
@@ -137,7 +138,46 @@ export class SyncExternalOrganization {
       await this.createCustomer(command.email, organizationAfterChanges._id);
     }
 
+    const domain = organization.domain || this.extractDomainFromEmail(command.email);
+    if (domain) {
+      this.triggerBrandEnrichment(command.userId, organization._id, devEnv._id, domain).catch((error) =>
+        this.logger.error(error, 'Failed to trigger brand enrichment (fire-and-forget)')
+      );
+    }
+
     return organizationAfterChanges as OrganizationEntity;
+  }
+
+  private extractDomainFromEmail(email: string): string | null {
+    const parts = email.split('@');
+    if (parts.length !== 2) return null;
+
+    return parts[1];
+  }
+
+  private async triggerBrandEnrichment(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    domain: string
+  ): Promise<void> {
+    try {
+      const enrichUsecase = this.moduleRef.get('EnrichOrganizationBrand', { strict: false });
+
+      await enrichUsecase.execute({
+        user: {
+          _id: userId,
+          organizationId,
+          environmentId,
+          roles: [MemberRoleEnum.ADMIN],
+          permissions: [],
+          scheme: ApiAuthSchemeEnum.BEARER,
+        },
+        domain,
+      });
+    } catch (error) {
+      this.logger.warn({ err: error }, `EnrichOrganizationBrand has failed for ${domain}, skipping`);
+    }
   }
 
   private async createCustomer(billingEmail: string, organizationId: string) {

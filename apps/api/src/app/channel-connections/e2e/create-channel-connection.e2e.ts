@@ -70,6 +70,33 @@ describe('Create Channel Connection - /channel-connections (POST) #novu-v2', () 
     expect(result.workspace.id).to.equal('T789012');
   });
 
+  it('should not store subscriberId when connectionMode is "shared"', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createDto: CreateChannelConnectionRequestDto = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      connectionMode: 'shared',
+      context: {
+        tenant: 'acme-corp',
+      },
+      workspace: {
+        id: 'T123456',
+        name: 'Test Workspace',
+      },
+      auth: {
+        accessToken: 'xoxb-test-token',
+      },
+    };
+
+    const { result } = await novuClient.channelConnections.create(createDto);
+
+    expect(result.subscriberId).to.be.null;
+    expect(result.contextKeys).to.be.an('array').that.is.not.empty;
+  });
+
   it('should create channel connection with custom identifier', async () => {
     const integration = await createSlackIntegration(session);
     const subscribersService = createSubscribersService(session);

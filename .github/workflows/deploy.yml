@@ -8,7 +8,9 @@ run-name: >
   }}${{
     github.event.inputs.deploy_ws == 'true' && 'ws, ' || ''
   }}${{
-    github.event.inputs.deploy_webhook == 'true' && 'webhook ' || ''
+    github.event.inputs.deploy_webhook == 'true' && 'webhook, ' || ''
+  }}${{
+    github.event.inputs.deploy_inbound_mail == 'true' && 'inbound-mail ' || ''
   }}on ${{ github.event.inputs.environment }}
 description: |
   This workflow deploys the Novu Cloud application to different environments and services based on the selected options.
@@ -55,7 +57,12 @@ on:
         type: boolean
         default: false
       deploy_webhook:
-        description: "Deploy Webhook"
+        description: "Deploy Webhook (staging / production-us / production-eu only)"
+        required: true
+        type: boolean
+        default: false
+      deploy_inbound_mail:
+        description: "Deploy Inbound Mail (staging / production-us / production-eu only)"
         required: true
         type: boolean
         default: false
@@ -74,9 +81,24 @@ jobs:
           if [ "${{ github.event.inputs.deploy_api }}" != "true" ] && \
              [ "${{ github.event.inputs.deploy_worker }}" != "true" ] && \
              [ "${{ github.event.inputs.deploy_ws }}" != "true" ] && \
-             [ "${{ github.event.inputs.deploy_webhook }}" != "true" ]; then
+             [ "${{ github.event.inputs.deploy_webhook }}" != "true" ] && \
+             [ "${{ github.event.inputs.deploy_inbound_mail }}" != "true" ]; then
             echo "Error: At least one service must be selected for deployment."
             exit 1
+          fi
+
+          # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
+          # Fail fast if someone selects them with an unsupported environment.
+          if [ "${{ github.event.inputs.deploy_webhook }}" = "true" ] || \
+             [ "${{ github.event.inputs.deploy_inbound_mail }}" = "true" ]; then
+            case "${{ github.event.inputs.environment }}" in
+              staging|production-us|production-eu|production-us-and-eu) ;;
+              *)
+                echo "Error: webhook and inbound-mail can only deploy to staging, production-us, production-eu, or production-us-and-eu."
+                echo "Selected environment: ${{ github.event.inputs.environment }}"
+                exit 1
+                ;;
+            esac
           fi
 
       - name: Generate Environment, Service, and Deploy Matrices
@@ -144,6 +166,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.deploy_webhook }}" == "true" ]; then
             services+=("\"webhook\"")
+          fi
+          if [ "${{ github.event.inputs.deploy_inbound_mail }}" == "true" ]; then
+            services+=("\"inbound-mail\"")
           fi
 
           # Parse service secrets and generate deploy_matrix
@@ -222,6 +247,13 @@ jobs:
               service_name=webhook-service
               task_name=webhook-task
               image=webhook
+              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+            elif [ "$service" == "\"inbound-mail\"" ]; then
+              cluster_name=inbound-mail-cluster
+              container_name=inbound-mail-container
+              service_name=inbound-mail-service
+              task_name=inbound-mail-task
+              image=inbound-mail
               deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
             fi
           done

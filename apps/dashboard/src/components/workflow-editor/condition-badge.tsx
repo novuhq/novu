@@ -12,9 +12,16 @@ interface ConditionBadgeProps {
   stepSlug: string;
   conditionsData?: RQBJsonLogic;
   className?: string;
+  isReadOnly?: boolean;
 }
 
-export const ConditionBadge = ({ conditionsCount, stepSlug, conditionsData, className }: ConditionBadgeProps) => {
+export const ConditionBadge = ({
+  conditionsCount,
+  stepSlug,
+  conditionsData,
+  className,
+  isReadOnly,
+}: ConditionBadgeProps) => {
   const navigate = useNavigate();
 
   const firstConditionField = useMemo(() => {
@@ -42,6 +49,8 @@ export const ConditionBadge = ({ conditionsCount, stepSlug, conditionsData, clas
   }, [firstConditionField]);
 
   const handleClick = (e: React.MouseEvent) => {
+    if (isReadOnly) return;
+
     e.preventDefault();
     e.stopPropagation();
     navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug }));
