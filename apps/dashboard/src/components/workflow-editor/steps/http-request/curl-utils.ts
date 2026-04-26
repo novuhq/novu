@@ -79,6 +79,21 @@ export function getKeyValuePairsFromBody(body: HttpRequestBodyValue): KeyValuePa
   }
 }
 
+function canRepresentAsKeyValuePairs(body: string): boolean {
+  try {
+    const parsed = JSON.parse(body);
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+      return false;
+    }
+
+    const values = Object.values(parsed);
+
+    return values.every((value) => value === null || ['string', 'number', 'boolean'].includes(typeof value));
+  } catch {
+    return false;
+  }
+}
+
 export function getInitialBodyEditorMode(body: HttpRequestBodyValue): BodyEditorMode {
   if (Array.isArray(body) || !body) {
     return 'key-value';
@@ -92,7 +107,7 @@ export function getInitialBodyEditorMode(body: HttpRequestBodyValue): BodyEditor
     return 'key-value';
   }
 
-  return getKeyValuePairsFromBody(body).length > 0 ? 'key-value' : 'raw';
+  return canRepresentAsKeyValuePairs(body) ? 'key-value' : 'raw';
 }
 
 export function buildRawCurlString(
