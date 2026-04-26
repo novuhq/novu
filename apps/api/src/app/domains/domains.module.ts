@@ -1,3 +1,4 @@
+import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ResourceValidatorService } from '@novu/application-generic';
 
@@ -21,7 +22,7 @@ export const DomainsModule = {
 
     return {
       module: DomainsModuleDefinition,
-      imports: [SharedModule, AuthModule],
+      imports: [SharedModule, AuthModule, HttpModule],
       controllers: [DomainsController],
       providers: [...USE_CASES, ResourceValidatorService],
       exports: [...USE_CASES],

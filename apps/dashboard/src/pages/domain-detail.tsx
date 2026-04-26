@@ -1,18 +1,19 @@
 import { DomainStatusEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   RiAddLine,
   RiAlertFill,
   RiArrowLeftSLine,
   RiEarthLine,
+  RiExternalLinkLine,
   RiInformationLine,
   RiMore2Fill,
   RiRefreshLine,
   RiShieldCheckLine,
 } from 'react-icons/ri';
-import { SiCloudflare } from 'react-icons/si';
-import { useNavigate, useParams } from 'react-router-dom';
+import { SiCloudflare, SiVercel } from 'react-icons/si';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
@@ -30,6 +31,7 @@ import {
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CollapsibleSection } from '@/components/primitives/collapsible-section';
+import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +45,12 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchDomain, useRefreshDomain } from '@/hooks/use-domain';
+import {
+  useCreateDomainConnectApplyUrl,
+  useFetchDomain,
+  useFetchDomainConnectStatus,
+  useRefreshDomain,
+} from '@/hooks/use-domain';
 import { useDeleteDomain } from '@/hooks/use-domains';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
@@ -87,12 +94,23 @@ export function DomainDetailPage() {
   const { domainId } = useParams<{ domainId: string }>();
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { data: domain, isLoading, isFetching } = useFetchDomain(domainId);
+  const { data: domainConnectStatus, isLoading: isDomainConnectStatusLoading } = useFetchDomainConnectStatus(domainId, {
+    enabled: domain?.status === DomainStatusEnum.PENDING,
+  });
   const { refresh: refreshDomain } = useRefreshDomain(domainId);
+  const createDomainConnectApplyUrl = useCreateDomainConnectApplyUrl(domainId);
   const deleteDomain = useDeleteDomain();
   const routingRef = useRef<DomainRoutingHandle>(null);
+  const hasHandledDomainConnectReturnRef = useRef(false);
+  const hasShownConnectedToastRef = useRef(false);
+  const previousDomainStatusRef = useRef<DomainStatusEnum | undefined>(undefined);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [hasSubmittedDomainConnectReturn, setHasSubmittedDomainConnectReturn] = useState(false);
+  const domainConnectReturnStatus = searchParams.get('domainConnect');
+  const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
 
   const domainsHref = currentEnvironment?.slug
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
@@ -106,6 +124,69 @@ export function DomainDetailPage() {
       showErrorToast('Failed to refresh verification status.');
     }
   };
+
+  const handleAutoConfigure = async () => {
+    if (!domain) return;
+
+    try {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('domainConnect');
+      currentUrl.searchParams.delete('domainId');
+      currentUrl.searchParams.delete('error');
+      currentUrl.searchParams.delete('error_description');
+
+      const response = await createDomainConnectApplyUrl.mutateAsync(currentUrl.toString());
+      window.location.assign(response.applyUrl);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to start DNS auto-configuration.';
+      showErrorToast(message);
+    }
+  };
+
+  useEffect(() => {
+    if (!domainConnectReturnStatus && !domainConnectError) return;
+    if (hasHandledDomainConnectReturnRef.current) return;
+
+    const cleanDomainConnectParams = () => {
+      const nextSearchParams = new URLSearchParams(searchParams);
+      nextSearchParams.delete('domainConnect');
+      nextSearchParams.delete('domainId');
+      nextSearchParams.delete('error');
+      nextSearchParams.delete('error_description');
+      nextSearchParams.delete('state');
+
+      navigate({ search: nextSearchParams.toString() ? `?${nextSearchParams.toString()}` : '' }, { replace: true });
+    };
+
+    hasHandledDomainConnectReturnRef.current = true;
+
+    if (domainConnectError) {
+      showErrorToast('DNS auto-configuration was cancelled or failed.');
+      cleanDomainConnectParams();
+
+      return;
+    }
+
+    setHasSubmittedDomainConnectReturn(true);
+    refreshDomain();
+    cleanDomainConnectParams();
+  }, [domainConnectError, domainConnectReturnStatus, navigate, refreshDomain, searchParams]);
+
+  useEffect(() => {
+    if (!domain) return;
+
+    const previousStatus = previousDomainStatusRef.current;
+    const hasJustVerified =
+      domain.status === DomainStatusEnum.VERIFIED &&
+      (previousStatus === DomainStatusEnum.PENDING || hasSubmittedDomainConnectReturn);
+
+    if (hasJustVerified && !hasShownConnectedToastRef.current) {
+      hasShownConnectedToastRef.current = true;
+      showSuccessToast('Domain connected. Inbound email is ready.');
+    }
+
+    previousDomainStatusRef.current = domain.status;
+  }, [domain, hasSubmittedDomainConnectReturn]);
 
   const handleRequestDelete = (e: Event) => {
     e.stopPropagation();
@@ -271,14 +352,40 @@ export function DomainDetailPage() {
 
             {/* Right: warning + DNS records + routing */}
             <div className="flex-1 overflow-auto px-6 py-8 space-y-6">
-              {/* Pending warning */}
-              {!isLoading && domain?.status === DomainStatusEnum.PENDING && (
+              {!isLoading && domain?.status === DomainStatusEnum.VERIFIED && (
                 <InlineToast
-                  variant="warning"
-                  title="Warning:"
-                  description="Domain isn't fully verified yet. Emails won't be received until MX records are configured."
+                  variant="success"
+                  title="Connected:"
+                  description="Inbound email is ready for this domain."
                 />
               )}
+              {!isLoading && domainConnectError && domain?.status === DomainStatusEnum.PENDING && (
+                <InlineToast
+                  variant="error"
+                  title="Auto-configuration failed:"
+                  description="The DNS provider did not complete the setup. You can try again or add the MX record manually."
+                />
+              )}
+              {!isLoading &&
+                hasSubmittedDomainConnectReturn &&
+                !domainConnectError &&
+                domain?.status === DomainStatusEnum.PENDING && (
+                  <InlineToast
+                    variant="info"
+                    title="DNS changes submitted:"
+                    description="We're checking the MX record now. This can take a few minutes while DNS propagates."
+                  />
+                )}
+              {!isLoading &&
+                !domainConnectError &&
+                !hasSubmittedDomainConnectReturn &&
+                domain?.status === DomainStatusEnum.PENDING && (
+                  <InlineToast
+                    variant="warning"
+                    title="Warning:"
+                    description="Domain isn't fully verified yet. Emails won't be received until MX records are configured."
+                  />
+                )}
 
               {/* DNS Records */}
               <CollapsibleSection title="DNS Records">
@@ -302,8 +409,34 @@ export function DomainDetailPage() {
                     </button>
                   </div>
 
+                  {domainConnectStatus?.available && domain?.status === DomainStatusEnum.PENDING && (
+                    <div className="border-stroke-soft bg-bg-weak flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <p className="text-text-strong text-sm font-medium">
+                          Auto-configure with {domainConnectStatus.providerName}
+                        </p>
+                        <p className="text-text-sub text-xs">
+                          Continue to your DNS provider to add the MX record automatically.
+                        </p>
+                      </div>
+                      <Button
+                        size="xs"
+                        type="button"
+                        onClick={handleAutoConfigure}
+                        isLoading={createDomainConnectApplyUrl.isPending}
+                      >
+                        Continue to {domainConnectStatus.providerName}
+                        <RiExternalLinkLine className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {!isDomainConnectStatusLoading && !domainConnectStatus?.available && domainConnectStatus?.reason && (
+                    <InlineToast variant="tip" title="Manual setup:" description={domainConnectStatus.reason} />
+                  )}
+
                   <p className="text-xs font-medium text-foreground-400">
-                    Update your DNS records on Cloudflare to match the following:
+                    Add the following MX record at your DNS provider:
                   </p>
 
                   <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
@@ -331,17 +464,23 @@ export function DomainDetailPage() {
                               {record.type}
                             </TableCell>
                             <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">
-                              {record.name}
+                              <span className="inline-flex max-w-full items-center gap-1">
+                                <span className="truncate">{record.name}</span>
+                                <CopyButton valueToCopy={record.name} size="2xs" />
+                              </span>
                             </TableCell>
                             <TableCell className="max-w-[200px] truncate font-code text-code-xs text-text-sub px-3 py-4">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="block truncate">{record.content}</span>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-sm break-all font-code text-code-xs">
-                                  {record.content}
-                                </TooltipContent>
-                              </Tooltip>
+                              <span className="inline-flex max-w-full items-center gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{record.content}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-sm break-all font-code text-code-xs">
+                                    {record.content}
+                                  </TooltipContent>
+                                </Tooltip>
+                                <CopyButton valueToCopy={record.content} size="2xs" />
+                              </span>
                             </TableCell>
                             <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.ttl}</TableCell>
                             <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.priority}</TableCell>
@@ -418,10 +557,12 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
 function ProviderValue({ provider }: { provider?: string }) {
   const label = provider ?? 'Unknown';
   const isCloudflare = provider?.toLowerCase() === 'cloudflare';
+  const isVercel = provider?.toLowerCase() === 'vercel';
 
   return (
     <span className="text-text-sub flex items-center gap-1.5 font-code text-code-xs">
       {isCloudflare && <SiCloudflare className="size-4 shrink-0 text-[#f38020]" aria-hidden />}
+      {isVercel && <SiVercel className="size-4 shrink-0 text-text-strong" aria-hidden />}
       {label}
     </span>
   );
