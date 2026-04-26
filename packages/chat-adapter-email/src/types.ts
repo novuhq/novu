@@ -1,18 +1,23 @@
+import type { IEmailAlternative } from '@novu/shared';
 import type { Adapter } from 'chat';
+
 export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
 
 export interface NovuEmailAdapterConfig {
-  fromAddress: string;
-  fromName?: string;
+  senderName?: string;
   signingSecret: string;
-  sendEmail: (params: SendEmailParams) => Promise<{ messageId: string }>;
+  sendEmail: (params: SendEmailParams) => Promise<{ messageId?: string }>;
 }
 
+export type EmailAlternative = IEmailAlternative;
+
 export interface SendEmailParams {
+  from: string;
   to: string;
   subject: string;
   html: string;
   text?: string;
+  alternatives?: EmailAlternative[];
   inReplyTo?: string;
   references?: string;
   messageId?: string;

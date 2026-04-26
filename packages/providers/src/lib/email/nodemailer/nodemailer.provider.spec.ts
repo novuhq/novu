@@ -191,7 +191,7 @@ describe.skip('NodemailerProvider', () => {
 
     test('should throw an error if TLS options are not a valid JSON', () => {
       try {
-        const provider = new NodemailerProvider({
+        new NodemailerProvider({
           ...mockConfig,
           tlsOptions: (() => {}) as unknown as ConnectionOptions,
         });
@@ -234,6 +234,26 @@ describe('NodemailerProvider header forwarding', () => {
           'In-Reply-To': '<original-message-id@example.com>',
           References: '<original-message-id@example.com>',
         },
+      })
+    );
+  });
+
+  test('should forward custom MIME alternatives to sendMail', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+    const reactionAlternative = {
+      contentType: 'text/vnd.google.email-reaction+json',
+      content: JSON.stringify({ version: 1, emoji: '👀' }),
+    };
+
+    await provider.sendMessage({
+      ...mockNovuMessage,
+      alternatives: [reactionAlternative],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        alternatives: [reactionAlternative],
       })
     );
   });

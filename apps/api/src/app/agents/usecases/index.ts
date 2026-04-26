@@ -1,6 +1,8 @@
 import { AddAgentIntegration } from './add-agent-integration/add-agent-integration.usecase';
+import { CleanupNovuEmail } from './cleanup-novu-email/cleanup-novu-email.usecase';
 import { CreateAgent } from './create-agent/create-agent.usecase';
 import { DeleteAgent } from './delete-agent/delete-agent.usecase';
+import { FindOrCreateNovuEmail } from './find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { GetAgent } from './get-agent/get-agent.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
 import { ListAgentEmoji } from './list-agent-emoji/list-agent-emoji.usecase';
@@ -18,6 +20,8 @@ export const USE_CASES = [
   UpdateAgent,
   DeleteAgent,
   AddAgentIntegration,
+  CleanupNovuEmail,
+  FindOrCreateNovuEmail,
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,

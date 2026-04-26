@@ -260,20 +260,5 @@ export class CredentialsDto implements ICredentials {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  replyDomain?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
   outboundIntegrationId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  inboundAddress?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  inboundDomain?: string;
 }

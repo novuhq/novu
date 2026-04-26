@@ -39,6 +39,15 @@ function wrapMsgId(id: string): string {
 
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
+// EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
+// alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
+// Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.
+const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
+  EmailProviderIdEnum.CustomSMTP,
+  EmailProviderIdEnum.Outlook365,
+  EmailProviderIdEnum.SendGrid,
+  EmailProviderIdEnum.SES,
+]);
 
 /**
  * Holds a cached Chat instance alongside a mutable pointer to the current
@@ -307,7 +316,6 @@ export class ChatSdkService implements OnModuleDestroy {
       token: c.token ?? null,
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
-      replyDomain: c.replyDomain ?? null,
       outboundIntegrationId: c.outboundIntegrationId ?? null,
     });
   }
@@ -315,7 +323,20 @@ export class ChatSdkService implements OnModuleDestroy {
   private buildSendEmailCallback(
     config: ResolvedAgentConfig,
     outboundIntegrationId: string | undefined
-  ): (params: { to: string; subject: string; html: string; text?: string; inReplyTo?: string; references?: string; messageId?: string }) => Promise<{ messageId: string }> {
+  ): (params: {
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+    text?: string;
+    alternatives?: Array<{
+      contentType: string;
+      content: string | Buffer;
+    }>;
+    inReplyTo?: string;
+    references?: string;
+    messageId?: string;
+  }) => Promise<{ messageId?: string }> {
     return async (params) => {
       if (!outboundIntegrationId) {
         throw new BadRequestException(
@@ -349,24 +370,52 @@ export class ChatSdkService implements OnModuleDestroy {
         );
       }
 
+      const hasUnsupportedAlternatives =
+        params.alternatives?.length && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(integration.providerId);
+      if (hasUnsupportedAlternatives) {
+        // NovuEmailAdapterImpl.addReaction supplies a reaction Message-ID; any custom MIME alternative caller must do
+        // the same so skipped unsupported sends don't claim provider delivery.
+        if (!params.messageId) {
+          this.logger.warn(
+            {
+              providerId: integration.providerId,
+              outboundIntegrationId,
+            },
+            'Skipping email with custom MIME alternatives because the outbound provider is unsupported and no messageId was supplied'
+          );
+
+          return { messageId: undefined };
+        }
+
+        this.logger.warn(
+          {
+            providerId: integration.providerId,
+            outboundIntegrationId,
+          },
+          'Skipping email reaction because the outbound provider does not support custom MIME alternatives'
+        );
+
+        return { messageId: params.messageId };
+      }
+
       const decrypted = decryptCredentials(integration.credentials);
       const mailFactory = new MailFactory();
-      const handler = mailFactory.getHandler(
-        { ...integration, credentials: decrypted },
-        config.credentials.replyDomain
-      );
+      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, params.from);
 
       const mailOptions: IEmailOptions = {
         to: [params.to],
         subject: params.subject,
         html: params.html,
         text: params.text,
-        from: config.credentials.replyDomain,
+        alternatives: params.alternatives,
+        from: params.from,
         senderName: config.credentials.senderName || undefined,
         headers: {
           ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
           ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
-          ...(params.references ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') } : {}),
+          ...(params.references
+            ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
+            : {}),
         },
       };
 
@@ -475,20 +524,17 @@ export class ChatSdkService implements OnModuleDestroy {
         };
       }
       case AgentPlatformEnum.EMAIL: {
-        const { replyDomain, senderName, outboundIntegrationId } = credentials;
+        const { senderName, outboundIntegrationId } = credentials;
 
-        if (!replyDomain || !credentials.secretKey) {
-          throw new BadRequestException(
-            'Email agent integration requires replyDomain and secretKey credentials'
-          );
+        if (!credentials.secretKey) {
+          throw new BadRequestException('Email agent integration requires secretKey credentials');
         }
 
         const { createNovuEmailAdapter } = await esmImport('@novu/chat-adapter-email');
 
         return {
           email: createNovuEmailAdapter({
-            fromAddress: replyDomain,
-            fromName: senderName,
+            senderName,
             signingSecret: credentials.secretKey,
             sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
           }),

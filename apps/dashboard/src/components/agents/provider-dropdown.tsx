@@ -8,7 +8,14 @@ import {
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiExpandUpDownLine, RiExternalLinkLine, RiLoader4Line, RiLockStarLine, RiSearchLine } from 'react-icons/ri';
+import {
+  RiAddLine,
+  RiExpandUpDownLine,
+  RiExternalLinkLine,
+  RiLoader4Line,
+  RiLockStarLine,
+  RiSearchLine,
+} from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { addAgentIntegration, getAgentDetailQueryKey, getAgentIntegrationsQueryKey } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
@@ -31,8 +38,8 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { QueryKeys } from '@/utils/query-keys';
 import { ROUTES } from '@/utils/routes';
-import { openInNewTab } from '@/utils/url';
 import { cn } from '@/utils/ui';
+import { openInNewTab } from '@/utils/url';
 
 type DropdownItem = {
   providerId: string;
@@ -86,6 +93,18 @@ function buildDropdownItems(
 
     const existing = integrationsByProvider.get(cp.providerId);
 
+    if (cp.providerId === EmailProviderIdEnum.NovuAgent) {
+      // NovuAgent is 1:1 with the agent — never list existing integrations
+      // (they belong to other agents). Always offer a single "create new" row.
+      supported.push({
+        providerId: cp.providerId,
+        displayName: providerConfig?.displayName || cp.displayName,
+        comingSoon: false,
+        requiresBusinessTier: cp.requiresBusinessTier ?? false,
+      });
+      continue;
+    }
+
     if (existing?.length) {
       for (const integration of existing) {
         supported.push({
@@ -98,15 +117,12 @@ function buildDropdownItems(
       }
     }
 
-    const isSingleton = cp.providerId === EmailProviderIdEnum.NovuAgent;
-    if (!(isSingleton && existing?.length)) {
-      supported.push({
-        providerId: cp.providerId,
-        displayName: providerConfig?.displayName || cp.displayName,
-        comingSoon: false,
-        requiresBusinessTier: cp.requiresBusinessTier ?? false,
-      });
-    }
+    supported.push({
+      providerId: cp.providerId,
+      displayName: providerConfig?.displayName || cp.displayName,
+      comingSoon: false,
+      requiresBusinessTier: cp.requiresBusinessTier ?? false,
+    });
   }
 
   return { supported, comingSoon };
@@ -150,34 +166,47 @@ export function ProviderDropdown({
     [integrations]
   );
 
-  const hasLinkedNovuAgent = useMemo(() => {
-    if (!linkedIntegrationIds?.size || !integrations?.length) return false;
-
-    return integrations.some(
-      (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
-    );
-  }, [integrations, linkedIntegrationIds]);
-
   const supported = useMemo(() => {
     let items = allSupported;
+
+    const linkedNovuAgent = integrations?.find(
+      (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds?.has(i._id)
+    );
+    if (linkedNovuAgent) {
+      const cfg = novuProviders.find((p) => p.id === linkedNovuAgent.providerId);
+      items = items.map((item) =>
+        item.providerId === EmailProviderIdEnum.NovuAgent && !item.integration
+          ? {
+              ...item,
+              displayName: linkedNovuAgent.name || cfg?.displayName || item.displayName,
+              integration: linkedNovuAgent as IIntegration,
+            }
+          : item
+      );
+    }
 
     if (excludeLinked && linkedIntegrationIds?.size) {
       items = items.filter((item) => !item.integration || !linkedIntegrationIds.has(item.integration._id));
     }
 
-    if (hasLinkedNovuAgent) {
-      items = items.filter((item) => item.providerId !== EmailProviderIdEnum.NovuAgent);
-    }
-
     return items;
-  }, [allSupported, excludeLinked, linkedIntegrationIds, hasLinkedNovuAgent]);
+  }, [allSupported, excludeLinked, linkedIntegrationIds, integrations]);
 
   const selected = useMemo(() => {
     if (selectedIntegrationId) {
       const fromList = supported.find((item) => item.integration?._id === selectedIntegrationId);
+      if (fromList) return fromList;
 
-      if (fromList) {
-        return fromList;
+      const fromAll = integrations?.find((i) => i._id === selectedIntegrationId);
+      if (fromAll) {
+        const cfg = novuProviders.find((p) => p.id === fromAll.providerId);
+
+        return {
+          providerId: fromAll.providerId,
+          displayName: fromAll.name || cfg?.displayName || fromAll.providerId,
+          comingSoon: false,
+          requiresBusinessTier: false,
+        };
       }
     }
 
@@ -194,15 +223,15 @@ export function ProviderDropdown({
     }
 
     return undefined;
-  }, [selectedIntegrationId, fallbackProviderId, supported]);
+  }, [selectedIntegrationId, fallbackProviderId, supported, integrations]);
 
   const isBusy = pendingItemKey !== null;
 
   const addAgentIntegrationMutation = useMutation({
-    mutationFn: async (integrationIdentifier: string) => {
+    mutationFn: async (body: { integrationIdentifier?: string; providerId?: string }) => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
-      return addAgentIntegration(environment, agentIdentifier, { integrationIdentifier });
+      return addAgentIntegration(environment, agentIdentifier, body);
     },
   });
 
@@ -265,12 +294,17 @@ export function ProviderDropdown({
     }
 
     try {
-      if (item.integration) {
+      if (item.providerId === EmailProviderIdEnum.NovuAgent) {
+        const link = await addAgentIntegrationMutation.mutateAsync({ providerId: item.providerId });
+        showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
+        onSelect(item.providerId, link.integration as unknown as IIntegration);
+        setOpen(false);
+      } else if (item.integration) {
         const alreadyLinked = linkedIntegrationIds?.has(item.integration._id);
 
         if (!alreadyLinked) {
           try {
-            await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
+            await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: item.integration.identifier });
             showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
           } catch (linkErr) {
             if (!isAlreadyLinkedToAgentConflict(linkErr)) {
@@ -282,15 +316,14 @@ export function ProviderDropdown({
         onSelect(item.providerId, item.integration);
         setOpen(false);
       } else {
-        const isSingletonProvider = item.providerId === EmailProviderIdEnum.NovuAgent;
         const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
-        const uniqueName = isSingletonProvider ? item.displayName : `${item.displayName} ${sameProviderCount + 1}`;
+        const uniqueName = sameProviderCount > 0 ? `${item.displayName} ${sameProviderCount + 1}` : item.displayName;
 
         const created = await createIntegrationMutation.mutateAsync({
           providerId: item.providerId,
           name: uniqueName,
         });
-        await addAgentIntegrationMutation.mutateAsync(created.identifier);
+        await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: created.identifier });
         showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
         onSelect(item.providerId, created);
         setOpen(false);
@@ -399,11 +432,14 @@ export function ProviderDropdown({
                         </span>
                       </div>
                     )}
-                    {!isRowPending && !isLocked && item.integration && item.providerId !== EmailProviderIdEnum.NovuAgent && (
-                      <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
-                        {item.integration.identifier}
-                      </span>
-                    )}
+                    {!isRowPending &&
+                      !isLocked &&
+                      item.integration &&
+                      item.providerId !== EmailProviderIdEnum.NovuAgent && (
+                        <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
+                          {item.integration.identifier}
+                        </span>
+                      )}
                     {!isRowPending && !isLocked && !item.integration && (
                       <RiAddLine className="text-text-soft size-3 shrink-0" />
                     )}
@@ -426,9 +462,7 @@ export function ProviderDropdown({
                   >
                     {isLocked ? (
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          {rowContent}
-                        </TooltipTrigger>
+                        <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
                         <TooltipContent
                           side="right"
                           align="start"
@@ -537,7 +571,6 @@ export function ProviderDropdown({
           {popoverContent}
         </Popover>
       </div>
-
     </div>
   );
 }

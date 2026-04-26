@@ -34,7 +34,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   private async sendMail(
-    { html, text, to, from, senderName, subject, attachments, cc, bcc, replyTo, headers = {} },
+    { html, text, alternatives = [], to, from, senderName, subject, attachments, cc, bcc, replyTo, headers = {} },
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     const transporter = nodemailer.createTransport({
@@ -45,6 +45,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       to,
       html,
       text,
+      ...(alternatives.length ? { alternatives } : {}),
       subject,
       attachments,
       from: {
@@ -64,7 +65,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    { html, text, to, from, subject, attachments, cc, bcc, replyTo, senderName, headers }: IEmailOptions,
+    { html, text, alternatives, to, from, subject, attachments, cc, bcc, replyTo, senderName, headers }: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail(
@@ -75,6 +76,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         subject,
         html,
         text,
+        alternatives,
         attachments: attachments?.map((attachment) => ({
           filename: attachment?.name,
           content: attachment.file,

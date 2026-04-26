@@ -17,6 +17,10 @@ function threadSubjectKey(threadId: string): string {
   return `email:thread:${threadId}:subject`;
 }
 
+function agentAddressKey(threadId: string): string {
+  return `email:thread:${threadId}:agentAddress`;
+}
+
 interface ResolveInput {
   recipientAddress: string;
   messageId: string;
@@ -113,6 +117,17 @@ export class ThreadResolver {
     const state = this.getState();
 
     return (await state.get<string>(threadSubjectKey(threadId))) ?? undefined;
+  }
+
+  async trackAgentAddress(threadId: string, address: string): Promise<void> {
+    const state = this.getState();
+    await state.set(agentAddressKey(threadId), address, STATE_TTL_MS);
+  }
+
+  async getAgentAddress(threadId: string): Promise<string | undefined> {
+    const state = this.getState();
+
+    return (await state.get<string>(agentAddressKey(threadId))) ?? undefined;
   }
 
   /**
