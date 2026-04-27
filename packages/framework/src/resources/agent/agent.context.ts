@@ -1,4 +1,5 @@
 import { isJSX, toCardElement } from 'chat/jsx-runtime';
+import { AgentDeliveryError } from './agent.errors';
 import type {
   AgentAction,
   AgentBridgeRequest,
@@ -216,6 +217,18 @@ export class AgentContextImpl implements AgentContext {
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
+
+      if (response.status === 502) {
+        let message = text;
+        try {
+          const parsed = JSON.parse(text) as { message?: string };
+          if (parsed.message) message = parsed.message;
+        } catch {
+          // use raw text if JSON parsing fails
+        }
+        throw new AgentDeliveryError(502, message);
+      }
+
       throw new Error(`Agent reply failed (${response.status}): ${text}`);
     }
 
