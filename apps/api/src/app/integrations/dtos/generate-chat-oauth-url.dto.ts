@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ConnectionMode, ContextPayload } from '@novu/shared';
-import { IsArray, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
   OAuthMode,
   SLACK_DEFAULT_OAUTH_SCOPES,
@@ -113,4 +113,18 @@ export class GenerateChatOauthUrlRequestDto {
   @IsString()
   @IsIn(['subscriber', 'shared'])
   connectionMode?: ConnectionMode;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      '**MS Teams only**: When true (default), after admin consent completes the OAuth flow automatically ' +
+      'chains into a delegated user-identity step so the subscriber who clicked "Connect" is also linked ' +
+      'as a personal MS Teams endpoint in a single flow. Set to false to skip the user-linking step and ' +
+      'only create the tenant-level connection.',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  autoLinkUser?: boolean;
 }

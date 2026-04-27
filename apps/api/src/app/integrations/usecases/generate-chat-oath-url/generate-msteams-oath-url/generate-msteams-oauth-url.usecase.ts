@@ -20,6 +20,7 @@ export type StateData = {
   providerId: ChatProviderIdEnum;
   timestamp: number;
   mode?: OAuthMode;
+  autoLinkUser?: boolean;
 };
 
 @Injectable()
@@ -57,7 +58,8 @@ export class GenerateMsTeamsOauthUrl {
       command.subscriberId,
       command.context,
       command.connectionIdentifier,
-      command.mode
+      command.mode,
+      command.autoLinkUser
     );
 
     if (command.mode === 'link_user') {
@@ -133,7 +135,8 @@ export class GenerateMsTeamsOauthUrl {
     subscriberId?: string,
     context?: ContextPayload,
     connectionIdentifier?: string,
-    mode?: OAuthMode
+    mode?: OAuthMode,
+    autoLinkUser?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -147,6 +150,7 @@ export class GenerateMsTeamsOauthUrl {
       providerId: providerId as ChatProviderIdEnum,
       timestamp: Date.now(),
       mode,
+      autoLinkUser,
     };
 
     const payload = JSON.stringify(stateData);
@@ -189,7 +193,7 @@ export class GenerateMsTeamsOauthUrl {
     }
 
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-    return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
+    return `https://49c2-79-177-157-205.ngrok-free.app${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {

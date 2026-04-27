@@ -435,6 +435,7 @@ export class IntegrationsController {
         userScope: body.userScope,
         mode: body.mode,
         connectionMode: body.connectionMode,
+        autoLinkUser: body.autoLinkUser,
       })
     );
 

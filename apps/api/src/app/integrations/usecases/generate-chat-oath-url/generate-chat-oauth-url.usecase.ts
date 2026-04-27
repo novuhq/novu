@@ -46,6 +46,7 @@ export class GenerateChatOauthUrl {
             integration,
             context: command.context,
             mode: command.mode,
+            autoLinkUser: command.autoLinkUser,
           })
         );
 

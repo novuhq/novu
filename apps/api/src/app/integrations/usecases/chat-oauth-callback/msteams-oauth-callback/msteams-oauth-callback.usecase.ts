@@ -14,6 +14,7 @@ import { CreateChannelConnection } from '../../../../channel-connections/usecase
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
+import { GenerateMsTeamsOauthUrlCommand } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.command';
 import {
   GenerateMsTeamsOauthUrl,
   StateData,
@@ -34,7 +35,8 @@ export class MsTeamsOauthCallback {
     private createChannelConnection: CreateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
     private logger: PinoLogger,
-    private msTeamsTokenService: MsTeamsTokenService
+    private msTeamsTokenService: MsTeamsTokenService,
+    private generateMsTeamsOauthUrl: GenerateMsTeamsOauthUrl
   ) {
     this.logger.setContext(MsTeamsOauthCallback.name);
   }
@@ -58,6 +60,37 @@ export class MsTeamsOauthCallback {
       }
     } else {
       await this.createAdminConsentConnection(command, stateData, integration);
+
+      /*
+       * After admin consent, if autoLinkUser is enabled and a subscriberId is present,
+       * chain into the link_user OAuth flow so the subscriber who clicked "Connect" also
+       * gets their personal Teams identity linked in one go — mirroring how Slack's
+       * oauth.v2.access response returns authed_user.id for free.
+       *
+       * autoLinkUser defaults to true on the MsTeamsConnectButton component so this
+       * behaviour is opt-out (pass autoLinkUser={false} to skip it).
+       */
+      if (stateData.autoLinkUser !== false && stateData.subscriberId) {
+        try {
+          const linkUserUrl = await this.generateMsTeamsOauthUrl.execute(
+            GenerateMsTeamsOauthUrlCommand.create({
+              environmentId: stateData.environmentId,
+              organizationId: stateData.organizationId,
+              connectionIdentifier: stateData.identifier,
+              subscriberId: stateData.subscriberId,
+              integration,
+              context: stateData.context,
+              mode: 'link_user',
+            })
+          );
+
+          return { type: ResponseTypeEnum.URL, result: linkUserUrl };
+        } catch (error) {
+          this.logger.warn(
+            `Could not chain link_user redirect after admin consent: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
     }
 
     if (credentials.redirectUrl) {

@@ -9,6 +9,7 @@ import sinon from 'sinon';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { encodeOAuthState } from '../../generate-chat-oath-url/chat-oauth-state.util';
+import { GenerateMsTeamsOauthUrl } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 import { MsTeamsOauthCallback } from './msteams-oauth-callback.usecase';
 
@@ -63,6 +64,7 @@ describe('MsTeamsOauthCallback', () => {
   let createChannelConnection: sinon.SinonStubbedInstance<CreateChannelConnection>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
   let msTeamsTokenService: sinon.SinonStubbedInstance<MsTeamsTokenService>;
+  let generateMsTeamsOauthUrl: sinon.SinonStubbedInstance<GenerateMsTeamsOauthUrl>;
   let axiosPost: sinon.SinonStub;
   let axiosGet: sinon.SinonStub;
   let originalApiRootUrl: string | undefined;
@@ -73,8 +75,9 @@ describe('MsTeamsOauthCallback', () => {
     createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
     msTeamsTokenService = sinon.createStubInstance(MsTeamsTokenService);
+    generateMsTeamsOauthUrl = sinon.createStubInstance(GenerateMsTeamsOauthUrl);
 
-    const logger = { setContext: sinon.stub(), info: sinon.stub(), error: sinon.stub() };
+    const logger = { setContext: sinon.stub(), info: sinon.stub(), error: sinon.stub(), warn: sinon.stub() };
 
     usecase = new MsTeamsOauthCallback(
       integrationRepository as any,
@@ -82,7 +85,8 @@ describe('MsTeamsOauthCallback', () => {
       createChannelConnection as any,
       createChannelEndpoint as any,
       logger as any,
-      msTeamsTokenService as any
+      msTeamsTokenService as any,
+      generateMsTeamsOauthUrl as any
     );
 
     originalApiRootUrl = process.env.API_ROOT_URL;
@@ -143,6 +147,131 @@ describe('MsTeamsOauthCallback', () => {
       });
 
       await expect(usecase.execute(command)).to.be.rejectedWith(BadRequestException, 'Admin consent was not granted');
+    });
+
+    it('should chain a link_user redirect when autoLinkUser=true and subscriberId are present in the state', async () => {
+      const MOCK_LINK_USER_URL = 'https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize?link_user=1';
+
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.MsTeams,
+        subscriberId: MOCK_SUBSCRIBER_ID,
+        autoLinkUser: true,
+      });
+
+      createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+      generateMsTeamsOauthUrl.execute.resolves(MOCK_LINK_USER_URL);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        tenant: 'tenant-xyz',
+        adminConsent: 'True',
+        state,
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelConnection.execute.calledOnce).to.be.true;
+      expect(generateMsTeamsOauthUrl.execute.calledOnce).to.be.true;
+      const generateCallArg = generateMsTeamsOauthUrl.execute.firstCall.args[0];
+      expect(generateCallArg.mode).to.equal('link_user');
+      expect(generateCallArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
+      expect(result.result).to.equal(MOCK_LINK_USER_URL);
+    });
+
+    it('should fall through to close-tab when subscriberId is absent', async () => {
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.MsTeams,
+        autoLinkUser: true,
+      });
+
+      createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        tenant: 'tenant-xyz',
+        adminConsent: 'True',
+        state,
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(generateMsTeamsOauthUrl.execute.called).to.be.false;
+      expect(result.result).to.include('window.close()');
+    });
+
+    it('should fall through to close-tab when autoLinkUser=false even if subscriberId is present', async () => {
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.MsTeams,
+        subscriberId: MOCK_SUBSCRIBER_ID,
+        autoLinkUser: false,
+      });
+
+      createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        tenant: 'tenant-xyz',
+        adminConsent: 'True',
+        state,
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(generateMsTeamsOauthUrl.execute.called).to.be.false;
+      expect(result.result).to.include('window.close()');
+    });
+
+    it('should fall through to close-tab when autoLinkUser is absent (legacy API callers)', async () => {
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.MsTeams,
+        subscriberId: MOCK_SUBSCRIBER_ID,
+      });
+
+      createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        tenant: 'tenant-xyz',
+        adminConsent: 'True',
+        state,
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(generateMsTeamsOauthUrl.execute.called).to.be.false;
+      expect(result.result).to.include('window.close()');
+    });
+
+    it('should fall through to close-tab and not throw when link_user chaining fails', async () => {
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.MsTeams,
+        subscriberId: MOCK_SUBSCRIBER_ID,
+        autoLinkUser: true,
+      });
+
+      createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+      generateMsTeamsOauthUrl.execute.rejects(new Error('Subscriber not found'));
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        tenant: 'tenant-xyz',
+        adminConsent: 'True',
+        state,
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(result.result).to.include('window.close()');
     });
 
     it('should throw if tenant is missing', async () => {

@@ -551,6 +551,7 @@ export class InboxService {
     userScope,
     mode,
     connectionMode,
+    autoLinkUser,
   }: GenerateChatOAuthUrlArgs): Promise<{ url: string }> {
     return this.#httpClient.post(CHAT_OAUTH_ROUTE, {
       integrationIdentifier,
@@ -561,6 +562,7 @@ export class InboxService {
       userScope,
       mode,
       connectionMode,
+      autoLinkUser,
     });
   }
 

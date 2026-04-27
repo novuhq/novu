@@ -20,6 +20,13 @@ export type MsTeamsConnectButtonProps = {
   context?: Context;
   scope?: string[];
   connectionMode?: ConnectionMode;
+  /**
+   * When true (default), after the admin consent step completes the OAuth flow automatically
+   * chains into a delegated user-identity step, linking the subscriber who clicked "Connect"
+   * as a personal MS Teams endpoint in the same popup window.
+   * Set to false to perform only the tenant-level admin consent without linking the user.
+   */
+  autoLinkUser?: boolean;
   onConnectSuccess?: (connectionIdentifier: string) => void;
   onConnectError?: (error: unknown) => void;
   onDisconnectSuccess?: () => void;
@@ -141,6 +148,7 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
         context: ctx,
         scope: props.scope,
         connectionMode: mode,
+        autoLinkUser: props.autoLinkUser ?? true,
       });
 
       if (result.error) {

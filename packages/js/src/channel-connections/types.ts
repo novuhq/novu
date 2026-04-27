@@ -22,6 +22,7 @@ export type GenerateChatOAuthUrlArgs = {
   userScope?: string[];
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
+  autoLinkUser?: boolean;
 };
 
 export type ListChannelConnectionsArgs = {
