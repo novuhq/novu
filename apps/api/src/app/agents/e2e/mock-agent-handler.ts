@@ -108,8 +108,8 @@ const echoBot = agent('novu-agent', {
     }
 
     if (userText.toLowerCase().includes('markdown')) {
-      await ctx.reply({
-        markdown: [
+      await ctx.reply(
+        [
           `**Echo:** ${userText}`,
           '',
           '| Metric | Value |',
@@ -119,8 +119,8 @@ const echoBot = agent('novu-agent', {
           '| Error rate | 0.02% |',
           '',
           '> Sent from _Novu Agent Framework_',
-        ].join('\n'),
-      });
+        ].join('\n')
+      );
 
       return;
     }
@@ -154,9 +154,9 @@ const echoBot = agent('novu-agent', {
     } else if (actionId === 'assign') {
       await ctx.reply(`On-call assignment updated to *${value}*.`);
     } else if (actionId === 'escalate') {
-      await ctx.reply({
-        markdown: `**Escalated** — paging the secondary on-call team.\n\n_Triggered by ${ctx.subscriber?.firstName ?? 'unknown'}_`,
-      });
+      await ctx.reply(
+        `**Escalated** — paging the secondary on-call team.\n\n_Triggered by ${ctx.subscriber?.firstName ?? 'unknown'}_`
+      );
     } else {
       await ctx.reply(`Got action: *${actionId}*${value ? ` = ${value}` : ''}`);
     }
