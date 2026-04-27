@@ -13,6 +13,7 @@ import type {
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  FileRef,
   MessageContent,
   ReplyContent,
   ReplyHandle,
@@ -25,9 +26,9 @@ function isCardElement(content: object): content is import('chat').CardElement {
   return 'type' in content && (content as { type: string }).type === 'card';
 }
 
-function serializeContent(content: MessageContent): ReplyContent {
+function serializeContent(content: MessageContent, files?: FileRef[]): ReplyContent {
   if (typeof content === 'string') {
-    return { markdown: content };
+    return files?.length ? { markdown: content, files } : { markdown: content };
   }
 
   if (isJSX(content)) {
@@ -41,16 +42,7 @@ function serializeContent(content: MessageContent): ReplyContent {
     return { card: content };
   }
 
-  if ('markdown' in content && typeof content.markdown === 'string') {
-    const result: ReplyContent = { markdown: content.markdown };
-    if (content.files?.length) {
-      result.files = content.files;
-    }
-
-    return result;
-  }
-
-  throw new Error('Invalid message content — expected string, { markdown }, or CardElement');
+  throw new Error('Invalid message content — expected string or CardElement');
 }
 
 interface ReplyPoster {
@@ -72,13 +64,13 @@ class ReplyHandleImpl implements ReplyHandle {
     this.platformThreadId = platformThreadId;
   }
 
-  async edit(content: MessageContent): Promise<ReplyHandle> {
+  async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const info = await this.poster.post({
       conversationId: this.conversationId,
       integrationIdentifier: this.integrationIdentifier,
       edit: {
         messageId: this.messageId,
-        content: serializeContent(content),
+        content: serializeContent(content, options?.files),
       },
     });
 
@@ -142,11 +134,11 @@ export class AgentContextImpl implements AgentContext {
     };
   }
 
-  async reply(content: MessageContent): Promise<ReplyHandle> {
+  async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: serializeContent(content),
+      reply: serializeContent(content, options?.files),
     };
 
     if (this._signals.length) {

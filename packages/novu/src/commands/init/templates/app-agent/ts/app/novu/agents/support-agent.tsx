@@ -30,13 +30,12 @@ export const supportAgent = agent('support-agent', {
     // Replace this block with your LLM call (OpenAI, Anthropic, etc.)
     ctx.metadata.set('lastMessage', text);
 
-    return {
-      markdown:
-        `**Got it.** You said: "${ctx.message?.text}"\n\n` +
-        `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
-        `**Conversation so far:** ${ctx.history.length} messages | ` +
-        `**Topic:** ${ctx.conversation.metadata?.topic ?? 'unknown'}`,
-    };
+    return (
+      `**Got it.** You said: "${ctx.message?.text}"\n\n` +
+      `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
+      `**Conversation so far:** ${ctx.history.length} messages | ` +
+      `**Topic:** ${ctx.conversation.metadata?.topic ?? 'unknown'}`
+    );
   },
 
   onAction: async (ctx) => {
@@ -44,7 +43,7 @@ export const supportAgent = agent('support-agent', {
     if (actionId.startsWith('topic-') && value) {
       ctx.metadata.set('topic', value);
 
-      return { markdown: `Topic set to **${value}**. Describe your issue and I'll help.` };
+      return `Topic set to **${value}**. Describe your issue and I'll help.`;
     }
   },
 
