@@ -45,6 +45,7 @@ describe('GenerateMsTeamsOauthUrl', () => {
     process.env.API_ROOT_URL = MOCK_API_ROOT_URL;
 
     environmentRepository.getApiKeys.resolves([{ key: MOCK_API_KEY } as any]);
+    subscriberRepository.findOne.resolves({ _id: 'sub-id', subscriberId: 'subscriber-1' } as any);
   });
 
   afterEach(() => {
@@ -152,7 +153,7 @@ describe('GenerateMsTeamsOauthUrl', () => {
         expect.fail('Expected NotFoundException but none was thrown');
       } catch (err) {
         expect(err).to.be.instanceOf(NotFoundException);
-        expect((err as NotFoundException).message).to.equal('missing tenantId');
+        expect((err as NotFoundException).message).to.equal('MS Teams integration missing tenantId');
       }
     });
 

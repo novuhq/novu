@@ -10,6 +10,7 @@ import { CreateChannelConnection } from '../../../../channel-connections/usecase
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { encodeOAuthState } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrl } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
+import { ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 import { MsTeamsOauthCallback } from './msteams-oauth-callback.usecase';
 
@@ -491,25 +492,19 @@ describe('MsTeamsOauthCallback', () => {
         state,
       });
 
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected BadRequestException but none was thrown');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.equal('subscriberId is required for link_user mode');
-      }
+      const result = await usecase.execute(command);
+
+      expect(result.type).to.equal(ResponseTypeEnum.HTML);
+      expect(result.result).to.include('subscriberId is required for link_user mode');
     });
 
     it('should throw if providerCode is missing in link_user mode', async () => {
       const command = MsTeamsOauthCallbackCommand.create({ state: buildLinkUserState() });
 
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected BadRequestException but none was thrown');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.equal('Missing authorization code for link_user mode');
-      }
+      const result = await usecase.execute(command);
+
+      expect(result.type).to.equal(ResponseTypeEnum.HTML);
+      expect(result.result).to.include('Missing authorization code for link_user mode');
     });
   });
 });
