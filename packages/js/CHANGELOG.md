@@ -1,10 +1,5 @@
 ## v3.15.1 (2026-04-27)
 
-### 🚀 Features
-
-- **dashboard,api-service,dal:** novu copilot workflow suggestions fixes NV-7215 ([#10508](https://github.com/novuhq/novu/pull/10508))
-- **react:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
-
 ### 🩹 Fixes
 
 - **js:** correct rounding in formatToRelativeTime for relative time display ([#10769](https://github.com/novuhq/novu/pull/10769))
@@ -13,7 +8,6 @@
 ### ❤️ Thank You
 
 - Dima Grossman @scopsy
-- George Djabarov @djabarovgeorge
 - Paweł Tymczuk @LetItRock
 
 ## v3.15.0 (2026-04-13)
