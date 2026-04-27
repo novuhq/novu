@@ -10,7 +10,7 @@ import { tv, type VariantProps } from '@/utils/tv';
 const LINK_BUTTON_ROOT_NAME = 'LinkButtonRoot';
 const LINK_BUTTON_ICON_NAME = 'LinkButtonIcon';
 
-export const linkButtonVariants = tv({
+const linkButtonVariants = tv({
   slots: {
     root: [
       // base
@@ -146,4 +146,4 @@ const LinkButton = React.forwardRef<
 });
 LinkButton.displayName = 'LinkButton';
 
-export { LinkButtonIcon as Icon, LinkButton, LinkButtonRoot as Root };
+export { LinkButton };

@@ -9,7 +9,7 @@ import { tv, type VariantProps } from '@/utils/tv';
 const COMPACT_BUTTON_ROOT_NAME = 'CompactButtonRoot';
 const COMPACT_BUTTON_ICON_NAME = 'CompactButtonIcon';
 
-export const compactButtonVariants = tv({
+const compactButtonVariants = tv({
   slots: {
     root: [
       // base
@@ -146,4 +146,4 @@ const CompactButton = React.forwardRef<
 });
 CompactButton.displayName = 'CompactButton';
 
-export { CompactButton, CompactButtonIcon as Icon, CompactButtonRoot as Root };
+export { CompactButton };
