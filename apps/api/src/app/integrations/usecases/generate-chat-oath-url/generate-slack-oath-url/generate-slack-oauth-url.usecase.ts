@@ -228,8 +228,7 @@ export class GenerateSlackOauthUrl {
     }
 
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-    // TODO Revert this
-    return `https://49c2-79-177-157-205.ngrok-free.app${CHAT_OAUTH_CALLBACK_PATH}`;
+    return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
