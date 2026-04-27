@@ -8,7 +8,7 @@ import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { MsTeamsColored } from '../../icons/MsTeamsColored';
 import type { MsTeamsLinkUserAppearanceCallback } from '../../types';
-import { DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER } from '../constants';
+import { buildDefaultConnectionIdentifier, DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 
@@ -32,7 +32,10 @@ export const MsTeamsLinkUser = (props: MsTeamsLinkUserProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
   const integrationIdentifier = () => props.integrationIdentifier;
-  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER;
+  const resolvedSubscriberId = () => props.subscriberId ?? novuAccessor().subscriberId;
+  const connectionIdentifier = () =>
+    props.connectionIdentifier ??
+    buildDefaultConnectionIdentifier(DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER, resolvedSubscriberId());
 
   const { generateLinkUserOAuthUrl } = useChannelEndpoint({
     integrationIdentifier: integrationIdentifier(),

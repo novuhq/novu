@@ -8,7 +8,7 @@ import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { MsTeamsColored } from '../../icons/MsTeamsColored';
 import type { ChannelConnectButtonAppearanceCallback } from '../../types';
-import { DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER } from '../constants';
+import { buildDefaultConnectionIdentifier, DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
@@ -44,7 +44,13 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
   const integrationIdentifier = () => props.integrationIdentifier;
-  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER;
+  const connectionMode = () => props.connectionMode ?? 'subscriber';
+  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const resolvedSubscriberId = () =>
+    connectionMode() === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
+  const connectionIdentifier = () =>
+    props.connectionIdentifier ??
+    buildDefaultConnectionIdentifier(DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER, resolvedSubscriberId());
 
   const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
     integrationIdentifier: integrationIdentifier(),
@@ -54,8 +60,6 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
 
   const [actionLoading, setActionLoading] = createSignal(false);
 
-  const connectionMode = () => props.connectionMode ?? 'subscriber';
-  const resolvedContext = () => props.context ?? novuAccessor().context;
   const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
 
   createEffect(() => {
