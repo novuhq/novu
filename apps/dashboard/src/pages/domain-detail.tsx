@@ -1,9 +1,9 @@
 import { DomainStatusEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
+import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import {
   RiAddLine,
-  RiAlertFill,
   RiArrowLeftSLine,
   RiEarthLine,
   RiExternalLinkLine,
@@ -11,7 +11,6 @@ import {
   RiMore2Fill,
   RiPulseLine,
   RiRefreshLine,
-  RiShieldCheckLine,
 } from 'react-icons/ri';
 import { SiCloudflare, SiVercel } from 'react-icons/si';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -26,7 +25,7 @@ import {
 } from '@/components/details-sidebar';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
 import { PageMeta } from '@/components/page-meta';
-import { Badge } from '@/components/primitives/badge';
+import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -93,37 +92,21 @@ function normalizeMetadata(data?: Record<string, string>): string {
 }
 
 function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
-  if (status === DomainStatusEnum.VERIFIED) {
-    return (
-      <span className="bg-success-lighter text-success-base inline-flex items-center gap-1 rounded-6 px-1 py-0.5 text-label-xs">
-        <RiShieldCheckLine className="size-4 shrink-0" />
-        Verified
-      </span>
-    );
-  }
+  const isVerified = status === DomainStatusEnum.VERIFIED;
 
   return (
-    <span className="bg-warning-lighter text-warning-base inline-flex items-center gap-1 rounded-6 px-1 py-0.5 text-label-xs">
-      <RiAlertFill className="size-4 shrink-0" />
-      Pending verification
-    </span>
+    <Badge variant="lighter" color={isVerified ? 'green' : 'orange'} size="md">
+      <AnimatedBadgeDot color={isVerified ? 'green' : 'orange'} size="md" variant="lighter" />
+      {isVerified ? 'Verified' : 'Pending verification'}
+    </Badge>
   );
 }
 
 function MxRecordStatusBadge({ configured }: { configured: boolean }) {
-  if (configured) {
-    return (
-      <Badge variant="lighter" color="green" size="md">
-        <RiShieldCheckLine className="size-4" />
-        Verified
-      </Badge>
-    );
-  }
-
   return (
-    <Badge variant="lighter" color="orange" size="md">
-      <RiAlertFill className="size-4" />
-      Pending
+    <Badge variant="lighter" color={configured ? 'green' : 'orange'} size="md">
+      <AnimatedBadgeDot color={configured ? 'green' : 'orange'} size="md" variant="lighter" />
+      {configured ? 'Verified' : 'Pending'}
     </Badge>
   );
 }
@@ -520,24 +503,22 @@ export function DomainDetailPage() {
                       <RiInformationLine className="size-4 shrink-0 text-foreground-400" />
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                      <button
-                        className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors disabled:opacity-50"
+                      <DnsActionButton
+                        icon={RiPulseLine}
+                        isActive={diagnoseDomainHook.isPending}
                         onClick={handleDiagnoseDns}
                         disabled={!canWriteDomains || !domain || diagnoseDomainHook.isPending}
-                        type="button"
                       >
-                        <RiPulseLine className="size-3" />
                         Diagnose DNS
-                      </button>
-                      <button
-                        className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors"
+                      </DnsActionButton>
+                      <DnsActionButton
+                        icon={RiRefreshLine}
+                        isActive={isFetching}
                         onClick={handleVerify}
                         disabled={!canWriteDomains || isFetching}
-                        type="button"
                       >
-                        <RiRefreshLine className="size-3" />
                         Refresh status
-                      </button>
+                      </DnsActionButton>
                     </div>
                   </div>
 
@@ -554,12 +535,13 @@ export function DomainDetailPage() {
                       <Button
                         size="xs"
                         type="button"
+                        className="group"
                         onClick={handleAutoConfigure}
                         disabled={!canWriteDomains}
                         isLoading={startDomainAutoConfigure.isPending}
                       >
                         Continue to {domainConnectProviderName}
-                        <RiExternalLinkLine className="size-4" />
+                        <RiExternalLinkLine className="size-4 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover:translate-x-0.5" />
                       </Button>
                     </div>
                   )}
@@ -705,6 +687,32 @@ export function DomainDetailPage() {
         isLoading={deleteDomain.isPending}
       />
     </DashboardLayout>
+  );
+}
+
+type DnsActionButtonProps = {
+  icon: React.ComponentType<{ className?: string }>;
+  isActive: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+};
+
+function DnsActionButton({ icon: Icon, isActive, onClick, disabled, children }: DnsActionButtonProps) {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      whileTap={disabled || shouldReduceMotion ? undefined : { scale: 0.97 }}
+      transition={{ duration: 0.08 }}
+      className="text-foreground-500 hover:text-foreground-900 disabled:hover:text-foreground-400 disabled:text-foreground-400 flex items-center gap-1 rounded text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-stroke-strong focus-visible:ring-offset-1 disabled:cursor-not-allowed"
+    >
+      <Icon className={`size-3 ${isActive && !shouldReduceMotion ? 'animate-spin' : ''}`} />
+      {children}
+    </motion.button>
   );
 }
 

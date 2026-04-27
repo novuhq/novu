@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { Textarea } from '@/components/primitives/textarea';
@@ -65,6 +65,10 @@ export function ExpandableDetailsTextarea({
 }: ExpandableDetailsTextareaProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
+  const savingInitial = shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -4 };
+  const savingAnimate = shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 };
+  const savingExit = shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -4 };
 
   const setExpanded = useCallback(
     (nextIsExpanded: boolean) => {
@@ -130,7 +134,23 @@ export function ExpandableDetailsTextarea({
         onClick={toggleExpanded}
         className="group text-text-soft hover:text-text-sub flex h-8 w-full cursor-pointer items-center justify-between rounded px-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-stroke-strong"
       >
-        <span className="text-label-xs font-medium">{label}</span>
+        <span className="flex items-center gap-1.5 text-label-xs font-medium">
+          {label}
+          <AnimatePresence initial={false}>
+            {isPersisting ? (
+              <motion.span
+                key="saving"
+                initial={savingInitial}
+                animate={savingAnimate}
+                exit={savingExit}
+                transition={{ duration: 0.15 }}
+                className="text-text-soft text-label-xs font-normal italic"
+              >
+                Saving…
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
+        </span>
         <span className="text-foreground-400 group-hover:text-foreground-600 flex min-w-8 shrink-0 items-center justify-end">
           <motion.span
             whileHover={{ scale: 1.05 }}

@@ -1,9 +1,11 @@
 import { DomainRouteTypeEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Fragment, forwardRef, useEffect, useId, useImperativeHandle, useState } from 'react';
 import {
   RiAddLine,
+  RiCheckLine,
+  RiCloseLine,
   RiMore2Fill,
   RiRobot2Line,
   RiSendPlaneLine,
@@ -116,6 +118,8 @@ function InlineRouteForm({
   isAddressLocked = false,
 }: InlineRouteFormProps) {
   const [form, setForm] = useState<RouteFormState>(initialValues);
+  const shouldReduceMotion = useReducedMotion();
+  const tapAnimation = shouldReduceMotion || isSaving ? undefined : { scale: 0.94 };
 
   const handleSave = async () => {
     if (!form.address.trim()) {
@@ -197,27 +201,28 @@ function InlineRouteForm({
         {/* Actions */}
         <TableCell className="px-3 py-4">
           <div className="flex items-center gap-1">
-            <Button
-              size="xs"
-              mode="ghost"
-              variant="secondary"
-              className="size-7 text-success"
+            <motion.button
+              type="button"
               onClick={handleSave}
               disabled={isSaving}
+              whileTap={tapAnimation}
+              transition={{ duration: 0.08 }}
+              className="text-success hover:bg-success-lighter disabled:hover:bg-transparent disabled:text-foreground-400 flex size-7 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-stroke-strong focus-visible:ring-offset-1 disabled:cursor-not-allowed"
               aria-label="Save route"
             >
-              ✓
-            </Button>
-            <Button
-              size="xs"
-              mode="ghost"
-              variant="secondary"
-              className="text-destructive size-7"
+              <RiCheckLine className="size-4" />
+            </motion.button>
+            <motion.button
+              type="button"
               onClick={onCancel}
+              disabled={isSaving}
+              whileTap={tapAnimation}
+              transition={{ duration: 0.08 }}
+              className="text-destructive hover:bg-error-lighter disabled:hover:bg-transparent disabled:text-foreground-400 flex size-7 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-stroke-strong focus-visible:ring-offset-1 disabled:cursor-not-allowed"
               aria-label="Cancel editing"
             >
-              ✕
-            </Button>
+              <RiCloseLine className="size-4" />
+            </motion.button>
           </div>
         </TableCell>
 
@@ -269,16 +274,27 @@ function ExistingRouteRow({
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
   const isCatchAll = route.address === '*';
   const agentName = isWebhook ? null : (agentOptions.find((a) => a._id === route.agentId)?.name ?? route.agentId);
+  const shouldReduceMotion = useReducedMotion();
+  const catchAllInitial = shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94 };
+  const catchAllAnimate = shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 };
 
   return (
     <TableRow className="[&>td]:border-0">
       <TableCell className="px-3 py-4 text-sm">
         <div className="flex items-center gap-2">
-          <span>{route.address}@{domainName}</span>
+          <span>
+            {route.address}@{domainName}
+          </span>
           {isCatchAll ? (
-            <Badge variant="lighter" color="blue" size="sm">
-              Catch-all
-            </Badge>
+            <motion.span
+              initial={catchAllInitial}
+              animate={catchAllAnimate}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              <Badge variant="lighter" color="blue" size="sm">
+                Catch-all
+              </Badge>
+            </motion.span>
           ) : null}
         </div>
       </TableCell>
