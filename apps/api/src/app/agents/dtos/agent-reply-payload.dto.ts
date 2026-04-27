@@ -128,6 +128,18 @@ export class ResolveDto {
   summary?: string;
 }
 
+export class AddReactionPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  emojiName: string;
+}
+
 export class SignalDto {
   @ApiProperty({ enum: SIGNAL_TYPES })
   @IsString()
@@ -199,4 +211,11 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
+
+  @ApiPropertyOptional({ type: [AddReactionPayloadDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddReactionPayloadDto)
+  addReactions?: AddReactionPayloadDto[];
 }
