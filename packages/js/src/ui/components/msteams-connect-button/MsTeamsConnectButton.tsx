@@ -148,7 +148,7 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
         context: ctx,
         scope: props.scope,
         connectionMode: mode,
-        autoLinkUser: props.autoLinkUser ?? true,
+        autoLinkUser: mode === 'subscriber' ? (props.autoLinkUser ?? true) : false,
       });
 
       if (result.error) {

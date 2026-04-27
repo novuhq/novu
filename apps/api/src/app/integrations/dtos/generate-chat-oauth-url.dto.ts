@@ -117,10 +117,12 @@ export class GenerateChatOauthUrlRequestDto {
   @ApiPropertyOptional({
     type: Boolean,
     description:
-      '**MS Teams only**: When true (default), after admin consent completes the OAuth flow automatically ' +
-      'chains into a delegated user-identity step so the subscriber who clicked "Connect" is also linked ' +
-      'as a personal MS Teams endpoint in a single flow. Set to false to skip the user-linking step and ' +
-      'only create the tenant-level connection.',
+      'When true, after the workspace/tenant connection is created the OAuth flow also links the subscriber ' +
+      'who clicked "Connect" as a personal endpoint. ' +
+      'For Slack, this uses the authed_user.id already returned by oauth.v2.access — no extra redirect. ' +
+      'For MS Teams, this triggers a second OAuth redirect for delegated user-identity consent. ' +
+      'Defaults to false when omitted; the SlackConnectButton and MsTeamsConnectButton SDK components ' +
+      'default this to true.',
     example: true,
     required: false,
   })

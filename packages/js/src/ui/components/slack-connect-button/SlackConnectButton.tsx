@@ -20,6 +20,15 @@ export type SlackConnectButtonProps = {
   context?: Context;
   scope?: string[];
   connectionMode?: ConnectionMode;
+  /**
+   * When true (default), after the workspace connection is created the OAuth
+   * flow also links the subscriber who clicked "Connect" as a personal Slack
+   * endpoint using the authed_user.id already returned by oauth.v2.access.
+   * Set to false to skip the user-linking step and only create the workspace
+   * connection. Raw API callers must pass true explicitly; this component
+   * defaults to true.
+   */
+  autoLinkUser?: boolean;
   onConnectSuccess?: (connectionIdentifier: string) => void;
   onConnectError?: (error: unknown) => void;
   onDisconnectSuccess?: () => void;
@@ -138,6 +147,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
         context: ctx,
         scope: props.scope,
         connectionMode: mode,
+        autoLinkUser: mode === 'subscriber' ? (props.autoLinkUser ?? true) : false,
       });
 
       if (result.error) {

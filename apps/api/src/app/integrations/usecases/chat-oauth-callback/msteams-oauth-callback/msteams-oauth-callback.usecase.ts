@@ -62,15 +62,15 @@ export class MsTeamsOauthCallback {
       await this.createAdminConsentConnection(command, stateData, integration);
 
       /*
-       * After admin consent, if autoLinkUser is enabled and a subscriberId is present,
-       * chain into the link_user OAuth flow so the subscriber who clicked "Connect" also
-       * gets their personal Teams identity linked in one go — mirroring how Slack's
-       * oauth.v2.access response returns authed_user.id for free.
+       * After admin consent, if autoLinkUser is explicitly true and a subscriberId is
+       * present, chain into the link_user OAuth flow so the subscriber who clicked
+       * "Connect" also gets their personal Teams identity linked in one go.
        *
-       * autoLinkUser defaults to true on the MsTeamsConnectButton component so this
-       * behaviour is opt-out (pass autoLinkUser={false} to skip it).
+       * autoLinkUser must be explicitly true — absent or false skips the chain.
+       * The MsTeamsConnectButton SDK component defaults autoLinkUser to true so SDK
+       * users get this behaviour by default; raw API callers must opt in explicitly.
        */
-      if (stateData.autoLinkUser !== false && stateData.subscriberId) {
+      if (stateData.autoLinkUser === true && stateData.subscriberId) {
         try {
           const linkUserUrl = await this.generateMsTeamsOauthUrl.execute(
             GenerateMsTeamsOauthUrlCommand.create({

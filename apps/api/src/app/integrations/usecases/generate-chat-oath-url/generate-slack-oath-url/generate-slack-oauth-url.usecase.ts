@@ -31,6 +31,7 @@ export type StateData = {
   timestamp: number;
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
+  autoLinkUser?: boolean;
 };
 
 export const SLACK_DEFAULT_OAUTH_SCOPES = [
@@ -69,7 +70,8 @@ export class GenerateSlackOauthUrl {
       command.context,
       command.connectionIdentifier,
       command.mode,
-      command.connectionMode
+      command.connectionMode,
+      command.autoLinkUser
     );
 
     const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
@@ -163,7 +165,8 @@ export class GenerateSlackOauthUrl {
     context?: ContextPayload,
     connectionIdentifier?: string,
     mode?: OAuthMode,
-    connectionMode?: ConnectionMode
+    connectionMode?: ConnectionMode,
+    autoLinkUser?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -178,6 +181,7 @@ export class GenerateSlackOauthUrl {
       timestamp: Date.now(),
       mode,
       connectionMode,
+      autoLinkUser,
     };
 
     const payload = JSON.stringify(stateData);
@@ -224,7 +228,8 @@ export class GenerateSlackOauthUrl {
     }
 
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-    return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
+    // TODO Revert this
+    return `https://49c2-79-177-157-205.ngrok-free.app${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {

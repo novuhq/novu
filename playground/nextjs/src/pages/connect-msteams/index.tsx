@@ -113,6 +113,7 @@ export default function ConnectMsTeamsPage() {
               // connectionIdentifier={CONNECTION_IDENTIFIER}
               // connectionMode="shared"
               onConnectError={(error) => console.error(error)}
+              autoLinkUser={false}
             />
           </NovuProvider>
 

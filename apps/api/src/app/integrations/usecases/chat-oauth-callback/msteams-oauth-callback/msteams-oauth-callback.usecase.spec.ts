@@ -227,7 +227,7 @@ describe('MsTeamsOauthCallback', () => {
       expect(result.result).to.include('window.close()');
     });
 
-    it('should fall through to close-tab when autoLinkUser is absent (legacy API callers)', async () => {
+    it('should fall through to close-tab when autoLinkUser is absent (raw API callers default to false)', async () => {
       const state = buildEncodedState({
         environmentId: MOCK_ENVIRONMENT_ID,
         organizationId: MOCK_ORGANIZATION_ID,

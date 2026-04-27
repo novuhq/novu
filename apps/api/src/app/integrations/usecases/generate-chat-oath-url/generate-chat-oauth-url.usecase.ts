@@ -33,6 +33,7 @@ export class GenerateChatOauthUrl {
             userScope: command.userScope,
             mode: command.mode,
             connectionMode: command.connectionMode,
+            autoLinkUser: command.autoLinkUser,
           })
         );
 
