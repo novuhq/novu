@@ -383,11 +383,11 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.DOMAINS,
-                element: IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element: !IS_SELF_HOSTED ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.DOMAIN_DETAIL,
-                element: IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element: !IS_SELF_HOSTED ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.API_KEYS,
