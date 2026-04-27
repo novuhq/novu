@@ -323,12 +323,14 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(secondCall[5]).to.equal('check');
     });
 
-    it('should return 400 when payload has no recognised operation', async () => {
+    it('should return 400 when edit and addReactions are combined', async () => {
       const conversationId = await seedConversation(ctx);
 
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
+        edit: { messageId: 'msg-edit', content: { markdown: 'updated' } },
+        addReactions: [{ messageId: 'msg-abc', emojiName: 'thumbs_up' }],
       });
 
       expect(res.status).to.equal(400);

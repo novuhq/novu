@@ -2,7 +2,7 @@ import type { Signal } from '@novu/framework';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
+import { AddReactionPayloadDto, EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 
 export type { Signal } from '@novu/framework';
 
@@ -39,5 +39,7 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsArray()
-  addReactions?: { messageId: string; emojiName: string }[];
+  @ValidateNested({ each: true })
+  @Type(() => AddReactionPayloadDto)
+  addReactions?: AddReactionPayloadDto[];
 }

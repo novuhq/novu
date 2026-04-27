@@ -37,8 +37,8 @@ export class HandleAgentReply {
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }
-    if (command.edit && (command.resolve || command.signals?.length)) {
-      throw new BadRequestException('edit cannot be combined with resolve or signals');
+    if (command.edit && (command.resolve || command.signals?.length || command.addReactions?.length)) {
+      throw new BadRequestException('edit cannot be combined with resolve, signals, or addReactions');
     }
     if (!command.reply && !command.edit && !command.resolve && !command.signals?.length && !command.addReactions?.length) {
       throw new BadRequestException('At least one of reply, edit, resolve, signals, or addReactions must be provided');
@@ -81,7 +81,7 @@ export class HandleAgentReply {
     }
 
     if (command.addReactions?.length) {
-      await Promise.all(
+      const results = await Promise.allSettled(
         command.addReactions.map((r) =>
           this.chatSdkService.reactToMessage(
             conversation._agentId,
@@ -93,6 +93,16 @@ export class HandleAgentReply {
           )
         )
       );
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.status === 'rejected') {
+          this.logger.warn(
+            { err: result.reason, reaction: command.addReactions[i], agentIdentifier: command.agentIdentifier },
+            `[agent:${command.agentIdentifier}] Failed to add reaction`
+          );
+        }
+      }
     }
 
     if (command.resolve) {
