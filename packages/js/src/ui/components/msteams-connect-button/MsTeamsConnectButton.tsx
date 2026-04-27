@@ -8,13 +8,13 @@ import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { MsTeamsColored } from '../../icons/MsTeamsColored';
 import type { ChannelConnectButtonAppearanceCallback } from '../../types';
-import { DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER, DEFAULT_MSTEAMS_INTEGRATION_IDENTIFIER } from '../msteams-constants';
+import { DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 
 export type MsTeamsConnectButtonProps = {
-  integrationIdentifier?: string;
+  integrationIdentifier: string;
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
@@ -43,7 +43,7 @@ const POLL_TIMEOUT_MS = 300_000; // 5 minutes
 export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
-  const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_MSTEAMS_INTEGRATION_IDENTIFIER;
+  const integrationIdentifier = () => props.integrationIdentifier;
   const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER;
 
   const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
@@ -80,6 +80,8 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   });
 
   const startPolling = () => {
+    const connId = connectionIdentifier();
+
     if (timeoutIdRef.current !== null) {
       clearTimeout(timeoutIdRef.current);
       timeoutIdRef.current = null;
@@ -91,14 +93,14 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
       timeoutIdRef.current = setTimeout(async () => {
         try {
           const response = await novuAccessor().channelConnections.get({
-            identifier: connectionIdentifier(),
+            identifier: connId,
           });
 
           if (response.data) {
             timeoutIdRef.current = null;
             setActionLoading(false);
             mutate(response.data);
-            props.onConnectSuccess?.(connectionIdentifier());
+            props.onConnectSuccess?.(connId);
 
             return;
           }

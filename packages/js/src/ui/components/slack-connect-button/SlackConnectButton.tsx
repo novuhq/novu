@@ -8,13 +8,13 @@ import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { SlackColored } from '../../icons/SlackColored';
 import type { ChannelConnectButtonAppearanceCallback } from '../../types';
+import { DEFAULT_SLACK_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
-import { DEFAULT_CONNECTION_IDENTIFIER, DEFAULT_INTEGRATION_IDENTIFIER } from '../slack-constants';
 
 export type SlackConnectButtonProps = {
-  integrationIdentifier?: string;
+  integrationIdentifier: string;
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
@@ -43,8 +43,8 @@ const POLL_TIMEOUT_MS = 120_000;
 export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
-  const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_INTEGRATION_IDENTIFIER;
-  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_CONNECTION_IDENTIFIER;
+  const integrationIdentifier = () => props.integrationIdentifier;
+  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_SLACK_CONNECTION_IDENTIFIER;
 
   const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
     integrationIdentifier: integrationIdentifier(),
@@ -80,6 +80,8 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   });
 
   const startPolling = () => {
+    const connId = connectionIdentifier();
+
     if (intervalIdRef.current !== null) {
       clearInterval(intervalIdRef.current);
       intervalIdRef.current = null;
@@ -90,7 +92,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
     intervalIdRef.current = setInterval(async () => {
       try {
         const response = await novuAccessor().channelConnections.get({
-          identifier: connectionIdentifier(),
+          identifier: connId,
         });
 
         if (response.data) {
@@ -101,7 +103,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
 
           setActionLoading(false);
           mutate(response.data);
-          props.onConnectSuccess?.(connectionIdentifier());
+          props.onConnectSuccess?.(connId);
 
           return;
         }

@@ -414,7 +414,7 @@ export function TeamsSetupGuide({
             >
               <MsTeamsConnectButton
                 integrationIdentifier={integrationIdentifier}
-                // connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
+                connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
                 connectLabel={`Connect ${agent.name} ↗`}
                 connectedLabel="Connected to MS Teams"
                 onConnectSuccess={handleConnected}

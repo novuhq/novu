@@ -119,7 +119,7 @@ export default function ConnectMsTeamsPage() {
 
           <NovuProvider {...novuConfig}>
             <MsTeamsConnectButton
-              integrationIdentifier={INTEGRATION_IDENTIFIER}
+              // integrationIdentifier={INTEGRATION_IDENTIFIER}
               connectLabel="Connect to MS Teams BBB"
               connectedLabel="Connected to MS Teams BBB"
               appearance={{

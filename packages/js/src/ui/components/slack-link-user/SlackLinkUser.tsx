@@ -8,12 +8,12 @@ import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { SlackColored } from '../../icons/SlackColored';
 import type { SlackLinkUserAppearanceCallback } from '../../types';
+import { DEFAULT_SLACK_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
-import { DEFAULT_CONNECTION_IDENTIFIER, DEFAULT_INTEGRATION_IDENTIFIER } from '../slack-constants';
 
 export type SlackLinkUserProps = {
-  integrationIdentifier?: string;
+  integrationIdentifier: string;
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
@@ -31,8 +31,8 @@ const POLL_TIMEOUT_MS = 120_000;
 export const SlackLinkUser = (props: SlackLinkUserProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
-  const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_INTEGRATION_IDENTIFIER;
-  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_CONNECTION_IDENTIFIER;
+  const integrationIdentifier = () => props.integrationIdentifier;
+  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_SLACK_CONNECTION_IDENTIFIER;
 
   const { generateLinkUserOAuthUrl } = useChannelEndpoint({
     integrationIdentifier: integrationIdentifier(),
