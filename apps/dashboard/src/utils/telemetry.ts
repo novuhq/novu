@@ -111,4 +111,12 @@ export enum TelemetryEvent {
   COPILOT_SUGGESTIONS_REFRESHED = 'Copilot suggestions refreshed - [AI Copilot]',
 
   STEP_RESOLVER_CUSTOM_CODE_CLICKED = 'Custom code clicked - [Workflow Editor]',
+
+  AGENTS_PAGE_VISITED = 'Agents page visited',
+  AGENT_DETAILS_PAGE_VISITED = 'Agent details page visited',
+  AGENT_CREATED_FROM_DASHBOARD = 'Agent created from dashboard',
+  AGENT_DELETED_FROM_DASHBOARD = 'Agent deleted from dashboard',
+  AGENT_INTEGRATION_LINKED_FROM_DASHBOARD = 'Agent integration linked from dashboard',
+  AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed',
+  AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD = 'Agent integration removed from dashboard',
 }

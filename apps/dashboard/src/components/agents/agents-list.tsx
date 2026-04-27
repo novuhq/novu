@@ -23,7 +23,9 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
 
@@ -33,6 +35,7 @@ export function AgentsList() {
   const location = useLocation();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const track = useTelemetry();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
 
   const [search, setSearch] = useState('');
@@ -89,6 +92,11 @@ export function AgentsList() {
       showSuccessToast('Agent created', 'Your agent is ready to use.');
       setCreateOpen(false);
 
+      track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
+        agentIdentifier: createdAgent.identifier,
+        active: createdAgent.active,
+      });
+
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
         environmentSlug: environment.slug ?? '',
@@ -108,9 +116,11 @@ export function AgentsList() {
   const deleteMutation = useMutation({
     mutationFn: (identifier: string) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
-    onSuccess: async () => {
+    onSuccess: async (_, identifier) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
+
+      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const listKey = getAgentsListQueryKey(environment._id, {

@@ -22,6 +22,11 @@ import shortid from 'shortid';
 import type { AgentIntegrationResponseDto } from '../../dtos';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
 
+export type FindOrCreateNovuEmailResult = {
+  response: AgentIntegrationResponseDto;
+  provisionedNewLink: boolean;
+};
+
 @Injectable()
 export class FindOrCreateNovuEmail {
   constructor(
@@ -34,19 +39,15 @@ export class FindOrCreateNovuEmail {
    * Find the agent's existing NovuAgent integration link, or create a new
    * Integration + link atomically. Idempotent — safe to call concurrently.
    */
-  async execute(
-    agentId: string,
-    environmentId: string,
-    organizationId: string
-  ): Promise<AgentIntegrationResponseDto> {
+  async execute(agentId: string, environmentId: string, organizationId: string): Promise<FindOrCreateNovuEmailResult> {
     await this.enforceEmailTier(organizationId);
 
     const existing = await this.findExistingLink(agentId, environmentId, organizationId);
-    if (existing) return existing;
+    if (existing) return { response: existing, provisionedNewLink: false };
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agentId, environmentId, organizationId);
-      if (recheck) return recheck;
+      if (recheck) return { response: recheck, provisionedNewLink: false };
 
       const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
       const identifier = `${slugify(displayName)}-${shortid.generate()}`;
@@ -66,7 +67,9 @@ export class FindOrCreateNovuEmail {
         { session }
       );
 
-      return this.createLink(agentId, integration, environmentId, organizationId, session);
+      const response = await this.createLink(agentId, integration, environmentId, organizationId, session);
+
+      return { response, provisionedNewLink: true };
     });
   }
 
@@ -109,7 +112,12 @@ export class FindOrCreateNovuEmail {
     session: ClientSession | null
   ): Promise<AgentIntegrationResponseDto> {
     const existingLink = await this.agentIntegrationRepository.findOne(
-      { _agentId: agentId, _integrationId: integration._id, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        _agentId: agentId,
+        _integrationId: integration._id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
       ['_id'],
       { session }
     );
@@ -119,7 +127,12 @@ export class FindOrCreateNovuEmail {
     }
 
     const link = await this.agentIntegrationRepository.create(
-      { _agentId: agentId, _integrationId: integration._id, _environmentId: environmentId, _organizationId: organizationId },
+      {
+        _agentId: agentId,
+        _integrationId: integration._id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
       { session }
     );
 

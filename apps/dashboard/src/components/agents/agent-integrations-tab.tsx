@@ -17,7 +17,9 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ProviderDropdown } from './provider-dropdown';
@@ -215,6 +217,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const track = useTelemetry();
 
   const canRemoveAgentIntegration = has({ permission: PermissionsEnum.AGENT_WRITE });
 
@@ -327,6 +330,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       const name = removed?.integration.name ?? 'Integration';
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
+      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
+        agentIdentifier: agent.identifier,
+        agentIntegrationId,
+        integrationIdentifier: removed?.integration.identifier,
+      });
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });

@@ -1,8 +1,9 @@
 import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials, InstrumentUsecase, MailFactory } from '@novu/application-generic';
+import { AnalyticsService, decryptCredentials, InstrumentUsecase, MailFactory } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 
+import { trackAgentTestEmailSent } from '../../agent-analytics';
 import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
 
 function escapeHtml(text: string): string {
@@ -14,7 +15,8 @@ export class SendAgentTestEmail {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -93,6 +95,13 @@ export class SendAgentTestEmail {
         error: 'delivery_failed',
         message: detail ? `${base}: ${detail}` : base,
       });
+    });
+
+    trackAgentTestEmailSent(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentIdentifier: command.agentIdentifier,
     });
 
     return { success: true };

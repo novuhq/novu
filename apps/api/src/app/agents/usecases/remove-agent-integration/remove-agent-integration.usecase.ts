@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
 
+import { trackAgentIntegrationRemoved } from '../../agent-analytics';
 import { CleanupNovuEmail } from '../cleanup-novu-email/cleanup-novu-email.usecase';
 import { RemoveAgentIntegrationCommand } from './remove-agent-integration.command';
 
@@ -9,7 +11,8 @@ export class RemoveAgentIntegration {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly cleanupNovuEmail: CleanupNovuEmail
+    private readonly cleanupNovuEmail: CleanupNovuEmail,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: RemoveAgentIntegrationCommand): Promise<void> {
@@ -50,6 +53,14 @@ export class RemoveAgentIntegration {
         command.organizationId,
         session
       );
+    });
+
+    trackAgentIntegrationRemoved(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentIdentifier: command.agentIdentifier,
+      agentIntegrationId: command.agentIntegrationId,
     });
   }
 }

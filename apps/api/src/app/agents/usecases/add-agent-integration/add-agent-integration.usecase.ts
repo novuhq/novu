@@ -7,7 +7,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { encryptSecret } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -15,13 +15,9 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import {
-  ApiServiceLevelEnum,
-  EmailProviderIdEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsBoolean,
-} from '@novu/shared';
+import { ApiServiceLevelEnum, EmailProviderIdEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 
+import { trackAgentIntegrationConnected } from '../../agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../dtos';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
 import { FindOrCreateNovuEmail } from '../find-or-create-novu-email/find-or-create-novu-email.usecase';
@@ -34,7 +30,8 @@ export class AddAgentIntegration {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
-    private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail
+    private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -60,7 +57,28 @@ export class AddAgentIntegration {
     }
 
     if (command.providerId === EmailProviderIdEnum.NovuAgent) {
-      return this.findOrCreateNovuEmail.execute(agent._id, command.environmentId, command.organizationId);
+      const { response, provisionedNewLink } = await this.findOrCreateNovuEmail.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId
+      );
+
+      if (provisionedNewLink) {
+        trackAgentIntegrationConnected(this.analyticsService, {
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          agentId: agent._id,
+          agentIdentifier: command.agentIdentifier,
+          integrationId: response.integration._id,
+          integrationIdentifier: response.integration.identifier,
+          providerId: response.integration.providerId,
+          channel: response.integration.channel,
+          connectionSource: 'novu_email_provisioned',
+        });
+      }
+
+      return response;
     }
 
     if (!command.integrationIdentifier) {
@@ -122,7 +140,22 @@ export class AddAgentIntegration {
       _organizationId: command.organizationId,
     });
 
-    return toAgentIntegrationResponse(link, integration);
+    const response = toAgentIntegrationResponse(link, integration);
+
+    trackAgentIntegrationConnected(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentId,
+      agentIdentifier: command.agentIdentifier,
+      integrationId: integration._id,
+      integrationIdentifier: integration.identifier,
+      providerId: integration.providerId,
+      channel: integration.channel,
+      connectionSource: 'existing_integration',
+    });
+
+    return response;
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
