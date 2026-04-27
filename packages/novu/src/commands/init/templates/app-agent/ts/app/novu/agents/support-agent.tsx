@@ -8,7 +8,8 @@ export const supportAgent = agent('support-agent', {
 
     if (isFirstMessage) {
       ctx.metadata.set('topic', 'unknown');
-      await ctx.reply(
+
+      return (
         <Card title="Hi, I'm Support Agent">
           <CardText>How can I help you today?</CardText>
           <Actions>
@@ -18,35 +19,32 @@ export const supportAgent = agent('support-agent', {
           </Actions>
         </Card>
       );
-
-      return;
     }
 
     if (text.includes('resolve') || text.includes('thanks')) {
       ctx.resolve(`Resolved by user: ${text}`);
-      await ctx.reply('Glad I could help! Marking this resolved.');
 
-      return;
+      return 'Glad I could help! Marking this resolved.';
     }
 
     // Replace this block with your LLM call (OpenAI, Anthropic, etc.)
     ctx.metadata.set('lastMessage', text);
-    await ctx.reply({
+
+    return {
       markdown:
         `**Got it.** You said: "${ctx.message?.text}"\n\n` +
         `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
         `**Conversation so far:** ${ctx.history.length} messages | ` +
         `**Topic:** ${ctx.conversation.metadata?.topic ?? 'unknown'}`,
-    });
+    };
   },
 
   onAction: async (ctx) => {
     const { actionId, value } = ctx.action!;
     if (actionId.startsWith('topic-') && value) {
       ctx.metadata.set('topic', value);
-      await ctx.reply({
-        markdown: `Topic set to **${value}**. Describe your issue and I'll help.`,
-      });
+
+      return { markdown: `Topic set to **${value}**. Describe your issue and I'll help.` };
     }
   },
 
