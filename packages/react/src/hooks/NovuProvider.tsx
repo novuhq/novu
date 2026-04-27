@@ -103,7 +103,7 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
 
 export const useNovu = () => {
   const context = useContext(NovuContext);
-  if (!context) {
+  if (!context.novu) {
     throw new Error('useNovu must be used within a <NovuProvider />');
   }
 
@@ -118,5 +118,6 @@ export const useUnsafeNovu = () => {
 
 export const useRealtime = () => {
   const context = useContext(NovuContext);
+
   return context.realtime;
 };
