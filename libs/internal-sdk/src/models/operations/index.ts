@@ -32,7 +32,6 @@ export * from "./domainscontrollergetdomainconnectstatus.js";
 export * from "./domainscontrollergetdomainroute.js";
 export * from "./domainscontrollerlistdomainroutes.js";
 export * from "./domainscontrollerlistdomains.js";
-export * from "./domainscontrollerlistroutes.js";
 export * from "./domainscontrollerupdatedomain.js";
 export * from "./domainscontrollerupdatedomainroute.js";
 export * from "./environmentscontrollerdiffenvironment.js";

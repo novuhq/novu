@@ -30,13 +30,13 @@ import { RoutingEmptyIllustration } from './routing-empty-illustration';
 
 type RouteFormState = {
   address: string;
-  destination: string;
+  agentId: string;
   type: DomainRouteTypeEnum;
 };
 
 const DEFAULT_ROUTE_FORM: RouteFormState = {
   address: '',
-  destination: '',
+  agentId: '',
   type: DomainRouteTypeEnum.AGENT,
 };
 
@@ -88,7 +88,7 @@ function InlineRouteForm({
       showErrorToast('Address is required.');
       return;
     }
-    if (form.type === DomainRouteTypeEnum.AGENT && !form.destination.trim()) {
+    if (form.type === DomainRouteTypeEnum.AGENT && !form.agentId.trim()) {
       showErrorToast('An agent must be selected for agent routes.');
       return;
     }
@@ -119,7 +119,7 @@ function InlineRouteForm({
               setForm((f) => ({
                 ...f,
                 type: v as DomainRouteTypeEnum,
-                destination: v === DomainRouteTypeEnum.WEBHOOK ? '' : f.destination,
+                agentId: v === DomainRouteTypeEnum.WEBHOOK ? '' : f.agentId,
               }))
             }
           >
@@ -133,8 +133,8 @@ function InlineRouteForm({
           </Select>
 
           <Select
-            value={form.destination}
-            onValueChange={(v) => setForm((f) => ({ ...f, destination: v }))}
+            value={form.agentId}
+            onValueChange={(v) => setForm((f) => ({ ...f, agentId: v }))}
             disabled={form.type !== DomainRouteTypeEnum.AGENT}
           >
             <SelectTrigger
@@ -147,7 +147,7 @@ function InlineRouteForm({
             </SelectTrigger>
             <SelectContent>
               {agentOptions.map((agent) => (
-                <SelectItem key={agent._id} value={agent._id}>
+                <SelectItem key={agent._id} value={agent.identifier}>
                   {agent.name}
                 </SelectItem>
               ))}
@@ -201,9 +201,7 @@ type ExistingRouteRowProps = {
 
 function ExistingRouteRow({ route, domainName, agentOptions, onDelete, onEdit, isDeleting }: ExistingRouteRowProps) {
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
-  const agentName = isWebhook
-    ? null
-    : (agentOptions.find((a) => a._id === route.destination)?.name ?? route.destination);
+  const agentName = isWebhook ? null : (agentOptions.find((a) => a._id === route.agentId)?.name ?? route.agentId);
 
   return (
     <TableRow className="[&>td]:border-0">
@@ -372,7 +370,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
       await createDomainRoute.mutateAsync({
         address: values.address,
         type: values.type,
-        ...(values.destination ? { destination: values.destination } : {}),
+        ...(values.agentId ? { agentId: values.agentId } : {}),
       });
       cancelAdding();
     } catch {
@@ -387,7 +385,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         body: {
           address: values.address,
           type: values.type,
-          ...(values.destination ? { destination: values.destination } : {}),
+          ...(values.agentId ? { agentId: values.agentId } : {}),
         },
       });
       setEditingRouteId(null);
@@ -432,7 +430,11 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 <InlineRouteForm
                   key={route._id}
                   domainName={domain.name}
-                  initialValues={{ address: route.address, destination: route.destination ?? '', type: route.type }}
+                  initialValues={{
+                    address: route.address,
+                    agentId: agentOptions.find((a) => a._id === route.agentId)?.identifier ?? '',
+                    type: route.type,
+                  }}
                   agentOptions={agentOptions}
                   onSave={(values) => handleUpdate(route._id, values)}
                   onCancel={() => setEditingRouteId(null)}
@@ -525,7 +527,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           >
             <WildcardRouteHint
               domainName={domain.name}
-              onConfigureClick={() => startAdding({ address: '*', destination: '', type: DomainRouteTypeEnum.WEBHOOK })}
+              onConfigureClick={() => startAdding({ address: '*', agentId: '', type: DomainRouteTypeEnum.WEBHOOK })}
               onDismiss={() => setIsWildcardHintDismissed(true)}
             />
           </motion.div>

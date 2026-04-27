@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
 /**
  * Get Domain Connect auto-configuration availability for a domain
  *
- * This operation requires {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function domainsDomainConnectStatus(
   client: NovuCore,
@@ -120,7 +120,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput, [1]);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,

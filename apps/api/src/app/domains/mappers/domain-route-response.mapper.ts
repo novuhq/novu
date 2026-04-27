@@ -6,7 +6,7 @@ export function toDomainRouteResponse(route: DomainRouteEntity): DomainRouteResp
     _id: route._id,
     _domainId: route._domainId as unknown as string,
     address: route.address,
-    destination: route.destination,
+    agentId: route.destination,
     type: route.type,
     _environmentId: route._environmentId as unknown as string,
     _organizationId: route._organizationId as unknown as string,

@@ -13,8 +13,8 @@ import {
   type DomainResponse,
   type DomainRouteResponse,
   deleteDomainRoute,
+  fetchDomainRoutes,
   fetchDomains,
-  fetchRoutes,
 } from '@/api/domains';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -28,14 +28,18 @@ export type ConfiguredAddress = {
   routeId: string;
 };
 
-async function fetchAllRoutesForDestination(environment: IEnvironment, destination: string) {
+async function fetchAllRoutesForAgentIdentifierOnDomain(
+  environment: IEnvironment,
+  domainId: string,
+  agentIdentifier: string
+) {
   const routes: DomainRouteResponse[] = [];
   let after: string | undefined;
 
   do {
-    const response = await fetchRoutes(environment, {
+    const response = await fetchDomainRoutes(domainId, environment, {
       limit: 100,
-      destination,
+      agentId: agentIdentifier,
       ...(after ? { after } : {}),
     });
     routes.push(...response.data);
@@ -43,6 +47,18 @@ async function fetchAllRoutesForDestination(environment: IEnvironment, destinati
   } while (after);
 
   return routes;
+}
+
+async function fetchAllRoutesForAgentIdentifier(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  domains: DomainResponse[]
+) {
+  const perDomain = await Promise.all(
+    domains.map((domain) => fetchAllRoutesForAgentIdentifierOnDomain(environment, domain._id, agentIdentifier))
+  );
+
+  return perDomain.flat();
 }
 
 async function fetchAllDomains(environment: IEnvironment) {
@@ -102,13 +118,18 @@ export function useEmailSetupCredentials({
     queryFn: () => fetchAllDomains(requireEnvironment(currentEnvironment, 'No environment selected')),
     enabled: Boolean(currentEnvironment),
   });
-  const domains = domainsQuery.data ?? [];
+  const domains = useMemo(() => domainsQuery.data ?? [], [domainsQuery.data]);
+  const domainIds = useMemo(() => domains.map((domain) => domain._id), [domains]);
 
   const routesQuery = useQuery({
-    queryKey: [QueryKeys.fetchDomainRoutes, currentEnvironment?._id, agent._id],
+    queryKey: [QueryKeys.fetchDomainRoutes, currentEnvironment?._id, agent.identifier, domainIds],
     queryFn: () =>
-      fetchAllRoutesForDestination(requireEnvironment(currentEnvironment, 'No environment selected'), agent._id),
-    enabled: Boolean(currentEnvironment && agent._id),
+      fetchAllRoutesForAgentIdentifier(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        domains
+      ),
+    enabled: Boolean(currentEnvironment && agent.identifier && domainsQuery.isSuccess),
   });
   const agentRoutes = routesQuery.data ?? [];
 
@@ -118,7 +139,7 @@ export function useEmailSetupCredentials({
     const domainNames = new Map(domains.map((domain) => [domain._id, domain.name]));
 
     return agentRoutes
-      .filter((route) => route.type === DomainRouteTypeEnum.AGENT && route.destination === agent._id)
+      .filter((route) => route.type === DomainRouteTypeEnum.AGENT && route.agentId === agent._id)
       .map((route) => ({
         address: route.address,
         domain: domainNames.get(route._domainId) ?? '',
@@ -190,7 +211,7 @@ export function useEmailSetupCredentials({
     mutationFn: ({ domainId, address }: { domainId: string; address: string }) =>
       createDomainRoute(
         domainId,
-        { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id },
+        { address, type: DomainRouteTypeEnum.AGENT, agentId: agent.identifier },
         requireEnvironment(currentEnvironment, 'No environment selected')
       ),
     onSuccess: () => {
@@ -216,7 +237,7 @@ export function useEmailSetupCredentials({
           route._domainId === domain._id &&
           route.address === address &&
           route.type === DomainRouteTypeEnum.AGENT &&
-          route.destination === agent._id
+          route.agentId === agent._id
       );
       if (ownRoute) return;
 
@@ -244,7 +265,7 @@ export function useEmailSetupCredentials({
           item._domainId === domainId &&
           item.address === address &&
           item.type === DomainRouteTypeEnum.AGENT &&
-          item.destination === agent._id
+          item.agentId === agent._id
       );
 
       if (!route) return;

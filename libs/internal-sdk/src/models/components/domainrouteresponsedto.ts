@@ -22,9 +22,9 @@ export type DomainRouteResponseDto = {
   domainId: string;
   address: string;
   /**
-   * Destination agent ID (only present for agent routes)
+   * Internal id of the destination agent. Only present for agent routes.
    */
-  destination?: string | undefined;
+  agentId?: string | undefined;
   type: DomainRouteResponseDtoType;
   environmentId: string;
   organizationId: string;
@@ -46,7 +46,7 @@ export const DomainRouteResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   _domainId: z.string(),
   address: z.string(),
-  destination: z.string().optional(),
+  agentId: z.string().optional(),
   type: DomainRouteResponseDtoType$inboundSchema,
   _environmentId: z.string(),
   _organizationId: z.string(),

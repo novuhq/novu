@@ -5,7 +5,7 @@ export type DomainRouteResponse = {
   _id: string;
   _domainId: string;
   address: string;
-  destination?: string;
+  agentId?: string;
   type: DomainRouteTypeEnum;
   _environmentId: string;
   _organizationId: string;
@@ -37,7 +37,7 @@ export type DomainResponse = {
 export type CreateDomainBody = { name: string };
 export type UpdateDomainBody = Record<string, never>;
 export type CreateDomainRouteBody = Pick<DomainRouteResponse, 'address' | 'type'> & {
-  destination?: string;
+  agentId?: string;
 };
 export type UpdateDomainRouteBody = Partial<CreateDomainRouteBody>;
 
@@ -63,7 +63,7 @@ export type ListDomainsParams = CursorPaginationParams & {
 };
 
 export type ListDomainRoutesParams = CursorPaginationParams & {
-  destination?: string;
+  agentId?: string;
 };
 
 export type DomainConnectStatusResponse = {
@@ -92,7 +92,7 @@ export type DomainConnectApplyUrlResponse = {
   redirectUri: string;
 };
 
-function buildCursorQuery(params: CursorPaginationParams & { destination?: string; name?: string } = {}): string {
+function buildCursorQuery(params: CursorPaginationParams & { agentId?: string; name?: string } = {}): string {
   const searchParams = new URLSearchParams();
 
   if (params.limit != null) searchParams.set('limit', String(params.limit));
@@ -101,7 +101,7 @@ function buildCursorQuery(params: CursorPaginationParams & { destination?: strin
   if (params.orderBy) searchParams.set('orderBy', params.orderBy);
   if (params.orderDirection) searchParams.set('orderDirection', params.orderDirection);
   if (params.includeCursor != null) searchParams.set('includeCursor', String(params.includeCursor));
-  if (params.destination) searchParams.set('destination', params.destination);
+  if (params.agentId) searchParams.set('agentId', params.agentId);
   if (params.name) searchParams.set('name', params.name);
 
   const query = searchParams.toString();
@@ -150,15 +150,6 @@ export const fetchDomainRoutes = async (
     `/domains/${encodeURIComponent(domainId)}/routes${buildCursorQuery(params)}`,
     { environment }
   );
-};
-
-export const fetchRoutes = async (
-  environment: IEnvironment,
-  params: ListDomainRoutesParams = {}
-): Promise<CursorPaginatedResponse<DomainRouteResponse>> => {
-  return get<CursorPaginatedResponse<DomainRouteResponse>>(`/domains/routes${buildCursorQuery(params)}`, {
-    environment,
-  });
 };
 
 export const fetchDomainRoute = async (

@@ -4,7 +4,6 @@ import {
   createDomainRoute,
   deleteDomainRoute,
   fetchDomainRoutes,
-  fetchRoutes,
   ListDomainRoutesParams,
   UpdateDomainRouteBody,
   updateDomainRoute,
@@ -32,16 +31,6 @@ export function useFetchDomainRoutes(domainId: string | undefined, params: ListD
         params
       ),
     enabled: !!domainId && !!currentEnvironment,
-  });
-}
-
-export function useFetchRoutes(params: ListDomainRoutesParams = {}) {
-  const { currentEnvironment } = useEnvironment();
-
-  return useQuery({
-    queryKey: [QueryKeys.fetchDomainRoutes, currentEnvironment?._id, params],
-    queryFn: () => fetchRoutes(requireEnvironment(currentEnvironment, 'No environment selected'), params),
-    enabled: !!currentEnvironment,
   });
 }
 

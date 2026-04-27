@@ -111,7 +111,7 @@ export function setDomainsRoutesListData(
         | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
-      destination?: string | undefined;
+      agentId?: string | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -136,7 +136,7 @@ export function invalidateDomainsRoutesList(
           | undefined;
         orderBy?: string | undefined;
         includeCursor?: boolean | undefined;
-        destination?: string | undefined;
+        agentId?: string | undefined;
         idempotencyKey?: string | undefined;
       },
     ]

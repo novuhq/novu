@@ -11,8 +11,10 @@ export class DomainRouteResponseDto {
   @ApiProperty()
   address: string;
 
-  @ApiPropertyOptional({ description: 'Destination agent ID (only present for agent routes)' })
-  destination?: string;
+  @ApiPropertyOptional({
+    description: 'Internal id of the destination agent. Only present for agent routes.',
+  })
+  agentId?: string;
 
   @ApiProperty({ enum: DomainRouteTypeEnum })
   type: DomainRouteTypeEnum;

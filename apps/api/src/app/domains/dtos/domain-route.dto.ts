@@ -8,10 +8,12 @@ export class DomainRouteDto {
   @IsNotEmpty()
   address: string;
 
-  @ApiPropertyOptional({ description: 'Destination agent ID (required when type is agent, unused for webhook)' })
+  @ApiPropertyOptional({
+    description: 'Agent identifier; required when type is agent, unused for webhook',
+  })
   @IsString()
   @IsOptional()
-  destination?: string;
+  agentId?: string;
 
   @ApiProperty({ enum: DomainRouteTypeEnum })
   @IsEnum(DomainRouteTypeEnum)

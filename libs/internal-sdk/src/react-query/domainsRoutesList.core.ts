@@ -49,7 +49,7 @@ export function buildDomainsRoutesListQuery(
       orderDirection: request.orderDirection,
       orderBy: request.orderBy,
       includeCursor: request.includeCursor,
-      destination: request.destination,
+      agentId: request.agentId,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function domainsRoutesListQueryFn(
@@ -86,7 +86,7 @@ export function queryKeyDomainsRoutesList(
       | undefined;
     orderBy?: string | undefined;
     includeCursor?: boolean | undefined;
-    destination?: string | undefined;
+    agentId?: string | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

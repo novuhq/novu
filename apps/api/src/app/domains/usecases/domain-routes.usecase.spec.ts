@@ -85,6 +85,7 @@ describe('Domain route usecases', () => {
     });
 
     expect(result._id).to.equal(ROUTE_ID);
+    expect(result.agentId).to.equal(AGENT_ID);
     expect(domainRouteRepositoryMock.create.calledWithMatch({ _domainId: DOMAIN_ID, address: 'support' })).to.equal(
       true
     );

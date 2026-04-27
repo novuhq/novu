@@ -36,7 +36,6 @@ export * from "./domainsRetrieve.js";
 export * from "./domainsRoutesCreate.js";
 export * from "./domainsRoutesDelete.js";
 export * from "./domainsRoutesList.js";
-export * from "./domainsRoutesListForEnvironment.js";
 export * from "./domainsRoutesRetrieve.js";
 export * from "./domainsRoutesUpdate.js";
 export * from "./domainsUpdate.js";

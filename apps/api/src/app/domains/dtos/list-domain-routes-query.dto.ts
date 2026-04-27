@@ -5,10 +5,10 @@ import { DomainRouteResponseDto } from './domain-route-response.dto';
 
 export class ListDomainRoutesQueryDto extends CursorPaginationQueryDto<DomainRouteResponseDto, 'updatedAt' | '_id'> {
   @ApiPropertyOptional({
-    description: 'Destination agent ID to filter routes by.',
+    description: 'Agent identifier to filter routes by.',
     type: String,
   })
   @IsOptional()
   @IsString()
-  destination?: string;
+  agentId?: string;
 }

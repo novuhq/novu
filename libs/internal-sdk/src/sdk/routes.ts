@@ -5,7 +5,6 @@
 import { domainsRoutesCreate } from "../funcs/domainsRoutesCreate.js";
 import { domainsRoutesDelete } from "../funcs/domainsRoutesDelete.js";
 import { domainsRoutesList } from "../funcs/domainsRoutesList.js";
-import { domainsRoutesListForEnvironment } from "../funcs/domainsRoutesListForEnvironment.js";
 import { domainsRoutesRetrieve } from "../funcs/domainsRoutesRetrieve.js";
 import { domainsRoutesUpdate } from "../funcs/domainsRoutesUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
@@ -94,20 +93,6 @@ export class Routes extends ClientSDK {
       domainId,
       routeId,
       idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * List domain routes for an environment
-   */
-  async listForEnvironment(
-    request: operations.DomainsControllerListRoutesRequest,
-    options?: RequestOptions,
-  ): Promise<operations.DomainsControllerListRoutesResponse> {
-    return unwrapAsync(domainsRoutesListForEnvironment(
-      this,
-      request,
       options,
     ));
   }

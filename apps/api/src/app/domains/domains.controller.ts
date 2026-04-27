@@ -14,7 +14,14 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { AgentRepository } from '@novu/dal';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  DomainRouteTypeEnum,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -42,6 +49,7 @@ import { DeleteDomainCommand } from './usecases/delete-domain/delete-domain.comm
 import { DeleteDomain } from './usecases/delete-domain/delete-domain.usecase';
 import { DeleteDomainRouteCommand } from './usecases/delete-domain-route/delete-domain-route.command';
 import { DeleteDomainRoute } from './usecases/delete-domain-route/delete-domain-route.usecase';
+import { resolveAgentIdentifier } from './usecases/domain-route.utils';
 import { GetDomainCommand } from './usecases/get-domain/get-domain.command';
 import { GetDomain } from './usecases/get-domain/get-domain.usecase';
 import { GetDomainConnectStatusCommand } from './usecases/get-domain-connect-status/get-domain-connect-status.command';
@@ -77,7 +85,8 @@ export class DomainsController {
     private readonly createDomainRouteUsecase: CreateDomainRoute,
     private readonly getDomainRouteUsecase: GetDomainRoute,
     private readonly updateDomainRouteUsecase: UpdateDomainRoute,
-    private readonly deleteDomainRouteUsecase: DeleteDomainRoute
+    private readonly deleteDomainRouteUsecase: DeleteDomainRoute,
+    private readonly agentRepository: AgentRepository
   ) {}
 
   @Get('/')
@@ -121,31 +130,6 @@ export class DomainsController {
     );
   }
 
-  @Get('/routes')
-  @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'List domain routes for an environment' })
-  @ApiResponse(ListDomainRoutesResponseDto, 200)
-  @SdkGroupName('Domains.Routes')
-  @SdkMethodName('listForEnvironment')
-  async listRoutes(
-    @UserSession() user: UserSessionData,
-    @Query() query: ListDomainRoutesQueryDto
-  ): Promise<ListDomainRoutesResponseDto> {
-    return this.listDomainRoutesUsecase.execute(
-      ListDomainRoutesCommand.create({
-        user,
-        destination: query.destination,
-        limit: Number(query.limit || '10'),
-        after: query.after,
-        before: query.before,
-        orderDirection: query.orderDirection || DirectionEnum.DESC,
-        orderBy: query.orderBy || '_id',
-        includeCursor: query.includeCursor,
-      })
-    );
-  }
-
   @Get('/:domainId')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
@@ -178,10 +162,21 @@ export class DomainsController {
     @Query() query: ListDomainRoutesQueryDto,
     @UserSession() user: UserSessionData
   ): Promise<ListDomainRoutesResponseDto> {
+    let destination: string | undefined;
+    if (query.agentId) {
+      destination = await resolveAgentIdentifier({
+        agentRepository: this.agentRepository,
+        identifier: query.agentId,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      });
+    }
+
     return this.listDomainRoutesUsecase.execute(
       ListDomainRoutesCommand.create({
         user,
         domainId,
+        destination,
         limit: Number(query.limit || '10'),
         after: query.after,
         before: query.before,
@@ -204,6 +199,16 @@ export class DomainsController {
     @Body() body: DomainRouteDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainRouteResponseDto> {
+    let destination: string | undefined;
+    if (body.type === DomainRouteTypeEnum.AGENT && body.agentId) {
+      destination = await resolveAgentIdentifier({
+        agentRepository: this.agentRepository,
+        identifier: body.agentId,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      });
+    }
+
     return this.createDomainRouteUsecase.execute(
       CreateDomainRouteCommand.create({
         environmentId: user.environmentId,
@@ -211,7 +216,7 @@ export class DomainsController {
         userId: user._id,
         domainId,
         address: body.address,
-        destination: body.destination,
+        destination,
         type: body.type,
       })
     );
@@ -253,6 +258,16 @@ export class DomainsController {
     @Body() body: UpdateDomainRouteDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainRouteResponseDto> {
+    let destination: string | undefined;
+    if (body.agentId !== undefined) {
+      destination = await resolveAgentIdentifier({
+        agentRepository: this.agentRepository,
+        identifier: body.agentId,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      });
+    }
+
     return this.updateDomainRouteUsecase.execute(
       UpdateDomainRouteCommand.create({
         environmentId: user.environmentId,
@@ -261,7 +276,7 @@ export class DomainsController {
         domainId,
         routeId,
         address: body.address,
-        destination: body.destination,
+        ...(body.agentId !== undefined ? { destination } : {}),
         type: body.type,
       })
     );

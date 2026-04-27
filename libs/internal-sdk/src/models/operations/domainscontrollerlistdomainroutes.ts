@@ -52,9 +52,9 @@ export type DomainsControllerListDomainRoutesRequest = {
    */
   includeCursor?: boolean | undefined;
   /**
-   * Destination agent ID to filter routes by.
+   * Agent identifier to filter routes by.
    */
-  destination?: string | undefined;
+  agentId?: string | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -81,7 +81,7 @@ export type DomainsControllerListDomainRoutesRequest$Outbound = {
   orderDirection?: string | undefined;
   orderBy?: string | undefined;
   includeCursor?: boolean | undefined;
-  destination?: string | undefined;
+  agentId?: string | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -100,7 +100,7 @@ export const DomainsControllerListDomainRoutesRequest$outboundSchema: z.ZodType<
       .optional(),
   orderBy: z.string().optional(),
   includeCursor: z.boolean().optional(),
-  destination: z.string().optional(),
+  agentId: z.string().optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

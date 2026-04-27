@@ -17,9 +17,9 @@ export type DomainRouteDto = {
    */
   address: string;
   /**
-   * Destination agent ID (required when type is agent, unused for webhook)
+   * Agent identifier; required when type is agent, unused for webhook
    */
-  destination?: string | undefined;
+  agentId?: string | undefined;
   type: DomainRouteDtoType;
 };
 
@@ -31,7 +31,7 @@ export const DomainRouteDtoType$outboundSchema: z.ZodNativeEnum<
 /** @internal */
 export type DomainRouteDto$Outbound = {
   address: string;
-  destination?: string | undefined;
+  agentId?: string | undefined;
   type: string;
 };
 
@@ -42,7 +42,7 @@ export const DomainRouteDto$outboundSchema: z.ZodType<
   DomainRouteDto
 > = z.object({
   address: z.string(),
-  destination: z.string().optional(),
+  agentId: z.string().optional(),
   type: DomainRouteDtoType$outboundSchema,
 });
 

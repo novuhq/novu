@@ -156,24 +156,17 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(error?.statusCode).to.equal(404);
   });
 
-  it('should delete a domain and remove its routes from listForEnvironment', async () => {
+  it('should delete a domain and cascade-remove its routes', async () => {
     const name = uniqueDomainName();
     const { result: domain } = await novuClient.domains.create({ name });
 
-    const { result: route } = await novuClient.domains.routes.create(
-      { address: 'cascade', type: DomainRouteDtoType.Webhook },
-      domain.id
-    );
+    await novuClient.domains.routes.create({ address: 'cascade', type: DomainRouteDtoType.Webhook }, domain.id);
 
-    const before = await novuClient.domains.routes.listForEnvironment({});
+    const before = await novuClient.domains.routes.list({ domainId: domain.id });
 
-    expect(before.result.data.some((r) => r.id === route.id)).to.equal(true);
+    expect(before.result.data.some((r) => r.address === 'cascade')).to.equal(true);
 
     await novuClient.domains.delete(domain.id);
-
-    const after = await novuClient.domains.routes.listForEnvironment({});
-
-    expect(after.result.data.some((r) => r.id === route.id)).to.equal(false);
 
     const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domainId: domain.id }));
 

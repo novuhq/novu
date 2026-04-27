@@ -10,6 +10,33 @@ export function toDuplicateRouteConflict(address: string, type: DomainRouteTypeE
   return new ConflictException(`A ${type} route for address "${address}" already exists.`);
 }
 
+export async function resolveAgentIdentifier({
+  agentRepository,
+  identifier,
+  environmentId,
+  organizationId,
+}: {
+  agentRepository: AgentRepository;
+  identifier: string;
+  environmentId: string;
+  organizationId: string;
+}): Promise<string> {
+  const agent = await agentRepository.findOne(
+    {
+      identifier,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    },
+    ['_id']
+  );
+
+  if (!agent) {
+    throw new NotFoundException(`Agent with identifier "${identifier}" not found.`);
+  }
+
+  return agent._id;
+}
+
 export async function assertDomainExists({
   domainRepository,
   domainId,
@@ -44,7 +71,7 @@ export async function assertAgentDestination({
   if (type !== DomainRouteTypeEnum.AGENT) return;
 
   if (!destination) {
-    throw new BadRequestException('destination is required for agent routes.');
+    throw new BadRequestException('agentId is required for agent routes.');
   }
 
   const agent = await agentRepository.findOne(
@@ -57,6 +84,6 @@ export async function assertAgentDestination({
   );
 
   if (!agent) {
-    throw new NotFoundException(`Agent "${destination}" referenced in route destination does not exist.`);
+    throw new NotFoundException(`Agent "${destination}" referenced by agentId does not exist.`);
   }
 }
