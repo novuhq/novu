@@ -946,10 +946,6 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         route={conditionsRoute}
         isSaving={updateDomainRoute.isPending}
         onSave={handleSaveConditions}
-        onSendTest={(route) => {
-          setConditionsRoute(null);
-          setTestDialogRoute(route);
-        }}
         onOpenChange={(open) => {
           if (!open) setConditionsRoute(null);
         }}

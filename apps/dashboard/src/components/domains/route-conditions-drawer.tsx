@@ -1,14 +1,7 @@
 import type { DomainRouteMatch } from '@novu/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import {
-  RiCheckLine,
-  RiCloseLine,
-  RiFilterLine,
-  RiInformation2Line,
-  RiPriceTag3Line,
-  RiSendPlaneLine,
-} from 'react-icons/ri';
+import { RiCheckLine, RiCloseLine, RiFilterLine, RiInformation2Line, RiPriceTag3Line } from 'react-icons/ri';
 import { formatQuery, generateID, type RuleGroupType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import type { DomainRouteResponse } from '@/api/domains';
@@ -52,7 +45,6 @@ type RouteConditionsDrawerProps = {
   domainName: string;
   route: DomainRouteResponse | null;
   onSave: (match: DomainRouteMatch | null) => Promise<void>;
-  onSendTest: (route: DomainRouteResponse) => void;
   isSaving: boolean;
 };
 
@@ -249,7 +241,6 @@ export function RouteConditionsDrawer({
   domainName,
   route,
   onSave,
-  onSendTest,
   isSaving,
 }: RouteConditionsDrawerProps) {
   const initialPresetState = useMemo(() => getInitialPresetState(route?.match), [route?.match]);
@@ -340,21 +331,7 @@ export function RouteConditionsDrawer({
           />
         ) : null}
         <SheetMain className="flex flex-col gap-3 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <TabSwitcher value={tab} onValueChange={handleTabChange} />
-            {route ? (
-              <Button
-                type="button"
-                variant="secondary"
-                mode="ghost"
-                size="2xs"
-                onClick={() => onSendTest(route)}
-                leadingIcon={RiSendPlaneLine}
-              >
-                Send test
-              </Button>
-            ) : null}
-          </div>
+          <TabSwitcher value={tab} onValueChange={handleTabChange} />
 
           {tab === 'presets' ? (
             <div className="flex flex-col gap-4">
