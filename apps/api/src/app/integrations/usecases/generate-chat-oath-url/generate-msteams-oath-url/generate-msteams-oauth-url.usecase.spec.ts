@@ -75,10 +75,13 @@ describe('GenerateMsTeamsOauthUrl', () => {
         integration: buildMockIntegration(),
       });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(
-        BadRequestException,
-        'Either subscriberId or context must be provided'
-      );
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected BadRequestException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.equal('Either subscriberId or context must be provided');
+      }
     });
   });
 
@@ -126,10 +129,13 @@ describe('GenerateMsTeamsOauthUrl', () => {
         mode: 'link_user',
       });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(
-        BadRequestException,
-        'subscriberId is required for link_user mode'
-      );
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected BadRequestException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.equal('subscriberId is required for link_user mode');
+      }
     });
 
     it('should throw NotFoundException when tenantId is missing for link_user mode', async () => {
@@ -141,7 +147,13 @@ describe('GenerateMsTeamsOauthUrl', () => {
         mode: 'link_user',
       });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(NotFoundException, 'missing tenantId');
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected NotFoundException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(NotFoundException);
+        expect((err as NotFoundException).message).to.equal('missing tenantId');
+      }
     });
 
     it('should encode mode in the OAuth state so the callback can branch correctly', async () => {

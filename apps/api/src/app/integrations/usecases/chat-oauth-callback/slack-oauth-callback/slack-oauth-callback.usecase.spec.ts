@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import { GetNovuProviderCredentials } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
