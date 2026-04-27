@@ -35,7 +35,7 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     name: string
   ): Promise<Pick<
     DomainEntity,
-    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId'
+    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
   > | null> {
     return this.findOne({ name } as unknown as FilterQuery<DomainDBModel> & EnforceEnvOrOrgIds, [
       '_id',
@@ -44,6 +44,7 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
       'mxRecordConfigured',
       '_environmentId',
       '_organizationId',
+      'data',
     ]);
   }
 
