@@ -34,7 +34,11 @@ export class VerifyDomain {
       throw new BadRequestException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
     }
 
-    const mxRecordConfigured = await this.checkMxRecord(domain.name, INBOUND_DOMAIN);
+    const result = await this.checkMxRecord(domain.name, INBOUND_DOMAIN);
+
+    // For transient DNS failures (non-definitive), preserve the existing state to
+    // prevent a verified domain from being incorrectly demoted back to pending.
+    const mxRecordConfigured = result.definitive ? result.configured : domain.mxRecordConfigured;
 
     if (
       mxRecordConfigured !== domain.mxRecordConfigured ||
@@ -61,19 +65,23 @@ export class VerifyDomain {
     };
   }
 
-  private async checkMxRecord(lookupDomain: string, expectedExchange: string): Promise<boolean> {
+  private async checkMxRecord(
+    lookupDomain: string,
+    expectedExchange: string
+  ): Promise<{ configured: boolean; definitive: boolean }> {
     try {
       const records: MxRecord[] = await dnsPromises.resolveMx(lookupDomain);
+      const configured = records.some((record) => record.exchange.toLowerCase() === expectedExchange.toLowerCase());
 
-      return records.some((record) => record.exchange.toLowerCase() === expectedExchange.toLowerCase());
+      return { configured, definitive: true };
     } catch (error) {
       if (isExpectedDnsLookupMiss(error)) {
         this.logger.debug(
-          { lookupDomain, expectedExchange, code: error.code },
+          { lookupDomain, expectedExchange, code: (error as NodeJS.ErrnoException).code },
           'MX record is not configured for domain verification yet'
         );
 
-        return false;
+        return { configured: false, definitive: true };
       }
 
       this.logger.warn(
@@ -81,7 +89,7 @@ export class VerifyDomain {
         'Failed to resolve MX records for domain verification'
       );
 
-      return false;
+      return { configured: false, definitive: false };
     }
   }
 }
