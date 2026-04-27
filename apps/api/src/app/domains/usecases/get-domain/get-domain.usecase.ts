@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DomainRepository } from '@novu/dal';
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
+import { resolveDomainName } from '../domain-route.utils';
 import { VerifyDomainCommand } from '../verify-domain/verify-domain.command';
 import { VerifyDomain } from '../verify-domain/verify-domain.usecase';
 import { GetDomainCommand } from './get-domain.command';
@@ -13,19 +14,16 @@ export class GetDomain {
   ) {}
 
   async execute(command: GetDomainCommand): Promise<DomainResponseDto> {
-    const domain = await this.domainRepository.findOneByIdAndEnvironment(
-      command.domainId,
-      command.environmentId,
-      command.organizationId
-    );
-
-    if (!domain) {
-      throw new NotFoundException(`Domain with id "${command.domainId}" not found.`);
-    }
+    const domain = await resolveDomainName({
+      domainRepository: this.domainRepository,
+      domain: command.domain,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     return this.verifyDomainUsecase.execute(
       VerifyDomainCommand.create({
-        domainId: command.domainId,
+        domainId: domain._id,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,

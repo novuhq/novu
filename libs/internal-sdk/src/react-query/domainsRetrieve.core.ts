@@ -19,14 +19,14 @@ export type DomainsRetrieveQueryData =
 export function prefetchDomainsRetrieve(
   queryClient: QueryClient,
   client$: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<void> {
   return queryClient.prefetchQuery({
     ...buildDomainsRetrieveQuery(
       client$,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ),
@@ -35,7 +35,7 @@ export function prefetchDomainsRetrieve(
 
 export function buildDomainsRetrieveQuery(
   client$: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -43,7 +43,7 @@ export function buildDomainsRetrieveQuery(
   queryFn: (context: QueryFunctionContext) => Promise<DomainsRetrieveQueryData>;
 } {
   return {
-    queryKey: queryKeyDomainsRetrieve(domainId, { idempotencyKey }),
+    queryKey: queryKeyDomainsRetrieve(domain, { idempotencyKey }),
     queryFn: async function domainsRetrieveQueryFn(
       ctx,
     ): Promise<DomainsRetrieveQueryData> {
@@ -60,7 +60,7 @@ export function buildDomainsRetrieveQuery(
 
       return unwrapAsync(domainsRetrieve(
         client$,
-        domainId,
+        domain,
         idempotencyKey,
         mergedOptions,
       ));
@@ -69,8 +69,8 @@ export function buildDomainsRetrieveQuery(
 }
 
 export function queryKeyDomainsRetrieve(
-  domainId: string,
+  domain: string,
   parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
-  return ["@novu/api", "Domains", "retrieve", domainId, parameters];
+  return ["@novu/api", "Domains", "retrieve", domain, parameters];
 }

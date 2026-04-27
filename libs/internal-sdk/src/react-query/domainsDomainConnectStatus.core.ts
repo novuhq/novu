@@ -19,14 +19,14 @@ export type DomainsDomainConnectStatusQueryData =
 export function prefetchDomainsDomainConnectStatus(
   queryClient: QueryClient,
   client$: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<void> {
   return queryClient.prefetchQuery({
     ...buildDomainsDomainConnectStatusQuery(
       client$,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ),
@@ -35,7 +35,7 @@ export function prefetchDomainsDomainConnectStatus(
 
 export function buildDomainsDomainConnectStatusQuery(
   client$: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -45,7 +45,7 @@ export function buildDomainsDomainConnectStatusQuery(
   ) => Promise<DomainsDomainConnectStatusQueryData>;
 } {
   return {
-    queryKey: queryKeyDomainsDomainConnectStatus(domainId, { idempotencyKey }),
+    queryKey: queryKeyDomainsDomainConnectStatus(domain, { idempotencyKey }),
     queryFn: async function domainsDomainConnectStatusQueryFn(
       ctx,
     ): Promise<DomainsDomainConnectStatusQueryData> {
@@ -62,7 +62,7 @@ export function buildDomainsDomainConnectStatusQuery(
 
       return unwrapAsync(domainsDomainConnectStatus(
         client$,
-        domainId,
+        domain,
         idempotencyKey,
         mergedOptions,
       ));
@@ -71,8 +71,8 @@ export function buildDomainsDomainConnectStatusQuery(
 }
 
 export function queryKeyDomainsDomainConnectStatus(
-  domainId: string,
+  domain: string,
   parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
-  return ["@novu/api", "DomainConnect", "status", domainId, parameters];
+  return ["@novu/api", "DomainConnect", "status", domain, parameters];
 }

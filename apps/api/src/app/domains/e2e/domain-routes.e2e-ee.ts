@@ -9,7 +9,7 @@ import {
   initNovuClassSdkInternalAuth,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
+describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -51,7 +51,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'support', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
     expect(route.id).to.be.a('string');
@@ -71,7 +71,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
         type: DomainRouteDtoType.Agent,
         agentId: agent.identifier,
       },
-      domain.id
+      domain.name
     );
 
     expect(route.agentId).to.equal(agent._id);
@@ -82,7 +82,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domain = await createDomain();
 
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.domains.routes.create({ address: 'no-dest', type: DomainRouteDtoType.Agent }, domain.id)
+      novuClient.domains.routes.create({ address: 'no-dest', type: DomainRouteDtoType.Agent }, domain.name)
     );
 
     expect(error?.statusCode).to.equal(400);
@@ -100,7 +100,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
           type: DomainRouteDtoType.Agent,
           agentId: unknownIdentifier,
         },
-        domain.id
+        domain.name
       )
     );
 
@@ -112,7 +112,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.list({
-        domainId: domain.id,
+        domain: domain.name,
         agentId: `nonexistent-${randomBytes(8).toString('hex')}`,
       })
     );
@@ -123,20 +123,20 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
   it('should return 409 when creating duplicate address and type on the same domain', async () => {
     const domain = await createDomain();
 
-    await novuClient.domains.routes.create({ address: 'dup', type: DomainRouteDtoType.Webhook }, domain.id);
+    await novuClient.domains.routes.create({ address: 'dup', type: DomainRouteDtoType.Webhook }, domain.name);
 
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.domains.routes.create({ address: 'dup', type: DomainRouteDtoType.Webhook }, domain.id)
+      novuClient.domains.routes.create({ address: 'dup', type: DomainRouteDtoType.Webhook }, domain.name)
     );
 
     expect(error?.statusCode).to.equal(409);
   });
 
   it('should return 404 when creating a route on a non-existent domain', async () => {
-    const fakeDomainId = '507f1f77bcf86cd799439012';
+    const fakeDomain = 'missing.example.test';
 
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.domains.routes.create({ address: 'x', type: DomainRouteDtoType.Webhook }, fakeDomainId)
+      novuClient.domains.routes.create({ address: 'x', type: DomainRouteDtoType.Webhook }, fakeDomain)
     );
 
     expect(error?.statusCode).to.equal(404);
@@ -146,10 +146,10 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domain = await createDomain();
     const { result: created } = await novuClient.domains.routes.create(
       { address: 'get-me', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
-    const { result: fetched } = await novuClient.domains.routes.retrieve(domain.id, created.id);
+    const { result: fetched } = await novuClient.domains.routes.retrieve(domain.name, created.id);
 
     expect(fetched.id).to.equal(created.id);
     expect(fetched.address).to.equal('get-me');
@@ -160,10 +160,10 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domainB = await createDomain();
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'iso', type: DomainRouteDtoType.Webhook },
-      domainA.id
+      domainA.name
     );
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domainB.id, route.id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domainB.name, route.id));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -171,10 +171,10 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
   it('should list routes for a domain', async () => {
     const domain = await createDomain();
 
-    await novuClient.domains.routes.create({ address: 'a1', type: DomainRouteDtoType.Webhook }, domain.id);
-    await novuClient.domains.routes.create({ address: 'a2', type: DomainRouteDtoType.Webhook }, domain.id);
+    await novuClient.domains.routes.create({ address: 'a1', type: DomainRouteDtoType.Webhook }, domain.name);
+    await novuClient.domains.routes.create({ address: 'a2', type: DomainRouteDtoType.Webhook }, domain.name);
 
-    const { result } = await novuClient.domains.routes.list({ domainId: domain.id });
+    const { result } = await novuClient.domains.routes.list({ domain: domain.name });
 
     expect(result.data.length).to.be.at.least(2);
     expect(result.data.every((r) => r.domainId === domain.id)).to.equal(true);
@@ -184,18 +184,18 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
   it('should paginate domain routes without overlap', async () => {
     const domain = await createDomain();
 
-    await novuClient.domains.routes.create({ address: 'p0', type: DomainRouteDtoType.Webhook }, domain.id);
-    await novuClient.domains.routes.create({ address: 'p1', type: DomainRouteDtoType.Webhook }, domain.id);
-    await novuClient.domains.routes.create({ address: 'p2', type: DomainRouteDtoType.Webhook }, domain.id);
+    await novuClient.domains.routes.create({ address: 'p0', type: DomainRouteDtoType.Webhook }, domain.name);
+    await novuClient.domains.routes.create({ address: 'p1', type: DomainRouteDtoType.Webhook }, domain.name);
+    await novuClient.domains.routes.create({ address: 'p2', type: DomainRouteDtoType.Webhook }, domain.name);
 
     const limit = 1;
-    const first = await novuClient.domains.routes.list({ domainId: domain.id, limit });
+    const first = await novuClient.domains.routes.list({ domain: domain.name, limit });
 
     expect(first.result.data.length).to.equal(1);
     expect(first.result.next).to.be.a('string');
 
     const second = await novuClient.domains.routes.list({
-      domainId: domain.id,
+      domain: domain.name,
       limit,
       after: first.result.next as string,
     });
@@ -206,9 +206,9 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
   });
 
   it('should return 404 when listing routes for a non-existent domain', async () => {
-    const fakeId = '507f1f77bcf86cd799439013';
+    const fakeDomain = 'missing.example.test';
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domainId: fakeId }));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domain: fakeDomain }));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -218,7 +218,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.list({
-        domainId: domain.id,
+        domain: domain.name,
         before: '000000000000000000000001',
         after: '000000000000000000000002',
       })
@@ -234,11 +234,11 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     await novuClient.domains.routes.create(
       { address: 'f1', type: DomainRouteDtoType.Agent, agentId: agent.identifier },
-      domain.id
+      domain.name
     );
-    await novuClient.domains.routes.create({ address: 'f2', type: DomainRouteDtoType.Webhook }, domain.id);
+    await novuClient.domains.routes.create({ address: 'f2', type: DomainRouteDtoType.Webhook }, domain.name);
 
-    const { result } = await novuClient.domains.routes.list({ domainId: domain.id, agentId: agent.identifier });
+    const { result } = await novuClient.domains.routes.list({ domain: domain.name, agentId: agent.identifier });
 
     expect(result.data.every((r) => r.agentId === agent._id)).to.equal(true);
     expect(result.data.length).to.equal(1);
@@ -249,11 +249,11 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domain = await createDomain();
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'old-addr', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
     const { result: updated } = await novuClient.domains.routes.update({
-      domainId: domain.id,
+      domain: domain.name,
       routeId: route.id,
       updateDomainRouteDto: { address: 'new-addr' },
     });
@@ -267,11 +267,11 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'switch', type: DomainRouteDtoType.Agent, agentId: agent.identifier },
-      domain.id
+      domain.name
     );
 
     const { result: updated } = await novuClient.domains.routes.update({
-      domainId: domain.id,
+      domain: domain.name,
       routeId: route.id,
       updateDomainRouteDto: { type: DomainRouteDtoType.Webhook },
     });
@@ -285,12 +285,12 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'wh-only', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.update({
-        domainId: domain.id,
+        domain: domain.name,
         routeId: route.id,
         updateDomainRouteDto: { type: DomainRouteDtoType.Agent },
       })
@@ -305,11 +305,11 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'to-agent', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
     const { result: updated } = await novuClient.domains.routes.update({
-      domainId: domain.id,
+      domain: domain.name,
       routeId: route.id,
       updateDomainRouteDto: { type: DomainRouteDtoType.Agent, agentId: agent.identifier },
     });
@@ -321,15 +321,15 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
   it('should return 409 when update causes duplicate address and type', async () => {
     const domain = await createDomain();
 
-    await novuClient.domains.routes.create({ address: 'keep', type: DomainRouteDtoType.Webhook }, domain.id);
+    await novuClient.domains.routes.create({ address: 'keep', type: DomainRouteDtoType.Webhook }, domain.name);
     const { result: second } = await novuClient.domains.routes.create(
       { address: 'move', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.update({
-        domainId: domain.id,
+        domain: domain.name,
         routeId: second.id,
         updateDomainRouteDto: { address: 'keep' },
       })
@@ -344,7 +344,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.update({
-        domainId: domain.id,
+        domain: domain.name,
         routeId: fakeRouteId,
         updateDomainRouteDto: { address: 'x' },
       })
@@ -357,12 +357,12 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domain = await createDomain();
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'del-me', type: DomainRouteDtoType.Webhook },
-      domain.id
+      domain.name
     );
 
-    await novuClient.domains.routes.delete(domain.id, route.id);
+    await novuClient.domains.routes.delete(domain.name, route.id);
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domain.id, route.id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domain.name, route.id));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -371,7 +371,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domain = await createDomain();
     const fakeRouteId = '507f1f77bcf86cd799439015';
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.delete(domain.id, fakeRouteId));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.delete(domain.name, fakeRouteId));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -380,7 +380,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
     const domain = await createDomain();
 
     const { error } = await expectSdkValidationExceptionGeneric(() =>
-      novuClient.domains.routes.create({ address: '', type: DomainRouteDtoType.Webhook }, domain.id)
+      novuClient.domains.routes.create({ address: '', type: DomainRouteDtoType.Webhook }, domain.name)
     );
 
     expect(error?.statusCode).to.equal(422);

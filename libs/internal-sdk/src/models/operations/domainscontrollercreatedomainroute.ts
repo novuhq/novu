@@ -10,7 +10,7 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type DomainsControllerCreateDomainRouteRequest = {
-  domainId: string;
+  domain: string;
   /**
    * A header for idempotency purposes
    */
@@ -25,7 +25,7 @@ export type DomainsControllerCreateDomainRouteResponse = {
 
 /** @internal */
 export type DomainsControllerCreateDomainRouteRequest$Outbound = {
-  domainId: string;
+  domain: string;
   "idempotency-key"?: string | undefined;
   DomainRouteDto: components.DomainRouteDto$Outbound;
 };
@@ -37,7 +37,7 @@ export const DomainsControllerCreateDomainRouteRequest$outboundSchema:
     z.ZodTypeDef,
     DomainsControllerCreateDomainRouteRequest
   > = z.object({
-    domainId: z.string(),
+    domain: z.string(),
     idempotencyKey: z.string().optional(),
     domainRouteDto: components.DomainRouteDto$outboundSchema,
   }).transform((v) => {

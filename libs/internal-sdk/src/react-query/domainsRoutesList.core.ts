@@ -42,7 +42,7 @@ export function buildDomainsRoutesListQuery(
   ) => Promise<DomainsRoutesListQueryData>;
 } {
   return {
-    queryKey: queryKeyDomainsRoutesList(request.domainId, {
+    queryKey: queryKeyDomainsRoutesList(request.domain, {
       after: request.after,
       before: request.before,
       limit: request.limit,
@@ -76,7 +76,7 @@ export function buildDomainsRoutesListQuery(
 }
 
 export function queryKeyDomainsRoutesList(
-  domainId: string,
+  domain: string,
   parameters: {
     after?: string | undefined;
     before?: string | undefined;
@@ -90,5 +90,5 @@ export function queryKeyDomainsRoutesList(
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {
-  return ["@novu/api", "Routes", "list", domainId, parameters];
+  return ["@novu/api", "Routes", "list", domain, parameters];
 }

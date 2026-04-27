@@ -28,7 +28,7 @@ import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
 export type DomainsRoutesDeleteMutationVariables = {
-  domainId: string;
+  domain: string;
   routeId: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
@@ -87,7 +87,7 @@ export function buildDomainsRoutesDeleteMutation(
   return {
     mutationKey: mutationKeyDomainsRoutesDelete(),
     mutationFn: function domainsRoutesDeleteMutationFn({
-      domainId,
+      domain,
       routeId,
       idempotencyKey,
       options,
@@ -106,7 +106,7 @@ export function buildDomainsRoutesDeleteMutation(
       };
       return unwrapAsync(domainsRoutesDelete(
         client$,
-        domainId,
+        domain,
         routeId,
         idempotencyKey,
         mergedOptions,

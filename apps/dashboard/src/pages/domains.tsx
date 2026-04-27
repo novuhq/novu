@@ -56,7 +56,7 @@ function DomainRow({
   const navigate = useNavigate();
 
   const handleRowClick = () => {
-    navigate(buildRoute(ROUTES.DOMAIN_DETAIL, { environmentSlug, domainId: domain._id }));
+    navigate(buildRoute(ROUTES.DOMAIN_DETAIL, { environmentSlug, domain: domain.name }));
   };
 
   return (
@@ -130,7 +130,7 @@ export function DomainsPage() {
     }
 
     try {
-      await deleteDomain.mutateAsync(domainToDelete._id);
+      await deleteDomain.mutateAsync(domainToDelete.name);
       setDomainToDelete(null);
       showSuccessToast(`Domain "${domainToDelete.name}" deleted.`);
     } catch {

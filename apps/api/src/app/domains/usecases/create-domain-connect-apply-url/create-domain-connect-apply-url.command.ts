@@ -5,7 +5,7 @@ import { IsDomainConnectRedirectUrl } from '../../validators/domain-connect-redi
 export class CreateDomainConnectApplyUrlCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  domainId: string;
+  domain: string;
 
   @IsOptional()
   @IsString()

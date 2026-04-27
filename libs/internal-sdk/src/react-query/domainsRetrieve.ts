@@ -53,10 +53,10 @@ export type DomainsRetrieveQueryError =
   | SDKValidationError;
 
 /**
- * Get a domain by ID
+ * Get a domain by name
  */
 export function useDomainsRetrieve(
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<
     DomainsRetrieveQueryData,
@@ -67,7 +67,7 @@ export function useDomainsRetrieve(
   return useQuery({
     ...buildDomainsRetrieveQuery(
       client,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ),
@@ -76,10 +76,10 @@ export function useDomainsRetrieve(
 }
 
 /**
- * Get a domain by ID
+ * Get a domain by name
  */
 export function useDomainsRetrieveSuspense(
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<
     DomainsRetrieveQueryData,
@@ -90,7 +90,7 @@ export function useDomainsRetrieveSuspense(
   return useSuspenseQuery({
     ...buildDomainsRetrieveQuery(
       client,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ),
@@ -101,7 +101,7 @@ export function useDomainsRetrieveSuspense(
 export function setDomainsRetrieveData(
   client: QueryClient,
   queryKeyBase: [
-    domainId: string,
+    domain: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
   data: DomainsRetrieveQueryData,
@@ -114,7 +114,7 @@ export function setDomainsRetrieveData(
 export function invalidateDomainsRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [domainId: string, parameters: { idempotencyKey?: string | undefined }]
+    [domain: string, parameters: { idempotencyKey?: string | undefined }]
   >,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {

@@ -47,7 +47,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
         navigate(
           buildRoute(ROUTES.DOMAIN_DETAIL, {
             environmentSlug: currentEnvironment.slug,
-            domainId: domain._id,
+            domain: domain.name,
           })
         );
       }

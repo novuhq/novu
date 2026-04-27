@@ -4,7 +4,7 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 export class GetDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  domainId: string;
+  domain: string;
 
   @IsString()
   @IsNotEmpty()

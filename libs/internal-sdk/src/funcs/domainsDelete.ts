@@ -33,7 +33,7 @@ import { Result } from "../types/fp.js";
  */
 export function domainsDelete(
   client: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -53,7 +53,7 @@ export function domainsDelete(
 > {
   return new APIPromise($do(
     client,
-    domainId,
+    domain,
     idempotencyKey,
     options,
   ));
@@ -61,7 +61,7 @@ export function domainsDelete(
 
 async function $do(
   client: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -83,7 +83,7 @@ async function $do(
   ]
 > {
   const input: operations.DomainsControllerDeleteDomainRequest = {
-    domainId: domainId,
+    domain: domain,
     idempotencyKey: idempotencyKey,
   };
 
@@ -102,12 +102,12 @@ async function $do(
   const body = null;
 
   const pathParams = {
-    domainId: encodeSimple("domainId", payload.domainId, {
+    domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domainId}")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}")(pathParams);
 
   const headers = new Headers(compactMap({
     Accept: "application/json",

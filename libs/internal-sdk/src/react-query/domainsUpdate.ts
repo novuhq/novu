@@ -30,7 +30,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type DomainsUpdateMutationVariables = {
   updateDomainDto: components.UpdateDomainDto;
-  domainId: string;
+  domain: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -88,7 +88,7 @@ export function buildDomainsUpdateMutation(
     mutationKey: mutationKeyDomainsUpdate(),
     mutationFn: function domainsUpdateMutationFn({
       updateDomainDto,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     }): Promise<DomainsUpdateMutationData> {
@@ -107,7 +107,7 @@ export function buildDomainsUpdateMutation(
       return unwrapAsync(domainsUpdate(
         client$,
         updateDomainDto,
-        domainId,
+        domain,
         idempotencyKey,
         mergedOptions,
       ));

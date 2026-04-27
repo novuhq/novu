@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
 export function domainsDomainConnectCreate(
   client: NovuCore,
   createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -56,7 +56,7 @@ export function domainsDomainConnectCreate(
   return new APIPromise($do(
     client,
     createDomainConnectApplyUrlDto,
-    domainId,
+    domain,
     idempotencyKey,
     options,
   ));
@@ -65,7 +65,7 @@ export function domainsDomainConnectCreate(
 async function $do(
   client: NovuCore,
   createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -89,7 +89,7 @@ async function $do(
   const input: operations.DomainsControllerCreateDomainConnectApplyUrlRequest =
     {
       createDomainConnectApplyUrlDto: createDomainConnectApplyUrlDto,
-      domainId: domainId,
+      domain: domain,
       idempotencyKey: idempotencyKey,
     };
 
@@ -110,12 +110,12 @@ async function $do(
   });
 
   const pathParams = {
-    domainId: encodeSimple("domainId", payload.domainId, {
+    domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domainId}/domain-connect/apply-url")(
+  const path = pathToFunc("/v1/domains/{domain}/domain-connect/apply-url")(
     pathParams,
   );
 

@@ -56,16 +56,16 @@ export class Domains extends ClientSDK {
   }
 
   /**
-   * Get a domain by ID
+   * Get a domain by name
    */
   async retrieve(
-    domainId: string,
+    domain: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerGetDomainResponse> {
     return unwrapAsync(domainsRetrieve(
       this,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ));
@@ -76,14 +76,14 @@ export class Domains extends ClientSDK {
    */
   async update(
     updateDomainDto: components.UpdateDomainDto,
-    domainId: string,
+    domain: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerUpdateDomainResponse> {
     return unwrapAsync(domainsUpdate(
       this,
       updateDomainDto,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ));
@@ -93,13 +93,13 @@ export class Domains extends ClientSDK {
    * Delete a domain
    */
   async delete(
-    domainId: string,
+    domain: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerDeleteDomainResponse | undefined> {
     return unwrapAsync(domainsDelete(
       this,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ));

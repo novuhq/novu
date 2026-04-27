@@ -116,8 +116,8 @@ export const fetchDomains = async (
   return get<CursorPaginatedResponse<DomainResponse>>(`/domains${buildCursorQuery(params)}`, { environment });
 };
 
-export const fetchDomain = async (domainId: string, environment: IEnvironment): Promise<DomainResponse> => {
-  const { data } = await get<{ data: DomainResponse }>(`/domains/${domainId}`, { environment });
+export const fetchDomain = async (domain: string, environment: IEnvironment): Promise<DomainResponse> => {
+  const { data } = await get<{ data: DomainResponse }>(`/domains/${encodeURIComponent(domain)}`, { environment });
 
   return data;
 };
@@ -128,37 +128,40 @@ export const createDomain = async (body: CreateDomainBody, environment: IEnviron
   return data;
 };
 
-export const deleteDomain = (domainId: string, environment: IEnvironment): Promise<void> =>
-  del(`/domains/${domainId}`, { environment });
+export const deleteDomain = (domain: string, environment: IEnvironment): Promise<void> =>
+  del(`/domains/${encodeURIComponent(domain)}`, { environment });
 
 export const updateDomain = async (
-  domainId: string,
+  domain: string,
   body: UpdateDomainBody,
   environment: IEnvironment
 ): Promise<DomainResponse> => {
-  const { data } = await patch<{ data: DomainResponse }>(`/domains/${domainId}`, { body, environment });
+  const { data } = await patch<{ data: DomainResponse }>(`/domains/${encodeURIComponent(domain)}`, {
+    body,
+    environment,
+  });
 
   return data;
 };
 
 export const fetchDomainRoutes = async (
-  domainId: string,
+  domain: string,
   environment: IEnvironment,
   params: ListDomainRoutesParams = {}
 ): Promise<CursorPaginatedResponse<DomainRouteResponse>> => {
   return get<CursorPaginatedResponse<DomainRouteResponse>>(
-    `/domains/${encodeURIComponent(domainId)}/routes${buildCursorQuery(params)}`,
+    `/domains/${encodeURIComponent(domain)}/routes${buildCursorQuery(params)}`,
     { environment }
   );
 };
 
 export const fetchDomainRoute = async (
-  domainId: string,
+  domain: string,
   routeId: string,
   environment: IEnvironment
 ): Promise<DomainRouteResponse> => {
   const { data } = await get<{ data: DomainRouteResponse }>(
-    `/domains/${encodeURIComponent(domainId)}/routes/${encodeURIComponent(routeId)}`,
+    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(routeId)}`,
     { environment }
   );
 
@@ -166,11 +169,11 @@ export const fetchDomainRoute = async (
 };
 
 export const createDomainRoute = async (
-  domainId: string,
+  domain: string,
   body: CreateDomainRouteBody,
   environment: IEnvironment
 ): Promise<DomainRouteResponse> => {
-  const { data } = await post<{ data: DomainRouteResponse }>(`/domains/${encodeURIComponent(domainId)}/routes`, {
+  const { data } = await post<{ data: DomainRouteResponse }>(`/domains/${encodeURIComponent(domain)}/routes`, {
     body,
     environment,
   });
@@ -179,40 +182,43 @@ export const createDomainRoute = async (
 };
 
 export const updateDomainRoute = async (
-  domainId: string,
+  domain: string,
   routeId: string,
   body: UpdateDomainRouteBody,
   environment: IEnvironment
 ): Promise<DomainRouteResponse> => {
   const { data } = await patch<{ data: DomainRouteResponse }>(
-    `/domains/${encodeURIComponent(domainId)}/routes/${encodeURIComponent(routeId)}`,
+    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(routeId)}`,
     { body, environment }
   );
 
   return data;
 };
 
-export const deleteDomainRoute = (domainId: string, routeId: string, environment: IEnvironment): Promise<void> =>
-  del(`/domains/${encodeURIComponent(domainId)}/routes/${encodeURIComponent(routeId)}`, { environment });
+export const deleteDomainRoute = (domain: string, routeId: string, environment: IEnvironment): Promise<void> =>
+  del(`/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(routeId)}`, { environment });
 
 export const fetchDomainConnectStatus = async (
-  domainId: string,
+  domain: string,
   environment: IEnvironment
 ): Promise<DomainConnectStatusResponse> => {
-  const { data } = await get<{ data: DomainConnectStatusResponse }>(`/domains/${domainId}/domain-connect/status`, {
-    environment,
-  });
+  const { data } = await get<{ data: DomainConnectStatusResponse }>(
+    `/domains/${encodeURIComponent(domain)}/domain-connect/status`,
+    {
+      environment,
+    }
+  );
 
   return data;
 };
 
 export const createDomainConnectApplyUrl = async (
-  domainId: string,
+  domain: string,
   body: CreateDomainConnectApplyUrlBody,
   environment: IEnvironment
 ): Promise<DomainConnectApplyUrlResponse> => {
   const { data } = await post<{ data: DomainConnectApplyUrlResponse }>(
-    `/domains/${domainId}/domain-connect/apply-url`,
+    `/domains/${encodeURIComponent(domain)}/domain-connect/apply-url`,
     {
       body,
       environment,

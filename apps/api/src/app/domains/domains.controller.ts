@@ -121,27 +121,24 @@ export class DomainsController {
     );
   }
 
-  @Get('/:domainId')
+  @Get('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'Get a domain by ID' })
+  @ApiOperation({ summary: 'Get a domain by name' })
   @ApiResponse(DomainResponseDto, 200)
   @SdkMethodName('retrieve')
-  async getDomain(
-    @Param('domainId') domainId: string,
-    @UserSession() user: UserSessionData
-  ): Promise<DomainResponseDto> {
+  async getDomain(@Param('domain') domain: string, @UserSession() user: UserSessionData): Promise<DomainResponseDto> {
     return this.getDomainUsecase.execute(
       GetDomainCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
       })
     );
   }
 
-  @Get('/:domainId/routes')
+  @Get('/:domain/routes')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List routes for a domain' })
@@ -149,14 +146,14 @@ export class DomainsController {
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('list')
   async listDomainRoutes(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Query() query: ListDomainRoutesQueryDto,
     @UserSession() user: UserSessionData
   ): Promise<ListDomainRoutesResponseDto> {
     return this.listDomainRoutesUsecase.execute(
       ListDomainRoutesCommand.create({
         user,
-        domainId,
+        domain,
         agentId: query.agentId,
         limit: Number(query.limit || '10'),
         after: query.after,
@@ -168,7 +165,7 @@ export class DomainsController {
     );
   }
 
-  @Post('/:domainId/routes')
+  @Post('/:domain/routes')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a domain route' })
@@ -176,7 +173,7 @@ export class DomainsController {
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('create')
   async createDomainRoute(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Body() body: DomainRouteDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainRouteResponseDto> {
@@ -185,7 +182,7 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
         address: body.address,
         agentId: body.agentId,
         type: body.type,
@@ -193,7 +190,7 @@ export class DomainsController {
     );
   }
 
-  @Get('/:domainId/routes/:routeId')
+  @Get('/:domain/routes/:routeId')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get a domain route by ID' })
@@ -201,7 +198,7 @@ export class DomainsController {
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('retrieve')
   async getDomainRoute(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Param('routeId') routeId: string,
     @UserSession() user: UserSessionData
   ): Promise<DomainRouteResponseDto> {
@@ -210,13 +207,13 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
         routeId,
       })
     );
   }
 
-  @Patch('/:domainId/routes/:routeId')
+  @Patch('/:domain/routes/:routeId')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain route' })
@@ -224,7 +221,7 @@ export class DomainsController {
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('update')
   async updateDomainRoute(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Param('routeId') routeId: string,
     @Body() body: UpdateDomainRouteDto,
     @UserSession() user: UserSessionData
@@ -234,7 +231,7 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
         routeId,
         address: body.address,
         agentId: body.agentId,
@@ -243,7 +240,7 @@ export class DomainsController {
     );
   }
 
-  @Delete('/:domainId/routes/:routeId')
+  @Delete('/:domain/routes/:routeId')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Delete a domain route' })
@@ -252,7 +249,7 @@ export class DomainsController {
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('delete')
   async deleteDomainRoute(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Param('routeId') routeId: string,
     @UserSession() user: UserSessionData
   ): Promise<void> {
@@ -261,13 +258,13 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
         routeId,
       })
     );
   }
 
-  @Get('/:domainId/domain-connect/status')
+  @Get('/:domain/domain-connect/status')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get Domain Connect auto-configuration availability for a domain' })
@@ -275,7 +272,7 @@ export class DomainsController {
   @SdkGroupName('Domains.DomainConnect')
   @SdkMethodName('status')
   async getDomainConnectStatus(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @UserSession() user: UserSessionData
   ): Promise<DomainConnectStatusResponseDto> {
     return this.getDomainConnectStatusUsecase.execute(
@@ -283,12 +280,12 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
       })
     );
   }
 
-  @Post('/:domainId/domain-connect/apply-url')
+  @Post('/:domain/domain-connect/apply-url')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a signed Domain Connect apply URL for a domain' })
@@ -296,7 +293,7 @@ export class DomainsController {
   @SdkGroupName('Domains.DomainConnect')
   @SdkMethodName('create')
   async createDomainConnectApplyUrl(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Body() body: CreateDomainConnectApplyUrlDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainConnectApplyUrlResponseDto> {
@@ -305,20 +302,20 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
         redirectUri: body?.redirectUri,
       })
     );
   }
 
-  @Patch('/:domainId')
+  @Patch('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain' })
   @ApiResponse(DomainResponseDto, 200)
   @SdkMethodName('update')
   async updateDomain(
-    @Param('domainId') domainId: string,
+    @Param('domain') domain: string,
     @Body() _body: UpdateDomainDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainResponseDto> {
@@ -327,25 +324,25 @@ export class DomainsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
       })
     );
   }
 
-  @Delete('/:domainId')
+  @Delete('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Delete a domain' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   @SdkMethodName('delete')
-  async deleteDomain(@Param('domainId') domainId: string, @UserSession() user: UserSessionData): Promise<void> {
+  async deleteDomain(@Param('domain') domain: string, @UserSession() user: UserSessionData): Promise<void> {
     return this.deleteDomainUsecase.execute(
       DeleteDomainCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        domainId,
+        domain,
       })
     );
   }

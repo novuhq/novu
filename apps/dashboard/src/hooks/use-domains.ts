@@ -39,8 +39,8 @@ export function useDeleteDomain() {
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
-    mutationFn: (domainId: string) =>
-      deleteDomain(domainId, requireEnvironment(currentEnvironment, 'No environment selected')),
+    mutationFn: (domain: string) =>
+      deleteDomain(domain, requireEnvironment(currentEnvironment, 'No environment selected')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains] });
     },

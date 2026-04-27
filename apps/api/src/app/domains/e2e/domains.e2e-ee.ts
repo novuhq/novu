@@ -56,20 +56,20 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(error?.statusCode).to.equal(422);
   });
 
-  it('should retrieve a domain by id', async () => {
+  it('should retrieve a domain by name', async () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });
 
-    const { result: fetched } = await novuClient.domains.retrieve(created.id);
+    const { result: fetched } = await novuClient.domains.retrieve(created.name);
 
     expect(fetched.id).to.equal(created.id);
     expect(fetched.name).to.equal(name);
   });
 
   it('should return 404 when retrieving a non-existent domain', async () => {
-    const fakeId = '000000000000000000000099';
+    const fakeDomain = 'missing.example.test';
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.retrieve(fakeId));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.retrieve(fakeDomain));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -138,7 +138,7 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });
 
-    const { result: updated } = await novuClient.domains.update({}, created.id);
+    const { result: updated } = await novuClient.domains.update({}, created.name);
 
     expect(updated.id).to.equal(created.id);
     expect(updated.name).to.equal(name);
@@ -149,9 +149,9 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });
 
-    await novuClient.domains.delete(created.id);
+    await novuClient.domains.delete(created.name);
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.retrieve(created.id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.retrieve(created.name));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -160,15 +160,15 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     const name = uniqueDomainName();
     const { result: domain } = await novuClient.domains.create({ name });
 
-    await novuClient.domains.routes.create({ address: 'cascade', type: DomainRouteDtoType.Webhook }, domain.id);
+    await novuClient.domains.routes.create({ address: 'cascade', type: DomainRouteDtoType.Webhook }, domain.name);
 
-    const before = await novuClient.domains.routes.list({ domainId: domain.id });
+    const before = await novuClient.domains.routes.list({ domain: domain.name });
 
     expect(before.result.data.some((r) => r.address === 'cascade')).to.equal(true);
 
-    await novuClient.domains.delete(domain.id);
+    await novuClient.domains.delete(domain.name);
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domainId: domain.id }));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domain: domain.name }));
 
     expect(error?.statusCode).to.equal(404);
   });

@@ -30,7 +30,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type DomainsRoutesCreateMutationVariables = {
   domainRouteDto: components.DomainRouteDto;
-  domainId: string;
+  domain: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -88,7 +88,7 @@ export function buildDomainsRoutesCreateMutation(
     mutationKey: mutationKeyDomainsRoutesCreate(),
     mutationFn: function domainsRoutesCreateMutationFn({
       domainRouteDto,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     }): Promise<DomainsRoutesCreateMutationData> {
@@ -107,7 +107,7 @@ export function buildDomainsRoutesCreateMutation(
       return unwrapAsync(domainsRoutesCreate(
         client$,
         domainRouteDto,
-        domainId,
+        domain,
         idempotencyKey,
         mergedOptions,
       ));

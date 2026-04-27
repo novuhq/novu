@@ -92,21 +92,24 @@ function MxRecordStatusBadge({ configured }: { configured: boolean }) {
 }
 
 export function DomainDetailPage() {
-  const { domainId } = useParams<{ domainId: string }>();
+  const { domain: domainParam } = useParams<{ domain: string }>();
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { data: domain, isLoading, isFetching } = useFetchDomain(domainId);
+  const { data: domain, isLoading, isFetching } = useFetchDomain(domainParam);
   const isDomainConnectInboundEmailEnabled = useFeatureFlag(
     FeatureFlagsKeysEnum.IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED,
     false
   );
-  const { data: domainConnectStatus, isLoading: isDomainConnectStatusLoading } = useFetchDomainConnectStatus(domainId, {
-    enabled: isDomainConnectInboundEmailEnabled && domain?.status === DomainStatusEnum.PENDING,
-  });
-  const { refresh: refreshDomain } = useRefreshDomain(domainId);
-  const createDomainConnectApplyUrl = useCreateDomainConnectApplyUrl(domainId);
+  const { data: domainConnectStatus, isLoading: isDomainConnectStatusLoading } = useFetchDomainConnectStatus(
+    domainParam,
+    {
+      enabled: isDomainConnectInboundEmailEnabled && domain?.status === DomainStatusEnum.PENDING,
+    }
+  );
+  const { refresh: refreshDomain } = useRefreshDomain(domainParam);
+  const createDomainConnectApplyUrl = useCreateDomainConnectApplyUrl(domainParam);
   const deleteDomain = useDeleteDomain();
   const routingRef = useRef<DomainRoutingHandle>(null);
   const hasHandledDomainConnectReturnRef = useRef(false);
@@ -144,6 +147,7 @@ export function DomainDetailPage() {
       const currentUrl = new URL(window.location.href);
       currentUrl.searchParams.delete('domainConnect');
       currentUrl.searchParams.delete('domainId');
+      currentUrl.searchParams.delete('domain');
       currentUrl.searchParams.delete('error');
       currentUrl.searchParams.delete('error_description');
 
@@ -170,6 +174,7 @@ export function DomainDetailPage() {
       const nextSearchParams = new URLSearchParams(searchParams);
       nextSearchParams.delete('domainConnect');
       nextSearchParams.delete('domainId');
+      nextSearchParams.delete('domain');
       nextSearchParams.delete('error');
       nextSearchParams.delete('error_description');
       nextSearchParams.delete('state');
@@ -220,7 +225,7 @@ export function DomainDetailPage() {
     if (!domain) return;
 
     try {
-      await deleteDomain.mutateAsync(domain._id);
+      await deleteDomain.mutateAsync(domain.name);
       setIsDeleteModalOpen(false);
       showSuccessToast(`Domain "${domain.name}" deleted.`);
       navigate(domainsHref);

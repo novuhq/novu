@@ -101,7 +101,7 @@ export function useDomainsRoutesListSuspense(
 export function setDomainsRoutesListData(
   client: QueryClient,
   queryKeyBase: [
-    domainId: string,
+    domain: string,
     parameters: {
       after?: string | undefined;
       before?: string | undefined;
@@ -126,7 +126,7 @@ export function invalidateDomainsRoutesList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [
-      domainId: string,
+      domain: string,
       parameters: {
         after?: string | undefined;
         before?: string | undefined;

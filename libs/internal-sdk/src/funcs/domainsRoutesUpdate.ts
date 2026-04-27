@@ -96,7 +96,7 @@ async function $do(
   });
 
   const pathParams = {
-    domainId: encodeSimple("domainId", payload.domainId, {
+    domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
@@ -105,9 +105,7 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domainId}/routes/{routeId}")(
-    pathParams,
-  );
+  const path = pathToFunc("/v1/domains/{domain}/routes/{routeId}")(pathParams);
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",

@@ -9,7 +9,7 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type DomainsControllerDeleteDomainRequest = {
-  domainId: string;
+  domain: string;
   /**
    * A header for idempotency purposes
    */
@@ -22,7 +22,7 @@ export type DomainsControllerDeleteDomainResponse = {
 
 /** @internal */
 export type DomainsControllerDeleteDomainRequest$Outbound = {
-  domainId: string;
+  domain: string;
   "idempotency-key"?: string | undefined;
 };
 
@@ -32,7 +32,7 @@ export const DomainsControllerDeleteDomainRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DomainsControllerDeleteDomainRequest
 > = z.object({
-  domainId: z.string(),
+  domain: z.string(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

@@ -40,12 +40,10 @@ const domainSchema = new Schema<DomainDBModel>(
  */
 domainSchema.index({ name: 1 }, { unique: true });
 
-domainSchema.index({ _environmentId: 1 });
-
 /*
- * Supports listDomains queries scoped to a specific environment + organization.
+ * Supports listDomains queries scoped to a specific environment
  */
-domainSchema.index({ _environmentId: 1, _organizationId: 1 });
+domainSchema.index({ _environmentId: 1 });
 
 export const Domain =
   (mongoose.models.Domain as mongoose.Model<DomainDBModel>) || mongoose.model<DomainDBModel>('Domain', domainSchema);

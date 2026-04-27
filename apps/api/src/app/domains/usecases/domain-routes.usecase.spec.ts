@@ -12,13 +12,14 @@ const ENVIRONMENT_ID = 'environment-id';
 const ORGANIZATION_ID = 'organization-id';
 const USER_ID = 'user-id';
 const DOMAIN_ID = 'domain-id';
+const DOMAIN_NAME = 'example.com';
 const ROUTE_ID = 'route-id';
 const AGENT_ID = 'agent-id';
 const AGENT_IDENTIFIER = 'agent-identifier';
 
 const domain = {
   _id: DOMAIN_ID,
-  name: 'example.com',
+  name: DOMAIN_NAME,
   _environmentId: ENVIRONMENT_ID,
   _organizationId: ORGANIZATION_ID,
 };
@@ -48,7 +49,7 @@ describe('Domain route usecases', () => {
 
   beforeEach(() => {
     domainRepositoryMock = {
-      findOneByIdAndEnvironment: stub().resolves(domain),
+      findOne: stub().resolves(domain),
     };
     domainRouteRepositoryMock = {
       create: stub().resolves(route),
@@ -76,7 +77,7 @@ describe('Domain route usecases', () => {
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     const result = await usecase.execute({
-      domainId: DOMAIN_ID,
+      domain: DOMAIN_NAME,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
       userId: USER_ID,
@@ -108,7 +109,7 @@ describe('Domain route usecases', () => {
 
     const result = await usecase.execute({
       user,
-      domainId: DOMAIN_ID,
+      domain: DOMAIN_NAME,
       limit: 10,
       orderBy: '_id',
       orderDirection: DirectionEnum.DESC,
@@ -123,7 +124,7 @@ describe('Domain route usecases', () => {
     const usecase = new GetDomainRoute(domainRepositoryMock, domainRouteRepositoryMock);
 
     const result = await usecase.execute({
-      domainId: DOMAIN_ID,
+      domain: DOMAIN_NAME,
       routeId: ROUTE_ID,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
@@ -137,7 +138,7 @@ describe('Domain route usecases', () => {
     const usecase = new UpdateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     const result = await usecase.execute({
-      domainId: DOMAIN_ID,
+      domain: DOMAIN_NAME,
       routeId: ROUTE_ID,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
@@ -153,7 +154,7 @@ describe('Domain route usecases', () => {
     const usecase = new DeleteDomainRoute(domainRepositoryMock, domainRouteRepositoryMock);
 
     await usecase.execute({
-      domainId: DOMAIN_ID,
+      domain: DOMAIN_NAME,
       routeId: ROUTE_ID,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
@@ -166,12 +167,12 @@ describe('Domain route usecases', () => {
   });
 
   it('throws when the parent domain does not exist', async () => {
-    domainRepositoryMock.findOneByIdAndEnvironment.resolves(null);
+    domainRepositoryMock.findOne.resolves(null);
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     try {
       await usecase.execute({
-        domainId: DOMAIN_ID,
+        domain: DOMAIN_NAME,
         environmentId: ENVIRONMENT_ID,
         organizationId: ORGANIZATION_ID,
         userId: USER_ID,

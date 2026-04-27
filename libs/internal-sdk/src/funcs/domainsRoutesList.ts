@@ -94,12 +94,12 @@ async function $do(
   const body = null;
 
   const pathParams = {
-    domainId: encodeSimple("domainId", payload.domainId, {
+    domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domainId}/routes")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}/routes")(pathParams);
 
   const query = encodeFormQuery({
     "after": payload.after,

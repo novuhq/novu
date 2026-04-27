@@ -56,7 +56,7 @@ export type DomainsRoutesRetrieveQueryError =
  * Get a domain route by ID
  */
 export function useDomainsRoutesRetrieve(
-  domainId: string,
+  domain: string,
   routeId: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<
@@ -71,7 +71,7 @@ export function useDomainsRoutesRetrieve(
   return useQuery({
     ...buildDomainsRoutesRetrieveQuery(
       client,
-      domainId,
+      domain,
       routeId,
       idempotencyKey,
       options,
@@ -84,7 +84,7 @@ export function useDomainsRoutesRetrieve(
  * Get a domain route by ID
  */
 export function useDomainsRoutesRetrieveSuspense(
-  domainId: string,
+  domain: string,
   routeId: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<
@@ -99,7 +99,7 @@ export function useDomainsRoutesRetrieveSuspense(
   return useSuspenseQuery({
     ...buildDomainsRoutesRetrieveQuery(
       client,
-      domainId,
+      domain,
       routeId,
       idempotencyKey,
       options,
@@ -111,7 +111,7 @@ export function useDomainsRoutesRetrieveSuspense(
 export function setDomainsRoutesRetrieveData(
   client: QueryClient,
   queryKeyBase: [
-    domainId: string,
+    domain: string,
     routeId: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
@@ -126,7 +126,7 @@ export function invalidateDomainsRoutesRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [
-      domainId: string,
+      domain: string,
       routeId: string,
       parameters: { idempotencyKey?: string | undefined },
     ]

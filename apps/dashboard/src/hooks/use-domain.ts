@@ -13,27 +13,27 @@ import { QueryKeys } from '@/utils/query-keys';
 const VERIFICATION_POLL_INTERVAL_MS = 5_000;
 
 function requireDomainRequestArgs<TEnvironment extends Pick<IEnvironment, '_id'>>(
-  domainId: string | undefined,
+  domain: string | undefined,
   currentEnvironment: TEnvironment | undefined
 ) {
-  if (!domainId || !currentEnvironment) {
+  if (!domain || !currentEnvironment) {
     throw new Error('Domain request requires a domain and environment.');
   }
 
-  return { domainId, currentEnvironment };
+  return { domain, currentEnvironment };
 }
 
-export function useFetchDomain(domainId: string | undefined) {
+export function useFetchDomain(domain: string | undefined) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery<DomainResponse>({
-    queryKey: [QueryKeys.fetchDomain, domainId, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchDomain, domain, currentEnvironment?._id],
     queryFn: () => {
-      const args = requireDomainRequestArgs(domainId, currentEnvironment);
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
 
-      return fetchDomain(args.domainId, args.currentEnvironment);
+      return fetchDomain(args.domain, args.currentEnvironment);
     },
-    enabled: !!domainId && !!currentEnvironment,
+    enabled: !!domain && !!currentEnvironment,
     refetchInterval: (query) => {
       const data = query.state.data;
 
@@ -46,48 +46,48 @@ export function useFetchDomain(domainId: string | undefined) {
   });
 }
 
-export function useRefreshDomain(domainId: string | undefined) {
+export function useRefreshDomain(domain: string | undefined) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
   return {
     refresh: () =>
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchDomain, domainId, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchDomain, domain, currentEnvironment?._id],
       }),
   };
 }
 
-export function useFetchDomainConnectStatus(domainId: string | undefined, options?: { enabled?: boolean }) {
+export function useFetchDomainConnectStatus(domain: string | undefined, options?: { enabled?: boolean }) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery<DomainConnectStatusResponse>({
-    queryKey: [QueryKeys.fetchDomainConnectStatus, domainId, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchDomainConnectStatus, domain, currentEnvironment?._id],
     queryFn: () => {
-      const args = requireDomainRequestArgs(domainId, currentEnvironment);
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
 
-      return fetchDomainConnectStatus(args.domainId, args.currentEnvironment);
+      return fetchDomainConnectStatus(args.domain, args.currentEnvironment);
     },
-    enabled: !!domainId && !!currentEnvironment && (options?.enabled ?? true),
+    enabled: !!domain && !!currentEnvironment && (options?.enabled ?? true),
     staleTime: 60_000,
   });
 }
 
-export function useCreateDomainConnectApplyUrl(domainId: string | undefined) {
+export function useCreateDomainConnectApplyUrl(domain: string | undefined) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (redirectUri?: string) => {
-      const args = requireDomainRequestArgs(domainId, currentEnvironment);
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
 
-      return createDomainConnectApplyUrl(args.domainId, { redirectUri }, args.currentEnvironment);
+      return createDomainConnectApplyUrl(args.domain, { redirectUri }, args.currentEnvironment);
     },
     onSettled: () => {
-      if (!domainId || !currentEnvironment) return;
+      if (!domain || !currentEnvironment) return;
 
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchDomainConnectStatus, domainId, currentEnvironment._id],
+        queryKey: [QueryKeys.fetchDomainConnectStatus, domain, currentEnvironment._id],
       });
     },
   });

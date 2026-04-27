@@ -10,7 +10,7 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type DomainsControllerUpdateDomainRequest = {
-  domainId: string;
+  domain: string;
   /**
    * A header for idempotency purposes
    */
@@ -25,7 +25,7 @@ export type DomainsControllerUpdateDomainResponse = {
 
 /** @internal */
 export type DomainsControllerUpdateDomainRequest$Outbound = {
-  domainId: string;
+  domain: string;
   "idempotency-key"?: string | undefined;
   UpdateDomainDto: components.UpdateDomainDto$Outbound;
 };
@@ -36,7 +36,7 @@ export const DomainsControllerUpdateDomainRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DomainsControllerUpdateDomainRequest
 > = z.object({
-  domainId: z.string(),
+  domain: z.string(),
   idempotencyKey: z.string().optional(),
   updateDomainDto: components.UpdateDomainDto$outboundSchema,
 }).transform((v) => {

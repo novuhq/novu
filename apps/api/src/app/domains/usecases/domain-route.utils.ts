@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { AgentRepository, DomainRepository } from '@novu/dal';
+import { AgentRepository, DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainRouteTypeEnum } from '@novu/shared';
 
 export function isDuplicateKeyError(err: unknown): boolean {
@@ -37,22 +37,31 @@ export async function resolveAgentIdentifier({
   return agent._id;
 }
 
-export async function assertDomainExists({
+export async function resolveDomainName({
   domainRepository,
-  domainId,
+  domain,
   environmentId,
   organizationId,
 }: {
   domainRepository: DomainRepository;
-  domainId: string;
+  domain: string;
   environmentId: string;
   organizationId: string;
-}): Promise<void> {
-  const domain = await domainRepository.findOneByIdAndEnvironment(domainId, environmentId, organizationId);
+}): Promise<DomainEntity> {
+  const domainEntity = await domainRepository.findOne(
+    {
+      name: domain,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    },
+    '*'
+  );
 
-  if (!domain) {
-    throw new NotFoundException(`Domain with id "${domainId}" not found.`);
+  if (!domainEntity) {
+    throw new NotFoundException(`Domain "${domain}" not found.`);
   }
+
+  return domainEntity;
 }
 
 export async function assertAgentDestination({

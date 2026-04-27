@@ -32,14 +32,14 @@ export class Routes extends ClientSDK {
    */
   async create(
     domainRouteDto: components.DomainRouteDto,
-    domainId: string,
+    domain: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerCreateDomainRouteResponse> {
     return unwrapAsync(domainsRoutesCreate(
       this,
       domainRouteDto,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ));
@@ -49,14 +49,14 @@ export class Routes extends ClientSDK {
    * Get a domain route by ID
    */
   async retrieve(
-    domainId: string,
+    domain: string,
     routeId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerGetDomainRouteResponse> {
     return unwrapAsync(domainsRoutesRetrieve(
       this,
-      domainId,
+      domain,
       routeId,
       idempotencyKey,
       options,
@@ -81,7 +81,7 @@ export class Routes extends ClientSDK {
    * Delete a domain route
    */
   async delete(
-    domainId: string,
+    domain: string,
     routeId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
@@ -90,7 +90,7 @@ export class Routes extends ClientSDK {
   > {
     return unwrapAsync(domainsRoutesDelete(
       this,
-      domainId,
+      domain,
       routeId,
       idempotencyKey,
       options,

@@ -15,14 +15,14 @@ export class DomainConnect extends ClientSDK {
    */
   async create(
     createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
-    domainId: string,
+    domain: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerCreateDomainConnectApplyUrlResponse> {
     return unwrapAsync(domainsDomainConnectCreate(
       this,
       createDomainConnectApplyUrlDto,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ));
@@ -32,13 +32,13 @@ export class DomainConnect extends ClientSDK {
    * Get Domain Connect auto-configuration availability for a domain
    */
   async status(
-    domainId: string,
+    domain: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerGetDomainConnectStatusResponse> {
     return unwrapAsync(domainsDomainConnectStatus(
       this,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ));

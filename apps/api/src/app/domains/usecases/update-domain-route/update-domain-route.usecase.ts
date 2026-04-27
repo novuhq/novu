@@ -5,9 +5,9 @@ import { DomainRouteResponseDto } from '../../dtos/domain-route-response.dto';
 import { toDomainRouteResponse } from '../../mappers/domain-route-response.mapper';
 import {
   assertAgentDestination,
-  assertDomainExists,
   isDuplicateKeyError,
   resolveAgentIdentifier,
+  resolveDomainName,
   toDuplicateRouteConflict,
 } from '../domain-route.utils';
 import { UpdateDomainRouteCommand } from './update-domain-route.command';
@@ -21,16 +21,16 @@ export class UpdateDomainRoute {
   ) {}
 
   async execute(command: UpdateDomainRouteCommand): Promise<DomainRouteResponseDto> {
-    await assertDomainExists({
+    const domain = await resolveDomainName({
       domainRepository: this.domainRepository,
-      domainId: command.domainId,
+      domain: command.domain,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
 
     const currentRoute = await this.domainRouteRepository.findOneByIdAndDomain(
       command.routeId,
-      command.domainId,
+      domain._id,
       command.environmentId,
       command.organizationId
     );
@@ -68,7 +68,7 @@ export class UpdateDomainRoute {
       const updated = await this.domainRouteRepository.findOneAndUpdate(
         {
           _id: command.routeId,
-          _domainId: command.domainId,
+          _domainId: domain._id,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },

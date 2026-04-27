@@ -54,7 +54,7 @@ export const ROUTES = {
   CREATE_SUBSCRIBER: '/env/:environmentSlug/subscribers/create',
   PARTNER_INTEGRATIONS_VERCEL: '/partner-integrations/vercel',
   DOMAINS: '/env/:environmentSlug/domains',
-  DOMAIN_DETAIL: '/env/:environmentSlug/domains/:domainId',
+  DOMAIN_DETAIL: '/env/:environmentSlug/domains/:domain',
   WEBHOOKS: '/env/:environmentSlug/webhooks',
   WEBHOOKS_ENDPOINTS: '/env/:environmentSlug/webhooks/endpoints',
   WEBHOOKS_EVENT_CATALOG: '/env/:environmentSlug/webhooks/event-catalog',

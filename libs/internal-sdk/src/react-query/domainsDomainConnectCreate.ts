@@ -30,7 +30,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type DomainsDomainConnectCreateMutationVariables = {
   createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto;
-  domainId: string;
+  domain: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -88,7 +88,7 @@ export function buildDomainsDomainConnectCreateMutation(
     mutationKey: mutationKeyDomainsDomainConnectCreate(),
     mutationFn: function domainsDomainConnectCreateMutationFn({
       createDomainConnectApplyUrlDto,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     }): Promise<DomainsDomainConnectCreateMutationData> {
@@ -107,7 +107,7 @@ export function buildDomainsDomainConnectCreateMutation(
       return unwrapAsync(domainsDomainConnectCreate(
         client$,
         createDomainConnectApplyUrlDto,
-        domainId,
+        domain,
         idempotencyKey,
         mergedOptions,
       ));

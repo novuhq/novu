@@ -56,7 +56,7 @@ export type DomainsDomainConnectStatusQueryError =
  * Get Domain Connect auto-configuration availability for a domain
  */
 export function useDomainsDomainConnectStatus(
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<
     DomainsDomainConnectStatusQueryData,
@@ -70,7 +70,7 @@ export function useDomainsDomainConnectStatus(
   return useQuery({
     ...buildDomainsDomainConnectStatusQuery(
       client,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ),
@@ -82,7 +82,7 @@ export function useDomainsDomainConnectStatus(
  * Get Domain Connect auto-configuration availability for a domain
  */
 export function useDomainsDomainConnectStatusSuspense(
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<
     DomainsDomainConnectStatusQueryData,
@@ -96,7 +96,7 @@ export function useDomainsDomainConnectStatusSuspense(
   return useSuspenseQuery({
     ...buildDomainsDomainConnectStatusQuery(
       client,
-      domainId,
+      domain,
       idempotencyKey,
       options,
     ),
@@ -107,7 +107,7 @@ export function useDomainsDomainConnectStatusSuspense(
 export function setDomainsDomainConnectStatusData(
   client: QueryClient,
   queryKeyBase: [
-    domainId: string,
+    domain: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
   data: DomainsDomainConnectStatusQueryData,
@@ -120,7 +120,7 @@ export function setDomainsDomainConnectStatusData(
 export function invalidateDomainsDomainConnectStatus(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [domainId: string, parameters: { idempotencyKey?: string | undefined }]
+    [domain: string, parameters: { idempotencyKey?: string | undefined }]
   >,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {

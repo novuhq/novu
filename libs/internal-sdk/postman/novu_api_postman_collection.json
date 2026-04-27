@@ -2401,7 +2401,7 @@
                                 },
                                 {
                                     "key": "providerId",
-                                    "value": "braze",
+                                    "value": "novu-email-agent",
                                     "type": "enum"
                                 },
                                 {
@@ -2578,6 +2578,236 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Domains",
+            "item": [
+                {
+                    "name": "List domains for an environment",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains"
+                            ],
+                            "query": [
+                                {
+                                    "key": "after",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "7742.34",
+                                    "type": "number"
+                                },
+                                {
+                                    "key": "orderDirection",
+                                    "value": "ASC",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "includeCursor",
+                                    "value": false,
+                                    "type": "boolean"
+                                },
+                                {
+                                    "key": "name",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": ""
+                    }
+                },
+                {
+                    "name": "Create a new domain",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains"
+                            ]
+                        },
+                        "description": ""
+                    }
+                },
+                {
+                    "name": "Get a domain by name",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": ""
+                    }
+                },
+                {
+                    "name": "Update a domain",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": ""
+                    }
+                },
+                {
+                    "name": "Delete a domain",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": ""
+                    }
+                }
+            ],
+            "description": "Used to manage your inbound email domains."
         },
         {
             "name": "Environment Variables",
@@ -3149,7 +3379,7 @@
                             "query": [
                                 {
                                     "key": "channel",
-                                    "value": "chat",
+                                    "value": "in_app",
                                     "type": "enum"
                                 },
                                 {
@@ -3258,7 +3488,7 @@
                             "query": [
                                 {
                                     "key": "channel",
-                                    "value": "sms",
+                                    "value": "chat",
                                     "type": "enum"
                                 }
                             ],

@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
 export function domainsRoutesCreate(
   client: NovuCore,
   domainRouteDto: components.DomainRouteDto,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -56,7 +56,7 @@ export function domainsRoutesCreate(
   return new APIPromise($do(
     client,
     domainRouteDto,
-    domainId,
+    domain,
     idempotencyKey,
     options,
   ));
@@ -65,7 +65,7 @@ export function domainsRoutesCreate(
 async function $do(
   client: NovuCore,
   domainRouteDto: components.DomainRouteDto,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -88,7 +88,7 @@ async function $do(
 > {
   const input: operations.DomainsControllerCreateDomainRouteRequest = {
     domainRouteDto: domainRouteDto,
-    domainId: domainId,
+    domain: domain,
     idempotencyKey: idempotencyKey,
   };
 
@@ -107,12 +107,12 @@ async function $do(
   const body = encodeJSON("body", payload.DomainRouteDto, { explode: true });
 
   const pathParams = {
-    domainId: encodeSimple("domainId", payload.domainId, {
+    domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domainId}/routes")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}/routes")(pathParams);
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",

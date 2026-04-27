@@ -11,54 +11,50 @@ import {
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
-function requireDomainId(domainId: string | undefined): string {
-  if (!domainId) {
+function requireDomain(domain: string | undefined): string {
+  if (!domain) {
     throw new Error('Domain route request requires a domain.');
   }
 
-  return domainId;
+  return domain;
 }
 
-export function useFetchDomainRoutes(domainId: string | undefined, params: ListDomainRoutesParams = {}) {
+export function useFetchDomainRoutes(domain: string | undefined, params: ListDomainRoutesParams = {}) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery({
-    queryKey: [QueryKeys.fetchDomainRoutes, domainId, currentEnvironment?._id, params],
+    queryKey: [QueryKeys.fetchDomainRoutes, domain, currentEnvironment?._id, params],
     queryFn: () =>
       fetchDomainRoutes(
-        requireDomainId(domainId),
+        requireDomain(domain),
         requireEnvironment(currentEnvironment, 'No environment selected'),
         params
       ),
-    enabled: !!domainId && !!currentEnvironment,
+    enabled: !!domain && !!currentEnvironment,
   });
 }
 
-export function useCreateDomainRoute(domainId: string | undefined) {
+export function useCreateDomainRoute(domain: string | undefined) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
     mutationFn: (body: CreateDomainRouteBody) =>
-      createDomainRoute(
-        requireDomainId(domainId),
-        body,
-        requireEnvironment(currentEnvironment, 'No environment selected')
-      ),
+      createDomainRoute(requireDomain(domain), body, requireEnvironment(currentEnvironment, 'No environment selected')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
     },
   });
 }
 
-export function useUpdateDomainRoute(domainId: string | undefined) {
+export function useUpdateDomainRoute(domain: string | undefined) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
     mutationFn: ({ routeId, body }: { routeId: string; body: UpdateDomainRouteBody }) =>
       updateDomainRoute(
-        requireDomainId(domainId),
+        requireDomain(domain),
         routeId,
         body,
         requireEnvironment(currentEnvironment, 'No environment selected')
@@ -69,14 +65,14 @@ export function useUpdateDomainRoute(domainId: string | undefined) {
   });
 }
 
-export function useDeleteDomainRoute(domainId: string | undefined) {
+export function useDeleteDomainRoute(domain: string | undefined) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
     mutationFn: (routeId: string) =>
       deleteDomainRoute(
-        requireDomainId(domainId),
+        requireDomain(domain),
         routeId,
         requireEnvironment(currentEnvironment, 'No environment selected')
       ),

@@ -5,7 +5,7 @@ import { IsOptional, IsString } from 'class-validator';
 export class ListDomainRoutesCommand extends CursorBasedPaginatedCommand<DomainRouteEntity, 'updatedAt' | '_id'> {
   @IsString()
   @IsOptional()
-  domainId?: string;
+  domain?: string;
 
   @IsString()
   @IsOptional()

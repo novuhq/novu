@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteResponseDto } from '../../dtos/domain-route-response.dto';
 import { toDomainRouteResponse } from '../../mappers/domain-route-response.mapper';
-import { assertDomainExists } from '../domain-route.utils';
+import { resolveDomainName } from '../domain-route.utils';
 import { GetDomainRouteCommand } from './get-domain-route.command';
 
 @Injectable()
@@ -13,16 +13,16 @@ export class GetDomainRoute {
   ) {}
 
   async execute(command: GetDomainRouteCommand): Promise<DomainRouteResponseDto> {
-    await assertDomainExists({
+    const domain = await resolveDomainName({
       domainRepository: this.domainRepository,
-      domainId: command.domainId,
+      domain: command.domain,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
 
     const route = await this.domainRouteRepository.findOneByIdAndDomain(
       command.routeId,
-      command.domainId,
+      domain._id,
       command.environmentId,
       command.organizationId
     );

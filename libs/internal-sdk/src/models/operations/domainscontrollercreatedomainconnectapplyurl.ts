@@ -10,7 +10,7 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type DomainsControllerCreateDomainConnectApplyUrlRequest = {
-  domainId: string;
+  domain: string;
   /**
    * A header for idempotency purposes
    */
@@ -25,7 +25,7 @@ export type DomainsControllerCreateDomainConnectApplyUrlResponse = {
 
 /** @internal */
 export type DomainsControllerCreateDomainConnectApplyUrlRequest$Outbound = {
-  domainId: string;
+  domain: string;
   "idempotency-key"?: string | undefined;
   CreateDomainConnectApplyUrlDto:
     components.CreateDomainConnectApplyUrlDto$Outbound;
@@ -38,7 +38,7 @@ export const DomainsControllerCreateDomainConnectApplyUrlRequest$outboundSchema:
     z.ZodTypeDef,
     DomainsControllerCreateDomainConnectApplyUrlRequest
   > = z.object({
-    domainId: z.string(),
+    domain: z.string(),
     idempotencyKey: z.string().optional(),
     createDomainConnectApplyUrlDto:
       components.CreateDomainConnectApplyUrlDto$outboundSchema,

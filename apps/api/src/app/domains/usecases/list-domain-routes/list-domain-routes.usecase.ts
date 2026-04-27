@@ -3,7 +3,7 @@ import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/
 import { DirectionEnum } from '@novu/shared';
 import { ListDomainRoutesResponseDto } from '../../dtos/list-domain-routes-response.dto';
 import { toDomainRouteResponse } from '../../mappers/domain-route-response.mapper';
-import { assertDomainExists, resolveAgentIdentifier } from '../domain-route.utils';
+import { resolveAgentIdentifier, resolveDomainName } from '../domain-route.utils';
 import { ListDomainRoutesCommand } from './list-domain-routes.command';
 
 @Injectable()
@@ -19,14 +19,14 @@ export class ListDomainRoutes {
       throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
     }
 
-    if (command.domainId) {
-      await assertDomainExists({
-        domainRepository: this.domainRepository,
-        domainId: command.domainId,
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
-      });
-    }
+    const domain = command.domain
+      ? await resolveDomainName({
+          domainRepository: this.domainRepository,
+          domain: command.domain,
+          environmentId: command.user.environmentId,
+          organizationId: command.user.organizationId,
+        })
+      : undefined;
 
     const destination = command.agentId
       ? await resolveAgentIdentifier({
@@ -40,7 +40,7 @@ export class ListDomainRoutes {
     const pagination = await this.domainRouteRepository.listRoutes({
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
-      domainId: command.domainId,
+      domainId: domain?._id,
       destination,
       limit: command.limit,
       after: command.after,

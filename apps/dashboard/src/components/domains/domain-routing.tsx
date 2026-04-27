@@ -337,13 +337,13 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const { currentEnvironment } = useEnvironment();
   const { data: agents = [] } = useAgents();
   const [cursor, setCursor] = useState<{ after?: string; before?: string }>({});
-  const { data: routesResponse, isLoading: areRoutesLoading } = useFetchDomainRoutes(domain._id, {
+  const { data: routesResponse, isLoading: areRoutesLoading } = useFetchDomainRoutes(domain.name, {
     limit: 50,
     ...cursor,
   });
-  const createDomainRoute = useCreateDomainRoute(domain._id);
-  const updateDomainRoute = useUpdateDomainRoute(domain._id);
-  const deleteDomainRoute = useDeleteDomainRoute(domain._id);
+  const createDomainRoute = useCreateDomainRoute(domain.name);
+  const updateDomainRoute = useUpdateDomainRoute(domain.name);
+  const deleteDomainRoute = useDeleteDomainRoute(domain.name);
 
   const [isAdding, setIsAdding] = useState(false);
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);

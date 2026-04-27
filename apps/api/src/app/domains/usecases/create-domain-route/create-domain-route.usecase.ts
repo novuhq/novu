@@ -5,9 +5,9 @@ import { DomainRouteResponseDto } from '../../dtos/domain-route-response.dto';
 import { toDomainRouteResponse } from '../../mappers/domain-route-response.mapper';
 import {
   assertAgentDestination,
-  assertDomainExists,
   isDuplicateKeyError,
   resolveAgentIdentifier,
+  resolveDomainName,
   toDuplicateRouteConflict,
 } from '../domain-route.utils';
 import { CreateDomainRouteCommand } from './create-domain-route.command';
@@ -21,9 +21,9 @@ export class CreateDomainRoute {
   ) {}
 
   async execute(command: CreateDomainRouteCommand): Promise<DomainRouteResponseDto> {
-    await assertDomainExists({
+    const domain = await resolveDomainName({
       domainRepository: this.domainRepository,
-      domainId: command.domainId,
+      domain: command.domain,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
@@ -48,7 +48,7 @@ export class CreateDomainRoute {
 
     try {
       const route = await this.domainRouteRepository.create({
-        _domainId: command.domainId,
+        _domainId: domain._id,
         address: command.address,
         ...(command.type === DomainRouteTypeEnum.AGENT && destination ? { destination } : {}),
         type: command.type,

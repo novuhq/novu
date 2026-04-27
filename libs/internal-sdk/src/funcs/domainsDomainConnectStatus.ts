@@ -33,7 +33,7 @@ import { Result } from "../types/fp.js";
  */
 export function domainsDomainConnectStatus(
   client: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -53,7 +53,7 @@ export function domainsDomainConnectStatus(
 > {
   return new APIPromise($do(
     client,
-    domainId,
+    domain,
     idempotencyKey,
     options,
   ));
@@ -61,7 +61,7 @@ export function domainsDomainConnectStatus(
 
 async function $do(
   client: NovuCore,
-  domainId: string,
+  domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -83,7 +83,7 @@ async function $do(
   ]
 > {
   const input: operations.DomainsControllerGetDomainConnectStatusRequest = {
-    domainId: domainId,
+    domain: domain,
     idempotencyKey: idempotencyKey,
   };
 
@@ -101,12 +101,12 @@ async function $do(
   const body = null;
 
   const pathParams = {
-    domainId: encodeSimple("domainId", payload.domainId, {
+    domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domainId}/domain-connect/status")(
+  const path = pathToFunc("/v1/domains/{domain}/domain-connect/status")(
     pathParams,
   );
 

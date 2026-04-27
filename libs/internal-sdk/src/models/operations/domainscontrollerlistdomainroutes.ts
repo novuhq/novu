@@ -24,7 +24,7 @@ export type DomainsControllerListDomainRoutesQueryParamOrderDirection =
   ClosedEnum<typeof DomainsControllerListDomainRoutesQueryParamOrderDirection>;
 
 export type DomainsControllerListDomainRoutesRequest = {
-  domainId: string;
+  domain: string;
   /**
    * Cursor for pagination indicating the starting point after which to fetch results.
    */
@@ -74,7 +74,7 @@ export const DomainsControllerListDomainRoutesQueryParamOrderDirection$outboundS
 
 /** @internal */
 export type DomainsControllerListDomainRoutesRequest$Outbound = {
-  domainId: string;
+  domain: string;
   after?: string | undefined;
   before?: string | undefined;
   limit?: number | undefined;
@@ -91,7 +91,7 @@ export const DomainsControllerListDomainRoutesRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DomainsControllerListDomainRoutesRequest
 > = z.object({
-  domainId: z.string(),
+  domain: z.string(),
   after: z.string().optional(),
   before: z.string().optional(),
   limit: z.number().optional(),
