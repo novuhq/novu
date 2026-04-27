@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
+import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -81,6 +81,7 @@ export class DomainsController {
   ) {}
 
   @Get('/')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List domains for an environment' })
   @ApiResponse(ListDomainsResponseDto, 200)
@@ -104,6 +105,7 @@ export class DomainsController {
   }
 
   @Post('/')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a new domain' })
   @ApiResponse(DomainResponseDto, 201)
@@ -120,6 +122,7 @@ export class DomainsController {
   }
 
   @Get('/routes')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List domain routes for an environment' })
   @ApiResponse(ListDomainRoutesResponseDto, 200)
@@ -144,6 +147,7 @@ export class DomainsController {
   }
 
   @Get('/:domainId')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get a domain by ID' })
   @ApiResponse(DomainResponseDto, 200)
@@ -163,6 +167,7 @@ export class DomainsController {
   }
 
   @Get('/:domainId/routes')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List routes for a domain' })
   @ApiResponse(ListDomainRoutesResponseDto, 200)
@@ -188,6 +193,7 @@ export class DomainsController {
   }
 
   @Post('/:domainId/routes')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a domain route' })
   @ApiResponse(DomainRouteResponseDto, 201)
@@ -212,6 +218,7 @@ export class DomainsController {
   }
 
   @Get('/:domainId/routes/:routeId')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get a domain route by ID' })
   @ApiResponse(DomainRouteResponseDto, 200)
@@ -234,6 +241,7 @@ export class DomainsController {
   }
 
   @Patch('/:domainId/routes/:routeId')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain route' })
   @ApiResponse(DomainRouteResponseDto, 200)
@@ -260,6 +268,7 @@ export class DomainsController {
   }
 
   @Delete('/:domainId/routes/:routeId')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Delete a domain route' })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -283,6 +292,7 @@ export class DomainsController {
   }
 
   @Get('/:domainId/domain-connect/status')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get Domain Connect auto-configuration availability for a domain' })
   @ApiResponse(DomainConnectStatusResponseDto, 200)
@@ -303,6 +313,7 @@ export class DomainsController {
   }
 
   @Post('/:domainId/domain-connect/apply-url')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a signed Domain Connect apply URL for a domain' })
   @ApiResponse(DomainConnectApplyUrlResponseDto, 201)
@@ -325,6 +336,7 @@ export class DomainsController {
   }
 
   @Patch('/:domainId')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain' })
   @ApiResponse(DomainResponseDto, 200)
@@ -345,6 +357,7 @@ export class DomainsController {
   }
 
   @Delete('/:domainId')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Delete a domain' })
   @HttpCode(HttpStatus.NO_CONTENT)
