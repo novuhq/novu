@@ -188,7 +188,6 @@ export class HandleAgentReply {
   }
 
   private extractTextFallback(content: ReplyContentDto): string {
-    if (content.text) return content.text;
     if (content.markdown) return content.markdown;
     if (content.card) {
       const title = (content.card as { title?: string }).title;
