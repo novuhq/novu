@@ -12,12 +12,13 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateDomainDto } from './dtos/create-domain.dto';
 import { CreateDomainConnectApplyUrlDto, DomainConnectApplyUrlResponseDto } from './dtos/domain-connect-apply-url.dto';
@@ -60,9 +61,9 @@ import { UpdateDomainRoute } from './usecases/update-domain-route/update-domain-
 @ApiCommonResponses()
 @Controller('/domains')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
 @RequireAuthentication()
 @ApiTags('Domains')
+@SdkGroupName('Domains')
 export class DomainsController {
   constructor(
     private readonly createDomainUsecase: CreateDomain,
@@ -83,6 +84,7 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List domains for an environment' })
   @ApiResponse(ListDomainsResponseDto, 200)
+  @SdkMethodName('list')
   async listDomains(
     @UserSession() user: UserSessionData,
     @Query() query: ListDomainsQueryDto
@@ -105,6 +107,7 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a new domain' })
   @ApiResponse(DomainResponseDto, 201)
+  @SdkMethodName('create')
   async createDomain(@Body() body: CreateDomainDto, @UserSession() user: UserSessionData): Promise<DomainResponseDto> {
     return this.createDomainUsecase.execute(
       CreateDomainCommand.create({
@@ -120,6 +123,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List domain routes for an environment' })
   @ApiResponse(ListDomainRoutesResponseDto, 200)
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('listForEnvironment')
   async listRoutes(
     @UserSession() user: UserSessionData,
     @Query() query: ListDomainRoutesQueryDto
@@ -142,6 +147,7 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get a domain by ID' })
   @ApiResponse(DomainResponseDto, 200)
+  @SdkMethodName('retrieve')
   async getDomain(
     @Param('domainId') domainId: string,
     @UserSession() user: UserSessionData
@@ -160,6 +166,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'List routes for a domain' })
   @ApiResponse(ListDomainRoutesResponseDto, 200)
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('list')
   async listDomainRoutes(
     @Param('domainId') domainId: string,
     @Query() query: ListDomainRoutesQueryDto,
@@ -183,6 +191,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a domain route' })
   @ApiResponse(DomainRouteResponseDto, 201)
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('create')
   async createDomainRoute(
     @Param('domainId') domainId: string,
     @Body() body: DomainRouteDto,
@@ -205,6 +215,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get a domain route by ID' })
   @ApiResponse(DomainRouteResponseDto, 200)
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('retrieve')
   async getDomainRoute(
     @Param('domainId') domainId: string,
     @Param('routeId') routeId: string,
@@ -225,6 +237,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain route' })
   @ApiResponse(DomainRouteResponseDto, 200)
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('update')
   async updateDomainRoute(
     @Param('domainId') domainId: string,
     @Param('routeId') routeId: string,
@@ -250,6 +264,8 @@ export class DomainsController {
   @ApiOperation({ summary: 'Delete a domain route' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('delete')
   async deleteDomainRoute(
     @Param('domainId') domainId: string,
     @Param('routeId') routeId: string,
@@ -270,6 +286,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   @ApiOperation({ summary: 'Get Domain Connect auto-configuration availability for a domain' })
   @ApiResponse(DomainConnectStatusResponseDto, 200)
+  @SdkGroupName('Domains.DomainConnect')
+  @SdkMethodName('status')
   async getDomainConnectStatus(
     @Param('domainId') domainId: string,
     @UserSession() user: UserSessionData
@@ -288,6 +306,8 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Create a signed Domain Connect apply URL for a domain' })
   @ApiResponse(DomainConnectApplyUrlResponseDto, 201)
+  @SdkGroupName('Domains.DomainConnect')
+  @SdkMethodName('create')
   async createDomainConnectApplyUrl(
     @Param('domainId') domainId: string,
     @Body() body: CreateDomainConnectApplyUrlDto,
@@ -308,6 +328,7 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({ summary: 'Update a domain' })
   @ApiResponse(DomainResponseDto, 200)
+  @SdkMethodName('update')
   async updateDomain(
     @Param('domainId') domainId: string,
     @Body() _body: UpdateDomainDto,
@@ -328,6 +349,7 @@ export class DomainsController {
   @ApiOperation({ summary: 'Delete a domain' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
+  @SdkMethodName('delete')
   async deleteDomain(@Param('domainId') domainId: string, @UserSession() user: UserSessionData): Promise<void> {
     return this.deleteDomainUsecase.execute(
       DeleteDomainCommand.create({
