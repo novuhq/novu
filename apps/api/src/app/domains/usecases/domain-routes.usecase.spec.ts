@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { DirectionEnum, DomainRouteTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
@@ -53,6 +53,7 @@ describe('Domain route usecases', () => {
     };
     domainRouteRepositoryMock = {
       create: stub().resolves(route),
+      findOne: stub().resolves(null),
       listRoutes: stub().resolves({
         routes: [route],
         next: null,
@@ -104,6 +105,27 @@ describe('Domain route usecases', () => {
     ).to.equal(true);
   });
 
+  it('throws when creating a duplicate route before writing', async () => {
+    domainRouteRepositoryMock.findOne.resolves({ _id: 'existing-route-id' });
+    const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
+
+    try {
+      await usecase.execute({
+        domain: DOMAIN_NAME,
+        environmentId: ENVIRONMENT_ID,
+        organizationId: ORGANIZATION_ID,
+        userId: USER_ID,
+        address: 'support',
+        agentId: AGENT_IDENTIFIER,
+        type: DomainRouteTypeEnum.AGENT,
+      });
+      throw new Error('Expected error not thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ConflictException);
+      expect(domainRouteRepositoryMock.create.called).to.equal(false);
+    }
+  });
+
   it('lists domain routes with cursor metadata', async () => {
     const usecase = new ListDomainRoutes(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
@@ -148,6 +170,26 @@ describe('Domain route usecases', () => {
 
     expect(result._id).to.equal(ROUTE_ID);
     expect(domainRouteRepositoryMock.findOneAndUpdate.called).to.equal(true);
+  });
+
+  it('throws when update would duplicate another route', async () => {
+    domainRouteRepositoryMock.findOne.resolves({ _id: 'other-route-id' });
+    const usecase = new UpdateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
+
+    try {
+      await usecase.execute({
+        domain: DOMAIN_NAME,
+        routeId: ROUTE_ID,
+        environmentId: ENVIRONMENT_ID,
+        organizationId: ORGANIZATION_ID,
+        userId: USER_ID,
+        address: 'billing',
+      });
+      throw new Error('Expected error not thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ConflictException);
+      expect(domainRouteRepositoryMock.findOneAndUpdate.called).to.equal(false);
+    }
   });
 
   it('deletes a route scoped to its domain', async () => {

@@ -48,9 +48,10 @@ export async function resolveDomainName({
   environmentId: string;
   organizationId: string;
 }): Promise<DomainEntity> {
+  const name = domain.toLowerCase();
   const domainEntity = await domainRepository.findOne(
     {
-      name: domain,
+      name,
       _environmentId: environmentId,
       _organizationId: organizationId,
     },
@@ -58,7 +59,7 @@ export async function resolveDomainName({
   );
 
   if (!domainEntity) {
-    throw new NotFoundException(`Domain "${domain}" not found.`);
+    throw new NotFoundException(`Domain "${name}" not found.`);
   }
 
   return domainEntity;

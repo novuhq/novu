@@ -47,6 +47,21 @@ export class CreateDomainRoute {
     });
 
     try {
+      const existingRoute = await this.domainRouteRepository.findOne(
+        {
+          _domainId: domain._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          address: command.address,
+          type: command.type,
+        },
+        ['_id']
+      );
+
+      if (existingRoute) {
+        throw toDuplicateRouteConflict(command.address, command.type);
+      }
+
       const route = await this.domainRouteRepository.create({
         _domainId: domain._id,
         address: command.address,

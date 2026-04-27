@@ -72,7 +72,9 @@ export class DomainRouteStrategy {
 
     Logger.log({ toAddress }, 'Processing domain-route email', LOG_CONTEXT);
 
-    const [localPart, domainName] = toAddress.split('@');
+    const [rawLocalPart, rawDomainName] = toAddress.split('@');
+    const localPart = rawLocalPart?.toLowerCase();
+    const domainName = rawDomainName?.toLowerCase();
 
     if (!domainName) {
       this.throwError(`No domain found for address ${toAddress}`);

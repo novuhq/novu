@@ -65,6 +65,22 @@ export class UpdateDomainRoute {
     }
 
     try {
+      const nextAddress = command.address ?? currentRoute.address;
+      const existingRoute = await this.domainRouteRepository.findOne(
+        {
+          _domainId: domain._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          address: nextAddress,
+          type: nextType,
+        },
+        ['_id']
+      );
+
+      if (existingRoute && String(existingRoute._id) !== String(currentRoute._id)) {
+        throw toDuplicateRouteConflict(nextAddress, nextType);
+      }
+
       const updated = await this.domainRouteRepository.findOneAndUpdate(
         {
           _id: command.routeId,

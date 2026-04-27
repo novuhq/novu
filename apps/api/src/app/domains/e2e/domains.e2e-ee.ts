@@ -56,6 +56,32 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(error?.statusCode).to.equal(422);
   });
 
+  it('should reject invalid domain names (422)', async () => {
+    const invalidNames = [
+      'https://novu.co',
+      'novu.co/path',
+      'novu',
+      'inbound_novu.co',
+      '-novu.co',
+      'novu-.co',
+      'novu.c',
+    ];
+
+    for (const name of invalidNames) {
+      const { error } = await expectSdkValidationExceptionGeneric(() => novuClient.domains.create({ name }));
+
+      expect(error?.statusCode).to.equal(422);
+    }
+  });
+
+  it('should normalize domain names to lowercase', async () => {
+    const name = `E2E-${randomBytes(6).toString('hex')}.Inbound.Example.Test`;
+
+    const { result: domain } = await novuClient.domains.create({ name });
+
+    expect(domain.name).to.equal(name.toLowerCase());
+  });
+
   it('should retrieve a domain by name', async () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });

@@ -368,7 +368,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const handleCreate = async (values: RouteFormState) => {
     try {
       await createDomainRoute.mutateAsync({
-        address: values.address,
+        address: values.address.trim().toLowerCase(),
         type: values.type,
         ...(values.agentId ? { agentId: values.agentId } : {}),
       });
@@ -383,7 +383,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
       await updateDomainRoute.mutateAsync({
         routeId,
         body: {
-          address: values.address,
+          address: values.address.trim().toLowerCase(),
           type: values.type,
           ...(values.agentId ? { agentId: values.agentId } : {}),
         },

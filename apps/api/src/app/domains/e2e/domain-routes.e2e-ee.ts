@@ -61,6 +61,32 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(route.agentId).to.be.undefined;
   });
 
+  it('should reject full email addresses as route addresses (422)', async () => {
+    const domain = await createDomain();
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.domains.routes.create(
+        { address: `support@${domain.name}`, type: DomainRouteDtoType.Webhook },
+        domain.name
+      )
+    );
+
+    expect(error?.statusCode).to.equal(422);
+  });
+
+  it('should reject invalid inbox local parts (422)', async () => {
+    const domain = await createDomain();
+    const invalidAddresses = ['hello world', '.hello', 'hello.', 'hello..there'];
+
+    for (const address of invalidAddresses) {
+      const { error } = await expectSdkValidationExceptionGeneric(() =>
+        novuClient.domains.routes.create({ address, type: DomainRouteDtoType.Webhook }, domain.name)
+      );
+
+      expect(error?.statusCode).to.equal(422);
+    }
+  });
+
   it('should create an agent route with a valid agent identifier', async () => {
     const domain = await createDomain();
     const agent = await createAgent();
@@ -127,6 +153,18 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.create({ address: 'dup', type: DomainRouteDtoType.Webhook }, domain.name)
+    );
+
+    expect(error?.statusCode).to.equal(409);
+  });
+
+  it('should trim route addresses before duplicate validation', async () => {
+    const domain = await createDomain();
+
+    await novuClient.domains.routes.create({ address: 'test', type: DomainRouteDtoType.Webhook }, domain.name);
+
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.domains.routes.create({ address: ' test ', type: DomainRouteDtoType.Webhook }, domain.name)
     );
 
     expect(error?.statusCode).to.equal(409);
