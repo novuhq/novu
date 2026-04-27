@@ -18,9 +18,10 @@ import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionDa
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared/framework/response.decorator';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodMaxParamsOverride, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateDomainDto } from './dtos/create-domain.dto';
+import { DiagnoseDomainResponseDto } from './dtos/diagnose-domain-response.dto';
 import { CreateDomainConnectApplyUrlDto, DomainConnectApplyUrlResponseDto } from './dtos/domain-connect-apply-url.dto';
 import { DomainConnectStatusResponseDto } from './dtos/domain-connect-status-response.dto';
 import { DomainResponseDto } from './dtos/domain-response.dto';
@@ -30,6 +31,8 @@ import { ListDomainRoutesQueryDto } from './dtos/list-domain-routes-query.dto';
 import { ListDomainRoutesResponseDto } from './dtos/list-domain-routes-response.dto';
 import { ListDomainsQueryDto } from './dtos/list-domains-query.dto';
 import { ListDomainsResponseDto } from './dtos/list-domains-response.dto';
+import { TestDomainRouteDto } from './dtos/test-domain-route.dto';
+import { TestDomainRouteResponseDto } from './dtos/test-domain-route-response.dto';
 import { UpdateDomainDto } from './dtos/update-domain.dto';
 import { UpdateDomainRouteDto } from './dtos/update-domain-route.dto';
 import { CreateDomainCommand } from './usecases/create-domain/create-domain.command';
@@ -42,6 +45,8 @@ import { DeleteDomainCommand } from './usecases/delete-domain/delete-domain.comm
 import { DeleteDomain } from './usecases/delete-domain/delete-domain.usecase';
 import { DeleteDomainRouteCommand } from './usecases/delete-domain-route/delete-domain-route.command';
 import { DeleteDomainRoute } from './usecases/delete-domain-route/delete-domain-route.usecase';
+import { DiagnoseDomainCommand } from './usecases/diagnose-domain/diagnose-domain.command';
+import { DiagnoseDomain } from './usecases/diagnose-domain/diagnose-domain.usecase';
 import { GetDomainCommand } from './usecases/get-domain/get-domain.command';
 import { GetDomain } from './usecases/get-domain/get-domain.usecase';
 import { GetDomainConnectStatusCommand } from './usecases/get-domain-connect-status/get-domain-connect-status.command';
@@ -52,6 +57,8 @@ import { GetDomainsCommand } from './usecases/get-domains/get-domains.command';
 import { GetDomains } from './usecases/get-domains/get-domains.usecase';
 import { ListDomainRoutesCommand } from './usecases/list-domain-routes/list-domain-routes.command';
 import { ListDomainRoutes } from './usecases/list-domain-routes/list-domain-routes.usecase';
+import { TestDomainRouteCommand } from './usecases/test-domain-route/test-domain-route.command';
+import { TestDomainRoute } from './usecases/test-domain-route/test-domain-route.usecase';
 import { UpdateDomainCommand } from './usecases/update-domain/update-domain.command';
 import { UpdateDomain } from './usecases/update-domain/update-domain.usecase';
 import { UpdateDomainRouteCommand } from './usecases/update-domain-route/update-domain-route.command';
@@ -74,13 +81,15 @@ export class DomainsController {
     private readonly deleteDomainUsecase: DeleteDomain,
     private readonly updateDomainUsecase: UpdateDomain,
     private readonly verifyDomainUsecase: VerifyDomain,
+    private readonly diagnoseDomainUsecase: DiagnoseDomain,
     private readonly getDomainConnectStatusUsecase: GetDomainConnectStatus,
     private readonly createDomainConnectApplyUrlUsecase: CreateDomainConnectApplyUrl,
     private readonly listDomainRoutesUsecase: ListDomainRoutes,
     private readonly createDomainRouteUsecase: CreateDomainRoute,
     private readonly getDomainRouteUsecase: GetDomainRoute,
     private readonly updateDomainRouteUsecase: UpdateDomainRoute,
-    private readonly deleteDomainRouteUsecase: DeleteDomainRoute
+    private readonly deleteDomainRouteUsecase: DeleteDomainRoute,
+    private readonly testDomainRouteUsecase: TestDomainRoute
   ) {}
 
   @Get('/')
@@ -128,6 +137,7 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         name: body.name,
+        data: body.data,
       })
     );
   }
@@ -170,6 +180,31 @@ export class DomainsController {
   ): Promise<DomainResponseDto> {
     return this.verifyDomainUsecase.execute(
       VerifyDomainCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        domain,
+      })
+    );
+  }
+
+  @Post('/:domain/diagnose')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
+  @ApiOperation({
+    summary: 'Diagnose inbound DNS for a domain',
+    description:
+      'Runs live DNS checks (MX correctness, apex CNAME collision, NS delegation, and common DNS blocklists for the Novu mail host). Returns structured issues with plain-language fixes.',
+  })
+  @ApiResponse(DiagnoseDomainResponseDto, 200)
+  @SdkMethodName('diagnose')
+  async diagnoseDomain(
+    @Param('domain') domain: string,
+    @UserSession() user: UserSessionData
+  ): Promise<DiagnoseDomainResponseDto> {
+    return this.diagnoseDomainUsecase.execute(
+      DiagnoseDomainCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -234,6 +269,7 @@ export class DomainsController {
         address: body.address,
         agentId: body.agentId,
         type: body.type,
+        data: body.data,
       })
     );
   }
@@ -260,7 +296,7 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
-        address,
+        address: decodeURIComponent(address),
       })
     );
   }
@@ -276,6 +312,7 @@ export class DomainsController {
   @ApiResponse(DomainRouteResponseDto, 200)
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('update')
+  @SdkMethodMaxParamsOverride(4)
   async updateDomainRoute(
     @Param('domain') domain: string,
     @Param('address') address: string,
@@ -288,9 +325,10 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
-        address,
+        address: decodeURIComponent(address),
         agentId: body.agentId,
         type: body.type,
+        data: body.data,
       })
     );
   }
@@ -318,7 +356,42 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
-        address,
+        address: decodeURIComponent(address),
+      })
+    );
+  }
+
+  @Post('/:domain/routes/:address/test')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ApiOperation({
+    summary: 'Test an inbound route',
+    description:
+      'Sends a synthetic inbound email through the same delivery path as production (outbound webhooks for webhook routes, signed HTTP to the agent for agent routes). Use `dryRun: true` to preview the payload without delivering.',
+  })
+  @ApiResponse(TestDomainRouteResponseDto, 200)
+  @SdkGroupName('Domains.Routes')
+  @SdkMethodName('test')
+  @SdkMethodMaxParamsOverride(4)
+  async testDomainRoute(
+    @Param('domain') domain: string,
+    @Param('address') address: string,
+    @Body() body: TestDomainRouteDto,
+    @UserSession() user: UserSessionData
+  ): Promise<TestDomainRouteResponseDto> {
+    return this.testDomainRouteUsecase.execute(
+      TestDomainRouteCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        domain,
+        address: decodeURIComponent(address),
+        from: body.from,
+        subject: body.subject,
+        text: body.text,
+        html: body.html,
+        dryRun: body.dryRun,
       })
     );
   }
@@ -380,13 +453,14 @@ export class DomainsController {
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   @ApiOperation({
     summary: 'Update a domain',
-    description: 'Reserved for future editable fields. Currently a no-op that returns the domain configuration.',
+    description:
+      'Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged.',
   })
   @ApiResponse(DomainResponseDto, 200)
   @SdkMethodName('update')
   async updateDomain(
     @Param('domain') domain: string,
-    @Body() _body: UpdateDomainDto,
+    @Body() body: UpdateDomainDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainResponseDto> {
     return this.updateDomainUsecase.execute(
@@ -395,6 +469,7 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
+        data: body.data,
       })
     );
   }

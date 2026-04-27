@@ -23,6 +23,9 @@ const domainRouteSchema = new Schema<DomainRouteDBModel>(
       enum: Object.values(DomainRouteTypeEnum),
       required: true,
     },
+    data: {
+      type: Schema.Types.Mixed,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

@@ -11,6 +11,7 @@ import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -36,7 +37,10 @@ import { Result } from "../types/fp.js";
  */
 export function domainsRoutesUpdate(
   client: NovuCore,
-  request: operations.DomainsControllerUpdateDomainRouteRequest,
+  updateDomainRouteDto: components.UpdateDomainRouteDto,
+  domain: string,
+  address: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
@@ -55,14 +59,20 @@ export function domainsRoutesUpdate(
 > {
   return new APIPromise($do(
     client,
-    request,
+    updateDomainRouteDto,
+    domain,
+    address,
+    idempotencyKey,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  request: operations.DomainsControllerUpdateDomainRouteRequest,
+  updateDomainRouteDto: components.UpdateDomainRouteDto,
+  domain: string,
+  address: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
@@ -82,8 +92,15 @@ async function $do(
     APICall,
   ]
 > {
+  const input: operations.DomainsControllerUpdateDomainRouteRequest = {
+    updateDomainRouteDto: updateDomainRouteDto,
+    domain: domain,
+    address: address,
+    idempotencyKey: idempotencyKey,
+  };
+
   const parsed = safeParse(
-    request,
+    input,
     (value) =>
       operations.DomainsControllerUpdateDomainRouteRequest$outboundSchema.parse(
         value,

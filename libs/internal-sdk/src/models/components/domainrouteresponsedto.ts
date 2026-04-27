@@ -30,6 +30,10 @@ export type DomainRouteResponseDto = {
   organizationId: string;
   createdAt: string;
   updatedAt: string;
+  /**
+   * String key-value metadata (max 10 keys, 500 characters total when set via API).
+   */
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -52,6 +56,7 @@ export const DomainRouteResponseDto$inboundSchema: z.ZodType<
   _organizationId: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  data: z.record(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

@@ -19,6 +19,10 @@ export type UpdateDomainRouteDto = {
    */
   agentId?: string | undefined;
   type?: UpdateDomainRouteDtoType | undefined;
+  /**
+   * Replaces route metadata when provided (max 10 keys, 500 characters total for keys+values).
+   */
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -30,6 +34,7 @@ export const UpdateDomainRouteDtoType$outboundSchema: z.ZodNativeEnum<
 export type UpdateDomainRouteDto$Outbound = {
   agentId?: string | undefined;
   type?: string | undefined;
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -40,6 +45,7 @@ export const UpdateDomainRouteDto$outboundSchema: z.ZodType<
 > = z.object({
   agentId: z.string().optional(),
   type: UpdateDomainRouteDtoType$outboundSchema.optional(),
+  data: z.record(z.string()).optional(),
 });
 
 export function updateDomainRouteDtoToJSON(

@@ -53,7 +53,8 @@ export class UpdateDomainRoute {
       organizationId: command.organizationId,
     });
 
-    const hasChanges = command.type !== undefined || command.agentId !== undefined;
+    const hasChanges =
+      command.type !== undefined || command.agentId !== undefined || command.data !== undefined;
 
     if (!hasChanges) {
       return toDomainRouteResponse(currentRoute);
@@ -72,6 +73,7 @@ export class UpdateDomainRoute {
           ...(nextType === DomainRouteTypeEnum.AGENT && command.agentId !== undefined
             ? { destination: resolvedDestination }
             : {}),
+          ...(command.data !== undefined ? { data: command.data } : {}),
         },
         ...(nextType === DomainRouteTypeEnum.WEBHOOK ? { $unset: { destination: '' } } : {}),
       },

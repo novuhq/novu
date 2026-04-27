@@ -21,6 +21,10 @@ export type DomainRouteDto = {
    */
   agentId?: string | undefined;
   type: DomainRouteDtoType;
+  /**
+   * Optional string key-value metadata (max 10 keys, 500 characters total for keys+values).
+   */
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -33,6 +37,7 @@ export type DomainRouteDto$Outbound = {
   address: string;
   agentId?: string | undefined;
   type: string;
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -44,6 +49,7 @@ export const DomainRouteDto$outboundSchema: z.ZodType<
   address: z.string(),
   agentId: z.string().optional(),
   type: DomainRouteDtoType$outboundSchema,
+  data: z.record(z.string()).optional(),
 });
 
 export function domainRouteDtoToJSON(domainRouteDto: DomainRouteDto): string {

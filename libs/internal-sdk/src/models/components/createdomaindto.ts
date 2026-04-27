@@ -9,11 +9,16 @@ export type CreateDomainDto = {
    * The domain name (e.g. "recent.dev")
    */
   name: string;
+  /**
+   * Optional string key-value metadata (max 10 keys, 500 characters total for keys+values).
+   */
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
 export type CreateDomainDto$Outbound = {
   name: string;
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -23,6 +28,7 @@ export const CreateDomainDto$outboundSchema: z.ZodType<
   CreateDomainDto
 > = z.object({
   name: z.string(),
+  data: z.record(z.string()).optional(),
 });
 
 export function createDomainDtoToJSON(

@@ -3,9 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   type DomainConnectStatusResponse,
   type DomainResponse,
+  type UpdateDomainBody,
   fetchDomain,
   fetchDomainAutoConfigure,
   startDomainAutoConfigure,
+  updateDomain,
   verifyDomain,
 } from '@/api/domains';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -59,6 +61,24 @@ export function useVerifyDomain(domain: string | undefined) {
       const args = requireDomainRequestArgs(domain, currentEnvironment);
 
       return verifyDomain(args.domain, args.currentEnvironment);
+    },
+    onSuccess: (data) => {
+      if (!domain || !currentEnvironment) return;
+
+      queryClient.setQueryData([QueryKeys.fetchDomain, domain, currentEnvironment._id], data);
+    },
+  });
+}
+
+export function useUpdateDomain(domain: string | undefined) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  return useMutation({
+    mutationFn: (body: UpdateDomainBody) => {
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
+
+      return updateDomain(args.domain, body, args.currentEnvironment);
     },
     onSuccess: (data) => {
       if (!domain || !currentEnvironment) return;

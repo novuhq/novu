@@ -11,6 +11,7 @@ export type DomainRouteResponse = {
   _organizationId: string;
   createdAt: string;
   updatedAt: string;
+  data?: Record<string, string>;
 };
 
 export type ExpectedDnsRecord = {
@@ -32,14 +33,49 @@ export type DomainResponse = {
   createdAt: string;
   updatedAt: string;
   expectedDnsRecords?: ExpectedDnsRecord[];
+  data?: Record<string, string>;
 };
 
-export type CreateDomainBody = { name: string };
-export type UpdateDomainBody = Record<string, never>;
+export type CreateDomainBody = { name: string; data?: Record<string, string> };
+export type UpdateDomainBody = { data?: Record<string, string> };
 export type CreateDomainRouteBody = Pick<DomainRouteResponse, 'address' | 'type'> & {
   agentId?: string;
+  data?: Record<string, string>;
 };
 export type UpdateDomainRouteBody = Partial<CreateDomainRouteBody>;
+
+export type DomainDiagnosticIssue = {
+  code: string;
+  severity: 'warn' | 'error';
+  message: string;
+  fix: string;
+};
+
+export type DiagnoseDomainResponse = {
+  ok: boolean;
+  runAt: string;
+  checks: Array<{ code: string; status: string; latencyMs: number }>;
+  issues: DomainDiagnosticIssue[];
+};
+
+export type TestDomainRouteBody = {
+  from: { address: string; name?: string };
+  subject: string;
+  text?: string;
+  html?: string;
+  dryRun?: boolean;
+};
+
+export type TestDomainRouteResponse = {
+  matched: boolean;
+  dryRun: boolean;
+  domainStatus?: string;
+  type?: 'webhook' | 'agent';
+  webhook?: { skipped?: boolean; latencyMs: number };
+  agent?: { agentId: string; status: number; agentReply?: unknown; latencyMs: number };
+  payload?: unknown;
+  wouldDeliverTo?: string;
+};
 
 export type CursorPaginatedResponse<T> = {
   data: T[];
@@ -140,6 +176,29 @@ export const updateDomain = async (
     body,
     environment,
   });
+
+  return data;
+};
+
+export const diagnoseDomain = async (domain: string, environment: IEnvironment): Promise<DiagnoseDomainResponse> => {
+  const { data } = await post<{ data: DiagnoseDomainResponse }>(`/domains/${encodeURIComponent(domain)}/diagnose`, {
+    body: {},
+    environment,
+  });
+
+  return data;
+};
+
+export const testDomainRoute = async (
+  domain: string,
+  address: string,
+  body: TestDomainRouteBody,
+  environment: IEnvironment
+): Promise<TestDomainRouteResponse> => {
+  const { data } = await post<{ data: TestDomainRouteResponse }>(
+    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(address)}/test`,
+    { body, environment }
+  );
 
   return data;
 };

@@ -14,6 +14,8 @@ export class DomainEntity {
 
   dnsProvider?: string;
 
+  data?: Record<string, string>;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

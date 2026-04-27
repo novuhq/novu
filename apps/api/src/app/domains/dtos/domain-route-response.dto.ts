@@ -30,4 +30,11 @@ export class DomainRouteResponseDto {
 
   @ApiProperty()
   updatedAt: string;
+
+  @ApiPropertyOptional({
+    description: 'String key-value metadata (max 10 keys, 500 characters total when set via API).',
+    type: Object,
+    additionalProperties: { type: 'string' },
+  })
+  data?: Record<string, string>;
 }

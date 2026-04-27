@@ -22,6 +22,9 @@ const domainSchema = new Schema<DomainDBModel>(
     dnsProvider: {
       type: Schema.Types.String,
     },
+    data: {
+      type: Schema.Types.Mixed,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

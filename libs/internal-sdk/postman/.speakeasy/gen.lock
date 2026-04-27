@@ -1,7 +1,7 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: 62967867c0cc33740fa76fbaed67e421
+  docChecksum: 181a873517a8ffb8800fdf2b89ee8e50
   docVersion: 3.15.0
   speakeasyVersion: 1.761.9
   generationVersion: 2.881.4
@@ -25,7 +25,7 @@ features:
 trackedFiles:
   novu_api_postman_collection.json:
     id: f80b59e13e5c
-    last_write_checksum: sha1:e17e16dd31a0db4352e561c496a6ad5e9650e226
+    last_write_checksum: sha1:a99117b4e5e010096eb9a64f06f562d508206a62
     pristine_git_object: 5e1d2eedd7bc4934ecc1a374a7f4dd6b4fa15852
 examples:
   EventsController_trigger:
@@ -2760,6 +2760,49 @@ examples:
       responses:
         "201":
           application/json: {"url": "https://slack.com/oauth/v2/authorize?state=..."}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_diagnoseDomain:
+    speakeasy-default-domains-controller-diagnose-domain:
+      parameters:
+        path:
+          domain: "alive-publication.biz"
+      responses:
+        "200":
+          application/json: {"ok": true, "runAt": "<value>", "checks": [{"code": "ns_unresolvable", "status": "skipped", "latencyMs": 2745.11}], "issues": []}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_testDomainRoute:
+    speakeasy-default-domains-controller-test-domain-route:
+      parameters:
+        path:
+          domain: "exalted-bonfire.com"
+          address: "90499 Rowan Close"
+      requestBody:
+        application/json: {"from": {"address": "58851 Konopelski Overpass"}, "subject": "<value>"}
+      responses:
+        "200":
+          application/json: {"matched": true, "dryRun": true}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":

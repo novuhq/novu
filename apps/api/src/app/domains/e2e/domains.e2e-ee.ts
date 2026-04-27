@@ -171,6 +171,52 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(updated.status).to.equal(created.status);
   });
 
+  it('should create a domain with valid data metadata', async () => {
+    const name = uniqueDomainName();
+
+    const { result: domain } = await novuClient.domains.create({
+      name,
+      data: { tier: 'pro', region: 'eu' },
+    });
+
+    expect(domain.data).to.deep.equal({ tier: 'pro', region: 'eu' });
+  });
+
+  it('should reject domain data with more than 10 keys (422)', async () => {
+    const name = uniqueDomainName();
+    const data = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`k${i}`, 'a']));
+
+    const { error } = await expectSdkValidationExceptionGeneric(() => novuClient.domains.create({ name, data }));
+
+    expect(error?.statusCode).to.equal(422);
+  });
+
+  it('should reject domain data exceeding total char budget (422)', async () => {
+    const name = uniqueDomainName();
+    const longValue = 'x'.repeat(498);
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.domains.create({
+        name,
+        data: { a: longValue, b: 'yy' },
+      })
+    );
+
+    expect(error?.statusCode).to.equal(422);
+  });
+
+  it('should replace domain data on PATCH', async () => {
+    const name = uniqueDomainName();
+    const { result: created } = await novuClient.domains.create({
+      name,
+      data: { a: '1' },
+    });
+
+    const { result: patched } = await novuClient.domains.update({ data: { b: '2' } }, created.name);
+
+    expect(patched.data).to.deep.equal({ b: '2' });
+  });
+
   it('should refresh verification status via verify endpoint', async () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });

@@ -14,6 +14,8 @@ export class DomainRouteEntity {
 
   type: DomainRouteTypeEnum;
 
+  data?: Record<string, string>;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

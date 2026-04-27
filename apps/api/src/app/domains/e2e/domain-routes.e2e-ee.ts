@@ -6,6 +6,7 @@ import { expect } from 'chai';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
+  expectSdkZodError,
   initNovuClassSdkInternalAuth,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
@@ -14,7 +15,7 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
   let novuClient: Novu;
 
   before(() => {
-    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+    (process.env as { IS_CONVERSATIONAL_AGENTS_ENABLED?: string }).IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
     process.env.MAIL_SERVER_DOMAIN = process.env.MAIL_SERVER_DOMAIN || 'mail.e2e.example.test';
   });
 
@@ -59,6 +60,38 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(route.address).to.equal('support');
     expect(route.type).to.equal('webhook');
     expect(route.agentId).to.be.undefined;
+  });
+
+  it('should create a route with data metadata', async () => {
+    const domain = await createDomain();
+
+    const { result: route } = await novuClient.domains.routes.create(
+      {
+        address: 'meta',
+        type: DomainRouteDtoType.Webhook,
+        data: { source: 'e2e' },
+      },
+      domain.name
+    );
+
+    expect(route.data).to.deep.equal({ source: 'e2e' });
+  });
+
+  it('should reject route data with non-string values (client validation)', async () => {
+    const domain = await createDomain();
+
+    const { error } = await expectSdkZodError(() =>
+      novuClient.domains.routes.create(
+        {
+          address: 'bad-meta',
+          type: DomainRouteDtoType.Webhook,
+          data: { n: 1 } as unknown as Record<string, string>,
+        },
+        domain.name
+      )
+    );
+
+    expect(error?.name).to.equal('SDKValidationError');
   });
 
   it('should reject full email addresses as route addresses (422)', async () => {
@@ -285,11 +318,11 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
       domain.name
     );
 
-    const { result: updated } = await novuClient.domains.routes.update({
-      domain: domain.name,
-      address: 'switch',
-      updateDomainRouteDto: { type: DomainRouteDtoType.Webhook },
-    });
+    const { result: updated } = await novuClient.domains.routes.update(
+      { type: DomainRouteDtoType.Webhook },
+      domain.name,
+      'switch'
+    );
 
     expect(updated.type).to.equal('webhook');
     expect(updated.agentId).to.be.undefined;
@@ -301,11 +334,7 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     await novuClient.domains.routes.create({ address: 'wh-only', type: DomainRouteDtoType.Webhook }, domain.name);
 
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.domains.routes.update({
-        domain: domain.name,
-        address: 'wh-only',
-        updateDomainRouteDto: { type: DomainRouteDtoType.Agent },
-      })
+      novuClient.domains.routes.update({ type: DomainRouteDtoType.Agent }, domain.name, 'wh-only')
     );
 
     expect(error?.statusCode).to.equal(400);
@@ -317,11 +346,11 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
 
     await novuClient.domains.routes.create({ address: 'to-agent', type: DomainRouteDtoType.Webhook }, domain.name);
 
-    const { result: updated } = await novuClient.domains.routes.update({
-      domain: domain.name,
-      address: 'to-agent',
-      updateDomainRouteDto: { type: DomainRouteDtoType.Agent, agentId: agent.identifier },
-    });
+    const { result: updated } = await novuClient.domains.routes.update(
+      { type: DomainRouteDtoType.Agent, agentId: agent.identifier },
+      domain.name,
+      'to-agent'
+    );
 
     expect(updated.type).to.equal('agent');
     expect(updated.agentId).to.equal(agent._id);
@@ -331,11 +360,7 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     const domain = await createDomain();
 
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.domains.routes.update({
-        domain: domain.name,
-        address: 'nope',
-        updateDomainRouteDto: { type: DomainRouteDtoType.Webhook },
-      })
+      novuClient.domains.routes.update({ type: DomainRouteDtoType.Webhook }, domain.name, 'nope')
     );
 
     expect(error?.statusCode).to.equal(404);

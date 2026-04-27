@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Update a domain
  *
  * @remarks
- * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
+ * Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

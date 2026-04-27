@@ -9,11 +9,13 @@ import {
   RiExternalLinkLine,
   RiInformationLine,
   RiMore2Fill,
+  RiPulseLine,
   RiRefreshLine,
   RiShieldCheckLine,
 } from 'react-icons/ri';
 import { SiCloudflare, SiVercel } from 'react-icons/si';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import type { DiagnoseDomainResponse } from '@/api/domains';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
@@ -42,6 +44,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Textarea } from '@/components/primitives/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -51,10 +54,13 @@ import {
   usePollDomainVerification,
   useRefreshDomain,
   useStartDomainAutoConfigure,
+  useUpdateDomain,
   useVerifyDomain,
 } from '@/hooks/use-domain';
+import { useDiagnoseDomain } from '@/hooks/use-diagnose-domain';
 import { useDeleteDomain } from '@/hooks/use-domains';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { parseDomainMetadataJson } from '@/utils/domain-metadata';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
@@ -113,6 +119,8 @@ export function DomainDetailPage() {
   );
   const { refresh: refreshDomain } = useRefreshDomain(domainParam);
   const verifyDomain = useVerifyDomain(domainParam);
+  const updateDomainMeta = useUpdateDomain(domainParam);
+  const diagnoseDomainHook = useDiagnoseDomain(domainParam);
   const startDomainAutoConfigure = useStartDomainAutoConfigure(domainParam);
   const deleteDomain = useDeleteDomain();
   const routingRef = useRef<DomainRoutingHandle>(null);
@@ -123,6 +131,8 @@ export function DomainDetailPage() {
   const [hasSubmittedDomainConnectReturn, setHasSubmittedDomainConnectReturn] = useState(false);
   const [hasDomainConnectFailure, setHasDomainConnectFailure] = useState(false);
   const [domainConnectApplyUrl, setDomainConnectApplyUrl] = useState<string | undefined>();
+  const [metadataDraft, setMetadataDraft] = useState('{}');
+  const [diagnoseResult, setDiagnoseResult] = useState<DiagnoseDomainResponse | null>(null);
   const domainConnectReturnStatus = searchParams.get('domainConnect');
   const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
   const domainConnectProviderName = domainConnectStatus?.providerName ?? 'your DNS provider';
@@ -137,6 +147,39 @@ export function DomainDetailPage() {
       showSuccessToast('Verification status refreshed.');
     } catch {
       showErrorToast('Failed to refresh verification status.');
+    }
+  };
+
+  useEffect(() => {
+    if (!domain) return;
+
+    setMetadataDraft(JSON.stringify(domain.data ?? {}, null, 2));
+  }, [domain]);
+
+  const handleSaveMetadata = async () => {
+    const parsed = parseDomainMetadataJson(metadataDraft);
+
+    if (!parsed.ok) {
+      showErrorToast(parsed.message);
+
+      return;
+    }
+
+    try {
+      await updateDomainMeta.mutateAsync({ data: parsed.data });
+      showSuccessToast('Domain metadata saved.');
+    } catch {
+      showErrorToast('Failed to save metadata.');
+    }
+  };
+
+  const handleDiagnoseDns = async () => {
+    try {
+      const result = await diagnoseDomainHook.mutateAsync();
+
+      setDiagnoseResult(result);
+    } catch {
+      showErrorToast('Failed to run DNS diagnosis.');
     }
   };
 
@@ -376,6 +419,32 @@ export function DomainDetailPage() {
                 )}
 
                 <Separator />
+
+                {!isLoading && domain && (
+                  <div className="space-y-2">
+                    <p className="text-text-strong text-label-xs font-medium">Metadata</p>
+                    <p className="text-text-soft text-2xs leading-snug">
+                      Optional key-value pairs (string values only). Up to 10 keys; combined length of keys and values
+                      ≤ 500 characters.
+                    </p>
+                    <Textarea
+                      value={metadataDraft}
+                      onChange={(e) => setMetadataDraft(e.target.value)}
+                      className="font-code text-code-xs min-h-[120px] resize-y"
+                      spellCheck={false}
+                    />
+                    <Button
+                      size="xs"
+                      variant="secondary"
+                      mode="outline"
+                      type="button"
+                      onClick={handleSaveMetadata}
+                      isLoading={updateDomainMeta.isPending}
+                    >
+                      Save metadata
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -444,15 +513,26 @@ export function DomainDetailPage() {
                       </p>
                       <RiInformationLine className="size-4 shrink-0 text-foreground-400" />
                     </div>
-                    <button
-                      className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors"
-                      onClick={handleVerify}
-                      disabled={isFetching}
-                      type="button"
-                    >
-                      <RiRefreshLine className="size-3" />
-                      Refresh status
-                    </button>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors disabled:opacity-50"
+                        onClick={handleDiagnoseDns}
+                        disabled={!domain || diagnoseDomainHook.isPending}
+                        type="button"
+                      >
+                        <RiPulseLine className="size-3" />
+                        Diagnose DNS
+                      </button>
+                      <button
+                        className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors"
+                        onClick={handleVerify}
+                        disabled={isFetching}
+                        type="button"
+                      >
+                        <RiRefreshLine className="size-3" />
+                        Refresh status
+                      </button>
+                    </div>
                   </div>
 
                   {domainConnectStatus?.available && domain?.status === DomainStatusEnum.PENDING && (
@@ -547,6 +627,28 @@ export function DomainDetailPage() {
                       )}
                     </TableBody>
                   </Table>
+
+                  {diagnoseResult && (
+                    <div className="space-y-2 pt-1">
+                      <p className="text-foreground-600 text-xs font-medium">Inbound DNS diagnosis</p>
+                      {diagnoseResult.issues.length === 0 ? (
+                        <InlineToast
+                          variant="success"
+                          title="No issues reported"
+                          description="Checks completed; no actionable issues were returned for this domain."
+                        />
+                      ) : (
+                        diagnoseResult.issues.map((issue, index) => (
+                          <InlineToast
+                            key={`${issue.code}-${index}`}
+                            variant={issue.severity === 'error' ? 'error' : 'warning'}
+                            title={issue.message}
+                            description={issue.fix}
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               </CollapsibleSection>
 

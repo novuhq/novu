@@ -1,22 +1,40 @@
 import { DomainRouteTypeEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { forwardRef, useImperativeHandle, useState } from 'react';
-import { RiAddLine, RiCloseLine, RiLightbulbFlashLine, RiMore2Fill, RiRobot2Line, RiWebhookLine } from 'react-icons/ri';
+import { Fragment, forwardRef, useEffect, useId, useImperativeHandle, useState } from 'react';
+import {
+  RiAddLine,
+  RiCloseLine,
+  RiLightbulbFlashLine,
+  RiMore2Fill,
+  RiRobot2Line,
+  RiSendPlaneLine,
+  RiWebhookLine,
+} from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { listAgents } from '@/api/agents';
-import type { DomainResponse, DomainRouteResponse } from '@/api/domains';
+import type { DomainResponse, DomainRouteResponse, TestDomainRouteResponse } from '@/api/domains';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
+import { Checkbox } from '@/components/primitives/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/primitives/dialog';
 import { Input } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { Textarea } from '@/components/primitives/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useEnvironment } from '@/context/environment/hooks';
 import {
@@ -25,6 +43,8 @@ import {
   useFetchDomainRoutes,
   useUpdateDomainRoute,
 } from '@/hooks/use-domain-routes';
+import { useTestDomainRoute } from '@/hooks/use-test-domain-route';
+import { parseDomainMetadataJson } from '@/utils/domain-metadata';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { RoutingEmptyIllustration } from './routing-empty-illustration';
 
@@ -32,12 +52,14 @@ type RouteFormState = {
   address: string;
   agentId: string;
   type: DomainRouteTypeEnum;
+  dataJson: string;
 };
 
 const DEFAULT_ROUTE_FORM: RouteFormState = {
   address: '',
   agentId: '',
   type: DomainRouteTypeEnum.AGENT,
+  dataJson: '{}',
 };
 
 type DomainRoutingProps = {
@@ -88,19 +110,22 @@ function InlineRouteForm({
   const handleSave = async () => {
     if (!form.address.trim()) {
       showErrorToast('Address is required.');
+
       return;
     }
     if (form.type === DomainRouteTypeEnum.AGENT && !form.agentId.trim()) {
       showErrorToast('An agent must be selected for agent routes.');
+
       return;
     }
     await onSave(form);
   };
 
   return (
-    <TableRow className="[&>td]:border-0">
-      {/* Address */}
-      <TableCell className="px-3 py-4">
+    <>
+      <TableRow className="[&>td]:border-0">
+        {/* Address */}
+        <TableCell className="px-3 py-4">
         <div className="flex items-center gap-1">
           <Input
             className="h-7 w-28 text-sm"
@@ -111,10 +136,10 @@ function InlineRouteForm({
           />
           <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
         </div>
-      </TableCell>
+        </TableCell>
 
-      {/* Destination */}
-      <TableCell className="px-3 py-4">
+        {/* Destination */}
+        <TableCell className="px-3 py-4">
         <div className="flex items-center gap-2">
           <Select
             value={form.type}
@@ -157,10 +182,10 @@ function InlineRouteForm({
             </SelectContent>
           </Select>
         </div>
-      </TableCell>
+        </TableCell>
 
-      {/* Actions */}
-      <TableCell className="px-3 py-4">
+        {/* Actions */}
+        <TableCell className="px-3 py-4">
         <div className="flex items-center gap-1">
           <Button
             size="xs"
@@ -184,12 +209,27 @@ function InlineRouteForm({
             ✕
           </Button>
         </div>
-      </TableCell>
+        </TableCell>
 
-      <TableCell className="w-12 px-3 py-4 text-right">
-        <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" disabled />
-      </TableCell>
-    </TableRow>
+        <TableCell className="w-12 px-3 py-4 text-right">
+          <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" disabled />
+        </TableCell>
+      </TableRow>
+
+      <TableRow className="[&>td]:border-0">
+        <TableCell colSpan={4} className="space-y-1 px-3 pb-4 pt-0">
+          <p className="text-foreground-500 text-2xs font-medium">Metadata (optional JSON)</p>
+          <Textarea
+            value={form.dataJson}
+            onChange={(e) => setForm((f) => ({ ...f, dataJson: e.target.value }))}
+            className="font-code text-code-xs min-h-[72px] resize-y"
+            spellCheck={false}
+            placeholder="{}"
+          />
+          <p className="text-foreground-400 text-2xs">String keys and string values only. Max 10 keys; 500 characters total.</p>
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
@@ -199,10 +239,19 @@ type ExistingRouteRowProps = {
   agentOptions: Array<{ _id: string; name: string; identifier: string }>;
   onDelete: (address: string) => Promise<void>;
   onEdit: (address: string) => void;
+  onSendTest: (route: DomainRouteResponse) => void;
   isDeleting: boolean;
 };
 
-function ExistingRouteRow({ route, domainName, agentOptions, onDelete, onEdit, isDeleting }: ExistingRouteRowProps) {
+function ExistingRouteRow({
+  route,
+  domainName,
+  agentOptions,
+  onDelete,
+  onEdit,
+  onSendTest,
+  isDeleting,
+}: ExistingRouteRowProps) {
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
   const agentName = isWebhook ? null : (agentOptions.find((a) => a._id === route.agentId)?.name ?? route.agentId);
 
@@ -234,6 +283,12 @@ function ExistingRouteRow({ route, domainName, agentOptions, onDelete, onEdit, i
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => onEdit(route.address)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSendTest(route)}>
+              <span className="flex items-center gap-1.5">
+                <RiSendPlaneLine className="size-3.5 shrink-0" />
+                Send test
+              </span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onSelect={() => onDelete(route.address)}
@@ -245,6 +300,124 @@ function ExistingRouteRow({ route, domainName, agentOptions, onDelete, onEdit, i
         </DropdownMenu>
       </TableCell>
     </TableRow>
+  );
+}
+
+type RouteTestDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  domainName: string;
+  route: DomainRouteResponse;
+  mutation: ReturnType<typeof useTestDomainRoute>;
+};
+
+function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: RouteTestDialogProps) {
+  const dryRunFieldId = useId();
+  const [fromAddress, setFromAddress] = useState('tester@example.com');
+  const [fromName, setFromName] = useState('');
+  const [subject, setSubject] = useState('Novu route test');
+  const [text, setText] = useState('Synthetic inbound message from Novu.');
+  const [dryRun, setDryRun] = useState(true);
+  const [lastResult, setLastResult] = useState<TestDomainRouteResponse | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setLastResult(null);
+    setDryRun(true);
+  }, [open]);
+
+  const handleSubmit = async () => {
+    if (!fromAddress.trim()) {
+      showErrorToast('From address is required.');
+
+      return;
+    }
+
+    try {
+      const result = await mutation.mutateAsync({
+        address: route.address,
+        body: {
+          from: { address: fromAddress.trim(), name: fromName.trim() || undefined },
+          subject: subject.trim() || 'Test',
+          text: text.trim() || undefined,
+          dryRun,
+        },
+      });
+
+      setLastResult(result);
+
+      if (!result.matched) {
+        showErrorToast('No route matched for this address.');
+      }
+    } catch {
+      showErrorToast('Route test failed.');
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Send test</DialogTitle>
+          <DialogDescription>
+            Deliver a synthetic inbound through the same path as production. Enable dry run to preview only.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="text-foreground-600 space-y-3 text-xs">
+          <p className="font-code text-code-xs text-foreground-900">
+            {route.address}@{domainName}
+          </p>
+
+          <div className="grid gap-2">
+            <p className="text-foreground-500 text-2xs font-medium uppercase tracking-wide">From email</p>
+            <Input value={fromAddress} onChange={(e) => setFromAddress(e.target.value)} className="h-8 text-sm" />
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-foreground-500 text-2xs font-medium uppercase tracking-wide">From name (optional)</p>
+            <Input value={fromName} onChange={(e) => setFromName(e.target.value)} className="h-8 text-sm" />
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-foreground-500 text-2xs font-medium uppercase tracking-wide">Subject</p>
+            <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="h-8 text-sm" />
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-foreground-500 text-2xs font-medium uppercase tracking-wide">Text body</p>
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="font-code min-h-[80px] text-xs"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox id={dryRunFieldId} checked={dryRun} onCheckedChange={(v) => setDryRun(v === true)} />
+            <label htmlFor={dryRunFieldId} className="cursor-pointer">
+              Dry run (preview payload without delivering)
+            </label>
+          </div>
+        </div>
+
+        {lastResult ? (
+          <pre className="bg-bg-weak text-foreground-700 max-h-48 overflow-auto rounded-md border p-3 font-mono text-2xs">
+            {JSON.stringify(lastResult, null, 2)}
+          </pre>
+        ) : null}
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="secondary" mode="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          <Button type="button" size="sm" onClick={handleSubmit} isLoading={mutation.isPending}>
+            Run test
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -347,13 +520,16 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const createDomainRoute = useCreateDomainRoute(domain.name);
   const updateDomainRoute = useUpdateDomainRoute(domain.name);
   const deleteDomainRoute = useDeleteDomainRoute(domain.name);
+  const testDomainRoute = useTestDomainRoute(domain.name);
 
   const [isAdding, setIsAdding] = useState(false);
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
   const [editingAddress, setEditingAddress] = useState<string | null>(null);
+  const [testDialogRoute, setTestDialogRoute] = useState<DomainRouteResponse | null>(null);
   const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
   const routes = routesResponse?.data ?? [];
-  const isMutating = createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
+  const isMutating =
+    createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
 
   const startAdding = (initialValues?: RouteFormState) => {
     setAddInitialValues(initialValues);
@@ -369,11 +545,20 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   useImperativeHandle(ref, () => ({ startAdding: () => startAdding() }));
 
   const handleCreate = async (values: RouteFormState) => {
+    const parsed = parseDomainMetadataJson(values.dataJson);
+
+    if (!parsed.ok) {
+      showErrorToast(parsed.message);
+
+      return;
+    }
+
     try {
       await createDomainRoute.mutateAsync({
         address: values.address.trim().toLowerCase(),
         type: values.type,
         ...(values.agentId ? { agentId: values.agentId } : {}),
+        data: parsed.data,
       });
       cancelAdding();
     } catch {
@@ -382,12 +567,21 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   };
 
   const handleUpdate = async (address: string, values: RouteFormState) => {
+    const parsed = parseDomainMetadataJson(values.dataJson);
+
+    if (!parsed.ok) {
+      showErrorToast(parsed.message);
+
+      return;
+    }
+
     try {
       await updateDomainRoute.mutateAsync({
         address,
         body: {
           type: values.type,
           ...(values.agentId ? { agentId: values.agentId } : {}),
+          data: parsed.data,
         },
       });
       setEditingAddress(null);
@@ -429,20 +623,22 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           <TableBody>
             {routes.map((route) =>
               editingAddress === route.address ? (
-                <InlineRouteForm
-                  key={route._id}
-                  domainName={domain.name}
-                  initialValues={{
-                    address: route.address,
-                    agentId: agentOptions.find((a) => a._id === route.agentId)?.identifier ?? '',
-                    type: route.type,
-                  }}
-                  agentOptions={agentOptions}
-                  isAddressLocked
-                  onSave={(values) => handleUpdate(route.address, values)}
-                  onCancel={() => setEditingAddress(null)}
-                  isSaving={isMutating}
-                />
+                <Fragment key={route._id}>
+                  <InlineRouteForm
+                    domainName={domain.name}
+                    initialValues={{
+                      address: route.address,
+                      agentId: agentOptions.find((a) => a._id === route.agentId)?.identifier ?? '',
+                      type: route.type,
+                      dataJson: JSON.stringify(route.data ?? {}, null, 2),
+                    }}
+                    agentOptions={agentOptions}
+                    isAddressLocked
+                    onSave={(values) => handleUpdate(route.address, values)}
+                    onCancel={() => setEditingAddress(null)}
+                    isSaving={isMutating}
+                  />
+                </Fragment>
               ) : (
                 <ExistingRouteRow
                   key={route._id}
@@ -451,6 +647,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                   agentOptions={agentOptions}
                   onDelete={handleDelete}
                   onEdit={setEditingAddress}
+                  onSendTest={setTestDialogRoute}
                   isDeleting={isMutating}
                 />
               )
@@ -458,8 +655,9 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
             {isAdding && (
               <InlineRouteForm
+                key={addInitialValues ? `add-${addInitialValues.address}-${addInitialValues.type}` : 'add-default'}
                 domainName={domain.name}
-                initialValues={addInitialValues}
+                initialValues={addInitialValues ?? DEFAULT_ROUTE_FORM}
                 agentOptions={agentOptions}
                 onSave={handleCreate}
                 onCancel={cancelAdding}
@@ -530,7 +728,9 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           >
             <WildcardRouteHint
               domainName={domain.name}
-              onConfigureClick={() => startAdding({ address: '*', agentId: '', type: DomainRouteTypeEnum.WEBHOOK })}
+              onConfigureClick={() =>
+                startAdding({ address: '*', agentId: '', type: DomainRouteTypeEnum.WEBHOOK, dataJson: '{}' })
+              }
               onDismiss={() => setIsWildcardHintDismissed(true)}
             />
           </motion.div>
@@ -551,6 +751,19 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {testDialogRoute ? (
+        <RouteTestDialog
+          key={testDialogRoute._id}
+          open
+          domainName={domain.name}
+          route={testDialogRoute}
+          mutation={testDomainRoute}
+          onOpenChange={(open) => {
+            if (!open) setTestDialogRoute(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 });

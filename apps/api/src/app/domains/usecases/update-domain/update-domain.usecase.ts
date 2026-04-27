@@ -19,9 +19,33 @@ export class UpdateDomain {
       organizationId: command.organizationId,
     });
 
+    if (command.data === undefined) {
+      return {
+        ...toDomainResponse(domain),
+        expectedDnsRecords: buildExpectedDnsRecords(domain.name),
+      };
+    }
+
+    const updated = await this.domainRepository.findOneAndUpdate(
+      {
+        _id: domain._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      { $set: { data: command.data } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return {
+        ...toDomainResponse(domain),
+        expectedDnsRecords: buildExpectedDnsRecords(domain.name),
+      };
+    }
+
     return {
-      ...toDomainResponse(domain),
-      expectedDnsRecords: buildExpectedDnsRecords(domain.name),
+      ...toDomainResponse(updated),
+      expectedDnsRecords: buildExpectedDnsRecords(updated.name),
     };
   }
 }

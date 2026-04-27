@@ -32,4 +32,11 @@ export class DomainResponseDto {
 
   @ApiPropertyOptional({ type: [ExpectedDnsRecordDto] })
   expectedDnsRecords?: ExpectedDnsRecordDto[];
+
+  @ApiPropertyOptional({
+    description: 'String key-value metadata (max 10 keys, 500 characters total when set via API).',
+    type: Object,
+    additionalProperties: { type: 'string' },
+  })
+  data?: Record<string, string>;
 }

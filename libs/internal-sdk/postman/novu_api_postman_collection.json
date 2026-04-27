@@ -2766,7 +2766,7 @@
                                 }
                             ]
                         },
-                        "description": "Reserved for future editable fields. Currently a no-op that returns the domain configuration."
+                        "description": "Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged."
                     }
                 },
                 {
@@ -2804,6 +2804,44 @@
                             ]
                         },
                         "description": "Removes the domain and cascades the deletion to all of its routes. Inbound mail for that domain stops being processed immediately."
+                    }
+                },
+                {
+                    "name": "Diagnose inbound DNS for a domain",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}/diagnose",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain",
+                                "diagnose"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Runs live DNS checks (MX correctness, apex CNAME collision, NS delegation, and common DNS blocklists for the Novu mail host). Returns structured issues with plain-language fixes."
                     }
                 },
                 {

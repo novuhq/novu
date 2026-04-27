@@ -4,17 +4,26 @@
 
 import * as z from "zod/v3";
 
-export type UpdateDomainDto = {};
+export type UpdateDomainDto = {
+  /**
+   * Replaces domain metadata when provided (max 10 keys, 500 characters total for keys+values).
+   */
+  data?: { [k: string]: string } | undefined;
+};
 
 /** @internal */
-export type UpdateDomainDto$Outbound = {};
+export type UpdateDomainDto$Outbound = {
+  data?: { [k: string]: string } | undefined;
+};
 
 /** @internal */
 export const UpdateDomainDto$outboundSchema: z.ZodType<
   UpdateDomainDto$Outbound,
   z.ZodTypeDef,
   UpdateDomainDto
-> = z.object({});
+> = z.object({
+  data: z.record(z.string()).optional(),
+});
 
 export function updateDomainDtoToJSON(
   updateDomainDto: UpdateDomainDto,

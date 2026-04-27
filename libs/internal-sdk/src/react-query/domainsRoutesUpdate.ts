@@ -11,6 +11,7 @@ import { NovuCore } from "../core.js";
 import { domainsRoutesUpdate } from "../funcs/domainsRoutesUpdate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -28,7 +29,10 @@ import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
 export type DomainsRoutesUpdateMutationVariables = {
-  request: operations.DomainsControllerUpdateDomainRouteRequest;
+  updateDomainRouteDto: components.UpdateDomainRouteDto;
+  domain: string;
+  address: string;
+  idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
@@ -87,7 +91,10 @@ export function buildDomainsRoutesUpdateMutation(
   return {
     mutationKey: mutationKeyDomainsRoutesUpdate(),
     mutationFn: function domainsRoutesUpdateMutationFn({
-      request,
+      updateDomainRouteDto,
+      domain,
+      address,
+      idempotencyKey,
       options,
     }): Promise<DomainsRoutesUpdateMutationData> {
       const mergedOptions = {
@@ -104,7 +111,10 @@ export function buildDomainsRoutesUpdateMutation(
       };
       return unwrapAsync(domainsRoutesUpdate(
         client$,
-        request,
+        updateDomainRouteDto,
+        domain,
+        address,
+        idempotencyKey,
         mergedOptions,
       ));
     },

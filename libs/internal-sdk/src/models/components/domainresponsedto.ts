@@ -32,6 +32,10 @@ export type DomainResponseDto = {
   createdAt: string;
   updatedAt: string;
   expectedDnsRecords?: Array<ExpectedDnsRecordDto> | undefined;
+  /**
+   * String key-value metadata (max 10 keys, 500 characters total when set via API).
+   */
+  data?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -55,6 +59,7 @@ export const DomainResponseDto$inboundSchema: z.ZodType<
   createdAt: z.string(),
   updatedAt: z.string(),
   expectedDnsRecords: z.array(ExpectedDnsRecordDto$inboundSchema).optional(),
+  data: z.record(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

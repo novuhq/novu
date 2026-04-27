@@ -1,6 +1,7 @@
 import { DomainRouteTypeEnum } from '@novu/shared';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { IsBoundedRecord } from '../../validators/bounded-record.validator';
 
 export class UpdateDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -18,4 +19,8 @@ export class UpdateDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsEnum(DomainRouteTypeEnum)
   @IsOptional()
   type?: DomainRouteTypeEnum;
+
+  @IsOptional()
+  @IsBoundedRecord()
+  data?: Record<string, string>;
 }

@@ -6,6 +6,7 @@ import { domainsRoutesCreate } from "../funcs/domainsRoutesCreate.js";
 import { domainsRoutesDelete } from "../funcs/domainsRoutesDelete.js";
 import { domainsRoutesList } from "../funcs/domainsRoutesList.js";
 import { domainsRoutesRetrieve } from "../funcs/domainsRoutesRetrieve.js";
+import { domainsRoutesTest } from "../funcs/domainsRoutesTest.js";
 import { domainsRoutesUpdate } from "../funcs/domainsRoutesUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -79,12 +80,18 @@ export class Routes extends ClientSDK {
    * Updates the destination of the route bound to `<address>@<domain>`. The address itself is the resource identity and cannot be changed; delete and recreate the route to rename it.
    */
   async update(
-    request: operations.DomainsControllerUpdateDomainRouteRequest,
+    updateDomainRouteDto: components.UpdateDomainRouteDto,
+    domain: string,
+    address: string,
+    idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerUpdateDomainRouteResponse> {
     return unwrapAsync(domainsRoutesUpdate(
       this,
-      request,
+      updateDomainRouteDto,
+      domain,
+      address,
+      idempotencyKey,
       options,
     ));
   }
@@ -105,6 +112,29 @@ export class Routes extends ClientSDK {
   > {
     return unwrapAsync(domainsRoutesDelete(
       this,
+      domain,
+      address,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Test an inbound route
+   *
+   * @remarks
+   * Sends a synthetic inbound email through the same delivery path as production (outbound webhooks for webhook routes, signed HTTP to the agent for agent routes). Use `dryRun: true` to preview the payload without delivering.
+   */
+  async test(
+    testDomainRouteDto: components.TestDomainRouteDto,
+    domain: string,
+    address: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.DomainsControllerTestDomainRouteResponse> {
+    return unwrapAsync(domainsRoutesTest(
+      this,
+      testDomainRouteDto,
       domain,
       address,
       idempotencyKey,

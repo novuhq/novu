@@ -4,6 +4,7 @@
 
 import { domainsCreate } from "../funcs/domainsCreate.js";
 import { domainsDelete } from "../funcs/domainsDelete.js";
+import { domainsDiagnose } from "../funcs/domainsDiagnose.js";
 import { domainsList } from "../funcs/domainsList.js";
 import { domainsRetrieve } from "../funcs/domainsRetrieve.js";
 import { domainsUpdate } from "../funcs/domainsUpdate.js";
@@ -85,7 +86,7 @@ export class Domains extends ClientSDK {
    * Update a domain
    *
    * @remarks
-   * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
+   * Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged.
    */
   async update(
     updateDomainDto: components.UpdateDomainDto,
@@ -114,6 +115,25 @@ export class Domains extends ClientSDK {
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerDeleteDomainResponse | undefined> {
     return unwrapAsync(domainsDelete(
+      this,
+      domain,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Diagnose inbound DNS for a domain
+   *
+   * @remarks
+   * Runs live DNS checks (MX correctness, apex CNAME collision, NS delegation, and common DNS blocklists for the Novu mail host). Returns structured issues with plain-language fixes.
+   */
+  async diagnose(
+    domain: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.DomainsControllerDiagnoseDomainResponse> {
+    return unwrapAsync(domainsDiagnose(
       this,
       domain,
       idempotencyKey,

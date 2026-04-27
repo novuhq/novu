@@ -54,7 +54,7 @@ export type DomainsUpdateMutationError =
  * Update a domain
  *
  * @remarks
- * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
+ * Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged.
  */
 export function useDomainsUpdateMutation(
   options?: MutationHookOptions<
