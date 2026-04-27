@@ -86,9 +86,12 @@ export class SendAgentTestEmail {
     };
 
     await handler.send(mailOptions).catch((err) => {
+      const base = err instanceof Error ? err.message : String(err);
+      const body = (err as any)?.response?.body;
+      const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
       throw new BadGatewayException({
         error: 'delivery_failed',
-        message: err instanceof Error ? err.message : String(err),
+        message: detail ? `${base}: ${detail}` : base,
       });
     });
 
