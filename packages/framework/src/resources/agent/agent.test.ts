@@ -1031,4 +1031,38 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(capturedCtx.reaction).toBeNull();
   });
+
+  it('should send handler return value as reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_ctx) => 'hello from return',
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    expect(replyCall).toBeDefined();
+    const replyBody = JSON.parse(replyCall![1].body);
+    expect(replyBody.reply.markdown).toBe('hello from return');
+  });
 });

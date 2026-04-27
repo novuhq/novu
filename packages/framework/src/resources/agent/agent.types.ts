@@ -1,5 +1,6 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
+import type { Awaitable } from '../../types/util.types';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -194,10 +195,10 @@ export interface AgentContext {
 }
 
 export interface AgentHandlers {
-  onMessage: (ctx: AgentContext) => Promise<void>;
-  onReaction?: (ctx: AgentContext) => Promise<void>;
-  onAction?: (ctx: AgentContext) => Promise<void>;
-  onResolve?: (ctx: AgentContext) => Promise<void>;
+  onMessage:   (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onReaction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onAction?:   (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onResolve?:  (ctx: AgentContext) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {
