@@ -921,6 +921,44 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.reaction.message).toBeNull();
   });
 
+  it('should flush addReaction without a reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        ctx.addReaction('msg-123', 'eyes');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const flushBody = JSON.parse(replyCall![1].body);
+
+    expect(flushBody.reply).toBeUndefined();
+    expect(flushBody.addReactions).toHaveLength(1);
+    expect(flushBody.addReactions[0]).toEqual({ messageId: 'msg-123', emojiName: 'eyes' });
+  });
+
   it('should batch addReaction with reply', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (ctx) => {
