@@ -23,7 +23,7 @@ const LOG_CONTEXT = 'InboundDomainRouteDelivery';
 
 export type RoutableDomain = Pick<
   DomainEntity,
-  '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId'
+  '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
 >;
 
 export type InboundDomainRouteMailInput = {
@@ -45,9 +45,11 @@ export type DomainRouteWebhookPayload = {
   domain: {
     id: string;
     name: string;
+    data: Record<string, string>;
   };
   route: {
     address: string;
+    data: Record<string, string>;
   };
   mail: {
     from: InboundDomainRouteMailInput['from'];
@@ -83,8 +85,12 @@ export class InboundDomainRouteDelivery {
       domain: {
         id: domain._id,
         name: domain.name,
+        data: domain.data ?? {},
       },
-      route: { address: route.address },
+      route: {
+        address: route.address,
+        data: route.data ?? {},
+      },
       mail: {
         from: mail.from,
         to: mail.to,
