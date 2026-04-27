@@ -56,7 +56,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Hello from agent' },
+        reply: { markdown: 'Hello from agent' },
       });
 
       expect(res.status).to.equal(200);
@@ -84,7 +84,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Hello' },
+        reply: { markdown: 'Hello' },
       });
 
       expect(res.status).to.equal(200);
@@ -106,7 +106,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         integrationIdentifier: ctx.integrationIdentifier,
         edit: {
           messageId: 'platform-msg-1',
-          content: { text: 'Edited content' },
+          content: { markdown: 'Edited content' },
         },
       });
 
@@ -137,8 +137,8 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'a' },
-        edit: { messageId: 'platform-msg-1', content: { text: 'b' } },
+        reply: { markdown: 'a' },
+        edit: { messageId: 'platform-msg-1', content: { markdown: 'b' } },
       });
 
       expect(res.status).to.equal(400);
@@ -150,7 +150,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        edit: { messageId: 'platform-msg-1', content: { text: 'b' } },
+        edit: { messageId: 'platform-msg-1', content: { markdown: 'b' } },
         signals: [{ type: 'metadata', key: 'k', value: 'v' }],
       });
 
@@ -163,7 +163,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Should fail' },
+        reply: { markdown: 'Should fail' },
       });
 
       expect(res.status).to.equal(400);
@@ -259,7 +259,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Here is your answer' },
+        reply: { markdown: 'Here is your answer' },
         signals: [{ type: 'metadata', key: 'resolved_by', value: 'bot' }],
         resolve: { summary: 'Answered' },
       });
@@ -306,7 +306,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'This should fail' },
+        reply: { markdown: 'This should fail' },
       });
 
       expect(res.status).to.equal(422);

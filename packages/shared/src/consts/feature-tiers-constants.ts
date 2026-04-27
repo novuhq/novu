@@ -431,10 +431,10 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'SAML and Enterprise SSO providers', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'SAML and Enterprise SSO providers', value: false },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'SAML and Enterprise SSO providers', value: false },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'SAML and Enterprise SSO providers', value: true },
+    [ApiServiceLevelEnum.FREE]: { label: 'SAML, SCIM and Enterprise SSO providers', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'SAML, SCIM and Enterprise SSO providers', value: false },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'SAML, SCIM and Enterprise SSO providers', value: false },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'SAML, SCIM and Enterprise SSO providers', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.ACCOUNT_MULTI_FACTOR_AUTHENTICATION_BOOLEAN]: {
