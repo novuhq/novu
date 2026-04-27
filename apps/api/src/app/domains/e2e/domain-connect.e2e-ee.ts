@@ -8,6 +8,10 @@ describe('Domain Connect API - /v1/domains/:domainId/domain-connect #novu-v2', (
   let session: UserSession;
   let novuClient: Novu;
 
+  before(() => {
+    process.env.MAIL_SERVER_DOMAIN = process.env.MAIL_SERVER_DOMAIN || 'mail.e2e.example.test';
+  });
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -21,7 +25,7 @@ describe('Domain Connect API - /v1/domains/:domainId/domain-connect #novu-v2', (
   it('should return disabled status with manual records when Domain Connect flag is off', async () => {
     const { result: domain } = await novuClient.domains.create({ name: uniqueDomainName() });
 
-    const { result: status } = await novuClient.domains.domainConnect.status(domain._id);
+    const { result: status } = await novuClient.domains.domainConnect.status(domain.id);
 
     expect(status.available).to.equal(false);
     expect(status.reasonCode).to.equal('disabled');
@@ -40,7 +44,7 @@ describe('Domain Connect API - /v1/domains/:domainId/domain-connect #novu-v2', (
   it('should reject apply-url when Domain Connect flag is off (400)', async () => {
     const { result: domain } = await novuClient.domains.create({ name: uniqueDomainName() });
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.domainConnect.create({}, domain._id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.domainConnect.create({}, domain.id));
 
     expect(error?.statusCode).to.equal(400);
     expect(String(error?.message ?? '')).to.match(/not enabled/i);

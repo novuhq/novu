@@ -13,6 +13,10 @@ describe('Domains API - /v1/domains #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
 
+  before(() => {
+    process.env.MAIL_SERVER_DOMAIN = process.env.MAIL_SERVER_DOMAIN || 'mail.e2e.example.test';
+  });
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -28,12 +32,12 @@ describe('Domains API - /v1/domains #novu-v2', () => {
 
     const { result: domain } = await novuClient.domains.create({ name });
 
-    expect(domain._id).to.be.a('string');
+    expect(domain.id).to.be.a('string');
     expect(domain.name).to.equal(name);
     expect(domain.status).to.equal('pending');
     expect(domain.mxRecordConfigured).to.equal(false);
-    expect(domain._environmentId).to.equal(session.environment._id);
-    expect(domain._organizationId).to.equal(session.organization._id);
+    expect(domain.environmentId).to.equal(session.environment._id);
+    expect(domain.organizationId).to.equal(session.organization._id);
   });
 
   it('should return 409 when creating a duplicate domain name in the same environment', async () => {
@@ -56,9 +60,9 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });
 
-    const { result: fetched } = await novuClient.domains.retrieve(created._id);
+    const { result: fetched } = await novuClient.domains.retrieve(created.id);
 
-    expect(fetched._id).to.equal(created._id);
+    expect(fetched.id).to.equal(created.id);
     expect(fetched.name).to.equal(name);
   });
 
@@ -85,7 +89,7 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(result).to.have.property('previous');
     expect(result).to.have.property('totalCount');
     expect(result).to.have.property('totalCountCapped');
-    expect(result.data.every((d) => d._environmentId === session.environment._id)).to.equal(true);
+    expect(result.data.every((d) => d.environmentId === session.environment._id)).to.equal(true);
   });
 
   it('should filter domains by name', async () => {
@@ -123,8 +127,8 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(secondPage.result.data.length).to.be.at.most(limit);
     expect(secondPage.result.previous).to.be.a('string');
 
-    const firstIds = firstPage.result.data.map((d) => d._id);
-    const secondIds = secondPage.result.data.map((d) => d._id);
+    const firstIds = firstPage.result.data.map((d) => d.id);
+    const secondIds = secondPage.result.data.map((d) => d.id);
     const overlap = firstIds.filter((id) => secondIds.includes(id));
 
     expect(overlap.length).to.equal(0);
@@ -134,9 +138,9 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });
 
-    const { result: updated } = await novuClient.domains.update({}, created._id);
+    const { result: updated } = await novuClient.domains.update({}, created.id);
 
-    expect(updated._id).to.equal(created._id);
+    expect(updated.id).to.equal(created.id);
     expect(updated.name).to.equal(name);
     expect(updated.status).to.equal(created.status);
   });
@@ -145,9 +149,9 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });
 
-    await novuClient.domains.delete(created._id);
+    await novuClient.domains.delete(created.id);
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.retrieve(created._id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.retrieve(created.id));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -158,20 +162,20 @@ describe('Domains API - /v1/domains #novu-v2', () => {
 
     const { result: route } = await novuClient.domains.routes.create(
       { address: 'cascade', type: DomainRouteDtoType.Webhook },
-      domain._id
+      domain.id
     );
 
     const before = await novuClient.domains.routes.listForEnvironment({});
 
-    expect(before.result.data.some((r) => r._id === route._id)).to.equal(true);
+    expect(before.result.data.some((r) => r.id === route.id)).to.equal(true);
 
-    await novuClient.domains.delete(domain._id);
+    await novuClient.domains.delete(domain.id);
 
     const after = await novuClient.domains.routes.listForEnvironment({});
 
-    expect(after.result.data.some((r) => r._id === route._id)).to.equal(false);
+    expect(after.result.data.some((r) => r.id === route.id)).to.equal(false);
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domainId: domain._id }));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.list({ domainId: domain.id }));
 
     expect(error?.statusCode).to.equal(404);
   });
