@@ -94,15 +94,14 @@ export class HandleAgentReply {
         )
       );
 
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
+      results.forEach((result, i) => {
         if (result.status === 'rejected') {
           this.logger.warn(
-            { err: result.reason, reaction: command.addReactions[i], agentIdentifier: command.agentIdentifier },
+            { err: result.reason, reaction: command.addReactions![i], agentIdentifier: command.agentIdentifier },
             `[agent:${command.agentIdentifier}] Failed to add reaction`
           );
         }
-      }
+      });
     }
 
     if (command.resolve) {
