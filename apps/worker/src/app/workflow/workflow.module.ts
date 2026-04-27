@@ -38,6 +38,7 @@ import {
   CommunityUserRepository,
   ContextRepository,
   DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -102,6 +103,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
 const REPOSITORIES = [
   DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,

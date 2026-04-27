@@ -45,7 +45,6 @@ export class CreateDomain {
         status: DomainStatusEnum.PENDING,
         mxRecordConfigured: false,
         dnsProvider: dnsProvider ?? undefined,
-        routes: [],
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       });

@@ -1,5 +1,5 @@
 import { encryptSecret, HttpClientService, SendWebhookMessage } from '@novu/application-generic';
-import { AgentIntegrationRepository, DomainRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, DomainRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -10,16 +10,27 @@ const ENV_ID = 'env-001';
 const ORG_ID = 'org-001';
 const DOMAIN_NAME = 'example.com';
 
-function makeVerifiedDomain(routes: Array<{ address: string; type: DomainRouteTypeEnum; destination?: string }>) {
+function makeVerifiedDomain() {
   return {
     _id: 'domain-001',
     name: DOMAIN_NAME,
     status: DomainStatusEnum.VERIFIED,
     mxRecordConfigured: true,
-    routes,
     _environmentId: ENV_ID,
     _organizationId: ORG_ID,
   };
+}
+
+function makeRoutes(routes: Array<{ address: string; type: DomainRouteTypeEnum; destination?: string }>) {
+  return routes.map((route, index) => ({
+    _id: `route-${index}`,
+    _domainId: 'domain-001',
+    _environmentId: ENV_ID,
+    _organizationId: ORG_ID,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...route,
+  }));
 }
 
 function makeCommand(localPart: string): InboundEmailParseCommand {
@@ -51,6 +62,7 @@ const TEST_ENCRYPTION_KEY = '12345678901234567890123456789012'; // 32 chars for 
 
 describe('DomainRouteStrategy', () => {
   let domainRepository: sinon.SinonStubbedInstance<DomainRepository>;
+  let domainRouteRepository: sinon.SinonStubbedInstance<DomainRouteRepository>;
   let sendWebhookMessage: sinon.SinonStubbedInstance<SendWebhookMessage>;
   let httpClientService: sinon.SinonStubbedInstance<HttpClientService>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
@@ -65,6 +77,7 @@ describe('DomainRouteStrategy', () => {
 
     sandbox = sinon.createSandbox();
     domainRepository = sandbox.createStubInstance(DomainRepository);
+    domainRouteRepository = sandbox.createStubInstance(DomainRouteRepository);
     sendWebhookMessage = sandbox.createStubInstance(SendWebhookMessage);
     httpClientService = sandbox.createStubInstance(HttpClientService);
     integrationRepository = sandbox.createStubInstance(IntegrationRepository);
@@ -81,6 +94,7 @@ describe('DomainRouteStrategy', () => {
 
     strategy = new DomainRouteStrategy(
       domainRepository as any,
+      domainRouteRepository as any,
       sendWebhookMessage as any,
       httpClientService as any,
       integrationRepository as any,
@@ -94,10 +108,9 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should NOT fire webhook when no WEBHOOK route exists', async () => {
-    const domain = makeVerifiedDomain([
-      { address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' },
-    ]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
@@ -105,8 +118,9 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should fire webhook when an exact WEBHOOK route matches', async () => {
-    const domain = makeVerifiedDomain([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
     sendWebhookMessage.execute.resolves();
 
     await strategy.execute(makeCommand('support'));
@@ -117,8 +131,9 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should NOT fire webhook for a WEBHOOK route that does not match the local-part', async () => {
-    const domain = makeVerifiedDomain([{ address: 'billing', type: DomainRouteTypeEnum.WEBHOOK }]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const routes = makeRoutes([{ address: 'billing', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
@@ -126,8 +141,9 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should fire webhook via wildcard "*" route when no exact match', async () => {
-    const domain = makeVerifiedDomain([{ address: '*', type: DomainRouteTypeEnum.WEBHOOK }]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const routes = makeRoutes([{ address: '*', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
     sendWebhookMessage.execute.resolves();
 
     await strategy.execute(makeCommand('anything'));
@@ -138,11 +154,12 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should prefer exact WEBHOOK route over wildcard "*"', async () => {
-    const domain = makeVerifiedDomain([
+    const routes = makeRoutes([
       { address: '*', type: DomainRouteTypeEnum.WEBHOOK },
       { address: 'support', type: DomainRouteTypeEnum.WEBHOOK },
     ]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
     sendWebhookMessage.execute.resolves();
 
     await strategy.execute(makeCommand('support'));
@@ -153,11 +170,12 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should fire both WEBHOOK and AGENT handlers when both routes match (fan-out)', async () => {
-    const domain = makeVerifiedDomain([
+    const routes = makeRoutes([
       { address: 'support', type: DomainRouteTypeEnum.WEBHOOK },
       { address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' },
     ]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
     sendWebhookMessage.execute.resolves();
 
     await strategy.execute(makeCommand('support'));
@@ -166,7 +184,7 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should throw when domain is not found', async () => {
-    domainRepository.findByRouteAddress.resolves(null);
+    domainRepository.findByName.resolves(null);
 
     try {
       await strategy.execute(makeCommand('support'));
@@ -177,8 +195,8 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should throw when domain is not verified', async () => {
-    const domain = { ...makeVerifiedDomain([]), status: DomainStatusEnum.PENDING };
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const domain = { ...makeVerifiedDomain(), status: DomainStatusEnum.PENDING };
+    domainRepository.findByName.resolves(domain as any);
 
     try {
       await strategy.execute(makeCommand('support'));
@@ -189,8 +207,8 @@ describe('DomainRouteStrategy', () => {
   });
 
   it('should throw when MX record is not configured', async () => {
-    const domain = { ...makeVerifiedDomain([]), mxRecordConfigured: false };
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const domain = { ...makeVerifiedDomain(), mxRecordConfigured: false };
+    domainRepository.findByName.resolves(domain as any);
 
     try {
       await strategy.execute(makeCommand('support'));

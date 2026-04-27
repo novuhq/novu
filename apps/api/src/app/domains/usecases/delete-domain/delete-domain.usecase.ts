@@ -1,11 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DomainRepository } from '@novu/dal';
+import { DomainRepository, DomainRouteRepository } from '@novu/dal';
 
 import { DeleteDomainCommand } from './delete-domain.command';
 
 @Injectable()
 export class DeleteDomain {
-  constructor(private readonly domainRepository: DomainRepository) {}
+  constructor(
+    private readonly domainRepository: DomainRepository,
+    private readonly domainRouteRepository: DomainRouteRepository
+  ) {}
 
   async execute(command: DeleteDomainCommand): Promise<void> {
     const domain = await this.domainRepository.findOneByIdAndEnvironment(
@@ -20,6 +23,11 @@ export class DeleteDomain {
 
     await this.domainRepository.delete({
       _id: command.domainId,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
+    await this.domainRouteRepository.delete({
+      _domainId: command.domainId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });

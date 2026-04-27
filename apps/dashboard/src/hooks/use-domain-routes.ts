@@ -1,17 +1,98 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { UpdateDomainBody, updateDomain } from '@/api/domains';
-import { useEnvironment } from '@/context/environment/hooks';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  CreateDomainRouteBody,
+  createDomainRoute,
+  deleteDomainRoute,
+  fetchDomainRoutes,
+  fetchRoutes,
+  ListDomainRoutesParams,
+  UpdateDomainRouteBody,
+  updateDomainRoute,
+} from '@/api/domains';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
-export function useUpdateDomain(domainId: string | undefined) {
+function requireDomainId(domainId: string | undefined): string {
+  if (!domainId) {
+    throw new Error('Domain route request requires a domain.');
+  }
+
+  return domainId;
+}
+
+export function useFetchDomainRoutes(domainId: string | undefined, params: ListDomainRoutesParams = {}) {
+  const { currentEnvironment } = useEnvironment();
+
+  return useQuery({
+    queryKey: [QueryKeys.fetchDomainRoutes, domainId, currentEnvironment?._id, params],
+    queryFn: () =>
+      fetchDomainRoutes(
+        requireDomainId(domainId),
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        params
+      ),
+    enabled: !!domainId && !!currentEnvironment,
+  });
+}
+
+export function useFetchRoutes(params: ListDomainRoutesParams = {}) {
+  const { currentEnvironment } = useEnvironment();
+
+  return useQuery({
+    queryKey: [QueryKeys.fetchDomainRoutes, currentEnvironment?._id, params],
+    queryFn: () => fetchRoutes(requireEnvironment(currentEnvironment, 'No environment selected'), params),
+    enabled: !!currentEnvironment,
+  });
+}
+
+export function useCreateDomainRoute(domainId: string | undefined) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
-    // biome-ignore lint/style/noNonNullAssertion: domainId and currentEnvironment are guaranteed non-null when the mutation is called
-    mutationFn: (body: UpdateDomainBody) => updateDomain(domainId!, body, currentEnvironment!),
+    mutationFn: (body: CreateDomainRouteBody) =>
+      createDomainRoute(
+        requireDomainId(domainId),
+        body,
+        requireEnvironment(currentEnvironment, 'No environment selected')
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomain, domainId] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
+    },
+  });
+}
+
+export function useUpdateDomainRoute(domainId: string | undefined) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  return useMutation({
+    mutationFn: ({ routeId, body }: { routeId: string; body: UpdateDomainRouteBody }) =>
+      updateDomainRoute(
+        requireDomainId(domainId),
+        routeId,
+        body,
+        requireEnvironment(currentEnvironment, 'No environment selected')
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
+    },
+  });
+}
+
+export function useDeleteDomainRoute(domainId: string | undefined) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  return useMutation({
+    mutationFn: (routeId: string) =>
+      deleteDomainRoute(
+        requireDomainId(domainId),
+        routeId,
+        requireEnvironment(currentEnvironment, 'No environment selected')
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
     },
   });
 }

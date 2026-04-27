@@ -5,7 +5,14 @@ import {
   HttpClientService,
   SendWebhookMessage,
 } from '@novu/application-generic';
-import { AgentIntegrationRepository, DomainEntity, DomainRepository, DomainRoute, IntegrationRepository } from '@novu/dal';
+import {
+  AgentIntegrationRepository,
+  DomainEntity,
+  DomainRepository,
+  DomainRouteEntity,
+  DomainRouteRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   DomainRouteTypeEnum,
@@ -20,7 +27,7 @@ import { normalizeReferences } from './resolve-thread-id';
 
 type RoutableDomain = Pick<
   DomainEntity,
-  '_id' | 'name' | 'status' | 'mxRecordConfigured' | 'routes' | '_environmentId' | '_organizationId'
+  '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId'
 >;
 
 const LOG_CONTEXT = 'DomainRouteStrategy';
@@ -53,6 +60,7 @@ export type DomainRouteEmailPayload = {
 export class DomainRouteStrategy {
   constructor(
     private domainRepository: DomainRepository,
+    private domainRouteRepository: DomainRouteRepository,
     private sendWebhookMessage: SendWebhookMessage,
     private httpClientService: HttpClientService,
     private integrationRepository: IntegrationRepository,
@@ -64,7 +72,13 @@ export class DomainRouteStrategy {
 
     Logger.log({ toAddress }, 'Processing domain-route email', LOG_CONTEXT);
 
-    const domain = await this.domainRepository.findByRouteAddress(toAddress);
+    const [localPart, domainName] = toAddress.split('@');
+
+    if (!domainName) {
+      this.throwError(`No domain found for address ${toAddress}`);
+    }
+
+    const domain = await this.domainRepository.findByName(domainName);
 
     if (!domain) {
       this.throwError(`No domain found for address ${toAddress}`);
@@ -78,10 +92,15 @@ export class DomainRouteStrategy {
       this.throwError(`Domain ${domain.name} does not have MX records configured`);
     }
 
-    const localPart = toAddress.split('@')[0];
+    const routes = await this.domainRouteRepository.findByDomainAndAddresses({
+      domainId: domain._id,
+      environmentId: domain._environmentId,
+      organizationId: domain._organizationId,
+      addresses: [localPart, '*'],
+    });
     const matchByType = (type: DomainRouteTypeEnum) =>
-      domain.routes.find((r) => r.type === type && r.address === localPart) ??
-      domain.routes.find((r) => r.type === type && r.address === '*');
+      routes.find((r) => r.type === type && r.address === localPart) ??
+      routes.find((r) => r.type === type && r.address === '*');
 
     const webhookRoute = matchByType(DomainRouteTypeEnum.WEBHOOK);
     const agentRoute = matchByType(DomainRouteTypeEnum.AGENT);
@@ -98,7 +117,7 @@ export class DomainRouteStrategy {
   private async fireWebhookEvent(
     command: InboundEmailParseCommand,
     domain: RoutableDomain,
-    route: DomainRoute
+    route: DomainRouteEntity
   ): Promise<void> {
     const payload: DomainRouteEmailPayload = {
       domain: {
@@ -140,7 +159,7 @@ export class DomainRouteStrategy {
   private async handleAgentRoute(
     command: InboundEmailParseCommand,
     domain: RoutableDomain,
-    route: DomainRoute,
+    route: DomainRouteEntity,
     toAddress: string
   ): Promise<void> {
     const agentId = route.destination;
@@ -170,11 +189,7 @@ export class DomainRouteStrategy {
       timeout: 30_000,
     });
 
-    Logger.log(
-      { toAddress, agentId, integrationIdentifier },
-      'Forwarded inbound email to agent webhook',
-      LOG_CONTEXT
-    );
+    Logger.log({ toAddress, agentId, integrationIdentifier }, 'Forwarded inbound email to agent webhook', LOG_CONTEXT);
   }
 
   private async resolveIntegration(
@@ -209,7 +224,9 @@ export class DomainRouteStrategy {
 
     const encryptedSecret = integration.credentials?.secretKey;
     if (!encryptedSecret) {
-      this.throwError(`Integration ${integration.identifier} is missing its webhook secret — re-link the email integration to regenerate it`);
+      this.throwError(
+        `Integration ${integration.identifier} is missing its webhook secret — re-link the email integration to regenerate it`
+      );
     }
 
     return { identifier: integration.identifier, secretKey: decryptSecret(encryptedSecret) };
@@ -236,7 +253,10 @@ export class DomainRouteStrategy {
         contentType: a.contentType,
         url: a.url,
       })),
-      date: (() => { const d = new Date(command.date as unknown as string); return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); })(),
+      date: (() => {
+        const d = new Date(command.date as unknown as string);
+        return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+      })(),
     };
   }
 

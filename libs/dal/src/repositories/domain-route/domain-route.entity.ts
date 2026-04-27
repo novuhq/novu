@@ -1,18 +1,18 @@
-import { DomainStatusEnum } from '@novu/shared';
+import { DomainRouteTypeEnum } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 
-export class DomainEntity {
+export class DomainRouteEntity {
   _id: string;
 
-  name: string;
+  _domainId: string;
 
-  status: DomainStatusEnum;
+  address: string;
 
-  mxRecordConfigured: boolean;
+  destination?: string;
 
-  dnsProvider?: string;
+  type: DomainRouteTypeEnum;
 
   _environmentId: EnvironmentId;
 
@@ -23,4 +23,7 @@ export class DomainEntity {
   updatedAt: string;
 }
 
-export type DomainDBModel = ChangePropsValueType<DomainEntity, '_environmentId' | '_organizationId'>;
+export type DomainRouteDBModel = ChangePropsValueType<
+  DomainRouteEntity,
+  '_domainId' | '_environmentId' | '_organizationId'
+>;

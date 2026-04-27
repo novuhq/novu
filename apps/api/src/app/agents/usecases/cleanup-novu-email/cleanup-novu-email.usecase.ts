@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { AgentIntegrationRepository, DomainRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { ClientSession } from 'mongoose';
 
@@ -11,7 +11,7 @@ export class CleanupNovuEmail {
   constructor(
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly domainRepository: DomainRepository,
+    private readonly domainRouteRepository: DomainRouteRepository,
     private readonly logger: PinoLogger
   ) {}
 
@@ -26,14 +26,9 @@ export class CleanupNovuEmail {
     organizationId: string,
     session: ClientSession | null
   ): Promise<void> {
-    await this.domainRepository.removeRoutesByDestination(environmentId, organizationId, agentId, { session });
+    await this.domainRouteRepository.removeByDestination(environmentId, organizationId, agentId, { session });
 
-    const novuIntegrationIds = await this.findNovuEmailIntegrationIds(
-      agentId,
-      environmentId,
-      organizationId,
-      session
-    );
+    const novuIntegrationIds = await this.findNovuEmailIntegrationIds(agentId, environmentId, organizationId, session);
 
     for (const integrationId of novuIntegrationIds) {
       await this.integrationRepository.delete(
@@ -68,7 +63,7 @@ export class CleanupNovuEmail {
 
     if (!integration) return;
 
-    await this.domainRepository.removeRoutesByDestination(environmentId, organizationId, agentId, { session });
+    await this.domainRouteRepository.removeByDestination(environmentId, organizationId, agentId, { session });
 
     await this.integrationRepository.delete(
       { _id: integration._id, _environmentId: environmentId, _organizationId: organizationId },

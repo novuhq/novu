@@ -39,6 +39,7 @@ import {
   ControlValuesRepository,
   DalService,
   DomainRepository,
+  DomainRouteRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -117,6 +118,7 @@ const DAL_MODELS = [
   AgentRepository,
   AgentIntegrationRepository,
   DomainRepository,
+  DomainRouteRepository,
 ];
 
 const dalService = {

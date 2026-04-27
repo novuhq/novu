@@ -19,7 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useUpdateDomain } from '@/hooks/use-domain-routes';
+import {
+  useCreateDomainRoute,
+  useDeleteDomainRoute,
+  useFetchDomainRoutes,
+  useUpdateDomainRoute,
+} from '@/hooks/use-domain-routes';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { RoutingEmptyIllustration } from './routing-empty-illustration';
 
@@ -187,23 +192,14 @@ function InlineRouteForm({
 
 type ExistingRouteRowProps = {
   route: DomainRouteResponse;
-  routeIndex: number;
   domainName: string;
   agentOptions: Array<{ _id: string; name: string; identifier: string }>;
-  onDelete: (index: number) => Promise<void>;
-  onEdit: (index: number) => void;
+  onDelete: (routeId: string) => Promise<void>;
+  onEdit: (routeId: string) => void;
   isDeleting: boolean;
 };
 
-function ExistingRouteRow({
-  route,
-  routeIndex,
-  domainName,
-  agentOptions,
-  onDelete,
-  onEdit,
-  isDeleting,
-}: ExistingRouteRowProps) {
+function ExistingRouteRow({ route, domainName, agentOptions, onDelete, onEdit, isDeleting }: ExistingRouteRowProps) {
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
   const agentName = isWebhook
     ? null
@@ -236,10 +232,10 @@ function ExistingRouteRow({
             <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => onEdit(routeIndex)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onEdit(route._id)}>Edit</DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onSelect={() => onDelete(routeIndex)}
+              onSelect={() => onDelete(route._id)}
               disabled={isDeleting}
             >
               Delete
@@ -342,17 +338,26 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 ) {
   const { currentEnvironment } = useEnvironment();
   const { data: agents = [] } = useAgents();
-  const updateDomain = useUpdateDomain(domain._id);
+  const [cursor, setCursor] = useState<{ after?: string; before?: string }>({});
+  const { data: routesResponse, isLoading: areRoutesLoading } = useFetchDomainRoutes(domain._id, {
+    limit: 50,
+    ...cursor,
+  });
+  const createDomainRoute = useCreateDomainRoute(domain._id);
+  const updateDomainRoute = useUpdateDomainRoute(domain._id);
+  const deleteDomainRoute = useDeleteDomainRoute(domain._id);
 
   const [isAdding, setIsAdding] = useState(false);
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
   const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
+  const routes = routesResponse?.data ?? [];
+  const isMutating = createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
 
   const startAdding = (initialValues?: RouteFormState) => {
     setAddInitialValues(initialValues);
     setIsAdding(true);
-    setEditingIndex(null);
+    setEditingRouteId(null);
   };
 
   const cancelAdding = () => {
@@ -364,54 +369,53 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const handleCreate = async (values: RouteFormState) => {
     try {
-      const newRoute: DomainRouteResponse = {
+      await createDomainRoute.mutateAsync({
         address: values.address,
         type: values.type,
         ...(values.destination ? { destination: values.destination } : {}),
-      };
-      await updateDomain.mutateAsync({ routes: [...domain.routes, newRoute] });
+      });
       cancelAdding();
     } catch {
       showErrorToast('Failed to add route.');
     }
   };
 
-  const handleUpdate = async (index: number, values: RouteFormState) => {
+  const handleUpdate = async (routeId: string, values: RouteFormState) => {
     try {
-      const updatedRoute: DomainRouteResponse = {
-        address: values.address,
-        type: values.type,
-        ...(values.destination ? { destination: values.destination } : {}),
-      };
-      const routes = domain.routes.map((r, idx) => (idx === index ? updatedRoute : r));
-      await updateDomain.mutateAsync({ routes });
-      setEditingIndex(null);
+      await updateDomainRoute.mutateAsync({
+        routeId,
+        body: {
+          address: values.address,
+          type: values.type,
+          ...(values.destination ? { destination: values.destination } : {}),
+        },
+      });
+      setEditingRouteId(null);
     } catch {
       showErrorToast('Failed to update route.');
     }
   };
 
-  const handleDelete = async (index: number) => {
+  const handleDelete = async (routeId: string) => {
     try {
-      const routes = domain.routes.filter((_, idx) => idx !== index);
-      await updateDomain.mutateAsync({ routes });
+      await deleteDomainRoute.mutateAsync(routeId);
     } catch {
       showErrorToast('Failed to delete route.');
     }
   };
 
   const agentOptions = agents.map((a) => ({ _id: a._id, name: a.name, identifier: a.identifier }));
-  const hasWebhookRoute = domain.routes.some((route) => route.type === DomainRouteTypeEnum.WEBHOOK);
-  const hasWildcardWebhookRoute = domain.routes.some(
+  const hasWebhookRoute = routes.some((route) => route.type === DomainRouteTypeEnum.WEBHOOK);
+  const hasWildcardWebhookRoute = routes.some(
     (route) => route.address === '*' && route.type === DomainRouteTypeEnum.WEBHOOK
   );
   const shouldShowWildcardHint = !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
-  const isEmpty = domain.routes.length === 0 && !isAdding;
+  const isEmpty = routes.length === 0 && !isAdding;
 
   return (
     <div className="space-y-3">
       <div className="rounded-lg border bg-white p-3">
-        <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
+        <Table containerClassname="rounded-none border-0 shadow-none overflow-visible" isLoading={areRoutesLoading}>
           {!isEmpty && (
             <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
               <TableRow>
@@ -423,27 +427,26 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
             </TableHeader>
           )}
           <TableBody>
-            {domain.routes.map((route, index) =>
-              editingIndex === index ? (
+            {routes.map((route) =>
+              editingRouteId === route._id ? (
                 <InlineRouteForm
-                  key={index}
+                  key={route._id}
                   domainName={domain.name}
                   initialValues={{ address: route.address, destination: route.destination ?? '', type: route.type }}
                   agentOptions={agentOptions}
-                  onSave={(values) => handleUpdate(index, values)}
-                  onCancel={() => setEditingIndex(null)}
-                  isSaving={updateDomain.isPending}
+                  onSave={(values) => handleUpdate(route._id, values)}
+                  onCancel={() => setEditingRouteId(null)}
+                  isSaving={isMutating}
                 />
               ) : (
                 <ExistingRouteRow
-                  key={index}
+                  key={route._id}
                   route={route}
-                  routeIndex={index}
                   domainName={domain.name}
                   agentOptions={agentOptions}
                   onDelete={handleDelete}
-                  onEdit={setEditingIndex}
-                  isDeleting={updateDomain.isPending}
+                  onEdit={setEditingRouteId}
+                  isDeleting={isMutating}
                 />
               )
             )}
@@ -455,11 +458,11 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 agentOptions={agentOptions}
                 onSave={handleCreate}
                 onCancel={cancelAdding}
-                isSaving={updateDomain.isPending}
+                isSaving={isMutating}
               />
             )}
 
-            {domain.routes.length === 0 && !isAdding && (
+            {routes.length === 0 && !isAdding && !areRoutesLoading && (
               <TableRow className="[&>td]:border-0">
                 <TableCell colSpan={4} className="px-3 py-16 text-center">
                   <div className="flex flex-col items-center gap-6">
@@ -487,6 +490,28 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           </TableBody>
         </Table>
       </div>
+      {(routesResponse?.previous || routesResponse?.next) && (
+        <div className="flex justify-end gap-2">
+          <Button
+            size="xs"
+            mode="outline"
+            variant="secondary"
+            disabled={!routesResponse?.previous || areRoutesLoading}
+            onClick={() => setCursor({ before: routesResponse?.previous ?? undefined })}
+          >
+            Previous
+          </Button>
+          <Button
+            size="xs"
+            mode="outline"
+            variant="secondary"
+            disabled={!routesResponse?.next || areRoutesLoading}
+            onClick={() => setCursor({ after: routesResponse?.next ?? undefined })}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       <AnimatePresence initial={false}>
         {shouldShowWildcardHint && (

@@ -99,10 +99,15 @@ function DomainRow({
 
 export function DomainsPage() {
   const { currentEnvironment } = useEnvironment();
-  const { data: domains, isLoading } = useFetchDomains();
+  const [cursor, setCursor] = useState<{ after?: string; before?: string }>({});
   const { subscription } = useFetchSubscription();
   const deleteDomain = useDeleteDomain();
   const [search, setSearch] = useState('');
+  const { data: domainsResponse, isLoading } = useFetchDomains({
+    limit: 10,
+    ...cursor,
+    ...(search ? { name: search } : {}),
+  });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [domainToDelete, setDomainToDelete] = useState<DomainResponse | null>(null);
 
@@ -113,7 +118,7 @@ export function DomainsPage() {
     FeatureNameEnum.DOMAINS_BOOLEAN,
     subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
   );
-  const filtered = (domains ?? []).filter((d) => d.name.toLowerCase().includes(search.toLowerCase()));
+  const domains = domainsResponse?.data ?? [];
 
   const handleRequestDelete = (domain: DomainResponse) => {
     setDomainToDelete(domain);
@@ -155,7 +160,10 @@ export function DomainsPage() {
               size="small"
               title="Search"
               value={search}
-              onChange={setSearch}
+              onChange={(value) => {
+                setSearch(value);
+                setCursor({});
+              }}
               placeholder="Search domains..."
             />
           </div>
@@ -178,7 +186,7 @@ export function DomainsPage() {
             </TableHeader>
             {!isTableLoading && environmentSlug && (
               <TableBody>
-                {filtered.length === 0 ? (
+                {domains.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-foreground-400 py-16 text-center">
                       {search
@@ -187,7 +195,7 @@ export function DomainsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((domain) => (
+                  domains.map((domain) => (
                     <DomainRow
                       key={domain._id}
                       domain={domain}
@@ -200,6 +208,35 @@ export function DomainsPage() {
               </TableBody>
             )}
           </Table>
+        </div>
+        <div className="border-t px-2 py-3">
+          <div className="flex items-center justify-between">
+            <span className="text-foreground-400 text-xs">
+              {domainsResponse
+                ? `${domainsResponse.totalCount} domain${domainsResponse.totalCount === 1 ? '' : 's'}`
+                : ''}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                mode="outline"
+                variant="secondary"
+                size="xs"
+                disabled={!domainsResponse?.previous || isLoading}
+                onClick={() => setCursor({ before: domainsResponse?.previous ?? undefined })}
+              >
+                Previous
+              </Button>
+              <Button
+                mode="outline"
+                variant="secondary"
+                size="xs"
+                disabled={!domainsResponse?.next || isLoading}
+                onClick={() => setCursor({ after: domainsResponse?.next ?? undefined })}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
