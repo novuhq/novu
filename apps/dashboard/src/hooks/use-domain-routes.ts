@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { NovuApiError } from '@/api/api.client';
 import {
   CreateDomainRouteBody,
   createDomainRoute,
   deleteDomainRoute,
+  fetchDomainRoute,
   fetchDomainRoutes,
   ListDomainRoutesParams,
   UpdateDomainRouteBody,
@@ -31,6 +33,37 @@ export function useFetchDomainRoutes(domain: string | undefined, params: ListDom
         params
       ),
     enabled: !!domain && !!currentEnvironment,
+  });
+}
+
+export function useFetchDomainRoute(domain: string | undefined, address: string | undefined) {
+  const { currentEnvironment } = useEnvironment();
+
+  return useQuery({
+    queryKey: [QueryKeys.fetchDomainRoutes, domain, currentEnvironment?._id, address],
+    queryFn: async () => {
+      try {
+        return await fetchDomainRoute(
+          requireDomain(domain),
+          requireDomain(address),
+          requireEnvironment(currentEnvironment, 'No environment selected')
+        );
+      } catch (error) {
+        if (error instanceof NovuApiError && error.status === 404) {
+          return null;
+        }
+
+        throw error;
+      }
+    },
+    enabled: !!domain && !!address && !!currentEnvironment,
+    retry: (failureCount, error) => {
+      if (error instanceof NovuApiError && error.status === 404) {
+        return false;
+      }
+
+      return failureCount < 3;
+    },
   });
 }
 

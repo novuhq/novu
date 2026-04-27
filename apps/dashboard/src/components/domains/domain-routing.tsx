@@ -4,8 +4,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Fragment, forwardRef, useEffect, useId, useImperativeHandle, useState } from 'react';
 import {
   RiAddLine,
-  RiCloseLine,
-  RiLightbulbFlashLine,
   RiMore2Fill,
   RiRobot2Line,
   RiSendPlaneLine,
@@ -14,6 +12,7 @@ import {
 import { Link } from 'react-router-dom';
 import { listAgents } from '@/api/agents';
 import type { DomainResponse, DomainRouteResponse, TestDomainRouteResponse } from '@/api/domains';
+import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Checkbox } from '@/components/primitives/checkbox';
@@ -40,6 +39,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import {
   useCreateDomainRoute,
   useDeleteDomainRoute,
+  useFetchDomainRoute,
   useFetchDomainRoutes,
   useUpdateDomainRoute,
 } from '@/hooks/use-domain-routes';
@@ -258,12 +258,20 @@ function ExistingRouteRow({
   canWrite,
 }: ExistingRouteRowProps) {
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
+  const isCatchAll = route.address === '*';
   const agentName = isWebhook ? null : (agentOptions.find((a) => a._id === route.agentId)?.name ?? route.agentId);
 
   return (
     <TableRow className="[&>td]:border-0">
       <TableCell className="px-3 py-4 text-sm">
-        {route.address}@{domainName}
+        <div className="flex items-center gap-2">
+          <span>{route.address}@{domainName}</span>
+          {isCatchAll ? (
+            <Badge variant="lighter" color="blue" size="sm">
+              Catch-all
+            </Badge>
+          ) : null}
+        </div>
       </TableCell>
       <TableCell className="text-foreground-600 max-w-[200px] truncate px-3 py-4 text-sm">
         {isWebhook ? (
@@ -428,6 +436,66 @@ function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: Ro
   );
 }
 
+type AddRouteTypeDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelectAddressRoute: () => void;
+  onSelectCatchAllRoute: () => void;
+  hasCatchAllRoute: boolean;
+  isCatchAllRouteLoading: boolean;
+};
+
+function AddRouteTypeDialog({
+  open,
+  onOpenChange,
+  onSelectAddressRoute,
+  onSelectCatchAllRoute,
+  hasCatchAllRoute,
+  isCatchAllRouteLoading,
+}: AddRouteTypeDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add route</DialogTitle>
+          <DialogDescription>Choose how inbound addresses should match this route.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-2">
+          <button
+            type="button"
+            onClick={onSelectAddressRoute}
+            className="hover:border-stroke-strong hover:bg-bg-weak rounded-lg border border-stroke-soft p-3 text-left transition-colors"
+          >
+            <span className="text-text-strong block text-label-sm font-medium">Address route</span>
+            <span className="text-text-soft mt-1 block text-label-xs">
+              Match one inbox address, like <span className="font-code">support@domain.com</span>.
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onSelectCatchAllRoute}
+            disabled={hasCatchAllRoute || isCatchAllRouteLoading}
+            className="hover:border-stroke-strong hover:bg-bg-weak disabled:bg-bg-weak disabled:text-text-disabled rounded-lg border border-stroke-soft p-3 text-left transition-colors disabled:cursor-not-allowed"
+          >
+            <span className="text-text-strong block text-label-sm font-medium">Wildcard route</span>
+            <span className="text-text-soft mt-1 block text-label-xs">
+              Match every unmatched address with <span className="font-code">*@domain.com</span>.
+            </span>
+            {hasCatchAllRoute ? (
+              <span className="text-text-soft mt-2 block text-label-xs">A wildcard route already exists.</span>
+            ) : null}
+            {isCatchAllRouteLoading ? (
+              <span className="text-text-soft mt-2 block text-label-xs">Checking existing wildcard route...</span>
+            ) : null}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type WebhookForwardingBannerProps = {
   environmentSlug: string;
   webhooksEnabled: boolean;
@@ -476,43 +544,6 @@ function WebhookForwardingBanner({ environmentSlug, webhooksEnabled }: WebhookFo
   );
 }
 
-type WildcardRouteHintProps = {
-  domainName: string;
-  onConfigureClick: () => void;
-  onDismiss: () => void;
-};
-
-function WildcardRouteHint({ domainName, onConfigureClick, onDismiss }: WildcardRouteHintProps) {
-  return (
-    <div className="border-information/20 bg-information/5 flex items-center justify-between gap-3 rounded-lg border px-4 py-3">
-      <div className="flex items-center gap-2">
-        <RiLightbulbFlashLine className="text-information size-4 shrink-0" />
-        <p className="text-foreground-600 text-xs">
-          <span className="text-foreground-950 font-medium">Tip:</span> Add a wildcard route{' '}
-          <code className="bg-neutral-alpha-100 rounded px-1 font-mono text-[11px]">*@{domainName}</code> to forward
-          every inbound email to your webhook endpoints.
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onConfigureClick}
-          className="text-foreground-900 hover:text-foreground-600 shrink-0 text-xs font-medium transition-colors"
-        >
-          Add wildcard route →
-        </button>
-        <CompactButton
-          icon={RiCloseLine}
-          variant="ghost"
-          className="text-foreground-400 hover:text-foreground-600 h-6 w-6 p-0"
-          onClick={onDismiss}
-          aria-label="Dismiss tip"
-        />
-      </div>
-    </div>
-  );
-}
-
 export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>(function DomainRouting(
   { domain, canWrite = true },
   ref
@@ -524,6 +555,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
     limit: 50,
     ...cursor,
   });
+  const { data: catchAllRoute, isFetching: isCatchAllRouteFetching } = useFetchDomainRoute(domain.name, '*');
   const createDomainRoute = useCreateDomainRoute(domain.name);
   const updateDomainRoute = useUpdateDomainRoute(domain.name);
   const deleteDomainRoute = useDeleteDomainRoute(domain.name);
@@ -533,8 +565,9 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
   const [editingAddress, setEditingAddress] = useState<string | null>(null);
   const [testDialogRoute, setTestDialogRoute] = useState<DomainRouteResponse | null>(null);
-  const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
+  const [isAddRouteTypeDialogOpen, setIsAddRouteTypeDialogOpen] = useState(false);
   const routes = routesResponse?.data ?? [];
+  const hasCatchAllRoute = Boolean(catchAllRoute) || routes.some((route) => route.address === '*');
   const isMutating = createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
 
   const startAdding = (initialValues?: RouteFormState) => {
@@ -547,12 +580,38 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
     setEditingAddress(null);
   };
 
+  const startAddingCatchAll = () => {
+    startAdding({ address: '*', agentId: '', type: DomainRouteTypeEnum.WEBHOOK, dataJson: '{}' });
+  };
+
+  const openAddRouteTypeDialog = () => {
+    if (!canWrite) {
+      return;
+    }
+
+    setIsAddRouteTypeDialogOpen(true);
+  };
+
+  const handleSelectAddressRoute = () => {
+    setIsAddRouteTypeDialogOpen(false);
+    startAdding();
+  };
+
+  const handleSelectCatchAllRoute = () => {
+    if (hasCatchAllRoute || isCatchAllRouteFetching) {
+      return;
+    }
+
+    setIsAddRouteTypeDialogOpen(false);
+    startAddingCatchAll();
+  };
+
   const cancelAdding = () => {
     setIsAdding(false);
     setAddInitialValues(undefined);
   };
 
-  useImperativeHandle(ref, () => ({ startAdding: () => startAdding() }));
+  useImperativeHandle(ref, () => ({ startAdding: openAddRouteTypeDialog }));
 
   const handleCreate = async (values: RouteFormState) => {
     if (!canWrite) {
@@ -622,11 +681,6 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const agentOptions = agents.map((a) => ({ _id: a._id, name: a.name, identifier: a.identifier }));
   const hasWebhookRoute = routes.some((route) => route.type === DomainRouteTypeEnum.WEBHOOK);
-  const hasWildcardWebhookRoute = routes.some(
-    (route) => route.address === '*' && route.type === DomainRouteTypeEnum.WEBHOOK
-  );
-  const shouldShowWildcardHint =
-    canWrite && !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
   const isEmpty = routes.length === 0 && !isAdding;
 
   return (
@@ -683,6 +737,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 domainName={domain.name}
                 initialValues={addInitialValues ?? DEFAULT_ROUTE_FORM}
                 agentOptions={agentOptions}
+                isAddressLocked={addInitialValues?.address === '*'}
                 onSave={handleCreate}
                 onCancel={cancelAdding}
                 isSaving={isMutating}
@@ -700,17 +755,18 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                         Configure routes to route incoming emails to relevant agents.
                       </p>
                     </div>
-                    <Button
-                      size="sm"
-                      mode="outline"
-                      variant="secondary"
-                      className="mx-auto"
-                      onClick={() => startAdding()}
-                      disabled={!canWrite}
-                    >
-                      <RiAddLine className="size-4" />
-                      Add new route
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        size="sm"
+                        mode="outline"
+                        variant="secondary"
+                        onClick={openAddRouteTypeDialog}
+                        disabled={!canWrite}
+                      >
+                        <RiAddLine className="size-4" />
+                        Add new route
+                      </Button>
+                    </div>
                   </div>
                 </TableCell>
               </TableRow>
@@ -742,24 +798,6 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
       )}
 
       <AnimatePresence initial={false}>
-        {shouldShowWildcardHint && (
-          <motion.div
-            key="wildcard-route-hint"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <WildcardRouteHint
-              domainName={domain.name}
-              onConfigureClick={() =>
-                startAdding({ address: '*', agentId: '', type: DomainRouteTypeEnum.WEBHOOK, dataJson: '{}' })
-              }
-              onDismiss={() => setIsWildcardHintDismissed(true)}
-            />
-          </motion.div>
-        )}
         {hasWebhookRoute && currentEnvironment?.slug && (
           <motion.div
             key="webhook-forwarding-banner"
@@ -789,6 +827,14 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           }}
         />
       ) : null}
+      <AddRouteTypeDialog
+        open={isAddRouteTypeDialogOpen}
+        onOpenChange={setIsAddRouteTypeDialogOpen}
+        onSelectAddressRoute={handleSelectAddressRoute}
+        onSelectCatchAllRoute={handleSelectCatchAllRoute}
+        hasCatchAllRoute={hasCatchAllRoute}
+        isCatchAllRouteLoading={isCatchAllRouteFetching}
+      />
     </div>
   );
 });

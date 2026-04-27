@@ -6,10 +6,17 @@ type CollapsibleSectionProps = {
   title: string;
   defaultOpen?: boolean;
   actions?: React.ReactNode;
+  forceMountContent?: boolean;
   children: React.ReactNode;
 };
 
-export function CollapsibleSection({ title, defaultOpen = true, actions, children }: CollapsibleSectionProps) {
+export function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  actions,
+  forceMountContent,
+  children,
+}: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -30,7 +37,7 @@ export function CollapsibleSection({ title, defaultOpen = true, actions, childre
         </div>
       </div>
 
-      <CollapsibleContent>{children}</CollapsibleContent>
+      <CollapsibleContent forceMount={forceMountContent}>{children}</CollapsibleContent>
     </Collapsible>
   );
 }

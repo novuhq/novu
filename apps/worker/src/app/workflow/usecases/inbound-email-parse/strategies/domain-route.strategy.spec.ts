@@ -72,7 +72,7 @@ describe('DomainRouteStrategy', () => {
     inboundDomainRouteDelivery = sandbox.createStubInstance(InboundDomainRouteDelivery);
 
     inboundDomainRouteDelivery.deliverToAgent.resolves({ httpStatus: 200, body: {}, latencyMs: 1 });
-    inboundDomainRouteDelivery.deliverToWebhook.resolves({ latencyMs: 1 });
+    inboundDomainRouteDelivery.deliverToWebhook.resolves({ latencyMs: 1, skipped: false });
 
     strategy = new DomainRouteStrategy(
       domainRepository as any,

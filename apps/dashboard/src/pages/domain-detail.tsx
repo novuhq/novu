@@ -25,7 +25,6 @@ import {
   ExpandableDetailsTextarea,
 } from '@/components/details-sidebar';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
-import { RetryVerificationIcon } from '@/components/icons/retry-verification';
 import { PageMeta } from '@/components/page-meta';
 import { Badge } from '@/components/primitives/badge';
 import {
@@ -337,7 +336,7 @@ export function DomainDetailPage() {
       <Breadcrumb className="min-w-0">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink to={domainsHref}>Domains</BreadcrumbLink>
+            <BreadcrumbLink to={domainsHref}>Inbound Email</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem className="min-w-0">
@@ -370,19 +369,6 @@ export function DomainDetailPage() {
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <Button
-                mode="outline"
-                variant="secondary"
-                size="xs"
-                onClick={handleVerify}
-                disabled={!canWriteDomains || isFetching || isLoading}
-                className="text-[12px] leading-[16px]"
-              >
-                <div className="flex h-4 items-center">
-                  <RetryVerificationIcon className="size-3 mr-2" />
-                  Retry verification
-                </div>
-              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -676,6 +662,7 @@ export function DomainDetailPage() {
               {domain && (
                 <CollapsibleSection
                   title="Routing"
+                  forceMountContent
                   actions={
                     <button
                       type="button"
