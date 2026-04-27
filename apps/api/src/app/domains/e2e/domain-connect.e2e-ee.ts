@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { Novu } from '@novu/api';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Domain Connect API - /v1/domains/:domainId/domain-connect #novu-v2', () => {
   let session: UserSession;
@@ -11,7 +11,7 @@ describe('Domain Connect API - /v1/domains/:domainId/domain-connect #novu-v2', (
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    novuClient = initNovuClassSdk(session);
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
 
   function uniqueDomainName(): string {

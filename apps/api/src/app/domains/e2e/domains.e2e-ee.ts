@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
-  initNovuClassSdk,
+  initNovuClassSdkInternalAuth,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Domains API - /v1/domains #novu-v2', () => {
@@ -16,7 +16,7 @@ describe('Domains API - /v1/domains #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    novuClient = initNovuClassSdk(session);
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
 
   function uniqueDomainName(): string {

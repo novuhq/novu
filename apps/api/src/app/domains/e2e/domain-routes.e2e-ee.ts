@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
-  initNovuClassSdk,
+  initNovuClassSdkInternalAuth,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
@@ -20,7 +20,7 @@ describe('Domain Routes API - /v1/domains/:domainId/routes #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    novuClient = initNovuClassSdk(session);
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
 
   function uniqueDomainName(): string {
