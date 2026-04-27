@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, decryptCredentials, MailFactory, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
@@ -13,6 +13,16 @@ import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
+
+function toDeliveryError(err: unknown): never {
+  const base = err instanceof Error ? err.message : String(err);
+  const body = (err as any)?.response?.body;
+  const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
+  throw new BadGatewayException({
+    error: 'delivery_failed',
+    message: detail ? `${base}: ${detail}` : base,
+  });
+}
 
 /** Ensure a Message-ID value is wrapped in RFC 5322 angle brackets. */
 function wrapMsgId(id: string): string {
@@ -134,14 +144,14 @@ export class ChatSdkService implements OnModuleDestroy {
     const adapter = chat.getAdapter(platform);
     const thread = ThreadImpl.fromJSON(serializedThread, adapter);
 
-    let sent: { id: string; threadId: string };
+    let postPromise: Promise<{ id: string; threadId: string }>;
     if (content.card) {
-      sent = await thread.post(content.card);
-    } else if (content.markdown !== undefined) {
-      sent = await thread.post({ markdown: content.markdown, files: content.files });
+      postPromise = thread.post(content.card);
     } else {
-      sent = await thread.post(content.text ?? '');
+      postPromise = thread.post({ markdown: content.markdown ?? '', files: content.files });
     }
+
+    const sent = await postPromise.catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -163,21 +173,21 @@ export class ChatSdkService implements OnModuleDestroy {
       throw new BadRequestException(`Platform ${platform} does not support editing messages`);
     }
 
-    let edited: { id: string; threadId: string };
+    let editPromise: Promise<{ id: string; threadId: string }>;
     if (content.card) {
-      edited = await adapter.editMessage(
+      editPromise = adapter.editMessage(
         platformThreadId,
         platformMessageId,
         content.card as unknown as AdapterPostableMessage
       );
-    } else if (content.markdown !== undefined) {
-      edited = await adapter.editMessage(platformThreadId, platformMessageId, {
-        markdown: content.markdown,
+    } else {
+      editPromise = adapter.editMessage(platformThreadId, platformMessageId, {
+        markdown: content.markdown ?? '',
         files: content.files,
       } as unknown as AdapterPostableMessage);
-    } else {
-      edited = await adapter.editMessage(platformThreadId, platformMessageId, content.text ?? '');
     }
+
+    const edited = await editPromise.catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
@@ -419,7 +429,7 @@ export class ChatSdkService implements OnModuleDestroy {
         },
       };
 
-      const result = await handler.send(mailOptions);
+      const result = await handler.send(mailOptions).catch(toDeliveryError);
 
       return { messageId: result?.id || params.messageId || '' };
     };

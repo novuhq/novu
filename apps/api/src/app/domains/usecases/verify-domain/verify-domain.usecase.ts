@@ -67,6 +67,15 @@ export class VerifyDomain {
 
       return records.some((record) => record.exchange.toLowerCase() === expectedExchange.toLowerCase());
     } catch (error) {
+      if (isExpectedDnsLookupMiss(error)) {
+        this.logger.debug(
+          { lookupDomain, expectedExchange, code: error.code },
+          'MX record is not configured for domain verification yet'
+        );
+
+        return false;
+      }
+
       this.logger.warn(
         { err: error, lookupDomain, expectedExchange },
         'Failed to resolve MX records for domain verification'
@@ -75,4 +84,10 @@ export class VerifyDomain {
       return false;
     }
   }
+}
+
+function isExpectedDnsLookupMiss(error: unknown): error is NodeJS.ErrnoException {
+  const code = (error as NodeJS.ErrnoException | undefined)?.code;
+
+  return code === 'ENOTFOUND' || code === 'ENODATA';
 }

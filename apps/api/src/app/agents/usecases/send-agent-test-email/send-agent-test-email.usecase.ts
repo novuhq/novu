@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, MailFactory } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
@@ -85,7 +85,15 @@ export class SendAgentTestEmail {
       senderName: (senderIntegration.credentials?.senderName as string) || 'Novu',
     };
 
-    await handler.send(mailOptions);
+    await handler.send(mailOptions).catch((err) => {
+      const base = err instanceof Error ? err.message : String(err);
+      const body = (err as any)?.response?.body;
+      const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
+      throw new BadGatewayException({
+        error: 'delivery_failed',
+        message: detail ? `${base}: ${detail}` : base,
+      });
+    });
 
     return { success: true };
   }

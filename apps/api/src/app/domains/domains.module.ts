@@ -1,9 +1,11 @@
+import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ResourceValidatorService } from '@novu/application-generic';
 
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
 import { DomainsController } from './domains.controller';
+import { DomainConnectDiscoveryService } from './services/domain-connect-discovery.service';
 import { USE_CASES } from './usecases';
 
 @Module({})
@@ -21,9 +23,9 @@ export const DomainsModule = {
 
     return {
       module: DomainsModuleDefinition,
-      imports: [SharedModule, AuthModule],
+      imports: [SharedModule, AuthModule, HttpModule],
       controllers: [DomainsController],
-      providers: [...USE_CASES, ResourceValidatorService],
+      providers: [...USE_CASES, DomainConnectDiscoveryService, ResourceValidatorService],
       exports: [...USE_CASES],
     };
   },

@@ -42,4 +42,5 @@ export const QueryKeys = Object.freeze({
   fetchWorkflowSuggestions: 'fetchWorkflowSuggestions',
   fetchDomains: 'fetchDomains',
   fetchDomain: 'fetchDomain',
+  fetchDomainConnectStatus: 'fetchDomainConnectStatus',
 });

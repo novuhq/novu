@@ -1,4 +1,4 @@
-import type { CardElement, ChatElement } from 'chat';
+import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 export type { TriggerRecipientsPayload };
 
@@ -88,8 +88,8 @@ export interface FileRef {
 /**
  * Content accepted by ctx.reply() and handle.edit().
  *
- * - `string` — plain text
- * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
+ * - `string` — plain text or markdown; converted to platform format by the chat SDK
+ * - `{ markdown, files? }` — markdown with optional file attachments
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
  *   (must be a CardElement at runtime; validated by serializeContent)
  */
@@ -97,7 +97,6 @@ export type MessageContent = string | { markdown: string; files?: FileRef[] } | 
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
-  text?: string;
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];
@@ -179,6 +178,19 @@ export interface AgentContext {
    *   ctx.trigger('team-alert', { to: { type: 'Topic', topicKey: 'support-team' } });
    */
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
+  /**
+   * Add an emoji reaction to any platform message.
+   * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
+   * when the handler completes (same batching contract as `ctx.trigger()`).
+   *
+   * @param messageId - Platform-native message ID to react to (e.g. Slack `ts`).
+   * @param emojiName - Emoji short-name (e.g. `'thumbs_up'`, `'check_mark'`).
+   *
+   * @example
+   *   ctx.addReaction(ctx.reaction!.messageId, 'check_mark');
+   *   await ctx.reply('Done!');
+   */
+  addReaction(messageId: string, emojiName: Emoji): void;
 }
 
 export interface AgentHandlers {
@@ -242,6 +254,12 @@ export interface EditPayload {
   content: ReplyContent;
 }
 
+/** An emoji reaction to be added to a platform message. */
+export interface AddReactionPayload {
+  messageId: string;
+  emojiName: Emoji;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -249,6 +267,7 @@ export interface AgentReplyPayload {
   edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+  addReactions?: AddReactionPayload[];
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

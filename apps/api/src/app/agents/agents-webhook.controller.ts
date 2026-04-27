@@ -54,6 +54,7 @@ export class AgentsWebhookController {
         edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
+        addReactions: body.addReactions,
       })
     );
   }

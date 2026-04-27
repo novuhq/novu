@@ -1,5 +1,8 @@
 import { isJSX, toCardElement } from 'chat/jsx-runtime';
+import { AgentDeliveryError } from './agent.errors';
+import type { Emoji } from 'chat';
 import type {
+  AddReactionPayload,
   AgentAction,
   AgentBridgeRequest,
   AgentContext,
@@ -24,7 +27,7 @@ function isCardElement(content: object): content is import('chat').CardElement {
 
 function serializeContent(content: MessageContent): ReplyContent {
   if (typeof content === 'string') {
-    return { text: content };
+    return { markdown: content };
   }
 
   if (isJSX(content)) {
@@ -107,6 +110,7 @@ export class AgentContextImpl implements AgentContext {
   readonly metadata: { set: (key: string, value: unknown) => void };
 
   private _signals: Signal[] = [];
+  private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
@@ -150,6 +154,11 @@ export class AgentContextImpl implements AgentContext {
       this._signals = [];
     }
 
+    if (this._pendingReactions.length) {
+      body.addReactions = this._pendingReactions;
+      this._pendingReactions = [];
+    }
+
     if (this._resolveSignal) {
       body.resolve = this._resolveSignal;
       this._resolveSignal = null;
@@ -177,12 +186,16 @@ export class AgentContextImpl implements AgentContext {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
+  addReaction(messageId: string, emojiName: Emoji): void {
+    this._pendingReactions.push({ messageId, emojiName });
+  }
+
   /**
    * Flush any remaining signals that weren't sent with reply().
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
-    if (!this._signals.length && !this._resolveSignal) {
+    if (!this._signals.length && !this._resolveSignal && !this._pendingReactions.length) {
       return;
     }
 
@@ -194,6 +207,11 @@ export class AgentContextImpl implements AgentContext {
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];
+    }
+
+    if (this._pendingReactions.length) {
+      body.addReactions = this._pendingReactions;
+      this._pendingReactions = [];
     }
 
     if (this._resolveSignal) {
@@ -216,6 +234,18 @@ export class AgentContextImpl implements AgentContext {
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
+
+      if (response.status === 502) {
+        let message = text;
+        try {
+          const parsed = JSON.parse(text) as { message?: string };
+          if (parsed.message) message = parsed.message;
+        } catch {
+          // use raw text if JSON parsing fails
+        }
+        throw new AgentDeliveryError(502, message);
+      }
+
       throw new Error(`Agent reply failed (${response.status}): ${text}`);
     }
 
