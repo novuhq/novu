@@ -2,7 +2,7 @@
 
 ### 🚀 Features
 
-- **react:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
+- **nextjs:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
 
 ### ❤️ Thank You
 

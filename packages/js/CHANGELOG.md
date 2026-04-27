@@ -2,8 +2,7 @@
 
 ### 🚀 Features
 
-- **dashboard,api-service,dal:** novu copilot workflow suggestions fixes NV-7215 ([#10508](https://github.com/novuhq/novu/pull/10508))
-- **react:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
+- **js:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
 
 ### 🩹 Fixes
 
