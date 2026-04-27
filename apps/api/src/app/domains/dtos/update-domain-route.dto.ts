@@ -1,7 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { IsBoundedRecord } from '../validators/bounded-record.validator';
+import { IsJsonLogicRule } from '../validators/json-logic-rule.validator';
 
 export class UpdateDomainRouteDto {
   @ApiPropertyOptional({
@@ -24,4 +25,13 @@ export class UpdateDomainRouteDto {
   @IsOptional()
   @IsBoundedRecord()
   data?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Optional JSON Logic rule evaluated against inbound mail context. Truthy rules deliver the route.',
+    type: Object,
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsJsonLogicRule()
+  match?: DomainRouteMatch | null;
 }

@@ -9,6 +9,7 @@ export function toDomainRouteResponse(route: DomainRouteEntity): DomainRouteResp
     agentId: route.destination,
     type: route.type,
     data: route.data,
+    match: route.match,
     _environmentId: route._environmentId as unknown as string,
     _organizationId: route._organizationId as unknown as string,
     createdAt: route.createdAt,

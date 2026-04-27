@@ -1,4 +1,4 @@
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Fragment, forwardRef, useEffect, useId, useImperativeHandle, useState } from 'react';
@@ -12,8 +12,8 @@ import {
   RiWebhookLine,
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { NovuApiError } from '@/api/api.client';
 import { listAgents } from '@/api/agents';
+import { NovuApiError } from '@/api/api.client';
 import type { DomainResponse, DomainRouteResponse, TestDomainRouteResponse } from '@/api/domains';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -39,6 +39,7 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { Textarea } from '@/components/primitives/textarea';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useConditionsCount } from '@/hooks/use-conditions-count';
 import {
   useCreateDomainRoute,
   useDeleteDomainRoute,
@@ -46,9 +47,11 @@ import {
   useFetchDomainRoutes,
   useUpdateDomainRoute,
 } from '@/hooks/use-domain-routes';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTestDomainRoute } from '@/hooks/use-test-domain-route';
 import { parseDomainMetadataJson } from '@/utils/domain-metadata';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { RouteConditionsDrawer } from './route-conditions-drawer';
 import { RoutingEmptyIllustration } from './routing-empty-illustration';
 
 type RouteFormState = {
@@ -106,6 +109,7 @@ type InlineRouteFormProps = {
   onCancel: () => void;
   isSaving: boolean;
   isAddressLocked?: boolean;
+  showConditions?: boolean;
 };
 
 function InlineRouteForm({
@@ -116,6 +120,7 @@ function InlineRouteForm({
   onCancel,
   isSaving,
   isAddressLocked = false,
+  showConditions = false,
 }: InlineRouteFormProps) {
   const [form, setForm] = useState<RouteFormState>(initialValues);
   const shouldReduceMotion = useReducedMotion();
@@ -198,6 +203,8 @@ function InlineRouteForm({
           </div>
         </TableCell>
 
+        {showConditions ? <TableCell className="text-foreground-400 px-3 py-4 text-sm">-</TableCell> : null}
+
         {/* Actions */}
         <TableCell className="px-3 py-4">
           <div className="flex items-center gap-1">
@@ -232,7 +239,7 @@ function InlineRouteForm({
       </TableRow>
 
       <TableRow className="[&>td]:border-0">
-        <TableCell colSpan={4} className="space-y-1 px-3 pb-4 pt-0">
+        <TableCell colSpan={showConditions ? 5 : 4} className="space-y-1 px-3 pb-4 pt-0">
           <p className="text-foreground-500 text-2xs font-medium">Metadata (optional JSON)</p>
           <Textarea
             value={form.dataJson}
@@ -256,9 +263,11 @@ type ExistingRouteRowProps = {
   agentOptions: Array<{ _id: string; name: string; identifier: string }>;
   onDelete: (address: string) => Promise<void>;
   onEdit: (address: string) => void;
+  onEditConditions: (route: DomainRouteResponse) => void;
   onSendTest: (route: DomainRouteResponse) => void;
   isDeleting: boolean;
   canWrite: boolean;
+  showConditions: boolean;
 };
 
 function ExistingRouteRow({
@@ -267,13 +276,16 @@ function ExistingRouteRow({
   agentOptions,
   onDelete,
   onEdit,
+  onEditConditions,
   onSendTest,
   isDeleting,
   canWrite,
+  showConditions,
 }: ExistingRouteRowProps) {
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
   const isCatchAll = route.address === '*';
   const agentName = isWebhook ? null : (agentOptions.find((a) => a._id === route.agentId)?.name ?? route.agentId);
+  const conditionsCount = useConditionsCount(route.match as never);
   const shouldReduceMotion = useReducedMotion();
   const catchAllInitial = shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94 };
   const catchAllAnimate = shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 };
@@ -311,6 +323,17 @@ function ExistingRouteRow({
           </span>
         )}
       </TableCell>
+      {showConditions ? (
+        <TableCell className="px-3 py-4">
+          {conditionsCount > 0 ? (
+            <Badge variant="lighter" color="blue" size="sm">
+              {conditionsCount} {conditionsCount === 1 ? 'condition' : 'conditions'}
+            </Badge>
+          ) : (
+            <span className="text-foreground-400 text-sm">-</span>
+          )}
+        </TableCell>
+      ) : null}
       <TableCell className="px-3 py-4">
         <span className="text-success text-sm">Active</span>
       </TableCell>
@@ -323,6 +346,11 @@ function ExistingRouteRow({
             <DropdownMenuItem onSelect={() => onEdit(route.address)} disabled={!canWrite}>
               Edit
             </DropdownMenuItem>
+            {showConditions ? (
+              <DropdownMenuItem onSelect={() => onEditConditions(route)} disabled={!canWrite}>
+                Edit conditions
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem onSelect={() => onSendTest(route)} disabled={!canWrite}>
               <span className="flex items-center gap-1.5">
                 <RiSendPlaneLine className="size-3.5 shrink-0" />
@@ -357,6 +385,18 @@ const DEFAULT_TEST_FORM = {
   subject: 'Novu route test',
   text: 'Synthetic inbound message from Novu.',
 };
+
+function getMatchEvaluationText(matchEvaluation: NonNullable<TestDomainRouteResponse['matchEvaluation']>): string {
+  if (!matchEvaluation.evaluated) {
+    return 'has no conditions.';
+  }
+
+  if (matchEvaluation.passed) {
+    return 'passed its conditions.';
+  }
+
+  return 'did not pass its conditions.';
+}
 
 function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: RouteTestDialogProps) {
   const dryRunFieldId = useId();
@@ -422,9 +462,7 @@ function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: Ro
         </DialogHeader>
 
         <div className="text-foreground-600 space-y-3 text-xs">
-          <p className="font-code text-code-xs text-foreground-900">
-            {route ? `${route.address}@${domainName}` : ''}
-          </p>
+          <p className="font-code text-code-xs text-foreground-900">{route ? `${route.address}@${domainName}` : ''}</p>
 
           <div className="grid gap-2">
             <p className="text-foreground-500 text-2xs font-medium uppercase tracking-wide">From email</p>
@@ -457,6 +495,19 @@ function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: Ro
             </label>
           </div>
         </div>
+
+        {lastResult?.matchEvaluation ? (
+          <div className="bg-bg-weak rounded-md border p-3 text-2xs">
+            <p className="text-foreground-600 font-medium">Condition evaluation</p>
+            <p className="text-foreground-500 mt-1">
+              Route <span className="font-code">{lastResult.matchEvaluation.matchedRouteAddress}</span>{' '}
+              {getMatchEvaluationText(lastResult.matchEvaluation)}
+              {lastResult.matchEvaluation.fallthroughTo
+                ? ` Falling through to ${lastResult.matchEvaluation.fallthroughTo}.`
+                : ''}
+            </p>
+          </div>
+        ) : null}
 
         {lastResult ? (
           <pre className="bg-bg-weak text-foreground-700 max-h-48 overflow-auto rounded-md border p-3 font-mono text-2xs">
@@ -590,6 +641,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   ref
 ) {
   const { currentEnvironment } = useEnvironment();
+  const isRouteMatchEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAIN_ROUTE_MATCH_ENABLED, false);
   const { data: agents = [] } = useAgents();
   const [cursor, setCursor] = useState<{ after?: string; before?: string }>({});
   const { data: routesResponse, isLoading: areRoutesLoading } = useFetchDomainRoutes(domain.name, {
@@ -606,6 +658,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
   const [editingAddress, setEditingAddress] = useState<string | null>(null);
   const [testDialogRoute, setTestDialogRoute] = useState<DomainRouteResponse | null>(null);
+  const [conditionsRoute, setConditionsRoute] = useState<DomainRouteResponse | null>(null);
   const [isAddRouteTypeDialogOpen, setIsAddRouteTypeDialogOpen] = useState(false);
   const routes = routesResponse?.data ?? [];
   const hasCatchAllRoute = Boolean(catchAllRoute) || routes.some((route) => route.address === '*');
@@ -720,6 +773,22 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
     }
   };
 
+  const handleSaveConditions = async (match: DomainRouteResponse['match'] | null) => {
+    if (!conditionsRoute) {
+      return;
+    }
+
+    try {
+      await updateDomainRoute.mutateAsync({
+        address: conditionsRoute.address,
+        body: { match },
+      });
+      setConditionsRoute(null);
+    } catch (error) {
+      showErrorToast(getRouteErrorMessage(error, 'Failed to update route conditions.'), 'Route update failed');
+    }
+  };
+
   const agentOptions = agents.map((a) => ({ _id: a._id, name: a.name, identifier: a.identifier }));
   const hasWebhookRoute = routes.some((route) => route.type === DomainRouteTypeEnum.WEBHOOK);
   const isEmpty = routes.length === 0 && !isAdding;
@@ -733,6 +802,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
               <TableRow>
                 <TableHead className="h-8 px-3 text-label-xs">Address</TableHead>
                 <TableHead className="h-8 px-3 text-label-xs">Destination</TableHead>
+                {isRouteMatchEnabled ? <TableHead className="h-8 px-3 text-label-xs">Conditions</TableHead> : null}
                 <TableHead className="h-8 px-3 text-label-xs">Status</TableHead>
                 <TableHead className="h-8 px-3 text-label-xs w-12" />
               </TableRow>
@@ -755,6 +825,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                     onSave={(values) => handleUpdate(route.address, values)}
                     onCancel={() => setEditingAddress(null)}
                     isSaving={isMutating}
+                    showConditions={isRouteMatchEnabled}
                   />
                 </Fragment>
               ) : (
@@ -765,9 +836,11 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                   agentOptions={agentOptions}
                   onDelete={handleDelete}
                   onEdit={setEditingAddress}
+                  onEditConditions={setConditionsRoute}
                   onSendTest={setTestDialogRoute}
                   isDeleting={isMutating}
                   canWrite={canWrite}
+                  showConditions={isRouteMatchEnabled}
                 />
               )
             )}
@@ -782,12 +855,13 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 onSave={handleCreate}
                 onCancel={cancelAdding}
                 isSaving={isMutating}
+                showConditions={isRouteMatchEnabled}
               />
             )}
 
             {routes.length === 0 && !isAdding && !areRoutesLoading && (
               <TableRow className="[&>td]:border-0">
-                <TableCell colSpan={4} className="px-3 py-16 text-center">
+                <TableCell colSpan={isRouteMatchEnabled ? 5 : 4} className="px-3 py-16 text-center">
                   <div className="flex flex-col items-center gap-6">
                     <RoutingEmptyIllustration />
                     <div className="space-y-1 text-center">
@@ -863,6 +937,21 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         mutation={testDomainRoute}
         onOpenChange={(open) => {
           if (!open) setTestDialogRoute(null);
+        }}
+      />
+
+      <RouteConditionsDrawer
+        open={!!conditionsRoute}
+        domainName={domain.name}
+        route={conditionsRoute}
+        isSaving={updateDomainRoute.isPending}
+        onSave={handleSaveConditions}
+        onSendTest={(route) => {
+          setConditionsRoute(null);
+          setTestDialogRoute(route);
+        }}
+        onOpenChange={(open) => {
+          if (!open) setConditionsRoute(null);
         }}
       />
 

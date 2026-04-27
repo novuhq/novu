@@ -1,4 +1,4 @@
-import { DirectionEnum, DomainRouteTypeEnum, DomainStatusEnum, IEnvironment } from '@novu/shared';
+import { DirectionEnum, DomainRouteMatch, DomainRouteTypeEnum, DomainStatusEnum, IEnvironment } from '@novu/shared';
 import { del, get, patch, post } from './api.client';
 
 export type DomainRouteResponse = {
@@ -12,6 +12,7 @@ export type DomainRouteResponse = {
   createdAt: string;
   updatedAt: string;
   data?: Record<string, string>;
+  match?: DomainRouteMatch;
 };
 
 export type ExpectedDnsRecord = {
@@ -41,8 +42,9 @@ export type UpdateDomainBody = { data?: Record<string, string> };
 export type CreateDomainRouteBody = Pick<DomainRouteResponse, 'address' | 'type'> & {
   agentId?: string;
   data?: Record<string, string>;
+  match?: DomainRouteMatch;
 };
-export type UpdateDomainRouteBody = Partial<CreateDomainRouteBody>;
+export type UpdateDomainRouteBody = Omit<Partial<CreateDomainRouteBody>, 'match'> & { match?: DomainRouteMatch | null };
 
 export type DomainDiagnosticIssue = {
   code: string;
@@ -75,6 +77,12 @@ export type TestDomainRouteResponse = {
   agent?: { agentId: string; status: number; agentReply?: unknown; latencyMs: number };
   payload?: unknown;
   wouldDeliverTo?: string;
+  matchEvaluation?: {
+    evaluated: boolean;
+    passed: boolean;
+    matchedRouteAddress: string;
+    fallthroughTo?: string;
+  };
 };
 
 export type CursorPaginatedResponse<T> = {

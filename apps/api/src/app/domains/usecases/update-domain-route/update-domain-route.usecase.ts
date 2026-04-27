@@ -54,11 +54,18 @@ export class UpdateDomainRoute {
     });
 
     const hasChanges =
-      command.type !== undefined || command.agentId !== undefined || command.data !== undefined;
+      command.type !== undefined ||
+      command.agentId !== undefined ||
+      command.data !== undefined ||
+      command.match !== undefined;
 
     if (!hasChanges) {
       return toDomainRouteResponse(currentRoute);
     }
+
+    const unset: Record<string, ''> = {};
+    if (nextType === DomainRouteTypeEnum.WEBHOOK) unset.destination = '';
+    if (command.match === null) unset.match = '';
 
     const updated = await this.domainRouteRepository.findOneAndUpdate(
       {
@@ -74,8 +81,9 @@ export class UpdateDomainRoute {
             ? { destination: resolvedDestination }
             : {}),
           ...(command.data !== undefined ? { data: command.data } : {}),
+          ...(command.match !== undefined && command.match !== null ? { match: command.match } : {}),
         },
-        ...(nextType === DomainRouteTypeEnum.WEBHOOK ? { $unset: { destination: '' } } : {}),
+        ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
       },
       { new: true }
     );

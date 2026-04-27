@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { DirectionEnum, DomainRouteTypeEnum } from '@novu/shared';
+import { DirectionEnum, DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 import { CreateDomainRoute } from './create-domain-route/create-domain-route.usecase';
@@ -17,6 +17,7 @@ const ROUTE_ID = 'route-id';
 const ROUTE_ADDRESS = 'support';
 const AGENT_ID = 'agent-id';
 const AGENT_IDENTIFIER = 'agent-identifier';
+const MATCH_RULE: DomainRouteMatch = { contains: [{ var: 'mail.subject' }, 'urgent'] };
 
 const domain = {
   _id: DOMAIN_ID,
@@ -106,6 +107,24 @@ describe('Domain route usecases', () => {
     ).to.equal(true);
   });
 
+  it('creates a domain route with a match rule', async () => {
+    domainRouteRepositoryMock.findOneByAddressAndDomain.resolves(null);
+    const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
+
+    await usecase.execute({
+      domain: DOMAIN_NAME,
+      environmentId: ENVIRONMENT_ID,
+      organizationId: ORGANIZATION_ID,
+      userId: USER_ID,
+      address: ROUTE_ADDRESS,
+      agentId: AGENT_IDENTIFIER,
+      type: DomainRouteTypeEnum.AGENT,
+      match: MATCH_RULE,
+    });
+
+    expect(domainRouteRepositoryMock.create.calledWithMatch({ match: MATCH_RULE })).to.equal(true);
+  });
+
   it('throws ConflictException when a route already exists for the address', async () => {
     domainRouteRepositoryMock.findOneByAddressAndDomain.resolves({ _id: 'existing-route-id' });
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
@@ -179,6 +198,38 @@ describe('Domain route usecases', () => {
 
     expect(result._id).to.equal(ROUTE_ID);
     expect(domainRouteRepositoryMock.findOneAndUpdate.called).to.equal(true);
+  });
+
+  it('updates a route match rule', async () => {
+    const usecase = new UpdateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
+
+    await usecase.execute({
+      domain: DOMAIN_NAME,
+      address: ROUTE_ADDRESS,
+      environmentId: ENVIRONMENT_ID,
+      organizationId: ORGANIZATION_ID,
+      userId: USER_ID,
+      match: MATCH_RULE,
+    });
+
+    expect(domainRouteRepositoryMock.findOneAndUpdate.calledWithMatch({}, { $set: { match: MATCH_RULE } })).to.equal(
+      true
+    );
+  });
+
+  it('clears a route match rule', async () => {
+    const usecase = new UpdateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
+
+    await usecase.execute({
+      domain: DOMAIN_NAME,
+      address: ROUTE_ADDRESS,
+      environmentId: ENVIRONMENT_ID,
+      organizationId: ORGANIZATION_ID,
+      userId: USER_ID,
+      match: null,
+    });
+
+    expect(domainRouteRepositoryMock.findOneAndUpdate.calledWithMatch({}, { $unset: { match: '' } })).to.equal(true);
   });
 
   it('throws NotFoundException when updating a missing route', async () => {

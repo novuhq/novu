@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
+import { ComponentType, useCallback, useMemo } from 'react';
+import { type Field, QueryBuilder, RuleGroupType, Translations, ValueEditorProps } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 
 import { AddConditionAction } from '@/components/conditions-editor/add-condition-action';
@@ -22,6 +22,8 @@ import {
   IsAllowedVariable,
   LiquidVariable,
 } from '@/utils/parseStepVariables';
+
+export type ConditionsEditorValueEditor = ComponentType<ValueEditorProps>;
 
 export interface EnhancedField extends Field {
   dataType: FieldDataType;
@@ -53,7 +55,7 @@ const translations: Partial<Translations> = {
   },
 };
 
-const controlElements = {
+const baseControlElements = {
   operatorSelector: OperatorSelector,
   combinatorSelector: CombinatorSelector,
   fieldSelector: FieldSelector,
@@ -77,6 +79,7 @@ function InternalConditionsEditor({
   saveForm,
   enhancedVariables,
   disabled,
+  valueEditor,
 }: {
   fields: EnhancedField[];
   variables: LiquidVariable[];
@@ -86,7 +89,12 @@ function InternalConditionsEditor({
   saveForm: () => void;
   enhancedVariables?: EnhancedLiquidVariable[];
   disabled?: boolean;
+  valueEditor?: ConditionsEditorValueEditor;
 }) {
+  const controlElements = useMemo(
+    () => ({ ...baseControlElements, valueEditor: valueEditor ?? baseControlElements.valueEditor }),
+    [valueEditor]
+  );
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
 
@@ -244,6 +252,7 @@ export function ConditionsEditor({
   isAllowedVariable,
   enhancedVariables,
   disabled,
+  valueEditor,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
@@ -253,6 +262,7 @@ export function ConditionsEditor({
   isAllowedVariable: IsAllowedVariable;
   enhancedVariables?: EnhancedLiquidVariable[];
   disabled?: boolean;
+  valueEditor?: ConditionsEditorValueEditor;
 }) {
   return (
     <ConditionsEditorProvider query={query} onQueryChange={onQueryChange}>
@@ -265,6 +275,7 @@ export function ConditionsEditor({
         saveForm={saveForm}
         enhancedVariables={enhancedVariables}
         disabled={disabled}
+        valueEditor={valueEditor}
       />
     </ConditionsEditorProvider>
   );

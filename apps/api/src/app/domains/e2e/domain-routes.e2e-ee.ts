@@ -77,6 +77,38 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(route.data).to.deep.equal({ source: 'e2e' });
   });
 
+  it('should create and update a route with a match rule', async () => {
+    const domain = await createDomain();
+    const match = { contains: [{ var: 'mail.subject' }, 'urgent'] };
+
+    const createResponse = await session.testAgent.post(`/v1/domains/${domain.name}/routes`).send({
+      address: 'conditions',
+      type: DomainRouteDtoType.Webhook,
+      match,
+    });
+    expect(createResponse.status).to.equal(201);
+    expect(createResponse.body.data.match).to.deep.equal(match);
+
+    const nextMatch = { in: [{ var: 'mail.fromDomain' }, ['acme.com']] };
+    const updateResponse = await session.testAgent.patch(`/v1/domains/${domain.name}/routes/conditions`).send({
+      match: nextMatch,
+    });
+    expect(updateResponse.status).to.equal(200);
+    expect(updateResponse.body.data.match).to.deep.equal(nextMatch);
+  });
+
+  it('should reject match rules that reference unknown fields', async () => {
+    const domain = await createDomain();
+
+    const response = await session.testAgent.post(`/v1/domains/${domain.name}/routes`).send({
+      address: 'bad-conditions',
+      type: DomainRouteDtoType.Webhook,
+      match: { '==': [{ var: 'unknown.field' }, 'value'] },
+    });
+
+    expect(response.status).to.equal(422);
+  });
+
   it('should reject route data with non-string values (client validation)', async () => {
     const domain = await createDomain();
 

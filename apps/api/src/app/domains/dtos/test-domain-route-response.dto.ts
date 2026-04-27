@@ -25,6 +25,20 @@ export class TestDomainRouteAgentResultDto {
   latencyMs: number;
 }
 
+export class TestDomainRouteMatchEvaluationDto {
+  @ApiProperty()
+  evaluated: boolean;
+
+  @ApiProperty()
+  passed: boolean;
+
+  @ApiProperty()
+  matchedRouteAddress: string;
+
+  @ApiPropertyOptional({ description: 'Route address tried after this route failed its match rule.' })
+  fallthroughTo?: string;
+}
+
 export class TestDomainRouteResponseDto {
   @ApiProperty()
   matched: boolean;
@@ -52,4 +66,7 @@ export class TestDomainRouteResponseDto {
 
   @ApiPropertyOptional({ type: TestDomainRouteAgentResultDto })
   agent?: TestDomainRouteAgentResultDto;
+
+  @ApiPropertyOptional({ type: TestDomainRouteMatchEvaluationDto })
+  matchEvaluation?: TestDomainRouteMatchEvaluationDto;
 }

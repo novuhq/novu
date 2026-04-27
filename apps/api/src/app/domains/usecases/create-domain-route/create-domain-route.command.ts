@@ -1,9 +1,10 @@
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IsBoundedRecord } from '../../validators/bounded-record.validator';
 import { IsEmailLocalPart } from '../../validators/email-local-part.validator';
+import { IsJsonLogicRule } from '../../validators/json-logic-rule.validator';
 
 export class CreateDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -27,4 +28,8 @@ export class CreateDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoundedRecord()
   data?: Record<string, string>;
+
+  @IsOptional()
+  @IsJsonLogicRule()
+  match?: DomainRouteMatch;
 }

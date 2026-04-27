@@ -1,6 +1,6 @@
 import { InboundDomainRouteDelivery } from '@novu/application-generic';
 import { DomainRepository, DomainRouteRepository } from '@novu/dal';
-import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
+import { DomainRouteMatch, DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
@@ -21,7 +21,9 @@ function makeVerifiedDomain() {
   };
 }
 
-function makeRoutes(routes: Array<{ address: string; type: DomainRouteTypeEnum; destination?: string }>) {
+function makeRoutes(
+  routes: Array<{ address: string; type: DomainRouteTypeEnum; destination?: string; match?: DomainRouteMatch }>
+) {
   return routes.map((route, index) => ({
     _id: `route-${index}`,
     _domainId: 'domain-001',
@@ -144,6 +146,96 @@ describe('DomainRouteStrategy', () => {
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
     const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
     expect(call.args[0].route.address).to.equal('support');
+  });
+
+  it('should deliver an exact route when its match rule passes', async () => {
+    const routes = makeRoutes([
+      {
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        match: { contains: [{ var: 'mail.subject' }, 'Hello'] },
+      },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand('support'));
+
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    expect(inboundDomainRouteDelivery.deliverToWebhook.getCall(0).args[0].route.address).to.equal('support');
+  });
+
+  it('should fall through to wildcard when the exact route match rule fails', async () => {
+    const routes = makeRoutes([
+      {
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        match: { contains: [{ var: 'mail.subject' }, 'Nope'] },
+      },
+      { address: '*', type: DomainRouteTypeEnum.WEBHOOK },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand('support'));
+
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    expect(inboundDomainRouteDelivery.deliverToWebhook.getCall(0).args[0].route.address).to.equal('*');
+  });
+
+  it('should deliver a wildcard route when its match rule passes', async () => {
+    const routes = makeRoutes([
+      {
+        address: '*',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        match: { contains: [{ var: 'mail.subject' }, 'Hello'] },
+      },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand('anything'));
+
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+  });
+
+  it('should not deliver when exact and wildcard match rules fail', async () => {
+    const routes = makeRoutes([
+      {
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        match: { contains: [{ var: 'mail.subject' }, 'Nope'] },
+      },
+      {
+        address: '*',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        match: { contains: [{ var: 'mail.subject' }, 'Also nope'] },
+      },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand('support'));
+
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook);
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+  });
+
+  it('should fail closed when route match evaluation throws', async () => {
+    const routes = makeRoutes([
+      {
+        address: 'support',
+        type: DomainRouteTypeEnum.WEBHOOK,
+        match: { unknownOperation: [{ var: 'mail.subject' }, 'Hello'] },
+      },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand('support'));
+
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook);
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
   });
 
   it('should not fire any handler when no route matches', async () => {

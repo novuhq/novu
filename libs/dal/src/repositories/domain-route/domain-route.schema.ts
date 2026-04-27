@@ -26,6 +26,9 @@ const domainRouteSchema = new Schema<DomainRouteDBModel>(
     data: {
       type: Schema.Types.Mixed,
     },
+    match: {
+      type: Schema.Types.Mixed,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

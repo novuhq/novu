@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 
 export class DomainRouteResponseDto {
   @ApiProperty()
@@ -37,4 +37,11 @@ export class DomainRouteResponseDto {
     additionalProperties: { type: 'string' },
   })
   data?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'JSON Logic rule evaluated against inbound mail context. Truthy rules deliver the route.',
+    type: Object,
+    additionalProperties: true,
+  })
+  match?: DomainRouteMatch;
 }

@@ -70,6 +70,68 @@ describe('Domain route test API - /v1/domains/:domain/routes/:address/test #novu
     expect(result.payload).to.be.an('object');
   });
 
+  it('should include match evaluation when testing a route with conditions', async () => {
+    const name = uniqueDomainName();
+    const { result: domain } = await novuClient.domains.create({ name });
+
+    const createResponse = await session.testAgent.post(`/v1/domains/${domain.name}/routes`).send({
+      address: 'support',
+      type: DomainRouteDtoType.Webhook,
+      match: { contains: [{ var: 'mail.subject' }, 'Test'] },
+    });
+    expect(createResponse.status).to.equal(201);
+
+    const { result } = await novuClient.domains.routes.test(
+      {
+        from: { address: 'sender@example.com' },
+        subject: 'Test message',
+        text: 'Ping',
+        dryRun: true,
+      },
+      domain.name,
+      'support'
+    );
+
+    const typedResult = result as typeof result & {
+      matchEvaluation?: { evaluated: boolean; passed: boolean };
+    };
+
+    expect(result.matched).to.equal(true);
+    expect(typedResult.matchEvaluation?.evaluated).to.equal(true);
+    expect(typedResult.matchEvaluation?.passed).to.equal(true);
+  });
+
+  it('should return matched false when route conditions fail', async () => {
+    const name = uniqueDomainName();
+    const { result: domain } = await novuClient.domains.create({ name });
+
+    const createResponse = await session.testAgent.post(`/v1/domains/${domain.name}/routes`).send({
+      address: 'support',
+      type: DomainRouteDtoType.Webhook,
+      match: { contains: [{ var: 'mail.subject' }, 'Nope'] },
+    });
+    expect(createResponse.status).to.equal(201);
+
+    const { result } = await novuClient.domains.routes.test(
+      {
+        from: { address: 'sender@example.com' },
+        subject: 'Test message',
+        text: 'Ping',
+        dryRun: true,
+      },
+      domain.name,
+      'support'
+    );
+
+    const typedResult = result as typeof result & {
+      matchEvaluation?: { evaluated: boolean; passed: boolean };
+    };
+
+    expect(result.matched).to.equal(false);
+    expect(typedResult.matchEvaluation?.evaluated).to.equal(true);
+    expect(typedResult.matchEvaluation?.passed).to.equal(false);
+  });
+
   it('should return 404 when testing a route on a missing domain', async () => {
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.test(

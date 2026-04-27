@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { InboundDomainRouteDelivery, type InboundDomainRouteMailInput } from '@novu/application-generic';
-import { DomainRepository, DomainRouteRepository } from '@novu/dal';
-import { DomainRouteTypeEnum } from '@novu/shared';
+import {
+  buildRouteMatchContext,
+  evaluateRules,
+  InboundDomainRouteDelivery,
+  type InboundDomainRouteMailInput,
+} from '@novu/application-generic';
+import { DomainRepository, type DomainRouteEntity, DomainRouteRepository } from '@novu/dal';
+import { DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 import { nanoid } from 'nanoid';
 
 import { TestDomainRouteResponseDto } from '../../dtos/test-domain-route-response.dto';
@@ -30,22 +35,29 @@ export class TestDomainRoute {
       organizationId: command.organizationId,
       addresses: [command.address, '*'],
     });
-    const route = routes.find((r) => r.address === command.address) ?? routes.find((r) => r.address === '*');
+    const exactRoute = routes.find((r) => r.address === command.address);
+    const wildcardRoute = routes.find((r) => r.address === '*');
 
     const dryRun = command.dryRun === true;
 
     const base: TestDomainRouteResponseDto = {
-      matched: Boolean(route),
+      matched: Boolean(exactRoute || wildcardRoute),
       dryRun,
       domainStatus: domain.status,
       mxRecordConfigured: domain.mxRecordConfigured,
     };
 
-    if (!route) {
-      return base;
-    }
+    const mail = this.buildMail(command, domain.name);
+    const selected = this.selectRoute({ exactRoute, wildcardRoute, domain, mail });
+    const route = selected.route;
 
-    const mail = this.buildMail(command, domain.name, route.address);
+    if (!route) {
+      return {
+        ...base,
+        matched: false,
+        matchEvaluation: selected.matchEvaluation,
+      };
+    }
 
     if (dryRun) {
       if (route.type === DomainRouteTypeEnum.WEBHOOK) {
@@ -57,6 +69,7 @@ export class TestDomainRoute {
           type: DomainRouteTypeEnum.WEBHOOK,
           wouldDeliverTo: 'configured outbound webhooks for this environment',
           payload: payload as unknown as Record<string, unknown>,
+          matchEvaluation: selected.matchEvaluation,
         };
       }
 
@@ -74,6 +87,7 @@ export class TestDomainRoute {
         type: DomainRouteTypeEnum.AGENT,
         wouldDeliverTo,
         payload: agentPayload as unknown as Record<string, unknown>,
+        matchEvaluation: selected.matchEvaluation,
       };
     }
 
@@ -94,6 +108,7 @@ export class TestDomainRoute {
           skipped: result.skipped,
           latencyMs: result.latencyMs,
         },
+        matchEvaluation: selected.matchEvaluation,
       };
     }
 
@@ -115,15 +130,82 @@ export class TestDomainRoute {
         agentReply: agentResult.body,
         latencyMs: agentResult.latencyMs,
       },
+      matchEvaluation: selected.matchEvaluation,
     };
   }
 
-  private buildMail(
-    command: TestDomainRouteCommand,
-    domainName: string,
-    routeAddress: string
-  ): InboundDomainRouteMailInput {
-    const toAddress = `${routeAddress}@${domainName}`;
+  private selectRoute({
+    exactRoute,
+    wildcardRoute,
+    domain,
+    mail,
+  }: {
+    exactRoute?: DomainRouteEntity;
+    wildcardRoute?: DomainRouteEntity;
+    domain: Parameters<typeof buildRouteMatchContext>[0];
+    mail: InboundDomainRouteMailInput;
+  }): {
+    route?: DomainRouteEntity;
+    matchEvaluation?: TestDomainRouteResponseDto['matchEvaluation'];
+  } {
+    const exactEvaluation = this.evaluateRouteMatch(exactRoute, domain, mail);
+    if (exactEvaluation.passed && exactRoute) {
+      return {
+        route: exactRoute,
+        matchEvaluation: exactEvaluation.matchEvaluation,
+      };
+    }
+
+    const wildcardEvaluation = this.evaluateRouteMatch(wildcardRoute, domain, mail);
+    if (wildcardEvaluation.passed && wildcardRoute) {
+      return {
+        route: wildcardRoute,
+        matchEvaluation: exactEvaluation.matchEvaluation
+          ? { ...exactEvaluation.matchEvaluation, fallthroughTo: wildcardRoute.address }
+          : wildcardEvaluation.matchEvaluation,
+      };
+    }
+
+    return {
+      matchEvaluation: exactEvaluation.matchEvaluation ?? wildcardEvaluation.matchEvaluation,
+    };
+  }
+
+  private evaluateRouteMatch(
+    route: DomainRouteEntity | undefined,
+    domain: Parameters<typeof buildRouteMatchContext>[0],
+    mail: InboundDomainRouteMailInput
+  ): { passed: boolean; matchEvaluation?: TestDomainRouteResponseDto['matchEvaluation'] } {
+    if (!route) {
+      return { passed: false };
+    }
+
+    if (!route.match) {
+      return {
+        passed: true,
+        matchEvaluation: {
+          evaluated: false,
+          passed: true,
+          matchedRouteAddress: route.address,
+        },
+      };
+    }
+
+    const context = buildRouteMatchContext(domain, route, mail);
+    const evaluation = evaluateRules(route.match as DomainRouteMatch, context, true);
+
+    return {
+      passed: evaluation.result,
+      matchEvaluation: {
+        evaluated: true,
+        passed: evaluation.result,
+        matchedRouteAddress: route.address,
+      },
+    };
+  }
+
+  private buildMail(command: TestDomainRouteCommand, domainName: string): InboundDomainRouteMailInput {
+    const toAddress = `${command.address}@${domainName}`;
     const messageId = `novu-test-${nanoid(12)}`;
 
     return {

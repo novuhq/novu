@@ -1,9 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IsBoundedRecord } from '../validators/bounded-record.validator';
 import { IsEmailLocalPart } from '../validators/email-local-part.validator';
+import { IsJsonLogicRule } from '../validators/json-logic-rule.validator';
 
 export class DomainRouteDto {
   @ApiProperty({ description: 'Inbox address local part (e.g. "support", "*")' })
@@ -32,4 +33,13 @@ export class DomainRouteDto {
   @IsOptional()
   @IsBoundedRecord()
   data?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Optional JSON Logic rule evaluated against inbound mail context. Truthy rules deliver the route.',
+    type: Object,
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsJsonLogicRule()
+  match?: DomainRouteMatch;
 }

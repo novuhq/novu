@@ -64,6 +64,7 @@ export class CreateDomainRoute {
         ...(command.type === DomainRouteTypeEnum.AGENT && destination ? { destination } : {}),
         type: command.type,
         ...(command.data !== undefined ? { data: command.data } : {}),
+        ...(command.match !== undefined ? { match: command.match } : {}),
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       });

@@ -1,7 +1,8 @@
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteMatch, DomainRouteTypeEnum } from '@novu/shared';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IsBoundedRecord } from '../../validators/bounded-record.validator';
+import { IsJsonLogicRule } from '../../validators/json-logic-rule.validator';
 
 export class UpdateDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -23,4 +24,8 @@ export class UpdateDomainRouteCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoundedRecord()
   data?: Record<string, string>;
+
+  @IsOptional()
+  @IsJsonLogicRule()
+  match?: DomainRouteMatch | null;
 }

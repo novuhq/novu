@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { InboundDomainRouteDelivery } from '@novu/application-generic';
-import { DomainRepository, DomainRouteRepository } from '@novu/dal';
+import { buildRouteMatchContext, evaluateRules, InboundDomainRouteDelivery } from '@novu/application-generic';
+import { DomainRepository, DomainRouteEntity, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 
@@ -47,15 +47,22 @@ export class DomainRouteStrategy {
       organizationId: domain._organizationId,
       addresses: [localPart, '*'],
     });
-    const route = routes.find((r) => r.address === localPart) ?? routes.find((r) => r.address === '*');
+    const exactRoute = routes.find((r) => r.address === localPart);
+    const wildcardRoute = routes.find((r) => r.address === '*');
+    const mail = this.commandToMail(command);
+    const route = this.selectRoute({
+      exactRoute,
+      wildcardRoute,
+      domain,
+      mail,
+      toAddress,
+    });
 
     if (!route) {
       Logger.log({ toAddress, domain: domain.name }, 'No route matched the inbound email', LOG_CONTEXT);
 
       return;
     }
-
-    const mail = this.commandToMail(command);
 
     if (route.type === DomainRouteTypeEnum.WEBHOOK) {
       await this.inboundDomainRouteDelivery.deliverToWebhook({
@@ -79,6 +86,82 @@ export class DomainRouteStrategy {
         toAddress,
       });
     }
+  }
+
+  private selectRoute({
+    exactRoute,
+    wildcardRoute,
+    domain,
+    mail,
+    toAddress,
+  }: {
+    exactRoute?: DomainRouteEntity;
+    wildcardRoute?: DomainRouteEntity;
+    domain: Parameters<typeof buildRouteMatchContext>[0];
+    mail: ReturnType<DomainRouteStrategy['commandToMail']>;
+    toAddress: string;
+  }): DomainRouteEntity | undefined {
+    if (!exactRoute && !wildcardRoute) {
+      return undefined;
+    }
+
+    if (this.doesRouteMatch({ route: exactRoute, domain, mail, toAddress, candidate: 'exact' })) {
+      return exactRoute;
+    }
+
+    if (this.doesRouteMatch({ route: wildcardRoute, domain, mail, toAddress, candidate: 'wildcard' })) {
+      return wildcardRoute;
+    }
+
+    Logger.log({ toAddress, domain: domain.name }, 'Domain route match rules dropped the inbound email', LOG_CONTEXT);
+
+    return undefined;
+  }
+
+  private doesRouteMatch({
+    route,
+    domain,
+    mail,
+    toAddress,
+    candidate,
+  }: {
+    route?: DomainRouteEntity;
+    domain: Parameters<typeof buildRouteMatchContext>[0];
+    mail: ReturnType<DomainRouteStrategy['commandToMail']>;
+    toAddress: string;
+    candidate: 'exact' | 'wildcard';
+  }): boolean {
+    if (!route) {
+      return false;
+    }
+
+    if (!route.match) {
+      Logger.log(
+        { toAddress, domain: domain.name, candidate, matchPassed: true },
+        'Route has no match rule',
+        LOG_CONTEXT
+      );
+
+      return true;
+    }
+
+    const context = buildRouteMatchContext(domain, route, mail);
+    const evaluation = evaluateRules(route.match as never, context, true);
+    if (evaluation.error) {
+      Logger.warn(
+        { toAddress, domain: domain.name, candidate, err: evaluation.error },
+        'Route match rule evaluation failed',
+        LOG_CONTEXT
+      );
+    }
+
+    Logger.log(
+      { toAddress, domain: domain.name, candidate, matchPassed: evaluation.result },
+      'Evaluated route match rule',
+      LOG_CONTEXT
+    );
+
+    return evaluation.result;
   }
 
   private commandToMail(command: InboundEmailParseCommand) {

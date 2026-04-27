@@ -270,6 +270,7 @@ export class DomainsController {
         agentId: body.agentId,
         type: body.type,
         data: body.data,
+        match: body.match,
       })
     );
   }
@@ -329,6 +330,7 @@ export class DomainsController {
         agentId: body.agentId,
         type: body.type,
         data: body.data,
+        match: body.match,
       })
     );
   }

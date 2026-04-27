@@ -35,6 +35,7 @@ export * from './get-tenant';
 export * from './get-topic-subscribers';
 export * from './get-workflow';
 export * from './get-workflow-with-preferences';
+export * from './inbound-domain-route-delivery/build-route-match-context';
 export * from './inbound-domain-route-delivery/inbound-domain-route-delivery.usecase';
 export * from './layout-variables-schema';
 export * from './merge-preferences';
