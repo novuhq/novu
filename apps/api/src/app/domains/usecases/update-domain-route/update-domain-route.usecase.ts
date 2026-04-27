@@ -7,6 +7,7 @@ import {
   assertAgentDestination,
   assertDomainExists,
   isDuplicateKeyError,
+  resolveAgentIdentifier,
   toDuplicateRouteConflict,
 } from '../domain-route.utils';
 import { UpdateDomainRouteCommand } from './update-domain-route.command';
@@ -39,7 +40,16 @@ export class UpdateDomainRoute {
     }
 
     const nextType = command.type ?? currentRoute.type;
-    const nextDestination = command.destination ?? currentRoute.destination;
+    const resolvedDestination =
+      command.agentId !== undefined
+        ? await resolveAgentIdentifier({
+            agentRepository: this.agentRepository,
+            identifier: command.agentId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+          })
+        : undefined;
+    const nextDestination = command.agentId !== undefined ? resolvedDestination : currentRoute.destination;
     await assertAgentDestination({
       agentRepository: this.agentRepository,
       destination: nextDestination,
@@ -48,7 +58,7 @@ export class UpdateDomainRoute {
       organizationId: command.organizationId,
     });
 
-    const hasChanges = command.address !== undefined || command.type !== undefined || command.destination !== undefined;
+    const hasChanges = command.address !== undefined || command.type !== undefined || command.agentId !== undefined;
 
     if (!hasChanges) {
       return toDomainRouteResponse(currentRoute);
@@ -66,8 +76,8 @@ export class UpdateDomainRoute {
           $set: {
             ...(command.address !== undefined ? { address: command.address } : {}),
             ...(command.type !== undefined ? { type: command.type } : {}),
-            ...(nextType === DomainRouteTypeEnum.AGENT && command.destination !== undefined
-              ? { destination: command.destination }
+            ...(nextType === DomainRouteTypeEnum.AGENT && command.agentId !== undefined
+              ? { destination: resolvedDestination }
               : {}),
           },
           ...(nextType === DomainRouteTypeEnum.WEBHOOK ? { $unset: { destination: '' } } : {}),

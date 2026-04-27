@@ -17,7 +17,7 @@ export class UpdateDomainRouteCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsOptional()
-  destination?: string;
+  agentId?: string;
 
   @IsEnum(DomainRouteTypeEnum)
   @IsOptional()

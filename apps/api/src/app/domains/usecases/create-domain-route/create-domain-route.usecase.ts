@@ -7,6 +7,7 @@ import {
   assertAgentDestination,
   assertDomainExists,
   isDuplicateKeyError,
+  resolveAgentIdentifier,
   toDuplicateRouteConflict,
 } from '../domain-route.utils';
 import { CreateDomainRouteCommand } from './create-domain-route.command';
@@ -26,9 +27,20 @@ export class CreateDomainRoute {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
+
+    const destination =
+      command.type === DomainRouteTypeEnum.AGENT && command.agentId
+        ? await resolveAgentIdentifier({
+            agentRepository: this.agentRepository,
+            identifier: command.agentId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+          })
+        : undefined;
+
     await assertAgentDestination({
       agentRepository: this.agentRepository,
-      destination: command.destination,
+      destination,
       type: command.type,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -38,9 +50,7 @@ export class CreateDomainRoute {
       const route = await this.domainRouteRepository.create({
         _domainId: command.domainId,
         address: command.address,
-        ...(command.type === DomainRouteTypeEnum.AGENT && command.destination
-          ? { destination: command.destination }
-          : {}),
+        ...(command.type === DomainRouteTypeEnum.AGENT && destination ? { destination } : {}),
         type: command.type,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,

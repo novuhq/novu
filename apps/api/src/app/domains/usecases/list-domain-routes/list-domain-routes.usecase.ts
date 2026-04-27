@@ -1,16 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DomainRepository, DomainRouteRepository } from '@novu/dal';
+import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { ListDomainRoutesResponseDto } from '../../dtos/list-domain-routes-response.dto';
 import { toDomainRouteResponse } from '../../mappers/domain-route-response.mapper';
-import { assertDomainExists } from '../domain-route.utils';
+import { assertDomainExists, resolveAgentIdentifier } from '../domain-route.utils';
 import { ListDomainRoutesCommand } from './list-domain-routes.command';
 
 @Injectable()
 export class ListDomainRoutes {
   constructor(
     private readonly domainRepository: DomainRepository,
-    private readonly domainRouteRepository: DomainRouteRepository
+    private readonly domainRouteRepository: DomainRouteRepository,
+    private readonly agentRepository: AgentRepository
   ) {}
 
   async execute(command: ListDomainRoutesCommand): Promise<ListDomainRoutesResponseDto> {
@@ -27,11 +28,20 @@ export class ListDomainRoutes {
       });
     }
 
+    const destination = command.agentId
+      ? await resolveAgentIdentifier({
+          agentRepository: this.agentRepository,
+          identifier: command.agentId,
+          environmentId: command.user.environmentId,
+          organizationId: command.user.organizationId,
+        })
+      : undefined;
+
     const pagination = await this.domainRouteRepository.listRoutes({
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
       domainId: command.domainId,
-      destination: command.destination,
+      destination,
       limit: command.limit,
       after: command.after,
       before: command.before,

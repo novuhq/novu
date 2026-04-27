@@ -13,7 +13,7 @@ export class CreateDomainRouteCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsOptional()
-  destination?: string;
+  agentId?: string;
 
   @IsEnum(DomainRouteTypeEnum)
   @IsNotEmpty()

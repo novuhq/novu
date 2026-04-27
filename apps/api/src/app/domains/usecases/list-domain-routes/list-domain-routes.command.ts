@@ -9,5 +9,5 @@ export class ListDomainRoutesCommand extends CursorBasedPaginatedCommand<DomainR
 
   @IsString()
   @IsOptional()
-  destination?: string;
+  agentId?: string;
 }

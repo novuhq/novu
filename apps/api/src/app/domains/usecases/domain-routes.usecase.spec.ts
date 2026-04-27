@@ -14,6 +14,7 @@ const USER_ID = 'user-id';
 const DOMAIN_ID = 'domain-id';
 const ROUTE_ID = 'route-id';
 const AGENT_ID = 'agent-id';
+const AGENT_IDENTIFIER = 'agent-identifier';
 
 const domain = {
   _id: DOMAIN_ID,
@@ -71,7 +72,7 @@ describe('Domain route usecases', () => {
     restore();
   });
 
-  it('creates a domain route after validating the parent domain and agent destination', async () => {
+  it('creates a domain route after resolving the agent identifier', async () => {
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     const result = await usecase.execute({
@@ -80,19 +81,30 @@ describe('Domain route usecases', () => {
       organizationId: ORGANIZATION_ID,
       userId: USER_ID,
       address: 'support',
-      destination: AGENT_ID,
+      agentId: AGENT_IDENTIFIER,
       type: DomainRouteTypeEnum.AGENT,
     });
 
     expect(result._id).to.equal(ROUTE_ID);
     expect(result.agentId).to.equal(AGENT_ID);
-    expect(domainRouteRepositoryMock.create.calledWithMatch({ _domainId: DOMAIN_ID, address: 'support' })).to.equal(
-      true
-    );
+    expect(
+      agentRepositoryMock.findOne.calledWithMatch({
+        identifier: AGENT_IDENTIFIER,
+        _environmentId: ENVIRONMENT_ID,
+        _organizationId: ORGANIZATION_ID,
+      })
+    ).to.equal(true);
+    expect(
+      domainRouteRepositoryMock.create.calledWithMatch({
+        _domainId: DOMAIN_ID,
+        address: 'support',
+        destination: AGENT_ID,
+      })
+    ).to.equal(true);
   });
 
   it('lists domain routes with cursor metadata', async () => {
-    const usecase = new ListDomainRoutes(domainRepositoryMock, domainRouteRepositoryMock);
+    const usecase = new ListDomainRoutes(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     const result = await usecase.execute({
       user,
@@ -164,7 +176,7 @@ describe('Domain route usecases', () => {
         organizationId: ORGANIZATION_ID,
         userId: USER_ID,
         address: 'support',
-        destination: AGENT_ID,
+        agentId: AGENT_IDENTIFIER,
         type: DomainRouteTypeEnum.AGENT,
       });
       throw new Error('Expected error not thrown');
