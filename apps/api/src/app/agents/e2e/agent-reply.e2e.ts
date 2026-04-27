@@ -297,6 +297,44 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
     });
   });
 
+  describe('addReactions', () => {
+    it('should call reactToMessage for each addReaction entry', async () => {
+      const conversationId = await seedConversation(ctx);
+      const chatSdkService = testServer.getService(ChatSdkService);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        addReactions: [
+          { messageId: 'msg-abc', emojiName: 'thumbs_up' },
+          { messageId: 'msg-def', emojiName: 'check' },
+        ],
+      });
+
+      expect(res.status).to.equal(200);
+      expect((chatSdkService.reactToMessage as sinon.SinonStub).callCount).to.equal(2);
+
+      const firstCall = (chatSdkService.reactToMessage as sinon.SinonStub).getCall(0).args;
+      expect(firstCall[4]).to.equal('msg-abc');
+      expect(firstCall[5]).to.equal('thumbs_up');
+
+      const secondCall = (chatSdkService.reactToMessage as sinon.SinonStub).getCall(1).args;
+      expect(secondCall[4]).to.equal('msg-def');
+      expect(secondCall[5]).to.equal('check');
+    });
+
+    it('should return 400 when payload has no recognised operation', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+      });
+
+      expect(res.status).to.equal(400);
+    });
+  });
+
   describe('Inactive agent', () => {
     it('should return 422 when agent is inactive', async () => {
       const conversationId = await seedConversation(ctx);
