@@ -147,10 +147,8 @@ export class ChatSdkService implements OnModuleDestroy {
     let postPromise: Promise<{ id: string; threadId: string }>;
     if (content.card) {
       postPromise = thread.post(content.card);
-    } else if (content.markdown !== undefined) {
-      postPromise = thread.post({ markdown: content.markdown, files: content.files });
     } else {
-      postPromise = thread.post(content.text ?? '');
+      postPromise = thread.post({ markdown: content.markdown ?? '', files: content.files });
     }
 
     const sent = await postPromise.catch(toDeliveryError);
@@ -182,13 +180,11 @@ export class ChatSdkService implements OnModuleDestroy {
         platformMessageId,
         content.card as unknown as AdapterPostableMessage
       );
-    } else if (content.markdown !== undefined) {
+    } else {
       editPromise = adapter.editMessage(platformThreadId, platformMessageId, {
-        markdown: content.markdown,
+        markdown: content.markdown ?? '',
         files: content.files,
       } as unknown as AdapterPostableMessage);
-    } else {
-      editPromise = adapter.editMessage(platformThreadId, platformMessageId, content.text ?? '');
     }
 
     const edited = await editPromise.catch(toDeliveryError);

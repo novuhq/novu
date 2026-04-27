@@ -88,8 +88,8 @@ export interface FileRef {
 /**
  * Content accepted by ctx.reply() and handle.edit().
  *
- * - `string` — plain text
- * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
+ * - `string` — plain text or markdown; converted to platform format by the chat SDK
+ * - `{ markdown, files? }` — markdown with optional file attachments
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
  *   (must be a CardElement at runtime; validated by serializeContent)
  */
@@ -97,7 +97,6 @@ export type MessageContent = string | { markdown: string; files?: FileRef[] } | 
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
-  text?: string;
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];

@@ -156,7 +156,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyCall).toBeDefined();
 
     const replyBody = JSON.parse(replyCall![1].body);
-    expect(replyBody.reply.text).toBe('Echo: Hello bot!');
+    expect(replyBody.reply.markdown).toBe('Echo: Hello bot!');
     expect(replyBody.conversationId).toBe('conv-456');
     expect(replyBody.integrationIdentifier).toBe('slack-main');
 
@@ -226,7 +226,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     );
     const replyBody = JSON.parse(replyCall![1].body);
 
-    expect(replyBody.reply.text).toBe('Got it');
+    expect(replyBody.reply.markdown).toBe('Got it');
     expect(replyBody.signals).toHaveLength(2);
     expect(replyBody.signals[0]).toEqual({ type: 'metadata', key: 'turnCount', value: 1 });
     expect(replyBody.signals[1]).toEqual({ type: 'metadata', key: 'language', value: 'en' });
@@ -271,10 +271,10 @@ describe('agent dispatch via NovuRequestHandler', () => {
     const editBody = parsedBodies.find((body: any) => body.edit);
 
     expect(initialReply).toBeDefined();
-    expect(initialReply.reply.text).toBe('Thinking...');
+    expect(initialReply.reply.markdown).toBe('Thinking...');
 
     expect(editBody).toBeDefined();
-    expect(editBody.edit.content.text).toBe('Done thinking');
+    expect(editBody.edit.content.markdown).toBe('Done thinking');
     expect(editBody.edit.messageId).toBe('msg-1');
     expect(editBody.reply).toBeUndefined();
     expect(editBody.signals).toBeUndefined();
@@ -442,7 +442,6 @@ describe('agent dispatch via NovuRequestHandler', () => {
     const replyBody = JSON.parse(replyCall![1].body);
 
     expect(replyBody.reply.markdown).toBe('**bold** text');
-    expect(replyBody.reply.text).toBeUndefined();
     expect(replyBody.reply.card).toBeUndefined();
   });
 
@@ -531,7 +530,6 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.reply.card.children).toHaveLength(2);
     expect(replyBody.reply.card.children[1].type).toBe('button');
     expect(replyBody.reply.card.children[1].id).toBe('confirm');
-    expect(replyBody.reply.text).toBeUndefined();
     expect(replyBody.reply.markdown).toBeUndefined();
   });
 
@@ -579,7 +577,6 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.reply.card).toBeDefined();
     expect(replyBody.reply.card.type).toBe('card');
     expect(replyBody.reply.card.title).toBe('JSX Card');
-    expect(replyBody.reply.text).toBeUndefined();
     expect(replyBody.reply.markdown).toBeUndefined();
   });
 
@@ -624,7 +621,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(editBody.edit.messageId).toBe('msg-1');
 
     const initialReply = parsedBodies.find((body: any) => body.reply);
-    expect(initialReply.reply.text).toBe('Loading...');
+    expect(initialReply.reply.markdown).toBe('Loading...');
   });
 
   it('should batch signals with card reply', async () => {
@@ -710,7 +707,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
     const replyBody = JSON.parse(replyCall![1].body);
-    expect(replyBody.reply.text).toBe('Action received');
+    expect(replyBody.reply.markdown).toBe('Action received');
   });
 
   it('should have null action on onMessage events', async () => {
@@ -875,7 +872,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
     const replyBody = JSON.parse(replyCall![1].body);
-    expect(replyBody.reply.text).toBe('Reaction received');
+    expect(replyBody.reply.markdown).toBe('Reaction received');
   });
 
   it('should have null reaction.message when messageText is not provided', async () => {

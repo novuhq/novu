@@ -25,7 +25,7 @@ function isCardElement(content: object): content is import('chat').CardElement {
 
 function serializeContent(content: MessageContent): ReplyContent {
   if (typeof content === 'string') {
-    return { text: content };
+    return { markdown: content };
   }
 
   if (isJSX(content)) {
