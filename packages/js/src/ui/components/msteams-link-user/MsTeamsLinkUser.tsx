@@ -1,6 +1,7 @@
 import { createResource, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { ChannelEndpointResponse } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
+import { useChannelEndpoint } from '../../api/hooks/useChannelEndpoint';
 import { useNovu } from '../../context';
 import { useStyle } from '../../helpers/useStyle';
 import { CheckCircleFill } from '../../icons/CheckCircleFill';
@@ -32,6 +33,12 @@ export const MsTeamsLinkUser = (props: MsTeamsLinkUserProps) => {
   const novuAccessor = useNovu();
   const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_MSTEAMS_INTEGRATION_IDENTIFIER;
   const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER;
+
+  const { generateLinkUserOAuthUrl } = useChannelEndpoint({
+    integrationIdentifier: integrationIdentifier(),
+    connectionIdentifier: connectionIdentifier(),
+    subscriberId: props.subscriberId,
+  });
 
   const [endpoint, setEndpoint] = createSignal<ChannelEndpointResponse | null>(null);
   const [loading, setLoading] = createSignal(true);
@@ -130,14 +137,20 @@ export const MsTeamsLinkUser = (props: MsTeamsLinkUserProps) => {
         props.onUnlinkSuccess?.();
       }
     } else {
+      const resolvedSubscriberId = props.subscriberId ?? novuAccessor().subscriberId;
+      if (!resolvedSubscriberId) {
+        props.onLinkError?.(new Error('subscriberId is required to link an MS Teams user'));
+
+        return;
+      }
+
       setActionLoading(true);
 
-      const result = await novuAccessor().channelConnections.generateOAuthUrl({
+      const result = await generateLinkUserOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
         connectionIdentifier: connectionIdentifier(),
-        subscriberId: props.subscriberId ?? novuAccessor().subscriberId,
+        subscriberId: resolvedSubscriberId,
         context: props.context,
-        mode: 'link_user',
       });
 
       if (result.error) {

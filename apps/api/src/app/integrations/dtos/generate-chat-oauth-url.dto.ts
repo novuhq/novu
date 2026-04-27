@@ -8,6 +8,10 @@ import {
   SLACK_LINK_USER_OAUTH_SCOPES,
 } from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 
+/**
+ * @deprecated Use GenerateConnectOauthUrlRequestDto (POST /channel-connections/oauth) or
+ * GenerateLinkUserOauthUrlRequestDto (POST /channel-endpoints/oauth) instead.
+ */
 export class GenerateChatOauthUrlRequestDto {
   @ApiProperty({
     type: String,

@@ -46,7 +46,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_INTEGRATION_IDENTIFIER;
   const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_CONNECTION_IDENTIFIER;
 
-  const { connection, loading, connect, disconnect, mutate } = useChannelConnection({
+  const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
     integrationIdentifier: integrationIdentifier(),
     connectionIdentifier: connectionIdentifier(),
     subscriberId: props.subscriberId,
@@ -140,7 +140,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
       const resolvedSubscriberId =
         mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
 
-      const result = await connect({
+      const result = await generateConnectOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
         connectionIdentifier: connectionIdentifier(),
         subscriberId: resolvedSubscriberId,
