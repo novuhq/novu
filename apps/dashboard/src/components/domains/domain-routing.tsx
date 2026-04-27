@@ -71,6 +71,7 @@ type InlineRouteFormProps = {
   onSave: (values: RouteFormState) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
+  isAddressLocked?: boolean;
 };
 
 function InlineRouteForm({
@@ -80,6 +81,7 @@ function InlineRouteForm({
   onSave,
   onCancel,
   isSaving,
+  isAddressLocked = false,
 }: InlineRouteFormProps) {
   const [form, setForm] = useState<RouteFormState>(initialValues);
 
@@ -104,6 +106,7 @@ function InlineRouteForm({
             className="h-7 w-28 text-sm"
             placeholder="support"
             value={form.address}
+            disabled={isAddressLocked}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
           />
           <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
@@ -194,8 +197,8 @@ type ExistingRouteRowProps = {
   route: DomainRouteResponse;
   domainName: string;
   agentOptions: Array<{ _id: string; name: string; identifier: string }>;
-  onDelete: (routeId: string) => Promise<void>;
-  onEdit: (routeId: string) => void;
+  onDelete: (address: string) => Promise<void>;
+  onEdit: (address: string) => void;
   isDeleting: boolean;
 };
 
@@ -230,10 +233,10 @@ function ExistingRouteRow({ route, domainName, agentOptions, onDelete, onEdit, i
             <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => onEdit(route._id)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onEdit(route.address)}>Edit</DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onSelect={() => onDelete(route._id)}
+              onSelect={() => onDelete(route.address)}
               disabled={isDeleting}
             >
               Delete
@@ -347,7 +350,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
   const [isAdding, setIsAdding] = useState(false);
   const [addInitialValues, setAddInitialValues] = useState<RouteFormState | undefined>(undefined);
-  const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
+  const [editingAddress, setEditingAddress] = useState<string | null>(null);
   const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
   const routes = routesResponse?.data ?? [];
   const isMutating = createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
@@ -355,7 +358,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const startAdding = (initialValues?: RouteFormState) => {
     setAddInitialValues(initialValues);
     setIsAdding(true);
-    setEditingRouteId(null);
+    setEditingAddress(null);
   };
 
   const cancelAdding = () => {
@@ -378,25 +381,24 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
     }
   };
 
-  const handleUpdate = async (routeId: string, values: RouteFormState) => {
+  const handleUpdate = async (address: string, values: RouteFormState) => {
     try {
       await updateDomainRoute.mutateAsync({
-        routeId,
+        address,
         body: {
-          address: values.address.trim().toLowerCase(),
           type: values.type,
           ...(values.agentId ? { agentId: values.agentId } : {}),
         },
       });
-      setEditingRouteId(null);
+      setEditingAddress(null);
     } catch {
       showErrorToast('Failed to update route.');
     }
   };
 
-  const handleDelete = async (routeId: string) => {
+  const handleDelete = async (address: string) => {
     try {
-      await deleteDomainRoute.mutateAsync(routeId);
+      await deleteDomainRoute.mutateAsync(address);
     } catch {
       showErrorToast('Failed to delete route.');
     }
@@ -426,7 +428,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
           )}
           <TableBody>
             {routes.map((route) =>
-              editingRouteId === route._id ? (
+              editingAddress === route.address ? (
                 <InlineRouteForm
                   key={route._id}
                   domainName={domain.name}
@@ -436,8 +438,9 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                     type: route.type,
                   }}
                   agentOptions={agentOptions}
-                  onSave={(values) => handleUpdate(route._id, values)}
-                  onCancel={() => setEditingRouteId(null)}
+                  isAddressLocked
+                  onSave={(values) => handleUpdate(route.address, values)}
+                  onCancel={() => setEditingAddress(null)}
                   isSaving={isMutating}
                 />
               ) : (
@@ -447,7 +450,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                   domainName={domain.name}
                   agentOptions={agentOptions}
                   onDelete={handleDelete}
-                  onEdit={setEditingRouteId}
+                  onEdit={setEditingAddress}
                   isDeleting={isMutating}
                 />
               )

@@ -107,7 +107,7 @@ describe('DomainRouteStrategy', () => {
     process.env.STORE_ENCRYPTION_KEY = originalEncryptionKey;
   });
 
-  it('should NOT fire webhook when no WEBHOOK route exists', async () => {
+  it('should dispatch the agent route when the matching route is type=agent', async () => {
     const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
     domainRepository.findByName.resolves(makeVerifiedDomain() as any);
     domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
@@ -115,6 +115,7 @@ describe('DomainRouteStrategy', () => {
     await strategy.execute(makeCommand('support'));
 
     sinon.assert.notCalled(sendWebhookMessage.execute);
+    sinon.assert.calledOnce(httpClientService.request);
   });
 
   it('should fire webhook when an exact WEBHOOK route matches', async () => {
@@ -169,18 +170,14 @@ describe('DomainRouteStrategy', () => {
     expect(call.args[0].payload.object).to.deep.include({ route: { address: 'support' } });
   });
 
-  it('should fire both WEBHOOK and AGENT handlers when both routes match (fan-out)', async () => {
-    const routes = makeRoutes([
-      { address: 'support', type: DomainRouteTypeEnum.WEBHOOK },
-      { address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' },
-    ]);
+  it('should not fire any handler when no route matches', async () => {
     domainRepository.findByName.resolves(makeVerifiedDomain() as any);
-    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
-    sendWebhookMessage.execute.resolves();
+    domainRouteRepository.findByDomainAndAddresses.resolves([]);
 
     await strategy.execute(makeCommand('support'));
 
-    sinon.assert.calledOnce(sendWebhookMessage.execute);
+    sinon.assert.notCalled(sendWebhookMessage.execute);
+    sinon.assert.notCalled(httpClientService.request);
   });
 
   it('should throw when domain is not found', async () => {

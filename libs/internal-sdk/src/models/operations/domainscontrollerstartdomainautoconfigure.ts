@@ -9,7 +9,7 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export type DomainsControllerCreateDomainConnectApplyUrlRequest = {
+export type DomainsControllerStartDomainAutoConfigureRequest = {
   domain: string;
   /**
    * A header for idempotency purposes
@@ -18,13 +18,13 @@ export type DomainsControllerCreateDomainConnectApplyUrlRequest = {
   createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto;
 };
 
-export type DomainsControllerCreateDomainConnectApplyUrlResponse = {
+export type DomainsControllerStartDomainAutoConfigureResponse = {
   headers: { [k: string]: Array<string> };
   result: components.DomainConnectApplyUrlResponseDto;
 };
 
 /** @internal */
-export type DomainsControllerCreateDomainConnectApplyUrlRequest$Outbound = {
+export type DomainsControllerStartDomainAutoConfigureRequest$Outbound = {
   domain: string;
   "idempotency-key"?: string | undefined;
   CreateDomainConnectApplyUrlDto:
@@ -32,11 +32,11 @@ export type DomainsControllerCreateDomainConnectApplyUrlRequest$Outbound = {
 };
 
 /** @internal */
-export const DomainsControllerCreateDomainConnectApplyUrlRequest$outboundSchema:
+export const DomainsControllerStartDomainAutoConfigureRequest$outboundSchema:
   z.ZodType<
-    DomainsControllerCreateDomainConnectApplyUrlRequest$Outbound,
+    DomainsControllerStartDomainAutoConfigureRequest$Outbound,
     z.ZodTypeDef,
-    DomainsControllerCreateDomainConnectApplyUrlRequest
+    DomainsControllerStartDomainAutoConfigureRequest
   > = z.object({
     domain: z.string(),
     idempotencyKey: z.string().optional(),
@@ -49,21 +49,21 @@ export const DomainsControllerCreateDomainConnectApplyUrlRequest$outboundSchema:
     });
   });
 
-export function domainsControllerCreateDomainConnectApplyUrlRequestToJSON(
-  domainsControllerCreateDomainConnectApplyUrlRequest:
-    DomainsControllerCreateDomainConnectApplyUrlRequest,
+export function domainsControllerStartDomainAutoConfigureRequestToJSON(
+  domainsControllerStartDomainAutoConfigureRequest:
+    DomainsControllerStartDomainAutoConfigureRequest,
 ): string {
   return JSON.stringify(
-    DomainsControllerCreateDomainConnectApplyUrlRequest$outboundSchema.parse(
-      domainsControllerCreateDomainConnectApplyUrlRequest,
+    DomainsControllerStartDomainAutoConfigureRequest$outboundSchema.parse(
+      domainsControllerStartDomainAutoConfigureRequest,
     ),
   );
 }
 
 /** @internal */
-export const DomainsControllerCreateDomainConnectApplyUrlResponse$inboundSchema:
+export const DomainsControllerStartDomainAutoConfigureResponse$inboundSchema:
   z.ZodType<
-    DomainsControllerCreateDomainConnectApplyUrlResponse,
+    DomainsControllerStartDomainAutoConfigureResponse,
     z.ZodTypeDef,
     unknown
   > = z.object({
@@ -76,18 +76,18 @@ export const DomainsControllerCreateDomainConnectApplyUrlResponse$inboundSchema:
     });
   });
 
-export function domainsControllerCreateDomainConnectApplyUrlResponseFromJSON(
+export function domainsControllerStartDomainAutoConfigureResponseFromJSON(
   jsonString: string,
 ): SafeParseResult<
-  DomainsControllerCreateDomainConnectApplyUrlResponse,
+  DomainsControllerStartDomainAutoConfigureResponse,
   SDKValidationError
 > {
   return safeParse(
     jsonString,
     (x) =>
-      DomainsControllerCreateDomainConnectApplyUrlResponse$inboundSchema.parse(
+      DomainsControllerStartDomainAutoConfigureResponse$inboundSchema.parse(
         JSON.parse(x),
       ),
-    `Failed to parse 'DomainsControllerCreateDomainConnectApplyUrlResponse' from JSON`,
+    `Failed to parse 'DomainsControllerStartDomainAutoConfigureResponse' from JSON`,
   );
 }

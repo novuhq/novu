@@ -29,6 +29,9 @@ import { Result } from "../types/fp.js";
 /**
  * Delete a domain
  *
+ * @remarks
+ * Removes the domain and cascades the deletion to all of its routes. Inbound mail for that domain stops being processed immediately.
+ *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function domainsDelete(

@@ -55,6 +55,9 @@ export type DomainsListQueryError =
 
 /**
  * List domains for an environment
+ *
+ * @remarks
+ * Returns a paginated list of inbound-email domains in the current environment. Supports cursor pagination and a name contains filter.
  */
 export function useDomainsList(
   request: operations.DomainsControllerListDomainsRequest,
@@ -73,6 +76,9 @@ export function useDomainsList(
 
 /**
  * List domains for an environment
+ *
+ * @remarks
+ * Returns a paginated list of inbound-email domains in the current environment. Supports cursor pagination and a name contains filter.
  */
 export function useDomainsListSuspense(
   request: operations.DomainsControllerListDomainsRequest,

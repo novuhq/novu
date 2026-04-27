@@ -8,5 +8,5 @@ export class GetDomainRouteCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsNotEmpty()
-  routeId: string;
+  address: string;
 }

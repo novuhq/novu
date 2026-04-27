@@ -157,11 +157,11 @@ export const fetchDomainRoutes = async (
 
 export const fetchDomainRoute = async (
   domain: string,
-  routeId: string,
+  address: string,
   environment: IEnvironment
 ): Promise<DomainRouteResponse> => {
   const { data } = await get<{ data: DomainRouteResponse }>(
-    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(routeId)}`,
+    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(address)}`,
     { environment }
   );
 
@@ -183,27 +183,36 @@ export const createDomainRoute = async (
 
 export const updateDomainRoute = async (
   domain: string,
-  routeId: string,
+  address: string,
   body: UpdateDomainRouteBody,
   environment: IEnvironment
 ): Promise<DomainRouteResponse> => {
   const { data } = await patch<{ data: DomainRouteResponse }>(
-    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(routeId)}`,
+    `/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(address)}`,
     { body, environment }
   );
 
   return data;
 };
 
-export const deleteDomainRoute = (domain: string, routeId: string, environment: IEnvironment): Promise<void> =>
-  del(`/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(routeId)}`, { environment });
+export const deleteDomainRoute = (domain: string, address: string, environment: IEnvironment): Promise<void> =>
+  del(`/domains/${encodeURIComponent(domain)}/routes/${encodeURIComponent(address)}`, { environment });
 
-export const fetchDomainConnectStatus = async (
+export const verifyDomain = async (domain: string, environment: IEnvironment): Promise<DomainResponse> => {
+  const { data } = await post<{ data: DomainResponse }>(`/domains/${encodeURIComponent(domain)}/verify`, {
+    body: {},
+    environment,
+  });
+
+  return data;
+};
+
+export const fetchDomainAutoConfigure = async (
   domain: string,
   environment: IEnvironment
 ): Promise<DomainConnectStatusResponse> => {
   const { data } = await get<{ data: DomainConnectStatusResponse }>(
-    `/domains/${encodeURIComponent(domain)}/domain-connect/status`,
+    `/domains/${encodeURIComponent(domain)}/auto-configure`,
     {
       environment,
     }
@@ -212,13 +221,13 @@ export const fetchDomainConnectStatus = async (
   return data;
 };
 
-export const createDomainConnectApplyUrl = async (
+export const startDomainAutoConfigure = async (
   domain: string,
   body: CreateDomainConnectApplyUrlBody,
   environment: IEnvironment
 ): Promise<DomainConnectApplyUrlResponse> => {
   const { data } = await post<{ data: DomainConnectApplyUrlResponse }>(
-    `/domains/${encodeURIComponent(domain)}/domain-connect/apply-url`,
+    `/domains/${encodeURIComponent(domain)}/auto-configure/start`,
     {
       body,
       environment,

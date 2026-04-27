@@ -13,7 +13,7 @@ export type DomainRouteDtoType = ClosedEnum<typeof DomainRouteDtoType>;
 
 export type DomainRouteDto = {
   /**
-   * Email address prefix (e.g. "support", "*")
+   * Inbox address local part (e.g. "support", "*")
    */
   address: string;
   /**

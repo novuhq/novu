@@ -27,14 +27,17 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete a domain route
+ * Delete a route
+ *
+ * @remarks
+ * Removes the route bound to `<address>@<domain>`. Inbound mail for that address will no longer be processed.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function domainsRoutesDelete(
   client: NovuCore,
   domain: string,
-  routeId: string,
+  address: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -55,7 +58,7 @@ export function domainsRoutesDelete(
   return new APIPromise($do(
     client,
     domain,
-    routeId,
+    address,
     idempotencyKey,
     options,
   ));
@@ -64,7 +67,7 @@ export function domainsRoutesDelete(
 async function $do(
   client: NovuCore,
   domain: string,
-  routeId: string,
+  address: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -87,7 +90,7 @@ async function $do(
 > {
   const input: operations.DomainsControllerDeleteDomainRouteRequest = {
     domain: domain,
-    routeId: routeId,
+    address: address,
     idempotencyKey: idempotencyKey,
   };
 
@@ -106,16 +109,16 @@ async function $do(
   const body = null;
 
   const pathParams = {
+    address: encodeSimple("address", payload.address, {
+      explode: false,
+      charEncoding: "percent",
+    }),
     domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
-    routeId: encodeSimple("routeId", payload.routeId, {
-      explode: false,
-      charEncoding: "percent",
-    }),
   };
-  const path = pathToFunc("/v1/domains/{domain}/routes/{routeId}")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}/routes/{address}")(pathParams);
 
   const headers = new Headers(compactMap({
     Accept: "application/json",

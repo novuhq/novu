@@ -100,19 +100,22 @@ export class DomainRouteStrategy {
       organizationId: domain._organizationId,
       addresses: [localPart, '*'],
     });
-    const matchByType = (type: DomainRouteTypeEnum) =>
-      routes.find((r) => r.type === type && r.address === localPart) ??
-      routes.find((r) => r.type === type && r.address === '*');
+    const route = routes.find((r) => r.address === localPart) ?? routes.find((r) => r.address === '*');
 
-    const webhookRoute = matchByType(DomainRouteTypeEnum.WEBHOOK);
-    const agentRoute = matchByType(DomainRouteTypeEnum.AGENT);
+    if (!route) {
+      Logger.log({ toAddress, domain: domain.name }, 'No route matched the inbound email', LOG_CONTEXT);
 
-    if (webhookRoute) {
-      await this.fireWebhookEvent(command, domain, webhookRoute);
+      return;
     }
 
-    if (agentRoute) {
-      await this.handleAgentRoute(command, domain, agentRoute, toAddress);
+    if (route.type === DomainRouteTypeEnum.WEBHOOK) {
+      await this.fireWebhookEvent(command, domain, route);
+
+      return;
+    }
+
+    if (route.type === DomainRouteTypeEnum.AGENT) {
+      await this.handleAgentRoute(command, domain, route, toAddress);
     }
   }
 

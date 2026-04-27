@@ -14,6 +14,7 @@ const USER_ID = 'user-id';
 const DOMAIN_ID = 'domain-id';
 const DOMAIN_NAME = 'example.com';
 const ROUTE_ID = 'route-id';
+const ROUTE_ADDRESS = 'support';
 const AGENT_ID = 'agent-id';
 const AGENT_IDENTIFIER = 'agent-identifier';
 
@@ -27,7 +28,7 @@ const domain = {
 const route = {
   _id: ROUTE_ID,
   _domainId: DOMAIN_ID,
-  address: 'support',
+  address: ROUTE_ADDRESS,
   destination: AGENT_ID,
   type: DomainRouteTypeEnum.AGENT,
   _environmentId: ENVIRONMENT_ID,
@@ -53,7 +54,6 @@ describe('Domain route usecases', () => {
     };
     domainRouteRepositoryMock = {
       create: stub().resolves(route),
-      findOne: stub().resolves(null),
       listRoutes: stub().resolves({
         routes: [route],
         next: null,
@@ -61,7 +61,7 @@ describe('Domain route usecases', () => {
         totalCount: 1,
         totalCountCapped: false,
       }),
-      findOneByIdAndDomain: stub().resolves(route),
+      findOneByAddressAndDomain: stub().resolves(route),
       findOneAndUpdate: stub().resolves(route),
       findOneAndDelete: stub().resolves(route),
     };
@@ -75,6 +75,7 @@ describe('Domain route usecases', () => {
   });
 
   it('creates a domain route after resolving the agent identifier', async () => {
+    domainRouteRepositoryMock.findOneByAddressAndDomain.resolves(null);
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     const result = await usecase.execute({
@@ -82,7 +83,7 @@ describe('Domain route usecases', () => {
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
       userId: USER_ID,
-      address: 'support',
+      address: ROUTE_ADDRESS,
       agentId: AGENT_IDENTIFIER,
       type: DomainRouteTypeEnum.AGENT,
     });
@@ -99,14 +100,14 @@ describe('Domain route usecases', () => {
     expect(
       domainRouteRepositoryMock.create.calledWithMatch({
         _domainId: DOMAIN_ID,
-        address: 'support',
+        address: ROUTE_ADDRESS,
         destination: AGENT_ID,
       })
     ).to.equal(true);
   });
 
-  it('throws when creating a duplicate route before writing', async () => {
-    domainRouteRepositoryMock.findOne.resolves({ _id: 'existing-route-id' });
+  it('throws ConflictException when a route already exists for the address', async () => {
+    domainRouteRepositoryMock.findOneByAddressAndDomain.resolves({ _id: 'existing-route-id' });
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     try {
@@ -115,7 +116,7 @@ describe('Domain route usecases', () => {
         environmentId: ENVIRONMENT_ID,
         organizationId: ORGANIZATION_ID,
         userId: USER_ID,
-        address: 'support',
+        address: ROUTE_ADDRESS,
         agentId: AGENT_IDENTIFIER,
         type: DomainRouteTypeEnum.AGENT,
       });
@@ -142,73 +143,84 @@ describe('Domain route usecases', () => {
     expect(domainRouteRepositoryMock.listRoutes.calledWithMatch({ domainId: DOMAIN_ID })).to.equal(true);
   });
 
-  it('retrieves a single route scoped to its domain', async () => {
+  it('retrieves a route by domain and address', async () => {
     const usecase = new GetDomainRoute(domainRepositoryMock, domainRouteRepositoryMock);
 
     const result = await usecase.execute({
       domain: DOMAIN_NAME,
-      routeId: ROUTE_ID,
+      address: ROUTE_ADDRESS,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
       userId: USER_ID,
     });
 
     expect(result._id).to.equal(ROUTE_ID);
+    expect(
+      domainRouteRepositoryMock.findOneByAddressAndDomain.calledWith(
+        ROUTE_ADDRESS,
+        DOMAIN_ID,
+        ENVIRONMENT_ID,
+        ORGANIZATION_ID
+      )
+    ).to.equal(true);
   });
 
-  it('updates a route after resolving its current value', async () => {
+  it('updates a route by domain and address', async () => {
     const usecase = new UpdateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     const result = await usecase.execute({
       domain: DOMAIN_NAME,
-      routeId: ROUTE_ID,
+      address: ROUTE_ADDRESS,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
       userId: USER_ID,
-      address: 'billing',
+      type: DomainRouteTypeEnum.WEBHOOK,
     });
 
     expect(result._id).to.equal(ROUTE_ID);
     expect(domainRouteRepositoryMock.findOneAndUpdate.called).to.equal(true);
   });
 
-  it('throws when update would duplicate another route', async () => {
-    domainRouteRepositoryMock.findOne.resolves({ _id: 'other-route-id' });
+  it('throws NotFoundException when updating a missing route', async () => {
+    domainRouteRepositoryMock.findOneByAddressAndDomain.resolves(null);
     const usecase = new UpdateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
     try {
       await usecase.execute({
         domain: DOMAIN_NAME,
-        routeId: ROUTE_ID,
+        address: 'missing',
         environmentId: ENVIRONMENT_ID,
         organizationId: ORGANIZATION_ID,
         userId: USER_ID,
-        address: 'billing',
+        type: DomainRouteTypeEnum.WEBHOOK,
       });
       throw new Error('Expected error not thrown');
     } catch (err) {
-      expect(err).to.be.instanceOf(ConflictException);
+      expect(err).to.be.instanceOf(NotFoundException);
       expect(domainRouteRepositoryMock.findOneAndUpdate.called).to.equal(false);
     }
   });
 
-  it('deletes a route scoped to its domain', async () => {
+  it('deletes a route by domain and address', async () => {
     const usecase = new DeleteDomainRoute(domainRepositoryMock, domainRouteRepositoryMock);
 
     await usecase.execute({
       domain: DOMAIN_NAME,
-      routeId: ROUTE_ID,
+      address: ROUTE_ADDRESS,
       environmentId: ENVIRONMENT_ID,
       organizationId: ORGANIZATION_ID,
       userId: USER_ID,
     });
 
     expect(
-      domainRouteRepositoryMock.findOneAndDelete.calledWithMatch({ _id: ROUTE_ID, _domainId: DOMAIN_ID })
+      domainRouteRepositoryMock.findOneAndDelete.calledWithMatch({
+        address: ROUTE_ADDRESS,
+        _domainId: DOMAIN_ID,
+      })
     ).to.equal(true);
   });
 
-  it('throws when the parent domain does not exist', async () => {
+  it('throws NotFoundException when the parent domain does not exist', async () => {
     domainRepositoryMock.findOne.resolves(null);
     const usecase = new CreateDomainRoute(domainRepositoryMock, domainRouteRepositoryMock, agentRepositoryMock);
 
@@ -218,7 +230,7 @@ describe('Domain route usecases', () => {
         environmentId: ENVIRONMENT_ID,
         organizationId: ORGANIZATION_ID,
         userId: USER_ID,
-        address: 'support',
+        address: ROUTE_ADDRESS,
         agentId: AGENT_IDENTIFIER,
         type: DomainRouteTypeEnum.AGENT,
       });

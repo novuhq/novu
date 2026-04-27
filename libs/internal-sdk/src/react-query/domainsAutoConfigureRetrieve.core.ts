@@ -8,15 +8,15 @@ import {
   QueryKey,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { domainsDomainConnectStatus } from "../funcs/domainsDomainConnectStatus.js";
+import { domainsAutoConfigureRetrieve } from "../funcs/domainsAutoConfigureRetrieve.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
-export type DomainsDomainConnectStatusQueryData =
-  operations.DomainsControllerGetDomainConnectStatusResponse;
+export type DomainsAutoConfigureRetrieveQueryData =
+  operations.DomainsControllerGetDomainAutoConfigureResponse;
 
-export function prefetchDomainsDomainConnectStatus(
+export function prefetchDomainsAutoConfigureRetrieve(
   queryClient: QueryClient,
   client$: NovuCore,
   domain: string,
@@ -24,7 +24,7 @@ export function prefetchDomainsDomainConnectStatus(
   options?: RequestOptions,
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildDomainsDomainConnectStatusQuery(
+    ...buildDomainsAutoConfigureRetrieveQuery(
       client$,
       domain,
       idempotencyKey,
@@ -33,7 +33,7 @@ export function prefetchDomainsDomainConnectStatus(
   });
 }
 
-export function buildDomainsDomainConnectStatusQuery(
+export function buildDomainsAutoConfigureRetrieveQuery(
   client$: NovuCore,
   domain: string,
   idempotencyKey?: string | undefined,
@@ -42,13 +42,13 @@ export function buildDomainsDomainConnectStatusQuery(
   queryKey: QueryKey;
   queryFn: (
     context: QueryFunctionContext,
-  ) => Promise<DomainsDomainConnectStatusQueryData>;
+  ) => Promise<DomainsAutoConfigureRetrieveQueryData>;
 } {
   return {
-    queryKey: queryKeyDomainsDomainConnectStatus(domain, { idempotencyKey }),
-    queryFn: async function domainsDomainConnectStatusQueryFn(
+    queryKey: queryKeyDomainsAutoConfigureRetrieve(domain, { idempotencyKey }),
+    queryFn: async function domainsAutoConfigureRetrieveQueryFn(
       ctx,
-    ): Promise<DomainsDomainConnectStatusQueryData> {
+    ): Promise<DomainsAutoConfigureRetrieveQueryData> {
       const sig = combineSignals(
         ctx.signal,
         options?.signal,
@@ -60,7 +60,7 @@ export function buildDomainsDomainConnectStatusQuery(
         signal: sig,
       };
 
-      return unwrapAsync(domainsDomainConnectStatus(
+      return unwrapAsync(domainsAutoConfigureRetrieve(
         client$,
         domain,
         idempotencyKey,
@@ -70,9 +70,9 @@ export function buildDomainsDomainConnectStatusQuery(
   };
 }
 
-export function queryKeyDomainsDomainConnectStatus(
+export function queryKeyDomainsAutoConfigureRetrieve(
   domain: string,
   parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
-  return ["@novu/api", "DomainConnect", "status", domain, parameters];
+  return ["@novu/api", "AutoConfigure", "retrieve", domain, parameters];
 }

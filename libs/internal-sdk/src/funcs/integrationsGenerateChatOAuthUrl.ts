@@ -31,11 +31,14 @@ import { Result } from "../types/fp.js";
  * Generate chat OAuth URL
  *
  * @remarks
- * Generate an OAuth URL for chat integrations like Slack and MS Teams.
+ * **Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.
+ *     Generate an OAuth URL for chat integrations like Slack and MS Teams.
  *     This URL allows subscribers to authorize the integration, enabling the system to send messages
  *     through their chat workspace. The generated URL expires after 5 minutes.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function integrationsGenerateChatOAuthUrl(
   client: NovuCore,

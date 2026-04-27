@@ -20,7 +20,7 @@ export function prefetchDomainsRoutesRetrieve(
   queryClient: QueryClient,
   client$: NovuCore,
   domain: string,
-  routeId: string,
+  address: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<void> {
@@ -28,7 +28,7 @@ export function prefetchDomainsRoutesRetrieve(
     ...buildDomainsRoutesRetrieveQuery(
       client$,
       domain,
-      routeId,
+      address,
       idempotencyKey,
       options,
     ),
@@ -38,7 +38,7 @@ export function prefetchDomainsRoutesRetrieve(
 export function buildDomainsRoutesRetrieveQuery(
   client$: NovuCore,
   domain: string,
-  routeId: string,
+  address: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -48,7 +48,7 @@ export function buildDomainsRoutesRetrieveQuery(
   ) => Promise<DomainsRoutesRetrieveQueryData>;
 } {
   return {
-    queryKey: queryKeyDomainsRoutesRetrieve(domain, routeId, {
+    queryKey: queryKeyDomainsRoutesRetrieve(domain, address, {
       idempotencyKey,
     }),
     queryFn: async function domainsRoutesRetrieveQueryFn(
@@ -68,7 +68,7 @@ export function buildDomainsRoutesRetrieveQuery(
       return unwrapAsync(domainsRoutesRetrieve(
         client$,
         domain,
-        routeId,
+        address,
         idempotencyKey,
         mergedOptions,
       ));
@@ -78,8 +78,8 @@ export function buildDomainsRoutesRetrieveQuery(
 
 export function queryKeyDomainsRoutesRetrieve(
   domain: string,
-  routeId: string,
+  address: string,
   parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
-  return ["@novu/api", "Routes", "retrieve", domain, routeId, parameters];
+  return ["@novu/api", "Routes", "retrieve", domain, address, parameters];
 }

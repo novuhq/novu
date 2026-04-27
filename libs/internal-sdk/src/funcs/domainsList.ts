@@ -29,6 +29,9 @@ import { Result } from "../types/fp.js";
 /**
  * List domains for an environment
  *
+ * @remarks
+ * Returns a paginated list of inbound-email domains in the current environment. Supports cursor pagination and a name contains filter.
+ *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function domainsList(

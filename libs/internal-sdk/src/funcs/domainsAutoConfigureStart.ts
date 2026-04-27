@@ -28,22 +28,22 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update a domain
+ * Start DNS auto-configuration
  *
  * @remarks
- * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
+ * Generates a signed redirect URL the customer can follow to apply Novu DNS records at their DNS provider. After the provider completes the flow, it redirects back to `redirectUri`.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
-export function domainsUpdate(
+export function domainsAutoConfigureStart(
   client: NovuCore,
-  updateDomainDto: components.UpdateDomainDto,
+  createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
   domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.DomainsControllerUpdateDomainResponse,
+    operations.DomainsControllerStartDomainAutoConfigureResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -58,7 +58,7 @@ export function domainsUpdate(
 > {
   return new APIPromise($do(
     client,
-    updateDomainDto,
+    createDomainConnectApplyUrlDto,
     domain,
     idempotencyKey,
     options,
@@ -67,14 +67,14 @@ export function domainsUpdate(
 
 async function $do(
   client: NovuCore,
-  updateDomainDto: components.UpdateDomainDto,
+  createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
   domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.DomainsControllerUpdateDomainResponse,
+      operations.DomainsControllerStartDomainAutoConfigureResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -89,8 +89,8 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.DomainsControllerUpdateDomainRequest = {
-    updateDomainDto: updateDomainDto,
+  const input: operations.DomainsControllerStartDomainAutoConfigureRequest = {
+    createDomainConnectApplyUrlDto: createDomainConnectApplyUrlDto,
     domain: domain,
     idempotencyKey: idempotencyKey,
   };
@@ -98,16 +98,17 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.DomainsControllerUpdateDomainRequest$outboundSchema.parse(
-        value,
-      ),
+      operations.DomainsControllerStartDomainAutoConfigureRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.UpdateDomainDto, { explode: true });
+  const body = encodeJSON("body", payload.CreateDomainConnectApplyUrlDto, {
+    explode: true,
+  });
 
   const pathParams = {
     domain: encodeSimple("domain", payload.domain, {
@@ -115,7 +116,9 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domain}")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}/auto-configure/start")(
+    pathParams,
+  );
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -133,7 +136,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "DomainsController_updateDomain",
+    operationID: "DomainsController_startDomainAutoConfigure",
     oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
@@ -157,7 +160,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "PATCH",
+    method: "POST",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -187,7 +190,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.DomainsControllerUpdateDomainResponse,
+    operations.DomainsControllerStartDomainAutoConfigureResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -200,8 +203,9 @@ async function $do(
     | SDKValidationError
   >(
     M.json(
-      200,
-      operations.DomainsControllerUpdateDomainResponse$inboundSchema,
+      201,
+      operations
+        .DomainsControllerStartDomainAutoConfigureResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

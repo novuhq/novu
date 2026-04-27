@@ -3,13 +3,7 @@ import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/
 import { DomainRouteTypeEnum } from '@novu/shared';
 import { DomainRouteResponseDto } from '../../dtos/domain-route-response.dto';
 import { toDomainRouteResponse } from '../../mappers/domain-route-response.mapper';
-import {
-  assertAgentDestination,
-  isDuplicateKeyError,
-  resolveAgentIdentifier,
-  resolveDomainName,
-  toDuplicateRouteConflict,
-} from '../domain-route.utils';
+import { assertAgentDestination, resolveAgentIdentifier, resolveDomainName } from '../domain-route.utils';
 import { UpdateDomainRouteCommand } from './update-domain-route.command';
 
 @Injectable()
@@ -28,15 +22,15 @@ export class UpdateDomainRoute {
       organizationId: command.organizationId,
     });
 
-    const currentRoute = await this.domainRouteRepository.findOneByIdAndDomain(
-      command.routeId,
+    const currentRoute = await this.domainRouteRepository.findOneByAddressAndDomain(
+      command.address,
       domain._id,
       command.environmentId,
       command.organizationId
     );
 
     if (!currentRoute) {
-      throw new NotFoundException(`Domain route with id "${command.routeId}" not found.`);
+      throw new NotFoundException(`Route "${command.address}@${domain.name}" not found.`);
     }
 
     const nextType = command.type ?? currentRoute.type;
@@ -50,6 +44,7 @@ export class UpdateDomainRoute {
           })
         : undefined;
     const nextDestination = command.agentId !== undefined ? resolvedDestination : currentRoute.destination;
+
     await assertAgentDestination({
       agentRepository: this.agentRepository,
       destination: nextDestination,
@@ -58,60 +53,35 @@ export class UpdateDomainRoute {
       organizationId: command.organizationId,
     });
 
-    const hasChanges = command.address !== undefined || command.type !== undefined || command.agentId !== undefined;
+    const hasChanges = command.type !== undefined || command.agentId !== undefined;
 
     if (!hasChanges) {
       return toDomainRouteResponse(currentRoute);
     }
 
-    try {
-      const nextAddress = command.address ?? currentRoute.address;
-      const existingRoute = await this.domainRouteRepository.findOne(
-        {
-          _domainId: domain._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          address: nextAddress,
-          type: nextType,
+    const updated = await this.domainRouteRepository.findOneAndUpdate(
+      {
+        _id: currentRoute._id,
+        _domainId: domain._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      {
+        $set: {
+          ...(command.type !== undefined ? { type: command.type } : {}),
+          ...(nextType === DomainRouteTypeEnum.AGENT && command.agentId !== undefined
+            ? { destination: resolvedDestination }
+            : {}),
         },
-        ['_id']
-      );
+        ...(nextType === DomainRouteTypeEnum.WEBHOOK ? { $unset: { destination: '' } } : {}),
+      },
+      { new: true }
+    );
 
-      if (existingRoute && String(existingRoute._id) !== String(currentRoute._id)) {
-        throw toDuplicateRouteConflict(nextAddress, nextType);
-      }
-
-      const updated = await this.domainRouteRepository.findOneAndUpdate(
-        {
-          _id: command.routeId,
-          _domainId: domain._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        {
-          $set: {
-            ...(command.address !== undefined ? { address: command.address } : {}),
-            ...(command.type !== undefined ? { type: command.type } : {}),
-            ...(nextType === DomainRouteTypeEnum.AGENT && command.agentId !== undefined
-              ? { destination: resolvedDestination }
-              : {}),
-          },
-          ...(nextType === DomainRouteTypeEnum.WEBHOOK ? { $unset: { destination: '' } } : {}),
-        },
-        { new: true }
-      );
-
-      if (!updated) {
-        throw new NotFoundException(`Domain route with id "${command.routeId}" not found.`);
-      }
-
-      return toDomainRouteResponse(updated);
-    } catch (err: unknown) {
-      if (isDuplicateKeyError(err)) {
-        throw toDuplicateRouteConflict(command.address ?? currentRoute.address, nextType);
-      }
-
-      throw err;
+    if (!updated) {
+      throw new NotFoundException(`Route "${command.address}@${domain.name}" not found.`);
     }
+
+    return toDomainRouteResponse(updated);
   }
 }

@@ -53,11 +53,14 @@ export type DomainsRoutesRetrieveQueryError =
   | SDKValidationError;
 
 /**
- * Get a domain route by ID
+ * Retrieve a route by address
+ *
+ * @remarks
+ * Returns the route bound to `<address>@<domain>`. Use `*` as the address to retrieve the wildcard route for the domain.
  */
 export function useDomainsRoutesRetrieve(
   domain: string,
-  routeId: string,
+  address: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<
     DomainsRoutesRetrieveQueryData,
@@ -72,7 +75,7 @@ export function useDomainsRoutesRetrieve(
     ...buildDomainsRoutesRetrieveQuery(
       client,
       domain,
-      routeId,
+      address,
       idempotencyKey,
       options,
     ),
@@ -81,11 +84,14 @@ export function useDomainsRoutesRetrieve(
 }
 
 /**
- * Get a domain route by ID
+ * Retrieve a route by address
+ *
+ * @remarks
+ * Returns the route bound to `<address>@<domain>`. Use `*` as the address to retrieve the wildcard route for the domain.
  */
 export function useDomainsRoutesRetrieveSuspense(
   domain: string,
-  routeId: string,
+  address: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<
     DomainsRoutesRetrieveQueryData,
@@ -100,7 +106,7 @@ export function useDomainsRoutesRetrieveSuspense(
     ...buildDomainsRoutesRetrieveQuery(
       client,
       domain,
-      routeId,
+      address,
       idempotencyKey,
       options,
     ),
@@ -112,7 +118,7 @@ export function setDomainsRoutesRetrieveData(
   client: QueryClient,
   queryKeyBase: [
     domain: string,
-    routeId: string,
+    address: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
   data: DomainsRoutesRetrieveQueryData,
@@ -127,7 +133,7 @@ export function invalidateDomainsRoutesRetrieve(
   queryKeyBase: TupleToPrefixes<
     [
       domain: string,
-      routeId: string,
+      address: string,
       parameters: { idempotencyKey?: string | undefined },
     ]
   >,

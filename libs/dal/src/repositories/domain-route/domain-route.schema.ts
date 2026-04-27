@@ -36,7 +36,7 @@ const domainRouteSchema = new Schema<DomainRouteDBModel>(
 );
 
 domainRouteSchema.index({ _domainId: 1, _id: 1 });
-domainRouteSchema.index({ _domainId: 1, address: 1, type: 1 }, { unique: true });
+domainRouteSchema.index({ _domainId: 1, address: 1 }, { unique: true });
 domainRouteSchema.index({ _environmentId: 1 });
 
 export const DomainRoute =

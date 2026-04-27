@@ -4,7 +4,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Domain Connect API - /v1/domains/:domain/domain-connect #novu-v2', () => {
+describe('Domain Auto-Configure API - /v1/domains/:domain/auto-configure #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -22,10 +22,10 @@ describe('Domain Connect API - /v1/domains/:domain/domain-connect #novu-v2', () 
     return `e2e-dc-${randomBytes(6).toString('hex')}.example.test`;
   }
 
-  it('should return disabled status with manual records when Domain Connect flag is off', async () => {
+  it('should return disabled status with manual records when auto-configure is off', async () => {
     const { result: domain } = await novuClient.domains.create({ name: uniqueDomainName() });
 
-    const { result: status } = await novuClient.domains.domainConnect.status(domain.name);
+    const { result: status } = await novuClient.domains.autoConfigure.retrieve(domain.name);
 
     expect(status.available).to.equal(false);
     expect(status.reasonCode).to.equal('disabled');
@@ -33,27 +33,27 @@ describe('Domain Connect API - /v1/domains/:domain/domain-connect #novu-v2', () 
     expect(status.manualRecords.length).to.be.greaterThan(0);
   });
 
-  it('should return 404 for domain connect status when domain does not exist', async () => {
+  it('should return 404 for auto-configure status when domain does not exist', async () => {
     const fakeDomain = 'missing.example.test';
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.domainConnect.status(fakeDomain));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.autoConfigure.retrieve(fakeDomain));
 
     expect(error?.statusCode).to.equal(404);
   });
 
-  it('should reject apply-url when Domain Connect flag is off (400)', async () => {
+  it('should reject auto-configure start when feature flag is off (400)', async () => {
     const { result: domain } = await novuClient.domains.create({ name: uniqueDomainName() });
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.domainConnect.create({}, domain.name));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.autoConfigure.start({}, domain.name));
 
     expect(error?.statusCode).to.equal(400);
     expect(String(error?.message ?? '')).to.match(/not enabled/i);
   });
 
-  it('should return 404 for apply-url when domain does not exist', async () => {
+  it('should return 404 for auto-configure start when domain does not exist', async () => {
     const fakeDomain = 'missing.example.test';
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.domainConnect.create({}, fakeDomain));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.autoConfigure.start({}, fakeDomain));
 
     expect(error?.statusCode).to.equal(404);
   });

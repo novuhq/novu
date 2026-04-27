@@ -19,14 +19,14 @@ export class DeleteDomainRoute {
     });
 
     const deleted = await this.domainRouteRepository.findOneAndDelete({
-      _id: command.routeId,
+      address: command.address,
       _domainId: domain._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
     if (!deleted) {
-      throw new NotFoundException(`Domain route with id "${command.routeId}" not found.`);
+      throw new NotFoundException(`Route "${command.address}@${domain.name}" not found.`);
     }
   }
 }

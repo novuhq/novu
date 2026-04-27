@@ -46,10 +46,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import {
-  useCreateDomainConnectApplyUrl,
   useFetchDomain,
-  useFetchDomainConnectStatus,
+  useFetchDomainAutoConfigure,
+  usePollDomainVerification,
   useRefreshDomain,
+  useStartDomainAutoConfigure,
+  useVerifyDomain,
 } from '@/hooks/use-domain';
 import { useDeleteDomain } from '@/hooks/use-domains';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -98,18 +100,20 @@ export function DomainDetailPage() {
   const [searchParams] = useSearchParams();
 
   const { data: domain, isLoading, isFetching } = useFetchDomain(domainParam);
+  usePollDomainVerification(domainParam, domain?.status);
   const isDomainConnectInboundEmailEnabled = useFeatureFlag(
     FeatureFlagsKeysEnum.IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED,
     false
   );
-  const { data: domainConnectStatus, isLoading: isDomainConnectStatusLoading } = useFetchDomainConnectStatus(
+  const { data: domainConnectStatus, isLoading: isDomainConnectStatusLoading } = useFetchDomainAutoConfigure(
     domainParam,
     {
       enabled: isDomainConnectInboundEmailEnabled && domain?.status === DomainStatusEnum.PENDING,
     }
   );
   const { refresh: refreshDomain } = useRefreshDomain(domainParam);
-  const createDomainConnectApplyUrl = useCreateDomainConnectApplyUrl(domainParam);
+  const verifyDomain = useVerifyDomain(domainParam);
+  const startDomainAutoConfigure = useStartDomainAutoConfigure(domainParam);
   const deleteDomain = useDeleteDomain();
   const routingRef = useRef<DomainRoutingHandle>(null);
   const hasHandledDomainConnectReturnRef = useRef(false);
@@ -129,7 +133,7 @@ export function DomainDetailPage() {
 
   const handleVerify = async () => {
     try {
-      await refreshDomain();
+      await verifyDomain.mutateAsync();
       showSuccessToast('Verification status refreshed.');
     } catch {
       showErrorToast('Failed to refresh verification status.');
@@ -151,11 +155,11 @@ export function DomainDetailPage() {
       currentUrl.searchParams.delete('error');
       currentUrl.searchParams.delete('error_description');
 
-      const response = await createDomainConnectApplyUrl.mutateAsync(currentUrl.toString());
+      const response = await startDomainAutoConfigure.mutateAsync(currentUrl.toString());
       try {
         window.location.assign(response.applyUrl);
       } catch {
-        createDomainConnectApplyUrl.reset();
+        startDomainAutoConfigure.reset();
         setHasDomainConnectFailure(true);
         setDomainConnectApplyUrl(response.applyUrl);
         showErrorToast('Failed to open DNS provider. Use the setup link in the warning below.');
@@ -195,9 +199,9 @@ export function DomainDetailPage() {
     setHasDomainConnectFailure(false);
     setDomainConnectApplyUrl(undefined);
     setHasSubmittedDomainConnectReturn(true);
-    refreshDomain();
+    void verifyDomain.mutateAsync().catch(() => refreshDomain());
     cleanDomainConnectParams();
-  }, [domainConnectError, domainConnectReturnStatus, navigate, refreshDomain, searchParams]);
+  }, [domainConnectError, domainConnectReturnStatus, navigate, refreshDomain, searchParams, verifyDomain]);
 
   useEffect(() => {
     if (!domain) return;
@@ -465,7 +469,7 @@ export function DomainDetailPage() {
                         size="xs"
                         type="button"
                         onClick={handleAutoConfigure}
-                        isLoading={createDomainConnectApplyUrl.isPending}
+                        isLoading={startDomainAutoConfigure.isPending}
                       >
                         Continue to {domainConnectProviderName}
                         <RiExternalLinkLine className="size-4" />

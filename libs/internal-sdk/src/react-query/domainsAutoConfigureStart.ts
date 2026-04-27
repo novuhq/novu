@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { domainsRoutesCreate } from "../funcs/domainsRoutesCreate.js";
+import { domainsAutoConfigureStart } from "../funcs/domainsAutoConfigureStart.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -28,17 +28,17 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type DomainsRoutesCreateMutationVariables = {
-  domainRouteDto: components.DomainRouteDto;
+export type DomainsAutoConfigureStartMutationVariables = {
+  createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto;
   domain: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type DomainsRoutesCreateMutationData =
-  operations.DomainsControllerCreateDomainRouteResponse;
+export type DomainsAutoConfigureStartMutationData =
+  operations.DomainsControllerStartDomainAutoConfigureResponse;
 
-export type DomainsRoutesCreateMutationError =
+export type DomainsAutoConfigureStartMutationError =
   | errors.ErrorDto
   | errors.ValidationErrorDto
   | NovuError
@@ -51,50 +51,50 @@ export type DomainsRoutesCreateMutationError =
   | SDKValidationError;
 
 /**
- * Create a route
+ * Start DNS auto-configuration
  *
  * @remarks
- * Creates a route on the domain that forwards inbound mail addressed to `<address>@<domain>` to either a webhook or an agent. Each address on a domain may only have a single route.
+ * Generates a signed redirect URL the customer can follow to apply Novu DNS records at their DNS provider. After the provider completes the flow, it redirects back to `redirectUri`.
  */
-export function useDomainsRoutesCreateMutation(
+export function useDomainsAutoConfigureStartMutation(
   options?: MutationHookOptions<
-    DomainsRoutesCreateMutationData,
-    DomainsRoutesCreateMutationError,
-    DomainsRoutesCreateMutationVariables
+    DomainsAutoConfigureStartMutationData,
+    DomainsAutoConfigureStartMutationError,
+    DomainsAutoConfigureStartMutationVariables
   >,
 ): UseMutationResult<
-  DomainsRoutesCreateMutationData,
-  DomainsRoutesCreateMutationError,
-  DomainsRoutesCreateMutationVariables
+  DomainsAutoConfigureStartMutationData,
+  DomainsAutoConfigureStartMutationError,
+  DomainsAutoConfigureStartMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildDomainsRoutesCreateMutation(client, options),
+    ...buildDomainsAutoConfigureStartMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyDomainsRoutesCreate(): MutationKey {
-  return ["@novu/api", "Routes", "create"];
+export function mutationKeyDomainsAutoConfigureStart(): MutationKey {
+  return ["@novu/api", "AutoConfigure", "start"];
 }
 
-export function buildDomainsRoutesCreateMutation(
+export function buildDomainsAutoConfigureStartMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: DomainsRoutesCreateMutationVariables,
-  ) => Promise<DomainsRoutesCreateMutationData>;
+    variables: DomainsAutoConfigureStartMutationVariables,
+  ) => Promise<DomainsAutoConfigureStartMutationData>;
 } {
   return {
-    mutationKey: mutationKeyDomainsRoutesCreate(),
-    mutationFn: function domainsRoutesCreateMutationFn({
-      domainRouteDto,
+    mutationKey: mutationKeyDomainsAutoConfigureStart(),
+    mutationFn: function domainsAutoConfigureStartMutationFn({
+      createDomainConnectApplyUrlDto,
       domain,
       idempotencyKey,
       options,
-    }): Promise<DomainsRoutesCreateMutationData> {
+    }): Promise<DomainsAutoConfigureStartMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -107,9 +107,9 @@ export function buildDomainsRoutesCreateMutation(
           ),
         },
       };
-      return unwrapAsync(domainsRoutesCreate(
+      return unwrapAsync(domainsAutoConfigureStart(
         client$,
-        domainRouteDto,
+        createDomainConnectApplyUrlDto,
         domain,
         idempotencyKey,
         mergedOptions,

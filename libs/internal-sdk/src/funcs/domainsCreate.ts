@@ -28,7 +28,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create a new domain
+ * Create a domain
+ *
+ * @remarks
+ * Registers a new inbound-email domain. The response includes the DNS records customers must add at their DNS provider before the domain can receive mail.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

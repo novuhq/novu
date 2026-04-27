@@ -52,10 +52,10 @@ export function useUpdateDomainRoute(domain: string | undefined) {
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
-    mutationFn: ({ routeId, body }: { routeId: string; body: UpdateDomainRouteBody }) =>
+    mutationFn: ({ address, body }: { address: string; body: UpdateDomainRouteBody }) =>
       updateDomainRoute(
         requireDomain(domain),
-        routeId,
+        address,
         body,
         requireEnvironment(currentEnvironment, 'No environment selected')
       ),
@@ -70,10 +70,10 @@ export function useDeleteDomainRoute(domain: string | undefined) {
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
-    mutationFn: (routeId: string) =>
+    mutationFn: (address: string) =>
       deleteDomainRoute(
         requireDomain(domain),
-        routeId,
+        address,
         requireEnvironment(currentEnvironment, 'No environment selected')
       ),
     onSuccess: () => {

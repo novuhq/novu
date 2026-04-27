@@ -221,8 +221,8 @@ export function useEmailSetupCredentials({
   });
 
   const { mutate: removeDomainRoute } = useMutation({
-    mutationFn: ({ domain, routeId }: { domain: string; routeId: string }) =>
-      deleteDomainRoute(domain, routeId, requireEnvironment(currentEnvironment, 'No environment selected')),
+    mutationFn: ({ domain, address }: { domain: string; address: string }) =>
+      deleteDomainRoute(domain, address, requireEnvironment(currentEnvironment, 'No environment selected')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
     },
@@ -273,7 +273,7 @@ export function useEmailSetupCredentials({
       if (!domain) return;
 
       removeDomainRoute(
-        { domain: domain.name, routeId: route._id },
+        { domain: domain.name, address: route.address },
         {
           onError: () => {
             showErrorToast('Could not remove inbound route from the domain.', 'Route removal failed');

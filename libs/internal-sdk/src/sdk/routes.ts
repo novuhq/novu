@@ -15,6 +15,9 @@ import { unwrapAsync } from "../types/fp.js";
 export class Routes extends ClientSDK {
   /**
    * List routes for a domain
+   *
+   * @remarks
+   * Returns a paginated list of routes attached to the domain. Optionally filter by an agent identifier to find routes pointing to a specific agent.
    */
   async list(
     request: operations.DomainsControllerListDomainRoutesRequest,
@@ -28,7 +31,10 @@ export class Routes extends ClientSDK {
   }
 
   /**
-   * Create a domain route
+   * Create a route
+   *
+   * @remarks
+   * Creates a route on the domain that forwards inbound mail addressed to `<address>@<domain>` to either a webhook or an agent. Each address on a domain may only have a single route.
    */
   async create(
     domainRouteDto: components.DomainRouteDto,
@@ -46,25 +52,31 @@ export class Routes extends ClientSDK {
   }
 
   /**
-   * Get a domain route by ID
+   * Retrieve a route by address
+   *
+   * @remarks
+   * Returns the route bound to `<address>@<domain>`. Use `*` as the address to retrieve the wildcard route for the domain.
    */
   async retrieve(
     domain: string,
-    routeId: string,
+    address: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerGetDomainRouteResponse> {
     return unwrapAsync(domainsRoutesRetrieve(
       this,
       domain,
-      routeId,
+      address,
       idempotencyKey,
       options,
     ));
   }
 
   /**
-   * Update a domain route
+   * Update a route
+   *
+   * @remarks
+   * Updates the destination of the route bound to `<address>@<domain>`. The address itself is the resource identity and cannot be changed; delete and recreate the route to rename it.
    */
   async update(
     request: operations.DomainsControllerUpdateDomainRouteRequest,
@@ -78,11 +90,14 @@ export class Routes extends ClientSDK {
   }
 
   /**
-   * Delete a domain route
+   * Delete a route
+   *
+   * @remarks
+   * Removes the route bound to `<address>@<domain>`. Inbound mail for that address will no longer be processed.
    */
   async delete(
     domain: string,
-    routeId: string,
+    address: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<
@@ -91,7 +106,7 @@ export class Routes extends ClientSDK {
     return unwrapAsync(domainsRoutesDelete(
       this,
       domain,
-      routeId,
+      address,
       idempotencyKey,
       options,
     ));

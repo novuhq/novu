@@ -15,11 +15,7 @@ export type UpdateDomainRouteDtoType = ClosedEnum<
 
 export type UpdateDomainRouteDto = {
   /**
-   * Email address prefix (e.g. "support", "*")
-   */
-  address?: string | undefined;
-  /**
-   * Agent identifier; required when type is agent, unused for webhook
+   * Agent identifier; required when type is agent, ignored when type is webhook.
    */
   agentId?: string | undefined;
   type?: UpdateDomainRouteDtoType | undefined;
@@ -32,7 +28,6 @@ export const UpdateDomainRouteDtoType$outboundSchema: z.ZodNativeEnum<
 
 /** @internal */
 export type UpdateDomainRouteDto$Outbound = {
-  address?: string | undefined;
   agentId?: string | undefined;
   type?: string | undefined;
 };
@@ -43,7 +38,6 @@ export const UpdateDomainRouteDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   UpdateDomainRouteDto
 > = z.object({
-  address: z.string().optional(),
   agentId: z.string().optional(),
   type: UpdateDomainRouteDtoType$outboundSchema.optional(),
 });

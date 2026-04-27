@@ -20,15 +20,15 @@ export class GetDomainRoute {
       organizationId: command.organizationId,
     });
 
-    const route = await this.domainRouteRepository.findOneByIdAndDomain(
-      command.routeId,
+    const route = await this.domainRouteRepository.findOneByAddressAndDomain(
+      command.address,
       domain._id,
       command.environmentId,
       command.organizationId
     );
 
     if (!route) {
-      throw new NotFoundException(`Domain route with id "${command.routeId}" not found.`);
+      throw new NotFoundException(`Route "${command.address}@${domain.name}" not found.`);
     }
 
     return toDomainRouteResponse(route);

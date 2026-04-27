@@ -27,7 +27,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update a domain route
+ * Update a route
+ *
+ * @remarks
+ * Updates the destination of the route bound to `<address>@<domain>`. The address itself is the resource identity and cannot be changed; delete and recreate the route to rename it.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
@@ -96,16 +99,16 @@ async function $do(
   });
 
   const pathParams = {
+    address: encodeSimple("address", payload.address, {
+      explode: false,
+      charEncoding: "percent",
+    }),
     domain: encodeSimple("domain", payload.domain, {
       explode: false,
       charEncoding: "percent",
     }),
-    routeId: encodeSimple("routeId", payload.routeId, {
-      explode: false,
-      charEncoding: "percent",
-    }),
   };
-  const path = pathToFunc("/v1/domains/{domain}/routes/{routeId}")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}/routes/{address}")(pathParams);
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",

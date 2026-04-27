@@ -171,6 +171,23 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(updated.status).to.equal(created.status);
   });
 
+  it('should refresh verification status via verify endpoint', async () => {
+    const name = uniqueDomainName();
+    const { result: created } = await novuClient.domains.create({ name });
+
+    const { result: verified } = await novuClient.domains.verify(created.name);
+
+    expect(verified.id).to.equal(created.id);
+    expect(verified.name).to.equal(name);
+    expect(['pending', 'verified']).to.include(verified.status);
+  });
+
+  it('should return 404 when verifying a non-existent domain', async () => {
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.verify('missing.example.test'));
+
+    expect(error?.statusCode).to.equal(404);
+  });
+
   it('should delete a domain and return 404 on subsequent retrieve', async () => {
     const name = uniqueDomainName();
     const { result: created } = await novuClient.domains.create({ name });

@@ -11,7 +11,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type DomainsControllerUpdateDomainRouteRequest = {
   domain: string;
-  routeId: string;
+  address: string;
   /**
    * A header for idempotency purposes
    */
@@ -27,7 +27,7 @@ export type DomainsControllerUpdateDomainRouteResponse = {
 /** @internal */
 export type DomainsControllerUpdateDomainRouteRequest$Outbound = {
   domain: string;
-  routeId: string;
+  address: string;
   "idempotency-key"?: string | undefined;
   UpdateDomainRouteDto: components.UpdateDomainRouteDto$Outbound;
 };
@@ -40,7 +40,7 @@ export const DomainsControllerUpdateDomainRouteRequest$outboundSchema:
     DomainsControllerUpdateDomainRouteRequest
   > = z.object({
     domain: z.string(),
-    routeId: z.string(),
+    address: z.string(),
     idempotencyKey: z.string().optional(),
     updateDomainRouteDto: components.UpdateDomainRouteDto$outboundSchema,
   }).transform((v) => {

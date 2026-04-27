@@ -52,6 +52,9 @@ export type DomainsUpdateMutationError =
 
 /**
  * Update a domain
+ *
+ * @remarks
+ * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
  */
 export function useDomainsUpdateMutation(
   options?: MutationHookOptions<

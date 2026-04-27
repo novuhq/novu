@@ -55,6 +55,9 @@ export type DomainsRoutesListQueryError =
 
 /**
  * List routes for a domain
+ *
+ * @remarks
+ * Returns a paginated list of routes attached to the domain. Optionally filter by an agent identifier to find routes pointing to a specific agent.
  */
 export function useDomainsRoutesList(
   request: operations.DomainsControllerListDomainRoutesRequest,
@@ -76,6 +79,9 @@ export function useDomainsRoutesList(
 
 /**
  * List routes for a domain
+ *
+ * @remarks
+ * Returns a paginated list of routes attached to the domain. Optionally filter by an agent identifier to find routes pointing to a specific agent.
  */
 export function useDomainsRoutesListSuspense(
   request: operations.DomainsControllerListDomainRoutesRequest,

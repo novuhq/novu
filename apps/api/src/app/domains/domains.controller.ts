@@ -56,6 +56,8 @@ import { UpdateDomainCommand } from './usecases/update-domain/update-domain.comm
 import { UpdateDomain } from './usecases/update-domain/update-domain.usecase';
 import { UpdateDomainRouteCommand } from './usecases/update-domain-route/update-domain-route.command';
 import { UpdateDomainRoute } from './usecases/update-domain-route/update-domain-route.usecase';
+import { VerifyDomainCommand } from './usecases/verify-domain/verify-domain.command';
+import { VerifyDomain } from './usecases/verify-domain/verify-domain.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -71,6 +73,7 @@ export class DomainsController {
     private readonly getDomainUsecase: GetDomain,
     private readonly deleteDomainUsecase: DeleteDomain,
     private readonly updateDomainUsecase: UpdateDomain,
+    private readonly verifyDomainUsecase: VerifyDomain,
     private readonly getDomainConnectStatusUsecase: GetDomainConnectStatus,
     private readonly createDomainConnectApplyUrlUsecase: CreateDomainConnectApplyUrl,
     private readonly listDomainRoutesUsecase: ListDomainRoutes,
@@ -83,7 +86,11 @@ export class DomainsController {
   @Get('/')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'List domains for an environment' })
+  @ApiOperation({
+    summary: 'List domains for an environment',
+    description:
+      'Returns a paginated list of inbound-email domains in the current environment. Supports cursor pagination and a name contains filter.',
+  })
   @ApiResponse(ListDomainsResponseDto, 200)
   @SdkMethodName('list')
   async listDomains(
@@ -107,7 +114,11 @@ export class DomainsController {
   @Post('/')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Create a new domain' })
+  @ApiOperation({
+    summary: 'Create a domain',
+    description:
+      'Registers a new inbound-email domain. The response includes the DNS records customers must add at their DNS provider before the domain can receive mail.',
+  })
   @ApiResponse(DomainResponseDto, 201)
   @SdkMethodName('create')
   async createDomain(@Body() body: CreateDomainDto, @UserSession() user: UserSessionData): Promise<DomainResponseDto> {
@@ -124,7 +135,11 @@ export class DomainsController {
   @Get('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'Get a domain by name' })
+  @ApiOperation({
+    summary: 'Retrieve a domain by name',
+    description:
+      'Returns the domain configuration and the DNS records that must be in place. This is a pure read; call `domains.verify` to refresh verification status from DNS.',
+  })
   @ApiResponse(DomainResponseDto, 200)
   @SdkMethodName('retrieve')
   async getDomain(@Param('domain') domain: string, @UserSession() user: UserSessionData): Promise<DomainResponseDto> {
@@ -138,10 +153,39 @@ export class DomainsController {
     );
   }
 
+  @Post('/:domain/verify')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ApiOperation({
+    summary: 'Verify a domain',
+    description:
+      'Performs a live DNS lookup to refresh the MX record status of the domain and updates the verification status accordingly. Returns the latest domain configuration.',
+  })
+  @ApiResponse(DomainResponseDto, 200)
+  @SdkMethodName('verify')
+  async verifyDomain(
+    @Param('domain') domain: string,
+    @UserSession() user: UserSessionData
+  ): Promise<DomainResponseDto> {
+    return this.verifyDomainUsecase.execute(
+      VerifyDomainCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        domain,
+      })
+    );
+  }
+
   @Get('/:domain/routes')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'List routes for a domain' })
+  @ApiOperation({
+    summary: 'List routes for a domain',
+    description:
+      'Returns a paginated list of routes attached to the domain. Optionally filter by an agent identifier to find routes pointing to a specific agent.',
+  })
   @ApiResponse(ListDomainRoutesResponseDto, 200)
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('list')
@@ -168,7 +212,11 @@ export class DomainsController {
   @Post('/:domain/routes')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Create a domain route' })
+  @ApiOperation({
+    summary: 'Create a route',
+    description:
+      'Creates a route on the domain that forwards inbound mail addressed to `<address>@<domain>` to either a webhook or an agent. Each address on a domain may only have a single route.',
+  })
   @ApiResponse(DomainRouteResponseDto, 201)
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('create')
@@ -190,16 +238,20 @@ export class DomainsController {
     );
   }
 
-  @Get('/:domain/routes/:routeId')
+  @Get('/:domain/routes/:address')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'Get a domain route by ID' })
+  @ApiOperation({
+    summary: 'Retrieve a route by address',
+    description:
+      'Returns the route bound to `<address>@<domain>`. Use `*` as the address to retrieve the wildcard route for the domain.',
+  })
   @ApiResponse(DomainRouteResponseDto, 200)
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('retrieve')
   async getDomainRoute(
     @Param('domain') domain: string,
-    @Param('routeId') routeId: string,
+    @Param('address') address: string,
     @UserSession() user: UserSessionData
   ): Promise<DomainRouteResponseDto> {
     return this.getDomainRouteUsecase.execute(
@@ -208,21 +260,25 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
-        routeId,
+        address,
       })
     );
   }
 
-  @Patch('/:domain/routes/:routeId')
+  @Patch('/:domain/routes/:address')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Update a domain route' })
+  @ApiOperation({
+    summary: 'Update a route',
+    description:
+      'Updates the destination of the route bound to `<address>@<domain>`. The address itself is the resource identity and cannot be changed; delete and recreate the route to rename it.',
+  })
   @ApiResponse(DomainRouteResponseDto, 200)
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('update')
   async updateDomainRoute(
     @Param('domain') domain: string,
-    @Param('routeId') routeId: string,
+    @Param('address') address: string,
     @Body() body: UpdateDomainRouteDto,
     @UserSession() user: UserSessionData
   ): Promise<DomainRouteResponseDto> {
@@ -232,25 +288,28 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
-        routeId,
-        address: body.address,
+        address,
         agentId: body.agentId,
         type: body.type,
       })
     );
   }
 
-  @Delete('/:domain/routes/:routeId')
+  @Delete('/:domain/routes/:address')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Delete a domain route' })
+  @ApiOperation({
+    summary: 'Delete a route',
+    description:
+      'Removes the route bound to `<address>@<domain>`. Inbound mail for that address will no longer be processed.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   @SdkGroupName('Domains.Routes')
   @SdkMethodName('delete')
   async deleteDomainRoute(
     @Param('domain') domain: string,
-    @Param('routeId') routeId: string,
+    @Param('address') address: string,
     @UserSession() user: UserSessionData
   ): Promise<void> {
     return this.deleteDomainRouteUsecase.execute(
@@ -259,19 +318,23 @@ export class DomainsController {
         organizationId: user.organizationId,
         userId: user._id,
         domain,
-        routeId,
+        address,
       })
     );
   }
 
-  @Get('/:domain/domain-connect/status')
+  @Get('/:domain/auto-configure')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
-  @ApiOperation({ summary: 'Get Domain Connect auto-configuration availability for a domain' })
+  @ApiOperation({
+    summary: 'Retrieve auto-configuration availability',
+    description:
+      'Returns whether DNS auto-configuration (Domain Connect) is available for this domain. When `available` is `false`, `manualRecords` lists the DNS records the customer must add manually.',
+  })
   @ApiResponse(DomainConnectStatusResponseDto, 200)
-  @SdkGroupName('Domains.DomainConnect')
-  @SdkMethodName('status')
-  async getDomainConnectStatus(
+  @SdkGroupName('Domains.AutoConfigure')
+  @SdkMethodName('retrieve')
+  async getDomainAutoConfigure(
     @Param('domain') domain: string,
     @UserSession() user: UserSessionData
   ): Promise<DomainConnectStatusResponseDto> {
@@ -285,14 +348,18 @@ export class DomainsController {
     );
   }
 
-  @Post('/:domain/domain-connect/apply-url')
+  @Post('/:domain/auto-configure/start')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Create a signed Domain Connect apply URL for a domain' })
+  @ApiOperation({
+    summary: 'Start DNS auto-configuration',
+    description:
+      'Generates a signed redirect URL the customer can follow to apply Novu DNS records at their DNS provider. After the provider completes the flow, it redirects back to `redirectUri`.',
+  })
   @ApiResponse(DomainConnectApplyUrlResponseDto, 201)
-  @SdkGroupName('Domains.DomainConnect')
-  @SdkMethodName('create')
-  async createDomainConnectApplyUrl(
+  @SdkGroupName('Domains.AutoConfigure')
+  @SdkMethodName('start')
+  async startDomainAutoConfigure(
     @Param('domain') domain: string,
     @Body() body: CreateDomainConnectApplyUrlDto,
     @UserSession() user: UserSessionData
@@ -311,7 +378,10 @@ export class DomainsController {
   @Patch('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Update a domain' })
+  @ApiOperation({
+    summary: 'Update a domain',
+    description: 'Reserved for future editable fields. Currently a no-op that returns the domain configuration.',
+  })
   @ApiResponse(DomainResponseDto, 200)
   @SdkMethodName('update')
   async updateDomain(
@@ -332,7 +402,11 @@ export class DomainsController {
   @Delete('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
-  @ApiOperation({ summary: 'Delete a domain' })
+  @ApiOperation({
+    summary: 'Delete a domain',
+    description:
+      'Removes the domain and cascades the deletion to all of its routes. Inbound mail for that domain stops being processed immediately.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   @SdkMethodName('delete')

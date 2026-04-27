@@ -8,5 +8,5 @@ export class DeleteDomainRouteCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsNotEmpty()
-  routeId: string;
+  address: string;
 }

@@ -7,17 +7,18 @@ import { domainsDelete } from "../funcs/domainsDelete.js";
 import { domainsList } from "../funcs/domainsList.js";
 import { domainsRetrieve } from "../funcs/domainsRetrieve.js";
 import { domainsUpdate } from "../funcs/domainsUpdate.js";
+import { domainsVerify } from "../funcs/domainsVerify.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
-import { DomainConnect } from "./domainconnect.js";
+import { AutoConfigure } from "./autoconfigure.js";
 import { Routes } from "./routes.js";
 
 export class Domains extends ClientSDK {
-  private _domainConnect?: DomainConnect;
-  get domainConnect(): DomainConnect {
-    return (this._domainConnect ??= new DomainConnect(this._options));
+  private _autoConfigure?: AutoConfigure;
+  get autoConfigure(): AutoConfigure {
+    return (this._autoConfigure ??= new AutoConfigure(this._options));
   }
 
   private _routes?: Routes;
@@ -27,6 +28,9 @@ export class Domains extends ClientSDK {
 
   /**
    * List domains for an environment
+   *
+   * @remarks
+   * Returns a paginated list of inbound-email domains in the current environment. Supports cursor pagination and a name contains filter.
    */
   async list(
     request: operations.DomainsControllerListDomainsRequest,
@@ -40,7 +44,10 @@ export class Domains extends ClientSDK {
   }
 
   /**
-   * Create a new domain
+   * Create a domain
+   *
+   * @remarks
+   * Registers a new inbound-email domain. The response includes the DNS records customers must add at their DNS provider before the domain can receive mail.
    */
   async create(
     createDomainDto: components.CreateDomainDto,
@@ -56,7 +63,10 @@ export class Domains extends ClientSDK {
   }
 
   /**
-   * Get a domain by name
+   * Retrieve a domain by name
+   *
+   * @remarks
+   * Returns the domain configuration and the DNS records that must be in place. This is a pure read; call `domains.verify` to refresh verification status from DNS.
    */
   async retrieve(
     domain: string,
@@ -73,6 +83,9 @@ export class Domains extends ClientSDK {
 
   /**
    * Update a domain
+   *
+   * @remarks
+   * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
    */
   async update(
     updateDomainDto: components.UpdateDomainDto,
@@ -91,6 +104,9 @@ export class Domains extends ClientSDK {
 
   /**
    * Delete a domain
+   *
+   * @remarks
+   * Removes the domain and cascades the deletion to all of its routes. Inbound mail for that domain stops being processed immediately.
    */
   async delete(
     domain: string,
@@ -98,6 +114,25 @@ export class Domains extends ClientSDK {
     options?: RequestOptions,
   ): Promise<operations.DomainsControllerDeleteDomainResponse | undefined> {
     return unwrapAsync(domainsDelete(
+      this,
+      domain,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Verify a domain
+   *
+   * @remarks
+   * Performs a live DNS lookup to refresh the MX record status of the domain and updates the verification status accordingly. Returns the latest domain configuration.
+   */
+  async verify(
+    domain: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.DomainsControllerVerifyDomainResponse> {
+    return unwrapAsync(domainsVerify(
       this,
       domain,
       idempotencyKey,

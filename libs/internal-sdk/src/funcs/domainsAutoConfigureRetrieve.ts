@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { encodeSimple } from "../lib/encodings.js";
 import { matchStatusCode } from "../lib/http.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
@@ -11,7 +11,6 @@ import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -28,22 +27,21 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update a domain
+ * Retrieve auto-configuration availability
  *
  * @remarks
- * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
+ * Returns whether DNS auto-configuration (Domain Connect) is available for this domain. When `available` is `false`, `manualRecords` lists the DNS records the customer must add manually.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
-export function domainsUpdate(
+export function domainsAutoConfigureRetrieve(
   client: NovuCore,
-  updateDomainDto: components.UpdateDomainDto,
   domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.DomainsControllerUpdateDomainResponse,
+    operations.DomainsControllerGetDomainAutoConfigureResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -58,7 +56,6 @@ export function domainsUpdate(
 > {
   return new APIPromise($do(
     client,
-    updateDomainDto,
     domain,
     idempotencyKey,
     options,
@@ -67,14 +64,13 @@ export function domainsUpdate(
 
 async function $do(
   client: NovuCore,
-  updateDomainDto: components.UpdateDomainDto,
   domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.DomainsControllerUpdateDomainResponse,
+      operations.DomainsControllerGetDomainAutoConfigureResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -89,8 +85,7 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.DomainsControllerUpdateDomainRequest = {
-    updateDomainDto: updateDomainDto,
+  const input: operations.DomainsControllerGetDomainAutoConfigureRequest = {
     domain: domain,
     idempotencyKey: idempotencyKey,
   };
@@ -98,16 +93,15 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.DomainsControllerUpdateDomainRequest$outboundSchema.parse(
-        value,
-      ),
+      operations.DomainsControllerGetDomainAutoConfigureRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.UpdateDomainDto, { explode: true });
+  const body = null;
 
   const pathParams = {
     domain: encodeSimple("domain", payload.domain, {
@@ -115,10 +109,9 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domain}")(pathParams);
+  const path = pathToFunc("/v1/domains/{domain}/auto-configure")(pathParams);
 
   const headers = new Headers(compactMap({
-    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -133,7 +126,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "DomainsController_updateDomain",
+    operationID: "DomainsController_getDomainAutoConfigure",
     oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
@@ -157,7 +150,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "PATCH",
+    method: "GET",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -187,7 +180,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.DomainsControllerUpdateDomainResponse,
+    operations.DomainsControllerGetDomainAutoConfigureResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -201,7 +194,7 @@ async function $do(
   >(
     M.json(
       200,
-      operations.DomainsControllerUpdateDomainResponse$inboundSchema,
+      operations.DomainsControllerGetDomainAutoConfigureResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

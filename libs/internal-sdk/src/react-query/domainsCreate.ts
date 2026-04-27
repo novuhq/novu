@@ -50,7 +50,10 @@ export type DomainsCreateMutationError =
   | SDKValidationError;
 
 /**
- * Create a new domain
+ * Create a domain
+ *
+ * @remarks
+ * Registers a new inbound-email domain. The response includes the DNS records customers must add at their DNS provider before the domain can receive mail.
  */
 export function useDomainsCreateMutation(
   options?: MutationHookOptions<

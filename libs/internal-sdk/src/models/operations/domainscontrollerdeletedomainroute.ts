@@ -10,7 +10,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type DomainsControllerDeleteDomainRouteRequest = {
   domain: string;
-  routeId: string;
+  address: string;
   /**
    * A header for idempotency purposes
    */
@@ -24,7 +24,7 @@ export type DomainsControllerDeleteDomainRouteResponse = {
 /** @internal */
 export type DomainsControllerDeleteDomainRouteRequest$Outbound = {
   domain: string;
-  routeId: string;
+  address: string;
   "idempotency-key"?: string | undefined;
 };
 
@@ -36,7 +36,7 @@ export const DomainsControllerDeleteDomainRouteRequest$outboundSchema:
     DomainsControllerDeleteDomainRouteRequest
   > = z.object({
     domain: z.string(),
-    routeId: z.string(),
+    address: z.string(),
     idempotencyKey: z.string().optional(),
   }).transform((v) => {
     return remap$(v, {

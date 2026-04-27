@@ -28,22 +28,23 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update a domain
+ * Generate OAuth URL for a workspace/tenant connection
  *
  * @remarks
- * Reserved for future editable fields. Currently a no-op that returns the domain configuration.
+ * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent).
+ *     The generated URL expires after 5 minutes.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
-export function domainsUpdate(
+export function integrationsGenerateConnectOAuthUrl(
   client: NovuCore,
-  updateDomainDto: components.UpdateDomainDto,
-  domain: string,
+  generateConnectOauthUrlRequestDto:
+    components.GenerateConnectOauthUrlRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.DomainsControllerUpdateDomainResponse,
+    operations.IntegrationsControllerGenerateConnectOAuthUrlResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -58,8 +59,7 @@ export function domainsUpdate(
 > {
   return new APIPromise($do(
     client,
-    updateDomainDto,
-    domain,
+    generateConnectOauthUrlRequestDto,
     idempotencyKey,
     options,
   ));
@@ -67,14 +67,14 @@ export function domainsUpdate(
 
 async function $do(
   client: NovuCore,
-  updateDomainDto: components.UpdateDomainDto,
-  domain: string,
+  generateConnectOauthUrlRequestDto:
+    components.GenerateConnectOauthUrlRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.DomainsControllerUpdateDomainResponse,
+      operations.IntegrationsControllerGenerateConnectOAuthUrlResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -89,33 +89,29 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.DomainsControllerUpdateDomainRequest = {
-    updateDomainDto: updateDomainDto,
-    domain: domain,
-    idempotencyKey: idempotencyKey,
-  };
+  const input: operations.IntegrationsControllerGenerateConnectOAuthUrlRequest =
+    {
+      generateConnectOauthUrlRequestDto: generateConnectOauthUrlRequestDto,
+      idempotencyKey: idempotencyKey,
+    };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.DomainsControllerUpdateDomainRequest$outboundSchema.parse(
-        value,
-      ),
+      operations
+        .IntegrationsControllerGenerateConnectOAuthUrlRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.UpdateDomainDto, { explode: true });
+  const body = encodeJSON("body", payload.GenerateConnectOauthUrlRequestDto, {
+    explode: true,
+  });
 
-  const pathParams = {
-    domain: encodeSimple("domain", payload.domain, {
-      explode: false,
-      charEncoding: "percent",
-    }),
-  };
-  const path = pathToFunc("/v1/domains/{domain}")(pathParams);
+  const path = pathToFunc("/v1/integrations/channel-connections/oauth")();
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -133,7 +129,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "DomainsController_updateDomain",
+    operationID: "IntegrationsController_generateConnectOAuthUrl",
     oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
@@ -157,7 +153,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "PATCH",
+    method: "POST",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -187,7 +183,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.DomainsControllerUpdateDomainResponse,
+    operations.IntegrationsControllerGenerateConnectOAuthUrlResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -200,8 +196,9 @@ async function $do(
     | SDKValidationError
   >(
     M.json(
-      200,
-      operations.DomainsControllerUpdateDomainResponse$inboundSchema,
+      201,
+      operations
+        .IntegrationsControllerGenerateConnectOAuthUrlResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

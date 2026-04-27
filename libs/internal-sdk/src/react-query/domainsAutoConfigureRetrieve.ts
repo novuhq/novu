@@ -28,19 +28,19 @@ import {
   TupleToPrefixes,
 } from "./_types.js";
 import {
-  buildDomainsDomainConnectStatusQuery,
-  DomainsDomainConnectStatusQueryData,
-  prefetchDomainsDomainConnectStatus,
-  queryKeyDomainsDomainConnectStatus,
-} from "./domainsDomainConnectStatus.core.js";
+  buildDomainsAutoConfigureRetrieveQuery,
+  DomainsAutoConfigureRetrieveQueryData,
+  prefetchDomainsAutoConfigureRetrieve,
+  queryKeyDomainsAutoConfigureRetrieve,
+} from "./domainsAutoConfigureRetrieve.core.js";
 export {
-  buildDomainsDomainConnectStatusQuery,
-  type DomainsDomainConnectStatusQueryData,
-  prefetchDomainsDomainConnectStatus,
-  queryKeyDomainsDomainConnectStatus,
+  buildDomainsAutoConfigureRetrieveQuery,
+  type DomainsAutoConfigureRetrieveQueryData,
+  prefetchDomainsAutoConfigureRetrieve,
+  queryKeyDomainsAutoConfigureRetrieve,
 };
 
-export type DomainsDomainConnectStatusQueryError =
+export type DomainsAutoConfigureRetrieveQueryError =
   | errors.ErrorDto
   | errors.ValidationErrorDto
   | NovuError
@@ -53,22 +53,25 @@ export type DomainsDomainConnectStatusQueryError =
   | SDKValidationError;
 
 /**
- * Get Domain Connect auto-configuration availability for a domain
+ * Retrieve auto-configuration availability
+ *
+ * @remarks
+ * Returns whether DNS auto-configuration (Domain Connect) is available for this domain. When `available` is `false`, `manualRecords` lists the DNS records the customer must add manually.
  */
-export function useDomainsDomainConnectStatus(
+export function useDomainsAutoConfigureRetrieve(
   domain: string,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<
-    DomainsDomainConnectStatusQueryData,
-    DomainsDomainConnectStatusQueryError
+    DomainsAutoConfigureRetrieveQueryData,
+    DomainsAutoConfigureRetrieveQueryError
   >,
 ): UseQueryResult<
-  DomainsDomainConnectStatusQueryData,
-  DomainsDomainConnectStatusQueryError
+  DomainsAutoConfigureRetrieveQueryData,
+  DomainsAutoConfigureRetrieveQueryError
 > {
   const client = useNovuContext();
   return useQuery({
-    ...buildDomainsDomainConnectStatusQuery(
+    ...buildDomainsAutoConfigureRetrieveQuery(
       client,
       domain,
       idempotencyKey,
@@ -79,22 +82,25 @@ export function useDomainsDomainConnectStatus(
 }
 
 /**
- * Get Domain Connect auto-configuration availability for a domain
+ * Retrieve auto-configuration availability
+ *
+ * @remarks
+ * Returns whether DNS auto-configuration (Domain Connect) is available for this domain. When `available` is `false`, `manualRecords` lists the DNS records the customer must add manually.
  */
-export function useDomainsDomainConnectStatusSuspense(
+export function useDomainsAutoConfigureRetrieveSuspense(
   domain: string,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<
-    DomainsDomainConnectStatusQueryData,
-    DomainsDomainConnectStatusQueryError
+    DomainsAutoConfigureRetrieveQueryData,
+    DomainsAutoConfigureRetrieveQueryError
   >,
 ): UseSuspenseQueryResult<
-  DomainsDomainConnectStatusQueryData,
-  DomainsDomainConnectStatusQueryError
+  DomainsAutoConfigureRetrieveQueryData,
+  DomainsAutoConfigureRetrieveQueryError
 > {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildDomainsDomainConnectStatusQuery(
+    ...buildDomainsAutoConfigureRetrieveQuery(
       client,
       domain,
       idempotencyKey,
@@ -104,20 +110,20 @@ export function useDomainsDomainConnectStatusSuspense(
   });
 }
 
-export function setDomainsDomainConnectStatusData(
+export function setDomainsAutoConfigureRetrieveData(
   client: QueryClient,
   queryKeyBase: [
     domain: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
-  data: DomainsDomainConnectStatusQueryData,
-): DomainsDomainConnectStatusQueryData | undefined {
-  const key = queryKeyDomainsDomainConnectStatus(...queryKeyBase);
+  data: DomainsAutoConfigureRetrieveQueryData,
+): DomainsAutoConfigureRetrieveQueryData | undefined {
+  const key = queryKeyDomainsAutoConfigureRetrieve(...queryKeyBase);
 
-  return client.setQueryData<DomainsDomainConnectStatusQueryData>(key, data);
+  return client.setQueryData<DomainsAutoConfigureRetrieveQueryData>(key, data);
 }
 
-export function invalidateDomainsDomainConnectStatus(
+export function invalidateDomainsAutoConfigureRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [domain: string, parameters: { idempotencyKey?: string | undefined }]
@@ -126,16 +132,16 @@ export function invalidateDomainsDomainConnectStatus(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "DomainConnect", "status", ...queryKeyBase],
+    queryKey: ["@novu/api", "AutoConfigure", "retrieve", ...queryKeyBase],
   });
 }
 
-export function invalidateAllDomainsDomainConnectStatus(
+export function invalidateAllDomainsAutoConfigureRetrieve(
   client: QueryClient,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "DomainConnect", "status"],
+    queryKey: ["@novu/api", "AutoConfigure", "retrieve"],
   });
 }

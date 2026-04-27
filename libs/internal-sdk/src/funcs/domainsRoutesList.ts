@@ -29,6 +29,9 @@ import { Result } from "../types/fp.js";
 /**
  * List routes for a domain
  *
+ * @remarks
+ * Returns a paginated list of routes attached to the domain. Optionally filter by an agent identifier to find routes pointing to a specific agent.
+ *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function domainsRoutesList(

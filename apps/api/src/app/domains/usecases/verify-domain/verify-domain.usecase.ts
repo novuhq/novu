@@ -1,5 +1,5 @@
 import { promises as dnsPromises, type MxRecord } from 'node:dns';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
@@ -7,6 +7,7 @@ import { DomainStatusEnum } from '@novu/shared';
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { buildExpectedDnsRecords, getMailServerDomain } from '../../utils/dns-records';
+import { resolveDomainName } from '../domain-route.utils';
 import { VerifyDomainCommand } from './verify-domain.command';
 
 @Injectable()
@@ -19,15 +20,12 @@ export class VerifyDomain {
   }
 
   async execute(command: VerifyDomainCommand): Promise<DomainResponseDto> {
-    const domain = await this.domainRepository.findOneByIdAndEnvironment(
-      command.domainId,
-      command.environmentId,
-      command.organizationId
-    );
-
-    if (!domain) {
-      throw new NotFoundException(`Domain with id "${command.domainId}" not found.`);
-    }
+    const domain = await resolveDomainName({
+      domainRepository: this.domainRepository,
+      domain: command.domain,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     const INBOUND_DOMAIN = getMailServerDomain();
     if (!INBOUND_DOMAIN) {
@@ -44,7 +42,7 @@ export class VerifyDomain {
 
       await this.domainRepository.update(
         {
-          _id: command.domainId,
+          _id: domain._id,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },

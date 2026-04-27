@@ -28,19 +28,23 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create a signed Domain Connect apply URL for a domain
+ * Generate OAuth URL to link a subscriber user identity
+ *
+ * @remarks
+ * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+ *     The generated URL expires after 5 minutes.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
-export function domainsDomainConnectCreate(
+export function integrationsGenerateLinkUserOAuthUrl(
   client: NovuCore,
-  createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
-  domain: string,
+  generateLinkUserOauthUrlRequestDto:
+    components.GenerateLinkUserOauthUrlRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.DomainsControllerCreateDomainConnectApplyUrlResponse,
+    operations.IntegrationsControllerGenerateLinkUserOAuthUrlResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -55,8 +59,7 @@ export function domainsDomainConnectCreate(
 > {
   return new APIPromise($do(
     client,
-    createDomainConnectApplyUrlDto,
-    domain,
+    generateLinkUserOauthUrlRequestDto,
     idempotencyKey,
     options,
   ));
@@ -64,14 +67,14 @@ export function domainsDomainConnectCreate(
 
 async function $do(
   client: NovuCore,
-  createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto,
-  domain: string,
+  generateLinkUserOauthUrlRequestDto:
+    components.GenerateLinkUserOauthUrlRequestDto,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.DomainsControllerCreateDomainConnectApplyUrlResponse,
+      operations.IntegrationsControllerGenerateLinkUserOAuthUrlResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -86,10 +89,9 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.DomainsControllerCreateDomainConnectApplyUrlRequest =
-    {
-      createDomainConnectApplyUrlDto: createDomainConnectApplyUrlDto,
-      domain: domain,
+  const input:
+    operations.IntegrationsControllerGenerateLinkUserOAuthUrlRequest = {
+      generateLinkUserOauthUrlRequestDto: generateLinkUserOauthUrlRequestDto,
       idempotencyKey: idempotencyKey,
     };
 
@@ -97,7 +99,7 @@ async function $do(
     input,
     (value) =>
       operations
-        .DomainsControllerCreateDomainConnectApplyUrlRequest$outboundSchema
+        .IntegrationsControllerGenerateLinkUserOAuthUrlRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -105,19 +107,11 @@ async function $do(
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateDomainConnectApplyUrlDto, {
+  const body = encodeJSON("body", payload.GenerateLinkUserOauthUrlRequestDto, {
     explode: true,
   });
 
-  const pathParams = {
-    domain: encodeSimple("domain", payload.domain, {
-      explode: false,
-      charEncoding: "percent",
-    }),
-  };
-  const path = pathToFunc("/v1/domains/{domain}/domain-connect/apply-url")(
-    pathParams,
-  );
+  const path = pathToFunc("/v1/integrations/channel-endpoints/oauth")();
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -135,7 +129,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "DomainsController_createDomainConnectApplyUrl",
+    operationID: "IntegrationsController_generateLinkUserOAuthUrl",
     oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
@@ -189,7 +183,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.DomainsControllerCreateDomainConnectApplyUrlResponse,
+    operations.IntegrationsControllerGenerateLinkUserOAuthUrlResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -204,7 +198,7 @@ async function $do(
     M.json(
       201,
       operations
-        .DomainsControllerCreateDomainConnectApplyUrlResponse$inboundSchema,
+        .IntegrationsControllerGenerateLinkUserOAuthUrlResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

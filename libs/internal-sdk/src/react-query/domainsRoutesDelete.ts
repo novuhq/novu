@@ -29,7 +29,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type DomainsRoutesDeleteMutationVariables = {
   domain: string;
-  routeId: string;
+  address: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -51,7 +51,10 @@ export type DomainsRoutesDeleteMutationError =
   | SDKValidationError;
 
 /**
- * Delete a domain route
+ * Delete a route
+ *
+ * @remarks
+ * Removes the route bound to `<address>@<domain>`. Inbound mail for that address will no longer be processed.
  */
 export function useDomainsRoutesDeleteMutation(
   options?: MutationHookOptions<
@@ -88,7 +91,7 @@ export function buildDomainsRoutesDeleteMutation(
     mutationKey: mutationKeyDomainsRoutesDelete(),
     mutationFn: function domainsRoutesDeleteMutationFn({
       domain,
-      routeId,
+      address,
       idempotencyKey,
       options,
     }): Promise<DomainsRoutesDeleteMutationData> {
@@ -107,7 +110,7 @@ export function buildDomainsRoutesDeleteMutation(
       return unwrapAsync(domainsRoutesDelete(
         client$,
         domain,
-        routeId,
+        address,
         idempotencyKey,
         mergedOptions,
       ));

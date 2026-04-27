@@ -48,7 +48,10 @@ export type DomainsRoutesUpdateMutationError =
   | SDKValidationError;
 
 /**
- * Update a domain route
+ * Update a route
+ *
+ * @remarks
+ * Updates the destination of the route bound to `<address>@<domain>`. The address itself is the resource identity and cannot be changed; delete and recreate the route to rename it.
  */
 export function useDomainsRoutesUpdateMutation(
   options?: MutationHookOptions<

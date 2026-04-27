@@ -27,18 +27,21 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get Domain Connect auto-configuration availability for a domain
+ * Verify a domain
+ *
+ * @remarks
+ * Performs a live DNS lookup to refresh the MX record status of the domain and updates the verification status accordingly. Returns the latest domain configuration.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
-export function domainsDomainConnectStatus(
+export function domainsVerify(
   client: NovuCore,
   domain: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.DomainsControllerGetDomainConnectStatusResponse,
+    operations.DomainsControllerVerifyDomainResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -67,7 +70,7 @@ async function $do(
 ): Promise<
   [
     Result<
-      operations.DomainsControllerGetDomainConnectStatusResponse,
+      operations.DomainsControllerVerifyDomainResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -82,7 +85,7 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.DomainsControllerGetDomainConnectStatusRequest = {
+  const input: operations.DomainsControllerVerifyDomainRequest = {
     domain: domain,
     idempotencyKey: idempotencyKey,
   };
@@ -90,8 +93,9 @@ async function $do(
   const parsed = safeParse(
     input,
     (value) =>
-      operations.DomainsControllerGetDomainConnectStatusRequest$outboundSchema
-        .parse(value),
+      operations.DomainsControllerVerifyDomainRequest$outboundSchema.parse(
+        value,
+      ),
     "Input validation failed",
   );
   if (!parsed.ok) {
@@ -106,9 +110,7 @@ async function $do(
       charEncoding: "percent",
     }),
   };
-  const path = pathToFunc("/v1/domains/{domain}/domain-connect/status")(
-    pathParams,
-  );
+  const path = pathToFunc("/v1/domains/{domain}/verify")(pathParams);
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -125,7 +127,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "DomainsController_getDomainConnectStatus",
+    operationID: "DomainsController_verifyDomain",
     oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
@@ -149,7 +151,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "GET",
+    method: "POST",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -179,7 +181,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.DomainsControllerGetDomainConnectStatusResponse,
+    operations.DomainsControllerVerifyDomainResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -193,7 +195,7 @@ async function $do(
   >(
     M.json(
       200,
-      operations.DomainsControllerGetDomainConnectStatusResponse$inboundSchema,
+      operations.DomainsControllerVerifyDomainResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

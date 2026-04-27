@@ -51,6 +51,9 @@ export type DomainsDeleteMutationError =
 
 /**
  * Delete a domain
+ *
+ * @remarks
+ * Removes the domain and cascades the deletion to all of its routes. Inbound mail for that domain stops being processed immediately.
  */
 export function useDomainsDeleteMutation(
   options?: MutationHookOptions<

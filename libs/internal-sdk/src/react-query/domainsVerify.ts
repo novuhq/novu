@@ -8,10 +8,9 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { domainsDomainConnectCreate } from "../funcs/domainsDomainConnectCreate.js";
+import { domainsVerify } from "../funcs/domainsVerify.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -28,17 +27,16 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type DomainsDomainConnectCreateMutationVariables = {
-  createDomainConnectApplyUrlDto: components.CreateDomainConnectApplyUrlDto;
+export type DomainsVerifyMutationVariables = {
   domain: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type DomainsDomainConnectCreateMutationData =
-  operations.DomainsControllerCreateDomainConnectApplyUrlResponse;
+export type DomainsVerifyMutationData =
+  operations.DomainsControllerVerifyDomainResponse;
 
-export type DomainsDomainConnectCreateMutationError =
+export type DomainsVerifyMutationError =
   | errors.ErrorDto
   | errors.ValidationErrorDto
   | NovuError
@@ -51,47 +49,49 @@ export type DomainsDomainConnectCreateMutationError =
   | SDKValidationError;
 
 /**
- * Create a signed Domain Connect apply URL for a domain
+ * Verify a domain
+ *
+ * @remarks
+ * Performs a live DNS lookup to refresh the MX record status of the domain and updates the verification status accordingly. Returns the latest domain configuration.
  */
-export function useDomainsDomainConnectCreateMutation(
+export function useDomainsVerifyMutation(
   options?: MutationHookOptions<
-    DomainsDomainConnectCreateMutationData,
-    DomainsDomainConnectCreateMutationError,
-    DomainsDomainConnectCreateMutationVariables
+    DomainsVerifyMutationData,
+    DomainsVerifyMutationError,
+    DomainsVerifyMutationVariables
   >,
 ): UseMutationResult<
-  DomainsDomainConnectCreateMutationData,
-  DomainsDomainConnectCreateMutationError,
-  DomainsDomainConnectCreateMutationVariables
+  DomainsVerifyMutationData,
+  DomainsVerifyMutationError,
+  DomainsVerifyMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildDomainsDomainConnectCreateMutation(client, options),
+    ...buildDomainsVerifyMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyDomainsDomainConnectCreate(): MutationKey {
-  return ["@novu/api", "DomainConnect", "create"];
+export function mutationKeyDomainsVerify(): MutationKey {
+  return ["@novu/api", "Domains", "verify"];
 }
 
-export function buildDomainsDomainConnectCreateMutation(
+export function buildDomainsVerifyMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: DomainsDomainConnectCreateMutationVariables,
-  ) => Promise<DomainsDomainConnectCreateMutationData>;
+    variables: DomainsVerifyMutationVariables,
+  ) => Promise<DomainsVerifyMutationData>;
 } {
   return {
-    mutationKey: mutationKeyDomainsDomainConnectCreate(),
-    mutationFn: function domainsDomainConnectCreateMutationFn({
-      createDomainConnectApplyUrlDto,
+    mutationKey: mutationKeyDomainsVerify(),
+    mutationFn: function domainsVerifyMutationFn({
       domain,
       idempotencyKey,
       options,
-    }): Promise<DomainsDomainConnectCreateMutationData> {
+    }): Promise<DomainsVerifyMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -104,9 +104,8 @@ export function buildDomainsDomainConnectCreateMutation(
           ),
         },
       };
-      return unwrapAsync(domainsDomainConnectCreate(
+      return unwrapAsync(domainsVerify(
         client$,
-        createDomainConnectApplyUrlDto,
         domain,
         idempotencyKey,
         mergedOptions,

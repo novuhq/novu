@@ -9,7 +9,7 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export type DomainsControllerGetDomainConnectStatusRequest = {
+export type DomainsControllerGetDomainAutoConfigureRequest = {
   domain: string;
   /**
    * A header for idempotency purposes
@@ -17,23 +17,23 @@ export type DomainsControllerGetDomainConnectStatusRequest = {
   idempotencyKey?: string | undefined;
 };
 
-export type DomainsControllerGetDomainConnectStatusResponse = {
+export type DomainsControllerGetDomainAutoConfigureResponse = {
   headers: { [k: string]: Array<string> };
   result: components.DomainConnectStatusResponseDto;
 };
 
 /** @internal */
-export type DomainsControllerGetDomainConnectStatusRequest$Outbound = {
+export type DomainsControllerGetDomainAutoConfigureRequest$Outbound = {
   domain: string;
   "idempotency-key"?: string | undefined;
 };
 
 /** @internal */
-export const DomainsControllerGetDomainConnectStatusRequest$outboundSchema:
+export const DomainsControllerGetDomainAutoConfigureRequest$outboundSchema:
   z.ZodType<
-    DomainsControllerGetDomainConnectStatusRequest$Outbound,
+    DomainsControllerGetDomainAutoConfigureRequest$Outbound,
     z.ZodTypeDef,
-    DomainsControllerGetDomainConnectStatusRequest
+    DomainsControllerGetDomainAutoConfigureRequest
   > = z.object({
     domain: z.string(),
     idempotencyKey: z.string().optional(),
@@ -43,21 +43,21 @@ export const DomainsControllerGetDomainConnectStatusRequest$outboundSchema:
     });
   });
 
-export function domainsControllerGetDomainConnectStatusRequestToJSON(
-  domainsControllerGetDomainConnectStatusRequest:
-    DomainsControllerGetDomainConnectStatusRequest,
+export function domainsControllerGetDomainAutoConfigureRequestToJSON(
+  domainsControllerGetDomainAutoConfigureRequest:
+    DomainsControllerGetDomainAutoConfigureRequest,
 ): string {
   return JSON.stringify(
-    DomainsControllerGetDomainConnectStatusRequest$outboundSchema.parse(
-      domainsControllerGetDomainConnectStatusRequest,
+    DomainsControllerGetDomainAutoConfigureRequest$outboundSchema.parse(
+      domainsControllerGetDomainAutoConfigureRequest,
     ),
   );
 }
 
 /** @internal */
-export const DomainsControllerGetDomainConnectStatusResponse$inboundSchema:
+export const DomainsControllerGetDomainAutoConfigureResponse$inboundSchema:
   z.ZodType<
-    DomainsControllerGetDomainConnectStatusResponse,
+    DomainsControllerGetDomainAutoConfigureResponse,
     z.ZodTypeDef,
     unknown
   > = z.object({
@@ -70,18 +70,18 @@ export const DomainsControllerGetDomainConnectStatusResponse$inboundSchema:
     });
   });
 
-export function domainsControllerGetDomainConnectStatusResponseFromJSON(
+export function domainsControllerGetDomainAutoConfigureResponseFromJSON(
   jsonString: string,
 ): SafeParseResult<
-  DomainsControllerGetDomainConnectStatusResponse,
+  DomainsControllerGetDomainAutoConfigureResponse,
   SDKValidationError
 > {
   return safeParse(
     jsonString,
     (x) =>
-      DomainsControllerGetDomainConnectStatusResponse$inboundSchema.parse(
+      DomainsControllerGetDomainAutoConfigureResponse$inboundSchema.parse(
         JSON.parse(x),
       ),
-    `Failed to parse 'DomainsControllerGetDomainConnectStatusResponse' from JSON`,
+    `Failed to parse 'DomainsControllerGetDomainAutoConfigureResponse' from JSON`,
   );
 }

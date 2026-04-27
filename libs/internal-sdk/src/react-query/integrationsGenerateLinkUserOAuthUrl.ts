@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { domainsRoutesCreate } from "../funcs/domainsRoutesCreate.js";
+import { integrationsGenerateLinkUserOAuthUrl } from "../funcs/integrationsGenerateLinkUserOAuthUrl.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -28,17 +28,17 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type DomainsRoutesCreateMutationVariables = {
-  domainRouteDto: components.DomainRouteDto;
-  domain: string;
+export type IntegrationsGenerateLinkUserOAuthUrlMutationVariables = {
+  generateLinkUserOauthUrlRequestDto:
+    components.GenerateLinkUserOauthUrlRequestDto;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type DomainsRoutesCreateMutationData =
-  operations.DomainsControllerCreateDomainRouteResponse;
+export type IntegrationsGenerateLinkUserOAuthUrlMutationData =
+  operations.IntegrationsControllerGenerateLinkUserOAuthUrlResponse;
 
-export type DomainsRoutesCreateMutationError =
+export type IntegrationsGenerateLinkUserOAuthUrlMutationError =
   | errors.ErrorDto
   | errors.ValidationErrorDto
   | NovuError
@@ -51,50 +51,50 @@ export type DomainsRoutesCreateMutationError =
   | SDKValidationError;
 
 /**
- * Create a route
+ * Generate OAuth URL to link a subscriber user identity
  *
  * @remarks
- * Creates a route on the domain that forwards inbound mail addressed to `<address>@<domain>` to either a webhook or an agent. Each address on a domain may only have a single route.
+ * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+ *     The generated URL expires after 5 minutes.
  */
-export function useDomainsRoutesCreateMutation(
+export function useIntegrationsGenerateLinkUserOAuthUrlMutation(
   options?: MutationHookOptions<
-    DomainsRoutesCreateMutationData,
-    DomainsRoutesCreateMutationError,
-    DomainsRoutesCreateMutationVariables
+    IntegrationsGenerateLinkUserOAuthUrlMutationData,
+    IntegrationsGenerateLinkUserOAuthUrlMutationError,
+    IntegrationsGenerateLinkUserOAuthUrlMutationVariables
   >,
 ): UseMutationResult<
-  DomainsRoutesCreateMutationData,
-  DomainsRoutesCreateMutationError,
-  DomainsRoutesCreateMutationVariables
+  IntegrationsGenerateLinkUserOAuthUrlMutationData,
+  IntegrationsGenerateLinkUserOAuthUrlMutationError,
+  IntegrationsGenerateLinkUserOAuthUrlMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildDomainsRoutesCreateMutation(client, options),
+    ...buildIntegrationsGenerateLinkUserOAuthUrlMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyDomainsRoutesCreate(): MutationKey {
-  return ["@novu/api", "Routes", "create"];
+export function mutationKeyIntegrationsGenerateLinkUserOAuthUrl(): MutationKey {
+  return ["@novu/api", "Integrations", "generateLinkUserOAuthUrl"];
 }
 
-export function buildDomainsRoutesCreateMutation(
+export function buildIntegrationsGenerateLinkUserOAuthUrlMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: DomainsRoutesCreateMutationVariables,
-  ) => Promise<DomainsRoutesCreateMutationData>;
+    variables: IntegrationsGenerateLinkUserOAuthUrlMutationVariables,
+  ) => Promise<IntegrationsGenerateLinkUserOAuthUrlMutationData>;
 } {
   return {
-    mutationKey: mutationKeyDomainsRoutesCreate(),
-    mutationFn: function domainsRoutesCreateMutationFn({
-      domainRouteDto,
-      domain,
+    mutationKey: mutationKeyIntegrationsGenerateLinkUserOAuthUrl(),
+    mutationFn: function integrationsGenerateLinkUserOAuthUrlMutationFn({
+      generateLinkUserOauthUrlRequestDto,
       idempotencyKey,
       options,
-    }): Promise<DomainsRoutesCreateMutationData> {
+    }): Promise<IntegrationsGenerateLinkUserOAuthUrlMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -107,10 +107,9 @@ export function buildDomainsRoutesCreateMutation(
           ),
         },
       };
-      return unwrapAsync(domainsRoutesCreate(
+      return unwrapAsync(integrationsGenerateLinkUserOAuthUrl(
         client$,
-        domainRouteDto,
-        domain,
+        generateLinkUserOauthUrlRequestDto,
         idempotencyKey,
         mergedOptions,
       ));

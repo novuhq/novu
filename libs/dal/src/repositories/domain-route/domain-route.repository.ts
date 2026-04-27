@@ -12,15 +12,15 @@ export class DomainRouteRepository extends BaseRepositoryV2<DomainRouteDBModel, 
     super(DomainRoute, DomainRouteEntity);
   }
 
-  async findOneByIdAndDomain(
-    routeId: string,
+  async findOneByAddressAndDomain(
+    address: string,
     domainId: string,
     environmentId: string,
     organizationId: string
   ): Promise<DomainRouteEntity | null> {
     return this.findOne(
       {
-        _id: routeId,
+        address,
         _domainId: domainId,
         _environmentId: environmentId,
         _organizationId: organizationId,

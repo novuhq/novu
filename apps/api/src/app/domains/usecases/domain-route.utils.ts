@@ -6,8 +6,8 @@ export function isDuplicateKeyError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000;
 }
 
-export function toDuplicateRouteConflict(address: string, type: DomainRouteTypeEnum): ConflictException {
-  return new ConflictException(`A ${type} route for address "${address}" already exists.`);
+export function toDuplicateRouteConflict(address: string, domainName: string): ConflictException {
+  return new ConflictException(`A route for "${address}@${domainName}" already exists.`);
 }
 
 export async function resolveAgentIdentifier({

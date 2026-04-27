@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { domainsRoutesCreate } from "../funcs/domainsRoutesCreate.js";
+import { integrationsGenerateConnectOAuthUrl } from "../funcs/integrationsGenerateConnectOAuthUrl.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -28,17 +28,17 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type DomainsRoutesCreateMutationVariables = {
-  domainRouteDto: components.DomainRouteDto;
-  domain: string;
+export type IntegrationsGenerateConnectOAuthUrlMutationVariables = {
+  generateConnectOauthUrlRequestDto:
+    components.GenerateConnectOauthUrlRequestDto;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type DomainsRoutesCreateMutationData =
-  operations.DomainsControllerCreateDomainRouteResponse;
+export type IntegrationsGenerateConnectOAuthUrlMutationData =
+  operations.IntegrationsControllerGenerateConnectOAuthUrlResponse;
 
-export type DomainsRoutesCreateMutationError =
+export type IntegrationsGenerateConnectOAuthUrlMutationError =
   | errors.ErrorDto
   | errors.ValidationErrorDto
   | NovuError
@@ -51,50 +51,50 @@ export type DomainsRoutesCreateMutationError =
   | SDKValidationError;
 
 /**
- * Create a route
+ * Generate OAuth URL for a workspace/tenant connection
  *
  * @remarks
- * Creates a route on the domain that forwards inbound mail addressed to `<address>@<domain>` to either a webhook or an agent. Each address on a domain may only have a single route.
+ * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent).
+ *     The generated URL expires after 5 minutes.
  */
-export function useDomainsRoutesCreateMutation(
+export function useIntegrationsGenerateConnectOAuthUrlMutation(
   options?: MutationHookOptions<
-    DomainsRoutesCreateMutationData,
-    DomainsRoutesCreateMutationError,
-    DomainsRoutesCreateMutationVariables
+    IntegrationsGenerateConnectOAuthUrlMutationData,
+    IntegrationsGenerateConnectOAuthUrlMutationError,
+    IntegrationsGenerateConnectOAuthUrlMutationVariables
   >,
 ): UseMutationResult<
-  DomainsRoutesCreateMutationData,
-  DomainsRoutesCreateMutationError,
-  DomainsRoutesCreateMutationVariables
+  IntegrationsGenerateConnectOAuthUrlMutationData,
+  IntegrationsGenerateConnectOAuthUrlMutationError,
+  IntegrationsGenerateConnectOAuthUrlMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildDomainsRoutesCreateMutation(client, options),
+    ...buildIntegrationsGenerateConnectOAuthUrlMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyDomainsRoutesCreate(): MutationKey {
-  return ["@novu/api", "Routes", "create"];
+export function mutationKeyIntegrationsGenerateConnectOAuthUrl(): MutationKey {
+  return ["@novu/api", "Integrations", "generateConnectOAuthUrl"];
 }
 
-export function buildDomainsRoutesCreateMutation(
+export function buildIntegrationsGenerateConnectOAuthUrlMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: DomainsRoutesCreateMutationVariables,
-  ) => Promise<DomainsRoutesCreateMutationData>;
+    variables: IntegrationsGenerateConnectOAuthUrlMutationVariables,
+  ) => Promise<IntegrationsGenerateConnectOAuthUrlMutationData>;
 } {
   return {
-    mutationKey: mutationKeyDomainsRoutesCreate(),
-    mutationFn: function domainsRoutesCreateMutationFn({
-      domainRouteDto,
-      domain,
+    mutationKey: mutationKeyIntegrationsGenerateConnectOAuthUrl(),
+    mutationFn: function integrationsGenerateConnectOAuthUrlMutationFn({
+      generateConnectOauthUrlRequestDto,
       idempotencyKey,
       options,
-    }): Promise<DomainsRoutesCreateMutationData> {
+    }): Promise<IntegrationsGenerateConnectOAuthUrlMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -107,10 +107,9 @@ export function buildDomainsRoutesCreateMutation(
           ),
         },
       };
-      return unwrapAsync(domainsRoutesCreate(
+      return unwrapAsync(integrationsGenerateConnectOAuthUrl(
         client$,
-        domainRouteDto,
-        domain,
+        generateConnectOauthUrlRequestDto,
         idempotencyKey,
         mergedOptions,
       ));

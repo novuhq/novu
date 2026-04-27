@@ -46,7 +46,7 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     return { _id: res.body.data._id as string, identifier };
   }
 
-  it('should create a webhook route without agentId', async () => {
+  it('should create a webhook route', async () => {
     const domain = await createDomain();
 
     const { result: route } = await novuClient.domains.routes.create(
@@ -146,7 +146,7 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(error?.statusCode).to.equal(404);
   });
 
-  it('should return 409 when creating duplicate address and type on the same domain', async () => {
+  it('should return 409 when creating two routes for the same address on the same domain', async () => {
     const domain = await createDomain();
 
     await novuClient.domains.routes.create({ address: 'dup', type: DomainRouteDtoType.Webhook }, domain.name);
@@ -180,28 +180,21 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(error?.statusCode).to.equal(404);
   });
 
-  it('should retrieve a domain route by id', async () => {
+  it('should retrieve a route by address', async () => {
     const domain = await createDomain();
-    const { result: created } = await novuClient.domains.routes.create(
-      { address: 'get-me', type: DomainRouteDtoType.Webhook },
-      domain.name
-    );
+    await novuClient.domains.routes.create({ address: 'get-me', type: DomainRouteDtoType.Webhook }, domain.name);
 
-    const { result: fetched } = await novuClient.domains.routes.retrieve(domain.name, created.id);
+    const { result: fetched } = await novuClient.domains.routes.retrieve(domain.name, 'get-me');
 
-    expect(fetched.id).to.equal(created.id);
     expect(fetched.address).to.equal('get-me');
   });
 
-  it('should return 404 when retrieving a route with wrong domain id', async () => {
+  it('should return 404 when retrieving a route on a different domain', async () => {
     const domainA = await createDomain();
     const domainB = await createDomain();
-    const { result: route } = await novuClient.domains.routes.create(
-      { address: 'iso', type: DomainRouteDtoType.Webhook },
-      domainA.name
-    );
+    await novuClient.domains.routes.create({ address: 'iso', type: DomainRouteDtoType.Webhook }, domainA.name);
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domainB.name, route.id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domainB.name, 'iso'));
 
     expect(error?.statusCode).to.equal(404);
   });
@@ -283,34 +276,18 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(result.data[0].address).to.equal('f1');
   });
 
-  it('should update route address', async () => {
-    const domain = await createDomain();
-    const { result: route } = await novuClient.domains.routes.create(
-      { address: 'old-addr', type: DomainRouteDtoType.Webhook },
-      domain.name
-    );
-
-    const { result: updated } = await novuClient.domains.routes.update({
-      domain: domain.name,
-      routeId: route.id,
-      updateDomainRouteDto: { address: 'new-addr' },
-    });
-
-    expect(updated.address).to.equal('new-addr');
-  });
-
   it('should update agent route to webhook and clear agentId', async () => {
     const domain = await createDomain();
     const agent = await createAgent();
 
-    const { result: route } = await novuClient.domains.routes.create(
+    await novuClient.domains.routes.create(
       { address: 'switch', type: DomainRouteDtoType.Agent, agentId: agent.identifier },
       domain.name
     );
 
     const { result: updated } = await novuClient.domains.routes.update({
       domain: domain.name,
-      routeId: route.id,
+      address: 'switch',
       updateDomainRouteDto: { type: DomainRouteDtoType.Webhook },
     });
 
@@ -321,15 +298,12 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
   it('should reject switching to agent without agentId (400)', async () => {
     const domain = await createDomain();
 
-    const { result: route } = await novuClient.domains.routes.create(
-      { address: 'wh-only', type: DomainRouteDtoType.Webhook },
-      domain.name
-    );
+    await novuClient.domains.routes.create({ address: 'wh-only', type: DomainRouteDtoType.Webhook }, domain.name);
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.update({
         domain: domain.name,
-        routeId: route.id,
+        address: 'wh-only',
         updateDomainRouteDto: { type: DomainRouteDtoType.Agent },
       })
     );
@@ -341,14 +315,11 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     const domain = await createDomain();
     const agent = await createAgent();
 
-    const { result: route } = await novuClient.domains.routes.create(
-      { address: 'to-agent', type: DomainRouteDtoType.Webhook },
-      domain.name
-    );
+    await novuClient.domains.routes.create({ address: 'to-agent', type: DomainRouteDtoType.Webhook }, domain.name);
 
     const { result: updated } = await novuClient.domains.routes.update({
       domain: domain.name,
-      routeId: route.id,
+      address: 'to-agent',
       updateDomainRouteDto: { type: DomainRouteDtoType.Agent, agentId: agent.identifier },
     });
 
@@ -356,60 +327,35 @@ describe('Domain Routes API - /v1/domains/:domain/routes #novu-v2', () => {
     expect(updated.agentId).to.equal(agent._id);
   });
 
-  it('should return 409 when update causes duplicate address and type', async () => {
+  it('should return 404 when updating a route that does not exist', async () => {
     const domain = await createDomain();
-
-    await novuClient.domains.routes.create({ address: 'keep', type: DomainRouteDtoType.Webhook }, domain.name);
-    const { result: second } = await novuClient.domains.routes.create(
-      { address: 'move', type: DomainRouteDtoType.Webhook },
-      domain.name
-    );
 
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.domains.routes.update({
         domain: domain.name,
-        routeId: second.id,
-        updateDomainRouteDto: { address: 'keep' },
-      })
-    );
-
-    expect(error?.statusCode).to.equal(409);
-  });
-
-  it('should return 404 when updating a non-existent route', async () => {
-    const domain = await createDomain();
-    const fakeRouteId = '507f1f77bcf86cd799439014';
-
-    const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.domains.routes.update({
-        domain: domain.name,
-        routeId: fakeRouteId,
-        updateDomainRouteDto: { address: 'x' },
+        address: 'nope',
+        updateDomainRouteDto: { type: DomainRouteDtoType.Webhook },
       })
     );
 
     expect(error?.statusCode).to.equal(404);
   });
 
-  it('should delete a route and return 404 on subsequent retrieve', async () => {
+  it('should delete a route by address and return 404 on subsequent retrieve', async () => {
     const domain = await createDomain();
-    const { result: route } = await novuClient.domains.routes.create(
-      { address: 'del-me', type: DomainRouteDtoType.Webhook },
-      domain.name
-    );
+    await novuClient.domains.routes.create({ address: 'del-me', type: DomainRouteDtoType.Webhook }, domain.name);
 
-    await novuClient.domains.routes.delete(domain.name, route.id);
+    await novuClient.domains.routes.delete(domain.name, 'del-me');
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domain.name, route.id));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.retrieve(domain.name, 'del-me'));
 
     expect(error?.statusCode).to.equal(404);
   });
 
-  it('should return 404 when deleting a non-existent route', async () => {
+  it('should return 404 when deleting a route that does not exist', async () => {
     const domain = await createDomain();
-    const fakeRouteId = '507f1f77bcf86cd799439015';
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.delete(domain.name, fakeRouteId));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.domains.routes.delete(domain.name, 'nope'));
 
     expect(error?.statusCode).to.equal(404);
   });

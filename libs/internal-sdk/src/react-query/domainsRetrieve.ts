@@ -53,7 +53,10 @@ export type DomainsRetrieveQueryError =
   | SDKValidationError;
 
 /**
- * Get a domain by name
+ * Retrieve a domain by name
+ *
+ * @remarks
+ * Returns the domain configuration and the DNS records that must be in place. This is a pure read; call `domains.verify` to refresh verification status from DNS.
  */
 export function useDomainsRetrieve(
   domain: string,
@@ -76,7 +79,10 @@ export function useDomainsRetrieve(
 }
 
 /**
- * Get a domain by name
+ * Retrieve a domain by name
+ *
+ * @remarks
+ * Returns the domain configuration and the DNS records that must be in place. This is a pure read; call `domains.verify` to refresh verification status from DNS.
  */
 export function useDomainsRetrieveSuspense(
   domain: string,
