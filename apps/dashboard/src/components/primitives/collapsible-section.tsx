@@ -5,6 +5,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 type CollapsibleSectionProps = {
   title: string;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   actions?: React.ReactNode;
   forceMountContent?: boolean;
   children: React.ReactNode;
@@ -13,14 +15,18 @@ type CollapsibleSectionProps = {
 export function CollapsibleSection({
   title,
   defaultOpen = true,
+  open,
+  onOpenChange,
   actions,
   forceMountContent,
   children,
 }: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  const isOpen = open ?? internalIsOpen;
+  const handleOpenChange = onOpenChange ?? setInternalIsOpen;
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="rounded-lg bg-neutral-alpha-50 p-1 space-y-1">
+    <Collapsible open={isOpen} onOpenChange={handleOpenChange} className="rounded-lg bg-neutral-alpha-50 p-1 space-y-1">
       <div className="flex items-center justify-between px-2 py-1">
         <p className="font-mono text-xs font-medium tracking-tight text-foreground-500 uppercase">{title}</p>
         <div className="flex items-center gap-2">

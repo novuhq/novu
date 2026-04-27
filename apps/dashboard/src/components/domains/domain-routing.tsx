@@ -10,6 +10,7 @@ import {
   RiWebhookLine,
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { NovuApiError } from '@/api/api.client';
 import { listAgents } from '@/api/agents';
 import type { DomainResponse, DomainRouteResponse, TestDomainRouteResponse } from '@/api/domains';
 import { Badge } from '@/components/primitives/badge';
@@ -61,6 +62,14 @@ const DEFAULT_ROUTE_FORM: RouteFormState = {
   type: DomainRouteTypeEnum.AGENT,
   dataJson: '{}',
 };
+
+function getRouteErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof NovuApiError) {
+    return error.message || fallback;
+  }
+
+  return fallback;
+}
 
 type DomainRoutingProps = {
   domain: DomainResponse;
@@ -634,8 +643,8 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         data: parsed.data,
       });
       cancelAdding();
-    } catch {
-      showErrorToast('Failed to add route.');
+    } catch (error) {
+      showErrorToast(getRouteErrorMessage(error, 'Failed to add route.'), 'Route creation failed');
     }
   };
 
@@ -662,8 +671,8 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         },
       });
       setEditingAddress(null);
-    } catch {
-      showErrorToast('Failed to update route.');
+    } catch (error) {
+      showErrorToast(getRouteErrorMessage(error, 'Failed to update route.'), 'Route update failed');
     }
   };
 
@@ -674,8 +683,8 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
 
     try {
       await deleteDomainRoute.mutateAsync(address);
-    } catch {
-      showErrorToast('Failed to delete route.');
+    } catch (error) {
+      showErrorToast(getRouteErrorMessage(error, 'Failed to delete route.'), 'Route deletion failed');
     }
   };
 

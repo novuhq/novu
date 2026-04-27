@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CompileTemplate, HttpClientService, SendWebhookMessage } from '@novu/application-generic';
+import {
+  CompileTemplate,
+  HttpClientService,
+  InboundDomainRouteDelivery,
+  SendWebhookMessage,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   DomainRepository,
@@ -43,6 +48,7 @@ describe('Should handle the new arrived mail', () => {
         { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
         { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
         { provide: DomainRouteRepository, useValue: sandbox.createStubInstance(DomainRouteRepository) },
+        { provide: InboundDomainRouteDelivery, useValue: sandbox.createStubInstance(InboundDomainRouteDelivery) },
         { provide: SendWebhookMessage, useValue: sandbox.createStubInstance(SendWebhookMessage) },
         { provide: CompileTemplate, useValue: compileTemplate },
         { provide: HttpClientService, useValue: sandbox.createStubInstance(HttpClientService) },

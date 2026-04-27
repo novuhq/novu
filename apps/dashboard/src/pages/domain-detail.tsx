@@ -164,6 +164,7 @@ export function DomainDetailPage() {
   const [metadataDraft, setMetadataDraft] = useState('{}');
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
   const [diagnoseResult, setDiagnoseResult] = useState<DiagnoseDomainResponse | null>(null);
+  const [isRoutingOpen, setIsRoutingOpen] = useState(true);
   const domainConnectReturnStatus = searchParams.get('domainConnect');
   const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
   const domainConnectProviderName = domainConnectStatus?.providerName ?? 'your DNS provider';
@@ -359,7 +360,7 @@ export function DomainDetailPage() {
       <PageMeta title={domain?.name ?? 'Domain'} />
 
       <div className="flex h-full flex-col">
-        <header className="border-b px-4 pt-2 pb-2 md:px-6">
+        <header className="border-stroke-soft border-b px-4 pt-2 pb-2 md:px-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex min-w-0 flex-col gap-1">
               {isLoading ? (
@@ -400,9 +401,9 @@ export function DomainDetailPage() {
 
         {/* Body */}
         <div className="flex-1 overflow-auto">
-          <div className="flex gap-0 h-full">
+          <div className="flex gap-6 px-6 pt-4 pb-6">
             {/* Left: metadata */}
-            <div className="w-[340px] shrink-0 px-6 py-8">
+            <div className="shrink-0">
               <DetailsSidebar>
                 <DetailsSidebarCard>
                   <DetailsSidebarRow label="Status">
@@ -461,7 +462,7 @@ export function DomainDetailPage() {
             </div>
 
             {/* Right: warning + DNS records + routing */}
-            <div className="flex-1 overflow-auto px-6 py-8 space-y-6">
+            <div className="min-w-0 flex-1 space-y-6 overflow-x-auto">
               {!isLoading && hasDomainConnectFailure && domain?.status === DomainStatusEnum.PENDING && (
                 <InlineToast
                   variant="error"
@@ -662,11 +663,16 @@ export function DomainDetailPage() {
               {domain && (
                 <CollapsibleSection
                   title="Routing"
+                  open={isRoutingOpen}
+                  onOpenChange={setIsRoutingOpen}
                   forceMountContent
                   actions={
                     <button
                       type="button"
-                      onClick={() => routingRef.current?.startAdding()}
+                      onClick={() => {
+                        setIsRoutingOpen(true);
+                        routingRef.current?.startAdding();
+                      }}
                       disabled={!canWriteDomains}
                       className="text-foreground-900 hover:text-foreground-600 flex items-center gap-1 text-xs font-medium transition-colors disabled:text-text-disabled"
                     >
