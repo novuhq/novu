@@ -1,18 +1,19 @@
 import { createResource, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { ChannelEndpointResponse } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
+import { useChannelEndpoint } from '../../api/hooks/useChannelEndpoint';
 import { useNovu } from '../../context';
 import { useStyle } from '../../helpers/useStyle';
 import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { SlackColored } from '../../icons/SlackColored';
 import type { SlackLinkUserAppearanceCallback } from '../../types';
+import { DEFAULT_SLACK_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
-import { DEFAULT_CONNECTION_IDENTIFIER, DEFAULT_INTEGRATION_IDENTIFIER } from '../slack-constants';
 
 export type SlackLinkUserProps = {
-  integrationIdentifier?: string;
+  integrationIdentifier: string;
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
@@ -30,8 +31,14 @@ const POLL_TIMEOUT_MS = 120_000;
 export const SlackLinkUser = (props: SlackLinkUserProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
-  const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_INTEGRATION_IDENTIFIER;
-  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_CONNECTION_IDENTIFIER;
+  const integrationIdentifier = () => props.integrationIdentifier;
+  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_SLACK_CONNECTION_IDENTIFIER;
+
+  const { generateLinkUserOAuthUrl } = useChannelEndpoint({
+    integrationIdentifier: integrationIdentifier(),
+    connectionIdentifier: connectionIdentifier(),
+    subscriberId: props.subscriberId,
+  });
 
   const [endpoint, setEndpoint] = createSignal<ChannelEndpointResponse | null>(null);
   const [loading, setLoading] = createSignal(true);
@@ -130,14 +137,20 @@ export const SlackLinkUser = (props: SlackLinkUserProps) => {
         props.onUnlinkSuccess?.();
       }
     } else {
+      const resolvedSubscriberId = props.subscriberId ?? novuAccessor().subscriberId;
+      if (!resolvedSubscriberId) {
+        props.onLinkError?.(new Error('subscriberId is required to link a Slack user'));
+
+        return;
+      }
+
       setActionLoading(true);
 
-      const result = await novuAccessor().channelConnections.generateOAuthUrl({
+      const result = await generateLinkUserOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
         connectionIdentifier: connectionIdentifier(),
-        subscriberId: props.subscriberId ?? novuAccessor().subscriberId,
+        subscriberId: resolvedSubscriberId,
         context: props.context,
-        mode: 'link_user',
         userScope: ['identity.basic'],
       });
 
@@ -151,6 +164,9 @@ export const SlackLinkUser = (props: SlackLinkUserProps) => {
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
         startPolling();
+      } else {
+        setActionLoading(false);
+        props.onLinkError?.(new Error('OAuth URL was not returned. Please try again.'));
       }
     }
   };

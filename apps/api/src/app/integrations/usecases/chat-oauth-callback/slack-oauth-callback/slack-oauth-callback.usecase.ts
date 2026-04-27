@@ -81,8 +81,7 @@ export class SlackOauthCallback {
           },
         })
       );
-
-      if (stateData.subscriberId && authData.authed_user?.id) {
+      if (stateData.autoLinkUser === true && stateData.subscriberId && authData.authed_user?.id) {
         await this.createChannelEndpoint.execute(
           CreateChannelEndpointCommand.create({
             organizationId: stateData.organizationId,
