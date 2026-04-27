@@ -132,8 +132,6 @@ export const MsTeamsLinkUser = (props: MsTeamsLinkUserProps) => {
     } else {
       setActionLoading(true);
 
-      const popup = window.open('about:blank', '_blank', 'noopener,noreferrer');
-
       const result = await novuAccessor().channelConnections.generateOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
         connectionIdentifier: connectionIdentifier(),
@@ -143,7 +141,6 @@ export const MsTeamsLinkUser = (props: MsTeamsLinkUserProps) => {
       });
 
       if (result.error) {
-        popup?.close();
         setActionLoading(false);
         props.onLinkError?.(result.error);
 
@@ -151,15 +148,9 @@ export const MsTeamsLinkUser = (props: MsTeamsLinkUserProps) => {
       }
 
       if (result.data?.url) {
-        if (popup) {
-          popup.location.href = result.data.url;
-        } else {
-          window.location.href = result.data.url;
-        }
-
+        window.open(result.data.url, '_blank', 'noopener,noreferrer');
         startPolling();
       } else {
-        popup?.close();
         setActionLoading(false);
         props.onLinkError?.(new Error('OAuth URL was not returned. Please try again.'));
       }
