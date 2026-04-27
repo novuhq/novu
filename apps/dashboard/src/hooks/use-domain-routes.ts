@@ -10,8 +10,8 @@ export function useUpdateDomain(domainId: string | undefined) {
   return useMutation({
     // biome-ignore lint/style/noNonNullAssertion: domainId and currentEnvironment are guaranteed non-null when the mutation is called
     mutationFn: (body: UpdateDomainBody) => updateDomain(domainId!, body, currentEnvironment!),
-    onSuccess: (data) => {
-      queryClient.setQueryData([QueryKeys.fetchDomain, domainId], data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomain, domainId] });
     },
   });
 }
