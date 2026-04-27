@@ -331,27 +331,43 @@ type RouteTestDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   domainName: string;
-  route: DomainRouteResponse;
+  route: DomainRouteResponse | null;
   mutation: ReturnType<typeof useTestDomainRoute>;
+};
+
+const DEFAULT_TEST_FORM = {
+  fromAddress: 'tester@example.com',
+  fromName: '',
+  subject: 'Novu route test',
+  text: 'Synthetic inbound message from Novu.',
 };
 
 function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: RouteTestDialogProps) {
   const dryRunFieldId = useId();
-  const [fromAddress, setFromAddress] = useState('tester@example.com');
-  const [fromName, setFromName] = useState('');
-  const [subject, setSubject] = useState('Novu route test');
-  const [text, setText] = useState('Synthetic inbound message from Novu.');
+  const [fromAddress, setFromAddress] = useState(DEFAULT_TEST_FORM.fromAddress);
+  const [fromName, setFromName] = useState(DEFAULT_TEST_FORM.fromName);
+  const [subject, setSubject] = useState(DEFAULT_TEST_FORM.subject);
+  const [text, setText] = useState(DEFAULT_TEST_FORM.text);
   const [dryRun, setDryRun] = useState(true);
   const [lastResult, setLastResult] = useState<TestDomainRouteResponse | null>(null);
+  const routeId = route?._id;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !routeId) return;
 
-    setLastResult(null);
+    setFromAddress(DEFAULT_TEST_FORM.fromAddress);
+    setFromName(DEFAULT_TEST_FORM.fromName);
+    setSubject(DEFAULT_TEST_FORM.subject);
+    setText(DEFAULT_TEST_FORM.text);
     setDryRun(true);
-  }, [open]);
+    setLastResult(null);
+  }, [open, routeId]);
 
   const handleSubmit = async () => {
+    if (!route) {
+      return;
+    }
+
     if (!fromAddress.trim()) {
       showErrorToast('From address is required.');
 
@@ -391,7 +407,7 @@ function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: Ro
 
         <div className="text-foreground-600 space-y-3 text-xs">
           <p className="font-code text-code-xs text-foreground-900">
-            {route.address}@{domainName}
+            {route ? `${route.address}@${domainName}` : ''}
           </p>
 
           <div className="grid gap-2">
@@ -824,18 +840,16 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
         )}
       </AnimatePresence>
 
-      {testDialogRoute ? (
-        <RouteTestDialog
-          key={testDialogRoute._id}
-          open
-          domainName={domain.name}
-          route={testDialogRoute}
-          mutation={testDomainRoute}
-          onOpenChange={(open) => {
-            if (!open) setTestDialogRoute(null);
-          }}
-        />
-      ) : null}
+      <RouteTestDialog
+        open={!!testDialogRoute}
+        domainName={domain.name}
+        route={testDialogRoute}
+        mutation={testDomainRoute}
+        onOpenChange={(open) => {
+          if (!open) setTestDialogRoute(null);
+        }}
+      />
+
       <AddRouteTypeDialog
         open={isAddRouteTypeDialogOpen}
         onOpenChange={setIsAddRouteTypeDialogOpen}

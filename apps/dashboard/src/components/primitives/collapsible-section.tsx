@@ -43,7 +43,7 @@ export function CollapsibleSection({
         </div>
       </div>
 
-      <CollapsibleContent forceMount={forceMountContent}>{children}</CollapsibleContent>
+      <CollapsibleContent forceMount={forceMountContent ? true : undefined}>{children}</CollapsibleContent>
     </Collapsible>
   );
 }
