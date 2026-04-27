@@ -40,8 +40,8 @@ export class HandleAgentReply {
     if (command.edit && (command.resolve || command.signals?.length)) {
       throw new BadRequestException('edit cannot be combined with resolve or signals');
     }
-    if (!command.reply && !command.edit && !command.resolve && !command.signals?.length) {
-      throw new BadRequestException('At least one of reply, edit, resolve, or signals must be provided');
+    if (!command.reply && !command.edit && !command.resolve && !command.signals?.length && !command.addReactions?.length) {
+      throw new BadRequestException('At least one of reply, edit, resolve, signals, or addReactions must be provided');
     }
 
     const conversation = await this.conversationService.getConversation(
@@ -78,6 +78,21 @@ export class HandleAgentReply {
 
     if (command.signals?.length) {
       await this.executeSignals(command, conversation, channel, command.signals);
+    }
+
+    if (command.addReactions?.length) {
+      await Promise.all(
+        command.addReactions.map((r) =>
+          this.chatSdkService.reactToMessage(
+            conversation._agentId,
+            command.integrationIdentifier,
+            channel.platform,
+            channel.platformThreadId,
+            r.messageId,
+            r.emojiName
+          )
+        )
+      );
     }
 
     if (command.resolve) {

@@ -36,4 +36,8 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsArray()
   signals?: Signal[];
+
+  @IsOptional()
+  @IsArray()
+  addReactions?: { messageId: string; emojiName: string }[];
 }
