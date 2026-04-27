@@ -1,4 +1,4 @@
-import type { CardElement, ChatElement } from 'chat';
+import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 export type { TriggerRecipientsPayload };
 
@@ -178,6 +178,19 @@ export interface AgentContext {
    *   ctx.trigger('team-alert', { to: { type: 'Topic', topicKey: 'support-team' } });
    */
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
+  /**
+   * Add an emoji reaction to any platform message.
+   * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
+   * when the handler completes (same batching contract as `ctx.trigger()`).
+   *
+   * @param messageId - Platform-native message ID to react to (e.g. Slack `ts`).
+   * @param emojiName - Emoji short-name (e.g. `'thumbs_up'`, `'check_mark'`).
+   *
+   * @example
+   *   ctx.addReaction(ctx.reaction!.messageId, 'check_mark');
+   *   await ctx.reply('Done!');
+   */
+  addReaction(messageId: string, emojiName: Emoji): void;
 }
 
 export interface AgentHandlers {
@@ -241,6 +254,12 @@ export interface EditPayload {
   content: ReplyContent;
 }
 
+/** An emoji reaction to be added to a platform message. */
+export interface AddReactionPayload {
+  messageId: string;
+  emojiName: Emoji;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -248,6 +267,7 @@ export interface AgentReplyPayload {
   edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+  addReactions?: AddReactionPayload[];
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */
