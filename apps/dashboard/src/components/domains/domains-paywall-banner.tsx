@@ -62,7 +62,7 @@ export function DomainsPaywallBanner() {
   );
 }
 
-function DomainsIllustrationSvg() {
+export function DomainsIllustrationSvg() {
   const id = useId();
   const g = (name: string) => `${id}-${name}`;
 
