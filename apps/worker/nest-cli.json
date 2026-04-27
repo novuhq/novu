@@ -21,10 +21,6 @@
         "outDir": "dist"
       },
       {
-        "include": ".env.test",
-        "outDir": "dist"
-      },
-      {
         "include": ".env.production",
         "outDir": "dist"
       }
