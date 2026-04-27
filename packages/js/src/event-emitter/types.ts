@@ -5,6 +5,7 @@ import type {
   DeleteChannelConnectionArgs,
   DeleteChannelEndpointArgs,
   GenerateChatOAuthUrlArgs,
+  GenerateLinkUserOAuthUrlArgs,
   GetChannelConnectionArgs,
   GetChannelEndpointArgs,
   ListChannelConnectionsArgs,
@@ -140,6 +141,11 @@ type ChannelConnectionGetEvents = BaseEvents<
 >;
 type ChannelConnectionDeleteEvents = BaseEvents<'channel-connection.delete', DeleteChannelConnectionArgs, void>;
 
+type ChannelEndpointOAuthUrlEvents = BaseEvents<
+  'channel-endpoint.oauth-url',
+  GenerateLinkUserOAuthUrlArgs,
+  { url: string }
+>;
 type ChannelEndpointsFetchEvents = BaseEvents<
   'channel-endpoints.list',
   ListChannelEndpointsArgs,
@@ -204,6 +210,7 @@ export type Events = SessionInitializeEvents &
   ChannelConnectionsFetchEvents &
   ChannelConnectionGetEvents &
   ChannelConnectionDeleteEvents &
+  ChannelEndpointOAuthUrlEvents &
   ChannelEndpointsFetchEvents &
   ChannelEndpointGetEvents &
   ChannelEndpointCreateEvents &

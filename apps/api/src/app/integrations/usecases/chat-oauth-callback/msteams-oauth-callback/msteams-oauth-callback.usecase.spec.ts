@@ -146,7 +146,13 @@ describe('MsTeamsOauthCallback', () => {
         state,
       });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(BadRequestException, 'Admin consent was not granted');
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected BadRequestException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.equal('Admin consent was not granted');
+      }
     });
 
     it('should chain a link_user redirect when autoLinkUser=true and subscriberId are present in the state', async () => {
@@ -284,10 +290,13 @@ describe('MsTeamsOauthCallback', () => {
 
       const command = MsTeamsOauthCallbackCommand.create({ state });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(
-        BadRequestException,
-        'Missing tenant parameter from MS Teams admin consent'
-      );
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected BadRequestException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.equal('Missing tenant parameter from MS Teams admin consent');
+      }
     });
   });
 
@@ -482,19 +491,25 @@ describe('MsTeamsOauthCallback', () => {
         state,
       });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(
-        BadRequestException,
-        'subscriberId is required for link_user mode'
-      );
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected BadRequestException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.equal('subscriberId is required for link_user mode');
+      }
     });
 
     it('should throw if providerCode is missing in link_user mode', async () => {
       const command = MsTeamsOauthCallbackCommand.create({ state: buildLinkUserState() });
 
-      await expect(usecase.execute(command)).to.be.rejectedWith(
-        BadRequestException,
-        'Missing authorization code for link_user mode'
-      );
+      try {
+        await usecase.execute(command);
+        expect.fail('Expected BadRequestException but none was thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.equal('Missing authorization code for link_user mode');
+      }
     });
   });
 });
