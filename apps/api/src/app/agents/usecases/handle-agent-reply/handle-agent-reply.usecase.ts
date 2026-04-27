@@ -81,7 +81,7 @@ export class HandleAgentReply {
     }
 
     if (command.addReactions?.length) {
-      const results = await Promise.allSettled(
+      await Promise.allSettled(
         command.addReactions.map((r) =>
           this.chatSdkService.reactToMessage(
             conversation._agentId,
@@ -93,15 +93,6 @@ export class HandleAgentReply {
           )
         )
       );
-
-      results.forEach((result, i) => {
-        if (result.status === 'rejected') {
-          this.logger.warn(
-            { err: result.reason, reaction: command.addReactions![i], agentIdentifier: command.agentIdentifier },
-            `[agent:${command.agentIdentifier}] Failed to add reaction`
-          );
-        }
-      });
     }
 
     if (command.resolve) {
