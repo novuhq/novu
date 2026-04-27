@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-export const MsTeamsColored = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
+export const MsTeamsColored = (props?: JSX.SvgSVGAttributes<SVGSVGElement>) => {
   return (
     <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path fill="#7B83EB" d="M16.901 10.757a4.589 4.589 0 1 0 0-9.177 4.589 4.589 0 0 0 0 9.177Z" />
