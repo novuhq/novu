@@ -8,6 +8,8 @@ import {
   initNovuClassSdkInternalAuth,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
+const NS_UNRESOLVABLE_CODE = 'ns_unresolvable';
+
 describe('Domain DNS diagnose API - /v1/domains/:domain/diagnose #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
@@ -46,5 +48,7 @@ describe('Domain DNS diagnose API - /v1/domains/:domain/diagnose #novu-v2', () =
     expect(diagnosis.checks.length).to.be.at.least(1);
     expect(diagnosis.issues).to.be.an('array');
     expect(diagnosis.checks.every((c) => typeof c.latencyMs === 'number')).to.equal(true);
+    expect(diagnosis.checks.some((c) => c.code === NS_UNRESOLVABLE_CODE)).to.equal(false);
+    expect(diagnosis.issues.some((issue) => issue.code === NS_UNRESOLVABLE_CODE)).to.equal(false);
   });
 });

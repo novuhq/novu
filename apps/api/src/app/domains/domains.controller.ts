@@ -195,7 +195,7 @@ export class DomainsController {
   @ApiOperation({
     summary: 'Diagnose inbound DNS for a domain',
     description:
-      'Runs live DNS checks (MX correctness, apex CNAME collision, NS delegation, and common DNS blocklists for the Novu mail host). Returns structured issues with plain-language fixes.',
+      'Runs live DNS checks for inbound email readiness (MX correctness, apex CNAME collision, and common DNS blocklists for the Novu mail host). Returns structured issues with plain-language fixes.',
   })
   @ApiResponse(DiagnoseDomainResponseDto, 200)
   @SdkMethodName('diagnose')

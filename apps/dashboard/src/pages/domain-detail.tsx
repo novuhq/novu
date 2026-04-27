@@ -1,4 +1,4 @@
-import { DomainStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { DomainStatusEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -18,6 +18,12 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { DiagnoseDomainResponse } from '@/api/domains';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DashboardLayout } from '@/components/dashboard-layout';
+import {
+  DetailsSidebar,
+  DetailsSidebarCard,
+  DetailsSidebarRow,
+  ExpandableDetailsTextarea,
+} from '@/components/details-sidebar';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
 import { RetryVerificationIcon } from '@/components/icons/retry-verification';
 import { PageMeta } from '@/components/page-meta';
@@ -41,13 +47,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { Textarea } from '@/components/primitives/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDiagnoseDomain } from '@/hooks/use-diagnose-domain';
 import {
   useFetchDomain,
   useFetchDomainAutoConfigure,
@@ -57,11 +63,35 @@ import {
   useUpdateDomain,
   useVerifyDomain,
 } from '@/hooks/use-domain';
-import { useDiagnoseDomain } from '@/hooks/use-diagnose-domain';
 import { useDeleteDomain } from '@/hooks/use-domains';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { parseDomainMetadataJson } from '@/utils/domain-metadata';
 import { buildRoute, ROUTES } from '@/utils/routes';
+
+const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+};
+
+function formatLongDate(dateStr: string): string {
+  const formatted = new Date(dateStr).toLocaleDateString('en-US', DATE_FORMAT_OPTIONS);
+
+  return formatted;
+}
+
+function formatMetadataDraft(data?: Record<string, string>): string {
+  return JSON.stringify(data ?? {}, null, 2);
+}
+
+function normalizeMetadata(data?: Record<string, string>): string {
+  const sortedData = Object.fromEntries(
+    Object.entries(data ?? {}).sort(([left], [right]) => left.localeCompare(right))
+  );
+
+  return JSON.stringify(sortedData);
+}
 
 function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
   if (status === DomainStatusEnum.VERIFIED) {
@@ -102,6 +132,7 @@ function MxRecordStatusBadge({ configured }: { configured: boolean }) {
 export function DomainDetailPage() {
   const { domain: domainParam } = useParams<{ domain: string }>();
   const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -132,10 +163,12 @@ export function DomainDetailPage() {
   const [hasDomainConnectFailure, setHasDomainConnectFailure] = useState(false);
   const [domainConnectApplyUrl, setDomainConnectApplyUrl] = useState<string | undefined>();
   const [metadataDraft, setMetadataDraft] = useState('{}');
+  const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
   const [diagnoseResult, setDiagnoseResult] = useState<DiagnoseDomainResponse | null>(null);
   const domainConnectReturnStatus = searchParams.get('domainConnect');
   const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
   const domainConnectProviderName = domainConnectStatus?.providerName ?? 'your DNS provider';
+  const canWriteDomains = has({ permission: PermissionsEnum.ORG_SETTINGS_WRITE });
 
   const domainsHref = currentEnvironment?.slug
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
@@ -152,15 +185,22 @@ export function DomainDetailPage() {
 
   useEffect(() => {
     if (!domain) return;
+    if (isMetadataExpanded) return;
 
-    setMetadataDraft(JSON.stringify(domain.data ?? {}, null, 2));
-  }, [domain]);
+    setMetadataDraft(formatMetadataDraft(domain.data));
+  }, [domain, isMetadataExpanded]);
 
   const handleSaveMetadata = async () => {
     const parsed = parseDomainMetadataJson(metadataDraft);
 
     if (!parsed.ok) {
       showErrorToast(parsed.message);
+
+      throw new Error(parsed.message);
+    }
+
+    if (!domain || normalizeMetadata(parsed.data) === normalizeMetadata(domain.data)) {
+      setMetadataDraft(formatMetadataDraft(parsed.data));
 
       return;
     }
@@ -170,6 +210,8 @@ export function DomainDetailPage() {
       showSuccessToast('Domain metadata saved.');
     } catch {
       showErrorToast('Failed to save metadata.');
+
+      throw new Error('Failed to save metadata.');
     }
   };
 
@@ -333,7 +375,7 @@ export function DomainDetailPage() {
                 variant="secondary"
                 size="xs"
                 onClick={handleVerify}
-                disabled={isFetching || isLoading}
+                disabled={!canWriteDomains || isFetching || isLoading}
                 className="text-[12px] leading-[16px]"
               >
                 <div className="flex h-4 items-center">
@@ -360,7 +402,7 @@ export function DomainDetailPage() {
                     onClick={() => {
                       setTimeout(() => handleRequestDelete(), 0);
                     }}
-                    disabled={deleteDomain.isPending || !domain}
+                    disabled={!canWriteDomains || deleteDomain.isPending || !domain}
                   >
                     Delete domain
                   </DropdownMenuItem>
@@ -375,88 +417,65 @@ export function DomainDetailPage() {
           <div className="flex gap-0 h-full">
             {/* Left: metadata */}
             <div className="w-[340px] shrink-0 px-6 py-8">
-              <div className="flex w-[300px] flex-col gap-2.5">
-                <div className="bg-bg-weak rounded-4 p-1">
-                  <MetaRow label="Status">
+              <DetailsSidebar>
+                <DetailsSidebarCard>
+                  <DetailsSidebarRow label="Status">
                     {isLoading ? (
                       <Skeleton className="h-5 w-28" />
                     ) : domain ? (
                       <DomainStatusBadge status={domain.status} />
                     ) : null}
-                  </MetaRow>
-                  <MetaRow label="Domain">
+                  </DetailsSidebarRow>
+                  <DetailsSidebarRow label="Domain">
                     {isLoading ? (
                       <Skeleton className="h-4 w-32" />
                     ) : (
                       <span className="text-text-sub text-label-xs">{domain?.name}</span>
                     )}
-                  </MetaRow>
-                  <MetaRow label="Provider">
+                  </DetailsSidebarRow>
+                  <DetailsSidebarRow label="Provider">
                     {isLoading ? <Skeleton className="h-4 w-24" /> : <ProviderValue provider={domain?.dnsProvider} />}
-                  </MetaRow>
-                  <MetaRow label="Created on">
+                  </DetailsSidebarRow>
+                  <DetailsSidebarRow label="Created on">
                     {isLoading ? (
                       <Skeleton className="h-4 w-28" />
                     ) : domain ? (
-                      <span className="text-text-sub font-code text-code-xs">
-                        {new Date(domain.createdAt).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
+                      <TimeDisplayHoverCard date={domain.createdAt}>
+                        <span className="text-text-sub font-code text-code-xs">{formatLongDate(domain.createdAt)}</span>
+                      </TimeDisplayHoverCard>
                     ) : null}
-                  </MetaRow>
-                </div>
+                  </DetailsSidebarRow>
+
+                  {!isLoading && domain && (
+                    <ExpandableDetailsTextarea
+                      label="Data"
+                      value={metadataDraft}
+                      onChange={setMetadataDraft}
+                      onPersist={handleSaveMetadata}
+                      onBeforeExpand={() => setMetadataDraft(formatMetadataDraft(domain.data))}
+                      onExpandedChange={setIsMetadataExpanded}
+                      placeholder={'{\n  "team": "support"\n}'}
+                      disabled={!canWriteDomains || updateDomainMeta.isPending}
+                      isPersisting={updateDomainMeta.isPending}
+                      spellCheck={false}
+                      textareaClassName="font-code text-code-xs min-h-[120px] resize-y"
+                    />
+                  )}
+                </DetailsSidebarCard>
 
                 {!isLoading && domain && (
-                  <p className="text-text-soft text-label-xs">
-                    Last updated{' '}
+                  <p className="text-label-xs font-medium">
+                    <span className="text-text-soft">Last updated </span>
                     <span className="text-text-sub">
                       {formatDistanceToNow(new Date(domain.updatedAt), { addSuffix: true })}
                     </span>
                   </p>
                 )}
-
-                <Separator />
-
-                {!isLoading && domain && (
-                  <div className="space-y-2">
-                    <p className="text-text-strong text-label-xs font-medium">Metadata</p>
-                    <p className="text-text-soft text-2xs leading-snug">
-                      Optional key-value pairs (string values only). Up to 10 keys; combined length of keys and values
-                      ≤ 500 characters.
-                    </p>
-                    <Textarea
-                      value={metadataDraft}
-                      onChange={(e) => setMetadataDraft(e.target.value)}
-                      className="font-code text-code-xs min-h-[120px] resize-y"
-                      spellCheck={false}
-                    />
-                    <Button
-                      size="xs"
-                      variant="secondary"
-                      mode="outline"
-                      type="button"
-                      onClick={handleSaveMetadata}
-                      isLoading={updateDomainMeta.isPending}
-                    >
-                      Save metadata
-                    </Button>
-                  </div>
-                )}
-              </div>
+              </DetailsSidebar>
             </div>
 
             {/* Right: warning + DNS records + routing */}
             <div className="flex-1 overflow-auto px-6 py-8 space-y-6">
-              {!isLoading && domain?.status === DomainStatusEnum.VERIFIED && (
-                <InlineToast
-                  variant="success"
-                  title="Connected:"
-                  description="Inbound email is ready for this domain."
-                />
-              )}
               {!isLoading && hasDomainConnectFailure && domain?.status === DomainStatusEnum.PENDING && (
                 <InlineToast
                   variant="error"
@@ -517,7 +536,7 @@ export function DomainDetailPage() {
                       <button
                         className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors disabled:opacity-50"
                         onClick={handleDiagnoseDns}
-                        disabled={!domain || diagnoseDomainHook.isPending}
+                        disabled={!canWriteDomains || !domain || diagnoseDomainHook.isPending}
                         type="button"
                       >
                         <RiPulseLine className="size-3" />
@@ -526,7 +545,7 @@ export function DomainDetailPage() {
                       <button
                         className="text-foreground-500 hover:text-foreground-900 flex items-center gap-1 text-xs transition-colors"
                         onClick={handleVerify}
-                        disabled={isFetching}
+                        disabled={!canWriteDomains || isFetching}
                         type="button"
                       >
                         <RiRefreshLine className="size-3" />
@@ -549,6 +568,7 @@ export function DomainDetailPage() {
                         size="xs"
                         type="button"
                         onClick={handleAutoConfigure}
+                        disabled={!canWriteDomains}
                         isLoading={startDomainAutoConfigure.isPending}
                       >
                         Continue to {domainConnectProviderName}
@@ -660,14 +680,15 @@ export function DomainDetailPage() {
                     <button
                       type="button"
                       onClick={() => routingRef.current?.startAdding()}
-                      className="text-foreground-900 hover:text-foreground-600 flex items-center gap-1 text-xs font-medium transition-colors"
+                      disabled={!canWriteDomains}
+                      className="text-foreground-900 hover:text-foreground-600 flex items-center gap-1 text-xs font-medium transition-colors disabled:text-text-disabled"
                     >
                       <RiAddLine className="size-3" />
                       Add new route
                     </button>
                   }
                 >
-                  <DomainRouting ref={routingRef} domain={domain} />
+                  <DomainRouting ref={routingRef} domain={domain} canWrite={canWriteDomains} />
                 </CollapsibleSection>
               )}
             </div>
@@ -691,17 +712,6 @@ export function DomainDetailPage() {
         isLoading={deleteDomain.isPending}
       />
     </DashboardLayout>
-  );
-}
-
-function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="py-1">
-      <div className="flex h-6 items-center justify-between gap-4 px-1.5">
-        <p className="text-text-soft text-label-xs shrink-0">{label}</p>
-        <div className="flex items-center text-right">{children}</div>
-      </div>
-    </div>
   );
 }
 

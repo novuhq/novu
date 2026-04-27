@@ -52,7 +52,6 @@ export class DiagnoseDomain {
     const issues: DiagnoseDomainResponseDto['issues'] = [];
 
     const mxResult = await this.runMxChecks(domain.name, expectedExchange, checks, issues);
-    await this.runNsCheck(domain.name, checks, issues);
     await this.runApexCnameCheck(domain.name, checks, issues);
     await this.runDnsblCheck(expectedExchange, checks, issues, mxResult);
 
@@ -204,45 +203,6 @@ export class DiagnoseDomain {
     }
 
     return records;
-  }
-
-  private async runNsCheck(
-    lookupDomain: string,
-    checks: DiagnoseDomainResponseDto['checks'],
-    issues: DiagnoseDomainResponseDto['issues']
-  ): Promise<void> {
-    const started = Date.now();
-
-    try {
-      await withDnsTimeout(dnsPromises.resolveNs(lookupDomain));
-      checks.push({
-        code: DomainDiagnosticCodeEnum.NS_UNRESOLVABLE,
-        status: DomainDiagnosticCheckStatusEnum.PASS,
-        latencyMs: Date.now() - started,
-      });
-    } catch (error) {
-      if (isExpectedDnsLookupMiss(error)) {
-        checks.push({
-          code: DomainDiagnosticCodeEnum.NS_UNRESOLVABLE,
-          status: DomainDiagnosticCheckStatusEnum.FAIL,
-          latencyMs: Date.now() - started,
-        });
-        issues.push({
-          code: DomainDiagnosticCodeEnum.NS_UNRESOLVABLE,
-          severity: DomainDiagnosticSeverityEnum.WARN,
-          message: `No NS records were returned for ${lookupDomain}.`,
-          fix: 'Confirm the domain is delegated correctly at your registrar.',
-        });
-
-        return;
-      }
-
-      checks.push({
-        code: DomainDiagnosticCodeEnum.NS_UNRESOLVABLE,
-        status: DomainDiagnosticCheckStatusEnum.SKIPPED,
-        latencyMs: Date.now() - started,
-      });
-    }
   }
 
   private async runApexCnameCheck(

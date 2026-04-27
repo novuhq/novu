@@ -18,12 +18,6 @@ import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Checkbox } from '@/components/primitives/checkbox';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/primitives/dropdown-menu';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -31,11 +25,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/primitives/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 import { Input } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { Textarea } from '@/components/primitives/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import { Textarea } from '@/components/primitives/textarea';
 import { useEnvironment } from '@/context/environment/hooks';
 import {
   useCreateDomainRoute,
@@ -64,6 +64,7 @@ const DEFAULT_ROUTE_FORM: RouteFormState = {
 
 type DomainRoutingProps = {
   domain: DomainResponse;
+  canWrite?: boolean;
 };
 
 export type DomainRoutingHandle = {
@@ -126,89 +127,89 @@ function InlineRouteForm({
       <TableRow className="[&>td]:border-0">
         {/* Address */}
         <TableCell className="px-3 py-4">
-        <div className="flex items-center gap-1">
-          <Input
-            className="h-7 w-28 text-sm"
-            placeholder="support"
-            value={form.address}
-            disabled={isAddressLocked}
-            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-          />
-          <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
-        </div>
+          <div className="flex items-center gap-1">
+            <Input
+              className="h-7 w-28 text-sm"
+              placeholder="support"
+              value={form.address}
+              disabled={isAddressLocked}
+              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+            />
+            <span className="text-foreground-400 shrink-0 text-xs">@{domainName}</span>
+          </div>
         </TableCell>
 
         {/* Destination */}
         <TableCell className="px-3 py-4">
-        <div className="flex items-center gap-2">
-          <Select
-            value={form.type}
-            onValueChange={(v) =>
-              setForm((f) => ({
-                ...f,
-                type: v as DomainRouteTypeEnum,
-                agentId: v === DomainRouteTypeEnum.WEBHOOK ? '' : f.agentId,
-              }))
-            }
-          >
-            <SelectTrigger className="h-7 w-28 text-sm" size="2xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={DomainRouteTypeEnum.AGENT}>Agent</SelectItem>
-              <SelectItem value={DomainRouteTypeEnum.WEBHOOK}>Webhook</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={form.agentId}
-            onValueChange={(v) => setForm((f) => ({ ...f, agentId: v }))}
-            disabled={form.type !== DomainRouteTypeEnum.AGENT}
-          >
-            <SelectTrigger
-              className={`h-7 w-40 text-sm ${form.type === DomainRouteTypeEnum.AGENT ? '' : 'invisible'}`}
-              size="2xs"
-              aria-hidden={form.type !== DomainRouteTypeEnum.AGENT}
-              tabIndex={form.type === DomainRouteTypeEnum.AGENT ? undefined : -1}
+          <div className="flex items-center gap-2">
+            <Select
+              value={form.type}
+              onValueChange={(v) =>
+                setForm((f) => ({
+                  ...f,
+                  type: v as DomainRouteTypeEnum,
+                  agentId: v === DomainRouteTypeEnum.WEBHOOK ? '' : f.agentId,
+                }))
+              }
             >
-              <SelectValue placeholder="Select agent" />
-            </SelectTrigger>
-            <SelectContent>
-              {agentOptions.map((agent) => (
-                <SelectItem key={agent._id} value={agent.identifier}>
-                  {agent.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+              <SelectTrigger className="h-7 w-28 text-sm" size="2xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DomainRouteTypeEnum.AGENT}>Agent</SelectItem>
+                <SelectItem value={DomainRouteTypeEnum.WEBHOOK}>Webhook</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={form.agentId}
+              onValueChange={(v) => setForm((f) => ({ ...f, agentId: v }))}
+              disabled={form.type !== DomainRouteTypeEnum.AGENT}
+            >
+              <SelectTrigger
+                className={`h-7 w-40 text-sm ${form.type === DomainRouteTypeEnum.AGENT ? '' : 'invisible'}`}
+                size="2xs"
+                aria-hidden={form.type !== DomainRouteTypeEnum.AGENT}
+                tabIndex={form.type === DomainRouteTypeEnum.AGENT ? undefined : -1}
+              >
+                <SelectValue placeholder="Select agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agentOptions.map((agent) => (
+                  <SelectItem key={agent._id} value={agent.identifier}>
+                    {agent.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </TableCell>
 
         {/* Actions */}
         <TableCell className="px-3 py-4">
-        <div className="flex items-center gap-1">
-          <Button
-            size="xs"
-            mode="ghost"
-            variant="secondary"
-            className="size-7 text-success"
-            onClick={handleSave}
-            disabled={isSaving}
-            aria-label="Save route"
-          >
-            ✓
-          </Button>
-          <Button
-            size="xs"
-            mode="ghost"
-            variant="secondary"
-            className="text-destructive size-7"
-            onClick={onCancel}
-            aria-label="Cancel editing"
-          >
-            ✕
-          </Button>
-        </div>
+          <div className="flex items-center gap-1">
+            <Button
+              size="xs"
+              mode="ghost"
+              variant="secondary"
+              className="size-7 text-success"
+              onClick={handleSave}
+              disabled={isSaving}
+              aria-label="Save route"
+            >
+              ✓
+            </Button>
+            <Button
+              size="xs"
+              mode="ghost"
+              variant="secondary"
+              className="text-destructive size-7"
+              onClick={onCancel}
+              aria-label="Cancel editing"
+            >
+              ✕
+            </Button>
+          </div>
         </TableCell>
 
         <TableCell className="w-12 px-3 py-4 text-right">
@@ -226,7 +227,9 @@ function InlineRouteForm({
             spellCheck={false}
             placeholder="{}"
           />
-          <p className="text-foreground-400 text-2xs">String keys and string values only. Max 10 keys; 500 characters total.</p>
+          <p className="text-foreground-400 text-2xs">
+            String keys and string values only. Max 10 keys; 500 characters total.
+          </p>
         </TableCell>
       </TableRow>
     </>
@@ -241,6 +244,7 @@ type ExistingRouteRowProps = {
   onEdit: (address: string) => void;
   onSendTest: (route: DomainRouteResponse) => void;
   isDeleting: boolean;
+  canWrite: boolean;
 };
 
 function ExistingRouteRow({
@@ -251,6 +255,7 @@ function ExistingRouteRow({
   onEdit,
   onSendTest,
   isDeleting,
+  canWrite,
 }: ExistingRouteRowProps) {
   const isWebhook = route.type === DomainRouteTypeEnum.WEBHOOK;
   const agentName = isWebhook ? null : (agentOptions.find((a) => a._id === route.agentId)?.name ?? route.agentId);
@@ -282,8 +287,10 @@ function ExistingRouteRow({
             <CompactButton icon={RiMore2Fill} variant="ghost" className="h-8 w-8 p-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => onEdit(route.address)}>Edit</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onSendTest(route)}>
+            <DropdownMenuItem onSelect={() => onEdit(route.address)} disabled={!canWrite}>
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSendTest(route)} disabled={!canWrite}>
               <span className="flex items-center gap-1.5">
                 <RiSendPlaneLine className="size-3.5 shrink-0" />
                 Send test
@@ -292,7 +299,7 @@ function ExistingRouteRow({
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onSelect={() => onDelete(route.address)}
-              disabled={isDeleting}
+              disabled={!canWrite || isDeleting}
             >
               Delete
             </DropdownMenuItem>
@@ -507,7 +514,7 @@ function WildcardRouteHint({ domainName, onConfigureClick, onDismiss }: Wildcard
 }
 
 export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>(function DomainRouting(
-  { domain },
+  { domain, canWrite = true },
   ref
 ) {
   const { currentEnvironment } = useEnvironment();
@@ -528,10 +535,13 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const [testDialogRoute, setTestDialogRoute] = useState<DomainRouteResponse | null>(null);
   const [isWildcardHintDismissed, setIsWildcardHintDismissed] = useState(false);
   const routes = routesResponse?.data ?? [];
-  const isMutating =
-    createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
+  const isMutating = createDomainRoute.isPending || updateDomainRoute.isPending || deleteDomainRoute.isPending;
 
   const startAdding = (initialValues?: RouteFormState) => {
+    if (!canWrite) {
+      return;
+    }
+
     setAddInitialValues(initialValues);
     setIsAdding(true);
     setEditingAddress(null);
@@ -545,6 +555,10 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   useImperativeHandle(ref, () => ({ startAdding: () => startAdding() }));
 
   const handleCreate = async (values: RouteFormState) => {
+    if (!canWrite) {
+      return;
+    }
+
     const parsed = parseDomainMetadataJson(values.dataJson);
 
     if (!parsed.ok) {
@@ -567,6 +581,10 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   };
 
   const handleUpdate = async (address: string, values: RouteFormState) => {
+    if (!canWrite) {
+      return;
+    }
+
     const parsed = parseDomainMetadataJson(values.dataJson);
 
     if (!parsed.ok) {
@@ -591,6 +609,10 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   };
 
   const handleDelete = async (address: string) => {
+    if (!canWrite) {
+      return;
+    }
+
     try {
       await deleteDomainRoute.mutateAsync(address);
     } catch {
@@ -603,7 +625,8 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   const hasWildcardWebhookRoute = routes.some(
     (route) => route.address === '*' && route.type === DomainRouteTypeEnum.WEBHOOK
   );
-  const shouldShowWildcardHint = !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
+  const shouldShowWildcardHint =
+    canWrite && !isWildcardHintDismissed && hasWebhookRoute && !hasWildcardWebhookRoute && !isAdding;
   const isEmpty = routes.length === 0 && !isAdding;
 
   return (
@@ -649,6 +672,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                   onEdit={setEditingAddress}
                   onSendTest={setTestDialogRoute}
                   isDeleting={isMutating}
+                  canWrite={canWrite}
                 />
               )
             )}
@@ -682,6 +706,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                       variant="secondary"
                       className="mx-auto"
                       onClick={() => startAdding()}
+                      disabled={!canWrite}
                     >
                       <RiAddLine className="size-4" />
                       Add new route
