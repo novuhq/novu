@@ -151,6 +151,9 @@ export const SlackLinkUser = (props: SlackLinkUserProps) => {
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
         startPolling();
+      } else {
+        setActionLoading(false);
+        props.onLinkError?.(new Error('OAuth URL was not returned. Please try again.'));
       }
     }
   };

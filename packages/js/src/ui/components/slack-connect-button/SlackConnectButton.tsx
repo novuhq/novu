@@ -150,6 +150,9 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
         startPolling();
+      } else {
+        setActionLoading(false);
+        props.onConnectError?.(new Error('OAuth URL was not returned. Please try again.'));
       }
     }
   };

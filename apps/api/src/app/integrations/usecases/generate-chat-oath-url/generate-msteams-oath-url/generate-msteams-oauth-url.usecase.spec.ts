@@ -117,6 +117,21 @@ describe('GenerateMsTeamsOauthUrl', () => {
       }
     });
 
+    it('should throw BadRequestException when only context is provided (no subscriberId) for link_user mode', async () => {
+      const command = GenerateMsTeamsOauthUrlCommand.create({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        context: { workflowId: 'wf-1', stepId: 'step-1' } as any,
+        integration: buildMockIntegration(),
+        mode: 'link_user',
+      });
+
+      await expect(usecase.execute(command)).to.be.rejectedWith(
+        BadRequestException,
+        'subscriberId is required for link_user mode'
+      );
+    });
+
     it('should throw NotFoundException when tenantId is missing for link_user mode', async () => {
       const command = GenerateMsTeamsOauthUrlCommand.create({
         environmentId: MOCK_ENVIRONMENT_ID,

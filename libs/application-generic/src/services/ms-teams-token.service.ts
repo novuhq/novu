@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { createHash } from 'crypto';
 import { PinoLogger } from '../logging';
 import { CachedResponse } from './cache/interceptors/cached-response.decorator';
+
+function shortSecretHash(secret: string): string {
+  return createHash('sha256').update(secret).digest('hex').slice(0, 8);
+}
 
 const MS_AAD_TOKEN_URL = 'https://login.microsoftonline.com';
 const BOT_FRAMEWORK_SCOPE = 'https://api.botframework.com/.default';
@@ -17,11 +22,13 @@ export class MsTeamsTokenService {
   /**
    * Acquires an app-only Microsoft Graph token using the client credentials flow.
    * Required permissions: AppCatalog.Read.All, TeamsAppInstallation.ReadWriteSelfForUser.All
-   * Cache key: msteams:graph-token:{clientId}:{appTenantId}, TTL 55 minutes.
+   * Cache key: msteams:graph-token:{clientId}:{appTenantId}:{secretHash}, TTL 55 minutes.
+   * The secretHash (first 8 hex chars of SHA-256) ensures cache entries are
+   * automatically invalidated after a secret rotation.
    */
   @CachedResponse<string>({
-    builder: (clientId: string, _secretKey: string, appTenantId: string) =>
-      `msteams:graph-token:${clientId}:${appTenantId}`,
+    builder: (clientId: string, secretKey: string, appTenantId: string) =>
+      `msteams:graph-token:${clientId}:${appTenantId}:${shortSecretHash(secretKey)}`,
     options: {
       ttl: TOKEN_TTL_SECONDS,
       skipSaveToCache: (token: string) => token === '',
@@ -34,12 +41,12 @@ export class MsTeamsTokenService {
   /**
    * Acquires a Bot Framework token using the client credentials flow.
    * Migrated from ResolveChannelEndpoints.getMsTeamsBotToken.
-   * Cache key: msteams:bot-token:{clientId}:{appTenantId}, TTL 55 minutes.
+   * Cache key: msteams:bot-token:{clientId}:{appTenantId}:{secretHash}, TTL 55 minutes.
    * Returns empty string on failure to allow graceful degradation in the send path.
    */
   @CachedResponse<string>({
-    builder: (clientId: string, _secretKey: string, appTenantId: string) =>
-      `msteams:bot-token:${clientId}:${appTenantId}`,
+    builder: (clientId: string, secretKey: string, appTenantId: string) =>
+      `msteams:bot-token:${clientId}:${appTenantId}:${shortSecretHash(secretKey)}`,
     options: {
       ttl: TOKEN_TTL_SECONDS,
       skipSaveToCache: (token: string) => token === '',
@@ -76,6 +83,7 @@ export class MsTeamsTokenService {
 
     const response = await axios.post<{ access_token: string; expires_in: number }>(tokenUrl, body.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      timeout: 10000,
     });
 
     return response.data.access_token;

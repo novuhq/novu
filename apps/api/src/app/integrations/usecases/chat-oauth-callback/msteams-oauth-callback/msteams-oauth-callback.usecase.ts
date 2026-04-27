@@ -250,7 +250,12 @@ export class MsTeamsOauthCallback {
   }
 
   private buildErrorHtml(message: string): string {
-    const escaped = message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const escaped = message
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
 
     return `<!DOCTYPE html>
 <html lang="en">

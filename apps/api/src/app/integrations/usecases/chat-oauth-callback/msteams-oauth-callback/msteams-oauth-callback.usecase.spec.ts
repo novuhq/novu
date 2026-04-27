@@ -316,7 +316,7 @@ describe('MsTeamsOauthCallback', () => {
       expect(result.result).to.include('AppCatalog.Read.All');
     });
 
-    it('should throw if id_token is missing from token response', async () => {
+    it('should return error HTML when id_token is missing from token response', async () => {
       axiosPost.onFirstCall().resolves({ data: { access_token: 'at-123' } });
 
       const command = MsTeamsOauthCallbackCommand.create({
@@ -330,7 +330,7 @@ describe('MsTeamsOauthCallback', () => {
       expect(result.result).to.include('MS Teams Bot Installation Failed');
     });
 
-    it('should throw if oid claim is absent from id_token', async () => {
+    it('should return error HTML when oid claim is absent from id_token', async () => {
       const idToken = buildIdToken({ sub: 'sub-123', tid: MOCK_TENANT_ID });
       axiosPost.onFirstCall().resolves({ data: { id_token: idToken, access_token: 'at-123' } });
 

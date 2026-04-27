@@ -61,6 +61,11 @@ export class GenerateMsTeamsOauthUrl {
     );
 
     if (command.mode === 'link_user') {
+      // the callback requires subscriberId to be present
+      if (!command.subscriberId) {
+        throw new BadRequestException('subscriberId is required for link_user mode');
+      }
+
       const { tenantId } = credentials;
 
       if (!tenantId) {

@@ -28,8 +28,10 @@ export type MsTeamsConnectButtonProps = {
   connectedLabel?: string;
 };
 
-const POLL_INTERVAL_MS = 2500;
-const POLL_TIMEOUT_MS = 120_000;
+const POLL_INITIAL_INTERVAL_MS = 2_500; // 2.5 seconds
+const POLL_MAX_INTERVAL_MS = 30_000; // 30 seconds
+const POLL_BACKOFF_FACTOR = 1.5;
+const POLL_TIMEOUT_MS = 300_000; // 5 minutes
 
 export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   const style = useStyle();
@@ -61,55 +63,56 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   const isConnected = () => !!connection();
   const isLoading = () => loading() || actionLoading();
 
-  const intervalIdRef: { current: ReturnType<typeof setInterval> | null } = { current: null };
+  const timeoutIdRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
 
   onCleanup(() => {
-    if (intervalIdRef.current !== null) {
-      clearInterval(intervalIdRef.current);
-      intervalIdRef.current = null;
+    if (timeoutIdRef.current !== null) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
     }
   });
 
   const startPolling = () => {
-    if (intervalIdRef.current !== null) {
-      clearInterval(intervalIdRef.current);
-      intervalIdRef.current = null;
+    if (timeoutIdRef.current !== null) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
     }
 
     const startedAt = Date.now();
 
-    intervalIdRef.current = setInterval(async () => {
-      try {
-        const response = await novuAccessor().channelConnections.get({
-          identifier: connectionIdentifier(),
-        });
+    const schedulePoll = (intervalMs: number) => {
+      timeoutIdRef.current = setTimeout(async () => {
+        try {
+          const response = await novuAccessor().channelConnections.get({
+            identifier: connectionIdentifier(),
+          });
 
-        if (response.data) {
-          if (intervalIdRef.current !== null) {
-            clearInterval(intervalIdRef.current);
-            intervalIdRef.current = null;
+          if (response.data) {
+            timeoutIdRef.current = null;
+            setActionLoading(false);
+            mutate(response.data);
+            props.onConnectSuccess?.(connectionIdentifier());
+
+            return;
           }
+        } catch {
+          // ignore transient errors during polling
+        }
 
+        if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+          timeoutIdRef.current = null;
           setActionLoading(false);
-          mutate(response.data);
-          props.onConnectSuccess?.(connectionIdentifier());
+          props.onConnectError?.(new Error('MS Teams OAuth timed out. Please try again.'));
 
           return;
         }
-      } catch {
-        // ignore transient errors during polling
-      }
 
-      if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
-        if (intervalIdRef.current !== null) {
-          clearInterval(intervalIdRef.current);
-          intervalIdRef.current = null;
-        }
+        const nextInterval = Math.min(intervalMs * POLL_BACKOFF_FACTOR, POLL_MAX_INTERVAL_MS);
+        schedulePoll(nextInterval);
+      }, intervalMs);
+    };
 
-        setActionLoading(false);
-        props.onConnectError?.(new Error('MS Teams OAuth timed out. Please try again.'));
-      }
-    }, POLL_INTERVAL_MS);
+    schedulePoll(POLL_INITIAL_INTERVAL_MS);
   };
 
   const handleClick = async () => {
@@ -150,6 +153,9 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
         startPolling();
+      } else {
+        setActionLoading(false);
+        props.onConnectError?.(new Error('OAuth URL was not returned. Please try again.'));
       }
     }
   };
