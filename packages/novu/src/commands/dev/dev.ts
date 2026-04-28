@@ -19,6 +19,7 @@ let tunnelClient: NtfrTunnel | null = null;
 
 const WATCHDOG_INTERVAL_MS = 10_000;
 const SLEEP_DRIFT_THRESHOLD_MS = WATCHDOG_INTERVAL_MS * 2.5;
+const TUNNEL_PROBE_INTERVAL_MS = 30_000;
 export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 const { version } = packageJson;
 
@@ -64,6 +65,7 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
 
   if (!parsedOptions.tunnel) {
     startTunnelWatchdog();
+    startTunnelProbe(tunnelOrigin, NOVU_ENDPOINT_PATH, parsedOptions.origin).catch(() => {});
   }
 
   if (NOVU_SECRET_KEY) {
@@ -156,6 +158,25 @@ function createWatchdogTick(getSocket: () => WatchdogSocket | undefined): () => 
 
 function startTunnelWatchdog(): void {
   setInterval(createWatchdogTick(() => tunnelClient?.socket), WATCHDOG_INTERVAL_MS);
+}
+
+async function startTunnelProbe(tunnelOrigin: string, endpointRoute: string, localOrigin: string): Promise<void> {
+  while (true) {
+    await wait(TUNNEL_PROBE_INTERVAL_MS);
+
+    const localHealthy = await tunnelHealthCheck(`${localOrigin}${endpointRoute}`);
+
+    if (!localHealthy) {
+      continue;
+    }
+
+    const tunnelHealthy = await tunnelHealthCheck(`${tunnelOrigin}${endpointRoute}`);
+
+    if (!tunnelHealthy && tunnelClient?.socket) {
+      tunnelClient.socket.addEventListener('open', () => console.log(chalk.green('\n  ✓ Tunnel reconnected')), { once: true });
+      tunnelClient.socket.reconnect();
+    }
+  }
 }
 
 async function createTunnel(localOrigin: string, endpointRoute: string): Promise<string> {
