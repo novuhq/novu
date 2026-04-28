@@ -27,10 +27,8 @@ export function DeprecationBanner() {
     migrationGuideUrl.searchParams.set('org_name', currentOrganization.name);
   }
 
-  const organizationId = currentOrganization?.id || currentOrganization?._id;
-
-  if (organizationId) {
-    migrationGuideUrl.searchParams.set('org_id', organizationId);
+  if (currentOrganization?._id) {
+    migrationGuideUrl.searchParams.set('org_id', currentOrganization?._id);
   }
 
   const MIGRATION_GUIDE_URL = migrationGuideUrl.toString();
