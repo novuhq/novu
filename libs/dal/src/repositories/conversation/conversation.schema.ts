@@ -74,6 +74,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
       type: Schema.Types.Mixed,
       default: {},
     },
+    externalSessionId: {
+      type: Schema.Types.String,
+    },
     messageCount: {
       type: Schema.Types.Number,
       default: 0,

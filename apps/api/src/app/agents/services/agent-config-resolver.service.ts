@@ -2,7 +2,9 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { AnalyticsService, decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  type AgentManagedRuntime,
   AgentRepository,
+  AgentRuntimeEnum,
   ChannelConnectionRepository,
   ICredentialsEntity,
   IntegrationRepository,
@@ -35,6 +37,8 @@ export interface ResolvedAgentConfig {
   agentIdentifier: string;
   integrationIdentifier: string;
   integrationId: string;
+  runtime: AgentRuntimeEnum;
+  managedRuntime?: AgentManagedRuntime;
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   bridgeUrl?: string;
@@ -168,6 +172,8 @@ export class AgentConfigResolver {
       agentIdentifier: agent.identifier,
       integrationIdentifier,
       integrationId: integration._id,
+      runtime: agent.runtime ?? AgentRuntimeEnum.BRIDGE,
+      managedRuntime: agent.managedRuntime,
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,

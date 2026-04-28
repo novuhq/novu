@@ -6,16 +6,22 @@ import type { EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { AgentRuntimeFactory } from '../runtimes/agent-runtime.factory';
+import { MissingClaudeManagedCredentialsError } from '../runtimes/claude-managed.runtime';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
+import { type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 
 Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
+
+const ONBOARDING_NO_CLAUDE_CREDENTIALS_REPLY_MARKDOWN = `*You're connected to Novu*
+
+Your bot is linked successfully. Add your Anthropic API key in the *Novu dashboard* to finish connecting Claude Managed Agents.`;
 
 export interface InboundReactionEvent {
   emoji: EmojiValue;
@@ -32,7 +38,7 @@ export class AgentInboundHandler {
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
-    private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly agentRuntimeFactory: AgentRuntimeFactory,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly analyticsService: AnalyticsService
   ) {}
@@ -162,7 +168,7 @@ export class AgentInboundHandler {
     ]);
 
     try {
-      await this.bridgeExecutor.execute({
+      await this.agentRuntimeFactory.resolve(config).execute({
         event,
         config,
         conversation,
@@ -185,6 +191,23 @@ export class AgentInboundHandler {
           platformMessageId: (sent as { id?: string })?.id ?? '',
           agentIdentifier: config.agentIdentifier,
           content: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        });
+
+        return;
+      }
+
+      if (err instanceof MissingClaudeManagedCredentialsError) {
+        this.logger.warn(err, `[agent:${agentId}] Claude managed agent credentials are not configured`);
+        const sent = await thread.post(ONBOARDING_NO_CLAUDE_CREDENTIALS_REPLY_MARKDOWN);
+        const channel = this.conversationService.getPrimaryChannel(conversation);
+        await this.conversationService.persistAgentMessage({
+          conversationId: conversation._id,
+          channel,
+          platformMessageId: (sent as { id?: string })?.id ?? '',
+          agentIdentifier: config.agentIdentifier,
+          content: ONBOARDING_NO_CLAUDE_CREDENTIALS_REPLY_MARKDOWN,
           environmentId: config.environmentId,
           organizationId: config.organizationId,
         });
@@ -259,7 +282,7 @@ export class AgentInboundHandler {
       sourceMessage: event.message,
     };
 
-    await this.bridgeExecutor.execute({
+    await this.agentRuntimeFactory.resolve(config).execute({
       event: AgentEventEnum.ON_REACTION,
       config,
       conversation,
@@ -344,7 +367,7 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
-    await this.bridgeExecutor.execute({
+    await this.agentRuntimeFactory.resolve(config).execute({
       event: AgentEventEnum.ON_ACTION,
       config,
       conversation,

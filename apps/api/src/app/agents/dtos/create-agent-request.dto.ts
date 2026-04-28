@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
+
+import { AgentRuntimeEnum, ManagedRuntimeDto } from './agent-runtime.dto';
 
 export class CreateAgentRequestDto {
   @ApiProperty()
@@ -25,4 +28,15 @@ export class CreateAgentRequestDto {
   @IsBoolean()
   @IsOptional()
   active?: boolean;
+
+  @ApiPropertyOptional({ enum: AgentRuntimeEnum, default: AgentRuntimeEnum.BRIDGE })
+  @IsEnum(AgentRuntimeEnum)
+  @IsOptional()
+  runtime?: AgentRuntimeEnum;
+
+  @ApiPropertyOptional({ type: ManagedRuntimeDto })
+  @ValidateNested()
+  @Type(() => ManagedRuntimeDto)
+  @IsOptional()
+  managedRuntime?: ManagedRuntimeDto;
 }

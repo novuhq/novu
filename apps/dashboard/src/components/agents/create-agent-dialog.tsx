@@ -2,12 +2,13 @@ import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@no
 import type { FormEvent, ReactNode } from 'react';
 import { useId, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiExternalLinkLine, RiInformationFill } from 'react-icons/ri';
-import type { CreateAgentBody } from '@/api/agents';
+import type { AgentRuntime, CreateAgentBody } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
 import { Hint, HintIcon } from '@/components/primitives/hint';
 import { Input } from '@/components/primitives/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Textarea } from '@/components/primitives/textarea';
 
 const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co';
@@ -17,11 +18,14 @@ type CreateAgentDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (body: CreateAgentBody) => Promise<void>;
   isSubmitting: boolean;
+  isClaudeManagedAgentsEnabled?: boolean;
 };
 
 type FormErrors = {
   name?: string;
   identifier?: string;
+  claudeAgentId?: string;
+  claudeEnvironmentId?: string;
 };
 
 function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
@@ -35,15 +39,27 @@ function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: 
   );
 }
 
-export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }: CreateAgentDialogProps) {
+export function CreateAgentDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  isSubmitting,
+  isClaudeManagedAgentsEnabled = false,
+}: CreateAgentDialogProps) {
   const formId = useId();
   const nameId = `${formId}-name`;
   const identifierId = `${formId}-identifier`;
   const descriptionId = `${formId}-description`;
+  const runtimeId = `${formId}-runtime`;
+  const claudeAgentIdFieldId = `${formId}-claude-agent-id`;
+  const claudeEnvironmentIdFieldId = `${formId}-claude-environment-id`;
 
   const [name, setName] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [description, setDescription] = useState('');
+  const [runtime, setRuntime] = useState<AgentRuntime>('bridge');
+  const [claudeAgentId, setClaudeAgentId] = useState('');
+  const [claudeEnvironmentId, setClaudeEnvironmentId] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   // Once the user edits the identifier manually, stop auto-syncing it from the name.
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
@@ -52,6 +68,9 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
     setName('');
     setIdentifier('');
     setDescription('');
+    setRuntime('bridge');
+    setClaudeAgentId('');
+    setClaudeEnvironmentId('');
     setErrors({});
     setIsIdentifierTouched(false);
   };
@@ -81,6 +100,16 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
       nextErrors.identifier = slugIdentifierFormatMessage('identifier');
     }
 
+    if (runtime === 'claude_managed') {
+      if (!claudeAgentId.trim()) {
+        nextErrors.claudeAgentId = 'Anthropic agent ID is required.';
+      }
+
+      if (!claudeEnvironmentId.trim()) {
+        nextErrors.claudeEnvironmentId = 'Anthropic environment ID is required.';
+      }
+    }
+
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
 
@@ -92,12 +121,21 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
     const body: CreateAgentBody = {
       name: trimmedName,
       identifier: trimmedIdentifier,
+      runtime,
     };
 
     const trimmedDescription = description.trim();
 
     if (trimmedDescription) {
       body.description = trimmedDescription;
+    }
+
+    if (runtime === 'claude_managed') {
+      body.managedRuntime = {
+        provider: 'anthropic',
+        agentId: claudeAgentId.trim(),
+        environmentId: claudeEnvironmentId.trim(),
+      };
     }
 
     await onSubmit(body);
@@ -213,6 +251,81 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
                   className="min-h-24 text-sm"
                 />
               </div>
+
+              {isClaudeManagedAgentsEnabled ? (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor={runtimeId} className="text-text-strong text-label-xs font-medium">
+                    Runtime
+                  </label>
+                  <Select value={runtime} onValueChange={(value) => setRuntime(value as AgentRuntime)}>
+                    <SelectTrigger id={runtimeId} size="2xs" className="shadow-xs h-auto min-h-8 py-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bridge" className="text-label-xs">
+                        Bring your own code (Bridge)
+                      </SelectItem>
+                      <SelectItem value="claude_managed" className="text-label-xs">
+                        Claude Managed Agent
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Hint className="text-text-soft text-paragraph-xs leading-4">
+                    <HintIcon as={RiInformationFill} />
+                    Reference an existing Anthropic Managed Agent that you created in the Anthropic Console.
+                  </Hint>
+                </div>
+              ) : null}
+
+              {isClaudeManagedAgentsEnabled && runtime === 'claude_managed' ? (
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <RequiredFieldLabel htmlFor={claudeAgentIdFieldId}>Anthropic agent ID</RequiredFieldLabel>
+                    <Input
+                      id={claudeAgentIdFieldId}
+                      size="2xs"
+                      className="font-mono"
+                      value={claudeAgentId}
+                      onChange={(e) => {
+                        setClaudeAgentId(e.target.value);
+                        setErrors((prev) => ({ ...prev, claudeAgentId: undefined }));
+                      }}
+                      placeholder="agent_011..."
+                      hasError={Boolean(errors.claudeAgentId)}
+                      aria-invalid={errors.claudeAgentId ? true : undefined}
+                    />
+                    {errors.claudeAgentId ? (
+                      <p className="text-error-base text-label-xs" role="alert">
+                        {errors.claudeAgentId}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <RequiredFieldLabel htmlFor={claudeEnvironmentIdFieldId}>
+                      Anthropic environment ID
+                    </RequiredFieldLabel>
+                    <Input
+                      id={claudeEnvironmentIdFieldId}
+                      size="2xs"
+                      className="font-mono"
+                      value={claudeEnvironmentId}
+                      onChange={(e) => {
+                        setClaudeEnvironmentId(e.target.value);
+                        setErrors((prev) => ({ ...prev, claudeEnvironmentId: undefined }));
+                      }}
+                      placeholder="env_013..."
+                      hasError={Boolean(errors.claudeEnvironmentId)}
+                      aria-invalid={errors.claudeEnvironmentId ? true : undefined}
+                    />
+                    {errors.claudeEnvironmentId ? (
+                      <p className="text-error-base text-label-xs" role="alert">
+                        {errors.claudeEnvironmentId}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 

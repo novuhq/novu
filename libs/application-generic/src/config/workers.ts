@@ -1,4 +1,5 @@
 enum WorkerEnum {
+  CLAUDE_MANAGED_AGENT = 'ClaudeManagedAgentWorker',
   INBOUND_PARSE_MAIL = 'InboundParseMailWorker',
   SUBSCRIBER_PROCESS = 'SubscriberProcessWorker',
   STANDARD = 'StandardWorker',
@@ -7,6 +8,7 @@ enum WorkerEnum {
 }
 
 const WORKER_CONCURRENCY_ENV_MAP: Record<WorkerEnum, string> = {
+  [WorkerEnum.CLAUDE_MANAGED_AGENT]: 'CLAUDE_MANAGED_AGENT_WORKER_CONCURRENCY',
   [WorkerEnum.INBOUND_PARSE_MAIL]: 'INBOUND_PARSE_MAIL_WORKER_CONCURRENCY',
   [WorkerEnum.SUBSCRIBER_PROCESS]: 'SUBSCRIBER_PROCESS_WORKER_CONCURRENCY',
   [WorkerEnum.STANDARD]: 'STANDARD_WORKER_CONCURRENCY',
@@ -63,6 +65,8 @@ const getWorkerConfig = (worker: WorkerEnum, hardcodedConcurrency: number): IWor
 });
 
 export const getInboundParseMailWorkerOptions = () => getWorkerConfig(WorkerEnum.INBOUND_PARSE_MAIL, 200);
+
+export const getClaudeManagedAgentWorkerOptions = () => getWorkerConfig(WorkerEnum.CLAUDE_MANAGED_AGENT, 20);
 
 export const getSubscriberProcessWorkerOptions = () => getWorkerConfig(WorkerEnum.SUBSCRIBER_PROCESS, 200);
 

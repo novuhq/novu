@@ -94,6 +94,44 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  async updateExternalSessionId(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    externalSessionId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { externalSessionId } }
+    );
+  }
+
+  async setExternalSessionIdIfMissing(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    externalSessionId: string
+  ): Promise<boolean> {
+    const result = await this.updateOne(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        externalSessionId: { $exists: false },
+      },
+      { $set: { externalSessionId } }
+    );
+
+    return result.modified > 0;
+  }
+
+  async clearExternalSessionId(environmentId: string, organizationId: string, id: string): Promise<void> {
+    await this.updateOne(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $unset: { externalSessionId: 1 } }
+    );
+  }
+
   async updateParticipants(
     environmentId: string,
     organizationId: string,

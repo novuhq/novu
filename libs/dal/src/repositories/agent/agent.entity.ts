@@ -7,6 +7,18 @@ export interface AgentBehavior {
   reactionOnResolved?: string | null;
 }
 
+export enum AgentRuntimeEnum {
+  BRIDGE = 'bridge',
+  CLAUDE_MANAGED = 'claude_managed',
+}
+
+export interface AgentManagedRuntime {
+  provider: 'anthropic';
+  agentId: string;
+  environmentId: string;
+  vaultIds?: string[];
+}
+
 export class AgentEntity {
   _id: string;
 
@@ -19,6 +31,10 @@ export class AgentEntity {
   active: boolean;
 
   behavior?: AgentBehavior;
+
+  runtime?: AgentRuntimeEnum;
+
+  managedRuntime?: AgentManagedRuntime;
 
   bridgeUrl?: string;
 

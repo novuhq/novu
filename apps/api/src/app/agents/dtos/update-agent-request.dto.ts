@@ -1,8 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { AgentRuntimeEnum } from '@novu/dal';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, IsUrl, ValidateNested } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUrl, ValidateNested } from 'class-validator';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
+import { ManagedRuntimeDto } from './agent-runtime.dto';
 
 export class UpdateAgentRequestDto {
   @ApiPropertyOptional()
@@ -25,6 +27,17 @@ export class UpdateAgentRequestDto {
   @Type(() => AgentBehaviorDto)
   @IsOptional()
   behavior?: AgentBehaviorDto;
+
+  @ApiPropertyOptional({ enum: AgentRuntimeEnum })
+  @IsEnum(AgentRuntimeEnum)
+  @IsOptional()
+  runtime?: AgentRuntimeEnum;
+
+  @ApiPropertyOptional({ type: ManagedRuntimeDto })
+  @ValidateNested()
+  @Type(() => ManagedRuntimeDto)
+  @IsOptional()
+  managedRuntime?: ManagedRuntimeDto;
 
   @ApiPropertyOptional({ description: 'Production bridge URL for this agent' })
   @IsUrl({ require_tld: false })

@@ -68,6 +68,21 @@ type BridgeUrlSectionProps = {
 };
 
 function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: BridgeUrlSectionProps) {
+  if (agent.runtime === 'claude_managed') {
+    return (
+      <>
+        <DetailsSidebarRow label="Runtime">
+          <span className="text-text-sub text-label-xs font-medium">Claude Managed Agent</span>
+        </DetailsSidebarRow>
+        <DetailsSidebarRow label="Claude agent ID">
+          <span className="text-text-sub font-code text-label-xs tracking-tight">
+            {agent.managedRuntime?.agentId ?? 'Not configured'}
+          </span>
+        </DetailsSidebarRow>
+      </>
+    );
+  }
+
   const isLocalTunnelActive = Boolean(agent.devBridgeActive && agent.devBridgeUrl);
   const activeBridgeUrl = isLocalTunnelActive ? agent.devBridgeUrl : agent.bridgeUrl;
 

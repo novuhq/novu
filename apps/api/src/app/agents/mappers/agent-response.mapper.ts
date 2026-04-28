@@ -1,8 +1,11 @@
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
+import { AgentRuntimeEnum } from '@novu/dal';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
 export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
+  const runtime = agent.runtime ?? AgentRuntimeEnum.BRIDGE;
+
   return {
     _id: agent._id,
     name: agent.name,
@@ -10,6 +13,8 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     description: agent.description,
     active: agent.active,
     behavior: agent.behavior,
+    runtime,
+    managedRuntime: runtime === AgentRuntimeEnum.CLAUDE_MANAGED ? agent.managedRuntime : undefined,
     bridgeUrl: agent.bridgeUrl,
     devBridgeUrl: agent.devBridgeUrl,
     devBridgeActive: agent.devBridgeActive,

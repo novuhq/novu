@@ -21,8 +21,8 @@
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.91.1",
     "@aws-sdk/client-secrets-manager": "^3.971.0",
-    "yargs": "^17.7.2",
     "@nestjs/axios": "3.0.3",
     "@nestjs/common": "10.4.18",
     "@nestjs/core": "10.4.18",
@@ -70,7 +70,8 @@
     "shortid": "^2.2.17",
     "simple-statistics": "^7.8.3",
     "svix": "^1.64.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",

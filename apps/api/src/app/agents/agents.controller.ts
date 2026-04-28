@@ -35,6 +35,7 @@ import {
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   AddAgentIntegrationRequestDto,
+  AgentCredentialsResponseDto,
   AgentIntegrationResponseDto,
   AgentResponseDto,
   CreateAgentRequestDto,
@@ -42,9 +43,11 @@ import {
   ListAgentIntegrationsResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  TestClaudeManagedAgentResponseDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
+  UpdateAnthropicAgentCredentialsRequestDto,
 } from './dtos';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
@@ -56,6 +59,8 @@ import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
+import { GetAnthropicAgentCredentialsCommand } from './usecases/get-anthropic-agent-credentials/get-anthropic-agent-credentials.command';
+import { GetAnthropicAgentCredentials } from './usecases/get-anthropic-agent-credentials/get-anthropic-agent-credentials.usecase';
 import { type AgentEmojiEntry, ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations/list-agent-integrations.command';
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
@@ -65,10 +70,14 @@ import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integrati
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
 import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
+import { TestClaudeManagedAgentCommand } from './usecases/test-claude-managed-agent/test-claude-managed-agent.command';
+import { TestClaudeManagedAgent } from './usecases/test-claude-managed-agent/test-claude-managed-agent.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
 import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
+import { UpdateAnthropicAgentCredentialsCommand } from './usecases/update-anthropic-agent-credentials/update-anthropic-agent-credentials.command';
+import { UpdateAnthropicAgentCredentials } from './usecases/update-anthropic-agent-credentials/update-anthropic-agent-credentials.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -89,7 +98,10 @@ export class AgentsController {
     private readonly updateAgentIntegrationUsecase: UpdateAgentIntegration,
     private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
     private readonly listAgentEmojiUsecase: ListAgentEmoji,
-    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail
+    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
+    private readonly getAnthropicAgentCredentialsUsecase: GetAnthropicAgentCredentials,
+    private readonly updateAnthropicAgentCredentialsUsecase: UpdateAnthropicAgentCredentials,
+    private readonly testClaudeManagedAgentUsecase: TestClaudeManagedAgent
   ) {}
 
   @Get('/emoji')
@@ -121,6 +133,8 @@ export class AgentsController {
         identifier: body.identifier,
         description: body.description,
         active: body.active,
+        runtime: body.runtime,
+        managedRuntime: body.managedRuntime,
       })
     );
   }
@@ -146,6 +160,44 @@ export class AgentsController {
         orderBy: query.orderBy || '_id',
         includeCursor: query.includeCursor,
         identifier: query.identifier,
+      })
+    );
+  }
+
+  @Get('/claude/credentials')
+  @ApiResponse(AgentCredentialsResponseDto)
+  @ApiOperation({
+    summary: 'Get Claude Managed Agents credential status',
+    description: 'Returns whether the current environment has an Anthropic API key configured for managed agents.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getClaudeManagedAgentCredentials(@UserSession() user: UserSessionData): Promise<AgentCredentialsResponseDto> {
+    return this.getAnthropicAgentCredentialsUsecase.execute(
+      GetAnthropicAgentCredentialsCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Put('/claude/credentials')
+  @ApiResponse(AgentCredentialsResponseDto)
+  @ApiOperation({
+    summary: 'Update Claude Managed Agents credentials',
+    description: 'Stores the Anthropic API key for the current environment as an encrypted environment variable.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateClaudeManagedAgentCredentials(
+    @UserSession() user: UserSessionData,
+    @Body() body: UpdateAnthropicAgentCredentialsRequestDto
+  ): Promise<AgentCredentialsResponseDto> {
+    return this.updateAnthropicAgentCredentialsUsecase.execute(
+      UpdateAnthropicAgentCredentialsCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        apiKey: body.apiKey,
       })
     );
   }
@@ -296,6 +348,31 @@ export class AgentsController {
     );
   }
 
+  @Post('/:identifier/claude/test')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(TestClaudeManagedAgentResponseDto)
+  @ApiOperation({
+    summary: 'Test Claude Managed Agents configuration',
+    description: 'Validates that the configured Anthropic API key can access the agent and environment ids.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  testClaudeManagedAgent(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<TestClaudeManagedAgentResponseDto> {
+    return this.testClaudeManagedAgentUsecase.execute(
+      TestClaudeManagedAgentCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+      })
+    );
+  }
+
   @Put('/:identifier/bridge')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -371,6 +448,8 @@ export class AgentsController {
         description: body.description,
         active: body.active,
         behavior: body.behavior,
+        runtime: body.runtime,
+        managedRuntime: body.managedRuntime,
         bridgeUrl: body.bridgeUrl,
         devBridgeUrl: body.devBridgeUrl,
         devBridgeActive: body.devBridgeActive,

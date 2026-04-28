@@ -1,4 +1,5 @@
 export * from './base-issue.dto';
+export * from './claude-managed-agent-job.dto';
 export * from './configurations.dto';
 export * from './credentials.dto';
 export * from './get-environment-tags.dto';

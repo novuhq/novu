@@ -15,9 +15,9 @@ import { trackAgentReplyProcessed } from '../../agent-analytics';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
+import { AgentRuntimeFactory } from '../../runtimes/agent-runtime.factory';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
-import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
@@ -27,7 +27,7 @@ export class HandleAgentReply {
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly chatSdkService: ChatSdkService,
-    private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly agentRuntimeFactory: AgentRuntimeFactory,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger,
@@ -430,7 +430,7 @@ export class HandleAgentReply {
       this.conversationService.getHistory(command.environmentId, conversation._id),
     ]);
 
-    await this.bridgeExecutor.execute({
+    await this.agentRuntimeFactory.resolve(config).execute({
       event: AgentEventEnum.ON_RESOLVE,
       config,
       conversation,

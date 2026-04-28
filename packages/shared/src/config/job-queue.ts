@@ -6,6 +6,7 @@
  */
 export enum JobTopicNameEnum {
   ACTIVE_JOBS_METRIC = 'metric-active-jobs',
+  CLAUDE_MANAGED_AGENT = 'claude-managed-agent',
   INBOUND_PARSE_MAIL = 'inbound-parse-mail',
   STANDARD = 'standard',
   WEB_SOCKETS = 'ws_socket_queue',
@@ -22,6 +23,7 @@ export enum ObservabilityBackgroundTransactionEnum {
   WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
   CRON_JOB_QUEUE = 'cron-job-queue',
   CLICKHOUSE_BATCH_FLUSH = 'clickhouse-batch-flush',
+  CLAUDE_MANAGED_AGENT_QUEUE = 'claude-managed-agent-queue',
 }
 
 export enum JobCronNameEnum {

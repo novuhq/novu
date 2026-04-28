@@ -43,6 +43,7 @@
     "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.91.1",
     "@aws-sdk/client-secrets-manager": "^3.971.0",
     "@chat-adapter/slack": "^4.25.0",
     "@chat-adapter/state-ioredis": "^4.26.0",

@@ -1,5 +1,5 @@
 import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
-import { del, get, patch, post } from '@/api/api.client';
+import { del, get, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -9,6 +9,8 @@ const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
 const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 
 const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
+
+const CLAUDE_AGENT_CREDENTIALS_QUERY_KEY = 'fetchClaudeAgentCredentials' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
@@ -39,6 +41,15 @@ export type AgentBehavior = {
   reactionOnResolved?: string | null;
 };
 
+export type AgentRuntime = 'bridge' | 'claude_managed';
+
+export type AgentManagedRuntime = {
+  provider: 'anthropic';
+  agentId: string;
+  environmentId: string;
+  vaultIds?: string[];
+};
+
 export type AgentResponse = {
   _id: string;
   name: string;
@@ -46,6 +57,8 @@ export type AgentResponse = {
   description?: string;
   active: boolean;
   behavior?: AgentBehavior;
+  runtime: AgentRuntime;
+  managedRuntime?: AgentManagedRuntime;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -69,6 +82,8 @@ export type CreateAgentBody = {
   identifier: string;
   description?: string;
   active?: boolean;
+  runtime?: AgentRuntime;
+  managedRuntime?: AgentManagedRuntime;
 };
 
 export type UpdateAgentBody = {
@@ -76,6 +91,8 @@ export type UpdateAgentBody = {
   description?: string;
   active?: boolean;
   behavior?: AgentBehavior;
+  runtime?: AgentRuntime;
+  managedRuntime?: AgentManagedRuntime;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -281,6 +298,52 @@ export function getAgentEmojiQueryKey() {
 
 export async function listAgentEmoji(environment: IEnvironment, signal?: AbortSignal): Promise<AgentEmojiEntry[]> {
   const response = await get<{ data: AgentEmojiEntry[] }>('/agents/emoji', { environment, signal });
+
+  return response.data;
+}
+
+export function getClaudeAgentCredentialsQueryKey(environmentId: string | undefined) {
+  return [CLAUDE_AGENT_CREDENTIALS_QUERY_KEY, environmentId] as const;
+}
+
+export type ClaudeAgentCredentialsResponse = {
+  configured: boolean;
+};
+
+export async function getClaudeAgentCredentials(
+  environment: IEnvironment,
+  signal?: AbortSignal
+): Promise<ClaudeAgentCredentialsResponse> {
+  const response = await get<{ data: ClaudeAgentCredentialsResponse }>('/agents/claude/credentials', {
+    environment,
+    signal,
+  });
+
+  return response.data;
+}
+
+export async function updateClaudeAgentCredentials(
+  environment: IEnvironment,
+  apiKey: string
+): Promise<ClaudeAgentCredentialsResponse> {
+  const response = await put<{ data: ClaudeAgentCredentialsResponse }>('/agents/claude/credentials', {
+    environment,
+    body: { apiKey },
+  });
+
+  return response.data;
+}
+
+export async function testClaudeManagedAgent(
+  environment: IEnvironment,
+  agentIdentifier: string
+): Promise<{ success: boolean }> {
+  const response = await post<{ data: { success: boolean } }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/claude/test`,
+    {
+      environment,
+    }
+  );
 
   return response.data;
 }

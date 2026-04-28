@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { AgentDBModel } from './agent.entity';
+import { AgentDBModel, AgentRuntimeEnum } from './agent.entity';
 
 const agentSchema = new Schema<AgentDBModel>(
   {
@@ -21,6 +21,17 @@ const agentSchema = new Schema<AgentDBModel>(
     behavior: {
       acknowledgeOnReceived: Schema.Types.Boolean,
       reactionOnResolved: Schema.Types.String,
+    },
+    runtime: {
+      type: Schema.Types.String,
+      enum: Object.values(AgentRuntimeEnum),
+      default: AgentRuntimeEnum.BRIDGE,
+    },
+    managedRuntime: {
+      provider: Schema.Types.String,
+      agentId: Schema.Types.String,
+      environmentId: Schema.Types.String,
+      vaultIds: [Schema.Types.String],
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,

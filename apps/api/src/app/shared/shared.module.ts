@@ -172,6 +172,7 @@ const IMPORTS = [
     JobTopicNameEnum.WEB_SOCKETS,
     JobTopicNameEnum.WORKFLOW,
     JobTopicNameEnum.INBOUND_PARSE_MAIL,
+    JobTopicNameEnum.CLAUDE_MANAGED_AGENT,
     JobTopicNameEnum.STANDARD,
   ]),
   LoggerModule.forRoot(

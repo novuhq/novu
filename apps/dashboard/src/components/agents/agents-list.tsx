@@ -1,4 +1,4 @@
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -22,6 +22,7 @@ import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/f
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
@@ -35,6 +36,7 @@ export function AgentsList() {
   const location = useLocation();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const isClaudeManagedAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CLAUDE_MANAGED_AGENTS_ENABLED, false);
   const track = useTelemetry();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
 
@@ -230,6 +232,7 @@ export function AgentsList() {
           onOpenChange={setCreateOpen}
           onSubmit={handleCreateSubmit}
           isSubmitting={createMutation.isPending}
+          isClaudeManagedAgentsEnabled={isClaudeManagedAgentsEnabled}
         />
       </>
     );
@@ -296,6 +299,7 @@ export function AgentsList() {
         onOpenChange={setCreateOpen}
         onSubmit={handleCreateSubmit}
         isSubmitting={createMutation.isPending}
+        isClaudeManagedAgentsEnabled={isClaudeManagedAgentsEnabled}
       />
 
       <DeleteAgentDialog

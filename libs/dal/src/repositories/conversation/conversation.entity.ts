@@ -55,6 +55,9 @@ export class ConversationEntity {
   /** Customer-controlled key/value bag accumulated across turns, sent back in every bridge payload */
   metadata: Record<string, unknown>;
 
+  /** External managed-agent session id, when this conversation is handled by a hosted runtime. */
+  externalSessionId?: string;
+
   messageCount: number;
 
   /** Truncated preview of the most recent message (max 200 chars) */

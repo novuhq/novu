@@ -146,7 +146,7 @@ const PROVIDERS = [
     MetricsModule,
     QueuesModule.forRoot(
       UNIQUE_WORKER_DEPENDENCIES.length
-        ? [JobTopicNameEnum.ACTIVE_JOBS_METRIC, ...UNIQUE_WORKER_DEPENDENCIES]
+        ? [JobTopicNameEnum.ACTIVE_JOBS_METRIC, JobTopicNameEnum.CLAUDE_MANAGED_AGENT, ...UNIQUE_WORKER_DEPENDENCIES]
         : undefined
     ),
     LoggerModule.forRoot(

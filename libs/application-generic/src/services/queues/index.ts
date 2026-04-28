@@ -1,4 +1,5 @@
 export { ActiveJobsMetricQueueService } from './active-jobs-metric-queue.service';
+export { ClaudeManagedAgentQueueService } from './claude-managed-agent-queue.service';
 export { InboundParseQueueService } from './inbound-parse-queue.service';
 export { QueueBaseService } from './queue-base.service';
 export { StandardQueueService } from './standard-queue.service';

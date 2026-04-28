@@ -19,6 +19,7 @@ import {
 } from '../services';
 import {
   ActiveJobsMetricQueueService,
+  ClaudeManagedAgentQueueService,
   InboundParseQueueService,
   StandardQueueService,
   SubscriberProcessQueueService,
@@ -100,6 +101,10 @@ export class QueuesModule implements OnApplicationShutdown {
             ActiveJobsMetricQueueServiceHealthIndicator,
             ActiveJobsMetricWorkerService
           );
+          break;
+        case JobTopicNameEnum.CLAUDE_MANAGED_AGENT:
+          tokenList.push(ClaudeManagedAgentQueueService);
+          DYNAMIC_PROVIDERS.push(ClaudeManagedAgentQueueService);
           break;
         default:
           break;

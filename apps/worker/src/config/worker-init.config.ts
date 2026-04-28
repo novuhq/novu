@@ -4,9 +4,11 @@ import { JobTopicNameEnum } from '@novu/shared';
 
 import { StandardWorker, WorkflowWorker } from '../app/workflow/services';
 import { SubscriberProcessWorker } from '../app/workflow/services/subscriber-process.worker';
+import { ClaudeManagedAgentWorker } from '../app/workflow/workers/claude-managed-agent.worker.service';
 import { InboundParseWorker } from '../app/workflow/workers/inbound-parse.worker.service';
 
 type WorkerClass =
+  | typeof ClaudeManagedAgentWorker
   | typeof StandardWorker
   | typeof WorkflowWorker
   | typeof SubscriberProcessWorker
@@ -17,6 +19,10 @@ type WorkerModuleTree = { workerClass: WorkerClass; queueDependencies: JobTopicN
 type WorkerDepTree = Partial<Record<JobTopicNameEnum, WorkerModuleTree>>;
 
 const WORKER_MAPPING: WorkerDepTree = {
+  [JobTopicNameEnum.CLAUDE_MANAGED_AGENT]: {
+    workerClass: ClaudeManagedAgentWorker,
+    queueDependencies: [JobTopicNameEnum.CLAUDE_MANAGED_AGENT],
+  },
   [JobTopicNameEnum.STANDARD]: {
     workerClass: StandardWorker,
     queueDependencies: [JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.STANDARD, JobTopicNameEnum.PROCESS_SUBSCRIBER],
@@ -63,7 +69,13 @@ export const UNIQUE_WORKER_DEPENDENCIES = [...new Set(WORKER_DEPENDENCIES)];
 export const ACTIVE_WORKERS: Provider[] | any[] = [];
 
 if (!workersToProcess.length) {
-  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, SubscriberProcessWorker, InboundParseWorker);
+  ACTIVE_WORKERS.push(
+    StandardWorker,
+    WorkflowWorker,
+    SubscriberProcessWorker,
+    InboundParseWorker,
+    ClaudeManagedAgentWorker
+  );
 } else {
   workersToProcess.forEach((queue) => {
     const workerClass = WORKER_MAPPING[queue]?.workerClass;

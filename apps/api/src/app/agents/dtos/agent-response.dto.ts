@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
 import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
+import { AgentRuntimeEnum, ManagedRuntimeDto } from './agent-runtime.dto';
 
 export class AgentResponseDto {
   @ApiProperty()
@@ -21,6 +22,12 @@ export class AgentResponseDto {
 
   @ApiProperty()
   active: boolean;
+
+  @ApiProperty({ enum: AgentRuntimeEnum, default: AgentRuntimeEnum.BRIDGE })
+  runtime: AgentRuntimeEnum;
+
+  @ApiPropertyOptional({ type: ManagedRuntimeDto })
+  managedRuntime?: ManagedRuntimeDto;
 
   @ApiPropertyOptional({ description: 'Production bridge URL' })
   bridgeUrl?: string;

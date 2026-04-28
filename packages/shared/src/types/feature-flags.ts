@@ -96,6 +96,8 @@ export enum FeatureFlagsKeysEnum {
   IS_VARIABLES_PAGE_ENABLED = 'IS_VARIABLES_PAGE_ENABLED',
   /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
+  /** Enable Claude Managed Agents as a hosted runtime option for conversational agents. */
+  IS_CLAUDE_MANAGED_AGENTS_ENABLED = 'IS_CLAUDE_MANAGED_AGENTS_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */

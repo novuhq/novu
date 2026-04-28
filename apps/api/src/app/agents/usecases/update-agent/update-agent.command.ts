@@ -1,8 +1,10 @@
+import { AgentRuntimeEnum } from '@novu/dal';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl, ValidateIf, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { AgentBehaviorDto } from '../../dtos/agent-behavior.dto';
+import { ManagedRuntimeDto } from '../../dtos/agent-runtime.dto';
 
 export class UpdateAgentCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -25,6 +27,14 @@ export class UpdateAgentCommand extends EnvironmentWithUserCommand {
   @Type(() => AgentBehaviorDto)
   @IsOptional()
   behavior?: AgentBehaviorDto;
+
+  @IsOptional()
+  runtime?: AgentRuntimeEnum;
+
+  @ValidateNested()
+  @Type(() => ManagedRuntimeDto)
+  @IsOptional()
+  managedRuntime?: ManagedRuntimeDto;
 
   @IsUrl({ require_tld: false })
   @IsOptional()
