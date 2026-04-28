@@ -1,5 +1,5 @@
 import { Group } from '@mantine/core';
-import { colors, Text, Warning } from '@novu/design-system';
+import { colors, Text } from '@novu/design-system';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
@@ -23,12 +23,17 @@ export function DeprecationBanner() {
   const migrationGuideBaseUrl = isFreeOrg ? 'https://dub.sh/eGRzfpk' : 'https://go.novu.co/migration-guide';
   const migrationGuideUrl = new URL(migrationGuideBaseUrl);
 
-  if (currentOrganization?.name) {
-    migrationGuideUrl.searchParams.set('org_name', currentOrganization.name);
-  }
+  // Dub passes any query string to the destination, but the Dub dashboard only breaks out
+  // standard UTM params (and `ref`). Use UTMs so org context shows in Dub analytics.
+  migrationGuideUrl.searchParams.set('utm_source', 'legacy_dashboard');
+  migrationGuideUrl.searchParams.set('utm_medium', 'deprecation_banner');
 
   if (currentOrganization?._id) {
-    migrationGuideUrl.searchParams.set('org_id', currentOrganization?._id);
+    migrationGuideUrl.searchParams.set('utm_campaign', currentOrganization._id);
+  }
+
+  if (currentOrganization?.name) {
+    migrationGuideUrl.searchParams.set('utm_content', currentOrganization.name.slice(0, 200));
   }
 
   const MIGRATION_GUIDE_URL = migrationGuideUrl.toString();
@@ -50,10 +55,12 @@ export function DeprecationBanner() {
       data-test-id="deprecation-banner"
     >
       <Group spacing={8} noWrap style={{ justifyContent: 'center', width: '100%', maxWidth: 1200 }}>
-        <Warning color={colors.white} />
         <Text color={colors.white} style={{ whiteSpace: 'normal', minWidth: 0 }}>
-          This dashboard will be deprecated {timePhrase}. After 31st May, you will loose support SLA for this dashboard.
-          To avoid disruption, please migrate to the new dashboard in advance.{' '}
+          <span aria-hidden={true} style={{ color: colors.white, flexShrink: 0, fontSize: '1.1em', lineHeight: 1.2 }}>
+            {'u26A0\uFE0F'}
+          </span>{' '}
+          This dashboard will be deprecated {timePhrase}. After 31st May ({daysLeft} days), you will loose support SLA
+          for this dashboard. To avoid disruption, please migrate to the new dashboard in advance.{' '}
           <a
             href={MIGRATION_GUIDE_URL}
             target="_blank"
