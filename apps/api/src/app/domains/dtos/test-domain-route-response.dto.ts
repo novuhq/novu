@@ -44,7 +44,11 @@ export class TestDomainRouteResponseDto {
   @ApiPropertyOptional({ description: 'Human-readable delivery target summary in dry-run mode.' })
   wouldDeliverTo?: string;
 
-  @ApiPropertyOptional({ type: Object, description: 'The outbound payload (dry-run only).' })
+  @ApiPropertyOptional({
+    type: Object,
+    description: 'The outbound payload (dry-run only).',
+    additionalProperties: true,
+  })
   payload?: Record<string, unknown>;
 
   @ApiPropertyOptional({ type: TestDomainRouteWebhookResultDto })

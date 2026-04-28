@@ -30,11 +30,6 @@ export type TestDomainRouteResponseDtoType = ClosedEnum<
   typeof TestDomainRouteResponseDtoType
 >;
 
-/**
- * The outbound payload (dry-run only).
- */
-export type TestDomainRouteResponseDtoPayload = {};
-
 export type TestDomainRouteResponseDto = {
   matched: boolean;
   dryRun: boolean;
@@ -48,7 +43,7 @@ export type TestDomainRouteResponseDto = {
   /**
    * The outbound payload (dry-run only).
    */
-  payload?: TestDomainRouteResponseDtoPayload | undefined;
+  payload?: { [k: string]: any } | undefined;
   webhook?: TestDomainRouteWebhookResultDto | undefined;
   agent?: TestDomainRouteAgentResultDto | undefined;
 };
@@ -63,23 +58,6 @@ export const TestDomainRouteResponseDtoType$inboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(TestDomainRouteResponseDtoType);
 
 /** @internal */
-export const TestDomainRouteResponseDtoPayload$inboundSchema: z.ZodType<
-  TestDomainRouteResponseDtoPayload,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-export function testDomainRouteResponseDtoPayloadFromJSON(
-  jsonString: string,
-): SafeParseResult<TestDomainRouteResponseDtoPayload, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TestDomainRouteResponseDtoPayload$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TestDomainRouteResponseDtoPayload' from JSON`,
-  );
-}
-
-/** @internal */
 export const TestDomainRouteResponseDto$inboundSchema: z.ZodType<
   TestDomainRouteResponseDto,
   z.ZodTypeDef,
@@ -91,8 +69,7 @@ export const TestDomainRouteResponseDto$inboundSchema: z.ZodType<
   mxRecordConfigured: z.boolean().optional(),
   type: TestDomainRouteResponseDtoType$inboundSchema.optional(),
   wouldDeliverTo: z.string().optional(),
-  payload: z.lazy(() => TestDomainRouteResponseDtoPayload$inboundSchema)
-    .optional(),
+  payload: z.record(z.any()).optional(),
   webhook: TestDomainRouteWebhookResultDto$inboundSchema.optional(),
   agent: TestDomainRouteAgentResultDto$inboundSchema.optional(),
 });
