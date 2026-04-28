@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, createHash } from '@novu/application-generic';
+import { CompileTemplate, createHash, validateUrlSsrf } from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
@@ -49,6 +49,12 @@ export class ReplyToStrategy {
       template: currentParseWebhook as string,
       data: job.payload,
     });
+
+    const ssrfError = await validateUrlSsrf(compiledDomain);
+
+    if (ssrfError) {
+      this.throwError(`Reply callback URL blocked (SSRF): ${ssrfError}`);
+    }
 
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',

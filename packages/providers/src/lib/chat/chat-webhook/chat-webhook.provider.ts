@@ -1,4 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { validateUrlSsrf } from '@novu/shared/utils/ssrf-url-validation';
 import {
   ChannelTypeEnum,
   ENDPOINT_TYPES,
@@ -51,7 +52,14 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
       delete data.body.hmacSecretKey;
     }
 
-    const response = await axios.create().post((data?.body?.webhookUrl as string) || endpoint.url, body, {
+    const targetUrl = (data?.body?.webhookUrl as string) || endpoint.url;
+    const ssrfError = await validateUrlSsrf(targetUrl);
+
+    if (ssrfError) {
+      throw new Error(`Chat webhook URL blocked: ${ssrfError}`);
+    }
+
+    const response = await axios.create().post(targetUrl, body, {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,
