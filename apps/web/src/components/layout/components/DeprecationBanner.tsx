@@ -20,16 +20,13 @@ export function DeprecationBanner() {
   }
 
   const daysLeft = getDaysUntilDashboardDeprecation();
-  const timePhrase =
-    daysLeft === 0
-      ? 'today'
-      : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+  const timePhrase = daysLeft === 0 ? 'today' : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
 
   return (
     <div
       style={{
         width: '100%',
-        padding: 8,
+        padding: '8px 16px',
         background: colors.horizontal,
         textAlign: 'center',
         display: 'flex',
@@ -38,11 +35,11 @@ export function DeprecationBanner() {
       }}
       data-test-id="deprecation-banner"
     >
-      <Group spacing={8}>
+      <Group spacing={8} style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
         <Warning color={colors.white} />
-        <Text color={colors.white}>
-          This dashboard will be deprecated {timePhrase}. After 31st May, you will loose support SLA for this dashboard. To avoid disruption, please migrate to the new dashboard in
-          advance.{' '}
+        <Text color={colors.white} style={{ whiteSpace: 'normal' }}>
+          This dashboard will be deprecated {timePhrase}. After 31st May, you will loose support SLA for this dashboard.
+          To avoid disruption, please migrate to the new dashboard in advance.{' '}
           <a
             href={MIGRATION_GUIDE_URL}
             target="_blank"
