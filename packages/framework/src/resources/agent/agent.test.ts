@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
+import { AgentDeliveryError } from './agent.errors';
 import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
 import { Button, Card, CardText } from './index';
@@ -1146,6 +1147,95 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyCall).toBeDefined();
     const replyBody = JSON.parse(replyCall![1].body);
     expect(replyBody.reply.markdown).toBe("Sorry that wasn't helpful!");
+  });
+
+  it.each([
+    { status: 502, body: '<!DOCTYPE html><html><body><h1>502 Bad Gateway</h1></body></html>', label: 'gateway HTML page', reason: 'Bad Gateway' },
+    { status: 401, body: '{"message":"Invalid API key"}', label: 'JSON credentials error', reason: 'Unauthorized' },
+    { status: 403, body: 'Forbidden', label: 'plain text forbidden', reason: 'Forbidden' },
+    { status: 429, body: '{"statusCode":429,"message":"Rate limit exceeded"}', label: 'rate limit', reason: 'Too Many Requests' },
+    { status: 500, body: '', label: 'empty body', reason: 'Internal Server Error' },
+    { status: 599, body: 'weird', label: 'unknown status code', reason: '599' },
+  ])('should throw AgentDeliveryError with clean message for $label ($status)', async ({ status, body, reason }) => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status, text: () => Promise.resolve(body) });
+
+    let caughtError: unknown;
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        try {
+          await ctx.reply('Hello');
+        } catch (err) {
+          caughtError = err;
+          throw err;
+        }
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(caughtError).toBeDefined());
+
+    expect(caughtError).toBeInstanceOf(AgentDeliveryError);
+    const err = caughtError as AgentDeliveryError;
+    expect(err.message).toBe(`Delivery failed: ${reason}`);
+    expect(err.statusCode).toBe(status);
+    expect(err.responseBody).toBe(body);
+  });
+
+  it('should log delivery errors without leaking the response body', async () => {
+    const longBody = '<!DOCTYPE html>' + '<p>error</p>'.repeat(500);
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 502, text: () => Promise.resolve(longBody) });
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx) => {
+        await ctx.reply('Hello');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
+
+    const logged = errorSpy.mock.calls[0].join(' ');
+    expect(logged).toBe('[agent:test-bot] Delivery failed: Bad Gateway');
+
+    errorSpy.mockRestore();
   });
 
   it('should not send a reply when onReaction returns nothing (reaction removed)', async () => {

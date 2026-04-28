@@ -2,19 +2,19 @@ import { DomainStatusEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/s
 import { formatDistanceToNow } from 'date-fns';
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
+import ReactConfetti from 'react-confetti';
+import { createPortal } from 'react-dom';
+import type { IconType } from 'react-icons';
 import {
   RiAddLine,
   RiArrowLeftSLine,
   RiEarthLine,
-  RiExternalLinkLine,
   RiInformationLine,
   RiMore2Fill,
-  RiPulseLine,
   RiRefreshLine,
 } from 'react-icons/ri';
 import { SiCloudflare, SiVercel } from 'react-icons/si';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import type { DiagnoseDomainResponse } from '@/api/domains';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import {
@@ -45,13 +45,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { LoadingIndicator } from '@/components/primitives/loading-indicator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useDiagnoseDomain } from '@/hooks/use-diagnose-domain';
 import {
   useFetchDomain,
   useFetchDomainAutoConfigure,
@@ -66,12 +66,16 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { parseDomainMetadataJson } from '@/utils/domain-metadata';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
 };
+
+const DOMAIN_CONNECT_VERIFYING_TIMEOUT_MS = 90_000;
+const VERIFIED_CONFETTI_DURATION_MS = 8_000;
 
 function formatLongDate(dateStr: string): string {
   const formatted = new Date(dateStr).toLocaleDateString('en-US', DATE_FORMAT_OPTIONS);
@@ -133,7 +137,6 @@ export function DomainDetailPage() {
   const { refresh: refreshDomain } = useRefreshDomain(domainParam);
   const verifyDomain = useVerifyDomain(domainParam);
   const updateDomainMeta = useUpdateDomain(domainParam);
-  const diagnoseDomainHook = useDiagnoseDomain(domainParam);
   const startDomainAutoConfigure = useStartDomainAutoConfigure(domainParam);
   const deleteDomain = useDeleteDomain();
   const routingRef = useRef<DomainRoutingHandle>(null);
@@ -146,8 +149,12 @@ export function DomainDetailPage() {
   const [domainConnectApplyUrl, setDomainConnectApplyUrl] = useState<string | undefined>();
   const [metadataDraft, setMetadataDraft] = useState('{}');
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
-  const [diagnoseResult, setDiagnoseResult] = useState<DiagnoseDomainResponse | null>(null);
   const [isRoutingOpen, setIsRoutingOpen] = useState(true);
+  const [showVerifiedConfetti, setShowVerifiedConfetti] = useState(false);
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: typeof window === 'undefined' ? 0 : window.innerWidth,
+    height: typeof window === 'undefined' ? 0 : window.innerHeight,
+  }));
   const domainConnectReturnStatus = searchParams.get('domainConnect');
   const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
   const domainConnectProviderName = domainConnectStatus?.providerName ?? 'your DNS provider';
@@ -195,16 +202,6 @@ export function DomainDetailPage() {
       showErrorToast('Failed to save metadata.');
 
       throw new Error('Failed to save metadata.');
-    }
-  };
-
-  const handleDiagnoseDns = async () => {
-    try {
-      const result = await diagnoseDomainHook.mutateAsync();
-
-      setDiagnoseResult(result);
-    } catch {
-      showErrorToast('Failed to run DNS diagnosis.');
     }
   };
 
@@ -282,10 +279,44 @@ export function DomainDetailPage() {
     if (hasJustVerified && !hasShownConnectedToastRef.current) {
       hasShownConnectedToastRef.current = true;
       showSuccessToast('Domain connected. Inbound email is ready.');
+      setShowVerifiedConfetti(true);
     }
 
     previousDomainStatusRef.current = domain.status;
   }, [domain, hasSubmittedDomainConnectReturn]);
+
+  useEffect(() => {
+    if (!showVerifiedConfetti) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setShowVerifiedConfetti(false);
+    }, VERIFIED_CONFETTI_DURATION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [showVerifiedConfetti]);
+
+  useEffect(() => {
+    if (!showVerifiedConfetti) return;
+
+    const handleResize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showVerifiedConfetti]);
+
+  useEffect(() => {
+    if (!hasSubmittedDomainConnectReturn) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setHasSubmittedDomainConnectReturn(false);
+    }, DOMAIN_CONNECT_VERIFYING_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hasSubmittedDomainConnectReturn]);
 
   const handleRequestDelete = () => {
     if (!domain) return;
@@ -341,6 +372,25 @@ export function DomainDetailPage() {
   return (
     <DashboardLayout headerStartItems={headerStartItems}>
       <PageMeta title={domain?.name ?? 'Domain'} />
+
+      {showVerifiedConfetti &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <ReactConfetti
+            width={viewportSize.width}
+            height={viewportSize.height}
+            recycle={false}
+            numberOfPieces={1000}
+            tweenDuration={VERIFIED_CONFETTI_DURATION_MS}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 10000,
+            }}
+          />,
+          document.body
+        )}
 
       <div className="flex h-full flex-col">
         <header className="border-stroke-soft border-b px-4 pt-2 pb-2 md:px-6">
@@ -492,7 +542,24 @@ export function DomainDetailPage() {
                 )}
 
               {/* DNS Records */}
-              <CollapsibleSection title="DNS Records">
+              <CollapsibleSection
+                title="DNS Records"
+                actions={
+                  <>
+                    {domainConnectStatus?.available &&
+                      domain?.status === DomainStatusEnum.PENDING &&
+                      (!hasSubmittedDomainConnectReturn || hasDomainConnectFailure) && (
+                        <AutoConfigureButton
+                          providerName={domainConnectProviderName}
+                          providerSlug={domain?.dnsProvider}
+                          isLoading={startDomainAutoConfigure.isPending}
+                          disabled={!canWriteDomains || startDomainAutoConfigure.isPending}
+                          onClick={handleAutoConfigure}
+                        />
+                      )}
+                  </>
+                }
+              >
                 <div className="rounded-lg border bg-white p-3 space-y-3">
                   {/* Card header row */}
                   <div className="flex items-center gap-1 justify-between">
@@ -504,14 +571,6 @@ export function DomainDetailPage() {
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <DnsActionButton
-                        icon={RiPulseLine}
-                        isActive={diagnoseDomainHook.isPending}
-                        onClick={handleDiagnoseDns}
-                        disabled={!canWriteDomains || !domain || diagnoseDomainHook.isPending}
-                      >
-                        Diagnose DNS
-                      </DnsActionButton>
-                      <DnsActionButton
                         icon={RiRefreshLine}
                         isActive={isFetching}
                         onClick={handleVerify}
@@ -522,29 +581,25 @@ export function DomainDetailPage() {
                     </div>
                   </div>
 
-                  {domainConnectStatus?.available && domain?.status === DomainStatusEnum.PENDING && (
-                    <div className="border-stroke-soft bg-bg-weak flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
-                      <div className="flex min-w-0 flex-col gap-1">
-                        <p className="text-text-strong text-sm font-medium">
-                          Auto-configure with {domainConnectProviderName}
-                        </p>
-                        <p className="text-text-sub text-xs">
-                          Continue to your DNS provider to add the MX record automatically.
-                        </p>
+                  {domainConnectStatus?.available &&
+                    domain?.status === DomainStatusEnum.PENDING &&
+                    hasSubmittedDomainConnectReturn &&
+                    !hasDomainConnectFailure && (
+                      <div className="border-stroke-soft bg-bg-weak flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <LoadingIndicator size="md" />
+                          <div className="flex min-w-0 flex-col gap-1">
+                            <p className="text-text-strong text-sm font-medium">
+                              Verifying DNS at {domainConnectProviderName}
+                            </p>
+                            <p className="text-text-sub text-xs">
+                              We&apos;re checking the MX record now. This usually finishes within a minute while DNS
+                              propagates.
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <Button
-                        size="xs"
-                        type="button"
-                        className="group"
-                        onClick={handleAutoConfigure}
-                        disabled={!canWriteDomains}
-                        isLoading={startDomainAutoConfigure.isPending}
-                      >
-                        Continue to {domainConnectProviderName}
-                        <RiExternalLinkLine className="size-4 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover:translate-x-0.5" />
-                      </Button>
-                    </div>
-                  )}
+                    )}
 
                   {!isDomainConnectStatusLoading &&
                     !domainConnectStatus?.available &&
@@ -616,28 +671,6 @@ export function DomainDetailPage() {
                       )}
                     </TableBody>
                   </Table>
-
-                  {diagnoseResult && (
-                    <div className="space-y-2 pt-1">
-                      <p className="text-foreground-600 text-xs font-medium">Inbound DNS diagnosis</p>
-                      {diagnoseResult.issues.length === 0 ? (
-                        <InlineToast
-                          variant="success"
-                          title="No issues reported"
-                          description="Checks completed; no actionable issues were returned for this domain."
-                        />
-                      ) : (
-                        diagnoseResult.issues.map((issue, index) => (
-                          <InlineToast
-                            key={`${issue.code}-${index}`}
-                            variant={issue.severity === 'error' ? 'error' : 'warning'}
-                            title={issue.message}
-                            description={issue.fix}
-                          />
-                        ))
-                      )}
-                    </div>
-                  )}
                 </div>
               </CollapsibleSection>
 
@@ -714,6 +747,47 @@ function DnsActionButton({ icon: Icon, isActive, onClick, disabled, children }: 
       {children}
     </motion.button>
   );
+}
+
+type AutoConfigureButtonProps = {
+  providerName: string;
+  providerSlug?: string;
+  isLoading: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+};
+
+function AutoConfigureButton({ providerName, providerSlug, isLoading, disabled, onClick }: AutoConfigureButtonProps) {
+  const ProviderIcon = getProviderIcon(providerSlug);
+  const isCloudflare = providerSlug?.toLowerCase() === 'cloudflare';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={`Auto configure with ${providerName}`}
+      className="text-text-strong hover:bg-bg-weak focus-visible:ring-stroke-strong flex items-center gap-1 rounded-md px-1.5 py-0.5 text-label-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {ProviderIcon && (
+        <ProviderIcon
+          className={cn('size-4 shrink-0', isCloudflare ? 'text-[#f38020]' : 'text-text-strong')}
+          aria-hidden
+        />
+      )}
+      <span>Auto configure</span>
+      {isLoading ? <LoadingIndicator size="sm" /> : null}
+    </button>
+  );
+}
+
+function getProviderIcon(provider?: string): IconType | null {
+  const slug = provider?.toLowerCase();
+
+  if (slug === 'cloudflare') return SiCloudflare;
+  if (slug === 'vercel') return SiVercel;
+
+  return null;
 }
 
 function ProviderValue({ provider }: { provider?: string }) {

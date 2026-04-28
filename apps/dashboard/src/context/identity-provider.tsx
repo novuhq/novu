@@ -12,22 +12,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const customerIo = useCustomerIo();
   const { currentUser, currentOrganization } = useAuth();
   const { selectedRegion } = useRegion();
-  const hasIdentifiedUser = useRef(false);
   const hasIdentifiedOrg = useRef(false);
-
-  useEffect(() => {
-    if (!currentUser || !currentUser._id || !ldClient || hasIdentifiedUser.current) return;
-
-    ldClient.identify({
-      kind: 'user',
-      key: currentUser._id,
-      firstName: currentUser.firstName,
-      lastName: currentUser.lastName,
-      email: currentUser.email,
-    });
-
-    hasIdentifiedUser.current = true;
-  }, [ldClient, currentUser]);
 
   useEffect(() => {
     if (!currentOrganization || !currentUser) return;
