@@ -15,6 +15,8 @@ const LINKS: LinkType[] = [
   { href: '/render-notification', label: 'Render Notification', category: 'Components' },
   { href: '/notifications', label: 'Notifications', category: 'Components' },
   { href: '/preferences', label: 'Preferences', category: 'Components' },
+  { href: '/connect-chat', label: 'Connect Chat (Slack)', category: 'Components' },
+  { href: '/connect-msteams', label: 'Connect MS Teams', category: 'Components' },
   { href: '/subscription', label: 'Subscription', category: 'Components' },
   { href: '/subscription-components', label: 'Subscription Components', category: 'Components' },
   { href: '/subscription-hooks', label: 'Subscription Hooks', category: 'Components' },
@@ -22,6 +24,8 @@ const LINKS: LinkType[] = [
   { href: '/custom-popover', label: 'Custom Popover', category: 'Customization' },
   { href: '/custom-subject-body', label: 'Custom Subject Body', category: 'Customization' },
   { href: '/custom-icons', label: 'Custom Icons', category: 'Customization' },
+  { href: '/send-email', label: 'Send Test Email', category: 'Tools' },
+  { href: '/send-email-thread', label: 'Send Email Thread', category: 'Tools' },
   { href: '/hooks', label: 'Hooks', category: 'Advanced' },
 ];
 

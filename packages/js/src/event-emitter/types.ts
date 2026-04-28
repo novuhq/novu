@@ -1,4 +1,17 @@
 import type {
+  ChannelConnectionResponse,
+  ChannelEndpointResponse,
+  CreateChannelEndpointArgs,
+  DeleteChannelConnectionArgs,
+  DeleteChannelEndpointArgs,
+  GenerateChatOAuthUrlArgs,
+  GenerateLinkUserOAuthUrlArgs,
+  GetChannelConnectionArgs,
+  GetChannelEndpointArgs,
+  ListChannelConnectionsArgs,
+  ListChannelEndpointsArgs,
+} from '../channel-connections/types';
+import type {
   ArchivedArgs,
   CompleteArgs,
   CountArgs,
@@ -110,6 +123,46 @@ type SubscriptionPreferencesBulkUpdateEvents = BaseEvents<
   SubscriptionPreference[]
 >;
 type SubscriptionDeleteEvents = BaseEvents<'subscription.delete', DeleteSubscriptionArgs, void>;
+
+type ChannelConnectionOAuthUrlEvents = BaseEvents<
+  'channel-connection.oauth-url',
+  GenerateChatOAuthUrlArgs,
+  { url: string }
+>;
+type ChannelConnectionsFetchEvents = BaseEvents<
+  'channel-connections.list',
+  ListChannelConnectionsArgs,
+  ChannelConnectionResponse[]
+>;
+type ChannelConnectionGetEvents = BaseEvents<
+  'channel-connection.get',
+  GetChannelConnectionArgs,
+  ChannelConnectionResponse | null
+>;
+type ChannelConnectionDeleteEvents = BaseEvents<'channel-connection.delete', DeleteChannelConnectionArgs, void>;
+
+type ChannelEndpointOAuthUrlEvents = BaseEvents<
+  'channel-endpoint.oauth-url',
+  GenerateLinkUserOAuthUrlArgs,
+  { url: string }
+>;
+type ChannelEndpointsFetchEvents = BaseEvents<
+  'channel-endpoints.list',
+  ListChannelEndpointsArgs,
+  ChannelEndpointResponse[]
+>;
+type ChannelEndpointGetEvents = BaseEvents<
+  'channel-endpoint.get',
+  GetChannelEndpointArgs,
+  ChannelEndpointResponse | null
+>;
+type ChannelEndpointCreateEvents = BaseEvents<
+  'channel-endpoint.create',
+  CreateChannelEndpointArgs,
+  ChannelEndpointResponse
+>;
+type ChannelEndpointDeleteEvents = BaseEvents<'channel-endpoint.delete', DeleteChannelEndpointArgs, void>;
+
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
@@ -153,7 +206,16 @@ export type Events = SessionInitializeEvents &
   SubscriptionPreferencesBulkUpdateEvents &
   SubscriptionDeleteEvents & {
     'subscriptions.list.updated': { data: { topicKey: string; subscriptions: TopicSubscription[] } };
-  } & SocketConnectEvents &
+  } & ChannelConnectionOAuthUrlEvents &
+  ChannelConnectionsFetchEvents &
+  ChannelConnectionGetEvents &
+  ChannelConnectionDeleteEvents &
+  ChannelEndpointOAuthUrlEvents &
+  ChannelEndpointsFetchEvents &
+  ChannelEndpointGetEvents &
+  ChannelEndpointCreateEvents &
+  ChannelEndpointDeleteEvents &
+  SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &

@@ -29,6 +29,13 @@ import {
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
 
 /**
+ * Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.
+ */
+export type HttpRequestStepResponseDtoBody =
+  | string
+  | Array<HttpRequestKeyValuePairDto>;
+
+/**
  * Control values for the HTTP request step
  */
 export type HttpRequestStepResponseDtoControlValues = {
@@ -45,9 +52,9 @@ export type HttpRequestStepResponseDtoControlValues = {
    */
   headers?: Array<HttpRequestKeyValuePairDto> | undefined;
   /**
-   * Request body as key-value pairs
+   * Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.
    */
-  body?: Array<HttpRequestKeyValuePairDto> | undefined;
+  body?: string | Array<HttpRequestKeyValuePairDto> | undefined;
   /**
    * JSON schema to validate response body against
    */
@@ -119,6 +126,23 @@ export type HttpRequestStepResponseDto = {
 };
 
 /** @internal */
+export const HttpRequestStepResponseDtoBody$inboundSchema: z.ZodType<
+  HttpRequestStepResponseDtoBody,
+  z.ZodTypeDef,
+  unknown
+> = z.union([z.string(), z.array(HttpRequestKeyValuePairDto$inboundSchema)]);
+
+export function httpRequestStepResponseDtoBodyFromJSON(
+  jsonString: string,
+): SafeParseResult<HttpRequestStepResponseDtoBody, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => HttpRequestStepResponseDtoBody$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'HttpRequestStepResponseDtoBody' from JSON`,
+  );
+}
+
+/** @internal */
 export const HttpRequestStepResponseDtoControlValues$inboundSchema: z.ZodType<
   HttpRequestStepResponseDtoControlValues,
   z.ZodTypeDef,
@@ -128,7 +152,10 @@ export const HttpRequestStepResponseDtoControlValues$inboundSchema: z.ZodType<
     method: HttpMethodEnum$inboundSchema,
     url: z.string(),
     headers: z.array(HttpRequestKeyValuePairDto$inboundSchema).optional(),
-    body: z.array(HttpRequestKeyValuePairDto$inboundSchema).optional(),
+    body: z.union([
+      z.string(),
+      z.array(HttpRequestKeyValuePairDto$inboundSchema),
+    ]).optional(),
     responseBodySchema: z.record(z.any()).optional(),
     enforceSchemaValidation: z.boolean().optional(),
     continueOnFailure: z.boolean().optional(),

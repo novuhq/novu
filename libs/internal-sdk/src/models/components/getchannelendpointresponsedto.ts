@@ -66,6 +66,7 @@ export const GetChannelEndpointResponseDtoProviderId = {
   Sparkpost: "sparkpost",
   EmailWebhook: "email-webhook",
   Braze: "braze",
+  NovuEmailAgent: "novu-email-agent",
   Nexmo: "nexmo",
   Plivo: "plivo",
   Sms77: "sms77",

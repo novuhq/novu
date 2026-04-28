@@ -8,6 +8,10 @@ describe('Agents API - /agents #novu-v2', () => {
   const agentRepository = new AgentRepository();
   const agentIntegrationRepository = new AgentIntegrationRepository();
 
+  before(() => {
+    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+  });
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -59,6 +63,72 @@ describe('Agents API - /agents #novu-v2', () => {
     const afterDelete = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
     expect(afterDelete.status).to.equal(404);
+  });
+
+  it('should update and return acknowledgeOnReceived behavior', async () => {
+    const identifier = `e2e-behavior-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Behavior Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior).to.equal(undefined);
+
+    const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { acknowledgeOnReceived: false },
+    });
+
+    expect(patchRes.status).to.equal(200);
+    expect(patchRes.body.data.behavior).to.deep.equal({ acknowledgeOnReceived: false });
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.acknowledgeOnReceived).to.equal(false);
+
+    const reEnableRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { acknowledgeOnReceived: true },
+    });
+
+    expect(reEnableRes.status).to.equal(200);
+    expect(reEnableRes.body.data.behavior.acknowledgeOnReceived).to.equal(true);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should update and return reactionOnResolved behavior', async () => {
+    const identifier = `e2e-reactions-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Reaction Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior).to.equal(undefined);
+
+    const setRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { reactionOnResolved: 'thumbs_up' },
+    });
+
+    expect(setRes.status).to.equal(200);
+    expect(setRes.body.data.behavior.reactionOnResolved).to.equal('thumbs_up');
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.reactionOnResolved).to.equal('thumbs_up');
+
+    const disableRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { reactionOnResolved: null },
+    });
+
+    expect(disableRes.status).to.equal(200);
+    expect(disableRes.body.data.behavior.reactionOnResolved).to.equal(null);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
 
   it('should return 422 when identifier is not a valid slug', async () => {
@@ -143,7 +213,7 @@ describe('Agents API - /agents #novu-v2', () => {
       .send({ integrationIdentifier: emailIntegrationIdentifier });
 
     expect(addRes.status).to.equal(201);
-    expect(addRes.body.data.integrationIdentifier).to.equal(emailIntegrationIdentifier);
+    expect(addRes.body.data.integration.identifier).to.equal(emailIntegrationIdentifier);
     const linkId = addRes.body.data._id as string;
 
     const listRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/integrations`);
@@ -159,7 +229,7 @@ describe('Agents API - /agents #novu-v2', () => {
       .send({ integrationIdentifier: smsIntegrationIdentifier });
 
     expect(patchLinkRes.status).to.equal(200);
-    expect(patchLinkRes.body.data.integrationIdentifier).to.equal(smsIntegrationIdentifier);
+    expect(patchLinkRes.body.data.integration.identifier).to.equal(smsIntegrationIdentifier);
 
     const removeRes = await session.testAgent.delete(
       `/v1/agents/${encodeURIComponent(identifier)}/integrations/${linkId}`
@@ -221,5 +291,163 @@ describe('Agents API - /agents #novu-v2', () => {
     );
 
     expect(agentAfter).to.equal(null);
+  });
+
+  describe('Bridge URL management', () => {
+    let identifier: string;
+
+    beforeEach(async () => {
+      identifier = `e2e-bridge-${Date.now()}`;
+      await session.testAgent.post('/v1/agents').send({ name: 'Bridge Agent', identifier });
+    });
+
+    afterEach(async () => {
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should update bridgeUrl via PATCH', async () => {
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        bridgeUrl: 'https://example.com/api/novu',
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/api/novu');
+    });
+
+    it('should update devBridgeUrl and devBridgeActive via PUT bridge endpoint', async () => {
+      const res = await session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/bridge`).send({
+        devBridgeUrl: 'https://example.org',
+        devBridgeActive: true,
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.devBridgeUrl).to.equal('https://example.org');
+      expect(res.body.data.devBridgeActive).to.equal(true);
+    });
+
+    it('should set bridgeUrl via PUT bridge endpoint', async () => {
+      const res = await session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/bridge`).send({
+        bridgeUrl: 'https://example.com/novu',
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/novu');
+    });
+
+    it('should return bridge fields on GET', async () => {
+      await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        bridgeUrl: 'https://example.com/api/novu',
+        devBridgeUrl: 'https://example.org',
+        devBridgeActive: true,
+      });
+
+      const res = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/api/novu');
+      expect(res.body.data.devBridgeUrl).to.equal('https://example.org');
+      expect(res.body.data.devBridgeActive).to.equal(true);
+    });
+
+    it('should deactivate devBridgeActive', async () => {
+      await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        devBridgeUrl: 'https://example.org',
+        devBridgeActive: true,
+      });
+
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        devBridgeActive: false,
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.devBridgeActive).to.equal(false);
+      expect(res.body.data.devBridgeUrl).to.equal('https://example.org');
+    });
+
+    // Locks in the SSRF guard — see UpdateAgent.assertSafeBridgeUrl.
+    // localhost / private IPs / link-local must be rejected so an authenticated
+    // AGENT_WRITE caller can't repoint the bridge at internal hosts.
+    it('should reject bridgeUrl pointing at loopback', async () => {
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        bridgeUrl: 'http://localhost:4000/api/novu',
+      });
+
+      expect(res.status).to.equal(400);
+      expect(JSON.stringify(res.body)).to.match(/bridgeUrl/i);
+    });
+
+    it('should reject devBridgeUrl pointing at link-local cloud metadata', async () => {
+      const res = await session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/bridge`).send({
+        devBridgeUrl: 'http://169.254.169.254/latest/meta-data/',
+      });
+
+      expect(res.status).to.equal(400);
+      expect(JSON.stringify(res.body)).to.match(/devBridgeUrl/i);
+    });
+  });
+
+  describe('Production environment guard', () => {
+    let prodSession: UserSession;
+    let identifier: string;
+
+    before(async () => {
+      prodSession = new UserSession();
+      await prodSession.initialize();
+    });
+
+    beforeEach(async () => {
+      identifier = `e2e-prodguard-${Date.now()}`;
+
+      await prodSession.switchToDevEnvironment();
+      await prodSession.testAgent.post('/v1/agents').send({ name: 'Guard Agent', identifier });
+    });
+
+    afterEach(async () => {
+      await prodSession.switchToDevEnvironment();
+      await prodSession.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should reject devBridgeActive=true on production environment', async () => {
+      await prodSession.switchToProdEnvironment();
+
+      await prodSession.testAgent.post('/v1/agents').send({ name: 'Prod Agent', identifier: `${identifier}-prod` });
+
+      const res = await prodSession.testAgent.patch(`/v1/agents/${encodeURIComponent(`${identifier}-prod`)}`).send({
+        devBridgeActive: true,
+      });
+
+      expect(res.status).to.equal(403);
+
+      await prodSession.testAgent.delete(`/v1/agents/${encodeURIComponent(`${identifier}-prod`)}`);
+    });
+
+    it('should reject devBridgeUrl on production environment', async () => {
+      await prodSession.switchToProdEnvironment();
+
+      await prodSession.testAgent.post('/v1/agents').send({ name: 'Prod Agent 2', identifier: `${identifier}-prod2` });
+
+      const res = await prodSession.testAgent.patch(`/v1/agents/${encodeURIComponent(`${identifier}-prod2`)}`).send({
+        devBridgeUrl: 'https://example.org',
+      });
+
+      expect(res.status).to.equal(403);
+
+      await prodSession.testAgent.delete(`/v1/agents/${encodeURIComponent(`${identifier}-prod2`)}`);
+    });
+
+    it('should allow bridgeUrl on production environment', async () => {
+      await prodSession.switchToProdEnvironment();
+
+      await prodSession.testAgent.post('/v1/agents').send({ name: 'Prod Agent 3', identifier: `${identifier}-prod3` });
+
+      const res = await prodSession.testAgent.patch(`/v1/agents/${encodeURIComponent(`${identifier}-prod3`)}`).send({
+        bridgeUrl: 'https://example.com/novu',
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.bridgeUrl).to.equal('https://example.com/novu');
+
+      await prodSession.testAgent.delete(`/v1/agents/${encodeURIComponent(`${identifier}-prod3`)}`);
+    });
   });
 });

@@ -513,6 +513,13 @@ export const slackConfigLegacy: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.SigningSecret,
+    displayName: 'Signing Secret',
+    description: 'Slack app Signing Secret, used for verifying inbound webhook requests',
+    type: 'string',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.RedirectUrl,
     displayName: 'Redirect URL',
     description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
@@ -547,6 +554,13 @@ export const slackConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.SigningSecret,
+    displayName: 'Signing Secret',
+    description: 'Slack app Signing Secret, used for verifying inbound webhook requests',
+    type: 'string',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.RedirectUrl,
     displayName: 'Redirect URL',
     description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
@@ -558,22 +572,22 @@ export const slackConfig: IConfigCredential[] = [
 export const msTeamsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ClientId,
-    displayName: 'Client ID',
-    description: 'Azure Bot Application (client) ID',
+    displayName: 'Microsoft App ID',
+    description: 'From Azure Bot resource → Configuration, or App Registration → Overview (Application client ID)',
     type: 'string',
     required: false,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Client Secret',
-    description: 'Azure Bot Client Secret value',
+    description: 'Secret value from App Registration → Certificates & secrets → New client secret',
     type: 'string',
     required: false,
   },
   {
     key: CredentialsKeyEnum.TenantId,
-    displayName: 'Tenant ID',
-    description: 'Azure Bot Tenant ID',
+    displayName: 'Directory (tenant) ID',
+    description: 'From App Registration → Overview (Directory tenant ID)',
     type: 'string',
     required: false,
   },
@@ -1275,6 +1289,21 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
     description: 'Your WhatsApp Business phone number identification',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'App Secret',
+    description:
+      'Found under App Settings > Basic in your Meta app dashboard — used to verify inbound webhook signatures',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Verify Token',
+    description: 'A secret string you define — must match the Verify Token entered in your Meta webhook configuration',
+    type: 'string',
+    required: false,
   },
 ];
 

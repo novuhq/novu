@@ -42,6 +42,7 @@ export const ROUTES = {
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',
   ACTIVITY_REQUESTS: '/env/:environmentSlug/activity/requests',
+  ACTIVITY_CONVERSATIONS: '/env/:environmentSlug/activity/conversations',
   ANALYTICS: '/env/:environmentSlug/analytics',
   LOGS: '/env/:environmentSlug/requests',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
@@ -52,6 +53,8 @@ export const ROUTES = {
   EDIT_SUBSCRIBER: '/env/:environmentSlug/subscribers/:subscriberId',
   CREATE_SUBSCRIBER: '/env/:environmentSlug/subscribers/create',
   PARTNER_INTEGRATIONS_VERCEL: '/partner-integrations/vercel',
+  DOMAINS: '/env/:environmentSlug/domains',
+  DOMAIN_DETAIL: '/env/:environmentSlug/domains/:domain',
   WEBHOOKS: '/env/:environmentSlug/webhooks',
   WEBHOOKS_ENDPOINTS: '/env/:environmentSlug/webhooks/endpoints',
   WEBHOOKS_EVENT_CATALOG: '/env/:environmentSlug/webhooks/event-catalog',
@@ -72,7 +75,26 @@ export const ROUTES = {
   VARIABLES: '/env/:environmentSlug/variables',
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
   AGENTS: '/env/:environmentSlug/agents',
+  AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
+  /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
 } as const;
+
+export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
+
+export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
+
+export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
+
+export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
+  if (tab && (AGENT_DETAILS_TABS as readonly string[]).includes(tab)) {
+    return tab as AgentDetailsTab;
+  }
+
+  return AGENT_DETAILS_DEFAULT_TAB;
+}
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
   return Object.entries(params).reduce((acc, [key, value]) => {

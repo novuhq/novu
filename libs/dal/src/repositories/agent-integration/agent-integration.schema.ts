@@ -21,6 +21,11 @@ const agentIntegrationSchema = new Schema<AgentIntegrationDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    connectedAt: {
+      type: Date,
+      required: false,
+      default: null,
+    },
   },
   schemaOptions
 );

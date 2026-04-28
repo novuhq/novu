@@ -50,6 +50,8 @@ import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integ
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
 import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-response.dto';
+import { GenerateConnectOauthUrlRequestDto } from './dtos/generate-connect-oauth-url-request.dto';
+import { GenerateLinkUserOauthUrlRequestDto } from './dtos/generate-link-user-oauth-url-request.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
@@ -61,6 +63,10 @@ import { CreateIntegrationCommand } from './usecases/create-integration/create-i
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { GenerateChatOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
 import { GenerateChatOauthUrl } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
+import { GenerateConnectOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
+import { GenerateConnectOauthUrl } from './usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
+import { GenerateLinkUserOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
+import { GenerateLinkUserOauthUrl } from './usecases/generate-chat-oath-url/generate-link-user-oauth-url.usecase';
 import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
@@ -92,6 +98,8 @@ export class IntegrationsController {
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private organizationRepository: CommunityOrganizationRepository,
     private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
+    private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
+    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
     private chatOauthCallbackUsecase: ChatOauthCallback,
     private featureFlagsService: FeatureFlagsService
   ) {}
@@ -405,13 +413,18 @@ export class IntegrationsController {
     );
   }
 
+  /**
+   * @deprecated Use POST /integrations/channel-connections/oauth or POST /integrations/channel-endpoints/oauth instead.
+   */
   @Post('/chat/oauth')
   @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate chat OAuth URL',
-    description: `Generate an OAuth URL for chat integrations like Slack and MS Teams. 
+    description: `**Deprecated** — use \`POST /integrations/channel-connections/oauth\` (connect) or \`POST /integrations/channel-endpoints/oauth\` (link_user) instead.
+    Generate an OAuth URL for chat integrations like Slack and MS Teams. 
     This URL allows subscribers to authorize the integration, enabling the system to send messages 
     through their chat workspace. The generated URL expires after 5 minutes.`,
+    deprecated: true,
   })
   @SdkMethodName('generateChatOAuthUrl')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
@@ -432,6 +445,76 @@ export class IntegrationsController {
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
         scope: body.scope,
+        userScope: body.userScope,
+        mode: body.mode,
+        connectionMode: body.connectionMode,
+        autoLinkUser: body.autoLinkUser,
+      })
+    );
+
+    return { url };
+  }
+
+  @Post('/channel-connections/oauth')
+  @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
+  @ApiOperation({
+    summary: 'Generate OAuth URL for a workspace/tenant connection',
+    description: `Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). 
+    The generated URL expires after 5 minutes.`,
+  })
+  @SdkMethodName('generateConnectOAuthUrl')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @ExternalApiAccessible()
+  @RequireAuthentication()
+  async generateConnectOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateConnectOauthUrlRequestDto
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
+    await this.checkFeatureEnabled(user);
+
+    const url = await this.generateConnectOauthUrlUsecase.execute(
+      GenerateConnectOauthUrlCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId: body.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
+        scope: body.scope,
+        connectionMode: body.connectionMode,
+        autoLinkUser: body.autoLinkUser,
+      })
+    );
+
+    return { url };
+  }
+
+  @Post('/channel-endpoints/oauth')
+  @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
+  @ApiOperation({
+    summary: 'Generate OAuth URL to link a subscriber user identity',
+    description: `Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID). 
+    The generated URL expires after 5 minutes.`,
+  })
+  @SdkMethodName('generateLinkUserOAuthUrl')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @ExternalApiAccessible()
+  @RequireAuthentication()
+  async generateLinkUserOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateLinkUserOauthUrlRequestDto
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
+    await this.checkFeatureEnabled(user);
+
+    const url = await this.generateLinkUserOauthUrlUsecase.execute(
+      GenerateLinkUserOauthUrlCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId: body.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
+        userScope: body.userScope,
       })
     );
 

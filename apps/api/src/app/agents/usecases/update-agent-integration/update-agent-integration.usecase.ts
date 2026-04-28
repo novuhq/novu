@@ -1,8 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
 import type { AgentIntegrationResponseDto } from '../../dtos';
+import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
 import { UpdateAgentIntegrationCommand } from './update-agent-integration.command';
 
 @Injectable()
@@ -49,17 +48,15 @@ export class UpdateAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'identifier']
+      '_id identifier name providerId channel active'
     );
 
     if (!targetIntegration) {
-      throw new NotFoundException(
-        `Integration with identifier "${command.integrationIdentifier}" was not found.`
-      );
+      throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
     }
 
     if (existingLink._integrationId === targetIntegration._id) {
-      return toAgentIntegrationResponse(existingLink, targetIntegration.identifier);
+      return toAgentIntegrationResponse(existingLink, targetIntegration);
     }
 
     const duplicate = await this.agentIntegrationRepository.findOne(
@@ -96,11 +93,9 @@ export class UpdateAgentIntegration {
     );
 
     if (!updated) {
-      throw new NotFoundException(
-        `Agent-integration link "${command.agentIntegrationId}" was not found after update.`
-      );
+      throw new NotFoundException(`Agent-integration link "${command.agentIntegrationId}" was not found after update.`);
     }
 
-    return toAgentIntegrationResponse(updated, targetIntegration.identifier);
+    return toAgentIntegrationResponse(updated, targetIntegration);
   }
 }

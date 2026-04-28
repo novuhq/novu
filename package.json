@@ -15,6 +15,7 @@
     "build:ws": "nx build @novu/ws",
     "build": "nx run-many --target=build --all --exclude=nextjs,nestjs",
     "clean": "rimraf **/build **/dist **/node_modules",
+    "cache:clean": "pnpm nx reset && pnpm store prune",
     "commit": "cz",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
@@ -167,7 +168,7 @@
       "minimatch@>=9.0.0 <9.0.7": "^9.0.7",
       "nanoid@>=3.0.0 <3.3.8": "^3.3.8",
       "nth-check": "^2.1.1",
-      "postcss@<8.4.31": "^8.4.31",
+      "postcss@<8.5.10": "^8.5.10",
       "proxy-agent@<6.3.1": "^6.3.1",
       "semver@>=7.0.0 <7.5.2": "^7.5.2",
       "systeminformation@<5.31.0": "^5.31.3",
@@ -195,9 +196,9 @@
       "ws@>=8.0.0 <8.17.1": "^8.17.1",
       "nextjs>next": "15.5.15",
       "next@<16.2.3": "^16.2.3",
-      "fast-xml-parser@>=4.0.0 <5.0.0": "5.5.8",
-      "fast-xml-parser@>=5.0.0 <5.5.7": "5.5.8",
-      "basic-ftp@<5.2.2": "5.2.2",
+      "fast-xml-parser@>=4.0.0 <5.0.0": "5.7.0",
+      "fast-xml-parser@>=5.0.0 <5.7.0": "5.7.0",
+      "basic-ftp@<=5.2.2": "5.3.0",
       "axios@>=1.0.0 <1.15.0": "^1.15.0",
       "seroval@<1.4.1": "^1.4.1",
       "h3@<1.15.9": "^1.15.9",
@@ -229,7 +230,7 @@
       "express@<4.20.0": "^4.20.0",
       "serve-static@<1.16.0": "^1.16.0",
       "send@<0.19.0": "^0.19.0",
-      "dompurify@>=3.1.3 <=3.3.1": "^3.3.2",
+      "dompurify@>=3.1.3 <3.4.0": "^3.4.0",
       "@octokit/endpoint@>=9.0.5 <9.0.6": "^9.0.6",
       "@octokit/request-error@<5.1.1": "^5.1.1",
       "@octokit/plugin-paginate-rest@<9.2.2": "^9.2.2",
@@ -260,17 +261,22 @@
       "path-to-regexp@>=8.0.0 <8.4.0": "^8.4.0",
       "svelte@<5.53.5": "5.53.5",
       "@sveltejs/kit@<=2.57.0": "^2.57.1",
-      "langsmith@<0.5.18": "^0.5.18",
+      "langsmith@<=0.5.18": "^0.5.19",
       "devalue@<5.6.4": "5.6.4",
       "picomatch@<2.3.2": "^2.3.2",
       "picomatch@>=4.0.0 <4.0.4": "^4.0.4",
       "yaml@>=1.0.0 <1.10.3": "^1.10.3",
       "yaml@>=2.0.0 <2.8.3": "^2.8.3",
-      "@xmldom/xmldom@<0.8.12": "^0.8.12",
+      "@xmldom/xmldom@<0.8.13": "^0.8.13",
       "micromatch@<4.0.0": "^4.0.8",
       "defu@<=6.1.4": "^6.1.5",
       "@smithy/config-resolver@<4.4.0": "^4.4.0",
-      "esbuild@<0.25.0": "^0.25.0"
+      "esbuild@<0.25.0": "^0.25.0",
+      "follow-redirects@<=1.15.11": "^1.16.0",
+      "@clerk/shared@>=2.20.17 <2.22.1": "^2.22.1",
+      "@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.4": "^3.47.4",
+      "protobufjs@<7.5.5": "^7.5.5",
+      "protobufjs@>=8.0.0 <8.0.1": "^8.0.1"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
@@ -307,6 +313,10 @@
       "sharp",
       "unrs-resolver",
       "workerd"
-    ]
+    ],
+    "allowUnusedPatches": true,
+    "patchedDependencies": {
+      "smtp-server@1.17.0": "patches/smtp-server@1.17.0.patch"
+    }
   }
 }

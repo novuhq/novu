@@ -115,6 +115,7 @@ const StepNode = (props: StepNodeProps) => {
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
   const {
     isReadOnly,
+    areConditionsClickable,
     showStepPreview,
     isCodeFirstWorkflow,
     onNodeDragEnd,
@@ -199,6 +200,7 @@ const StepNode = (props: StepNodeProps) => {
       </AnimationStepWrapper>
       {hasConditions && (
         <ConditionBadge
+          isReadOnly={!areConditionsClickable}
           conditionsCount={conditionsCount}
           stepSlug={data.stepSlug ?? ''}
           conditionsData={data.controlValues?.skip as RQBJsonLogic}

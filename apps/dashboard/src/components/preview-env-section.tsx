@@ -52,7 +52,6 @@ export function PreviewEnvSection({ schema, env, onUpdate }: EnvSectionProps) {
   const handleReset = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      e.preventDefault();
       onUpdate('env', serverEnvData);
     },
     [onUpdate, serverEnvData]
@@ -60,7 +59,24 @@ export function PreviewEnvSection({ schema, env, onUpdate }: EnvSectionProps) {
 
   return (
     <AccordionItem value="env" className={ACCORDION_STYLES.itemLast}>
-      <AccordionTrigger className={ACCORDION_STYLES.trigger}>
+      <AccordionTrigger
+        className={ACCORDION_STYLES.trigger}
+        rightSlot={
+          <div className="mr-2 flex items-center gap-2">
+            <Button
+              onClick={handleReset}
+              type="button"
+              variant="secondary"
+              mode="ghost"
+              size="2xs"
+              className="text-foreground-600 gap-1"
+            >
+              <RiRefreshLine className="h-3 w-3" />
+              Reset defaults
+            </Button>
+          </div>
+        }
+      >
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-0.5">
             Environment
@@ -75,19 +91,6 @@ export function PreviewEnvSection({ schema, env, onUpdate }: EnvSectionProps) {
                 templates. Values are resolved server-side.
               </TooltipContent>
             </Tooltip>
-          </div>
-          <div className="mr-2 flex items-center gap-2">
-            <Button
-              onClick={handleReset}
-              type="button"
-              variant="secondary"
-              mode="ghost"
-              size="2xs"
-              className="text-foreground-600 gap-1"
-            >
-              <RiRefreshLine className="h-3 w-3" />
-              Reset defaults
-            </Button>
           </div>
         </div>
       </AccordionTrigger>

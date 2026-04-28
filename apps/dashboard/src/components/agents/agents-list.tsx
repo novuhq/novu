@@ -1,7 +1,8 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { RiRobot2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
@@ -12,6 +13,7 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
@@ -21,13 +23,19 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
 
 export function AgentsList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const track = useTelemetry();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
 
   const [search, setSearch] = useState('');
@@ -79,9 +87,24 @@ export function AgentsList() {
   const createMutation = useMutation({
     mutationFn: (body: CreateAgentBody) =>
       createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
-    onSuccess: async () => {
+    onSuccess: async (createdAgent) => {
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
+      setCreateOpen(false);
+
+      track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
+        agentIdentifier: createdAgent.identifier,
+        active: createdAgent.active,
+      });
+
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+        environmentSlug: environment.slug ?? '',
+        agentIdentifier: encodeURIComponent(createdAgent.identifier),
+        agentTab: AGENT_DETAILS_DEFAULT_TAB,
+      })}${location.search}`;
+
+      navigate(agentDetailsPath);
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
@@ -93,9 +116,11 @@ export function AgentsList() {
   const deleteMutation = useMutation({
     mutationFn: (identifier: string) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
-    onSuccess: async () => {
+    onSuccess: async (_, identifier) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
+
+      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const listKey = getAgentsListQueryKey(environment._id, {
@@ -183,6 +208,33 @@ export function AgentsList() {
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;
 
+  if (showEmptyBlank) {
+    return (
+      <>
+        <AgentsEmptyTeaser
+          cta={
+            <PermissionButton
+              permission={PermissionsEnum.AGENT_WRITE}
+              size="xs"
+              variant="secondary"
+              mode="gradient"
+              trailingIcon={RiArrowRightSLine}
+              onClick={() => setCreateOpen(true)}
+            >
+              Create agent
+            </PermissionButton>
+          }
+        />
+        <CreateAgentDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onSubmit={handleCreateSubmit}
+          isSubmitting={createMutation.isPending}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2 py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -211,26 +263,6 @@ export function AgentsList() {
         <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
       ) : null}
 
-      {showEmptyBlank ? (
-        <div className="border-stroke-soft flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 py-16">
-          <p className="text-text-strong text-label-sm font-medium">No agents yet</p>
-          <p className="text-text-soft max-w-md text-center text-label-sm">
-            Create an agent to connect your brain to channels with a unified API.
-          </p>
-          <PermissionButton
-            permission={PermissionsEnum.AGENT_WRITE}
-            size="xs"
-            variant="primary"
-            mode="gradient"
-            className="gap-1"
-            leadingIcon={RiRobot2Line}
-            onClick={() => setCreateOpen(true)}
-          >
-            Add Agent
-          </PermissionButton>
-        </div>
-      ) : null}
-
       {showNoResults ? (
         <ListNoResults
           title="No agents found"
@@ -239,7 +271,7 @@ export function AgentsList() {
         />
       ) : null}
 
-      {!listQuery.isError && !showEmptyBlank && !showNoResults ? (
+      {!listQuery.isError && !showNoResults ? (
         <AgentsTable
           agents={agents}
           isLoading={isLoading}

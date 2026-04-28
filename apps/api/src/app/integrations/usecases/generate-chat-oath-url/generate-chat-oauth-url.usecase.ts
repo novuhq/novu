@@ -30,6 +30,10 @@ export class GenerateChatOauthUrl {
             integration,
             context: command.context,
             scope: command.scope,
+            userScope: command.userScope,
+            mode: command.mode,
+            connectionMode: command.connectionMode,
+            autoLinkUser: command.autoLinkUser,
           })
         );
 
@@ -42,6 +46,8 @@ export class GenerateChatOauthUrl {
             subscriberId: command.subscriberId,
             integration,
             context: command.context,
+            mode: command.mode,
+            autoLinkUser: command.autoLinkUser,
           })
         );
 

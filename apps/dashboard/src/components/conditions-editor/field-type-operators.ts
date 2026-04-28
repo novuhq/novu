@@ -86,13 +86,7 @@ export function getOperatorsForFieldType(dataType: FieldDataType): Operator[] {
   return FIELD_TYPE_OPERATORS[dataType] || FIELD_TYPE_OPERATORS.string;
 }
 
-const RELATIVE_DATE_OPERATORS = [
-  'moreThanXAgo',
-  'lessThanXAgo',
-  'withinLast',
-  'notWithinLast',
-  'exactlyXAgo',
-] as const;
+const RELATIVE_DATE_OPERATORS = ['moreThanXAgo', 'lessThanXAgo', 'withinLast', 'notWithinLast', 'exactlyXAgo'] as const;
 
 export function isRelativeDateOperator(operator: string): boolean {
   return RELATIVE_DATE_OPERATORS.includes(operator as any);

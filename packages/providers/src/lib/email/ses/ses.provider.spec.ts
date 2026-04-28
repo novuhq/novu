@@ -107,6 +107,53 @@ test('should trigger ses library correctly', async () => {
   expect(response.id).toEqual('<mock-message-id@email.amazonses.com>');
 });
 
+test('should forward custom headers in raw email content', async () => {
+  const mockResponse = { MessageId: 'mock-message-id' };
+  const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
+    return mockResponse as any;
+  });
+
+  const provider = new SESEmailProvider(mockConfig);
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    headers: {
+      'In-Reply-To': '<original-message-id@example.com>',
+      References: '<original-message-id@example.com>',
+    },
+  });
+
+  const bufferArray = spy.mock.calls[0][0].input['Content']['Raw']['Data'];
+  const emailContent = Buffer.from(bufferArray).toString();
+
+  expect(spy).toHaveBeenCalled();
+  expect(emailContent.includes('In-Reply-To: <original-message-id@example.com>')).toBe(true);
+  expect(emailContent.includes('References: <original-message-id@example.com>')).toBe(true);
+});
+
+test('should forward custom MIME alternatives in raw email content', async () => {
+  const mockResponse = { MessageId: 'mock-message-id' };
+  const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
+    return mockResponse as any;
+  });
+
+  const provider = new SESEmailProvider(mockConfig);
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    alternatives: [
+      {
+        contentType: 'text/vnd.google.email-reaction+json',
+        content: JSON.stringify({ version: 1, emoji: '👀' }),
+      },
+    ],
+  });
+
+  const bufferArray = spy.mock.calls[0][0].input['Content']['Raw']['Data'];
+  const emailContent = Buffer.from(bufferArray).toString();
+
+  expect(spy).toHaveBeenCalled();
+  expect(emailContent.includes('Content-Type: text/vnd.google.email-reaction+json')).toBe(true);
+});
+
 test('should trigger ses library correctly with _passthrough', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
   const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {

@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-export const MarkAsArchivedRead = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
+export const MarkAsArchivedRead = (props?: JSX.SvgSVGAttributes<SVGSVGElement>) => {
   return (
     <svg viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path

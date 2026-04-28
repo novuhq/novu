@@ -4,6 +4,7 @@ import { NODE_TYPE_TO_STEP_TYPE } from './node-utils';
 
 interface CanvasContextType {
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
   showStepPreview?: boolean;
   /** Code-first (bridge) workflows synced from the framework — canvas reordering is not supported */
   isCodeFirstWorkflow?: boolean;

@@ -4,7 +4,15 @@ import { Schedule } from '../preferences';
 import type { Preference } from '../preferences/preference';
 import { SubscriptionPreference, TopicSubscription } from '../subscriptions';
 import { type NotificationFilter, type NovuOptions, type UnreadCount, WorkflowCriticalityEnum } from '../types';
-import { commonAppearanceKeys, inboxAppearanceKeys, subscriptionAppearanceKeys } from './config';
+import {
+  channelConnectButtonAppearanceKeys,
+  commonAppearanceKeys,
+  connectChatAppearanceKeys,
+  inboxAppearanceKeys,
+  linkMsTeamsUserAppearanceKeys,
+  linkSlackUserAppearanceKeys,
+  subscriptionAppearanceKeys,
+} from './config';
 import { AllLocalization } from './context/LocalizationContext';
 
 export type NotificationClickHandler = (notification: Notification) => void;
@@ -316,6 +324,46 @@ export type SubscriptionAppearanceCallbackKeys = keyof SubscriptionAppearanceCal
 export type SubscriptionAppearanceCallbackFunction<K extends SubscriptionAppearanceCallbackKeys> =
   SubscriptionAppearanceCallback[K];
 export type SubscriptionAppearanceKey = (typeof subscriptionAppearanceKeys)[number];
+export type ConnectChatAppearanceKey = (typeof connectChatAppearanceKeys)[number];
+export type SlackLinkUserAppearanceKey = (typeof linkSlackUserAppearanceKeys)[number];
+export type MsTeamsLinkUserAppearanceKey = (typeof linkMsTeamsUserAppearanceKeys)[number];
+export type ChannelConnectButtonAppearanceKey = (typeof channelConnectButtonAppearanceKeys)[number];
+
+// SLACK LINK USER APPEARANCE
+export type SlackLinkUserAppearanceCallback = {
+  linkSlackUserContainer: (context: { linked: boolean }) => string;
+  linkSlackUserButton: (context: { linked: boolean }) => string;
+  linkSlackUserButtonContainer: (context: { linked: boolean }) => string;
+  linkSlackUserButtonIcon: (context: { linked: boolean }) => string;
+  linkSlackUserButtonLabel: (context: { linked: boolean }) => string;
+};
+export type SlackLinkUserAppearanceCallbackKeys = keyof SlackLinkUserAppearanceCallback;
+export type SlackLinkUserAppearanceCallbackFunction<K extends SlackLinkUserAppearanceCallbackKeys> =
+  SlackLinkUserAppearanceCallback[K];
+
+// MS TEAMS LINK USER APPEARANCE
+export type MsTeamsLinkUserAppearanceCallback = {
+  linkMsTeamsUserContainer: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButton: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButtonContainer: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButtonIcon: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButtonLabel: (context: { linked: boolean }) => string;
+};
+export type MsTeamsLinkUserAppearanceCallbackKeys = keyof MsTeamsLinkUserAppearanceCallback;
+export type MsTeamsLinkUserAppearanceCallbackFunction<K extends MsTeamsLinkUserAppearanceCallbackKeys> =
+  MsTeamsLinkUserAppearanceCallback[K];
+
+// CHANNEL CONNECT BUTTON APPEARANCE
+export type ChannelConnectButtonAppearanceCallback = {
+  channelConnectButtonContainer: (context: { connected: boolean }) => string;
+  channelConnectButton: (context: { connected: boolean }) => string;
+  channelConnectButtonInner: (context: { connected: boolean }) => string;
+  channelConnectButtonIcon: (context: { connected: boolean }) => string;
+  channelConnectButtonLabel: (context: { connected: boolean }) => string;
+};
+export type ChannelConnectButtonAppearanceCallbackKeys = keyof ChannelConnectButtonAppearanceCallback;
+export type ChannelConnectButtonAppearanceCallbackFunction<K extends ChannelConnectButtonAppearanceCallbackKeys> =
+  ChannelConnectButtonAppearanceCallback[K];
 export type SubscriptionElements = Partial<
   { [K in CommonAppearanceKey]: ElementStyles } & {
     [K in Exclude<SubscriptionAppearanceKey, SubscriptionAppearanceCallbackKeys>]: ElementStyles;
@@ -338,13 +386,31 @@ export type SubscriptionTheme = {
 export type SubscriptionAppearance = SubscriptionTheme & { baseTheme?: SubscriptionTheme | SubscriptionTheme[] };
 
 // ALL APPEARANCE
-export type AllAppearanceCallbackKeys = InboxAppearanceCallbackKeys | SubscriptionAppearanceCallbackKeys;
+export type AllAppearanceCallbackKeys =
+  | InboxAppearanceCallbackKeys
+  | SubscriptionAppearanceCallbackKeys
+  | SlackLinkUserAppearanceCallbackKeys
+  | MsTeamsLinkUserAppearanceCallbackKeys
+  | ChannelConnectButtonAppearanceCallbackKeys;
 export type AllAppearanceCallbackFunction<K extends AllAppearanceCallbackKeys> = K extends InboxAppearanceCallbackKeys
   ? InboxAppearanceCallbackFunction<K>
   : K extends SubscriptionAppearanceCallbackKeys
     ? SubscriptionAppearanceCallbackFunction<K>
-    : never;
-export type AllAppearanceKey = CommonAppearanceKey | InboxAppearanceKey | SubscriptionAppearanceKey;
+    : K extends SlackLinkUserAppearanceCallbackKeys
+      ? SlackLinkUserAppearanceCallbackFunction<K>
+      : K extends MsTeamsLinkUserAppearanceCallbackKeys
+        ? MsTeamsLinkUserAppearanceCallbackFunction<K>
+        : K extends ChannelConnectButtonAppearanceCallbackKeys
+          ? ChannelConnectButtonAppearanceCallbackFunction<K>
+          : never;
+export type AllAppearanceKey =
+  | CommonAppearanceKey
+  | InboxAppearanceKey
+  | SubscriptionAppearanceKey
+  | ConnectChatAppearanceKey
+  | SlackLinkUserAppearanceKey
+  | MsTeamsLinkUserAppearanceKey
+  | ChannelConnectButtonAppearanceKey;
 export type AllElements = Partial<
   {
     [K in CommonAppearanceKey]: ElementStyles;
@@ -356,7 +422,8 @@ export type AllElements = Partial<
     [K in Extract<AllAppearanceKey, AllAppearanceCallbackKeys>]: ElementStyles | AllAppearanceCallbackFunction<K>;
   }
 >;
-export type AllIconKey = CommonIconKey | InboxIconKey | SubscriptionIconKey;
+export type ChannelConnectButtonIconKey = 'channelConnect' | 'channelConnected';
+export type AllIconKey = CommonIconKey | InboxIconKey | SubscriptionIconKey | ChannelConnectButtonIconKey;
 export type AllIconOverrides = {
   [key in AllIconKey]?: IconRenderer;
 };

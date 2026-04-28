@@ -4,6 +4,7 @@ import {
   ChannelFactory,
   CompileTemplate,
   GetNovuProviderCredentials,
+  MsTeamsTokenService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
@@ -13,7 +14,13 @@ import { SharedModule } from '../shared/shared.module';
 import { IntegrationsController } from './integrations.controller';
 import { USE_CASES } from './usecases';
 
-const PROVIDERS = [ChannelFactory, CompileTemplate, GetNovuProviderCredentials, CalculateLimitNovuIntegration];
+const PROVIDERS = [
+  ChannelFactory,
+  CompileTemplate,
+  GetNovuProviderCredentials,
+  CalculateLimitNovuIntegration,
+  MsTeamsTokenService,
+];
 
 @Module({
   imports: [SharedModule, forwardRef(() => AuthModule), ChannelConnectionsModule, ChannelEndpointsModule],

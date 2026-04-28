@@ -9,13 +9,22 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ProductFeature, RequirePermissions } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -33,9 +42,12 @@ import {
   ListAgentIntegrationsResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  UpdateAgentBridgeRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
+import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
@@ -44,22 +56,26 @@ import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
+import { type AgentEmojiEntry, ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations/list-agent-integrations.command';
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
-import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
-import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
+import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
+import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
+import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
+import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiTags('Agents')
+@UseGuards(AgentConversationEnabledGuard)
+@ApiExcludeController()
 @RequireAuthentication()
 export class AgentsController {
   constructor(
@@ -71,8 +87,22 @@ export class AgentsController {
     private readonly addAgentIntegrationUsecase: AddAgentIntegration,
     private readonly listAgentIntegrationsUsecase: ListAgentIntegrations,
     private readonly updateAgentIntegrationUsecase: UpdateAgentIntegration,
-    private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration
+    private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
+    private readonly listAgentEmojiUsecase: ListAgentEmoji,
+    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail
   ) {}
+
+  @Get('/emoji')
+  @ApiOperation({
+    summary: 'List available emoji',
+    description:
+      'Returns the set of well-known cross-platform emoji names supported for agent reactions. ' +
+      'Each entry includes the normalized name and a unicode representation for display.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listAgentEmoji(): Promise<AgentEmojiEntry[]> {
+    return this.listAgentEmojiUsecase.execute();
+  }
 
   @Post('/')
   @ApiResponse(AgentResponseDto, 201)
@@ -81,10 +111,7 @@ export class AgentsController {
     description: 'Creates an agent scoped to the current environment. The identifier must be unique per environment.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  createAgent(
-    @UserSession() user: UserSessionData,
-    @Body() body: CreateAgentRequestDto
-  ): Promise<AgentResponseDto> {
+  createAgent(@UserSession() user: UserSessionData, @Body() body: CreateAgentRequestDto): Promise<AgentResponseDto> {
     return this.createAgentUsecase.execute(
       CreateAgentCommand.create({
         userId: user._id,
@@ -93,6 +120,7 @@ export class AgentsController {
         name: body.name,
         identifier: body.identifier,
         description: body.description,
+        active: body.active,
       })
     );
   }
@@ -105,10 +133,7 @@ export class AgentsController {
       'Returns a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  listAgents(
-    @UserSession() user: UserSessionData,
-    @Query() query: ListAgentsQueryDto
-  ): Promise<ListAgentsResponseDto> {
+  listAgents(@UserSession() user: UserSessionData, @Query() query: ListAgentsQueryDto): Promise<ListAgentsResponseDto> {
     return this.listAgentsUsecase.execute(
       ListAgentsCommand.create({
         user,
@@ -129,7 +154,8 @@ export class AgentsController {
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
-    description: 'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
+    description:
+      'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
@@ -147,6 +173,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
+        providerId: body.providerId,
       })
     );
   }
@@ -241,6 +268,64 @@ export class AgentsController {
     );
   }
 
+  @Post('/:identifier/test-email')
+  @HttpCode(HttpStatus.OK)
+  @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
+  @ApiOperation({
+    summary: 'Send a test email to the agent inbound address',
+    description:
+      'Sends a test email to the configured inbound address using the agent outbound provider (or the Novu demo integration as fallback). Used to verify the inbound email pipeline.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentTestEmail(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: SendAgentTestEmailRequestDto
+  ): Promise<{ success: boolean }> {
+    return this.sendAgentTestEmailUsecase.execute(
+      SendAgentTestEmailCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        targetAddress: body.targetAddress,
+      })
+    );
+  }
+
+  @Put('/:identifier/bridge')
+  @ApiResponse(AgentResponseDto)
+  @ApiOperation({
+    summary: 'Update agent bridge configuration',
+    description:
+      'Updates the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateAgentBridge(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: UpdateAgentBridgeRequestDto
+  ): Promise<AgentResponseDto> {
+    return this.updateAgentUsecase.execute(
+      UpdateAgentCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+        bridgeUrl: body.bridgeUrl,
+        devBridgeUrl: body.devBridgeUrl,
+        devBridgeActive: body.devBridgeActive,
+      })
+    );
+  }
+
   @Get('/:identifier')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -284,6 +369,11 @@ export class AgentsController {
         identifier,
         name: body.name,
         description: body.description,
+        active: body.active,
+        behavior: body.behavior,
+        bridgeUrl: body.bridgeUrl,
+        devBridgeUrl: body.devBridgeUrl,
+        devBridgeActive: body.devBridgeActive,
       })
     );
   }
