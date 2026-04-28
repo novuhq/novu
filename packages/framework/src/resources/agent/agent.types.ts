@@ -90,11 +90,11 @@ export interface FileRef {
  * Content accepted by ctx.reply() and handle.edit().
  *
  * - `string` — plain text or markdown; converted to platform format by the chat SDK
- * - `{ markdown, files? }` — markdown with optional file attachments
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
- *   (must be a CardElement at runtime; validated by serializeContent)
+ *
+ * For file attachments, pass a `files` array as the second argument to reply()/edit().
  */
-export type MessageContent = string | { markdown: string; files?: FileRef[] } | ChatElement;
+export type MessageContent = string | ChatElement;
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
@@ -130,7 +130,7 @@ export interface ReplyHandle {
   /** Platform-native thread id this message lives in. */
   readonly platformThreadId: string;
   /** Edit this message in place with new content. Returns the same handle for chaining. */
-  edit(content: MessageContent): Promise<ReplyHandle>;
+  edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
 export interface AgentContext {
@@ -150,10 +150,14 @@ export interface AgentContext {
    *
    * @example
    *   const msg = await ctx.reply('Thinking…');
-   *   // ... do work ...
    *   await msg.edit('Here is the answer');
+   *
+   * @example with file attachment
+   *   await ctx.reply('Here is your report', {
+   *     files: [{ filename: 'report.pdf', url: 'https://...' }],
+   *   });
    */
-  reply(content: MessageContent): Promise<ReplyHandle>;
+  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
   resolve(summary?: string): void;
   metadata: {
     set(key: string, value: unknown): void;

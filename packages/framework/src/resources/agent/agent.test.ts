@@ -411,7 +411,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
   it('should serialize markdown content on reply', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (ctx) => {
-        await ctx.reply({ markdown: '**bold** text' });
+        await ctx.reply('**bold** text');
       },
     });
 
@@ -448,8 +448,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
   it('should serialize markdown with file attachments', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (ctx) => {
-        await ctx.reply({
-          markdown: 'Here is the report',
+        await ctx.reply('Here is the report', {
           files: [{ filename: 'report.pdf', url: 'https://example.com/report.pdf' }],
         });
       },

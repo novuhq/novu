@@ -13,7 +13,6 @@ export const DomainDiagnosticIssueDtoCode = {
   MxWrongTarget: "mx_wrong_target",
   MxLowPriority: "mx_low_priority",
   ApexCnameCollision: "apex_cname_collision",
-  NsUnresolvable: "ns_unresolvable",
   DnsblListed: "dnsbl_listed",
 } as const;
 export type DomainDiagnosticIssueDtoCode = ClosedEnum<

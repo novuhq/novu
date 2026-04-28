@@ -38,6 +38,15 @@ describe('Domains API - /v1/domains #novu-v2', () => {
     expect(domain.mxRecordConfigured).to.equal(false);
     expect(domain.environmentId).to.equal(session.environment._id);
     expect(domain.organizationId).to.equal(session.organization._id);
+    expect(domain.expectedDnsRecords).to.deep.equal([
+      {
+        type: 'MX',
+        name,
+        content: process.env.MAIL_SERVER_DOMAIN,
+        ttl: 'Auto',
+        priority: 10,
+      },
+    ]);
   });
 
   it('should return 409 when creating a duplicate domain name in the same environment', async () => {
@@ -90,6 +99,7 @@ describe('Domains API - /v1/domains #novu-v2', () => {
 
     expect(fetched.id).to.equal(created.id);
     expect(fetched.name).to.equal(name);
+    expect(fetched.expectedDnsRecords).to.deep.equal(created.expectedDnsRecords);
   });
 
   it('should return 404 when retrieving a non-existent domain', async () => {

@@ -6,6 +6,7 @@ import { DomainStatusEnum } from '@novu/shared';
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { detectDnsProvider } from '../../utils/dns-provider';
+import { buildExpectedDnsRecords } from '../../utils/dns-records';
 import { CreateDomainCommand } from './create-domain.command';
 
 function isDuplicateKeyError(err: unknown): boolean {
@@ -51,6 +52,9 @@ export class CreateDomain {
       throw err;
     }
 
-    return toDomainResponse(domain);
+    return {
+      ...toDomainResponse(domain),
+      expectedDnsRecords: buildExpectedDnsRecords(domain.name),
+    };
   }
 }
