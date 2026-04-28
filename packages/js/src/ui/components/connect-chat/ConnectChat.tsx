@@ -24,7 +24,12 @@ export type ConnectChatProps = {
 export const ConnectChat = (props: ConnectChatProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
-  const { connection, loading, connect, disconnect } = useChannelConnection({
+  const {
+    connection,
+    loading,
+    generateConnectOAuthUrl: connect,
+    disconnect,
+  } = useChannelConnection({
     integrationIdentifier: props.integrationIdentifier,
     connectionIdentifier: props.connectionIdentifier,
     subscriberId: props.subscriberId,

@@ -47,7 +47,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
         navigate(
           buildRoute(ROUTES.DOMAIN_DETAIL, {
             environmentSlug: currentEnvironment.slug,
-            domainId: domain._id,
+            domain: domain.name,
           })
         );
       }
@@ -65,7 +65,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
         <DialogHeader>
           <DialogTitle>Add domain</DialogTitle>
           <DialogDescription>
-            Connect a domain to use across Novu features like inbound email, Inbox, and tracking.
+            Connect a domain receive inbound email on your own domain and route each address to a webhook or an agent.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -84,7 +84,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
                 <FormItem>
                   <FormLabel>Domain</FormLabel>
                   <FormControl>
-                    <Input placeholder="recent.dev" {...field} />
+                    <Input placeholder="inbound.acme.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

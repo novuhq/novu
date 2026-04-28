@@ -19,7 +19,7 @@ describe('Domain Connect usecases', () => {
     _organizationId: 'organization-id',
   } as DomainEntity;
   const command = {
-    domainId: 'domain-id',
+    domain: 'example.com',
     environmentId: 'environment-id',
     organizationId: 'organization-id',
     userId: 'user-id',
@@ -39,7 +39,7 @@ describe('Domain Connect usecases', () => {
     process.env.DOMAIN_CONNECT_PRIVATE_KEY = privateKey;
     process.env.DASHBOARD_URL = 'https://dashboard.novu.co';
     domainRepositoryMock = {
-      findOneByIdAndEnvironment: stub().resolves(domain),
+      findOne: stub().resolves(domain),
     };
     featureFlagsServiceMock = {
       getFlag: stub().resolves(true),
@@ -139,7 +139,7 @@ describe('Domain Connect usecases', () => {
   });
 
   it('uses discovered root domain provider settings for submitted subdomains', async () => {
-    domainRepositoryMock.findOneByIdAndEnvironment.resolves({ ...domain, name: 'inbound.example.com' });
+    domainRepositoryMock.findOne.resolves({ ...domain, name: 'inbound.example.com' });
     domainConnectDiscoveryServiceMock.discoverDomainConnectHost.resolves({
       domainName: 'example.com',
       providerHost: 'domainconnect.vercel.com',

@@ -1,30 +1,13 @@
-import { DomainRouteTypeEnum } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-
-class RouteCommand {
-  @IsString()
-  @IsNotEmpty()
-  address: string;
-
-  @IsString()
-  @IsOptional()
-  destination?: string;
-
-  @IsEnum(DomainRouteTypeEnum)
-  @IsNotEmpty()
-  type: DomainRouteTypeEnum;
-}
+import { IsBoundedRecord } from '../../validators/bounded-record.validator';
 
 export class UpdateDomainCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  domainId: string;
+  domain: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => RouteCommand)
   @IsOptional()
-  routes?: RouteCommand[];
+  @IsBoundedRecord()
+  data?: Record<string, string>;
 }

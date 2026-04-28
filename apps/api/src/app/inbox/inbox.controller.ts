@@ -46,8 +46,14 @@ import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-even
 import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
 import { GenerateChatOauthUrlRequestDto } from '../integrations/dtos/generate-chat-oauth-url.dto';
 import { GenerateChatOAuthUrlResponseDto } from '../integrations/dtos/generate-chat-oauth-url-response.dto';
+import { GenerateConnectOauthUrlRequestDto } from '../integrations/dtos/generate-connect-oauth-url-request.dto';
+import { GenerateLinkUserOauthUrlRequestDto } from '../integrations/dtos/generate-link-user-oauth-url-request.dto';
 import { GenerateChatOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
 import { GenerateChatOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
+import { GenerateConnectOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
+import { GenerateConnectOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
+import { GenerateLinkUserOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
+import { GenerateLinkUserOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.usecase';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
@@ -138,6 +144,8 @@ export class InboxController {
     private getChannelEndpointUsecase: GetChannelEndpoint,
     private deleteChannelEndpointUsecase: DeleteChannelEndpoint,
     private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
+    private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
+    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
     private featureFlagsService: FeatureFlagsService
   ) {}
 
@@ -816,15 +824,15 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/chat/oauth')
-  async generateChatOAuthUrl(
+  @Post('/channel-connections/oauth')
+  async generateConnectOAuthUrl(
     @SubscriberSession() subscriberSession: SubscriberSession,
-    @Body() body: GenerateChatOauthUrlRequestDto
+    @Body() body: GenerateConnectOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
     await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
 
-    const url = await this.generateChatOauthUrlUsecase.execute(
-      GenerateChatOauthUrlCommand.create({
+    const url = await this.generateConnectOauthUrlUsecase.execute(
+      GenerateConnectOauthUrlCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -832,9 +840,31 @@ export class InboxController {
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
         scope: body.scope,
-        userScope: body.userScope,
-        mode: body.mode,
         connectionMode: body.connectionMode,
+        autoLinkUser: body.autoLinkUser,
+      })
+    );
+
+    return { url };
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/channel-endpoints/oauth')
+  async generateLinkUserOAuthUrl(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Body() body: GenerateLinkUserOauthUrlRequestDto
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
+    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
+
+    const url = await this.generateLinkUserOauthUrlUsecase.execute(
+      GenerateLinkUserOauthUrlCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
+        userScope: body.userScope,
       })
     );
 

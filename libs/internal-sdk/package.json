@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "3.15.0",
+  "version": "0.1.21",
   "author": "Novu",
   "main": "./index.js",
   "sideEffects": false,
@@ -15,15 +15,9 @@
     "react-dom": "^18 || ^19"
   },
   "peerDependenciesMeta": {
-    "@tanstack/react-query": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
+    "@tanstack/react-query": {"optional":true},
+    "react": {"optional":true},
+    "react-dom": {"optional":true}
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

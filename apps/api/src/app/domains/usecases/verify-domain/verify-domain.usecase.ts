@@ -1,5 +1,5 @@
 import { promises as dnsPromises, type MxRecord } from 'node:dns';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
@@ -7,6 +7,7 @@ import { DomainStatusEnum } from '@novu/shared';
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { buildExpectedDnsRecords, getMailServerDomain } from '../../utils/dns-records';
+import { resolveDomainName } from '../domain-route.utils';
 import { VerifyDomainCommand } from './verify-domain.command';
 
 @Injectable()
@@ -19,22 +20,23 @@ export class VerifyDomain {
   }
 
   async execute(command: VerifyDomainCommand): Promise<DomainResponseDto> {
-    const domain = await this.domainRepository.findOneByIdAndEnvironment(
-      command.domainId,
-      command.environmentId,
-      command.organizationId
-    );
-
-    if (!domain) {
-      throw new NotFoundException(`Domain with id "${command.domainId}" not found.`);
-    }
+    const domain = await resolveDomainName({
+      domainRepository: this.domainRepository,
+      domain: command.domain,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     const INBOUND_DOMAIN = getMailServerDomain();
     if (!INBOUND_DOMAIN) {
       throw new BadRequestException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
     }
 
-    const mxRecordConfigured = await this.checkMxRecord(domain.name, INBOUND_DOMAIN);
+    const result = await this.checkMxRecord(domain.name, INBOUND_DOMAIN);
+
+    // For transient DNS failures (non-definitive), preserve the existing state to
+    // prevent a verified domain from being incorrectly demoted back to pending.
+    const mxRecordConfigured = result.definitive ? result.configured : domain.mxRecordConfigured;
 
     if (
       mxRecordConfigured !== domain.mxRecordConfigured ||
@@ -44,7 +46,7 @@ export class VerifyDomain {
 
       await this.domainRepository.update(
         {
-          _id: command.domainId,
+          _id: domain._id,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
@@ -61,19 +63,23 @@ export class VerifyDomain {
     };
   }
 
-  private async checkMxRecord(lookupDomain: string, expectedExchange: string): Promise<boolean> {
+  private async checkMxRecord(
+    lookupDomain: string,
+    expectedExchange: string
+  ): Promise<{ configured: boolean; definitive: boolean }> {
     try {
       const records: MxRecord[] = await dnsPromises.resolveMx(lookupDomain);
+      const configured = records.some((record) => record.exchange.toLowerCase() === expectedExchange.toLowerCase());
 
-      return records.some((record) => record.exchange.toLowerCase() === expectedExchange.toLowerCase());
+      return { configured, definitive: true };
     } catch (error) {
       if (isExpectedDnsLookupMiss(error)) {
         this.logger.debug(
-          { lookupDomain, expectedExchange, code: error.code },
+          { lookupDomain, expectedExchange, code: (error as NodeJS.ErrnoException).code },
           'MX record is not configured for domain verification yet'
         );
 
-        return false;
+        return { configured: false, definitive: true };
       }
 
       this.logger.warn(
@@ -81,7 +87,7 @@ export class VerifyDomain {
         'Failed to resolve MX records for domain verification'
       );
 
-      return false;
+      return { configured: false, definitive: false };
     }
   }
 }

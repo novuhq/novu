@@ -1,13 +1,21 @@
 import {
   DomainRouteTypeEnum,
-  emailProviders as emailProviderConfigs,
   EmailProviderIdEnum,
+  emailProviders as emailProviderConfigs,
+  type IEnvironment,
   type IIntegration,
 } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type AgentResponse } from '@/api/agents';
-import { type DomainResponse, type UpdateDomainBody, fetchDomains, updateDomain } from '@/api/domains';
+import {
+  createDomainRoute,
+  type DomainResponse,
+  type DomainRouteResponse,
+  deleteDomainRoute,
+  fetchDomainRoutes,
+  fetchDomains,
+} from '@/api/domains';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
@@ -17,7 +25,57 @@ export type ConfiguredAddress = {
   address: string;
   domain: string;
   domainId: string;
+  routeId: string;
 };
+
+async function fetchAllRoutesForAgentIdentifierOnDomain(
+  environment: IEnvironment,
+  domain: string,
+  agentIdentifier: string
+) {
+  const routes: DomainRouteResponse[] = [];
+  let after: string | undefined;
+
+  do {
+    const response = await fetchDomainRoutes(domain, environment, {
+      limit: 100,
+      agentId: agentIdentifier,
+      ...(after ? { after } : {}),
+    });
+    routes.push(...response.data);
+    after = response.next ?? undefined;
+  } while (after);
+
+  return routes;
+}
+
+async function fetchAllRoutesForAgentIdentifier(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  domains: DomainResponse[]
+) {
+  const perDomain = await Promise.all(
+    domains.map((domain) => fetchAllRoutesForAgentIdentifierOnDomain(environment, domain.name, agentIdentifier))
+  );
+
+  return perDomain.flat();
+}
+
+async function fetchAllDomains(environment: IEnvironment) {
+  const domains: DomainResponse[] = [];
+  let after: string | undefined;
+
+  do {
+    const response = await fetchDomains(environment, {
+      limit: 100,
+      ...(after ? { after } : {}),
+    });
+    domains.push(...response.data);
+    after = response.next ?? undefined;
+  } while (after);
+
+  return domains;
+}
 
 export function useEmailSetupCredentials({
   emailIntegration,
@@ -34,7 +92,7 @@ export function useEmailSetupCredentials({
 
   const [outboundId, setOutboundId] = useState('');
 
-  const serverCredentials = emailIntegration?.credentials ?? {};
+  const serverCredentials = useMemo(() => emailIntegration?.credentials ?? {}, [emailIntegration?.credentials]);
   const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
   const pendingKeysRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -45,7 +103,7 @@ export function useEmailSetupCredentials({
       }
     }
     credentialsRef.current = merged;
-  }, [emailIntegration]);
+  }, [serverCredentials]);
 
   const hasInitializedFromServer = useRef(false);
   useEffect(() => {
@@ -57,25 +115,39 @@ export function useEmailSetupCredentials({
 
   const domainsQuery = useQuery<DomainResponse[]>({
     queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id],
-    queryFn: () => fetchDomains(requireEnvironment(currentEnvironment, 'No environment selected')),
+    queryFn: () => fetchAllDomains(requireEnvironment(currentEnvironment, 'No environment selected')),
     enabled: Boolean(currentEnvironment),
   });
-  const domains = domainsQuery.data ?? [];
+  const domains = useMemo(() => domainsQuery.data ?? [], [domainsQuery.data]);
+  const domainNames = useMemo(() => domains.map((domain) => domain.name), [domains]);
+
+  const routesQuery = useQuery({
+    queryKey: [QueryKeys.fetchDomainRoutes, currentEnvironment?._id, agent.identifier, domainNames],
+    queryFn: () =>
+      fetchAllRoutesForAgentIdentifier(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        domains
+      ),
+    enabled: Boolean(currentEnvironment && agent.identifier && domainsQuery.isSuccess),
+  });
+  const agentRoutes = routesQuery.data ?? [];
 
   const configuredAddresses = useMemo<ConfiguredAddress[]>(() => {
     if (!agent._id) return [];
 
-    const result: ConfiguredAddress[] = [];
-    for (const domain of domains) {
-      for (const route of domain.routes ?? []) {
-        if (route.type === DomainRouteTypeEnum.AGENT && route.destination === agent._id) {
-          result.push({ address: route.address, domain: domain.name, domainId: domain._id });
-        }
-      }
-    }
+    const domainNamesById = new Map(domains.map((domain) => [domain._id, domain.name]));
 
-    return result;
-  }, [domains, agent._id]);
+    return agentRoutes
+      .filter((route) => route.type === DomainRouteTypeEnum.AGENT && route.agentId === agent._id)
+      .map((route) => ({
+        address: route.address,
+        domain: domainNamesById.get(route._domainId) ?? '',
+        domainId: route._domainId,
+        routeId: route._id,
+      }))
+      .filter((address) => address.domain);
+  }, [domains, agentRoutes, agent._id]);
 
   const outboundIntegration = useMemo(
     () => (outboundId ? integrations?.find((i) => i._id === outboundId) : undefined),
@@ -136,41 +208,43 @@ export function useEmailSetupCredentials({
   }
 
   const { mutate: mutateDomainRoutes } = useMutation({
-    mutationFn: ({ domainId, body }: { domainId: string; body: UpdateDomainBody }) =>
-      updateDomain(domainId, body, requireEnvironment(currentEnvironment, 'No environment selected')),
+    mutationFn: ({ domain, address }: { domain: string; address: string }) =>
+      createDomainRoute(
+        domain,
+        { address, type: DomainRouteTypeEnum.AGENT, agentId: agent.identifier },
+        requireEnvironment(currentEnvironment, 'No environment selected')
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
+    },
+  });
+
+  const { mutate: removeDomainRoute } = useMutation({
+    mutationFn: ({ domain, address }: { domain: string; address: string }) =>
+      deleteDomainRoute(domain, address, requireEnvironment(currentEnvironment, 'No environment selected')),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomainRoutes] });
     },
   });
 
   const addAddress = useCallback(
     (address: string, domain: DomainResponse) => {
       if (!currentEnvironment || !agent._id) return;
-      const existingRoutes = domain.routes ?? [];
 
-      const ownRoute = existingRoutes.find(
-        (r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id
+      const ownRoute = agentRoutes.find(
+        (route) =>
+          route._domainId === domain._id &&
+          route.address === address &&
+          route.type === DomainRouteTypeEnum.AGENT &&
+          route.agentId === agent._id
       );
       if (ownRoute) return;
 
-      const conflicting = existingRoutes.find(
-        (r) => r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination !== agent._id
-      );
-      if (conflicting) {
-        showErrorToast(
-          `"${address}@${domain.name}" is already routed to another agent. Each address can only route to one agent.`,
-          'Address already in use'
-        );
-
-        return;
-      }
-
       mutateDomainRoutes(
         {
-          domainId: domain._id,
-          body: {
-            routes: [...existingRoutes, { address, type: DomainRouteTypeEnum.AGENT, destination: agent._id }],
-          },
+          domain: domain.name,
+          address,
         },
         {
           onError: (err) => {
@@ -180,19 +254,26 @@ export function useEmailSetupCredentials({
         }
       );
     },
-    [currentEnvironment, agent._id, mutateDomainRoutes]
+    [currentEnvironment, agent._id, agentRoutes, mutateDomainRoutes]
   );
 
   const removeAddress = useCallback(
     (address: string, domainId: string) => {
       if (!currentEnvironment || !agent._id) return;
-      const domain = domains.find((d) => d._id === domainId);
-      if (!domain) return;
-      const updatedRoutes = (domain.routes ?? []).filter(
-        (r) => !(r.address === address && r.type === DomainRouteTypeEnum.AGENT && r.destination === agent._id)
+      const domain = domains.find((item) => item._id === domainId);
+      const route = agentRoutes.find(
+        (item) =>
+          item._domainId === domainId &&
+          item.address === address &&
+          item.type === DomainRouteTypeEnum.AGENT &&
+          item.agentId === agent._id
       );
-      mutateDomainRoutes(
-        { domainId: domain._id, body: { routes: updatedRoutes } },
+
+      if (!route) return;
+      if (!domain) return;
+
+      removeDomainRoute(
+        { domain: domain.name, address: route.address },
         {
           onError: () => {
             showErrorToast('Could not remove inbound route from the domain.', 'Route removal failed');
@@ -200,7 +281,7 @@ export function useEmailSetupCredentials({
         }
       );
     },
-    [currentEnvironment, agent._id, domains, mutateDomainRoutes]
+    [currentEnvironment, agent._id, agentRoutes, domains, removeDomainRoute]
   );
 
   function onOutboundSelect(id: string) {

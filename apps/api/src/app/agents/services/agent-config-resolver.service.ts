@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
+import { trackAgentIntegrationFirstWebhook } from '../agent-analytics';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { AgentInactiveException } from '../exceptions/agent-inactive.exception';
 import { esmImport } from '../utils/esm-import';
@@ -69,7 +70,8 @@ export class AgentConfigResolver {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async resolve(agentId: string, integrationIdentifier: string): Promise<ResolvedAgentConfig> {
@@ -135,7 +137,9 @@ export class AgentConfigResolver {
       connectionAccessToken = connection.auth.accessToken;
     }
 
-    if (!agentIntegration.connectedAt) {
+    const hadConnectedAt = Boolean(agentIntegration.connectedAt);
+
+    if (!hadConnectedAt) {
       await this.agentIntegrationRepository.updateOne(
         {
           _id: agentIntegration._id,
@@ -144,6 +148,15 @@ export class AgentConfigResolver {
         },
         { $set: { connectedAt: new Date() } }
       );
+
+      trackAgentIntegrationFirstWebhook(this.analyticsService, {
+        organizationId,
+        environmentId,
+        agentId,
+        agentIdentifier: agent.identifier,
+        integrationIdentifier,
+        platform,
+      });
     }
 
     return {

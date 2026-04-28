@@ -1,5 +1,5 @@
-import { encryptSecret, HttpClientService, SendWebhookMessage } from '@novu/application-generic';
-import { AgentIntegrationRepository, DomainRepository, IntegrationRepository } from '@novu/dal';
+import { InboundDomainRouteDelivery } from '@novu/application-generic';
+import { DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -10,16 +10,27 @@ const ENV_ID = 'env-001';
 const ORG_ID = 'org-001';
 const DOMAIN_NAME = 'example.com';
 
-function makeVerifiedDomain(routes: Array<{ address: string; type: DomainRouteTypeEnum; destination?: string }>) {
+function makeVerifiedDomain() {
   return {
     _id: 'domain-001',
     name: DOMAIN_NAME,
     status: DomainStatusEnum.VERIFIED,
     mxRecordConfigured: true,
-    routes,
     _environmentId: ENV_ID,
     _organizationId: ORG_ID,
   };
+}
+
+function makeRoutes(routes: Array<{ address: string; type: DomainRouteTypeEnum; destination?: string }>) {
+  return routes.map((route, index) => ({
+    _id: `route-${index}`,
+    _domainId: 'domain-001',
+    _environmentId: ENV_ID,
+    _organizationId: ORG_ID,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...route,
+  }));
 }
 
 function makeCommand(localPart: string): InboundEmailParseCommand {
@@ -47,156 +58,136 @@ function makeCommand(localPart: string): InboundEmailParseCommand {
   } as unknown as InboundEmailParseCommand;
 }
 
-const TEST_ENCRYPTION_KEY = '12345678901234567890123456789012'; // 32 chars for AES-256
-
 describe('DomainRouteStrategy', () => {
   let domainRepository: sinon.SinonStubbedInstance<DomainRepository>;
-  let sendWebhookMessage: sinon.SinonStubbedInstance<SendWebhookMessage>;
-  let httpClientService: sinon.SinonStubbedInstance<HttpClientService>;
-  let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
-  let agentIntegrationRepository: sinon.SinonStubbedInstance<AgentIntegrationRepository>;
+  let domainRouteRepository: sinon.SinonStubbedInstance<DomainRouteRepository>;
+  let inboundDomainRouteDelivery: sinon.SinonStubbedInstance<InboundDomainRouteDelivery>;
   let strategy: DomainRouteStrategy;
   let sandbox: sinon.SinonSandbox;
-  let originalEncryptionKey: string | undefined;
 
   beforeEach(() => {
-    originalEncryptionKey = process.env.STORE_ENCRYPTION_KEY;
-    process.env.STORE_ENCRYPTION_KEY = TEST_ENCRYPTION_KEY;
-
     sandbox = sinon.createSandbox();
     domainRepository = sandbox.createStubInstance(DomainRepository);
-    sendWebhookMessage = sandbox.createStubInstance(SendWebhookMessage);
-    httpClientService = sandbox.createStubInstance(HttpClientService);
-    integrationRepository = sandbox.createStubInstance(IntegrationRepository);
-    agentIntegrationRepository = sandbox.createStubInstance(AgentIntegrationRepository);
+    domainRouteRepository = sandbox.createStubInstance(DomainRouteRepository);
+    inboundDomainRouteDelivery = sandbox.createStubInstance(InboundDomainRouteDelivery);
 
-    agentIntegrationRepository.findLinksForAgents.resolves([
-      { _integrationId: 'integration-001', _agentId: 'agent-001' } as any,
-    ]);
-    integrationRepository.findOne.resolves({
-      identifier: 'novu-email-agent-test',
-      credentials: { secretKey: encryptSecret('test-secret-key') },
-    } as any);
-    httpClientService.request.resolves({ body: {}, statusCode: 200, headers: {} });
+    inboundDomainRouteDelivery.deliverToAgent.resolves({ httpStatus: 200, body: {}, latencyMs: 1 });
+    inboundDomainRouteDelivery.deliverToWebhook.resolves({ latencyMs: 1, skipped: false });
 
     strategy = new DomainRouteStrategy(
       domainRepository as any,
-      sendWebhookMessage as any,
-      httpClientService as any,
-      integrationRepository as any,
-      agentIntegrationRepository as any
+      domainRouteRepository as any,
+      inboundDomainRouteDelivery as any
     );
   });
 
   afterEach(() => {
     sandbox.restore();
-    process.env.STORE_ENCRYPTION_KEY = originalEncryptionKey;
   });
 
-  it('should NOT fire webhook when no WEBHOOK route exists', async () => {
-    const domain = makeVerifiedDomain([
-      { address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' },
-    ]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+  it('should dispatch the agent route when the matching route is type=agent', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
-    sinon.assert.notCalled(sendWebhookMessage.execute);
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook as any);
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
   });
 
   it('should fire webhook when an exact WEBHOOK route matches', async () => {
-    const domain = makeVerifiedDomain([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
-    sendWebhookMessage.execute.resolves();
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
-    sinon.assert.calledOnce(sendWebhookMessage.execute);
-    const call = sendWebhookMessage.execute.getCall(0);
-    expect(call.args[0].payload.object).to.deep.include({ route: { address: 'support' } });
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    expect(call.args[0].mail.subject).to.equal('Hello');
+    expect(call.args[0].route.address).to.equal('support');
   });
 
   it('should NOT fire webhook for a WEBHOOK route that does not match the local-part', async () => {
-    const domain = makeVerifiedDomain([{ address: 'billing', type: DomainRouteTypeEnum.WEBHOOK }]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const routes = makeRoutes([{ address: 'billing', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
-    sinon.assert.notCalled(sendWebhookMessage.execute);
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook);
   });
 
   it('should fire webhook via wildcard "*" route when no exact match', async () => {
-    const domain = makeVerifiedDomain([{ address: '*', type: DomainRouteTypeEnum.WEBHOOK }]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
-    sendWebhookMessage.execute.resolves();
+    const routes = makeRoutes([{ address: '*', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('anything'));
 
-    sinon.assert.calledOnce(sendWebhookMessage.execute);
-    const call = sendWebhookMessage.execute.getCall(0);
-    expect(call.args[0].payload.object).to.deep.include({ route: { address: '*' } });
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    expect(call.args[0].route.address).to.equal('*');
   });
 
   it('should prefer exact WEBHOOK route over wildcard "*"', async () => {
-    const domain = makeVerifiedDomain([
+    const routes = makeRoutes([
       { address: '*', type: DomainRouteTypeEnum.WEBHOOK },
       { address: 'support', type: DomainRouteTypeEnum.WEBHOOK },
     ]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
-    sendWebhookMessage.execute.resolves();
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
-    sinon.assert.calledOnce(sendWebhookMessage.execute);
-    const call = sendWebhookMessage.execute.getCall(0);
-    expect(call.args[0].payload.object).to.deep.include({ route: { address: 'support' } });
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    expect(call.args[0].route.address).to.equal('support');
   });
 
-  it('should fire both WEBHOOK and AGENT handlers when both routes match (fan-out)', async () => {
-    const domain = makeVerifiedDomain([
-      { address: 'support', type: DomainRouteTypeEnum.WEBHOOK },
-      { address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' },
-    ]);
-    domainRepository.findByRouteAddress.resolves(domain as any);
-    sendWebhookMessage.execute.resolves();
+  it('should not fire any handler when no route matches', async () => {
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves([]);
 
     await strategy.execute(makeCommand('support'));
 
-    sinon.assert.calledOnce(sendWebhookMessage.execute);
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook);
+    sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
   });
 
   it('should throw when domain is not found', async () => {
-    domainRepository.findByRouteAddress.resolves(null);
+    domainRepository.findByName.resolves(null);
 
     try {
       await strategy.execute(makeCommand('support'));
       throw new Error('Expected error not thrown');
     } catch (e) {
-      expect(e.message).to.include('No domain found');
+      expect((e as Error).message).to.include('No domain found');
     }
   });
 
   it('should throw when domain is not verified', async () => {
-    const domain = { ...makeVerifiedDomain([]), status: DomainStatusEnum.PENDING };
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const domain = { ...makeVerifiedDomain(), status: DomainStatusEnum.PENDING };
+    domainRepository.findByName.resolves(domain as any);
 
     try {
       await strategy.execute(makeCommand('support'));
       throw new Error('Expected error not thrown');
     } catch (e) {
-      expect(e.message).to.include('not verified');
+      expect((e as Error).message).to.include('not verified');
     }
   });
 
   it('should throw when MX record is not configured', async () => {
-    const domain = { ...makeVerifiedDomain([]), mxRecordConfigured: false };
-    domainRepository.findByRouteAddress.resolves(domain as any);
+    const domain = { ...makeVerifiedDomain(), mxRecordConfigured: false };
+    domainRepository.findByName.resolves(domain as any);
 
     try {
       await strategy.execute(makeCommand('support'));
       throw new Error('Expected error not thrown');
     } catch (e) {
-      expect(e.message).to.include('MX records');
+      expect((e as Error).message).to.include('MX records');
     }
   });
 });

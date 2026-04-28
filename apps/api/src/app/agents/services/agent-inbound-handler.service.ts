@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { EmojiValue, Message, Thread } from 'chat';
+import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -32,7 +33,8 @@ export class AgentInboundHandler {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async handle(
@@ -90,6 +92,9 @@ export class AgentInboundHandler {
         }
       : undefined;
 
+    const primaryChannel = this.conversationService.getPrimaryChannel(conversation);
+    const isFirstMessage = !primaryChannel.firstPlatformMessageId;
+
     await this.conversationService.persistInboundMessage({
       conversationId: conversation._id,
       platform: config.platform,
@@ -105,8 +110,17 @@ export class AgentInboundHandler {
       organizationId: config.organizationId,
     });
 
-    const primaryChannel = this.conversationService.getPrimaryChannel(conversation);
-    const isFirstMessage = !primaryChannel.firstPlatformMessageId;
+    trackAgentInboundMessage(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      agentEvent: event,
+      isFirstMessageInThread: isFirstMessage,
+    });
 
     if (isFirstMessage && message.id) {
       this.conversationService
@@ -199,6 +213,16 @@ export class AgentInboundHandler {
     if (!conversation) {
       return;
     }
+
+    trackAgentInboundReaction(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+    });
 
     const platformUserId = event.user?.userId;
 
@@ -301,6 +325,17 @@ export class AgentInboundHandler {
       thread.id,
       serializedThread
     );
+
+    trackAgentInboundAction(this.analyticsService, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      agentIdentifier: config.agentIdentifier,
+      integrationIdentifier: config.integrationIdentifier,
+      platform: config.platform,
+      conversationId: conversation._id,
+      actionId: action.actionId,
+    });
 
     const [subscriber, history] = await Promise.all([
       subscriberId

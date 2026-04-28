@@ -13,6 +13,9 @@ export type OAuthMode = 'connect' | 'link_user';
 
 export type ConnectionMode = 'subscriber' | 'shared';
 
+/**
+ * @deprecated Use GenerateConnectOAuthUrlArgs or GenerateLinkUserOAuthUrlArgs instead.
+ */
 export type GenerateChatOAuthUrlArgs = {
   integrationIdentifier: string;
   connectionIdentifier?: string;
@@ -22,6 +25,30 @@ export type GenerateChatOAuthUrlArgs = {
   userScope?: string[];
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
+  autoLinkUser?: boolean;
+};
+
+/** Args for creating a workspace/tenant channel connection (Slack install or MS Teams admin consent). */
+export type GenerateConnectOAuthUrlArgs = {
+  integrationIdentifier: string;
+  connectionIdentifier?: string;
+  subscriberId?: string;
+  context?: Context;
+  /** Slack only: OAuth bot scopes to request. */
+  scope?: string[];
+  connectionMode?: ConnectionMode;
+  autoLinkUser?: boolean;
+};
+
+/** Args for linking a subscriber to their personal chat identity (Slack user or MS Teams user OID). */
+export type GenerateLinkUserOAuthUrlArgs = {
+  integrationIdentifier: string;
+  connectionIdentifier?: string;
+  /** Required — this operation always binds a specific subscriber to a user identity. */
+  subscriberId: string;
+  context?: Context;
+  /** Slack only: user-level OAuth scopes (e.g. identity.basic). */
+  userScope?: string[];
 };
 
 export type ListChannelConnectionsArgs = {

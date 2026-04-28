@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ConversationChannel,
@@ -11,6 +11,7 @@ import {
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
 import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
+import { trackAgentReplyProcessed } from '../../agent-analytics';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
@@ -30,7 +31,8 @@ export class HandleAgentReply {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger,
-    private readonly parseEventRequest: ParseEventRequest
+    private readonly parseEventRequest: ParseEventRequest,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
@@ -40,7 +42,13 @@ export class HandleAgentReply {
     if (command.edit && (command.resolve || command.signals?.length || command.addReactions?.length)) {
       throw new BadRequestException('edit cannot be combined with resolve, signals, or addReactions');
     }
-    if (!command.reply && !command.edit && !command.resolve && !command.signals?.length && !command.addReactions?.length) {
+    if (
+      !command.reply &&
+      !command.edit &&
+      !command.resolve &&
+      !command.signals?.length &&
+      !command.addReactions?.length
+    ) {
       throw new BadRequestException('At least one of reply, edit, resolve, signals, or addReactions must be provided');
     }
 
@@ -98,6 +106,31 @@ export class HandleAgentReply {
     if (command.resolve) {
       await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
+
+    const triggerSignalCount = (command.signals ?? []).filter((s) => s.type === 'trigger').length;
+    const metadataSignalCount = (command.signals ?? []).filter((s) => s.type === 'metadata').length;
+    const reactionCount = command.addReactions?.length ?? 0;
+    const actions: string[] = [];
+
+    if (command.reply) actions.push('reply');
+    if (command.edit) actions.push('edit');
+    if (command.resolve) actions.push('resolve');
+    if (triggerSignalCount > 0) actions.push('trigger_signals');
+    if (metadataSignalCount > 0) actions.push('metadata_signals');
+    if (reactionCount > 0) actions.push('add_reactions');
+
+    trackAgentReplyProcessed(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentIdentifier: command.agentIdentifier,
+      conversationId: command.conversationId,
+      integrationIdentifier: command.integrationIdentifier,
+      actions,
+      triggerSignalCount,
+      metadataSignalCount,
+      reactionCount,
+    });
 
     return replyInfo ?? null;
   }

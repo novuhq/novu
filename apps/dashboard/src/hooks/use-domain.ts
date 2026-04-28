@@ -1,11 +1,14 @@
 import { DomainStatusEnum, type IEnvironment } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  createDomainConnectApplyUrl,
   type DomainConnectStatusResponse,
   type DomainResponse,
+  type UpdateDomainBody,
   fetchDomain,
-  fetchDomainConnectStatus,
+  fetchDomainAutoConfigure,
+  startDomainAutoConfigure,
+  updateDomain,
+  verifyDomain,
 } from '@/api/domains';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
@@ -13,81 +16,130 @@ import { QueryKeys } from '@/utils/query-keys';
 const VERIFICATION_POLL_INTERVAL_MS = 5_000;
 
 function requireDomainRequestArgs<TEnvironment extends Pick<IEnvironment, '_id'>>(
-  domainId: string | undefined,
+  domain: string | undefined,
   currentEnvironment: TEnvironment | undefined
 ) {
-  if (!domainId || !currentEnvironment) {
+  if (!domain || !currentEnvironment) {
     throw new Error('Domain request requires a domain and environment.');
   }
 
-  return { domainId, currentEnvironment };
+  return { domain, currentEnvironment };
 }
 
-export function useFetchDomain(domainId: string | undefined) {
+export function useFetchDomain(domain: string | undefined) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery<DomainResponse>({
-    queryKey: [QueryKeys.fetchDomain, domainId, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchDomain, domain, currentEnvironment?._id],
     queryFn: () => {
-      const args = requireDomainRequestArgs(domainId, currentEnvironment);
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
 
-      return fetchDomain(args.domainId, args.currentEnvironment);
+      return fetchDomain(args.domain, args.currentEnvironment);
     },
-    enabled: !!domainId && !!currentEnvironment,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-
-      if (!data || data.status === DomainStatusEnum.PENDING) {
-        return VERIFICATION_POLL_INTERVAL_MS;
-      }
-
-      return false;
-    },
+    enabled: !!domain && !!currentEnvironment,
   });
 }
 
-export function useRefreshDomain(domainId: string | undefined) {
+export function useRefreshDomain(domain: string | undefined) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
   return {
     refresh: () =>
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchDomain, domainId, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchDomain, domain, currentEnvironment?._id],
       }),
   };
 }
 
-export function useFetchDomainConnectStatus(domainId: string | undefined, options?: { enabled?: boolean }) {
+export function useVerifyDomain(domain: string | undefined) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  return useMutation({
+    mutationFn: () => {
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
+
+      return verifyDomain(args.domain, args.currentEnvironment);
+    },
+    onSuccess: (data) => {
+      if (!domain || !currentEnvironment) return;
+
+      queryClient.setQueryData([QueryKeys.fetchDomain, domain, currentEnvironment._id], data);
+    },
+  });
+}
+
+export function useUpdateDomain(domain: string | undefined) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  return useMutation({
+    mutationFn: (body: UpdateDomainBody) => {
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
+
+      return updateDomain(args.domain, body, args.currentEnvironment);
+    },
+    onSuccess: (data) => {
+      if (!domain || !currentEnvironment) return;
+
+      queryClient.setQueryData([QueryKeys.fetchDomain, domain, currentEnvironment._id], data);
+    },
+  });
+}
+
+export function usePollDomainVerification(domain: string | undefined, currentStatus: DomainStatusEnum | undefined) {
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
+  const isPending = currentStatus === DomainStatusEnum.PENDING;
+
+  useQuery({
+    queryKey: [QueryKeys.fetchDomain, domain, currentEnvironment?._id, 'verify-poll'],
+    queryFn: async () => {
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
+      const data = await verifyDomain(args.domain, args.currentEnvironment);
+
+      queryClient.setQueryData([QueryKeys.fetchDomain, domain, currentEnvironment?._id], data);
+
+      return data;
+    },
+    enabled: !!domain && !!currentEnvironment && isPending,
+    refetchInterval: VERIFICATION_POLL_INTERVAL_MS,
+    refetchIntervalInBackground: false,
+    staleTime: 0,
+  });
+}
+
+export function useFetchDomainAutoConfigure(domain: string | undefined, options?: { enabled?: boolean }) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery<DomainConnectStatusResponse>({
-    queryKey: [QueryKeys.fetchDomainConnectStatus, domainId, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchDomainConnectStatus, domain, currentEnvironment?._id],
     queryFn: () => {
-      const args = requireDomainRequestArgs(domainId, currentEnvironment);
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
 
-      return fetchDomainConnectStatus(args.domainId, args.currentEnvironment);
+      return fetchDomainAutoConfigure(args.domain, args.currentEnvironment);
     },
-    enabled: !!domainId && !!currentEnvironment && (options?.enabled ?? true),
+    enabled: !!domain && !!currentEnvironment && (options?.enabled ?? true),
     staleTime: 60_000,
   });
 }
 
-export function useCreateDomainConnectApplyUrl(domainId: string | undefined) {
+export function useStartDomainAutoConfigure(domain: string | undefined) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (redirectUri?: string) => {
-      const args = requireDomainRequestArgs(domainId, currentEnvironment);
+      const args = requireDomainRequestArgs(domain, currentEnvironment);
 
-      return createDomainConnectApplyUrl(args.domainId, { redirectUri }, args.currentEnvironment);
+      return startDomainAutoConfigure(args.domain, { redirectUri }, args.currentEnvironment);
     },
     onSettled: () => {
-      if (!domainId || !currentEnvironment) return;
+      if (!domain || !currentEnvironment) return;
 
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchDomainConnectStatus, domainId, currentEnvironment._id],
+        queryKey: [QueryKeys.fetchDomainConnectStatus, domain, currentEnvironment._id],
       });
     },
   });

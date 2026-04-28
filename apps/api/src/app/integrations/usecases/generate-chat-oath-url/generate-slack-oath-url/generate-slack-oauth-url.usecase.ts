@@ -31,6 +31,7 @@ export type StateData = {
   timestamp: number;
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
+  autoLinkUser?: boolean;
 };
 
 export const SLACK_DEFAULT_OAUTH_SCOPES = [
@@ -69,7 +70,8 @@ export class GenerateSlackOauthUrl {
       command.context,
       command.connectionIdentifier,
       command.mode,
-      command.connectionMode
+      command.connectionMode,
+      command.autoLinkUser
     );
 
     const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
@@ -163,7 +165,8 @@ export class GenerateSlackOauthUrl {
     context?: ContextPayload,
     connectionIdentifier?: string,
     mode?: OAuthMode,
-    connectionMode?: ConnectionMode
+    connectionMode?: ConnectionMode,
+    autoLinkUser?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -178,6 +181,7 @@ export class GenerateSlackOauthUrl {
       timestamp: Date.now(),
       mode,
       connectionMode,
+      autoLinkUser,
     };
 
     const payload = JSON.stringify(stateData);

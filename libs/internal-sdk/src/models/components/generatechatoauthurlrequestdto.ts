@@ -78,6 +78,10 @@ export type GenerateChatOauthUrlRequestDto = {
    * Connection mode that determines how the channel connection is scoped. Use "subscriber" (default) to associate the connection with a specific subscriber. Use "shared" to associate the connection with a context instead of a subscriber — subscriberId will not be stored on the connection.
    */
   connectionMode?: GenerateChatOauthUrlRequestDtoConnectionMode | undefined;
+  /**
+   * When true, after the workspace/tenant connection is created the OAuth flow also links the subscriber who clicked "Connect" as a personal endpoint. For Slack, this uses the authed_user.id already returned by oauth.v2.access — no extra redirect. For MS Teams, this triggers a second OAuth redirect for delegated user-identity consent. Defaults to false when omitted; the SlackConnectButton and MsTeamsConnectButton SDK components default this to true.
+   */
+  autoLinkUser?: boolean | undefined;
 };
 
 /** @internal */
@@ -154,6 +158,7 @@ export type GenerateChatOauthUrlRequestDto$Outbound = {
   userScope?: Array<string> | undefined;
   mode?: string | undefined;
   connectionMode?: string | undefined;
+  autoLinkUser?: boolean | undefined;
 };
 
 /** @internal */
@@ -176,6 +181,7 @@ export const GenerateChatOauthUrlRequestDto$outboundSchema: z.ZodType<
   mode: Mode$outboundSchema.optional(),
   connectionMode: GenerateChatOauthUrlRequestDtoConnectionMode$outboundSchema
     .optional(),
+  autoLinkUser: z.boolean().optional(),
 });
 
 export function generateChatOauthUrlRequestDtoToJSON(

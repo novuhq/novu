@@ -235,13 +235,15 @@ function buildRedirectUri({
   }
 
   redirectUrl.searchParams.set('domainConnect', 'submitted');
-  redirectUrl.searchParams.set('domainId', domain._id);
+  redirectUrl.searchParams.set('domain', domain.name);
 
   return redirectUrl.toString();
 }
 
 function applyDomainPlaceholders(value: string, domain: DomainEntity): string {
   return value
+    .split('{domain}')
+    .join(domain.name)
     .split('{domainId}')
     .join(domain._id)
     .split('{environmentId}')
@@ -320,5 +322,5 @@ function getDomainConnectRedirectBaseUrl(): string | undefined {
     return undefined;
   }
 
-  return `${dashboardBaseUrl.replace(/\/+$/, '')}/domains/{domainId}`;
+  return `${dashboardBaseUrl.replace(/\/+$/, '')}/domains/{domain}`;
 }

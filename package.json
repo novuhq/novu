@@ -15,6 +15,7 @@
     "build:ws": "nx build @novu/ws",
     "build": "nx run-many --target=build --all --exclude=nextjs,nestjs",
     "clean": "rimraf **/build **/dist **/node_modules",
+    "cache:clean": "pnpm nx reset && pnpm store prune",
     "commit": "cz",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "docker:build": "pnpm -r --if-present --parallel docker:build",

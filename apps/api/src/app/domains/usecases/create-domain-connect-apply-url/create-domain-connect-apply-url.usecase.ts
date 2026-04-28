@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { DomainRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -10,6 +10,7 @@ import {
   getProviderNameForHost,
   isSupportedDomainConnectHost,
 } from '../../utils/domain-connect';
+import { resolveDomainName } from '../domain-route.utils';
 import { CreateDomainConnectApplyUrlCommand } from './create-domain-connect-apply-url.command';
 
 @Injectable()
@@ -21,15 +22,12 @@ export class CreateDomainConnectApplyUrl {
   ) {}
 
   async execute(command: CreateDomainConnectApplyUrlCommand): Promise<DomainConnectApplyUrlResponseDto> {
-    const domain = await this.domainRepository.findOneByIdAndEnvironment(
-      command.domainId,
-      command.environmentId,
-      command.organizationId
-    );
-
-    if (!domain) {
-      throw new NotFoundException(`Domain with id "${command.domainId}" not found.`);
-    }
+    const domain = await resolveDomainName({
+      domainRepository: this.domainRepository,
+      domain: command.domain,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     const isDomainConnectEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED,

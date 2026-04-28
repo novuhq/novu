@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { DomainRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -14,6 +14,7 @@ import {
   hasDomainConnectRuntimeConfig,
   isSupportedDomainConnectHost,
 } from '../../utils/domain-connect';
+import { resolveDomainName } from '../domain-route.utils';
 import { GetDomainConnectStatusCommand } from './get-domain-connect-status.command';
 
 @Injectable()
@@ -25,15 +26,12 @@ export class GetDomainConnectStatus {
   ) {}
 
   async execute(command: GetDomainConnectStatusCommand): Promise<DomainConnectStatusResponseDto> {
-    const domain = await this.domainRepository.findOneByIdAndEnvironment(
-      command.domainId,
-      command.environmentId,
-      command.organizationId
-    );
-
-    if (!domain) {
-      throw new NotFoundException(`Domain with id "${command.domainId}" not found.`);
-    }
+    const domain = await resolveDomainName({
+      domainRepository: this.domainRepository,
+      domain: command.domain,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     const manualRecords = buildExpectedDnsRecords(domain.name);
 

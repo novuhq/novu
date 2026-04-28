@@ -2,7 +2,7 @@ import { createEffect, createResource, createSignal, onCleanup, onMount } from '
 import type {
   ChannelConnectionResponse,
   DeleteChannelConnectionArgs,
-  GenerateChatOAuthUrlArgs,
+  GenerateConnectOAuthUrlArgs,
   GetChannelConnectionArgs,
 } from '../../../channel-connections/types';
 import { useNovu } from '../../context';
@@ -33,12 +33,8 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
     }
   });
 
-  const connect = async (args: GenerateChatOAuthUrlArgs) => {
-    setLoading(true);
-    const response = await novuAccessor().channelConnections.generateOAuthUrl(args);
-    setLoading(false);
-
-    return response;
+  const generateConnectOAuthUrl = async (args: GenerateConnectOAuthUrlArgs) => {
+    return novuAccessor().channelConnections.generateConnectOAuthUrl(args);
   };
 
   const disconnect = async (identifier: string) => {
@@ -109,5 +105,5 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
     setLoading(connection.loading);
   });
 
-  return { connection, loading, mutate, refetch, connect, disconnect };
+  return { connection, loading, mutate, refetch, generateConnectOAuthUrl, disconnect };
 };
