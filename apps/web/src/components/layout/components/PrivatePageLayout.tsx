@@ -1,28 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ErrorBoundary } from '@sentry/react';
-import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { IntercomProvider } from 'react-use-intercom';
-
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '@novu/shared';
+import { ErrorBoundary } from '@sentry/react';
+import { useEffect, useMemo, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { IntercomProvider } from 'react-use-intercom';
 
 import {
-  BRIDGE_SYNC_SAMPLE_ENDPOINT,
   BRIDGE_ENDPOINTS_LEGACY_VERSIONS,
+  BRIDGE_SYNC_SAMPLE_ENDPOINT,
   INTERCOM_APP_ID,
   IS_EE_AUTH_ENABLED,
 } from '../../../config';
-import { SpotLight } from '../../utils/Spotlight';
-import { SpotLightProvider } from '../../providers/SpotlightProvider';
 import { useEnvironment, useRedirectURL, useRouteScopes } from '../../../hooks';
+import { useOptInRedirect } from '../../../hooks/useOptInRedirect';
 // TODO: Move sidebar under layout folder as it belongs here
 import { Sidebar } from '../../nav/Sidebar';
-import { HeaderNav } from './v2/HeaderNav';
+import { SpotLightProvider } from '../../providers/SpotlightProvider';
+import { SpotLight } from '../../utils/Spotlight';
 import { DeprecationBanner } from './DeprecationBanner';
+import { DeprecationNoticeModal } from './DeprecationNoticeModal';
 import { FreeTrialBanner } from './FreeTrialBanner';
+import { HeaderNav } from './v2/HeaderNav';
 import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
-import { useOptInRedirect } from '../../../hooks/useOptInRedirect';
 
 const AppShell = styled.div`
   display: flex;
@@ -104,6 +104,7 @@ export function PrivatePageLayout() {
             <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
               <Sidebar />
               <ContentShell>
+                <DeprecationNoticeModal />
                 <DeprecationBanner />
                 {showSampleModeBanner && <SampleModeBanner />}
                 <FreeTrialBanner />
