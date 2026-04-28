@@ -1,7 +1,6 @@
 name: Rollback Deployment
 run-name: >
-  Rollback 
-  ${{
+  Rollback  ${{
     github.event.inputs.rollback_api == 'true' && 'api, ' || ''
   }}${{
     github.event.inputs.rollback_worker == 'true' && 'worker, ' || ''
@@ -58,13 +57,13 @@ on:
         default: true
 
       rollback_webhook:
-        description: "Rollback Webhook (staging / production-us / production-eu only)"
+        description: "Rollback Webhook"
         required: true
         type: boolean
         default: false
 
       rollback_inbound_mail:
-        description: "Rollback Inbound Mail (staging / production-us / production-eu only)"
+        description: "Rollback Inbound Mail"
         required: true
         type: boolean
         default: false
@@ -76,7 +75,9 @@ on:
         default: 1
 
       rollback_signoff:
-        description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you agree?"
+        description: "This will rollback the selected services to the previous task
+          definition. This won't rollback any database migration or environment
+          changes. Do you agree?"
         required: true
         type: choice
         default: "I do not agree"
@@ -296,7 +297,7 @@ jobs:
           echo "rollback_matrix=$rollback_matrix" >> $GITHUB_OUTPUT
 
   rollback:
-    needs: [prepare-matrix]
+    needs: [ prepare-matrix ]
     runs-on: ubuntu-latest
     permissions:
       contents: read
