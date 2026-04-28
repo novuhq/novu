@@ -22,7 +22,7 @@ import {
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
 import type { Agent, AgentBridgeRequest, MessageContent } from './resources/agent';
-import { AgentContextImpl, AgentEventEnum } from './resources/agent';
+import { AgentContextImpl, AgentDeliveryError, AgentEventEnum } from './resources/agent';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient } from './utils';
 
@@ -226,7 +226,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
 
         const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
-          console.error(`[agent:${agentId}] Handler error:`, err);
+          if (err instanceof AgentDeliveryError) {
+            console.error(`[agent:${agentId}] ${err.message}`);
+          } else {
+            console.error(`[agent:${agentId}] Handler error:`, err);
+          }
         });
 
         if (waitUntil) {
