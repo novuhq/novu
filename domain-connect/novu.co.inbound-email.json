@@ -15,7 +15,7 @@
       "host": "@",
       "pointsTo": "%mailServerDomain%",
       "priority": 10,
-      "ttl": 1
+      "ttl": 300
     }
   ]
 }
