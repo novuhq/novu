@@ -56,10 +56,7 @@ export function DeprecationBanner() {
     >
       <Group spacing={8} noWrap style={{ justifyContent: 'center', width: '100%', maxWidth: 1200 }}>
         <Text color={colors.white} style={{ whiteSpace: 'normal', minWidth: 0 }}>
-          <span aria-hidden={true} style={{ color: colors.white, flexShrink: 0, fontSize: '1.1em', lineHeight: 1.2 }}>
-            {'u26A0\uFE0F'}
-          </span>{' '}
-          This dashboard will be deprecated {timePhrase}. After 31st May ({daysLeft} days), you will loose support SLA
+          ⚠️ This dashboard will be deprecated {timePhrase}. After 31st May ({daysLeft} days), you will loose support SLA
           for this dashboard. To avoid disruption, please migrate to the new dashboard in advance.{' '}
           <a
             href={MIGRATION_GUIDE_URL}
