@@ -59,9 +59,13 @@ function isPrivateIp(ip: string): boolean {
     /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
     /^::ffff:192\.168\./i,
     /^::ffff:169\.254\./i,
-    /^::1$/,
-    /^fc00:/i,
-    /^fe80:/i,
+    /^::1$/i,
+    /* ULA fc00::/7 (fc00–fdff first hextet) */
+    /^f[cd][0-9a-f]{2}:/i,
+    /^::ffff:f[cd][0-9a-f]{2}:/i,
+    /* Link-local fe80::/10 (fe80–febf first hextet) */
+    /^fe[89ab][0-9a-f]{2}:/i,
+    /^::ffff:fe[89ab][0-9a-f]{2}:/i,
   ];
 
   return privateRanges.some((range) => range.test(ip));
