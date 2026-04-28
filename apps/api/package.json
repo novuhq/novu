@@ -86,7 +86,7 @@
     "axios": "^1.15.2",
     "bcrypt": "^5.0.0",
     "body-parser": "^2.2.1",
-    "bull": "^4.16.5",
+    "bull": "^4.2.1",
     "chat": "^4.25.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
