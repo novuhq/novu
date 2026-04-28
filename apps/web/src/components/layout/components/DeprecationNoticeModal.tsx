@@ -56,36 +56,25 @@ export function DeprecationNoticeModal() {
     <Modal
       opened={opened}
       onClose={handleDismiss}
-      fullScreen
-      transition="fade"
-      transitionDuration={200}
       withCloseButton
       closeOnClickOutside
+      centered
+      size="lg"
+      radius="md"
       title={<Title size={2}>Legacy dashboard deprecation</Title>}
       overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
-      overlayOpacity={0.85}
+      overlayOpacity={0.7}
       sx={{ backdropFilter: 'blur(10px)' }}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
-      radius="md"
       styles={{
         root: {
           zIndex: 250,
-        },
-        inner: {
-          padding: 0,
         },
         modal: {
           backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
         },
         body: {
-          padding: '48px 24px',
-          maxWidth: 720,
-          margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          boxSizing: 'border-box',
+          paddingTop: 5,
         },
       }}
     >
