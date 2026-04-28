@@ -2,6 +2,8 @@ export * from '../hooks/NovuProvider';
 export * from './Bell';
 export * from './Inbox';
 export * from './InboxContent';
+export * from './msteams-connect-button/MsTeamsConnectButton';
+export * from './msteams-link-user/MsTeamsLinkUser';
 export * from './Notifications';
 export * from './Preferences';
 export * from './slack-connect-button/SlackConnectButton';

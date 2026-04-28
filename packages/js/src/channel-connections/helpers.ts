@@ -6,6 +6,7 @@ import type {
   ChannelConnectionResponse,
   DeleteChannelConnectionArgs,
   GenerateChatOAuthUrlArgs,
+  GenerateConnectOAuthUrlArgs,
   GetChannelConnectionArgs,
   ListChannelConnectionsArgs,
 } from './types';
@@ -29,6 +30,28 @@ export const generateChatOAuthUrl = async ({
     emitter.emit('channel-connection.oauth-url.resolved', { args, error });
 
     return { error: new NovuError('Failed to generate chat OAuth URL', error) };
+  }
+};
+
+export const generateConnectOAuthUrl = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: GenerateConnectOAuthUrlArgs;
+}): Result<{ url: string }> => {
+  try {
+    emitter.emit('channel-connection.oauth-url.pending', { args });
+    const data = await apiService.generateConnectOAuthUrl(args);
+    emitter.emit('channel-connection.oauth-url.resolved', { args, data });
+
+    return { data };
+  } catch (error) {
+    emitter.emit('channel-connection.oauth-url.resolved', { args, error });
+
+    return { error: new NovuError('Failed to generate connect OAuth URL', error) };
   }
 };
 

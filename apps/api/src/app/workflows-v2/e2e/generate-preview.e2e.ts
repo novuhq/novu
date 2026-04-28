@@ -546,6 +546,61 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
   });
 
+  it('should generate URL-safe in-app preview payload values for redirect URL variables', async () => {
+    const payloadSchema = {
+      type: 'object',
+      properties: {
+        reservation: {
+          type: 'string',
+        },
+        payment: {
+          type: 'string',
+        },
+      },
+    };
+    const workflow = await createWorkflow({}, payloadSchema);
+    await emulateExternalOrigin(workflow.id);
+
+    const stepId = workflow.steps[0].id;
+    const controlValues = {
+      subject: 'Payment pending',
+      body: 'Complete your payment',
+      primaryAction: {
+        label: 'Pay',
+        redirect: {
+          target: RedirectTargetEnum.SELF,
+          url: '/payments/{{payload.payment}}',
+        },
+      },
+      redirect: {
+        target: RedirectTargetEnum.SELF,
+        url: '/reservations/{{payload.reservation}}/payments',
+      },
+    };
+
+    const { result } = await novuClient.workflows.steps.generatePreview({
+      workflowId: workflow.id,
+      stepId,
+      generatePreviewRequestDto: {
+        controlValues,
+        previewPayload: {
+          payload: {
+            reservation: 'example text',
+            payment: 'example {payment}',
+          },
+        },
+      },
+    });
+
+    expect(result.result.type).to.equal(ChannelTypeEnum.InApp);
+    if (result.result.type !== ChannelTypeEnum.InApp) throw new Error('should have an in-app preview');
+
+    expect(result.previewPayloadExample.payload?.reservation).to.equal('example-text');
+    expect(result.previewPayloadExample.payload?.payment).to.equal('example-%7Bpayment%7D');
+    expect(result.result.preview.primaryAction?.redirect?.url).to.equal('/payments/example-%7Bpayment%7D');
+    expect(result.result.preview.redirect?.url).to.equal('/reservations/example-text/payments');
+  });
+
   it('should return 201 for non-existent workflow', async () => {
     const pay = {
       type: 'object',

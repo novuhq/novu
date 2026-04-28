@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
-import { CacheService, PinoLogger } from '@novu/application-generic';
+import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { CacheService, decryptCredentials, MailFactory, PinoLogger } from '@novu/application-generic';
+import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
+import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
@@ -11,6 +13,23 @@ import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
+
+function toDeliveryError(err: unknown): never {
+  const base = err instanceof Error ? err.message : String(err);
+  const body = (err as any)?.response?.body;
+  const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
+  throw new BadGatewayException({
+    error: 'delivery_failed',
+    message: detail ? `${base}: ${detail}` : base,
+  });
+}
+
+/** Ensure a Message-ID value is wrapped in RFC 5322 angle brackets. */
+function wrapMsgId(id: string): string {
+  const trimmed = id.trim();
+
+  return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
+}
 
 /**
  * ICredentials field mapping per platform adapter:
@@ -30,6 +49,15 @@ import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
+// EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
+// alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
+// Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.
+const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
+  EmailProviderIdEnum.CustomSMTP,
+  EmailProviderIdEnum.Outlook365,
+  EmailProviderIdEnum.SendGrid,
+  EmailProviderIdEnum.SES,
+]);
 
 /**
  * Holds a cached Chat instance alongside a mutable pointer to the current
@@ -58,7 +86,8 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly inboundHandler: AgentInboundHandler
+    private readonly inboundHandler: AgentInboundHandler,
+    private readonly integrationRepository: IntegrationRepository
   ) {
     this.instances = new LRUCache<string, CachedChat>({
       max: MAX_CACHED_INSTANCES,
@@ -115,14 +144,14 @@ export class ChatSdkService implements OnModuleDestroy {
     const adapter = chat.getAdapter(platform);
     const thread = ThreadImpl.fromJSON(serializedThread, adapter);
 
-    let sent: { id: string; threadId: string };
+    let postPromise: Promise<{ id: string; threadId: string }>;
     if (content.card) {
-      sent = await thread.post(content.card);
-    } else if (content.markdown !== undefined) {
-      sent = await thread.post({ markdown: content.markdown, files: content.files });
+      postPromise = thread.post(content.card);
     } else {
-      sent = await thread.post(content.text ?? '');
+      postPromise = thread.post({ markdown: content.markdown ?? '', files: content.files });
     }
+
+    const sent = await postPromise.catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -144,21 +173,21 @@ export class ChatSdkService implements OnModuleDestroy {
       throw new BadRequestException(`Platform ${platform} does not support editing messages`);
     }
 
-    let edited: { id: string; threadId: string };
+    let editPromise: Promise<{ id: string; threadId: string }>;
     if (content.card) {
-      edited = await adapter.editMessage(
+      editPromise = adapter.editMessage(
         platformThreadId,
         platformMessageId,
         content.card as unknown as AdapterPostableMessage
       );
-    } else if (content.markdown !== undefined) {
-      edited = await adapter.editMessage(platformThreadId, platformMessageId, {
-        markdown: content.markdown,
+    } else {
+      editPromise = adapter.editMessage(platformThreadId, platformMessageId, {
+        markdown: content.markdown ?? '',
         files: content.files,
       } as unknown as AdapterPostableMessage);
-    } else {
-      edited = await adapter.editMessage(platformThreadId, platformMessageId, content.text ?? '');
     }
+
+    const edited = await editPromise.catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
@@ -258,6 +287,7 @@ export class ChatSdkService implements OnModuleDestroy {
     adapterFingerprint: string
   ): Promise<Chat> {
     const chat = await this.createChatInstance(instanceKey, platform, config);
+    await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
     this.registerEventHandlers(agentId, cached);
     this.instances.set(instanceKey, cached);
@@ -296,7 +326,113 @@ export class ChatSdkService implements OnModuleDestroy {
       token: c.token ?? null,
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
+      outboundIntegrationId: c.outboundIntegrationId ?? null,
     });
+  }
+
+  private buildSendEmailCallback(
+    config: ResolvedAgentConfig,
+    outboundIntegrationId: string | undefined
+  ): (params: {
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+    text?: string;
+    alternatives?: Array<{
+      contentType: string;
+      content: string | Buffer;
+    }>;
+    inReplyTo?: string;
+    references?: string;
+    messageId?: string;
+  }) => Promise<{ messageId?: string }> {
+    return async (params) => {
+      if (!outboundIntegrationId) {
+        throw new BadRequestException(
+          'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
+            'Configure one in the agent email setup.'
+        );
+      }
+
+      const integration = await this.integrationRepository.findOne({
+        _id: outboundIntegrationId,
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      if (!integration) {
+        throw new BadRequestException(
+          `Outbound email integration ${outboundIntegrationId} not found or does not belong to this environment`
+        );
+      }
+
+      if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+        throw new BadRequestException(
+          `Integration ${outboundIntegrationId} is the inbound NovuAgent provider and cannot be used as an outbound sender`
+        );
+      }
+
+      if (!integration.active) {
+        throw new BadRequestException(
+          `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
+        );
+      }
+
+      const hasUnsupportedAlternatives =
+        params.alternatives?.length && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(integration.providerId);
+      if (hasUnsupportedAlternatives) {
+        // NovuEmailAdapterImpl.addReaction supplies a reaction Message-ID; any custom MIME alternative caller must do
+        // the same so skipped unsupported sends don't claim provider delivery.
+        if (!params.messageId) {
+          this.logger.warn(
+            {
+              providerId: integration.providerId,
+              outboundIntegrationId,
+            },
+            'Skipping email with custom MIME alternatives because the outbound provider is unsupported and no messageId was supplied'
+          );
+
+          return { messageId: undefined };
+        }
+
+        this.logger.warn(
+          {
+            providerId: integration.providerId,
+            outboundIntegrationId,
+          },
+          'Skipping email reaction because the outbound provider does not support custom MIME alternatives'
+        );
+
+        return { messageId: params.messageId };
+      }
+
+      const decrypted = decryptCredentials(integration.credentials);
+      const mailFactory = new MailFactory();
+      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, params.from);
+
+      const mailOptions: IEmailOptions = {
+        to: [params.to],
+        subject: params.subject,
+        html: params.html,
+        text: params.text,
+        alternatives: params.alternatives,
+        from: params.from,
+        senderName: config.credentials.senderName || undefined,
+        headers: {
+          ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+          ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+          ...(params.references
+            ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
+            : {}),
+        },
+      };
+
+      const result = await handler.send(mailOptions).catch(toDeliveryError);
+
+      return { messageId: result?.id || params.messageId || '' };
+    };
   }
 
   private async createChatInstance(
@@ -394,6 +530,23 @@ export class ChatSdkService implements OnModuleDestroy {
             appSecret: credentials.secretKey,
             verifyToken: credentials.token,
             phoneNumberId: credentials.phoneNumberIdentification,
+          }),
+        };
+      }
+      case AgentPlatformEnum.EMAIL: {
+        const { senderName, outboundIntegrationId } = credentials;
+
+        if (!credentials.secretKey) {
+          throw new BadRequestException('Email agent integration requires secretKey credentials');
+        }
+
+        const { createNovuEmailAdapter } = await esmImport('@novu/chat-adapter-email');
+
+        return {
+          email: createNovuEmailAdapter({
+            senderName,
+            signingSecret: credentials.secretKey,
+            sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
           }),
         };
       }

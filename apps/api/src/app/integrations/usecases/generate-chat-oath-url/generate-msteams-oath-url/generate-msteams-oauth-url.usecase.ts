@@ -6,6 +6,10 @@ import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oauth-url.command';
 
+export type OAuthMode = 'connect' | 'link_user';
+
+export const MS_TEAMS_LINK_USER_OAUTH_SCOPES = ['openid', 'profile', 'User.Read'] as const;
+
 export type StateData = {
   identifier?: string;
   subscriberId?: string;
@@ -15,6 +19,8 @@ export type StateData = {
   integrationIdentifier: string;
   providerId: ChatProviderIdEnum;
   timestamp: number;
+  mode?: OAuthMode;
+  autoLinkUser?: boolean;
 };
 
 @Injectable()
@@ -40,7 +46,8 @@ export class GenerateMsTeamsOauthUrl {
     this.validateSubscriberIdOrContext(command);
     await this.assertResourceExists(command);
 
-    const { clientId } = await this.getIntegrationCredentials(command.integration);
+    const credentials = await this.getIntegrationCredentials(command.integration);
+    const { clientId } = credentials;
 
     if (!clientId) {
       throw new NotFoundException('MS Teams integration missing clientId');
@@ -50,10 +57,27 @@ export class GenerateMsTeamsOauthUrl {
       command.integration,
       command.subscriberId,
       command.context,
-      command.connectionIdentifier
+      command.connectionIdentifier,
+      command.mode,
+      command.autoLinkUser
     );
 
-    return this.getOAuthUrl(clientId, secureState);
+    if (command.mode === 'link_user') {
+      // the callback requires subscriberId to be present
+      if (!command.subscriberId) {
+        throw new BadRequestException('subscriberId is required for link_user mode');
+      }
+
+      const { tenantId } = credentials;
+
+      if (!tenantId) {
+        throw new NotFoundException('MS Teams integration missing tenantId');
+      }
+
+      return this.getLinkUserOAuthUrl(clientId, tenantId, secureState);
+    }
+
+    return this.getAdminConsentUrl(clientId, secureState);
   }
 
   private validateSubscriberIdOrContext(command: GenerateMsTeamsOauthUrlCommand): void {
@@ -82,7 +106,7 @@ export class GenerateMsTeamsOauthUrl {
     return;
   }
 
-  private async getOAuthUrl(clientId: string, secureState: string): Promise<string> {
+  private getAdminConsentUrl(clientId: string, secureState: string): string {
     const oauthParams = new URLSearchParams({
       client_id: clientId,
       redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
@@ -93,11 +117,26 @@ export class GenerateMsTeamsOauthUrl {
     return `${this.MS_TEAMS_ADMIN_CONSENT_URL}${oauthParams.toString()}`;
   }
 
+  private getLinkUserOAuthUrl(clientId: string, tenantId: string, secureState: string): string {
+    const oauthParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
+      scope: MS_TEAMS_LINK_USER_OAUTH_SCOPES.join(' '),
+      state: secureState,
+      response_mode: 'query',
+    });
+
+    return `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?${oauthParams.toString()}`;
+  }
+
   private async createSecureState(
     integration: IntegrationEntity,
     subscriberId?: string,
     context?: ContextPayload,
-    connectionIdentifier?: string
+    connectionIdentifier?: string,
+    mode?: OAuthMode,
+    autoLinkUser?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -110,6 +149,8 @@ export class GenerateMsTeamsOauthUrl {
       integrationIdentifier: identifier,
       providerId: providerId as ChatProviderIdEnum,
       timestamp: Date.now(),
+      mode,
+      autoLinkUser,
     };
 
     const payload = JSON.stringify(stateData);

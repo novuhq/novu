@@ -6,7 +6,6 @@ type AgentIntegrationGuideSectionProps = {
 };
 
 export function AgentIntegrationGuideSection({ title, children }: AgentIntegrationGuideSectionProps) {
-
   return (
     <section className="flex flex-col gap-3">
       <h3 className="text-text-strong text-label-sm font-medium leading-5">{title}</h3>

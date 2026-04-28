@@ -67,6 +67,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       servicePlanId: Schema.Types.String,
       tenantId: Schema.Types.String,
       signingSecret: Schema.Types.String,
+      outboundIntegrationId: Schema.Types.String,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,

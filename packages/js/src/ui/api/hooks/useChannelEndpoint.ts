@@ -1,5 +1,9 @@
 import { createEffect, createResource, createSignal, onCleanup, onMount } from 'solid-js';
-import type { ChannelEndpointResponse, CreateChannelEndpointArgs } from '../../../channel-connections/types';
+import type {
+  ChannelEndpointResponse,
+  CreateChannelEndpointArgs,
+  GenerateLinkUserOAuthUrlArgs,
+} from '../../../channel-connections/types';
 import { useNovu } from '../../context';
 
 export type UseChannelEndpointOptions = {
@@ -28,6 +32,10 @@ export const useChannelEndpoint = (options: UseChannelEndpointOptions) => {
       return null;
     }
   });
+
+  const generateLinkUserOAuthUrl = async (args: GenerateLinkUserOAuthUrlArgs) => {
+    return novuAccessor().channelEndpoints.generateLinkUserOAuthUrl(args);
+  };
 
   const create = async (args: CreateChannelEndpointArgs) => {
     setLoading(true);
@@ -90,5 +98,5 @@ export const useChannelEndpoint = (options: UseChannelEndpointOptions) => {
     setLoading(endpoint.loading);
   });
 
-  return { endpoint, loading, mutate, refetch, create, remove };
+  return { endpoint, loading, mutate, refetch, generateLinkUserOAuthUrl, create, remove };
 };

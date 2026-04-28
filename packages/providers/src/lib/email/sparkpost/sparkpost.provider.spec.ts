@@ -54,6 +54,38 @@ test('should trigger sparkpost library correctly', async () => {
   );
 });
 
+test('should forward custom headers inside content.headers', async () => {
+  const { mockPost: spy } = axiosSpy({
+    data: {
+      results: {
+        id: 'id',
+      },
+    },
+  });
+  const provider = new SparkPostEmailProvider(mockConfig);
+
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    headers: {
+      'In-Reply-To': '<original-message-id@example.com>',
+      References: '<original-message-id@example.com>',
+    },
+  });
+
+  expect(spy).toHaveBeenCalledWith(
+    '/transmissions',
+    expect.objectContaining({
+      content: expect.objectContaining({
+        headers: {
+          'In-Reply-To': '<original-message-id@example.com>',
+          References: '<original-message-id@example.com>',
+        },
+      }),
+    }),
+    expect.anything()
+  );
+});
+
 test('should trigger sparkpost library correctly with _passthrough', async () => {
   const { mockPost: spy } = axiosSpy({
     data: {

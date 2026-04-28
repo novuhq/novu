@@ -15,6 +15,8 @@ import { CheckIntegrationEMail } from './check-integration/check-integration-ema
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
 import { GenerateChatOauthUrl } from './generate-chat-oath-url/generate-chat-oauth-url.usecase';
+import { GenerateConnectOauthUrl } from './generate-chat-oath-url/generate-connect-oauth-url.usecase';
+import { GenerateLinkUserOauthUrl } from './generate-chat-oath-url/generate-link-user-oauth-url.usecase';
 import { GenerateMsTeamsOauthUrl } from './generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
@@ -43,6 +45,8 @@ export const USE_CASES = [
   CreateNovuIntegrations,
   NormalizeVariables,
   GenerateChatOauthUrl,
+  GenerateConnectOauthUrl,
+  GenerateLinkUserOauthUrl,
   GenerateSlackOauthUrl,
   GenerateMsTeamsOauthUrl,
   SlackOauthCallback,

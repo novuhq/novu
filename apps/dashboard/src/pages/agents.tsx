@@ -2,7 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import type { FormEvent, ReactElement } from 'react';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCheckLine, RiCloseLine, RiMailLine, RiMessage3Line, RiMoreLine } from 'react-icons/ri';
 import {
   SiGithub,
@@ -30,6 +30,8 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
 const slackIcon = '/images/providers/light/square/slack.svg';
@@ -402,6 +404,15 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
 export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const track = useTelemetry();
+
+  useEffect(() => {
+    if (!isConversationalAgentsEnabled) {
+      return;
+    }
+
+    track(TelemetryEvent.AGENTS_PAGE_VISITED);
+  }, [isConversationalAgentsEnabled, track]);
 
   return (
     <>

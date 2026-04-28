@@ -98,6 +98,8 @@ export enum FeatureFlagsKeysEnum {
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
+  /** Enable Domain Connect auto-configuration for inbound email domains. */
+  IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED = 'IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

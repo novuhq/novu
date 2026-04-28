@@ -6,7 +6,7 @@ import { ConversationStatusBadge } from '@/components/conversations/conversation
 import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
 import { SubscriberFallbackAvatar } from '@/components/conversations/subscriber-fallback-avatar';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { IS_ENTERPRISE } from '@/config';
+import { IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchConversations } from '@/hooks/use-fetch-conversations';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -31,7 +31,7 @@ export function RecentConversationsSection({ agent }: RecentConversationsSection
         <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
           Recent conversations
         </span>
-        {IS_ENTERPRISE && conversationsPath ? (
+        {!IS_SELF_HOSTED && conversationsPath ? (
           <Link
             to={conversationsPath}
             className="text-text-sub hover:text-text-strong text-label-xs flex items-center gap-0.5 rounded-lg p-1.5 font-medium transition-colors"
@@ -43,7 +43,7 @@ export function RecentConversationsSection({ agent }: RecentConversationsSection
       </div>
 
       <div className="bg-bg-white flex h-[300px] flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
-        {IS_ENTERPRISE ? (
+        {!IS_SELF_HOSTED ? (
           <RecentConversationsContent agent={agent} />
         ) : (
           <ConversationsUpgradeCta source="agent-overview" variant="compact" />

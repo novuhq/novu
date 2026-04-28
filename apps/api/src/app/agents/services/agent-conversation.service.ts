@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
-import type { TriggerRecipientsPayload } from '@novu/shared';
 import {
   ConversationActivityEntity,
   ConversationActivityRepository,
@@ -12,6 +11,7 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
 } from '@novu/dal';
+import type { TriggerRecipientsPayload } from '@novu/shared';
 
 export interface CreateOrGetConversationParams {
   environmentId: string;
@@ -92,7 +92,6 @@ export class AgentConversationService {
 
   async createOrGetConversation(params: CreateOrGetConversationParams): Promise<ConversationEntity> {
     const { environmentId, organizationId, platformThreadId } = params;
-
     const existing = await this.conversationRepository.findByPlatformThread(
       environmentId,
       organizationId,

@@ -12,6 +12,7 @@ export type {
 } from 'chat';
 export { Actions, Button, Card, CardLink, CardText, Divider, Select, SelectOption, TextInput } from 'chat';
 export { AgentContextImpl } from './agent.context';
+export { AgentDeliveryError } from './agent.errors';
 export { agent } from './agent.resource';
 export type {
   Agent,

@@ -3,12 +3,35 @@ import type {
   ChannelEndpointResponse,
   CreateChannelEndpointArgs,
   DeleteChannelEndpointArgs,
+  GenerateLinkUserOAuthUrlArgs,
   GetChannelEndpointArgs,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
+
+export const generateLinkUserOAuthUrl = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: GenerateLinkUserOAuthUrlArgs;
+}): Result<{ url: string }> => {
+  try {
+    emitter.emit('channel-endpoint.oauth-url.pending', { args });
+    const data = await apiService.generateLinkUserOAuthUrl(args);
+    emitter.emit('channel-endpoint.oauth-url.resolved', { args, data });
+
+    return { data };
+  } catch (error) {
+    emitter.emit('channel-endpoint.oauth-url.resolved', { args, error });
+
+    return { error: new NovuError('Failed to generate link user OAuth URL', error) };
+  }
+};
 
 export const listChannelEndpoints = async ({
   emitter,

@@ -1,5 +1,8 @@
 import { isJSX, toCardElement } from 'chat/jsx-runtime';
+import { AgentDeliveryError } from './agent.errors';
+import type { Emoji } from 'chat';
 import type {
+  AddReactionPayload,
   AgentAction,
   AgentBridgeRequest,
   AgentContext,
@@ -10,6 +13,7 @@ import type {
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  FileRef,
   MessageContent,
   ReplyContent,
   ReplyHandle,
@@ -22,9 +26,9 @@ function isCardElement(content: object): content is import('chat').CardElement {
   return 'type' in content && (content as { type: string }).type === 'card';
 }
 
-function serializeContent(content: MessageContent): ReplyContent {
+function serializeContent(content: MessageContent, files?: FileRef[]): ReplyContent {
   if (typeof content === 'string') {
-    return { text: content };
+    return files?.length ? { markdown: content, files } : { markdown: content };
   }
 
   if (isJSX(content)) {
@@ -38,16 +42,7 @@ function serializeContent(content: MessageContent): ReplyContent {
     return { card: content };
   }
 
-  if ('markdown' in content && typeof content.markdown === 'string') {
-    const result: ReplyContent = { markdown: content.markdown };
-    if (content.files?.length) {
-      result.files = content.files;
-    }
-
-    return result;
-  }
-
-  throw new Error('Invalid message content — expected string, { markdown }, or CardElement');
+  throw new Error('Invalid message content — expected string or CardElement');
 }
 
 interface ReplyPoster {
@@ -69,13 +64,13 @@ class ReplyHandleImpl implements ReplyHandle {
     this.platformThreadId = platformThreadId;
   }
 
-  async edit(content: MessageContent): Promise<ReplyHandle> {
+  async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const info = await this.poster.post({
       conversationId: this.conversationId,
       integrationIdentifier: this.integrationIdentifier,
       edit: {
         messageId: this.messageId,
-        content: serializeContent(content),
+        content: serializeContent(content, options?.files),
       },
     });
 
@@ -107,6 +102,7 @@ export class AgentContextImpl implements AgentContext {
   readonly metadata: { set: (key: string, value: unknown) => void };
 
   private _signals: Signal[] = [];
+  private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
@@ -138,16 +134,21 @@ export class AgentContextImpl implements AgentContext {
     };
   }
 
-  async reply(content: MessageContent): Promise<ReplyHandle> {
+  async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: serializeContent(content),
+      reply: serializeContent(content, options?.files),
     };
 
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];
+    }
+
+    if (this._pendingReactions.length) {
+      body.addReactions = this._pendingReactions;
+      this._pendingReactions = [];
     }
 
     if (this._resolveSignal) {
@@ -177,12 +178,16 @@ export class AgentContextImpl implements AgentContext {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
+  addReaction(messageId: string, emojiName: Emoji): void {
+    this._pendingReactions.push({ messageId, emojiName });
+  }
+
   /**
    * Flush any remaining signals that weren't sent with reply().
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
-    if (!this._signals.length && !this._resolveSignal) {
+    if (!this._signals.length && !this._resolveSignal && !this._pendingReactions.length) {
       return;
     }
 
@@ -194,6 +199,11 @@ export class AgentContextImpl implements AgentContext {
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];
+    }
+
+    if (this._pendingReactions.length) {
+      body.addReactions = this._pendingReactions;
+      this._pendingReactions = [];
     }
 
     if (this._resolveSignal) {
@@ -216,6 +226,18 @@ export class AgentContextImpl implements AgentContext {
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
+
+      if (response.status === 502) {
+        let message = text;
+        try {
+          const parsed = JSON.parse(text) as { message?: string };
+          if (parsed.message) message = parsed.message;
+        } catch {
+          // use raw text if JSON parsing fails
+        }
+        throw new AgentDeliveryError(502, message);
+      }
+
       throw new Error(`Agent reply failed (${response.status}): ${text}`);
     }
 

@@ -90,6 +90,10 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
       mailData.ReplyTo = options.replyTo;
     }
 
+    if (options.headers && Object.keys(options.headers).length > 0) {
+      mailData.Headers = Object.entries(options.headers).map(([Name, Value]) => ({ Name, Value }));
+    }
+
     return mailData;
   }
 

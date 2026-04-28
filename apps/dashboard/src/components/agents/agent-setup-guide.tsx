@@ -1,12 +1,13 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
+import { EmailSetupGuide } from './email-setup-guide';
 import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
@@ -26,14 +27,20 @@ function resolveProviderSetupGuide(providerId: string) {
       return TeamsSetupGuide;
     case ChatProviderIdEnum.WhatsAppBusiness:
       return WhatsAppSetupGuide;
+    case EmailProviderIdEnum.NovuAgent:
+      return EmailSetupGuide;
     default:
       return null;
   }
 }
 
+const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
+
 export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(
+    () => sessionStorage.getItem(SESSION_KEY(agent.identifier)) ?? undefined
+  );
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
   const queryClient = useQueryClient();
@@ -62,6 +69,13 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
   const defaultFromAgent = agent.integrations?.[0];
 
   const effectiveIntegrationId = selectedIntegrationId ?? defaultFromAgent?.integrationId;
+
+  // Once the server has the integration link, sessionStorage is no longer needed.
+  useEffect(() => {
+    if (defaultFromAgent?.integrationId) {
+      sessionStorage.removeItem(SESSION_KEY(agent.identifier));
+    }
+  }, [defaultFromAgent?.integrationId, agent.identifier]);
 
   const selectedProviderId = useMemo(() => {
     if (selectedIntegrationId) {
@@ -123,6 +137,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
                   onSelect={(_providerId, integration) => {
                     if (integration?._id) {
                       setSelectedIntegrationId(integration._id);
+                      sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
                     }
                   }}
                 />

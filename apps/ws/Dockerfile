@@ -35,6 +35,7 @@ RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
+RUN rm -f dist/.env.test dist/.env.ci
 
 WORKDIR /usr/src/app
 

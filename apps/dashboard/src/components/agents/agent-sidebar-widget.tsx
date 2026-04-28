@@ -3,17 +3,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import {
+  DetailsSidebar,
+  DetailsSidebarCard,
+  DetailsSidebarRow,
+  ExpandableDetailsTextarea,
+} from '@/components/details-sidebar';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
-import { Textarea } from '@/components/primitives/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -36,23 +40,6 @@ function formatLongDate(dateStr: string): string {
   const formatted = new Date(dateStr).toLocaleDateString('en-US', DATE_FORMAT_OPTIONS);
 
   return formatted;
-}
-
-function SidebarRow({
-  label,
-  children,
-  className,
-}: {
-  label: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn('flex h-8 items-center justify-between px-1.5', className)}>
-      <span className="text-text-soft text-label-xs flex items-center gap-1 font-medium">{label}</span>
-      <div className="flex items-center gap-1.5">{children}</div>
-    </div>
-  );
 }
 
 function TruncatedUrl({ url }: { url: string }) {
@@ -86,7 +73,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: Bridge
 
   return (
     <>
-      <SidebarRow label="Bridge URL">
+      <DetailsSidebarRow label="Bridge URL">
         {activeBridgeUrl ? (
           <div className="flex items-center gap-1">
             {isLocalTunnelActive ? (
@@ -99,9 +86,9 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: Bridge
         ) : (
           <span className="text-text-soft text-label-xs italic">Not configured</span>
         )}
-      </SidebarRow>
+      </DetailsSidebarRow>
       {agent.devBridgeUrl ? (
-        <SidebarRow
+        <DetailsSidebarRow
           label={
             <>
               Local tunnel connection
@@ -119,7 +106,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate }: Bridge
               void onUpdate({ devBridgeActive: checked });
             }}
           />
-        </SidebarRow>
+        </DetailsSidebarRow>
       ) : null}
     </>
   );
@@ -139,7 +126,6 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
 
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [description, setDescription] = useState(agent.description ?? '');
-  const descriptionContainerRef = useRef<HTMLDivElement>(null);
 
   const { isPending: isUpdatePending, mutateAsync: updateAgentAsync } = useMutation({
     mutationFn: (body: UpdateAgentBody) =>
@@ -212,47 +198,10 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
     setName(agent.name);
   }, [agent.name, isEditingName]);
 
-  const toggleDescriptionExpanded = useCallback(() => {
-    if (isDescriptionExpanded) {
-      void persistDescription().finally(() => {
-        setIsDescriptionExpanded(false);
-      });
-
-      return;
-    }
-
-    setDescription(agent.description ?? '');
-    setIsDescriptionExpanded(true);
-  }, [agent.description, isDescriptionExpanded, persistDescription]);
-
-  useEffect(() => {
-    if (!isDescriptionExpanded) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-
-      if (descriptionContainerRef.current?.contains(target)) {
-        return;
-      }
-
-      void persistDescription().finally(() => {
-        setIsDescriptionExpanded(false);
-      });
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDescriptionExpanded, persistDescription]);
-
   return (
-    <div className="flex w-[300px] shrink-0 flex-col gap-2.5">
-      <div className="bg-bg-weak flex flex-col rounded p-1 py-1.5">
-        <SidebarRow label="Status">
+    <DetailsSidebar>
+      <DetailsSidebarCard>
+        <DetailsSidebarRow label="Status">
           {agent.active ? (
             <Badge variant="lighter" color="green" size="md">
               <AnimatedBadgeDot color="green" />
@@ -275,7 +224,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
               }
             }}
           />
-        </SidebarRow>
+        </DetailsSidebarRow>
 
         <div className="flex h-8 items-center justify-between gap-2 px-1.5">
           <span className="text-text-soft text-label-xs font-medium shrink-0">Name</span>
@@ -361,17 +310,17 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
           </div>
         </div>
 
-        <SidebarRow label="Agent ID">
+        <DetailsSidebarRow label="Agent ID">
           <span className="text-text-sub font-code text-label-xs tracking-tight">{agent.identifier}</span>
-        </SidebarRow>
+        </DetailsSidebarRow>
 
-        <SidebarRow label="Created on">
+        <DetailsSidebarRow label="Created on">
           <TimeDisplayHoverCard date={agent.createdAt}>
             <span className="text-text-sub font-code text-label-xs tracking-tight">
               {formatLongDate(agent.createdAt)}
             </span>
           </TimeDisplayHoverCard>
-        </SidebarRow>
+        </DetailsSidebarRow>
 
         <BridgeUrlSection
           agent={agent}
@@ -380,50 +329,20 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
           onUpdate={updateAgentAsync}
         />
 
-        <div ref={descriptionContainerRef} className="flex flex-col">
-          <button
-            type="button"
-            onClick={toggleDescriptionExpanded}
-            className="group text-text-soft hover:text-text-sub flex h-8 w-full cursor-pointer items-center justify-between rounded px-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-stroke-strong"
-          >
-            <span className="text-label-xs font-medium">Description</span>
-            <span className="text-foreground-400 group-hover:text-foreground-600 flex min-w-8 shrink-0 items-center justify-end">
-              <motion.span
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className="inline-flex items-center justify-center"
-              >
-                <RiExpandUpDownLine
-                  className={cn(
-                    'size-3.5 translate-x-0.5 transition-transform duration-200',
-                    isDescriptionExpanded && 'rotate-180'
-                  )}
-                />
-              </motion.span>
-            </span>
-          </button>
-          {isDescriptionExpanded ? (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="mt-2 overflow-hidden px-1.5"
-            >
-              <Textarea
-                className="min-h-24 text-sm"
-                placeholder="Describe what this agent does"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={MAX_DESCRIPTION_LENGTH}
-                showCounter
-                disabled={!canWrite || isUpdatePending}
-              />
-            </motion.div>
-          ) : null}
-        </div>
-      </div>
+        <ExpandableDetailsTextarea
+          label="Description"
+          value={description}
+          onChange={setDescription}
+          onPersist={persistDescription}
+          onBeforeExpand={() => setDescription(agent.description ?? '')}
+          onExpandedChange={setIsDescriptionExpanded}
+          placeholder="Describe what this agent does"
+          maxLength={MAX_DESCRIPTION_LENGTH}
+          showCounter
+          disabled={!canWrite || isUpdatePending}
+          isPersisting={isUpdatePending}
+        />
+      </DetailsSidebarCard>
 
       <p className="text-label-xs font-medium">
         <span className="text-text-soft">Last updated </span>
@@ -447,6 +366,6 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
         isLoading={isUpdatePending}
         confirmButtonVariant="error"
       />
-    </div>
+    </DetailsSidebar>
   );
 }

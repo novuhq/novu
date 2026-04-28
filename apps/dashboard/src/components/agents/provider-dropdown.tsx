@@ -1,13 +1,22 @@
 import {
   CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
+  EmailProviderIdEnum,
   type IIntegration,
   providers as novuProviders,
   PROVIDER_ID_TO_CHANNEL_MAP,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiExpandUpDownLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
+import {
+  RiAddLine,
+  RiExpandUpDownLine,
+  RiExternalLinkLine,
+  RiLoader4Line,
+  RiLockStarLine,
+  RiSearchLine,
+} from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { addAgentIntegration, getAgentDetailQueryKey, getAgentIntegrationsQueryKey } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { createIntegration } from '@/api/integrations';
@@ -22,15 +31,23 @@ import {
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { QueryKeys } from '@/utils/query-keys';
+import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { openInNewTab } from '@/utils/url';
 
 type DropdownItem = {
   providerId: string;
   displayName: string;
   comingSoon: boolean;
+  requiresBusinessTier: boolean;
   integration?: IIntegration;
 };
 
@@ -71,11 +88,24 @@ function buildDropdownItems(
         providerId: cp.providerId,
         displayName: cp.displayName,
         comingSoon: true,
+        requiresBusinessTier: false,
       });
       continue;
     }
 
     const existing = integrationsByProvider.get(cp.providerId);
+
+    if (cp.providerId === EmailProviderIdEnum.NovuAgent) {
+      // NovuAgent is 1:1 with the agent — never list existing integrations
+      // (they belong to other agents). Always offer a single "create new" row.
+      supported.push({
+        providerId: cp.providerId,
+        displayName: providerConfig?.displayName || cp.displayName,
+        comingSoon: false,
+        requiresBusinessTier: cp.requiresBusinessTier ?? false,
+      });
+      continue;
+    }
 
     if (existing?.length) {
       for (const integration of existing) {
@@ -83,6 +113,7 @@ function buildDropdownItems(
           providerId: cp.providerId,
           displayName: integration.name || providerConfig?.displayName || cp.displayName,
           comingSoon: false,
+          requiresBusinessTier: cp.requiresBusinessTier ?? false,
           integration,
         });
       }
@@ -92,6 +123,7 @@ function buildDropdownItems(
       providerId: cp.providerId,
       displayName: providerConfig?.displayName || cp.displayName,
       comingSoon: false,
+      requiresBusinessTier: cp.requiresBusinessTier ?? false,
     });
   }
 
@@ -128,6 +160,9 @@ export function ProviderDropdown({
   const { integrations } = useFetchIntegrations();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const isAgentEmailAvailable = useIsAgentEmailAvailable();
+  const track = useTelemetry();
 
   const { supported: allSupported, comingSoon } = useMemo(
     () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
@@ -135,19 +170,46 @@ export function ProviderDropdown({
   );
 
   const supported = useMemo(() => {
-    if (!excludeLinked || !linkedIntegrationIds?.size) {
-      return allSupported;
+    let items = allSupported;
+
+    const linkedNovuAgent = integrations?.find(
+      (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds?.has(i._id)
+    );
+    if (linkedNovuAgent) {
+      const cfg = novuProviders.find((p) => p.id === linkedNovuAgent.providerId);
+      items = items.map((item) =>
+        item.providerId === EmailProviderIdEnum.NovuAgent && !item.integration
+          ? {
+              ...item,
+              displayName: linkedNovuAgent.name || cfg?.displayName || item.displayName,
+              integration: linkedNovuAgent as IIntegration,
+            }
+          : item
+      );
     }
 
-    return allSupported.filter((item) => !item.integration || !linkedIntegrationIds.has(item.integration._id));
-  }, [allSupported, excludeLinked, linkedIntegrationIds]);
+    if (excludeLinked && linkedIntegrationIds?.size) {
+      items = items.filter((item) => !item.integration || !linkedIntegrationIds.has(item.integration._id));
+    }
+
+    return items;
+  }, [allSupported, excludeLinked, linkedIntegrationIds, integrations]);
 
   const selected = useMemo(() => {
     if (selectedIntegrationId) {
       const fromList = supported.find((item) => item.integration?._id === selectedIntegrationId);
+      if (fromList) return fromList;
 
-      if (fromList) {
-        return fromList;
+      const fromAll = integrations?.find((i) => i._id === selectedIntegrationId);
+      if (fromAll) {
+        const cfg = novuProviders.find((p) => p.id === fromAll.providerId);
+
+        return {
+          providerId: fromAll.providerId,
+          displayName: fromAll.name || cfg?.displayName || fromAll.providerId,
+          comingSoon: false,
+          requiresBusinessTier: false,
+        };
       }
     }
 
@@ -164,15 +226,15 @@ export function ProviderDropdown({
     }
 
     return undefined;
-  }, [selectedIntegrationId, fallbackProviderId, supported]);
+  }, [selectedIntegrationId, fallbackProviderId, supported, integrations]);
 
   const isBusy = pendingItemKey !== null;
 
   const addAgentIntegrationMutation = useMutation({
-    mutationFn: async (integrationIdentifier: string) => {
+    mutationFn: async (body: { integrationIdentifier?: string; providerId?: string }) => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
-      return addAgentIntegration(environment, agentIdentifier, { integrationIdentifier });
+      return addAgentIntegration(environment, agentIdentifier, body);
     },
   });
 
@@ -207,6 +269,10 @@ export function ProviderDropdown({
       return;
     }
 
+    if (item.requiresBusinessTier && !isAgentEmailAvailable) {
+      return;
+    }
+
     const environment = currentEnvironment;
 
     if (!environment?._id) {
@@ -231,13 +297,30 @@ export function ProviderDropdown({
     }
 
     try {
-      if (item.integration) {
+      if (item.providerId === EmailProviderIdEnum.NovuAgent) {
+        const link = await addAgentIntegrationMutation.mutateAsync({ providerId: item.providerId });
+        showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
+        track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
+          agentIdentifier,
+          providerId: item.providerId,
+          integrationIdentifier: link.integration.identifier,
+          mode: 'novu_email',
+        });
+        onSelect(item.providerId, link.integration as unknown as IIntegration);
+        setOpen(false);
+      } else if (item.integration) {
         const alreadyLinked = linkedIntegrationIds?.has(item.integration._id);
 
         if (!alreadyLinked) {
           try {
-            await addAgentIntegrationMutation.mutateAsync(item.integration.identifier);
+            await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: item.integration.identifier });
             showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
+            track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
+              agentIdentifier,
+              providerId: item.providerId,
+              integrationIdentifier: item.integration.identifier,
+              mode: 'existing_integration',
+            });
           } catch (linkErr) {
             if (!isAlreadyLinkedToAgentConflict(linkErr)) {
               throw linkErr;
@@ -249,14 +332,20 @@ export function ProviderDropdown({
         setOpen(false);
       } else {
         const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
-        const uniqueName = `${item.displayName} ${sameProviderCount + 1}`;
+        const uniqueName = sameProviderCount > 0 ? `${item.displayName} ${sameProviderCount + 1}` : item.displayName;
 
         const created = await createIntegrationMutation.mutateAsync({
           providerId: item.providerId,
           name: uniqueName,
         });
-        await addAgentIntegrationMutation.mutateAsync(created.identifier);
+        await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: created.identifier });
         showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
+        track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
+          agentIdentifier,
+          providerId: item.providerId,
+          integrationIdentifier: created.identifier,
+          mode: 'new_integration_then_link',
+        });
         onSelect(item.providerId, created);
         setOpen(false);
       }
@@ -334,39 +423,114 @@ export function ProviderDropdown({
               {supported.map((item, index) => {
                 const itemKey = getSupportedItemKey(item, index);
                 const isRowPending = pendingItemKey === itemKey;
+                const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable;
+
+                const rowContent = (
+                  <div className="flex w-full items-center gap-1">
+                    <ProviderIcon
+                      providerId={item.providerId}
+                      providerDisplayName={item.displayName}
+                      className="size-4 shrink-0"
+                    />
+                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">{item.displayName}</span>
+
+                    {isRowPending && (
+                      <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+                    )}
+                    {!isRowPending && isLocked && (
+                      <div className="flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5">
+                        <RiLockStarLine className="size-2.5 text-pink-600" />
+                        <span
+                          className="text-[9px] font-semibold uppercase leading-none"
+                          style={{
+                            background: 'linear-gradient(225deg, #FF884D 23.17%, #E300BD 80.17%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                          }}
+                        >
+                          Team+
+                        </span>
+                      </div>
+                    )}
+                    {!isRowPending &&
+                      !isLocked &&
+                      item.integration &&
+                      item.providerId !== EmailProviderIdEnum.NovuAgent && (
+                        <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
+                          {item.integration.identifier}
+                        </span>
+                      )}
+                    {!isRowPending && !isLocked && !item.integration && (
+                      <RiAddLine className="text-text-soft size-3 shrink-0" />
+                    )}
+                  </div>
+                );
 
                 return (
                   <CommandItem
                     key={itemKey}
                     value={`${item.displayName} ${item.providerId}${item.integration ? ` ${item.integration.identifier}` : ''}`}
-                    disabled={isBusy}
+                    disabled={isBusy || isLocked}
                     onSelect={() => {
                       void handleSelect(item, index);
                     }}
                     className={cn(
                       'flex items-center gap-2 rounded-md p-1',
-                      item.integration?._id === selectedIntegrationId && 'bg-bg-muted'
+                      item.integration?._id === selectedIntegrationId && 'bg-bg-muted',
+                      isLocked && '!pointer-events-auto opacity-60'
                     )}
                   >
-                    <div className="flex flex-1 items-center gap-1">
-                      <ProviderIcon
-                        providerId={item.providerId}
-                        providerDisplayName={item.displayName}
-                        className="size-4 shrink-0"
-                      />
-                      <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
-                        {item.displayName}
-                      </span>
-                    </div>
-
-                    {isRowPending ? (
-                      <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
-                    ) : item.integration ? (
-                      <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
-                        {item.integration.identifier}
-                      </span>
+                    {isLocked ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
+                        <TooltipContent
+                          side="right"
+                          align="start"
+                          variant="light"
+                          size="lg"
+                          className="flex w-64 flex-col items-start gap-3 border border-neutral-100 p-2 shadow-md"
+                        >
+                          <div className="flex items-center gap-1 rounded bg-red-50 px-2 py-1">
+                            <RiLockStarLine className="h-3 w-3 text-pink-600" />
+                            <span
+                              className="text-[10px] font-medium uppercase leading-normal"
+                              style={{
+                                background: 'linear-gradient(225deg, #FF884D 23.17%, #E300BD 80.17%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                              }}
+                            >
+                              Team feature
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-start gap-3">
+                            <p className="text-xs text-neutral-500">
+                              Agent email requires the Team plan. Upgrade to connect an inbound email address.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpen(false);
+                                if (IS_SELF_HOSTED) {
+                                  openInNewTab(
+                                    `${SELF_HOSTED_UPGRADE_REDIRECT_URL}?utm_campaign=agent_email_integration`
+                                  );
+                                } else {
+                                  navigate(`${ROUTES.SETTINGS_BILLING}?utm_source=agent_provider_dropdown`);
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium text-neutral-900 hover:underline"
+                            >
+                              Upgrade plan <RiExternalLinkLine className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     ) : (
-                      <RiAddLine className="text-text-soft size-3 shrink-0" />
+                      rowContent
                     )}
                   </CommandItem>
                 );
@@ -428,8 +592,6 @@ export function ProviderDropdown({
           {popoverContent}
         </Popover>
       </div>
-
-      <p className="text-text-soft text-label-xs font-medium leading-4">{'💡 You can always add more providers.'}</p>
     </div>
   );
 }

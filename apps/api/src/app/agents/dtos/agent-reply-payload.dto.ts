@@ -72,7 +72,7 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   validate(content: ReplyContentDto): boolean {
     if (!content) return true;
 
-    const fields = [content.text, content.markdown, content.card].filter((v) => v !== undefined);
+    const fields = [content.markdown, content.card].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
     if (content.files?.length && !content.markdown) return false;
@@ -86,18 +86,11 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   }
 
   defaultMessage(): string {
-    return 'Content must have exactly one of text, markdown, or card. Files only allowed with markdown. Each file needs exactly one of data or url.';
+    return 'Content must have exactly one of markdown or card. Files only allowed with markdown. Each file needs exactly one of data or url.';
   }
 }
 
 export class ReplyContentDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(40_000)
-  text?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -133,6 +126,18 @@ export class ResolveDto {
   @IsOptional()
   @IsString()
   summary?: string;
+}
+
+export class AddReactionPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  emojiName: string;
 }
 
 export class SignalDto {
@@ -206,4 +211,11 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
+
+  @ApiPropertyOptional({ type: [AddReactionPayloadDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddReactionPayloadDto)
+  addReactions?: AddReactionPayloadDto[];
 }

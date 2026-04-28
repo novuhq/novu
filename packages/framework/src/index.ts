@@ -30,6 +30,7 @@ export type {
 } from './resources';
 export {
   Actions,
+  AgentDeliveryError,
   AgentEventEnum,
   agent,
   Button,
