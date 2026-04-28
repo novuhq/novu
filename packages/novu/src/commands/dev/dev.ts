@@ -164,17 +164,21 @@ async function startTunnelProbe(tunnelOrigin: string, endpointRoute: string, loc
   while (true) {
     await wait(TUNNEL_PROBE_INTERVAL_MS);
 
-    const localHealthy = await tunnelHealthCheck(`${localOrigin}${endpointRoute}`);
+    try {
+      const localHealthy = await tunnelHealthCheck(`${localOrigin}${endpointRoute}`);
 
-    if (!localHealthy) {
-      continue;
-    }
+      if (!localHealthy) {
+        continue;
+      }
 
-    const tunnelHealthy = await tunnelHealthCheck(`${tunnelOrigin}${endpointRoute}`);
+      const tunnelHealthy = await tunnelHealthCheck(`${tunnelOrigin}${endpointRoute}`);
 
-    if (!tunnelHealthy && tunnelClient?.socket) {
-      tunnelClient.socket.addEventListener('open', () => console.log(chalk.green('\n  ✓ Tunnel reconnected')), { once: true });
-      tunnelClient.socket.reconnect();
+      if (!tunnelHealthy && tunnelClient?.socket) {
+        tunnelClient.socket.addEventListener('open', () => console.log(chalk.green('\n  ✓ Tunnel reconnected')), { once: true });
+        tunnelClient.socket.reconnect();
+      }
+    } catch {
+      // keep the probe loop alive regardless of unexpected errors
     }
   }
 }
