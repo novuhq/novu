@@ -3,6 +3,44 @@ import { LRUCache } from 'lru-cache';
 
 /* Keep in sync with packages/shared/src/utils/ssrf-url-validation.ts */
 
+/**
+ * Resolves a webhook-style URL for outbound HTTP requests.
+ * Host-only or path-first values (no scheme) are treated as https, matching axios behavior.
+ */
+export function normalizeOutboundHttpUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return trimmed;
+    }
+
+    return null;
+  } catch {
+    // Continue: scheme-less host/path (e.g. example.com/hook)
+  }
+
+  const withHttps = `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withHttps);
+
+    if (!parsed.hostname) {
+      return null;
+    }
+
+    return withHttps;
+  } catch {
+    return null;
+  }
+}
+
 const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
   max: 500,
   ttl: 1000 * 60 * 5, // 5 minutes

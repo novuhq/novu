@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { validateUrlSsrf } from '@novu/shared/utils/ssrf-url-validation';
+import { normalizeOutboundHttpUrl, validateUrlSsrf } from '@novu/shared/utils/ssrf-url-validation';
 import {
   ChannelTypeEnum,
   ENDPOINT_TYPES,
@@ -52,7 +52,13 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
       delete data.body.hmacSecretKey;
     }
 
-    const targetUrl = (data?.body?.webhookUrl as string) || endpoint.url;
+    const targetUrlRaw = (data?.body?.webhookUrl as string) || endpoint.url;
+    const targetUrl = normalizeOutboundHttpUrl(targetUrlRaw);
+
+    if (!targetUrl) {
+      throw new Error('Chat webhook URL blocked: Invalid URL format.');
+    }
+
     const ssrfError = await validateUrlSsrf(targetUrl);
 
     if (ssrfError) {

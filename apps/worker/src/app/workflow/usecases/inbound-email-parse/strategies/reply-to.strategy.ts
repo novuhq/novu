@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, createHash, validateUrlSsrf } from '@novu/application-generic';
+import { CompileTemplate, createHash, normalizeOutboundHttpUrl, validateUrlSsrf } from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
@@ -50,7 +50,13 @@ export class ReplyToStrategy {
       data: job.payload,
     });
 
-    const ssrfError = await validateUrlSsrf(compiledDomain);
+    const requestUrl = normalizeOutboundHttpUrl(compiledDomain);
+
+    if (!requestUrl) {
+      this.throwError('Reply callback URL blocked (SSRF): Invalid URL format.');
+    }
+
+    const ssrfError = await validateUrlSsrf(requestUrl);
 
     if (ssrfError) {
       this.throwError(`Reply callback URL blocked (SSRF): ${ssrfError}`);
@@ -67,7 +73,7 @@ export class ReplyToStrategy {
       mail: command,
     };
 
-    await axios.post(compiledDomain, userPayload);
+    await axios.post(requestUrl, userPayload);
   }
 
   private splitTo(address: string) {

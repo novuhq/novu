@@ -25,7 +25,7 @@ const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 const USER_MAIL_DOMAIN = 'mail.domain.com';
-const USER_PARSE_WEBHOOK = 'user-parse.com/webhook/{{compiledVariable}}';
+const USER_PARSE_WEBHOOK = 'https://example.com/webhook/{{compiledVariable}}';
 
 describe('Should handle the new arrived mail', () => {
   let inboundEmailParseUsecase: InboundEmailParse;
@@ -171,7 +171,7 @@ const getEntitiesStubObject = {
         active: true,
         replyCallback: {
           active: true,
-          url: 'user-parse.com/webhook/{{compiledVariable}}',
+          url: 'https://example.com/webhook/{{compiledVariable}}',
         },
         shouldStopOnFail: false,
         filters: [],
@@ -238,7 +238,7 @@ const getEntitiesStubObject = {
     step: {
       replyCallback: {
         active: true,
-        url: 'user-parse.com/webhook/{{compiledVariable}}',
+        url: 'https://example.com/webhook/{{compiledVariable}}',
       },
       metadata: {
         timed: {
