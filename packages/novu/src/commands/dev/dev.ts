@@ -16,6 +16,9 @@ process.on('SIGINT', () => {
 });
 
 let tunnelClient: NtfrTunnel | null = null;
+
+const WATCHDOG_INTERVAL_MS = 10_000;
+const SLEEP_DRIFT_THRESHOLD_MS = WATCHDOG_INTERVAL_MS * 2.5;
 export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 const { version } = packageJson;
 
@@ -58,6 +61,10 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
   }
 
   await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
+
+  if (!parsedOptions.tunnel) {
+    startTunnelWatchdog();
+  }
 
   if (NOVU_SECRET_KEY) {
     const bridgeUrl = `${tunnelOrigin}${NOVU_ENDPOINT_PATH}`;
@@ -102,10 +109,14 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
 }
 
 async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5_000);
+
   try {
     const res = await (
       await fetch(`${configTunnelUrl}?action=health-check`, {
         method: 'GET',
+        signal: controller.signal,
         headers: {
           accept: 'application/json',
           'Content-Type': 'application/json',
@@ -117,7 +128,34 @@ async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
     return res.status === 'ok';
   } catch (e) {
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+type WatchdogSocket = Pick<NonNullable<NtfrTunnel['socket']>, 'reconnect' | 'addEventListener'>;
+
+function createWatchdogTick(getSocket: () => WatchdogSocket | undefined): () => void {
+  let lastTickMs = Date.now();
+
+  return () => {
+    const now = Date.now();
+    const drift = now - lastTickMs;
+    lastTickMs = now;
+
+    if (drift > SLEEP_DRIFT_THRESHOLD_MS) {
+      const socket = getSocket();
+
+      if (socket) {
+        socket.addEventListener('open', () => console.log(chalk.green('\n  ✓ Tunnel reconnected')), { once: true });
+        socket.reconnect();
+      }
+    }
+  };
+}
+
+function startTunnelWatchdog(): void {
+  setInterval(createWatchdogTick(() => tunnelClient?.socket), WATCHDOG_INTERVAL_MS);
 }
 
 async function createTunnel(localOrigin: string, endpointRoute: string): Promise<string> {
