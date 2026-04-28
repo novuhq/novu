@@ -3,6 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ClaudeManagedAgentQueueService, PinoLogger } from '@novu/application-generic';
 import { ConversationRepository } from '@novu/dal';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
+import { PLATFORMS_WITH_INTERIM_EDITS } from '../dtos/agent-platform.enum';
 import { AnthropicAgentCredentialsService } from '../services/anthropic-agent-credentials.service';
 import type { AgentRuntime, AgentRuntimeExecuteParams } from './agent-runtime.interface';
 
@@ -72,6 +73,8 @@ export class ClaudeManagedRuntime implements AgentRuntime {
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         integrationIdentifier: config.integrationIdentifier,
+        platform: config.platform,
+        interimEditsSupported: PLATFORMS_WITH_INTERIM_EDITS.has(config.platform),
       },
       groupId: config.organizationId,
       options: {

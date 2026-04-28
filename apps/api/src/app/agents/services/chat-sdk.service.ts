@@ -8,7 +8,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { LRUCache } from 'lru-cache';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import type { ReplyContentDto } from '../dtos/agent-reply-payload.dto';
+import type { AgentProgressTaskDto, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -75,6 +75,33 @@ interface CachedChat {
   chat: Chat;
   config: ResolvedAgentConfig;
   adapterFingerprint: string;
+}
+
+export type AgentProgressRenderer = 'slack_plan' | 'markdown';
+
+export interface AgentProgressResult extends SentMessageInfo {
+  progressRenderer: AgentProgressRenderer;
+}
+
+interface RawMessageLike {
+  id?: string;
+  threadId?: string;
+}
+
+interface PlanCapableAdapter {
+  postObject?: (threadId: string, kind: string, data: unknown) => Promise<RawMessageLike>;
+  editObject?: (threadId: string, messageId: string, kind: string, data: unknown) => Promise<RawMessageLike>;
+}
+
+interface SlackPlanModel {
+  title: string;
+  tasks: Array<{
+    id: string;
+    title: string;
+    status: AgentProgressTaskDto['status'];
+    details?: string;
+    output?: string;
+  }>;
 }
 
 @Injectable()
@@ -190,6 +217,182 @@ export class ChatSdkService implements OnModuleDestroy {
     const edited = await editPromise.catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
+  }
+
+  async postProgress(params: {
+    agentId: string;
+    integrationIdentifier: string;
+    platform: string;
+    platformThreadId: string;
+    serializedThread: Record<string, unknown>;
+    content: ReplyContentDto;
+    progressTasks?: AgentProgressTaskDto[];
+    preferredRenderer?: AgentProgressRenderer;
+  }): Promise<AgentProgressResult> {
+    const planResult = await this.tryPostSlackPlan(params);
+    if (planResult) {
+      return planResult;
+    }
+
+    const sent = await this.postToConversation(
+      params.agentId,
+      params.integrationIdentifier,
+      params.platform,
+      params.serializedThread,
+      params.content
+    );
+
+    return { ...sent, progressRenderer: 'markdown' };
+  }
+
+  async updateProgress(params: {
+    agentId: string;
+    integrationIdentifier: string;
+    platform: string;
+    platformThreadId: string;
+    platformMessageId: string;
+    content: ReplyContentDto;
+    progressRenderer?: AgentProgressRenderer;
+    progressTasks?: AgentProgressTaskDto[];
+  }): Promise<AgentProgressResult> {
+    const planResult = await this.tryEditSlackPlan(params);
+    if (planResult) {
+      return planResult;
+    }
+
+    const edited = await this.editInConversation(
+      params.agentId,
+      params.integrationIdentifier,
+      params.platform,
+      params.platformThreadId,
+      params.platformMessageId,
+      params.content
+    );
+
+    return { ...edited, progressRenderer: 'markdown' };
+  }
+
+  async refreshTyping(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    serializedThread: Record<string, unknown>,
+    label: string
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const { ThreadImpl } = await esmImport('chat');
+    const adapter = chat.getAdapter(platform);
+    const thread = ThreadImpl.fromJSON(serializedThread, adapter);
+
+    await thread.startTyping(label);
+  }
+
+  private async tryPostSlackPlan(params: {
+    agentId: string;
+    integrationIdentifier: string;
+    platform: string;
+    platformThreadId: string;
+    progressTasks?: AgentProgressTaskDto[];
+    preferredRenderer?: AgentProgressRenderer;
+  }): Promise<AgentProgressResult | null> {
+    const progressTasks = params.progressTasks;
+    if (!this.canUseSlackPlan(params.platform, params.preferredRenderer, progressTasks)) {
+      return null;
+    }
+
+    const adapter = await this.getPlanCapableAdapter(params.agentId, params.integrationIdentifier, params.platform);
+    if (typeof adapter.postObject !== 'function') {
+      return null;
+    }
+
+    try {
+      const sent = await adapter.postObject(params.platformThreadId, 'plan', this.buildSlackPlan(progressTasks));
+
+      return this.toProgressResult(sent, 'slack_plan');
+    } catch (err) {
+      this.logger.warn(err, '[agent-progress] Slack plan post failed, falling back to markdown');
+
+      return null;
+    }
+  }
+
+  private async tryEditSlackPlan(params: {
+    agentId: string;
+    integrationIdentifier: string;
+    platform: string;
+    platformThreadId: string;
+    platformMessageId: string;
+    progressRenderer?: AgentProgressRenderer;
+    progressTasks?: AgentProgressTaskDto[];
+  }): Promise<AgentProgressResult | null> {
+    const progressTasks = params.progressTasks;
+    if (!this.canUseSlackPlan(params.platform, params.progressRenderer, progressTasks)) {
+      return null;
+    }
+
+    const adapter = await this.getPlanCapableAdapter(params.agentId, params.integrationIdentifier, params.platform);
+    if (typeof adapter.editObject !== 'function') {
+      return null;
+    }
+
+    try {
+      const edited = await adapter.editObject(
+        params.platformThreadId,
+        params.platformMessageId,
+        'plan',
+        this.buildSlackPlan(progressTasks)
+      );
+
+      return this.toProgressResult(edited, 'slack_plan');
+    } catch (err) {
+      this.logger.warn(err, '[agent-progress] Slack plan edit failed, falling back to markdown');
+
+      return null;
+    }
+  }
+
+  private canUseSlackPlan(
+    platform: string,
+    preferredRenderer: AgentProgressRenderer | undefined,
+    progressTasks: AgentProgressTaskDto[] | undefined
+  ): progressTasks is AgentProgressTaskDto[] {
+    return platform === AgentPlatformEnum.SLACK && preferredRenderer !== 'markdown' && Boolean(progressTasks?.length);
+  }
+
+  private async getPlanCapableAdapter(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string
+  ): Promise<PlanCapableAdapter> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    return chat.getAdapter(platform) as PlanCapableAdapter;
+  }
+
+  private buildSlackPlan(progressTasks: AgentProgressTaskDto[]): SlackPlanModel {
+    return {
+      title: 'Claude is working',
+      tasks: progressTasks.slice(0, 8).map((task) => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        details: task.details,
+        output: task.output,
+      })),
+    };
+  }
+
+  private toProgressResult(raw: RawMessageLike, progressRenderer: AgentProgressRenderer): AgentProgressResult {
+    if (!raw.id || !raw.threadId) {
+      throw new Error('Slack plan adapter returned an invalid message response');
+    }
+
+    return { messageId: raw.id, platformThreadId: raw.threadId, progressRenderer };
   }
 
   async removeReaction(

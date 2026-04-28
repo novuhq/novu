@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
+import {
+  AgentRuntimeEnum,
+  ConversationActivitySenderTypeEnum,
+  ConversationParticipantTypeEnum,
+  SubscriberRepository,
+} from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { PLATFORMS_WITH_INTERIM_EDITS, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { AgentRuntimeFactory } from '../runtimes/agent-runtime.factory';
 import { MissingClaudeManagedCredentialsError } from '../runtimes/claude-managed.runtime';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -138,8 +143,10 @@ export class AgentInboundHandler {
 
     if (config.acknowledgeOnReceived) {
       const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
+      const usesVisibleProgress =
+        config.runtime === AgentRuntimeEnum.CLAUDE_MANAGED && PLATFORMS_WITH_INTERIM_EDITS.has(config.platform);
 
-      if (supportsTyping) {
+      if (supportsTyping && !usesVisibleProgress) {
         await thread.startTyping('Thinking...');
       } else if (isFirstMessage && message.id) {
         thread

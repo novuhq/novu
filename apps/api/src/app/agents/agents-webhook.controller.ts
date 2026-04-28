@@ -17,12 +17,14 @@ import { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
+import { AgentReplyPayloadDto, AgentStatusPayloadDto } from './dtos/agent-reply-payload.dto';
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { UpdateAgentStatusCommand } from './usecases/update-agent-status/update-agent-status.command';
+import { UpdateAgentStatus } from './usecases/update-agent-status/update-agent-status.usecase';
 
 @Controller('/agents')
 @UseGuards(AgentConversationEnabledGuard)
@@ -30,7 +32,8 @@ import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-rep
 export class AgentsWebhookController {
   constructor(
     private chatSdkService: ChatSdkService,
-    private handleAgentReplyUsecase: HandleAgentReply
+    private handleAgentReplyUsecase: HandleAgentReply,
+    private updateAgentStatusUsecase: UpdateAgentStatus
   ) {}
 
   @Post('/:agentId/reply')
@@ -55,6 +58,34 @@ export class AgentsWebhookController {
         resolve: body.resolve,
         signals: body.signals as Signal[],
         addReactions: body.addReactions,
+      })
+    );
+  }
+
+  @Post('/:agentId/status')
+  @HttpCode(HttpStatus.OK)
+  @RequireAuthentication()
+  @ExternalApiAccessible()
+  async handleAgentStatus(
+    @UserSession() user: UserSessionData,
+    @Param('agentId') agentId: string,
+    @Body() body: AgentStatusPayloadDto
+  ) {
+    return this.updateAgentStatusUsecase.execute(
+      UpdateAgentStatusCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        conversationId: body.conversationId,
+        agentIdentifier: agentId,
+        integrationIdentifier: body.integrationIdentifier,
+        messageId: body.messageId,
+        platformThreadId: body.platformThreadId,
+        state: body.state,
+        toolName: body.toolName,
+        progressRenderer: body.progressRenderer,
+        progressTasks: body.progressTasks,
+        retryAfterMs: body.retryAfterMs,
       })
     );
   }

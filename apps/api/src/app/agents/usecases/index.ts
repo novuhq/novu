@@ -14,6 +14,7 @@ import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-emai
 import { TestClaudeManagedAgent } from './test-claude-managed-agent/test-claude-managed-agent.usecase';
 import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
+import { UpdateAgentStatus } from './update-agent-status/update-agent-status.usecase';
 import { UpdateAnthropicAgentCredentials } from './update-anthropic-agent-credentials/update-anthropic-agent-credentials.usecase';
 
 export const USE_CASES = [
@@ -33,5 +34,6 @@ export const USE_CASES = [
   HandleAgentReply,
   SendAgentTestEmail,
   TestClaudeManagedAgent,
+  UpdateAgentStatus,
   UpdateAnthropicAgentCredentials,
 ];

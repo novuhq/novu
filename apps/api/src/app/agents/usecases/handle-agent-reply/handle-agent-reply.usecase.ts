@@ -208,12 +208,13 @@ export class HandleAgentReply {
     agentName?: string
   ): Promise<SentMessageInfo> {
     const textFallback = this.extractTextFallback(edit.content);
+    const platformThreadId = this.resolveEditThreadId(edit.platformThreadId, channel);
 
     const sent = await this.chatSdkService.editInConversation(
       conversation._agentId,
       command.integrationIdentifier,
       channel.platform,
-      channel.platformThreadId,
+      platformThreadId,
       edit.messageId,
       edit.content
     );
@@ -233,6 +234,14 @@ export class HandleAgentReply {
     });
 
     return sent;
+  }
+
+  private resolveEditThreadId(platformThreadId: string | undefined, channel: ConversationChannel): string {
+    if (platformThreadId && platformThreadId !== channel.platformThreadId) {
+      throw new ForbiddenException('Message thread does not match this conversation');
+    }
+
+    return channel.platformThreadId;
   }
 
   private extractTextFallback(content: ReplyContentDto): string {

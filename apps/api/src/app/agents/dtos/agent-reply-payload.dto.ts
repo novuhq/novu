@@ -8,7 +8,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  MaxLength,
   Validate,
   ValidateNested,
   ValidatorConstraint,
@@ -18,6 +17,17 @@ import {
 export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
+export const AGENT_STATUS_STATES = [
+  'thinking',
+  'tool_use',
+  'tool_result',
+  'compacting',
+  'retrying',
+  'error',
+  'typing',
+] as const;
+export const AGENT_PROGRESS_RENDERERS = ['slack_plan', 'markdown'] as const;
+export const AGENT_PROGRESS_TASK_STATUSES = ['pending', 'in_progress', 'complete', 'error'] as const;
 
 /**
  * Allowed characters for a metadata signal key.
@@ -112,6 +122,11 @@ export class EditPayloadDto {
   @IsString()
   @IsNotEmpty()
   messageId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  platformThreadId?: string;
 
   @ApiProperty({ type: ReplyContentDto })
   @IsObject()
@@ -218,4 +233,82 @@ export class AgentReplyPayloadDto {
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+}
+
+export class AgentProgressTaskDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiProperty({ enum: AGENT_PROGRESS_TASK_STATUSES })
+  @IsString()
+  @IsIn(AGENT_PROGRESS_TASK_STATUSES)
+  status: (typeof AGENT_PROGRESS_TASK_STATUSES)[number];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  details?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  output?: string;
+}
+
+export class AgentStatusPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  conversationId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  integrationIdentifier: string;
+
+  @ApiPropertyOptional({ description: 'Existing placeholder message id. Omit it to create the placeholder.' })
+  @IsOptional()
+  @IsString()
+  messageId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Thread id returned by the placeholder post, if it differs from the source thread.',
+  })
+  @IsOptional()
+  @IsString()
+  platformThreadId?: string;
+
+  @ApiProperty({ enum: AGENT_STATUS_STATES })
+  @IsString()
+  @IsIn(AGENT_STATUS_STATES)
+  state: (typeof AGENT_STATUS_STATES)[number];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  toolName?: string;
+
+  @ApiPropertyOptional({ enum: AGENT_PROGRESS_RENDERERS })
+  @IsOptional()
+  @IsString()
+  @IsIn(AGENT_PROGRESS_RENDERERS)
+  progressRenderer?: (typeof AGENT_PROGRESS_RENDERERS)[number];
+
+  @ApiPropertyOptional({ type: [AgentProgressTaskDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AgentProgressTaskDto)
+  progressTasks?: AgentProgressTaskDto[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  retryAfterMs?: number;
 }
