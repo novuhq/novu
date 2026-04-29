@@ -19,6 +19,8 @@ import { GenerateConnectOauthUrl } from './generate-chat-oath-url/generate-conne
 import { GenerateLinkUserOauthUrl } from './generate-chat-oath-url/generate-link-user-oauth-url.usecase';
 import { GenerateMsTeamsOauthUrl } from './generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import { GenerateMsTeamsArmTemplate } from './generate-msteams-arm-template/generate-msteams-arm-template.usecase';
+import { GetMsTeamsArmTemplate } from './generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
@@ -49,6 +51,8 @@ export const USE_CASES = [
   GenerateLinkUserOauthUrl,
   GenerateSlackOauthUrl,
   GenerateMsTeamsOauthUrl,
+  GenerateMsTeamsArmTemplate,
+  GetMsTeamsArmTemplate,
   SlackOauthCallback,
   MsTeamsOauthCallback,
   ChatOauthCallback,

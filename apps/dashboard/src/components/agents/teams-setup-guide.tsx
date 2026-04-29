@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiKey2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { getMsTeamsArmTemplateDeployUrl } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -41,10 +42,6 @@ function getApiHostname(): string {
   } catch {
     return 'api.novu.co';
   }
-}
-
-function buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 function buildOAuthCallbackUrl(): string {
@@ -112,24 +109,6 @@ function RedirectUriSection({ redirectUri }: { redirectUri: string }) {
   );
 }
 
-function WebhookUrlSection({ webhookUrl }: { webhookUrl: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-text-sub text-label-xs font-medium leading-5">Messaging endpoint</p>
-      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
-        <input
-          type="text"
-          readOnly
-          value={webhookUrl}
-          aria-label="Messaging endpoint URL"
-          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
-        />
-        <CopyButton valueToCopy={webhookUrl} size="xs" className="shrink-0 border-l border-stroke-soft" />
-      </div>
-    </div>
-  );
-}
-
 function ManifestPreview({ manifestJson }: { manifestJson: string }) {
   const [open, setOpen] = useState(false);
 
@@ -177,6 +156,7 @@ export function TeamsSetupGuide({
   const { currentEnvironment } = useEnvironment();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
@@ -200,7 +180,6 @@ export function TeamsSetupGuide({
   const appId = credentials?.clientId ?? '';
   const hasCredentials = Boolean(appId && credentials?.secretKey && credentials?.tenantId);
 
-  const webhookUrl = buildWebhookUrl(agent._id, integrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
   const manifestJson = JSON.stringify(buildManifest(appId, agent.name), null, 2);
 
   const canDownload = Boolean(appId);
@@ -213,8 +192,25 @@ export function TeamsSetupGuide({
     void downloadTeamsAppPackage(manifestJson, agent.name);
   }, [canDownload, manifestJson, agent.name]);
 
+  const handleDeployToAzure = useCallback(async () => {
+    if (!currentEnvironment || !hasCredentials || isDeploying) {
+      return;
+    }
+
+    setIsDeploying(true);
+
+    try {
+      const { deployUrl } = await getMsTeamsArmTemplateDeployUrl(integrationId, currentEnvironment);
+      window.open(deployUrl, '_blank', 'noopener,noreferrer');
+    } finally {
+      setIsDeploying(false);
+    }
+  }, [currentEnvironment, hasCredentials, integrationId, isDeploying]);
+
   const base = stepOffset;
 
+  // Steps: App Reg + Redirect URI (base+0), Graph perms (base+1),
+  //        Credentials (base+2), Deploy to Azure (base+3), Download pkg (base+4), Upload+connect (base+5)
   const firstIncomplete = useMemo(() => {
     if (isConnected) {
       return base + 7;
@@ -224,7 +220,7 @@ export function TeamsSetupGuide({
       return base;
     }
 
-    return base + 6;
+    return base + 5;
   }, [base, hasCredentials, isConnected]);
 
   const steps = (
@@ -232,21 +228,32 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base}
         status={deriveStepStatus(base, firstIncomplete)}
-        title="Create an Azure Bot resource"
-        description="In the Azure Portal, create a new Azure Bot (Single Tenant). Choose F0 (free) pricing for testing. Once created, note your App ID from the Bot Configuration page."
+        title="Create an App Registration"
+        description={
+          <span>
+            {'In the Azure Portal, create a new '}
+            <strong>App Registration</strong>
+            {' (Single Tenant). When prompted for a Redirect URI, add the OAuth callback URL shown below as a '}
+            <strong>Web</strong>
+            {' platform URI. Once created, note the App ID from the Overview page.'}
+          </span>
+        }
         rightContent={
-          <SetupButton
-            href="https://portal.azure.com/#create/Microsoft.AzureBot"
-            leadingIcon={
-              <ProviderIcon
-                providerId={ChatProviderIdEnum.MsTeams}
-                providerDisplayName="MS Teams"
-                className="size-4 shrink-0"
-              />
-            }
-          >
-            Open Azure Portal
-          </SetupButton>
+          <div className="flex min-w-0 flex-col gap-3">
+            <SetupButton
+              href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
+              leadingIcon={
+                <ProviderIcon
+                  providerId={ChatProviderIdEnum.MsTeams}
+                  providerDisplayName="MS Teams"
+                  className="size-4 shrink-0"
+                />
+              }
+            >
+              Open App Registrations
+            </SetupButton>
+            <RedirectUriSection redirectUri={buildOAuthCallbackUrl()} />
+          </div>
         }
       />
 
@@ -301,28 +308,8 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncomplete)}
-        title="Add Novu's redirect URI"
-        description={
-          <span>
-            {'In your App Registration, go to '}
-            <strong>Authentication</strong>
-            {' → '}
-            <strong>Add a platform</strong>
-            {' → '}
-            <strong>Web</strong>
-            {'. Paste the URL below as the Redirect URI, then click '}
-            <strong>Configure</strong>
-            {'. This is where Microsoft sends the user after they grant admin consent.'}
-          </span>
-        }
-        rightContent={<RedirectUriSection redirectUri={buildOAuthCallbackUrl()} />}
-      />
-
-      <SetupStep
-        index={base + 3}
-        status={deriveStepStatus(base + 3, firstIncomplete)}
         title="Configure credentials"
-        description="Copy the App ID, Client Secret, and Tenant ID from your Azure Bot registration into the integration."
+        description="Copy the App ID, Client Secret, and Tenant ID from your App Registration into the integration."
         rightContent={
           <SetupButton
             leadingIcon={<RiKey2Line className="size-3.5" />}
@@ -336,7 +323,44 @@ export function TeamsSetupGuide({
             className="mt-2 w-full"
             variant="tip"
             title="Where to find these:"
-            description="App ID is on the Bot Configuration page. For the secret, click Manage Password → Certificates & secrets → New client secret and copy the Value immediately — it's only shown once. Tenant ID is on the App Registration Overview page."
+            description="App ID is on the Overview page. For the secret, go to Certificates & secrets → New client secret and copy the Value immediately — it's only shown once. Tenant ID is also on the Overview page."
+          />
+        }
+      />
+
+      <SetupStep
+        index={base + 3}
+        status={deriveStepStatus(base + 3, firstIncomplete)}
+        title="Deploy the Azure Bot to your subscription"
+        description="Click the button to open a pre-filled Azure deployment. It creates the Azure Bot resource, sets the messaging endpoint, and enables the Microsoft Teams channel — all in one click."
+        rightContent={
+          <div className="flex min-w-0 flex-col gap-3">
+            <SetupButton
+              leadingIcon={
+                isDeploying ? null : (
+                  <ProviderIcon
+                    providerId={ChatProviderIdEnum.MsTeams}
+                    providerDisplayName="MS Teams"
+                    className="size-4 shrink-0"
+                  />
+                )
+              }
+              onClick={handleDeployToAzure}
+              disabled={!hasCredentials || isDeploying}
+            >
+              {isDeploying ? 'Opening Azure Portal…' : 'Deploy to Azure'}
+            </SetupButton>
+            {!hasCredentials && (
+              <p className="text-text-soft text-label-xs">Configure credentials in step {base + 2} first.</p>
+            )}
+          </div>
+        }
+        extraContent={
+          <InlineToast
+            className="mt-2 w-full"
+            variant="tip"
+            title="What this deploys:"
+            description="An Azure Bot resource (F0 free tier, Single Tenant) with your messaging endpoint pre-filled and the Microsoft Teams channel enabled. Your App ID and Tenant ID are pre-populated from the credentials you saved."
           />
         }
       />
@@ -344,14 +368,6 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 4}
         status={deriveStepStatus(base + 4, firstIncomplete)}
-        title="Set the messaging endpoint and enable Teams"
-        description="In your Azure Bot, go to Configuration → paste the endpoint below. Then go to Channels → enable Microsoft Teams."
-        rightContent={<WebhookUrlSection webhookUrl={webhookUrl} />}
-      />
-
-      <SetupStep
-        index={base + 5}
-        status={deriveStepStatus(base + 5, firstIncomplete)}
         title="Download the Teams app package"
         description="We've generated a ready-to-upload app package with your manifest and placeholder icons. Before deploying to production, replace the icons and update the developer fields in manifest.json with your company info."
         rightContent={
@@ -379,8 +395,8 @@ export function TeamsSetupGuide({
       />
 
       <SetupStep
-        index={base + 6}
-        status={deriveStepStatus(base + 6, firstIncomplete)}
+        index={base + 5}
+        status={deriveStepStatus(base + 5, firstIncomplete)}
         title="Upload to Teams and verify"
         description={
           <div className="flex flex-col gap-2">

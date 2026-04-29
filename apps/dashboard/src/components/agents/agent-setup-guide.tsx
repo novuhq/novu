@@ -155,7 +155,7 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
             ) : null}
 
             {hasConnectedIntegration && (
-              <AgentCodeSetupSection agent={agent} stepOffset={5} providerId={selectedProviderId} />
+              <AgentCodeSetupSection agent={agent} stepOffset={1} providerId={selectedProviderId} />
             )}
           </div>
         </div>

@@ -67,6 +67,9 @@ import { GenerateConnectOauthUrlCommand } from './usecases/generate-chat-oath-ur
 import { GenerateConnectOauthUrl } from './usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
 import { GenerateLinkUserOauthUrl } from './usecases/generate-chat-oath-url/generate-link-user-oauth-url.usecase';
+import { GenerateMsTeamsArmTemplateCommand } from './usecases/generate-msteams-arm-template/generate-msteams-arm-template.command';
+import { GenerateMsTeamsArmTemplate } from './usecases/generate-msteams-arm-template/generate-msteams-arm-template.usecase';
+import { GetMsTeamsArmTemplate } from './usecases/generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
@@ -101,7 +104,9 @@ export class IntegrationsController {
     private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
     private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
     private chatOauthCallbackUsecase: ChatOauthCallback,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private generateMsTeamsArmTemplateUsecase: GenerateMsTeamsArmTemplate,
+    private getMsTeamsArmTemplateUsecase: GetMsTeamsArmTemplate
   ) {}
 
   @Get('/')
@@ -411,6 +416,56 @@ export class IntegrationsController {
         environmentId: user.environmentId,
       })
     );
+  }
+
+  @Get('/:integrationId/msteams-arm-template/deploy-url')
+  @ApiOkResponse({
+    description: 'Signed Azure Portal "Deploy to Azure" URL for the MS Teams ARM template.',
+  })
+  @ApiOperation({
+    summary: 'Get MS Teams ARM template deploy URL',
+    description:
+      'Returns a short-lived signed URL that opens the Azure Portal with a pre-filled ARM template to create the Azure Bot resource and enable the MS Teams channel.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getMsTeamsArmTemplateDeployUrl(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<{ deployUrl: string }> {
+    return this.generateMsTeamsArmTemplateUsecase.execute(
+      GenerateMsTeamsArmTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        integrationId,
+      })
+    );
+  }
+
+  /**
+   * Public endpoint fetched by Azure Portal when the user clicks "Deploy to Azure".
+   * Protected by an HMAC-signed, time-expiring `sig` + `exp` query parameter pair —
+   * no session cookie is available because Azure's servers make this request, not the browser.
+   */
+  @Get('/:integrationId/msteams-arm-template')
+  @ApiExcludeEndpoint()
+  @ApiOperation({ summary: 'Serve MS Teams ARM template JSON (signed)' })
+  async getMsTeamsArmTemplateJson(
+    @Res() res: Response,
+    @Param('integrationId') integrationId: string,
+    @Query('sig') sig: string,
+    @Query('exp') exp: string
+  ): Promise<void> {
+    if (!sig || !exp) {
+      throw new BadRequestException('Missing required parameters: sig, exp');
+    }
+
+    const { template } = await this.getMsTeamsArmTemplateUsecase.execute(integrationId, sig, exp);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(JSON.stringify(template, null, 2));
   }
 
   /**

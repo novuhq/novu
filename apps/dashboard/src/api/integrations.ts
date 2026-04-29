@@ -80,3 +80,15 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
     environment: environment,
   });
 }
+
+export async function getMsTeamsArmTemplateDeployUrl(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<{ deployUrl: string }> {
+  const { data } = await get<{ data: { deployUrl: string } }>(
+    `/integrations/${integrationId}/msteams-arm-template/deploy-url`,
+    { environment }
+  );
+
+  return data;
+}
