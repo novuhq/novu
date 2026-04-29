@@ -104,7 +104,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
   };
 
   const handleSkipClick = () => {
-    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED);
+    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { usecase: 'inbox' });
     const queryParams = new URLSearchParams();
 
     if (environment?._id) {
