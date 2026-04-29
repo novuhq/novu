@@ -6,6 +6,7 @@ import {
   createAgent,
   getAgent,
 } from '@/api/agents';
+import { NovuApiError } from '@/api/api.client';
 import { AgentSetupSteps } from '@/components/agents/agent-setup-steps';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -21,7 +22,11 @@ async function ensureAgent(
 ): Promise<AgentResponse> {
   try {
     return await getAgent(env, DEFAULT_AGENT_IDENTIFIER);
-  } catch {
+  } catch (error) {
+    if (!(error instanceof NovuApiError && error.status === 404)) {
+      throw error;
+    }
+
     const created = await createAgent(env, {
       name: DEFAULT_AGENT_NAME,
       identifier: DEFAULT_AGENT_IDENTIFIER,
