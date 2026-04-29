@@ -9,13 +9,13 @@
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/inbound-mail --load -t novu-inbound-mail - $DOCKER_BUILD_ARGUMENTS",
-    "start": "nodemon",
-    "start:dev": "nodemon",
-    "start:test": "cross-env NODE_ENV=test nodemon",
+    "start": "tsx watch src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "start:test": "cross-env NODE_ENV=test tsx watch src/main.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "biome check --write .",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --trace-warnings --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts"
+    "test": "cross-env NODE_ENV=test mocha --require tsx/cjs --trace-warnings --timeout 10000 --exit --file e2e/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.971.0",
@@ -36,12 +36,12 @@
     "lodash": "^4.17.23",
     "mailparser": "^0.6.0",
     "newrelic": "^13.12.0",
+    "pino": "^8.17.2",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "smtp-server": "^1.4.0",
     "spamc": "0.0.5",
     "uuid": "^9.0.0",
-    "winston": "^3.9.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
@@ -55,12 +55,8 @@
     "@types/smtp-server": "^3.5.7",
     "cross-env": "^7.0.3",
     "mocha": "^10.2.0",
-    "nodemon": "^3.0.1",
     "sinon": "^9.2.4",
-    "ts-jest": "^27.0.7",
-    "ts-loader": "~9.4.0",
-    "ts-node": "~10.9.1",
-    "tsconfig-paths": "~4.1.0",
+    "tsx": "^4.21.0",
     "typescript": "5.6.2"
   },
   "nx": {
