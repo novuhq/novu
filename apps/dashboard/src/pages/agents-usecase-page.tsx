@@ -1,8 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ChevronRight, CalendarDays, Mail } from 'lucide-react';
-import { RiArrowLeftSLine } from 'react-icons/ri';
+import { CalendarDays, Mail } from 'lucide-react';
+import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { AgentFlowIllustration } from '@/components/onboarding/agent-flow-illustration';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -214,7 +214,7 @@ export function AgentsUsecasePage() {
       </div>
 
       <div className="mt-10 flex items-center gap-3">
-        <Button variant="secondary" mode="gradient" size="xs" trailingIcon={ChevronRight}>
+        <Button variant="secondary" mode="gradient" size="xs" trailingIcon={RiArrowRightSLine}>
           Setup agent
         </Button>
 

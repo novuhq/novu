@@ -1,3 +1,4 @@
+import { type IEnvironment } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AGENTS_LIST_QUERY_KEY,
@@ -15,7 +16,7 @@ const DEFAULT_AGENT_IDENTIFIER = 'support-agent';
 const DEFAULT_AGENT_DESCRIPTION = 'Handles customer questions across your connected channels.';
 
 async function ensureAgent(
-  env: ReturnType<typeof requireEnvironment>,
+  env: IEnvironment,
   track: ReturnType<typeof useTelemetry>
 ): Promise<AgentResponse> {
   try {
