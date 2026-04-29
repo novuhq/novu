@@ -91,13 +91,18 @@ export class GetMsTeamsArmTemplate {
 
   private sanitizeBotName(name: string): string {
     // Azure Bot resource names: 2-64 chars, alphanumeric and hyphens only
-    return name
+    const sanitized = name
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
-      .slice(0, 64)
-      .padEnd(2, 'bot');
+      .slice(0, 64);
+
+    if (sanitized.length < 2) {
+      return 'bot';
+    }
+
+    return sanitized;
   }
 
   private buildWebhookUrl(agentIdentifier: string | null, integrationIdentifier: string): string {
