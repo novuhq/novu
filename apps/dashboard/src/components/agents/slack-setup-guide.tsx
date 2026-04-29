@@ -130,7 +130,7 @@ function ManifestCode({ manifestYaml, show }: { manifestYaml: string; show: bool
           transition={{ duration: 0.2, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <CodeBlock code={manifestYaml} language="yaml" title="slack-app-manifest.yaml" />
+          <CodeBlock code={manifestYaml} language="shell" title="slack-app-manifest.yaml" />
         </motion.div>
       )}
     </AnimatePresence>
