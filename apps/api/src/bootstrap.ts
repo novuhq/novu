@@ -36,6 +36,12 @@ const extendedBodySizeRoutes = [
   '/v2/workflows',
 ];
 
+// Anthropic-compatible LLM proxy receives full Claude Code conversation context
+// (system prompt + tool schemas + message history). Anthropic's own request cap
+// is 32MB, so match it here to avoid the gateway becoming the bottleneck.
+const LLM_GATEWAY_ROUTES = ['/v2/llm'];
+const LLM_GATEWAY_BODY_LIMIT = '32mb';
+
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
 validateEnv();
 class BootstrapOptions {
@@ -107,6 +113,26 @@ export async function bootstrap(
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
+
+  app.use(LLM_GATEWAY_ROUTES, bodyParser.json({ limit: LLM_GATEWAY_BODY_LIMIT }));
+  app.use(LLM_GATEWAY_ROUTES, bodyParser.urlencoded({ limit: LLM_GATEWAY_BODY_LIMIT, extended: true }));
+
+  /**
+   * The Anthropic SDK (used by the Wizard CLI via `@anthropic-ai/claude-agent-sdk`)
+   * only knows how to send `Authorization: Bearer <token>` when `ANTHROPIC_AUTH_TOKEN`
+   * is set — there's no env-driven hook that would let us emit `Authorization: ApiKey ...`
+   * directly. Normalize the prefix here, on LLM gateway routes only, so the
+   * existing `ApiKeyStrategy` (which requires the `ApiKey ` prefix) accepts it.
+   * Scoped to `/v2/llm` to avoid affecting any other route that genuinely uses
+   * bearer tokens (e.g., JWT auth elsewhere in the API).
+   */
+  app.use(LLM_GATEWAY_ROUTES, (req, _res, next) => {
+    const auth = req.headers.authorization;
+    if (typeof auth === 'string' && /^Bearer\s+/i.test(auth)) {
+      req.headers.authorization = auth.replace(/^Bearer\s+/i, 'ApiKey ');
+    }
+    next();
+  });
 
   app.use('/v1/agents', bodyParser.json({ verify: agentRawBodyBuffer }));
 

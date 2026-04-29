@@ -1,6 +1,7 @@
 import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth-layout';
@@ -81,7 +82,7 @@ function CliAuthContent() {
     }
   }, [developmentEnvironment, currentEnvironment?._id, switchEnvironment]);
 
-  async function handleAuthorize() {
+  const handleAuthorize = useCallback(async () => {
     if (!callbackOk || !apiKey || !currentEnvironment) {
       return;
     }
@@ -121,7 +122,7 @@ function CliAuthContent() {
     } finally {
       setIsAuthorizing(false);
     }
-  }
+  }, [callbackOk, callbackUrl, apiKey, currentEnvironment, cliState, currentUser]);
 
   function handleCancel() {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? 'default' }));
@@ -131,13 +132,36 @@ function CliAuthContent() {
 
   const reason = (() => {
     if (!callbackOk) return 'This page must be opened from the Novu CLI.';
-    if (!isLlmGatewayEnabled) return 'Novu Envoy is not enabled for your account yet.';
+    if (!isLlmGatewayEnabled) return 'Novu Wizard is not enabled for your account yet.';
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
     if (isLoading) return null;
     if (!apiKey) return 'No API key is available in this environment.';
 
     return null;
   })();
+
+  const canAuthorize = !reason && !isLoading && !!apiKey && !isAuthorizing && !didAuthorize;
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Enter') return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (!canAuthorize) return;
+
+      event.preventDefault();
+      handleAuthorize();
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canAuthorize, handleAuthorize]);
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center px-4 py-8">
@@ -148,7 +172,7 @@ function CliAuthContent() {
             <h1 className="text-foreground-900 text-base font-semibold">Authorize Novu CLI</h1>
           </div>
           <p className="text-foreground-600 text-xs">
-            Novu Envoy is requesting access to your{' '}
+            Novu Wizard is requesting access to your{' '}
             <span className="font-medium">{currentEnvironment?.name ?? '...'}</span> environment in order to integrate
             Novu into your project.
           </p>
@@ -162,25 +186,50 @@ function CliAuthContent() {
             </div>
           ) : null}
 
-          {didAuthorize ? (
-            <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-xs text-green-700">
-              <RiCheckLine className="mt-[2px] size-4" />
-              <span>You can close this tab and return to your terminal.</span>
-            </div>
-          ) : null}
-
-          <div className="flex items-center justify-end gap-2">
-            <Button mode="outline" onClick={handleCancel} disabled={isAuthorizing}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAuthorize}
-              disabled={!!reason || isLoading || !apiKey || isAuthorizing || didAuthorize}
-              isLoading={isAuthorizing || isLoading}
-            >
-              {didAuthorize ? 'Authorized' : 'Authorize'}
-            </Button>
-          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            {didAuthorize ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, y: -4, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -4, height: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-xs text-green-700">
+                  <motion.span
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 18 }}
+                    className="mt-[2px] inline-flex"
+                  >
+                    <RiCheckLine className="size-4" />
+                  </motion.span>
+                  <span>You can close this tab and return to your terminal.</span>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="actions"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="flex items-center justify-end gap-2 overflow-hidden"
+              >
+                <Button mode="outline" onClick={handleCancel} disabled={isAuthorizing}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAuthorize}
+                  disabled={!!reason || isLoading || !apiKey || isAuthorizing}
+                  isLoading={isAuthorizing || isLoading}
+                >
+                  Authorize
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CardContent>
       </Card>
     </div>

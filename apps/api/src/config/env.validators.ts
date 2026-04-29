@@ -100,7 +100,7 @@ export const envValidators = {
       AI_LLM_MAX_RETRIES: num({ default: 3 }),
       AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
-      // Novu Envoy LLM Gateway (`@novu/ee-ai`). All optional so OSS / non-EE deploys still boot.
+      // Novu Wizard LLM Gateway (`@novu/ee-ai`). All optional so OSS / non-EE deploys still boot.
       NOVU_LLM_GATEWAY_ANTHROPIC_API_KEY: str({ default: '' }),
       NOVU_LLM_GATEWAY_DEFAULT_MODEL: str({ default: 'claude-sonnet-4-5' }),
       NOVU_LLM_GATEWAY_DAILY_TOKEN_LIMIT: num({ default: 2_000_000 }),

@@ -3,12 +3,12 @@
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
-import { envoyCommand } from './commands/envoy';
-import { EnvoyCommandOptions } from './commands/envoy/types';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
 import { pullTranslations, pushTranslations } from './commands/translations';
+import { wizardCommand } from './commands/wizard';
+import { WizardCommandOptions } from './commands/wizard/types';
 import { NOVU_API_URL, NOVU_SECRET_KEY } from './constants';
 import { AnalyticService, ConfigService } from './services';
 
@@ -93,25 +93,26 @@ program
   });
 
 program
-  .command('envoy')
+  .command('wizard')
   .description('Integrate Novu into your app with an AI agent (beta)')
-  .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key', NOVU_SECRET_KEY || '')
+  .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
   .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
   .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
-  .option('--region <region>', 'us | eu', 'us')
+  .option('--mcp-url <url>', 'Override the Novu MCP server URL (default: https://mcp.novu.co/)')
+  .option('--region <region>', 'us | eu | local', 'us')
   .option('--model <model>', 'Override default model')
   .option('--yes', 'Non-interactive mode (auto-accept edits)', false)
   .option('--print', 'Print the final summary as JSON and exit', false)
   .option('--skills-branch <branch>', 'Override the novuhq/skills git branch/tag/commit to install (default: main)')
-  .action(async (options: EnvoyCommandOptions) => {
+  .action(async (options: WizardCommandOptions) => {
     analytics.track({
       identity: {
         anonymousId,
       },
       data: {},
-      event: 'Run Novu Envoy Command',
+      event: 'Run Novu Wizard Command',
     });
-    await envoyCommand(options, anonymousId);
+    await wizardCommand(options, anonymousId);
   });
 
 program

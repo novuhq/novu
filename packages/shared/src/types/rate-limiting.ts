@@ -77,7 +77,6 @@ export enum ApiRateLimitCategoryEnum {
   TRIGGER = 'trigger',
   CONFIGURATION = 'configuration',
   GLOBAL = 'global',
-  LLM = 'llm',
 }
 
 /**
