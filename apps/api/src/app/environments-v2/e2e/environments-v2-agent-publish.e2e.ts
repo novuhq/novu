@@ -227,12 +227,12 @@ describe('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST)
     );
     const linkId = prodLinks[0]?._id;
 
-    if (linkId) {
-      const removeRes = await session.testAgent.delete(
-        `/v1/agents/${encodeURIComponent(identifier)}/integrations/${linkId}`
-      );
+    expect(linkId, 'prod agent should have a promoted integration link').to.exist;
 
-      expect(removeRes.status, 'DELETE integrations should be 403 in prod').to.equal(403);
-    }
+    const removeRes = await session.testAgent.delete(
+      `/v1/agents/${encodeURIComponent(identifier)}/integrations/${linkId}`
+    );
+
+    expect(removeRes.status, 'DELETE integrations should be 403 in prod').to.equal(403);
   });
 });

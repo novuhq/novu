@@ -82,7 +82,9 @@ describe('SyncAgentToEnvironment usecase', () => {
   };
   let integrationRepo: {
     find: sinon.SinonStub;
+    findOne: sinon.SinonStub;
     create: sinon.SinonStub;
+    delete: sinon.SinonStub;
   };
 
   function buildUsecase() {
@@ -92,7 +94,7 @@ describe('SyncAgentToEnvironment usecase', () => {
   beforeEach(() => {
     agentRepo = { findOne: stub(), create: stub(), update: stub().resolves() };
     agentIntegrationRepo = { find: stub(), create: stub().resolves(), delete: stub().resolves() };
-    integrationRepo = { find: stub(), create: stub() };
+    integrationRepo = { find: stub(), findOne: stub(), create: stub(), delete: stub().resolves() };
   });
 
   afterEach(() => restore());
@@ -143,6 +145,7 @@ describe('SyncAgentToEnvironment usecase', () => {
       agentRepo.create.resolves(targetAgent);
       agentIntegrationRepo.find.onSecondCall().resolves([]);
       integrationRepo.find.onSecondCall().resolves([]);
+      integrationRepo.findOne.resolves(null);
       integrationRepo.create.resolves(stubIntegration);
 
       await buildUsecase().execute(baseCommand());
@@ -218,12 +221,17 @@ describe('SyncAgentToEnvironment usecase', () => {
       agentIntegrationRepo.find.onFirstCall().resolves([]);
       agentIntegrationRepo.find.onSecondCall().resolves([orphanedLink]);
       integrationRepo.find.onFirstCall().resolves([removedStub]);
+      agentIntegrationRepo.find.onThirdCall().resolves([]);
 
       await buildUsecase().execute(baseCommand());
 
       expect(agentIntegrationRepo.delete.calledOnce).to.equal(true);
       const deleteArg = agentIntegrationRepo.delete.firstCall.args[0];
       expect(deleteArg._id).to.equal('orphan-link-id');
+
+      expect(integrationRepo.delete.calledOnce).to.equal(true);
+      const integrationDeleteArg = integrationRepo.delete.firstCall.args[0];
+      expect(integrationDeleteArg._id).to.equal('old-stub-id');
     });
   });
 
