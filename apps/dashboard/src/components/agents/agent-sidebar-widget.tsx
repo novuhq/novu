@@ -82,8 +82,6 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
     await onUpdate({ bridgeUrl: trimmed || undefined });
   }, [agent.bridgeUrl, bridgeUrl, canWrite, onUpdate]);
 
-  const isLocalTunnelActive = !readOnly && Boolean(agent.devBridgeActive && agent.devBridgeUrl);
-
   return (
     <>
       <div className="flex h-8 items-center justify-between gap-2 px-1.5">

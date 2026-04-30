@@ -143,7 +143,12 @@ export function AgentDetailsPage() {
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
   const showSetupModal =
-    isProductionEnv && agent != null && !agent.active && !hasConnectedIntegration && !setupModalDismissed;
+    isProductionEnv &&
+    agent != null &&
+    agentIntegrationsQuery.isSuccess &&
+    !agent.active &&
+    !hasConnectedIntegration &&
+    !setupModalDismissed;
 
   const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);

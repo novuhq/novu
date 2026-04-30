@@ -211,7 +211,8 @@ export function AgentsList() {
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;
 
-  const isProductionEnv = readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+  const isProductionEnv =
+    Boolean(currentEnvironment) && (readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
 
   if (showEmptyBlank) {
     if (isProductionEnv) {

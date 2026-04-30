@@ -42,11 +42,11 @@ export class UpdateAgent {
       );
     }
 
-    if (command.devBridgeActive === true || (command.devBridgeUrl !== undefined && command.devBridgeUrl !== null)) {
+    if (command.devBridgeActive !== undefined || command.devBridgeUrl !== undefined) {
       await this.assertNotProduction(
         command.environmentId,
         command.organizationId,
-        'Dev bridge cannot be activated on production environments.'
+        'Dev bridge settings cannot be modified in production environments.'
       );
     }
 
