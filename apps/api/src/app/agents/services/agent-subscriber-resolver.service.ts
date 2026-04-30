@@ -17,7 +17,9 @@ export class AgentSubscriberResolver {
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async resolve(params: ResolveSubscriberParams): Promise<string | null> {
     const { environmentId, organizationId, platform, platformUserId, integrationIdentifier } = params;

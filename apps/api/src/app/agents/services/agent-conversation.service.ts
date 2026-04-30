@@ -79,7 +79,9 @@ export class AgentConversationService {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
     const channel = conversation.channels?.[0];

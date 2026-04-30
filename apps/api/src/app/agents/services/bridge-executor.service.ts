@@ -56,7 +56,9 @@ export class BridgeExecutorService {
   constructor(
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(params: BridgeExecutorParams): Promise<void> {
     const agentIdentifier = params.config.agentIdentifier;
