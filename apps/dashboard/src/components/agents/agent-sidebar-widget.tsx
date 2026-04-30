@@ -79,7 +79,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
     }
 
     setIsEditing(false);
-    await onUpdate({ bridgeUrl: trimmed || null });
+    await onUpdate({ bridgeUrl: trimmed || undefined });
   }, [agent.bridgeUrl, bridgeUrl, canWrite, onUpdate]);
 
   const isLocalTunnelActive = !readOnly && Boolean(agent.devBridgeActive && agent.devBridgeUrl);
