@@ -2,8 +2,11 @@ import { useUser } from '@clerk/clerk-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { RiCloseLine } from 'react-icons/ri';
+import { API_HOSTNAME } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+const IS_NOVU_STAGING_API = API_HOSTNAME === 'https://api.novu-staging.co';
 
 type SanityAsset = {
   _ref: string;
@@ -113,6 +116,10 @@ export function ChangelogStack() {
   };
 
   const fetchChangelogs = async (): Promise<Changelog[]> => {
+    if (IS_NOVU_STAGING_API) {
+      return [];
+    }
+
     // Build Sanity query to get published changelog posts with covers, sorted by publishedAt
     const query = encodeURIComponent(`
       *[_type == "changelogPost" && defined(cover.asset)] | order(publishedAt desc, _createdAt desc) [0...10] {
@@ -150,6 +157,7 @@ export function ChangelogStack() {
   const { data: changelogs = [] } = useQuery({
     queryKey: CONSTANTS.QUERY_KEY,
     queryFn: fetchChangelogs,
+    meta: { showError: false },
     // Refetch every hour to ensure users see new changelogs
     staleTime: 60 * 60 * 1000,
   });
