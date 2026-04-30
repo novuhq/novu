@@ -46,6 +46,7 @@ export function SetupStep({
   description,
   rightContent,
   extraContent,
+  fullWidthContent,
 }: {
   index: number;
   status: StepStatus;
@@ -54,25 +55,29 @@ export function SetupStep({
   description: ReactNode;
   rightContent?: ReactNode;
   extraContent?: ReactNode;
+  fullWidthContent?: ReactNode;
 }) {
   return (
-    <div className="relative flex gap-5 pl-6">
+    <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex w-[400px] shrink-0 flex-col pr-12">
-        <div className="flex flex-col gap-2">
-          {sectionLabel && (
-            <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
-              {sectionLabel}
-            </p>
-          )}
-          <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
-          <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+      <div className="flex gap-5">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex flex-col gap-2">
+            {sectionLabel && (
+              <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
+                {sectionLabel}
+              </p>
+            )}
+            <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
+            <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+          </div>
+          {extraContent}
         </div>
-        {extraContent}
+        {rightContent && <div className="flex min-h-0 min-w-0 shrink-0 flex-col items-start">{rightContent}</div>}
       </div>
-      {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
+      {fullWidthContent}
     </div>
   );
 }

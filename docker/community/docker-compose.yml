@@ -25,14 +25,10 @@ services:
         max-size: "50m"
         max-file: "5"
     environment:
-      - PUID=1000
-      - PGID=1000
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongodb:/data/db
-    ports:
-      - 27017:27017
     healthcheck:
       test:
         [

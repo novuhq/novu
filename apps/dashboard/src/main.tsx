@@ -60,7 +60,10 @@ import { EnvironmentsPage } from './pages/environments';
 import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
+import { AgentsUsecasePage } from './pages/agents-usecase-page';
+import { AgentsSetupPage } from './pages/agents-setup-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
+import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
@@ -134,6 +137,18 @@ const router = createBrowserRouter([
         path: '/onboarding',
         element: <OnboardingParentRoute />,
         children: [
+          {
+            path: ROUTES.USECASE_SELECT,
+            element: <UsecaseSelectPage />,
+          },
+          {
+            path: ROUTES.AGENTS_USECASE,
+            element: <AgentsUsecasePage />,
+          },
+          {
+            path: ROUTES.AGENTS_SETUP,
+            element: <AgentsSetupPage />,
+          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,

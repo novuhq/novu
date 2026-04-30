@@ -42,7 +42,15 @@
       "require": "./dist/cjs/utils/index.js",
       "import": "./dist/esm/utils/index.js",
       "types": "./dist/esm/utils/index.d.js"
+    },
+    "./utils/ssrf-url-validation": {
+      "require": "./dist/cjs/utils/ssrf-url-validation.js",
+      "import": "./dist/esm/utils/ssrf-url-validation.js",
+      "types": "./dist/esm/utils/ssrf-url-validation.d.ts"
     }
+  },
+  "dependencies": {
+    "lru-cache": "^11.2.4"
   },
   "devDependencies": {
     "madge": "^8.0.0",

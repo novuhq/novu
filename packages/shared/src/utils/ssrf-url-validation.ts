@@ -1,7 +1,7 @@
 import * as dns from 'node:dns';
 import { LRUCache } from 'lru-cache';
 
-/* Keep in sync with packages/shared/src/utils/ssrf-url-validation.ts */
+/* Keep in sync with libs/application-generic/src/utils/ssrf-url-validation.ts (normalizeOutboundHttpUrl + validateUrlSsrf) */
 
 /**
  * Resolves a webhook-style URL for outbound HTTP requests.
