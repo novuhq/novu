@@ -14,6 +14,10 @@ export class SyncAgentToEnvironment {
   async execute(command: SyncAgentToEnvironmentCommand): Promise<void> {
     const { agentIdentifier, environmentId: sourceEnvironmentId, targetEnvironmentId, organizationId } = command;
 
+    if (sourceEnvironmentId === targetEnvironmentId) {
+      throw new Error('Source and target environments cannot be the same');
+    }
+
     const sourceAgent = await this.agentRepository.findOne(
       { identifier: agentIdentifier, _environmentId: sourceEnvironmentId, _organizationId: organizationId },
       '*'
@@ -98,19 +102,28 @@ export class SyncAgentToEnvironment {
         continue;
       }
 
-      const stubIntegration = await this.integrationRepository.create({
-        providerId: sourceIntegration.providerId,
-        channel: sourceIntegration.channel,
-        name: sourceIntegration.name,
-        identifier: sourceIntegration.identifier,
-        credentials: {},
-        active: true,
-        primary: false,
-        priority: 0,
+      // Reuse an existing stub if another agent already created one for this source integration
+      let stubIntegration = await this.integrationRepository.findOne({
         _parentId: sourceIntegration._id,
         _environmentId: targetEnvironmentId,
         _organizationId: organizationId,
       });
+
+      if (!stubIntegration) {
+        stubIntegration = await this.integrationRepository.create({
+          providerId: sourceIntegration.providerId,
+          channel: sourceIntegration.channel,
+          name: sourceIntegration.name,
+          identifier: sourceIntegration.identifier,
+          credentials: {},
+          active: true,
+          primary: false,
+          priority: 0,
+          _parentId: sourceIntegration._id,
+          _environmentId: targetEnvironmentId,
+          _organizationId: organizationId,
+        });
+      }
 
       await this.agentIntegrationRepository.create({
         _agentId: targetAgent._id,
@@ -128,10 +141,19 @@ export class SyncAgentToEnvironment {
           _environmentId: targetEnvironmentId,
           _organizationId: organizationId,
         });
-        await this.integrationRepository.delete({
-          _id: link._integrationId,
-          _organizationId: organizationId,
-        });
+
+        // Only delete the stub integration if no other agent links still reference it
+        const remainingLinks = await this.agentIntegrationRepository.find(
+          { _integrationId: link._integrationId, _environmentId: targetEnvironmentId, _organizationId: organizationId },
+          ['_id']
+        );
+
+        if (remainingLinks.length === 0) {
+          await this.integrationRepository.delete({
+            _id: link._integrationId,
+            _organizationId: organizationId,
+          });
+        }
       }
     }
   }
