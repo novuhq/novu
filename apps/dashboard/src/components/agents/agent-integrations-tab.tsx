@@ -15,6 +15,7 @@ import { NovuApiError } from '@/api/api.client';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -215,11 +216,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly, oppositeEnvironment } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
 
-  const canRemoveAgentIntegration = has({ permission: PermissionsEnum.AGENT_WRITE });
+  const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
   const integrationsHubPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -400,8 +401,25 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   return (
     <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
       <aside className="w-[300px] shrink-0">
-        <div className="flex flex-col gap-4">
-          <div className="bg-bg-weak flex flex-col gap-2 rounded-[10px] p-1">
+        <div className="flex flex-col gap-2.5">
+          {readOnly && (
+            <InlineToast
+              variant="soft-warning"
+              description="Viewing in production"
+              ctaLabel="Switch to dev"
+              onCtaClick={() => {
+                if (!oppositeEnvironment?.slug) return;
+                navigate(
+                  buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+                    environmentSlug: oppositeEnvironment.slug,
+                    agentIdentifier: encodeURIComponent(agent.identifier),
+                    agentTab: 'integrations',
+                  })
+                );
+              }}
+            />
+          )}
+          <div className="bg-bg-weak flex flex-col gap-2 rounded p-1 py-1.5">
             <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected providers</p>
             {isLoading ? (
               <>
@@ -468,26 +486,28 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
                 {links.length > 0 ? <div className="bg-stroke-weak h-px" role="presentation" /> : null}
 
-                <ProviderDropdown
-                  agentIdentifier={agent.identifier}
-                  selectedIntegrationId={selectedIntegration?.integration._id}
-                  linkedIntegrationIds={linkedIntegrationIdSet}
-                  excludeLinked
-                  onSelect={handleProviderDropdownSelect}
-                  renderTrigger={({ isBusy }) => (
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <RiAddLine className="size-4 shrink-0" aria-hidden />
-                        <span className="text-label-sm leading-5">Add provider</span>
-                      </span>
-                      <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
-                    </button>
-                  )}
-                />
+                {!readOnly && (
+                  <ProviderDropdown
+                    agentIdentifier={agent.identifier}
+                    selectedIntegrationId={selectedIntegration?.integration._id}
+                    linkedIntegrationIds={linkedIntegrationIdSet}
+                    excludeLinked
+                    onSelect={handleProviderDropdownSelect}
+                    renderTrigger={({ isBusy }) => (
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <RiAddLine className="size-4 shrink-0" aria-hidden />
+                          <span className="text-label-sm leading-5">Add provider</span>
+                        </span>
+                        <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
+                      </button>
+                    )}
+                  />
+                )}
               </>
             )}
           </div>

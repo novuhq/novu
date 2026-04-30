@@ -1,4 +1,4 @@
-import type { IEnvironment } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type IEnvironment } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import {
   RiAddBoxLine,
@@ -14,6 +14,7 @@ import {
 } from 'react-icons/ri';
 import type { IResourceDependency, IResourceDiffResult, ResourceToPublish } from '@/api/environments';
 import { useDiffEnvironments } from '@/hooks/use-environments';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useResourceDependencies } from '@/hooks/use-resource-dependencies';
 import { formatDateSimple } from '@/utils/format-date';
 import { Badge, BadgeIcon } from '../primitives/badge';
@@ -21,6 +22,7 @@ import { Button } from '../primitives/button';
 import { Checkbox } from '../primitives/checkbox';
 import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
+import { InlineToast } from '../primitives/inline-toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { LayoutUsageIndicator } from './layout-usage-indicator';
 import { WorkflowHoverCard } from './workflow-hover-card';
@@ -60,6 +62,8 @@ export function PublishModal({
     targetEnvironmentId: environment?._id,
     enabled: isOpen,
   });
+
+  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
 
   const { workflows, layouts, agents, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
 
@@ -132,6 +136,11 @@ export function PublishModal({
   const getTotalSelectedCount = () => {
     return Object.values(resourceSelection).filter((state) => state.selected).length;
   };
+
+  const newSelectedAgentCount = agents.filter((a) => {
+    const id = a.sourceResource?.id || a.targetResource?.id;
+    return id && resourceSelection[id]?.selected && a.summary.added > 0;
+  }).length;
 
   const handleConfirm = () => {
     const selectedResources: ResourceToPublish[] = Object.entries(resourceSelection)
@@ -210,7 +219,7 @@ export function PublishModal({
             </ResourceGroupCompact>
           )}
 
-          {agents.length > 0 && (
+          {isAgentsEnabled && agents.length > 0 && (
             <ResourceGroupCompact
               title="Agents"
               count={agents.length}
@@ -237,6 +246,8 @@ export function PublishModal({
             </ResourceGroupCompact>
           )}
         </div>
+
+        {isAgentsEnabled && newSelectedAgentCount > 0 && <AgentInactiveWarning count={newSelectedAgentCount} />}
 
         <PublishModalActions
           environment={environment}
@@ -403,6 +414,16 @@ function CompactResourceRow({
                   </TooltipContent>
                 </Tooltip>
               )}
+              {resource.resourceType === 'agent' && resource.summary.added > 0 && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <RiAlertFill className="h-3 w-3 shrink-0 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="rounded bg-gray-900 px-2 py-1 text-xs text-white">
+                    This agent will publish as inactive until configured in production.
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
             <div className="truncate font-mono text-xs tracking-tight text-gray-400">{slug}</div>
           </>
@@ -487,6 +508,28 @@ function PublishModalContent({ environment }: { environment: IEnvironment }) {
         <p className="text-xs text-gray-500">{description}</p>
       </div>
     </>
+  );
+}
+
+function AgentInactiveWarning({ count }: { count: number }) {
+  return (
+    <InlineToast
+      variant="soft-warning"
+      description={
+        <div className="space-y-1.5">
+          <p className="text-label-xs font-medium text-text-strong">
+            {count} agent{count !== 1 ? 's' : ''} will publish as{' '}
+            <Badge variant="lighter" color="orange" size="sm" className="rounded">
+              Inactive.
+            </Badge>
+          </p>
+          <p className="text-xs text-text-sub">
+            Affected agents will publish in{' '}
+            <span className="font-medium text-text-strong">Inactive</span> state until configured in production.
+          </p>
+        </div>
+      }
+    />
   );
 }
 
