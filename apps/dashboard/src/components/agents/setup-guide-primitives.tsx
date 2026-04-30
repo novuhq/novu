@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
@@ -284,18 +285,43 @@ export function IntegrationCredentialsSidebar({
   isOpen,
   onClose,
   onSaveSuccess,
+  agentOnboarding,
 }: {
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
   onSaveSuccess?: () => void;
+  agentOnboarding?: boolean;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
 
   const integration = integrations?.find((i) => i._id === integrationId);
   const provider = novuProviders?.find((p) => p.id === integration?.providerId);
+
+  useEffect(() => {
+    if (!agentOnboarding) {
+      return;
+    }
+
+    const hasAgentOnboardingParam = searchParams.get('agent_onboarding') === 'true';
+
+    if ((isOpen && hasAgentOnboardingParam) || (!isOpen && !searchParams.has('agent_onboarding'))) {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (isOpen) {
+      nextSearchParams.set('agent_onboarding', 'true');
+    } else {
+      nextSearchParams.delete('agent_onboarding');
+    }
+
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [agentOnboarding, isOpen, searchParams, setSearchParams]);
 
   async function onSubmit(data: IntegrationFormData) {
     if (!integration) return;
@@ -332,6 +358,7 @@ export function IntegrationCredentialsSidebar({
           integration={integration}
           onSubmit={onSubmit}
           mode="update"
+          agentOnboarding={agentOnboarding}
           onFormStateChange={setFormState}
         />
       </div>
