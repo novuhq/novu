@@ -11,6 +11,7 @@ describe('ChatSdkService', () => {
         error: sinon.stub(),
         debug: sinon.stub(),
         info: sinon.stub(),
+        setContext: sinon.stub(),
       };
       const integrationRepository = {
         findOne: sinon.stub().resolves({
@@ -71,6 +72,7 @@ describe('ChatSdkService', () => {
         error: sinon.stub(),
         debug: sinon.stub(),
         info: sinon.stub(),
+        setContext: sinon.stub(),
       };
       const integrationRepository = {
         findOne: sinon.stub().resolves({
