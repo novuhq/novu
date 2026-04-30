@@ -204,7 +204,7 @@ export class AddAgentIntegration {
   private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
     const environment = await this.environmentRepository.findOne(
       { _id: environmentId, _organizationId: organizationId },
-      ['type']
+      ['type', 'name']
     );
 
     if (environment?.type === EnvironmentTypeEnum.PROD) {
