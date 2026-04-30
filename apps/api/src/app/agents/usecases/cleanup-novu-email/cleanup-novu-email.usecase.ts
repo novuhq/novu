@@ -13,7 +13,9 @@ export class CleanupNovuEmail {
     private readonly integrationRepository: IntegrationRepository,
     private readonly domainRouteRepository: DomainRouteRepository,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   /**
    * Removes all NovuAgent email resources tied to an agent:

@@ -21,7 +21,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly logger: PinoLogger,
     private readonly requestLogRepository: RequestLogRepository
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();

@@ -55,7 +55,9 @@ export class ConstructFrameworkWorkflow {
     private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {

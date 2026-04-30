@@ -72,7 +72,9 @@ export class AgentConfigResolver {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly logger: PinoLogger,
     private readonly analyticsService: AnalyticsService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async resolve(agentId: string, integrationIdentifier: string): Promise<ResolvedAgentConfig> {
     const agent = await this.agentRepository.findByIdForWebhook(agentId);

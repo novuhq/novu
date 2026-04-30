@@ -35,7 +35,9 @@ export class AgentInboundHandler {
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly analyticsService: AnalyticsService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async handle(
     agentId: string,
