@@ -8,6 +8,7 @@ RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
 
 COPY .npmrc .
 COPY package.json .
+COPY patches ./patches
 
 COPY apps/dashboard ./apps/dashboard
 COPY libs ./libs
