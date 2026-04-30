@@ -3,7 +3,7 @@ import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe.only('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST) #novu-v2', () => {
+describe('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST) #novu-v2', () => {
   let session: UserSession;
 
   const environmentRepository = new EnvironmentRepository();
