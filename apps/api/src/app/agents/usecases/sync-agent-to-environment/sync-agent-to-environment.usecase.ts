@@ -115,6 +115,7 @@ export class SyncAgentToEnvironment {
       await this.agentIntegrationRepository.create({
         _agentId: targetAgent._id,
         _integrationId: stubIntegration._id,
+        connectedAt: null,
         _environmentId: targetEnvironmentId,
         _organizationId: organizationId,
       });
@@ -125,6 +126,10 @@ export class SyncAgentToEnvironment {
         await this.agentIntegrationRepository.delete({
           _id: link._id,
           _environmentId: targetEnvironmentId,
+          _organizationId: organizationId,
+        });
+        await this.integrationRepository.delete({
+          _id: link._integrationId,
           _organizationId: organizationId,
         });
       }

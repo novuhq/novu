@@ -5,6 +5,7 @@ import { expect } from 'chai';
 
 describe('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST) #novu-v2', () => {
   let session: UserSession;
+  let previousAgentsFlag: string | undefined;
 
   const environmentRepository = new EnvironmentRepository();
   const agentRepository = new AgentRepository();
@@ -12,7 +13,12 @@ describe('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST)
   const integrationRepository = new IntegrationRepository();
 
   before(() => {
+    previousAgentsFlag = process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+  });
+
+  after(() => {
+    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = previousAgentsFlag;
   });
 
   beforeEach(async () => {
@@ -206,8 +212,14 @@ describe('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST)
 
     expect(addRes.status, 'POST integrations should be 403 in prod').to.equal(403);
 
+    const prodAgent = await agentRepository.findOne(
+      { identifier, _environmentId: prodEnv._id, _organizationId: session.organization._id },
+      ['_id'] as any
+    );
+
     const prodLinks = await agentIntegrationRepository.find(
       {
+        _agentId: prodAgent!._id,
         _environmentId: prodEnv._id,
         _organizationId: session.organization._id,
       },
