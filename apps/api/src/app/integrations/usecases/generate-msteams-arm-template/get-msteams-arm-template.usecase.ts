@@ -106,7 +106,8 @@ export class GetMsTeamsArmTemplate {
   }
 
   private buildWebhookUrl(agentIdentifier: string | null, integrationIdentifier: string): string {
-    const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    // const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    const base = 'https://gosha.ngrok.app';
 
     if (!agentIdentifier) {
       return `${base}/v1/agents/unknown/webhook/${integrationIdentifier}`;

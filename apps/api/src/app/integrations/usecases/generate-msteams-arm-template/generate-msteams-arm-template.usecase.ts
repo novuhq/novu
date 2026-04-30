@@ -80,7 +80,8 @@ export class GenerateMsTeamsArmTemplate {
   }
 
   private buildTemplateApiUrl(integrationId: string, sig: string, exp: number): string {
-    const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    // const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    const base = 'https://gosha.ngrok.app';
 
     return `${base}/v1/integrations/${integrationId}/msteams-arm-template?sig=${sig}&exp=${exp}`;
   }

@@ -92,3 +92,15 @@ export async function getMsTeamsArmTemplateDeployUrl(
 
   return data;
 }
+
+export async function getAzureSetupOauthUrl(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<{ url: string }> {
+  const { data } = await get<{ data: { url: string } }>(
+    `/integrations/${integrationId}/msteams-azure-setup/oauth-url`,
+    { environment }
+  );
+
+  return data;
+}
