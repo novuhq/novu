@@ -263,20 +263,27 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
 
     this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
 
-    this.#partySocket.addEventListener('open', () => {
+    const socket = this.#partySocket;
+
+    socket.addEventListener('open', () => {
       this.#startHibernationHeartbeat();
       this.#emitter.emit('socket.connect.resolved', { args });
     });
 
-    this.#partySocket.addEventListener('error', (error) => {
+    socket.addEventListener('error', (error) => {
       this.#emitter.emit('socket.connect.resolved', { args, error });
     });
 
-    this.#partySocket.addEventListener('close', () => {
+    socket.addEventListener('close', () => {
+      if (socket !== this.#partySocket) {
+        return;
+      }
+
       this.#clearHibernationHeartbeat();
+      this.#partySocket = undefined;
     });
 
-    this.#partySocket.addEventListener('message', this.#handleMessage);
+    socket.addEventListener('message', this.#handleMessage);
   }
 
   async #handleConnectSocket(): Result<void> {
