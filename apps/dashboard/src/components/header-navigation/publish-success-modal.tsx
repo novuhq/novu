@@ -27,6 +27,7 @@ export function PublishSuccessModal({
   const layoutCount = publishResult?.results?.find((r) => r.resourceType === 'layout')?.successful?.length || 0;
   const translationCount =
     publishResult?.results?.find((r) => r.resourceType === 'translation')?.successful?.length || 0;
+  const agentCount = publishResult?.results?.find((r) => r.resourceType === 'agent')?.successful?.length || 0;
 
   const buildSummaryText = () => {
     const parts: string[] = [];
@@ -41,6 +42,10 @@ export function PublishSuccessModal({
 
     if (translationCount > 0) {
       parts.push(`${translationCount} shared component${translationCount !== 1 ? 's' : ''}`);
+    }
+
+    if (agentCount > 0) {
+      parts.push(`${agentCount} agent${agentCount !== 1 ? 's' : ''}`);
     }
 
     if (parts.length === 0) return 'No items';

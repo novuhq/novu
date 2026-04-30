@@ -9,6 +9,7 @@ import {
   RiExpandUpDownLine,
   RiGitCommitFill,
   RiLinkUnlinkM,
+  RiRobot2Line,
   RiRouteFill,
 } from 'react-icons/ri';
 import type { IResourceDependency, IResourceDiffResult, ResourceToPublish } from '@/api/environments';
@@ -52,6 +53,7 @@ export function PublishModal({
   const [resourceSelection, setResourceSelection] = useState<ResourceSelection>({});
   const [workflowsExpanded, setWorkflowsExpanded] = useState(true);
   const [layoutsExpanded, setLayoutsExpanded] = useState(true);
+  const [agentsExpanded, setAgentsExpanded] = useState(true);
 
   const { data: diffData } = useDiffEnvironments({
     sourceEnvironmentId: currentEnvironmentId,
@@ -59,7 +61,7 @@ export function PublishModal({
     enabled: isOpen,
   });
 
-  const { workflows, layouts, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
+  const { workflows, layouts, agents, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
 
   // Initialize selection state
   useEffect(() => {
@@ -97,8 +99,8 @@ export function PublishModal({
     });
   };
 
-  const handleGroupToggle = (resourceType: 'workflow' | 'layout') => {
-    const resources = resourceType === 'workflow' ? workflows : layouts;
+  const handleGroupToggle = (resourceType: 'workflow' | 'layout' | 'agent') => {
+    const resources = resourceType === 'workflow' ? workflows : resourceType === 'layout' ? layouts : agents;
     const allSelected = resources.every((r) => {
       const id = r.sourceResource?.id || r.targetResource?.id;
       return id && resourceSelection[id]?.selected;
@@ -119,8 +121,8 @@ export function PublishModal({
     });
   };
 
-  const getSelectedCount = (resourceType: 'workflow' | 'layout') => {
-    const resources = resourceType === 'workflow' ? workflows : layouts;
+  const getSelectedCount = (resourceType: 'workflow' | 'layout' | 'agent') => {
+    const resources = resourceType === 'workflow' ? workflows : resourceType === 'layout' ? layouts : agents;
     return resources.filter((r) => {
       const id = r.sourceResource?.id || r.targetResource?.id;
       return id && resourceSelection[id]?.selected;
@@ -202,6 +204,33 @@ export function PublishModal({
                     dependencies={layout.dependencies}
                     allWorkflows={workflows}
                     dependencyMap={dependencyMap}
+                  />
+                );
+              })}
+            </ResourceGroupCompact>
+          )}
+
+          {agents.length > 0 && (
+            <ResourceGroupCompact
+              title="Agents"
+              count={agents.length}
+              selectedCount={getSelectedCount('agent')}
+              isExpanded={agentsExpanded}
+              onToggle={() => setAgentsExpanded(!agentsExpanded)}
+              onGroupToggle={() => handleGroupToggle('agent')}
+              icon={RiRobot2Line}
+            >
+              {agents.map((agent) => {
+                const id = agent.sourceResource?.id || agent.targetResource?.id;
+                if (!id) return null;
+
+                return (
+                  <CompactResourceRow
+                    key={id}
+                    resource={agent}
+                    selected={resourceSelection[id]?.selected || false}
+                    disabled={resourceSelection[id]?.disabled || false}
+                    onToggle={() => handleResourceToggle(id)}
                   />
                 );
               })}
