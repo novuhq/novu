@@ -123,23 +123,18 @@ function getProviderCallToAction(providerId: string | undefined): string {
   }
 }
 
-function BridgeConnectionStatus({
-  agent,
-  agentIdentifier,
-  providerId,
-}: {
-  agent: AgentResponse;
-  agentIdentifier: string;
-  providerId: string | undefined;
-}) {
+function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: () => void) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const isBridgeConnected = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
   const [connected, setConnected] = useState(isBridgeConnected);
+  const onBridgeConnectedRef = useRef(onBridgeConnected);
+  onBridgeConnectedRef.current = onBridgeConnected;
 
   useEffect(() => {
     if (isBridgeConnected) {
       setConnected(true);
+      onBridgeConnectedRef.current?.();
 
       return;
     }
@@ -155,15 +150,16 @@ function BridgeConnectionStatus({
       if (cancelled) return;
 
       try {
-        const data = await getAgent(environment, agentIdentifier);
+        const data = await getAgent(environment, agent.identifier);
         if (cancelled) return;
 
         const isConnected = Boolean(data.bridgeUrl || (data.devBridgeActive && data.devBridgeUrl));
 
         if (isConnected) {
           setConnected(true);
+          onBridgeConnectedRef.current?.();
           queryClient.invalidateQueries({
-            queryKey: getAgentDetailQueryKey(environment._id, agentIdentifier),
+            queryKey: getAgentDetailQueryKey(environment._id, agent.identifier),
           });
           clearInterval(intervalId);
         }
@@ -176,7 +172,18 @@ function BridgeConnectionStatus({
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [agentIdentifier, currentEnvironment, isBridgeConnected, queryClient]);
+  }, [agent.identifier, currentEnvironment, isBridgeConnected, queryClient]);
+
+  return connected;
+}
+
+function BridgeConnectionStatus({
+  connected,
+  providerId,
+}: {
+  connected: boolean;
+  providerId: string | undefined;
+}) {
 
   if (connected) {
     return (
@@ -216,20 +223,19 @@ type AgentCodeSetupSectionProps = {
   agent: AgentResponse;
   stepOffset: number;
   providerId?: string;
+  onBridgeConnected?: () => void;
 };
 
-export function AgentCodeSetupSection({ agent, stepOffset, providerId }: AgentCodeSetupSectionProps) {
+export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeConnected }: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
 
   const currentApiUrl = apiHostnameManager.getHostname();
   const apiUrl = currentApiUrl !== CLI_DEFAULT_API_URL ? currentApiUrl : null;
 
-  const isBridgeConnected = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
+  const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
-  // The caller only renders this section once a provider integration is
-  // connected, so the "2/2 Connect your code" steps start out active.
-  const firstIncompleteStep = isBridgeConnected ? stepOffset + 2 : stepOffset;
+  const firstIncompleteStep = bridgeConnected ? stepOffset + 2 : stepOffset;
 
   return (
     <>
@@ -285,7 +291,7 @@ export function AgentCodeSetupSection({ agent, stepOffset, providerId }: AgentCo
         }
       />
 
-      <BridgeConnectionStatus agent={agent} agentIdentifier={agent.identifier} providerId={providerId} />
+      <BridgeConnectionStatus connected={bridgeConnected} providerId={providerId} />
     </>
   );
 }

@@ -81,16 +81,16 @@ class Mailin extends events.EventEmitter {
 
     /* Basic memory profiling. */
     if (configuration.profile) {
-      logger.info('Enable memory profiling', LOG_CONTEXT);
+      logger.info({ context: LOG_CONTEXT }, 'Enable memory profiling');
       setInterval(() => {
         const memoryUsage = process.memoryUsage();
         const ram = memoryUsage.rss + memoryUsage.heapUsed;
         const million = 1000000;
         logger.info(
+          { context: LOG_CONTEXT },
           `Ram Usage: ${ram / million}mb | rss: ${memoryUsage.rss / million}mb | heapTotal: ${
             memoryUsage.heapTotal / million
-          }mb | heapUsed: ${memoryUsage.heapUsed / million}`,
-          LOG_CONTEXT
+          }mb | heapUsed: ${memoryUsage.heapUsed / million}`
         );
       }, 500);
     }
@@ -154,7 +154,7 @@ class Mailin extends events.EventEmitter {
                 validateViaLocal();
               });
             } catch (e) {
-              logger.error(e, 'Exception occurred while validating DNS', LOG_CONTEXT);
+              logger.error({ err: e, context: LOG_CONTEXT }, 'Exception occurred while validating DNS');
               return reject(new Error(e));
             }
           };
@@ -165,14 +165,17 @@ class Mailin extends events.EventEmitter {
             validateViaDNS();
           }
         } catch (e) {
-          logger.error(e, 'Exception occurred while validating address', LOG_CONTEXT);
+          logger.error({ err: e, context: LOG_CONTEXT }, 'Exception occurred while validating address');
           reject(e);
         }
       });
     }
 
     function dataReady(connection) {
-      logger.info(`${connection.id} Processing message from ${connection.envelope.mailFrom.address}`, LOG_CONTEXT);
+      logger.info(
+        { context: LOG_CONTEXT, connectionId: connection.id },
+        `${connection.id} Processing message from ${connection.envelope.mailFrom.address}`
+      );
 
       return retrieveRawEmail(connection)
         .then((rawEmail) =>
@@ -203,8 +206,10 @@ class Mailin extends events.EventEmitter {
         .then(postQueue.bind(null, connection))
         .then(unlinkFile.bind(null, connection))
         .catch((error) => {
-          logger.error(`${connection.id} Unable to finish processing message!!`, LOG_CONTEXT);
-          logger.error(error);
+          logger.error(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Unable to finish processing message!!`
+          );
           throw error;
         });
     }
@@ -218,11 +223,13 @@ class Mailin extends events.EventEmitter {
         return Promise.resolve(false);
       }
 
-      logger.verbose(`${connection.id} Validating dkim.`, LOG_CONTEXT);
+      logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Validating dkim.`);
 
       return mailUtilities.validateDkimAsync(rawEmail).catch((err) => {
-        logger.error(`${connection.id} Unable to validate dkim. Consider dkim as failed.`, LOG_CONTEXT);
-        logger.error(err);
+        logger.error(
+          { err, context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} Unable to validate dkim. Consider dkim as failed.`
+        );
 
         return false;
       });
@@ -233,14 +240,16 @@ class Mailin extends events.EventEmitter {
         return Promise.resolve(false);
       }
 
-      logger.verbose(`${connection.id} Validating spf.`, LOG_CONTEXT);
+      logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Validating spf.`);
 
       /* Get ip and host. */
       return mailUtilities
         .validateSpfAsync(connection.remoteAddress, connection.from, connection.clientHostname)
         .catch((err) => {
-          logger.error(`${connection.id} Unable to validate spf. Consider spf as failed.`, LOG_CONTEXT);
-          logger.error(err);
+          logger.error(
+            { err, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Unable to validate spf. Consider spf as failed.`
+          );
 
           return false;
         });
@@ -252,8 +261,10 @@ class Mailin extends events.EventEmitter {
       }
 
       return mailUtilities.computeSpamScoreAsync(rawEmail).catch((err) => {
-        logger.error(`${connection.id} Unable to compute spam score. Set spam score to 0.`, LOG_CONTEXT);
-        logger.error(err);
+        logger.error(
+          { err, context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} Unable to compute spam score. Set spam score to 0.`
+        );
 
         return 0.0;
       });
@@ -261,7 +272,7 @@ class Mailin extends events.EventEmitter {
 
     function parseEmail(connection) {
       return new Promise((resolve) => {
-        logger.verbose(`${connection.id} Parsing email.`, LOG_CONTEXT);
+        logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Parsing email.`);
 
         /* Prepare the mail parser. */
         const mailParser = new MailParser();
@@ -295,7 +306,7 @@ class Mailin extends events.EventEmitter {
     }
 
     function detectLanguage(connection, text) {
-      logger.verbose(`${connection.id} Detecting language.`, LOG_CONTEXT);
+      logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Detecting language.`);
 
       let language = '';
 
@@ -303,10 +314,10 @@ class Mailin extends events.EventEmitter {
       const potentialLanguages = languageDetector.detect(text, 2);
       if (potentialLanguages.length !== 0) {
         logger.verbose(
+          { context: LOG_CONTEXT, connectionId: connection.id },
           `Potential languages: ${util.inspect(potentialLanguages, {
             depth: 5,
-          })}`,
-          LOG_CONTEXT
+          })}`
         );
 
         /*
@@ -315,7 +326,10 @@ class Mailin extends events.EventEmitter {
          */
         language = potentialLanguages[0][0];
       } else {
-        logger.info(`${connection.id} Unable to detect language for the current message.`, LOG_CONTEXT);
+        logger.info(
+          { context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} Unable to detect language for the current message.`
+        );
       }
 
       return language;
@@ -368,9 +382,12 @@ class Mailin extends events.EventEmitter {
 
     function postQueue(connection, finalizedMessage) {
       return new Promise((resolve) => {
-        logger.debug(`${connection.id} finalized message is: ${finalizedMessage}`, LOG_CONTEXT);
+        logger.debug(
+          { context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} finalized message is: ${finalizedMessage}`
+        );
 
-        logger.info(`${connection.id} Adding mail to queue `, LOG_CONTEXT);
+        logger.info({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Adding mail to queue `);
 
         const toAddress = getAddressTo(finalizedMessage);
         const parts: string[] = toAddress.split('@');
@@ -397,7 +414,10 @@ class Mailin extends events.EventEmitter {
     function unlinkFile(connection) {
       /* Don't forget to unlink the tmp file. */
       return fs.promises.unlink(connection.mailPath).then(() => {
-        logger.info(`${connection.id} End processing message, deleted ${connection.mailPath}`, LOG_CONTEXT);
+        logger.info(
+          { context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} End processing message, deleted ${connection.mailPath}`
+        );
       });
     }
 
@@ -412,8 +432,11 @@ class Mailin extends events.EventEmitter {
         connection.mailPath = mailPath;
 
         _this.emit('startData', connection);
-        logger.verbose(`Connection id ${connection.id}`, LOG_CONTEXT);
-        logger.info(`${connection.id} Receiving message from ${connection.envelope.mailFrom.address}`, LOG_CONTEXT);
+        logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `Connection id ${connection.id}`);
+        logger.info(
+          { context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} Receiving message from ${connection.envelope.mailFrom.address}`
+        );
 
         _this.emit('startMessage', connection);
 
@@ -436,7 +459,7 @@ class Mailin extends events.EventEmitter {
           _this.emit('error', connection, error);
         });
       } catch (error) {
-        logger.error(error, 'Exception occurred while performing onData callback', LOG_CONTEXT);
+        logger.error({ err: error, context: LOG_CONTEXT }, 'Exception occurred while performing onData callback');
       }
     }
 
@@ -476,22 +499,21 @@ class Mailin extends events.EventEmitter {
     this._smtp = server;
 
     server.listen(configuration.port, configuration.host, () => {
-      logger.info(`Mailin Smtp server listening on port ${configuration.port}`, LOG_CONTEXT);
+      logger.info({ context: LOG_CONTEXT }, `Mailin Smtp server listening on port ${configuration.port}`);
     });
 
     server.on('close', () => {
-      logger.info('Closing smtp server', LOG_CONTEXT);
+      logger.info({ context: LOG_CONTEXT }, 'Closing smtp server');
       _this.emit('close', _session);
     });
 
     server.on('error', (error) => {
       callback(error);
       if (configuration.port < 1000) {
-        logger.error('Ports under 1000 require root privileges.', LOG_CONTEXT);
+        logger.error({ context: LOG_CONTEXT }, 'Ports under 1000 require root privileges.');
       }
 
-      logger.error('Server errored', LOG_CONTEXT);
-      logger.error(error);
+      logger.error({ err: error, context: LOG_CONTEXT }, 'Server errored');
       _this.emit('error', _session, error);
     });
 
@@ -500,7 +522,13 @@ class Mailin extends events.EventEmitter {
 
   public stop(callback: () => void) {
     callback = callback || (() => {});
-    logger.info('Stopping mailin.', LOG_CONTEXT);
+    logger.info({ context: LOG_CONTEXT }, 'Stopping mailin.');
+
+    if (!this._smtp) {
+      callback();
+
+      return;
+    }
 
     /*
      * FIXME A bug in the RAI module prevents the callback to be called, so

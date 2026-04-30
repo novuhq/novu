@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
@@ -46,6 +47,7 @@ export function SetupStep({
   description,
   rightContent,
   extraContent,
+  fullWidthContent,
 }: {
   index: number;
   status: StepStatus;
@@ -54,25 +56,29 @@ export function SetupStep({
   description: ReactNode;
   rightContent?: ReactNode;
   extraContent?: ReactNode;
+  fullWidthContent?: ReactNode;
 }) {
   return (
-    <div className="relative flex gap-5 pl-6">
+    <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex w-[400px] shrink-0 flex-col pr-12">
-        <div className="flex flex-col gap-2">
-          {sectionLabel && (
-            <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
-              {sectionLabel}
-            </p>
-          )}
-          <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
-          <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+      <div className="flex gap-5">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex flex-col gap-2">
+            {sectionLabel && (
+              <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
+                {sectionLabel}
+              </p>
+            )}
+            <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
+            <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+          </div>
+          {extraContent}
         </div>
-        {extraContent}
+        {rightContent && <div className="flex min-h-0 min-w-0 shrink-0 flex-col items-start">{rightContent}</div>}
       </div>
-      {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
+      {fullWidthContent}
     </div>
   );
 }
@@ -279,18 +285,43 @@ export function IntegrationCredentialsSidebar({
   isOpen,
   onClose,
   onSaveSuccess,
+  agentOnboarding,
 }: {
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
   onSaveSuccess?: () => void;
+  agentOnboarding?: boolean;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
 
   const integration = integrations?.find((i) => i._id === integrationId);
   const provider = novuProviders?.find((p) => p.id === integration?.providerId);
+
+  useEffect(() => {
+    if (!agentOnboarding) {
+      return;
+    }
+
+    const hasAgentOnboardingParam = searchParams.get('agent_onboarding') === 'true';
+
+    if ((isOpen && hasAgentOnboardingParam) || (!isOpen && !searchParams.has('agent_onboarding'))) {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (isOpen) {
+      nextSearchParams.set('agent_onboarding', 'true');
+    } else {
+      nextSearchParams.delete('agent_onboarding');
+    }
+
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [agentOnboarding, isOpen, searchParams, setSearchParams]);
 
   async function onSubmit(data: IntegrationFormData) {
     if (!integration) return;
@@ -327,6 +358,7 @@ export function IntegrationCredentialsSidebar({
           integration={integration}
           onSubmit={onSubmit}
           mode="update"
+          agentOnboarding={agentOnboarding}
           onFormStateChange={setFormState}
         />
       </div>

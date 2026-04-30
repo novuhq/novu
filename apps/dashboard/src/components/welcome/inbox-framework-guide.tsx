@@ -121,7 +121,7 @@ export function InboxFrameworkGuide({
               <button
                 type="button"
                 onClick={() => {
-                  track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { skippedFrom: 'inbox-embed-setup-later' });
+                  track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { usecase: 'inbox', skippedFrom: 'inbox-embed-setup-later' });
                   navigate(buildRoute(ROUTES.WELCOME, { environmentSlug: currentEnvironment?.slug ?? '' }));
                 }}
                 className="text-foreground-400 hover:text-foreground-600 cursor-pointer text-sm transition-colors"

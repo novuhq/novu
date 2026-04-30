@@ -1,6 +1,46 @@
 import * as dns from 'node:dns';
 import { LRUCache } from 'lru-cache';
 
+/* Keep in sync with packages/shared/src/utils/ssrf-url-validation.ts */
+
+/**
+ * Resolves a webhook-style URL for outbound HTTP requests.
+ * Host-only or path-first values (no scheme) are treated as https, matching axios behavior.
+ */
+export function normalizeOutboundHttpUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return trimmed;
+    }
+
+    return null;
+  } catch {
+    // Continue: scheme-less host/path (e.g. example.com/hook)
+  }
+
+  const withHttps = `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withHttps);
+
+    if (!parsed.hostname) {
+      return null;
+    }
+
+    return withHttps;
+  } catch {
+    return null;
+  }
+}
+
 const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
   max: 500,
   ttl: 1000 * 60 * 5, // 5 minutes
@@ -19,9 +59,13 @@ function isPrivateIp(ip: string): boolean {
     /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
     /^::ffff:192\.168\./i,
     /^::ffff:169\.254\./i,
-    /^::1$/,
-    /^fc00:/i,
-    /^fe80:/i,
+    /^::1$/i,
+    /* ULA fc00::/7 (fc00–fdff first hextet) */
+    /^f[cd][0-9a-f]{2}:/i,
+    /^::ffff:f[cd][0-9a-f]{2}:/i,
+    /* Link-local fe80::/10 (fe80–febf first hextet) */
+    /^fe[89ab][0-9a-f]{2}:/i,
+    /^::ffff:fe[89ab][0-9a-f]{2}:/i,
   ];
 
   return privateRanges.some((range) => range.test(ip));

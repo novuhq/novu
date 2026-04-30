@@ -89,6 +89,7 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly inboundHandler: AgentInboundHandler,
     private readonly integrationRepository: IntegrationRepository
   ) {
+    this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
       max: MAX_CACHED_INSTANCES,
       ttl: INSTANCE_TTL_MS,
