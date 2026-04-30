@@ -79,7 +79,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
     }
 
     setIsEditing(false);
-    await onUpdate({ bridgeUrl: trimmed || undefined });
+    await onUpdate({ bridgeUrl: trimmed });
   }, [agent.bridgeUrl, bridgeUrl, canWrite, onUpdate]);
 
   return (
@@ -277,7 +277,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
             navigate(
               buildRoute(ROUTES.AGENT_DETAILS, {
                 environmentSlug: oppositeEnvironment.slug,
-                agentIdentifier: agent.identifier,
+                agentIdentifier: encodeURIComponent(agent.identifier),
               })
             );
           }}
