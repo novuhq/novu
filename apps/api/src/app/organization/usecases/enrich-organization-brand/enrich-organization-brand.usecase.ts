@@ -63,7 +63,9 @@ export class EnrichOrganizationBrand {
     private readonly brandRetrievalService: BrandRetrievalService,
     private readonly moduleRef: ModuleRef,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: EnrichOrganizationBrandCommand): Promise<void> {
     const isEnabled = await this.featureFlagsService.getFlag({

@@ -33,7 +33,9 @@ export class HandleAgentReply {
     private readonly logger: PinoLogger,
     private readonly parseEventRequest: ParseEventRequest,
     private readonly analyticsService: AnalyticsService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
     if (command.reply && command.edit) {
