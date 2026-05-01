@@ -92,6 +92,55 @@ describe('BridgeExecutorService', () => {
       expect(attachmentStorage.signRead.called).to.equal(false);
       expect(logger.warn.calledWithMatch({ expectedPrefix: 'org/env/agents/conv/' })).to.equal(true);
     });
+
+    it('should omit malformed attachment entries without throwing', async () => {
+      const logger = makeLogger();
+      const attachmentStorage = {
+        signRead: sinon.stub().resolves('https://signed/read'),
+      };
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+
+      const result = await (service as any).mapRichContentForBridge(
+        {
+          attachments: [null, 'bad-entry'],
+        },
+        makeActivity()
+      );
+
+      expect(result).to.deep.equal({ attachments: [] });
+      expect(attachmentStorage.signRead.called).to.equal(false);
+      expect(logger.warn.callCount).to.equal(2);
+    });
+
+    it('should limit concurrent history attachment signing', async () => {
+      let active = 0;
+      let maxActive = 0;
+      const logger = makeLogger();
+      const attachmentStorage = {
+        signRead: sinon.stub().callsFake(async () => {
+          active += 1;
+          maxActive = Math.max(maxActive, active);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          active -= 1;
+
+          return 'https://signed/read';
+        }),
+      };
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+
+      await (service as any).mapRichContentForBridge(
+        {
+          attachments: Array.from({ length: 10 }, (_, index) => ({
+            type: 'image',
+            storageKey: `org/env/agents/conv/message/${index}-image.png`,
+          })),
+        },
+        makeActivity()
+      );
+
+      expect(maxActive).to.be.at.most(4);
+      expect(attachmentStorage.signRead.callCount).to.equal(10);
+    });
   });
 
   describe('mapMessage', () => {
@@ -160,6 +209,40 @@ describe('BridgeExecutorService', () => {
 
       expect(result.attachments).to.deep.equal([]);
       expect(logger.warn.calledOnce).to.equal(true);
+    });
+
+    it('should limit concurrent stored attachment signing', async () => {
+      let active = 0;
+      let maxActive = 0;
+      const logger = makeLogger();
+      const attachmentStorage = {
+        signRead: sinon.stub().callsFake(async () => {
+          active += 1;
+          maxActive = Math.max(maxActive, active);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          active -= 1;
+
+          return 'https://fresh-signed/read';
+        }),
+      };
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+
+      const result = await (service as any).mapMessage(
+        makeMessage(),
+        Array.from({ length: 10 }, (_, index) => ({
+          type: 'image',
+          storageKey: `org/env/agents/conv/message/${index}-image.png`,
+        })),
+        {
+          organizationId: 'org',
+          environmentId: 'env',
+          conversationId: 'conv',
+        }
+      );
+
+      expect(result.attachments).to.have.length(10);
+      expect(maxActive).to.be.at.most(4);
+      expect(attachmentStorage.signRead.callCount).to.equal(10);
     });
   });
 });

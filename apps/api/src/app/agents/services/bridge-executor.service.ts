@@ -26,11 +26,33 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
+const ATTACHMENT_SIGNING_CONCURRENCY = 4;
 
 interface AttachmentSigningContext {
   organizationId: string;
   environmentId: string;
   conversationId: string;
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  });
+
+  await Promise.all(workers);
+
+  return results;
 }
 
 export interface BridgeReaction {
@@ -323,17 +345,15 @@ export class BridgeExecutorService {
   private async mapHistory(activities: ConversationActivityEntity[]): Promise<AgentHistoryEntry[]> {
     const reversed = [...activities].reverse();
 
-    return await Promise.all(
-      reversed.map(async (activity) => ({
-        role: activity.senderType,
-        type: activity.type,
-        content: activity.content,
-        richContent: await this.mapRichContentForBridge(activity.richContent, activity),
-        senderName: activity.senderName || undefined,
-        signalData: activity.signalData || undefined,
-        createdAt: activity.createdAt,
-      }))
-    );
+    return await mapWithConcurrency(reversed, ATTACHMENT_SIGNING_CONCURRENCY, async (activity) => ({
+      role: activity.senderType,
+      type: activity.type,
+      content: activity.content,
+      richContent: await this.mapRichContentForBridge(activity.richContent, activity),
+      senderName: activity.senderName || undefined,
+      signalData: activity.signalData || undefined,
+      createdAt: activity.createdAt,
+    }));
   }
 
   private async mapRichContentForBridge(
@@ -350,8 +370,16 @@ export class BridgeExecutorService {
       return richContent;
     }
 
-    const mapped = await Promise.all(
-      rawAttachments.map(async (item) => {
+    const mapped = await mapWithConcurrency(
+      rawAttachments,
+      ATTACHMENT_SIGNING_CONCURRENCY,
+      async (item) => {
+        if (!item || typeof item !== 'object') {
+          this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment is malformed; omitting');
+
+          return null;
+        }
+
         const att = item as Record<string, unknown>;
         const storageKey = att.storageKey;
 
@@ -374,7 +402,7 @@ export class BridgeExecutorService {
         this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment missing storageKey; omitting');
 
         return null;
-      })
+      }
     );
 
     const attachments = mapped.flatMap((entry) => (entry ? [entry] : []));
@@ -424,8 +452,10 @@ export class BridgeExecutorService {
     storedAttachments: StoredAttachment[],
     signingContext: AttachmentSigningContext
   ) {
-    const mapped = await Promise.all(
-      storedAttachments.map(async (attachment) => {
+    const mapped = await mapWithConcurrency(
+      storedAttachments,
+      ATTACHMENT_SIGNING_CONCURRENCY,
+      async (attachment) => {
         const url = await this.signStoredAttachmentForBridge(attachment.storageKey, signingContext);
 
         if (!url) {
@@ -439,7 +469,7 @@ export class BridgeExecutorService {
           mimeType: attachment.mimeType,
           size: attachment.size,
         };
-      })
+      }
     );
 
     return mapped.flatMap((entry) => (entry ? [entry] : []));
