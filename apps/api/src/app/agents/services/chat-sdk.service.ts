@@ -1,3 +1,6 @@
+import * as dns from 'node:dns';
+import * as http from 'node:http';
+import * as https from 'node:https';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, decryptCredentials, MailFactory, PinoLogger, validateUrlSsrf } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
@@ -91,6 +94,35 @@ interface CachedChat {
 type ChatSdkFile = Omit<FileRef, 'data'> & { data?: Buffer };
 type ChatSdkReplyContent = Omit<ReplyContentDto, 'files'> & { files?: ChatSdkFile[] };
 type MaterializedFile = ChatSdkFile & { size: number; source: 'data' | 'url' };
+type PinnedFileResponse = {
+  status: number;
+  statusText: string;
+  headers: http.IncomingHttpHeaders;
+  data: Buffer;
+};
+
+function isPrivateIp(ip: string): boolean {
+  const privateRanges = [
+    /^0\.0\.0\.0$/i,
+    /^127\./,
+    /^10\./,
+    /^172\.(1[6-9]|2[0-9]|3[01])\./,
+    /^192\.168\./,
+    /^169\.254\./,
+    /^::ffff:127\./i,
+    /^::ffff:10\./i,
+    /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
+    /^::ffff:192\.168\./i,
+    /^::ffff:169\.254\./i,
+    /^::1$/i,
+    /^f[cd][0-9a-f]{2}:/i,
+    /^::ffff:f[cd][0-9a-f]{2}:/i,
+    /^fe[89ab][0-9a-f]{2}:/i,
+    /^::ffff:fe[89ab][0-9a-f]{2}:/i,
+  ];
+
+  return privateRanges.some((range) => range.test(ip));
+}
 
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
@@ -368,14 +400,14 @@ export class ChatSdkService implements OnModuleDestroy {
   private async fetchFileUrl(url: string, file: FileRef, index: number): Promise<{ data: Buffer; mimeType?: string }> {
     const response = await this.fetchValidatedFileUrl(url, file, index);
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       throw new BadRequestException({
         error: 'attachment_failed',
         message: `Failed to fetch file ${this.describeFile(file, index)}: ${response.status} ${response.statusText}`,
       });
     }
 
-    const contentLength = response.headers.get('content-length');
+    const contentLength = this.getHeader(response.headers, 'content-length');
     if (contentLength) {
       const size = Number(contentLength);
       if (Number.isFinite(size) && size > MAX_FILE_BYTES) {
@@ -386,13 +418,13 @@ export class ChatSdkService implements OnModuleDestroy {
       }
     }
 
-    const data = await this.readResponseBody(response, file, index);
-    const mimeType = response.headers.get('content-type') || undefined;
+    const data = response.data;
+    const mimeType = this.getHeader(response.headers, 'content-type');
 
     return { data, mimeType };
   }
 
-  private async fetchValidatedFileUrl(url: string, file: FileRef, index: number): Promise<Response> {
+  private async fetchValidatedFileUrl(url: string, file: FileRef, index: number): Promise<PinnedFileResponse> {
     let currentUrl = url;
 
     for (let redirectCount = 0; redirectCount <= MAX_FILE_FETCH_REDIRECTS; redirectCount += 1) {
@@ -404,13 +436,14 @@ export class ChatSdkService implements OnModuleDestroy {
         });
       }
 
-      let response: Response;
+      let response: PinnedFileResponse;
       try {
-        response = await fetch(currentUrl, {
-          redirect: 'manual',
-          signal: AbortSignal.timeout(FILE_FETCH_TIMEOUT_MS),
-        });
+        response = await this.requestPinnedFileUrl(currentUrl, file, index);
       } catch (err) {
+        if (err instanceof BadRequestException) {
+          throw err;
+        }
+
         const message = err instanceof Error ? err.message : String(err);
         throw new BadRequestException({
           error: 'attachment_failed',
@@ -422,7 +455,7 @@ export class ChatSdkService implements OnModuleDestroy {
         return response;
       }
 
-      const location = response.headers.get('location');
+      const location = this.getHeader(response.headers, 'location');
       if (!location) {
         throw new BadRequestException({
           error: 'attachment_failed',
@@ -443,34 +476,6 @@ export class ChatSdkService implements OnModuleDestroy {
     return validateUrlSsrf(url);
   }
 
-  private async readResponseBody(response: Response, file: FileRef, index: number): Promise<Buffer> {
-    if (!response.body) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-      this.assertFetchedFileSize(buffer.length, file, index);
-
-      return buffer;
-    }
-
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
-
-      total += value.byteLength;
-      this.assertFetchedFileSize(total, file, index);
-      chunks.push(value);
-    }
-
-    return Buffer.concat(
-      chunks.map((chunk) => Buffer.from(chunk)),
-      total
-    );
-  }
-
   private assertFetchedFileSize(size: number, file: FileRef, index: number): void {
     if (size > MAX_FILE_BYTES) {
       throw new BadRequestException({
@@ -478,6 +483,120 @@ export class ChatSdkService implements OnModuleDestroy {
         message: `Invalid file ${this.describeFile(file, index)}: file size exceeds ${this.formatBytes(MAX_FILE_BYTES)}.`,
       });
     }
+  }
+
+  private async requestPinnedFileUrl(url: string, file: FileRef, index: number): Promise<PinnedFileResponse> {
+    const parsed = new URL(url);
+    const address = await this.resolvePublicAddress(parsed, file, index);
+    const client = parsed.protocol === 'https:' ? https : http;
+
+    return await new Promise((resolve, reject) => {
+      const request = client.request(
+        {
+          protocol: parsed.protocol,
+          hostname: address.address,
+          family: address.family,
+          port: parsed.port || undefined,
+          path: `${parsed.pathname}${parsed.search}`,
+          method: 'GET',
+          headers: { Host: parsed.host },
+          servername: parsed.hostname,
+          timeout: FILE_FETCH_TIMEOUT_MS,
+        },
+        (response) => {
+          const status = response.statusCode ?? 0;
+          const statusText = response.statusMessage ?? '';
+
+          if (status >= 300 && status < 400) {
+            response.resume();
+            resolve({ status, statusText, headers: response.headers, data: Buffer.alloc(0) });
+
+            return;
+          }
+
+          const contentLength = this.getHeader(response.headers, 'content-length');
+          if (contentLength) {
+            const size = Number(contentLength);
+            if (Number.isFinite(size) && size > MAX_FILE_BYTES) {
+              response.destroy();
+              reject(
+                new BadRequestException({
+                  error: 'attachment_failed',
+                  message: `Invalid file ${this.describeFile(file, index)}: file size exceeds ${this.formatBytes(MAX_FILE_BYTES)}.`,
+                })
+              );
+
+              return;
+            }
+          }
+
+          const chunks: Buffer[] = [];
+          let total = 0;
+
+          response.on('data', (chunk: Buffer) => {
+            total += chunk.length;
+            if (total > MAX_FILE_BYTES) {
+              response.destroy(
+                new BadRequestException({
+                  error: 'attachment_failed',
+                  message: `Invalid file ${this.describeFile(file, index)}: file size exceeds ${this.formatBytes(MAX_FILE_BYTES)}.`,
+                })
+              );
+
+              return;
+            }
+
+            chunks.push(chunk);
+          });
+          response.on('end', () => resolve({ status, statusText, headers: response.headers, data: Buffer.concat(chunks, total) }));
+          response.on('error', reject);
+        }
+      );
+
+      request.on('timeout', () => request.destroy(new Error('Request timed out')));
+      request.on('error', reject);
+      request.end();
+    });
+  }
+
+  private async resolvePublicAddress(
+    parsed: URL,
+    file: FileRef,
+    index: number
+  ): Promise<dns.LookupAddress> {
+    let addresses: dns.LookupAddress[];
+    try {
+      addresses = await dns.promises.lookup(parsed.hostname, { all: true });
+    } catch {
+      throw new BadRequestException({
+        error: 'attachment_failed',
+        message: `Invalid file ${this.describeFile(file, index)} url: Unable to resolve hostname "${parsed.hostname}".`,
+      });
+    }
+
+    if (!addresses.length) {
+      throw new BadRequestException({
+        error: 'attachment_failed',
+        message: `Invalid file ${this.describeFile(file, index)} url: Unable to resolve hostname "${parsed.hostname}".`,
+      });
+    }
+
+    for (const { address } of addresses) {
+      if (isPrivateIp(address)) {
+        throw new BadRequestException({
+          error: 'attachment_failed',
+          message: `Invalid file ${this.describeFile(file, index)} url: Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`,
+        });
+      }
+    }
+
+    return addresses[0];
+  }
+
+  private getHeader(headers: http.IncomingHttpHeaders, name: string): string | undefined {
+    const value = headers[name.toLowerCase()];
+
+    return Array.isArray(value) ? value[0] : value;
   }
 
   private describeFile(file: FileRef, index: number): string {

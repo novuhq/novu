@@ -1,7 +1,22 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+import type { IncomingHttpHeaders } from 'http';
 import sinon from 'sinon';
 import { ChatSdkService } from './chat-sdk.service';
+
+function makePinnedResponse({
+  status = 200,
+  statusText = 'OK',
+  headers = {},
+  data = Buffer.from('hello'),
+}: {
+  status?: number;
+  statusText?: string;
+  headers?: IncomingHttpHeaders;
+  data?: Buffer;
+} = {}) {
+  return { status, statusText, headers, data };
+}
 
 describe('ChatSdkService', () => {
   function makeService() {
@@ -108,38 +123,33 @@ describe('ChatSdkService', () => {
     it('should fetch url file data to a Buffer and use response content-type as fallback mimeType', async () => {
       const service = makeService();
       sinon.stub(service as any, 'validateFileUrl').resolves(null);
-      const fetchStub = sinon.stub(globalThis, 'fetch' as any).resolves(
-        new Response('hello', {
+      const requestStub = sinon.stub(service as any, 'requestPinnedFileUrl').resolves(
+        makePinnedResponse({
           headers: {
             'content-type': 'text/plain',
             'content-length': '5',
           },
-        }) as any
+        })
       );
 
-      try {
-        const result = await (service as any).prepareContentForDelivery(
-          {
-            markdown: 'Here is the file',
-            files: [
-              {
-                filename: 'sample.txt',
-                url: 'https://example.com/sample.txt',
-              },
-            ],
-          },
-          'slack'
-        );
+      const result = await (service as any).prepareContentForDelivery(
+        {
+          markdown: 'Here is the file',
+          files: [
+            {
+              filename: 'sample.txt',
+              url: 'https://example.com/sample.txt',
+            },
+          ],
+        },
+        'slack'
+      );
 
-        expect(fetchStub.calledOnce).to.equal(true);
-        expect(fetchStub.firstCall.args[0]).to.equal('https://example.com/sample.txt');
-        expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
-        expect(result.files[0].data.toString()).to.equal('hello');
-        expect(result.files[0].mimeType).to.equal('text/plain');
-        expect(result.files[0].url).to.equal(undefined);
-      } finally {
-        fetchStub.restore();
-      }
+      expect(requestStub.calledOnceWith('https://example.com/sample.txt')).to.equal(true);
+      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
+      expect(result.files[0].data.toString()).to.equal('hello');
+      expect(result.files[0].mimeType).to.equal('text/plain');
+      expect(result.files[0].url).to.equal(undefined);
     });
 
     it('should validate redirected file urls before following them', async () => {
@@ -150,13 +160,13 @@ describe('ChatSdkService', () => {
         .resolves(null)
         .onSecondCall()
         .resolves('Requests to "localhost" are not allowed.');
-      const fetchStub = sinon.stub(globalThis, 'fetch' as any).resolves(
-        new Response(null, {
+      const requestStub = sinon.stub(service as any, 'requestPinnedFileUrl').resolves(
+        makePinnedResponse({
           status: 302,
           headers: {
             location: 'http://localhost/private.txt',
           },
-        }) as any
+        })
       );
 
       try {
@@ -170,9 +180,8 @@ describe('ChatSdkService', () => {
         throw new Error('Expected prepareContentForDelivery to throw');
       } catch (err) {
         expect(validateStub.callCount).to.equal(2);
+        expect(requestStub.calledOnceWith('https://example.com/sample.txt')).to.equal(true);
         expect((err as Error).message).to.include('Requests to "localhost" are not allowed.');
-      } finally {
-        fetchStub.restore();
       }
     });
 
@@ -197,9 +206,9 @@ describe('ChatSdkService', () => {
     it('should reject non-2xx file url responses', async () => {
       const service = makeService();
       sinon.stub(service as any, 'validateFileUrl').resolves(null);
-      const fetchStub = sinon
-        .stub(globalThis, 'fetch' as any)
-        .resolves(new Response('nope', { status: 404, statusText: 'Not Found' }) as any);
+      sinon
+        .stub(service as any, 'requestPinnedFileUrl')
+        .resolves(makePinnedResponse({ status: 404, statusText: 'Not Found' }));
 
       try {
         await (service as any).prepareContentForDelivery(
@@ -212,20 +221,18 @@ describe('ChatSdkService', () => {
         throw new Error('Expected prepareContentForDelivery to throw');
       } catch (err) {
         expect((err as Error).message).to.include('404 Not Found');
-      } finally {
-        fetchStub.restore();
       }
     });
 
     it('should reject file urls with content-length over the per-file limit', async () => {
       const service = makeService();
       sinon.stub(service as any, 'validateFileUrl').resolves(null);
-      const fetchStub = sinon.stub(globalThis, 'fetch' as any).resolves(
-        new Response('', {
+      sinon.stub(service as any, 'requestPinnedFileUrl').resolves(
+        makePinnedResponse({
           headers: {
             'content-length': String(26 * 1024 * 1024),
           },
-        }) as any
+        })
       );
 
       try {
@@ -239,17 +246,15 @@ describe('ChatSdkService', () => {
         throw new Error('Expected prepareContentForDelivery to throw');
       } catch (err) {
         expect((err as Error).message).to.include('file size exceeds 25 MB');
-      } finally {
-        fetchStub.restore();
       }
     });
 
     it('should reject streamed file url bodies over the per-file limit', async () => {
       const service = makeService();
       sinon.stub(service as any, 'validateFileUrl').resolves(null);
-      const fetchStub = sinon
-        .stub(globalThis, 'fetch' as any)
-        .resolves(new Response(Buffer.alloc(26 * 1024 * 1024)) as any);
+      sinon
+        .stub(service as any, 'requestPinnedFileUrl')
+        .rejects(new Error('Invalid file "large.bin": file size exceeds 25 MB.'));
 
       try {
         await (service as any).prepareContentForDelivery(
@@ -262,8 +267,6 @@ describe('ChatSdkService', () => {
         throw new Error('Expected prepareContentForDelivery to throw');
       } catch (err) {
         expect((err as Error).message).to.include('file size exceeds 25 MB');
-      } finally {
-        fetchStub.restore();
       }
     });
 
