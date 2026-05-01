@@ -32,6 +32,30 @@ describe('ChatSdkService', () => {
   }
 
   describe('prepareContentForDelivery', () => {
+    it('should reject card replies with file attachments', async () => {
+      const service = makeService();
+
+      try {
+        await (service as any).prepareContentForDelivery(
+          {
+            card: { type: 'card', title: 'Report', children: [] },
+            files: [
+              {
+                filename: 'sample.txt',
+                data: Buffer.from('hello').toString('base64'),
+              },
+            ],
+          },
+          'slack'
+        );
+        throw new Error('Expected prepareContentForDelivery to throw');
+      } catch (err) {
+        expect((err as Error).message).to.include(
+          'File attachments are only supported with string or markdown replies, not cards.'
+        );
+      }
+    });
+
     it('should convert base64 file data to a Buffer before passing content to the chat SDK', async () => {
       const service = makeService();
       const result = await (service as any).prepareContentForDelivery(

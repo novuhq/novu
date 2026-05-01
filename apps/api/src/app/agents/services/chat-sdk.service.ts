@@ -232,6 +232,13 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: string = AgentPlatformEnum.SLACK,
     agentId?: string
   ): Promise<ChatSdkReplyContent> {
+    if (content.card && content.files?.length) {
+      throw new BadRequestException({
+        error: 'attachment_failed',
+        message: 'File attachments are only supported with string or markdown replies, not cards.',
+      });
+    }
+
     if (!content.files?.length) {
       return content as ChatSdkReplyContent;
     }

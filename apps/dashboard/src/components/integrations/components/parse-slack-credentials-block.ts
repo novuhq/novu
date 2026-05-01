@@ -165,8 +165,9 @@ function matchInlineLabel(line: string, field: SlackFieldShape): string | null {
 
 function matchesLabel(line: string, field: SlackFieldShape): boolean {
   const labels = [field.label, ...(field.aliases ?? [])];
+  const normalized = line.replace(/:\s*$/, '').toLowerCase();
 
-  return labels.some((label) => line.toLowerCase() === label.toLowerCase());
+  return labels.some((label) => normalized === label.replace(/:\s*$/, '').toLowerCase());
 }
 
 function consumeNextValue(

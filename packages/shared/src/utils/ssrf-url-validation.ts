@@ -62,8 +62,8 @@ export function isPrivateIp(ip: string): boolean {
     /^f[cd][0-9a-f]{2}:/i,
     /^::ffff:f[cd][0-9a-f]{2}:/i,
     /* Link-local fe80::/10 (fe80–febf first hextet) */
-    /^fe(?:8|9|a|b)[0-9a-f]{0,2}:/i,
-    /^::ffff:fe(?:8|9|a|b)[0-9a-f]{0,2}:/i,
+    /^fe[89ab][0-9a-f]:/i,
+    /^::ffff:fe[89ab][0-9a-f]:/i,
   ];
 
   return privateRanges.some((range) => range.test(ip));

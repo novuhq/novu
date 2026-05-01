@@ -22,10 +22,10 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('::1')).toBe(true);
       expect(isPrivateIp('fc00::1')).toBe(true);
       expect(isPrivateIp('fdff::1')).toBe(true);
-      expect(isPrivateIp('fe8::1')).toBe(true);
       expect(isPrivateIp('fe80::1')).toBe(true);
       expect(isPrivateIp('fe80:abcd::1')).toBe(true);
-      expect(isPrivateIp('feb::1')).toBe(true);
+      expect(isPrivateIp('fea0::1')).toBe(true);
+      expect(isPrivateIp('febf::1')).toBe(true);
     });
 
     it('should detect IPv4-mapped private IPv6 addresses', () => {
@@ -40,6 +40,8 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('8.8.8.8')).toBe(false);
       expect(isPrivateIp('1.1.1.1')).toBe(false);
       expect(isPrivateIp('2001:4860:4860::8888')).toBe(false);
+      expect(isPrivateIp('fe8::1')).toBe(false);
+      expect(isPrivateIp('feb::1')).toBe(false);
     });
   });
 
@@ -47,7 +49,7 @@ describe('ssrf-url-validation', () => {
     it('should block hostnames that resolve to IPv6 link-local addresses', async () => {
       vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: 'fe80::1', family: 6 }] as never);
 
-      const result = await validateUrlSsrf('https://example.com/file.txt');
+      const result = await validateUrlSsrf('https://ssrf-link-local-test.invalid/file.txt');
 
       expect(result).toBe('Requests to private or reserved IP addresses are not allowed (resolved: fe80::1).');
     });
