@@ -43,6 +43,8 @@ import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
 import { AgentsPage } from './pages/agents';
+import { AgentsSetupPage } from './pages/agents-setup-page';
+import { AgentsUsecasePage } from './pages/agents-usecase-page';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -60,16 +62,14 @@ import { EnvironmentsPage } from './pages/environments';
 import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
-import { AgentsUsecasePage } from './pages/agents-usecase-page';
-import { AgentsSetupPage } from './pages/agents-setup-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
-import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { UpsertVariablePage } from './pages/upsert-variable';
+import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
@@ -398,11 +398,12 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.DOMAINS,
-                element: !IS_SELF_HOSTED ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element: !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.DOMAIN_DETAIL,
-                element: !IS_SELF_HOSTED ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element:
+                  !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.API_KEYS,
@@ -679,7 +680,11 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+
+if (!rootElement) throw new Error('Root element not found');
+
+createRoot(rootElement).render(
   <StrictMode>
     <FeatureFlagsProvider>
       <RouterProvider router={router} />

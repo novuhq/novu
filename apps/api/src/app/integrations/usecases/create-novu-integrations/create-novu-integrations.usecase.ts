@@ -95,15 +95,7 @@ export class CreateNovuIntegrations {
   }
 
   private async createSlackIntegration(command: CreateNovuIntegrationsCommand) {
-    const isSlackTeamsEnabled = await this.featureFlagService.getFlag({
-      user: { _id: command.userId } as UserEntity,
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-    });
-
-    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT || !isSlackTeamsEnabled) {
+    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
       return;
     }
 

@@ -5,7 +5,6 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -434,8 +433,6 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Body() body: GenerateChatOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const url = await this.generateChatOauthUrlUsecase.execute(
       GenerateChatOauthUrlCommand.create({
         environmentId: user.environmentId,
@@ -470,8 +467,6 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Body() body: GenerateConnectOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const url = await this.generateConnectOauthUrlUsecase.execute(
       GenerateConnectOauthUrlCommand.create({
         environmentId: user.environmentId,
@@ -504,8 +499,6 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Body() body: GenerateLinkUserOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const url = await this.generateLinkUserOauthUrlUsecase.execute(
       GenerateLinkUserOauthUrlCommand.create({
         environmentId: user.environmentId,
@@ -567,18 +560,6 @@ export class IntegrationsController {
     }
 
     res.redirect(result.result);
-  }
-
-  private async checkFeatureEnabled(user: UserSessionData) {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-    });
-
-    if (!isEnabled) {
-      throw new NotFoundException('Feature not enabled');
-    }
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {

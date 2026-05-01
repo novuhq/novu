@@ -13,6 +13,15 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { API_HOSTNAME } from '@/config';
 
+export type AgentIntegrationGuideHeaderProps = {
+  providerId: string;
+  providerDisplayName: string;
+  integrationLink: AgentIntegrationLink;
+  canRemoveIntegration: boolean;
+  onRequestRemoveIntegration?: () => void;
+  isRemovingIntegration?: boolean;
+};
+
 type AgentIntegrationGuideLayoutProps = {
   providerDisplayName: string;
   providerId: string;
@@ -38,86 +47,67 @@ function buildWebhookUrl(agentId: string, integrationIdentifier: string): string
   return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
-export function AgentIntegrationGuideLayout({
-  providerDisplayName,
+export function AgentIntegrationGuideHeader({
   providerId,
-  onBack,
-  children,
-  embedded = false,
-  agent,
+  providerDisplayName,
   integrationLink,
   canRemoveIntegration,
   onRequestRemoveIntegration,
   isRemovingIntegration = false,
-}: AgentIntegrationGuideLayoutProps) {
-  const webhookUrlId = useId();
-  const isActive = integrationLink?.integration.active ?? false;
-  const integrationIdentifier = integrationLink?.integration.identifier;
-  const createdAt = integrationLink?.createdAt;
-  const webhookUrl = buildWebhookUrl(agent._id, integrationIdentifier ?? 'YOUR_INTEGRATION_IDENTIFIER');
+}: AgentIntegrationGuideHeaderProps) {
+  const isConnected = Boolean(integrationLink.connectedAt);
+  const integrationIdentifier = integrationLink.integration.identifier;
+  const createdAt = integrationLink.createdAt;
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      {!embedded && (
-        <CompactButton
-          type="button"
-          size="lg"
-          variant="ghost"
-          className="w-fit"
-          icon={RiArrowLeftSLine}
-          onClick={onBack}
-        >
-          Back to integrations
-        </CompactButton>
-      )}
-
-      <header className="flex items-start justify-between">
-        <div className="flex min-w-0 flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <ProviderIcon
-                providerId={providerId}
-                providerDisplayName={providerDisplayName}
-                className="size-4 shrink-0"
-              />
-              <span className="text-text-strong text-label-sm font-medium leading-5">{providerDisplayName}</span>
-            </div>
-            {isActive ? (
-              <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
-                <span className="flex size-4 items-center justify-center rounded-full bg-success-lighter">
-                  <span className="bg-success-base size-1.5 rounded-full" />
-                </span>
-                <span className="text-success-base text-label-xs font-medium leading-4">Active</span>
-              </span>
-            ) : (
-              <span className="bg-error-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
-                <span className="bg-error-lighter flex size-4 items-center justify-center rounded-full">
-                  <span className="bg-error-base size-1.5 rounded-full" />
-                </span>
-                <span className="text-error-base text-label-xs font-medium leading-4">Action needed</span>
-              </span>
-            )}
+    <header className="flex items-start justify-between">
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <ProviderIcon
+              providerId={providerId}
+              providerDisplayName={providerDisplayName}
+              className="size-4 shrink-0"
+            />
+            <span className="text-text-strong text-label-sm font-medium leading-5">{providerDisplayName}</span>
           </div>
-
-          {integrationIdentifier ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-text-sub font-mono text-[12px] leading-4 tracking-tight">
-                {integrationIdentifier}
+          {isConnected ? (
+            <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
+              <span className="flex size-4 items-center justify-center rounded-full bg-success-lighter">
+                <span className="bg-success-base size-1.5 rounded-full" />
               </span>
-              {createdAt ? (
-                <>
-                  <span className="bg-text-soft size-0.5 shrink-0 rounded-full" />
-                  <span className="text-[12px] leading-4">
-                    <span className="text-text-soft">Created </span>
-                    <span className="text-text-sub font-medium">{formatCreatedDate(createdAt)}</span>
-                  </span>
-                </>
-              ) : null}
-            </div>
-          ) : null}
+              <span className="text-success-base text-label-xs font-medium leading-4">Connected</span>
+            </span>
+          ) : (
+            <span className="bg-error-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
+              <span className="bg-error-lighter flex size-4 items-center justify-center rounded-full">
+                <span className="bg-error-base size-1.5 rounded-full" />
+              </span>
+              <span className="text-error-base text-label-xs font-medium leading-4">Action needed</span>
+            </span>
+          )}
         </div>
 
-        {integrationLink && canRemoveIntegration && onRequestRemoveIntegration ? (
+        {integrationIdentifier ? (
+          <div className="flex items-center gap-1.5">
+            <span className="text-text-sub font-mono text-[12px] leading-4 tracking-tight">
+              {integrationIdentifier}
+            </span>
+            {createdAt ? (
+              <>
+                <span className="bg-text-soft size-0.5 shrink-0 rounded-full" />
+                <span className="text-[12px] leading-4">
+                  <span className="text-text-soft">Created </span>
+                  <span className="text-text-sub font-medium">{formatCreatedDate(createdAt)}</span>
+                </span>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {onRequestRemoveIntegration ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -135,7 +125,7 @@ export function AgentIntegrationGuideLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 className="text-destructive cursor-pointer"
-                disabled={isRemovingIntegration}
+                disabled={!canRemoveIntegration || isRemovingIntegration}
                 onClick={onRequestRemoveIntegration}
               >
                 Remove integration
@@ -143,7 +133,53 @@ export function AgentIntegrationGuideLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
-      </header>
+      </div>
+    </header>
+  );
+}
+
+export function AgentIntegrationGuideLayout({
+  providerDisplayName,
+  providerId,
+  onBack,
+  children,
+  embedded = false,
+  agent,
+  integrationLink,
+  canRemoveIntegration,
+  onRequestRemoveIntegration,
+  isRemovingIntegration = false,
+}: AgentIntegrationGuideLayoutProps) {
+  const webhookUrlId = useId();
+  const integrationIdentifier = integrationLink?.integration.identifier;
+  const webhookUrl = buildWebhookUrl(agent._id, integrationIdentifier ?? 'YOUR_INTEGRATION_IDENTIFIER');
+
+  return (
+    <div className="flex w-full flex-col gap-6">
+      {!embedded && (
+        <CompactButton
+          type="button"
+          size="lg"
+          variant="ghost"
+          className="w-fit"
+          icon={RiArrowLeftSLine}
+          onClick={onBack}
+        >
+          Back to integrations
+        </CompactButton>
+      )}
+
+      {integrationLink ? (
+        <AgentIntegrationGuideHeader
+          providerId={providerId}
+          providerDisplayName={providerDisplayName}
+          integrationLink={integrationLink}
+          canRemoveIntegration={canRemoveIntegration}
+          onRequestRemoveIntegration={onRequestRemoveIntegration}
+          isRemovingIntegration={isRemovingIntegration}
+
+        />
+      ) : null}
 
       <section className="flex flex-col gap-4">
         <h3 className="text-text-sub text-[11px] font-medium uppercase leading-4 tracking-wider">Agent metadata</h3>

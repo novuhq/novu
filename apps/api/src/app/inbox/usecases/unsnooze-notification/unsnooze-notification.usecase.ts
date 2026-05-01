@@ -20,7 +20,9 @@ export class UnsnoozeNotification {
     private jobRepository: JobRepository,
     private markNotificationAs: MarkNotificationAs,
     private createExecutionDetails: CreateExecutionDetails
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: UnsnoozeNotificationCommand): Promise<InboxNotificationDto> {
     const snoozedNotification = await this.messageRepository.findOne({
