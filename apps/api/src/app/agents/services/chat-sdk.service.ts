@@ -258,7 +258,6 @@ export class ChatSdkService implements OnModuleDestroy {
           agentId,
           platform,
           droppedCount: content.files.length,
-          filenames: content.files.map((file) => file.filename),
         },
         'Dropping outbound agent files because platform does not support attachments'
       );

@@ -97,9 +97,10 @@ export function parseSlackCredentialsBlock(input: string): ParsedSlackCredential
 
       if (matchesLabel(line, field)) {
         matchedField = field;
-        value = consumeNextValue(lines, index);
-        if (value !== undefined) {
-          index += 1;
+        const consumed = consumeNextValue(lines, index);
+        value = consumed.value;
+        if (consumed.consumedIndex !== undefined) {
+          index = consumed.consumedIndex;
         }
         break;
       }
@@ -168,7 +169,10 @@ function matchesLabel(line: string, field: SlackFieldShape): boolean {
   return labels.some((label) => line.toLowerCase() === label.toLowerCase());
 }
 
-function consumeNextValue(lines: string[], currentIndex: number): string | undefined {
+function consumeNextValue(
+  lines: string[],
+  currentIndex: number
+): { value: string | undefined; consumedIndex?: number } {
   for (let lookahead = currentIndex + 1; lookahead < lines.length; lookahead += 1) {
     const candidate = lines[lookahead];
 
@@ -177,13 +181,13 @@ function consumeNextValue(lines: string[], currentIndex: number): string | undef
     }
 
     if (looksLikeFieldLabel(candidate)) {
-      return undefined;
+      return { value: undefined };
     }
 
-    return cleanValue(candidate);
+    return { value: cleanValue(candidate), consumedIndex: lookahead };
   }
 
-  return undefined;
+  return { value: undefined };
 }
 
 function looksLikeFieldLabel(line: string): boolean {
