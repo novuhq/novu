@@ -529,6 +529,16 @@ describe('slugify', () => {
     }
   });
 
+  it('returns empty string for CJK-only input', () => {
+    expect(slugify('テストメール')).toBe('');
+    expect(slugify('你好世界')).toBe('');
+    expect(slugify('알림')).toBe('');
+  });
+
+  it('preserves ASCII parts in mixed-script input', () => {
+    expect(slugify('Test テスト')).toBe('test');
+  });
+
   it('normalizes the string', () => {
     const slug = decodeURIComponent('a%CC%8Aa%CC%88o%CC%88-123'); // åäö-123
     expect(slugify(slug), 'aao-123');
