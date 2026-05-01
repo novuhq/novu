@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import { AgentAttachmentStorage, READ_URL_TTL_SECONDS } from './agent-attachment-storage.service';
 
 describe('AgentAttachmentStorage', () => {
+  const mb = 1024 * 1024;
   const ctx = {
     organizationId: 'org1',
     environmentId: 'env1',
@@ -20,6 +21,14 @@ describe('AgentAttachmentStorage', () => {
       info: sinon.stub(),
       setContext: sinon.stub(),
     };
+  }
+
+  function makeStorageService() {
+    return {
+      uploadFile: sinon.stub().resolves({}),
+      getReadSignedUrl: sinon.stub().resolves('https://signed/read'),
+      fileExists: sinon.stub(),
+    } as unknown as StorageService;
   }
 
   it('should upload and return signed url for fetchData attachment', async () => {
@@ -49,6 +58,118 @@ describe('AgentAttachmentStorage', () => {
     expect(uploadFile.calledOnce).to.equal(true);
     expect(getReadSignedUrl.calledOnce).to.equal(true);
     expect(getReadSignedUrl.firstCall.args[1]).to.equal(READ_URL_TTL_SECONDS);
+  });
+
+  it('should keep uploaded attachment metadata when signing fails', async () => {
+    const uploadFile = sinon.stub().resolves({});
+    const getReadSignedUrl = sinon.stub().rejects(new Error('signing unavailable'));
+    const storageService = {
+      uploadFile,
+      getReadSignedUrl,
+      fileExists: sinon.stub(),
+    } as unknown as StorageService;
+    const logger = makeLogger();
+
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const attachment: Attachment = {
+      type: 'file',
+      name: 'doc.pdf',
+      mimeType: 'application/pdf',
+      size: 10,
+      fetchData: async () => Buffer.from('hello'),
+    };
+
+    const result = await service.storeInbound([attachment], ctx);
+
+    expect(result).to.have.length(1);
+    expect(result[0]).to.include({
+      type: 'file',
+      name: 'doc.pdf',
+      mimeType: 'application/pdf',
+      size: 10,
+    });
+    expect(result[0].storageKey).to.include('org1/env1/agents/conv1/msg1/0-doc.pdf');
+    expect(result[0].url).to.equal(undefined);
+    expect(uploadFile.calledOnce).to.equal(true);
+    expect(getReadSignedUrl.calledOnce).to.equal(true);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should process at most 15 inbound attachments and preserve original indexes', async () => {
+    const storageService = makeStorageService();
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const fetchDataStubs = Array.from({ length: 16 }, () => sinon.stub().resolves(Buffer.from('x')));
+    const attachments = fetchDataStubs.map((fetchData, index) => ({
+      type: 'file',
+      name: `file-${index}.txt`,
+      mimeType: 'text/plain',
+      size: 1,
+      fetchData,
+    })) as Attachment[];
+
+    const result = await service.storeInbound(attachments, ctx);
+
+    expect(result).to.have.length(15);
+    expect(storageService.uploadFile.callCount).to.equal(15);
+    expect(fetchDataStubs[15].called).to.equal(false);
+    expect(result[14].storageKey).to.include('org1/env1/agents/conv1/msg1/14-file-14.txt');
+    expect(logger.warn.calledWithMatch({ attachmentCount: 16, cap: 15 })).to.equal(true);
+  });
+
+  it('should skip known-size attachments that would exceed the aggregate byte cap before fetch', async () => {
+    const storageService = makeStorageService();
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const fetchDataStubs = [
+      sinon.stub().resolves(Buffer.from('a')),
+      sinon.stub().resolves(Buffer.from('b')),
+      sinon.stub().resolves(Buffer.from('c')),
+    ];
+    const attachments = fetchDataStubs.map((fetchData, index) => ({
+      type: 'file',
+      name: `known-${index}.txt`,
+      mimeType: 'text/plain',
+      size: 20 * mb,
+      fetchData,
+    })) as Attachment[];
+
+    const result = await service.storeInbound(attachments, ctx);
+
+    expect(result).to.have.length(2);
+    expect(storageService.uploadFile.callCount).to.equal(2);
+    expect(fetchDataStubs[2].called).to.equal(false);
+    expect(logger.warn.calledWithMatch({ size: 20 * mb, aggregateCap: 50 * mb })).to.equal(true);
+  });
+
+  it('should skip unknown-size attachments that would exceed the aggregate byte cap after fetch', async () => {
+    const storageService = makeStorageService();
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const attachments = [
+      {
+        type: 'file',
+        name: 'unknown-0.bin',
+        fetchData: async () => Buffer.alloc(25 * mb),
+      },
+      {
+        type: 'file',
+        name: 'unknown-1.bin',
+        fetchData: async () => Buffer.alloc(25 * mb),
+      },
+      {
+        type: 'file',
+        name: 'unknown-2.bin',
+        fetchData: async () => Buffer.from('x'),
+      },
+    ] as Attachment[];
+
+    const result = await service.storeInbound(attachments, ctx);
+
+    expect(result).to.have.length(2);
+    expect(storageService.uploadFile.callCount).to.equal(2);
+    expect(logger.warn.calledWithMatch({ byteLength: 1, aggregateCap: 50 * mb })).to.equal(true);
   });
 
   it('should skip attachment over pre-fetch size limit', async () => {

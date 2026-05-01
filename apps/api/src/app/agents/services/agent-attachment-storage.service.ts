@@ -8,7 +8,7 @@ export interface StoredAttachment {
   mimeType?: string;
   size?: number;
   storageKey: string;
-  url: string;
+  url?: string;
 }
 
 export interface StoreInboundAttachmentContext {
@@ -19,6 +19,8 @@ export interface StoreInboundAttachmentContext {
 }
 
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+const MAX_ATTACHMENTS_PER_MESSAGE = 15;
+const MAX_AGGREGATE_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 export const READ_URL_TTL_SECONDS = 15 * 60;
 const AGENTS_FOLDER = 'agents';
 
@@ -79,23 +81,50 @@ export class AgentAttachmentStorage {
     ctx: StoreInboundAttachmentContext
   ): Promise<StoredAttachment[]> {
     if (!attachments?.length) {
-
       return [];
     }
 
-    const settled = await Promise.allSettled(
-      attachments.map((attachment, index) => this.storeOne(attachment, ctx, index))
-    );
-
     const result: StoredAttachment[] = [];
+    const attachmentsToProcess = attachments.slice(0, MAX_ATTACHMENTS_PER_MESSAGE);
+    let processedBytes = 0;
 
-    for (const entry of settled) {
-      if (entry.status === 'fulfilled' && entry.value) {
-        result.push(entry.value);
-      }
+    if (attachments.length > MAX_ATTACHMENTS_PER_MESSAGE) {
+      this.logger.warn(
+        { attachmentCount: attachments.length, cap: MAX_ATTACHMENTS_PER_MESSAGE },
+        'Skipping inbound attachments over count limit'
+      );
+    }
 
-      if (entry.status === 'rejected') {
-        this.logger.warn(entry.reason, 'Inbound attachment processing failed');
+    for (const [index, attachment] of attachmentsToProcess.entries()) {
+      try {
+        const knownSize = attachment.size;
+
+        if (
+          knownSize != null &&
+          knownSize <= MAX_ATTACHMENT_BYTES &&
+          processedBytes + knownSize > MAX_AGGREGATE_ATTACHMENT_BYTES
+        ) {
+          this.logger.warn(
+            {
+              size: knownSize,
+              processedBytes,
+              aggregateCap: MAX_AGGREGATE_ATTACHMENT_BYTES,
+              name: attachment.name,
+            },
+            'Skipping inbound attachment over aggregate size limit'
+          );
+
+          continue;
+        }
+
+        const stored = await this.storeOne(attachment, ctx, index, processedBytes);
+
+        if (stored) {
+          processedBytes += stored.size ?? 0;
+          result.push(stored);
+        }
+      } catch (err) {
+        this.logger.warn(err, 'Inbound attachment processing failed');
       }
     }
 
@@ -106,7 +135,6 @@ export class AgentAttachmentStorage {
     const exists = await this.storageService.fileExists(storageKey);
 
     if (!exists) {
-
       return null;
     }
 
@@ -116,7 +144,8 @@ export class AgentAttachmentStorage {
   private async storeOne(
     attachment: Attachment,
     ctx: StoreInboundAttachmentContext,
-    index: number
+    index: number,
+    processedBytes: number
   ): Promise<StoredAttachment | null> {
     try {
       if (attachment.size != null && attachment.size > MAX_ATTACHMENT_BYTES) {
@@ -145,6 +174,20 @@ export class AgentAttachmentStorage {
         return null;
       }
 
+      if (processedBytes + buffer.length > MAX_AGGREGATE_ATTACHMENT_BYTES) {
+        this.logger.warn(
+          {
+            byteLength: buffer.length,
+            processedBytes,
+            aggregateCap: MAX_AGGREGATE_ATTACHMENT_BYTES,
+            name: attachment.name,
+          },
+          'Skipping inbound attachment over aggregate size limit after fetch'
+        );
+
+        return null;
+      }
+
       const rawName = attachment.name ?? `file-${index}`;
       const filename = sanitizeFilenameSegment(rawName);
       const mimeType = attachment.mimeType ?? 'application/octet-stream';
@@ -158,9 +201,20 @@ export class AgentAttachmentStorage {
         filename,
       });
 
-      await this.storageService.uploadFile(storageKey, buffer, mimeType);
+      try {
+        await this.storageService.uploadFile(storageKey, buffer, mimeType);
+      } catch (err) {
+        this.logger.warn(err, 'Failed to upload inbound attachment');
 
-      const url = await this.storageService.getReadSignedUrl(storageKey, READ_URL_TTL_SECONDS);
+        return null;
+      }
+
+      let url: string | undefined;
+      try {
+        url = await this.storageService.getReadSignedUrl(storageKey, READ_URL_TTL_SECONDS);
+      } catch (err) {
+        this.logger.warn(err, 'Failed to sign inbound attachment after upload');
+      }
 
       return {
         type: attachment.type,

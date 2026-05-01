@@ -25,6 +25,7 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
+const AGENTS_STORAGE_FOLDER = 'agents';
 
 export interface BridgeReaction {
   emoji: string;
@@ -307,7 +308,7 @@ export class BridgeExecutorService {
         role: activity.senderType,
         type: activity.type,
         content: activity.content,
-        richContent: await this.mapRichContentForBridge(activity.richContent, activity._id?.toString()),
+        richContent: await this.mapRichContentForBridge(activity.richContent, activity),
         senderName: activity.senderName || undefined,
         signalData: activity.signalData || undefined,
         createdAt: activity.createdAt,
@@ -317,7 +318,7 @@ export class BridgeExecutorService {
 
   private async mapRichContentForBridge(
     richContent: Record<string, unknown> | undefined,
-    activityId?: string
+    activity: ConversationActivityEntity
   ): Promise<Record<string, unknown> | undefined> {
     if (!richContent) {
       return undefined;
@@ -335,7 +336,7 @@ export class BridgeExecutorService {
         const storageKey = att.storageKey;
 
         if (typeof storageKey === 'string' && storageKey.length > 0) {
-          const url = await this.signAttachmentForHistory(storageKey, activityId);
+          const url = await this.signAttachmentForHistory(storageKey, activity);
 
           if (!url) {
             return null;
@@ -350,7 +351,7 @@ export class BridgeExecutorService {
           };
         }
 
-        this.logger.warn({ activityId }, 'History attachment missing storageKey; omitting');
+        this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment missing storageKey; omitting');
 
         return null;
       })
@@ -364,7 +365,22 @@ export class BridgeExecutorService {
     };
   }
 
-  private async signAttachmentForHistory(storageKey: string, activityId?: string): Promise<string | null> {
+  private async signAttachmentForHistory(
+    storageKey: string,
+    activity: ConversationActivityEntity
+  ): Promise<string | null> {
+    const activityId = activity._id?.toString();
+    const expectedPrefix = `${activity._organizationId}/${activity._environmentId}/${AGENTS_STORAGE_FOLDER}/${activity._conversationId}/`;
+
+    if (!storageKey.startsWith(expectedPrefix)) {
+      this.logger.warn(
+        { storageKey, activityId, expectedPrefix },
+        'History attachment storageKey outside expected namespace; omitting from bridge payload'
+      );
+
+      return null;
+    }
+
     try {
       const url = await this.attachmentStorage.signRead(storageKey);
 
