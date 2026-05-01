@@ -18,7 +18,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          # Similar to the affected-project workflow, a shallow checkout is
+          # enough here as long as we fetch the `next` base branch explicitly.
+          fetch-depth: 50
+
+      - name: Fetch base branch for nx affected
+        run: git fetch origin next --depth=50
 
       # https://vercel.com/guides/corepack-errors-github-actions
       - name: Use Latest Corepack
