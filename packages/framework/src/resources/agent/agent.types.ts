@@ -82,10 +82,11 @@ export interface FileRef {
   mimeType?: string;
   /**
    * Inline file data. Binary values are encoded to base64 before being sent to Novu.
+   * Node Buffers are supported because Buffer extends Uint8Array.
    *
    * Limit: <= 5 MB decoded. Use `url` for larger files.
    */
-  data?: string | Buffer | Uint8Array | ArrayBuffer | Blob;
+  data?: string | Uint8Array | ArrayBuffer | Blob;
   /**
    * Publicly-accessible HTTP(S) URL. Recommended for larger files.
    *
