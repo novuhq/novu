@@ -143,25 +143,61 @@ describe('AgentAttachmentStorage', () => {
     expect(logger.warn.calledWithMatch({ size: 20 * mb, aggregateCap: 50 * mb })).to.equal(true);
   });
 
-  it('should skip unknown-size attachments that would exceed the aggregate byte cap after fetch', async () => {
+  it('should skip fetchData attachments without size metadata before downloading', async () => {
+    const storageService = makeStorageService();
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const fetchData = sinon.stub().resolves(Buffer.from('x'));
+    const attachments = [{ type: 'file', name: 'unknown.bin', fetchData }] as Attachment[];
+
+    const result = await service.storeInbound(attachments, ctx);
+
+    expect(result).to.have.length(0);
+    expect(fetchData.called).to.equal(false);
+    expect(storageService.uploadFile.called).to.equal(false);
+    expect(logger.warn.called).to.equal(true);
+  });
+
+  it('should skip blob attachments when trusted size metadata is missing', async () => {
+    const storageService = makeStorageService();
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const blob = new Blob([Buffer.from('x')]);
+    const attachment = {
+      type: 'file',
+      name: 'blob.bin',
+      data: blob,
+    } as Attachment;
+
+    const result = await service.storeInbound([attachment], ctx);
+
+    expect(result).to.have.length(0);
+    expect(storageService.uploadFile.called).to.equal(false);
+    expect(logger.warn.called).to.equal(true);
+  });
+
+  it('should skip attachments that exceed aggregate cap after fetch when size metadata is inaccurate', async () => {
     const storageService = makeStorageService();
     const logger = makeLogger();
     const service = new AgentAttachmentStorage(storageService, logger as any);
     const attachments = [
       {
         type: 'file',
-        name: 'unknown-0.bin',
+        name: 'file-0.bin',
+        size: 24 * mb,
+        fetchData: async () => Buffer.alloc(24 * mb),
+      },
+      {
+        type: 'file',
+        name: 'file-1.bin',
+        size: 25 * mb,
         fetchData: async () => Buffer.alloc(25 * mb),
       },
       {
         type: 'file',
-        name: 'unknown-1.bin',
-        fetchData: async () => Buffer.alloc(25 * mb),
-      },
-      {
-        type: 'file',
-        name: 'unknown-2.bin',
-        fetchData: async () => Buffer.from('x'),
+        name: 'file-2.bin',
+        size: 1,
+        fetchData: async () => Buffer.alloc(2 * mb),
       },
     ] as Attachment[];
 
@@ -169,7 +205,7 @@ describe('AgentAttachmentStorage', () => {
 
     expect(result).to.have.length(2);
     expect(storageService.uploadFile.callCount).to.equal(2);
-    expect(logger.warn.calledWithMatch({ byteLength: 1, aggregateCap: 50 * mb })).to.equal(true);
+    expect(logger.warn.calledWithMatch({ byteLength: 2 * mb, aggregateCap: 50 * mb })).to.equal(true);
   });
 
   it('should skip attachment over pre-fetch size limit', async () => {
@@ -195,7 +231,7 @@ describe('AgentAttachmentStorage', () => {
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
-  it('should skip attachment over post-fetch size limit when size metadata absent', async () => {
+  it('should skip attachment over post-fetch size limit when size metadata is inaccurate', async () => {
     const storageService = {
       uploadFile: sinon.stub(),
       getReadSignedUrl: sinon.stub(),
@@ -208,6 +244,7 @@ describe('AgentAttachmentStorage', () => {
     const huge = Buffer.alloc(26 * 1024 * 1024);
     const attachment: Attachment = {
       type: 'file',
+      size: 1,
       fetchData: async () => huge,
     };
 

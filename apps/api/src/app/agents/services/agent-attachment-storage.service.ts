@@ -44,21 +44,45 @@ function buildStorageKey(params: {
 }
 
 async function bufferFromAttachment(attachment: Attachment): Promise<Buffer | null> {
-  if (typeof attachment.fetchData === 'function') {
-    return await attachment.fetchData();
-  }
-
   if (!attachment.data) {
+    if (attachment.size == null) {
+      throw new Error('Inbound attachment size is required before download');
+    }
+
+    if (attachment.size > MAX_ATTACHMENT_BYTES) {
+      throw new Error('Inbound attachment exceeds size limit');
+    }
+
+    if (typeof attachment.fetchData === 'function') {
+      return await attachment.fetchData();
+    }
+
     return null;
   }
 
   if (Buffer.isBuffer(attachment.data)) {
+    if (attachment.data.length > MAX_ATTACHMENT_BYTES) {
+      throw new Error('Inbound attachment buffer exceeds size limit');
+    }
+
     return attachment.data;
   }
 
   const blob = attachment.data as Blob;
 
   if (typeof blob.arrayBuffer === 'function') {
+    if (attachment.size == null) {
+      throw new Error('Inbound attachment size is required before reading blob data');
+    }
+
+    if (attachment.size > MAX_ATTACHMENT_BYTES) {
+      throw new Error('Inbound attachment exceeds size limit');
+    }
+
+    if (blob.size !== attachment.size) {
+      throw new Error('Inbound attachment blob size does not match trusted size metadata');
+    }
+
     const ab = await blob.arrayBuffer();
 
     return Buffer.from(ab);

@@ -27,6 +27,12 @@ const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
 
+interface AttachmentSigningContext {
+  organizationId: string;
+  environmentId: string;
+  conversationId: string;
+}
+
 export interface BridgeReaction {
   emoji: string;
   added: boolean;
@@ -212,18 +218,28 @@ export class BridgeExecutorService {
       replyUrl,
       conversationId: conversation._id,
       integrationIdentifier: config.integrationIdentifier,
-      message: message ? await this.mapMessage(message, params.storedAttachments) : null,
+      message: message
+        ? await this.mapMessage(message, params.storedAttachments, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+          })
+        : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
       action: action ?? null,
-      reaction: reaction ? await this.mapReaction(reaction) : null,
+      reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
     };
   }
 
-  private async mapMessage(message: Message, storedAttachments?: StoredAttachment[]): Promise<AgentMessage> {
+  private async mapMessage(
+    message: Message,
+    storedAttachments?: StoredAttachment[],
+    signingContext?: AttachmentSigningContext
+  ): Promise<AgentMessage> {
     const mapped: AgentMessage = {
       text: message.text,
       platformMessageId: message.id,
@@ -237,13 +253,9 @@ export class BridgeExecutorService {
     };
 
     if (storedAttachments !== undefined) {
-      mapped.attachments = storedAttachments.map((s) => ({
-        type: s.type,
-        url: s.url,
-        name: s.name,
-        mimeType: s.mimeType,
-        size: s.size,
-      }));
+      mapped.attachments = signingContext
+        ? await this.mapStoredAttachmentsForBridge(storedAttachments, signingContext)
+        : [];
 
       return mapped;
     }
@@ -289,13 +301,21 @@ export class BridgeExecutorService {
     };
   }
 
-  private async mapReaction(reaction: BridgeReaction): Promise<AgentReaction> {
+  private async mapReaction(
+    reaction: BridgeReaction,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity
+  ): Promise<AgentReaction> {
     return {
       messageId: reaction.messageId,
       emoji: { name: reaction.emoji },
       added: reaction.added,
       message: reaction.sourceMessage
-        ? await this.mapMessage(reaction.sourceMessage, reaction.sourceMessageStoredAttachments)
+        ? await this.mapMessage(reaction.sourceMessage, reaction.sourceMessageStoredAttachments, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+          })
         : null,
     };
   }
@@ -370,7 +390,11 @@ export class BridgeExecutorService {
     activity: ConversationActivityEntity
   ): Promise<string | null> {
     const activityId = activity._id?.toString();
-    const expectedPrefix = `${activity._organizationId}/${activity._environmentId}/${AGENTS_STORAGE_FOLDER}/${activity._conversationId}/`;
+    const expectedPrefix = this.getAttachmentStoragePrefix({
+      organizationId: activity._organizationId,
+      environmentId: activity._environmentId,
+      conversationId: activity._conversationId,
+    });
 
     if (!storageKey.startsWith(expectedPrefix)) {
       this.logger.warn(
@@ -394,5 +418,64 @@ export class BridgeExecutorService {
 
       return null;
     }
+  }
+
+  private async mapStoredAttachmentsForBridge(
+    storedAttachments: StoredAttachment[],
+    signingContext: AttachmentSigningContext
+  ) {
+    const mapped = await Promise.all(
+      storedAttachments.map(async (attachment) => {
+        const url = await this.signStoredAttachmentForBridge(attachment.storageKey, signingContext);
+
+        if (!url) {
+          return null;
+        }
+
+        return {
+          type: attachment.type,
+          url,
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+        };
+      })
+    );
+
+    return mapped.flatMap((entry) => (entry ? [entry] : []));
+  }
+
+  private async signStoredAttachmentForBridge(
+    storageKey: string,
+    signingContext: AttachmentSigningContext
+  ): Promise<string | null> {
+    const expectedPrefix = this.getAttachmentStoragePrefix(signingContext);
+
+    if (!storageKey.startsWith(expectedPrefix)) {
+      this.logger.warn(
+        { storageKey, expectedPrefix },
+        'Stored attachment storageKey outside expected namespace; omitting from bridge payload'
+      );
+
+      return null;
+    }
+
+    try {
+      const url = await this.attachmentStorage.signRead(storageKey);
+
+      if (!url) {
+        this.logger.warn({ storageKey }, 'Stored attachment missing from storage; omitting from bridge payload');
+      }
+
+      return url;
+    } catch (err) {
+      this.logger.warn(err, 'Failed to sign stored attachment; omitting from bridge payload');
+
+      return null;
+    }
+  }
+
+  private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
+    return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
 }
