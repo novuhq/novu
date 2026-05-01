@@ -2,6 +2,7 @@ import { IEnvironment } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { buildRoute, ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
@@ -43,12 +44,13 @@ export function InboxFrameworkGuide({
   const track = useTelemetry();
   const navigate = useNavigate();
 
-  const frameworks = getFrameworks('ai-assist', currentEnvironment?.identifier, subscriberId) || [];
+  const defaultInstallationMethod: InstallationMethod = IS_AI_FEATURES_ENABLED ? 'ai-assist' : 'manual';
+  const frameworks = getFrameworks(defaultInstallationMethod, currentEnvironment?.identifier, subscriberId) || [];
 
   const [selectedFrameworkName, setSelectedFrameworkName] = useState<string>(() => {
     return frameworks.find((f) => f.selected)?.name ?? frameworks[0]?.name ?? '';
   });
-  const [installationMethod, setInstallationMethod] = useState<InstallationMethod>('ai-assist');
+  const [installationMethod, setInstallationMethod] = useState<InstallationMethod>(defaultInstallationMethod);
 
   const effectiveInstallationMethod = useMemo<InstallationMethod>(
     () => (FRAMEWORKS_WITH_MANUAL_ONLY.includes(selectedFrameworkName) ? 'manual' : installationMethod),
@@ -78,7 +80,7 @@ export function InboxFrameworkGuide({
 
       if (FRAMEWORKS_WITH_MANUAL_ONLY.includes(framework.name)) {
         setInstallationMethod('manual');
-      } else if (FRAMEWORKS_WITH_INSTALLATION_TABS.includes(framework.name)) {
+      } else if (IS_AI_FEATURES_ENABLED && FRAMEWORKS_WITH_INSTALLATION_TABS.includes(framework.name)) {
         setInstallationMethod('ai-assist');
       }
     },
@@ -90,7 +92,7 @@ export function InboxFrameworkGuide({
   }, []);
 
   const showInstallationTabs = useMemo(
-    () => FRAMEWORKS_WITH_INSTALLATION_TABS.includes(selectedFrameworkName),
+    () => IS_AI_FEATURES_ENABLED && FRAMEWORKS_WITH_INSTALLATION_TABS.includes(selectedFrameworkName),
     [selectedFrameworkName]
   );
 
@@ -121,7 +123,10 @@ export function InboxFrameworkGuide({
               <button
                 type="button"
                 onClick={() => {
-                  track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { usecase: 'inbox', skippedFrom: 'inbox-embed-setup-later' });
+                  track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
+                    usecase: 'inbox',
+                    skippedFrom: 'inbox-embed-setup-later',
+                  });
                   navigate(buildRoute(ROUTES.WELCOME, { environmentSlug: currentEnvironment?.slug ?? '' }));
                 }}
                 className="text-foreground-400 hover:text-foreground-600 cursor-pointer text-sm transition-colors"

@@ -42,6 +42,7 @@ import { Tag } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
 import { useCreateAiChat } from '@/hooks/use-create-ai-chat';
@@ -75,7 +76,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const createdWorkflowSlugRef = useRef<string | null>(null);
   const chatId = useMemo(() => generateId(), []);
   const persistedChatIdRef = useRef<string | null>(null);
-  const [tab, setTab] = useState<CreateWorkflowTab>('guided');
+  const [tab, setTab] = useState<CreateWorkflowTab>(IS_AI_FEATURES_ENABLED ? 'guided' : 'manual');
 
   const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
     workflowSlug: mode === 'duplicate' ? workflowId : undefined,
@@ -213,8 +214,8 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   };
 
   const isDuplicateMode = mode === 'duplicate';
-  const showTabs = !isDuplicateMode;
-  const showGuidedContent = !isDuplicateMode && tab === 'guided';
+  const showTabs = IS_AI_FEATURES_ENABLED && !isDuplicateMode;
+  const showGuidedContent = IS_AI_FEATURES_ENABLED && !isDuplicateMode && tab === 'guided';
   const showManualContent = isDuplicateMode || tab === 'manual';
 
   const title = isDuplicateMode ? 'Duplicate workflow' : 'Create workflow';
@@ -385,7 +386,7 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
 
       return fetchWorkflowSuggestions({ environment: currentEnvironment, refresh: shouldRefresh });
     },
-    enabled: !!currentEnvironment,
+    enabled: IS_AI_FEATURES_ENABLED && !!currentEnvironment,
     staleTime: 24 * 60 * 60 * 1000,
   });
 
