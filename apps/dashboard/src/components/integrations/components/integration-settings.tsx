@@ -2,7 +2,6 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   CredentialsKeyEnum,
-  FeatureFlagsKeysEnum,
   IIntegration,
   IProviderConfig,
   PermissionsEnum,
@@ -16,7 +15,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '../../../utils/ui';
@@ -120,21 +118,12 @@ export function IntegrationSettings({
   }, [name, mode, setValue]);
 
   const isDemo = integration && isDemoIntegration(integration.providerId);
-  const isSlackTeamsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED, false);
   const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
 
-  // Filter credentials based on provider and feature flag
   const providerCredentials = useMemo(() => {
     let credentials = provider.credentials;
 
-    // MS Teams: only show OAuth credentials when feature flag is enabled
-    if (provider.id === ChatProviderIdEnum.MsTeams) {
-      credentials = isSlackTeamsEnabled ? provider.credentials : [];
-    }
-
-    // Slack: hide HMAC for new integrations when feature flag is enabled
-    // But keep HMAC visible for existing integrations (backward compatibility)
-    if (provider.id === ChatProviderIdEnum.Slack && isSlackTeamsEnabled) {
+    if (provider.id === ChatProviderIdEnum.Slack) {
       // For existing integrations (update mode), show HMAC if it is true in credentials
       if (mode === 'update' && integration?.credentials?.hmac === true) {
         credentials = provider.credentials;
@@ -149,7 +138,7 @@ export function IntegrationSettings({
     }
 
     return credentials;
-  }, [provider.id, provider.credentials, isSlackTeamsEnabled, mode, integration?.credentials, isAgentOnboarding]);
+  }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding]);
 
   return (
     <Form {...form}>
@@ -240,7 +229,7 @@ export function IntegrationSettings({
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    {provider?.id === ChatProviderIdEnum.MsTeams && isSlackTeamsEnabled && (
+                    {provider?.id === ChatProviderIdEnum.MsTeams && (
                       <InlineToast
                         variant="tip"
                         className="mb-3"

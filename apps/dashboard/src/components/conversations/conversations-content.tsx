@@ -8,7 +8,7 @@ import { ConversationsTable } from '@/components/conversations/conversations-tab
 import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConversationUrlState } from '@/hooks/use-conversation-url-state';
 import { cn } from '@/utils/ui';
@@ -25,7 +25,7 @@ export function ConversationsContent({
   className,
   contentHeight = 'h-[calc(100vh-140px)]',
 }: ConversationsContentProps) {
-  if (IS_SELF_HOSTED) {
+  if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
     return (
       <div className={cn('p-2.5', className)}>
         <div className={cn('flex', contentHeight)}>
