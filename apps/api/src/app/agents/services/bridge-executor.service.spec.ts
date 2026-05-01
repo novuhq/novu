@@ -141,6 +141,47 @@ describe('BridgeExecutorService', () => {
       expect(maxActive).to.be.at.most(4);
       expect(attachmentStorage.signRead.callCount).to.equal(10);
     });
+
+    it('should not multiply attachment signing concurrency across history entries', async () => {
+      let active = 0;
+      let maxActive = 0;
+      const logger = makeLogger();
+      const attachmentStorage = {
+        signRead: sinon.stub().callsFake(async () => {
+          active += 1;
+          maxActive = Math.max(maxActive, active);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          active -= 1;
+
+          return 'https://signed/read';
+        }),
+      };
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+
+      await (service as any).mapHistory([
+        makeActivity({
+          _id: 'activity-1',
+          richContent: {
+            attachments: Array.from({ length: 10 }, (_, index) => ({
+              type: 'image',
+              storageKey: `org/env/agents/conv/message-a/${index}-image.png`,
+            })),
+          },
+        }),
+        makeActivity({
+          _id: 'activity-2',
+          richContent: {
+            attachments: Array.from({ length: 10 }, (_, index) => ({
+              type: 'image',
+              storageKey: `org/env/agents/conv/message-b/${index}-image.png`,
+            })),
+          },
+        }),
+      ]);
+
+      expect(maxActive).to.be.at.most(4);
+      expect(attachmentStorage.signRead.callCount).to.equal(20);
+    });
   });
 
   describe('mapMessage', () => {

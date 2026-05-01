@@ -344,16 +344,21 @@ export class BridgeExecutorService {
 
   private async mapHistory(activities: ConversationActivityEntity[]): Promise<AgentHistoryEntry[]> {
     const reversed = [...activities].reverse();
+    const mapped: AgentHistoryEntry[] = [];
 
-    return await mapWithConcurrency(reversed, ATTACHMENT_SIGNING_CONCURRENCY, async (activity) => ({
-      role: activity.senderType,
-      type: activity.type,
-      content: activity.content,
-      richContent: await this.mapRichContentForBridge(activity.richContent, activity),
-      senderName: activity.senderName || undefined,
-      signalData: activity.signalData || undefined,
-      createdAt: activity.createdAt,
-    }));
+    for (const activity of reversed) {
+      mapped.push({
+        role: activity.senderType,
+        type: activity.type,
+        content: activity.content,
+        richContent: await this.mapRichContentForBridge(activity.richContent, activity),
+        senderName: activity.senderName || undefined,
+        signalData: activity.signalData || undefined,
+        createdAt: activity.createdAt,
+      });
+    }
+
+    return mapped;
   }
 
   private async mapRichContentForBridge(
