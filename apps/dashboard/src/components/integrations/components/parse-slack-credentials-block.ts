@@ -45,10 +45,28 @@ const NOISE_LINES = new Set([
   'slack signs the requests we send you using this secret. confirm that each request comes from slack by verifying its unique signature.',
 ]);
 
+/**
+ * Slack masks secrets in its UI as a row of bullet glyphs. We need to recognize
+ * the most common ones so the parser can flag them instead of pushing the dots
+ * into the form. Covers •, ●, ·, ∙, ◦, ∘, ⚫, ⚪ and `*`.
+ */
+const MASK_CHAR_REGEX = /^[\u2022\u25CF\u00B7\u2219\u25E6\u2218\u26AB\u26AA*]+$/;
+
+function isMaskedValue(value: string): boolean {
+  const stripped = value.replace(/\s+/g, '');
+  if (stripped.length < 3) {
+    return false;
+  }
+
+  return MASK_CHAR_REGEX.test(stripped);
+}
+
 export type ParsedSlackCredentials = {
   values: Partial<Record<SlackCredentialField, string>>;
   matched: SlackCredentialField[];
   invalid: SlackCredentialField[];
+  /** Labels we recognized but whose value was masked (e.g. `••••••••`). */
+  masked: SlackCredentialField[];
   unknownLines: string[];
 };
 
@@ -64,6 +82,7 @@ export function parseSlackCredentialsBlock(input: string): ParsedSlackCredential
     values: {},
     matched: [],
     invalid: [],
+    masked: [],
     unknownLines: [],
   };
 
@@ -117,9 +136,20 @@ export function parseSlackCredentialsBlock(input: string): ParsedSlackCredential
       continue;
     }
 
-    if (result.values[matchedField.key] !== undefined) {
+    if (
+      result.values[matchedField.key] !== undefined ||
+      result.masked.includes(matchedField.key)
+    ) {
       // Slack pages don't repeat fields; if they do, prefer the first match
       // and skip duplicates so the user's existing value isn't clobbered twice.
+      continue;
+    }
+
+    if (isMaskedValue(value)) {
+      // The user copied while the secret was still hidden. Don't push the
+      // bullets into the form — surface the field so we can prompt them to
+      // unmask it in Slack and paste again.
+      result.masked.push(matchedField.key);
       continue;
     }
 
@@ -146,7 +176,9 @@ export function isLikelySlackCredentialsBlock(input: string): boolean {
 
   const parsed = parseSlackCredentialsBlock(input);
 
-  return parsed.matched.length >= 2;
+  // Masked values still count: the user clearly copied a Slack credentials
+  // block, they just forgot to unmask the secrets first.
+  return parsed.matched.length + parsed.masked.length >= 2;
 }
 
 function matchInlineLabel(line: string, field: SlackFieldShape): string | null {
