@@ -2,7 +2,14 @@ import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
-import { CacheService, decryptCredentials, MailFactory, PinoLogger, validateUrlSsrf } from '@novu/application-generic';
+import {
+  CacheService,
+  decryptCredentials,
+  isPrivateIp,
+  MailFactory,
+  PinoLogger,
+  validateUrlSsrf,
+} from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
@@ -100,29 +107,6 @@ type PinnedFileResponse = {
   headers: http.IncomingHttpHeaders;
   data: Buffer;
 };
-
-function isPrivateIp(ip: string): boolean {
-  const privateRanges = [
-    /^0\.0\.0\.0$/i,
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2[0-9]|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,
-    /^::ffff:127\./i,
-    /^::ffff:10\./i,
-    /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
-    /^::ffff:192\.168\./i,
-    /^::ffff:169\.254\./i,
-    /^::1$/i,
-    /^f[cd][0-9a-f]{2}:/i,
-    /^::ffff:f[cd][0-9a-f]{2}:/i,
-    /^fe[89ab][0-9a-f]{2}:/i,
-    /^::ffff:fe[89ab][0-9a-f]{2}:/i,
-  ];
-
-  return privateRanges.some((range) => range.test(ip));
-}
 
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
@@ -475,15 +459,6 @@ export class ChatSdkService implements OnModuleDestroy {
     return validateUrlSsrf(url);
   }
 
-  private assertFetchedFileSize(size: number, file: FileRef, index: number): void {
-    if (size > MAX_FILE_BYTES) {
-      throw new BadRequestException({
-        error: 'attachment_failed',
-        message: `Invalid file ${this.describeFile(file, index)}: file size exceeds ${this.formatBytes(MAX_FILE_BYTES)}.`,
-      });
-    }
-  }
-
   private async requestPinnedFileUrl(url: string, file: FileRef, index: number): Promise<PinnedFileResponse> {
     const parsed = new URL(url);
     const address = await this.resolvePublicAddress(parsed, file, index);
@@ -547,7 +522,9 @@ export class ChatSdkService implements OnModuleDestroy {
 
             chunks.push(chunk);
           });
-          response.on('end', () => resolve({ status, statusText, headers: response.headers, data: Buffer.concat(chunks, total) }));
+          response.on('end', () =>
+            resolve({ status, statusText, headers: response.headers, data: Buffer.concat(chunks, total) })
+          );
           response.on('error', reject);
         }
       );
@@ -558,11 +535,7 @@ export class ChatSdkService implements OnModuleDestroy {
     });
   }
 
-  private async resolvePublicAddress(
-    parsed: URL,
-    file: FileRef,
-    index: number
-  ): Promise<dns.LookupAddress> {
+  private async resolvePublicAddress(parsed: URL, file: FileRef, index: number): Promise<dns.LookupAddress> {
     let addresses: dns.LookupAddress[];
     try {
       addresses = await dns.promises.lookup(parsed.hostname, { all: true });

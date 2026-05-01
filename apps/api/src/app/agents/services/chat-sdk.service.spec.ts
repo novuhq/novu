@@ -1,6 +1,6 @@
+import type { IncomingHttpHeaders } from 'node:http';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
-import type { IncomingHttpHeaders } from 'http';
 import sinon from 'sinon';
 import { ChatSdkService } from './chat-sdk.service';
 
