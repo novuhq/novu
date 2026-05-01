@@ -127,6 +127,31 @@ describe('Domain Connect utils', () => {
     expectSignature(url);
   });
 
+  it('normalizes private keys loaded through secret managers before signing', () => {
+    const secretManagerValues = [
+      privateKey.replace(/\n/g, ''),
+      privateKey.replace(/\n/g, '\\n'),
+      privateKey.replace(/\n/g, '\\r\\n'),
+      `"${privateKey.replace(/\n/g, '\\n')}"`,
+    ];
+
+    for (const secretManagerValue of secretManagerValues) {
+      process.env.DOMAIN_CONNECT_PRIVATE_KEY = secretManagerValue;
+
+      const result = buildDomainConnectApplyUrl({
+        domain,
+        connectDomainName: 'example.com',
+        discoveredHost: 'domainconnect.vercel.com',
+        settings: {
+          urlSyncUX: 'https://vercel.com/domain-connect',
+          urlAPI: 'https://vercel.com/api/domain-connect',
+        },
+      });
+
+      expectSignature(new URL(result.applyUrl));
+    }
+  });
+
   it('rejects redirect URIs outside the configured dashboard origin', () => {
     expect(() =>
       buildDomainConnectApplyUrl({

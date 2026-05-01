@@ -266,6 +266,7 @@ export function WhatsAppSetupGuide({
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => setIsCredentialsSaved(true)}
+          agentOnboarding
         />
       </div>
     );
@@ -280,6 +281,7 @@ export function WhatsAppSetupGuide({
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => setIsCredentialsSaved(true)}
+        agentOnboarding
       />
     </>
   );

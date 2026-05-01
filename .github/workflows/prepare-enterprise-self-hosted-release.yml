@@ -8,7 +8,9 @@ run-name: >
   }}${{
     github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
   }}${{
-    github.event.inputs.build_ws == 'true' && 'ws ' || ''
+    github.event.inputs.build_ws == 'true' && 'ws, ' || ''
+  }}${{
+    github.event.inputs.build_inbound_mail == 'true' && 'inbound-mail ' || ''
   }}
 
 env:
@@ -41,6 +43,11 @@ on:
         required: true
         type: boolean
         default: true
+      build_inbound_mail:
+        description: "Build Inbound Mail service"
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -59,7 +66,8 @@ jobs:
           if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
              [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
              [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_ws }}" != "true" ]; then
+             [ "${{ github.event.inputs.build_ws }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_inbound_mail }}" != "true" ]; then
             echo "Error: At least one service must be selected for building."
             exit 1
           fi
@@ -81,6 +89,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
             services+=("\"ws-ee\"")
+          fi
+          if [ "${{ github.event.inputs.build_inbound_mail }}" == "true" ]; then
+            services+=("\"inbound-mail-ee\"")
           fi
 
           matrix="[$(IFS=','; echo "${services[*]}")]"

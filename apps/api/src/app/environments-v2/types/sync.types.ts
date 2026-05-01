@@ -6,6 +6,7 @@ export enum ResourceTypeEnum {
   STEP = 'step',
   LOCALIZATION_GROUP = 'localization_group',
   LAYOUT = 'layout',
+  AGENT = 'agent',
 }
 
 export enum DependencyReasonEnum {
