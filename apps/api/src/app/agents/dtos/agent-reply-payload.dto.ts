@@ -8,7 +8,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  MaxLength,
   Validate,
   ValidateNested,
   ValidatorConstraint,
@@ -18,6 +17,8 @@ import {
 export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
+const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
+const MAX_FILES_PER_MESSAGE = 15;
 
 /**
  * Allowed characters for a metadata signal key.
@@ -76,17 +77,25 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
     if (fields.length !== 1) return false;
 
     if (content.files?.length && !content.markdown) return false;
+    if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
 
     for (const file of content.files ?? []) {
       const sources = [file.data, file.url].filter(Boolean);
       if (sources.length !== 1) return false;
+      if (typeof file.data === 'string' && file.data.replace(/\s/g, '').length > MAX_INLINE_FILE_BASE64_CHARS) {
+        return false;
+      }
     }
 
     return true;
   }
 
   defaultMessage(): string {
-    return 'Content must have exactly one of markdown or card. Files only allowed with markdown. Each file needs exactly one of data or url.';
+    return (
+      'Content must have exactly one of markdown or card. Files only allowed with markdown. ' +
+      `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
+      'Inline data must be 5 MB or smaller.'
+    );
   }
 }
 

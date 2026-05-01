@@ -219,17 +219,8 @@ export function SlackSetupGuide({
         description={
           <span>
             {
-              'Paste the App ID, Client ID, Client Secret and Signing Secret from your Slack app into the integration. View '
+              'Paste the App Credentials block from your Slack app — the App ID, Client ID, Client Secret and Signing Secret are filled automatically.'
             }
-            <a
-              href="https://docs.novu.co/integrations/chat/slack"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              setup guide
-            </a>
-            .
           </span>
         }
         rightContent={
@@ -273,7 +264,7 @@ export function SlackSetupGuide({
           user?.externalId && currentEnvironment?.identifier ? (
             <NovuProvider
               subscriber={{
-                subscriberId: user.externalId + ':agent-quickstart:' + agent._id,
+                subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
                 firstName: user.firstName ?? '',
                 lastName: user.lastName ?? '',
                 avatar: user.imageUrl ?? '',
@@ -284,7 +275,7 @@ export function SlackSetupGuide({
             >
               <SlackConnectButton
                 integrationIdentifier={selectedIntegrationIdentifier}
-                connectionIdentifier={user.externalId + ':agent-quickstart:' + agent._id}
+                connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
                 connectionMode="subscriber"
                 connectLabel={`Install ${agent.name} ↗`}
                 connectedLabel="Connected to Slack"
