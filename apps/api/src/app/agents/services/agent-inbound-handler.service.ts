@@ -6,6 +6,7 @@ import type { EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
@@ -34,7 +35,8 @@ export class AgentInboundHandler {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly attachmentStorage: AgentAttachmentStorage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -82,14 +84,25 @@ export class AgentInboundHandler {
       ? ConversationActivitySenderTypeEnum.SUBSCRIBER
       : ConversationActivitySenderTypeEnum.PLATFORM_USER;
 
-    const richContent = message.attachments?.length
+    let storedAttachments: StoredAttachment[] | undefined;
+
+    if (message.attachments?.length) {
+      storedAttachments = await this.attachmentStorage.storeInbound(message.attachments, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        conversationId: String(conversation._id),
+        platformMessageId: message.id ?? `unknown-${Date.now()}`,
+      });
+    }
+
+    const richContent = storedAttachments?.length
       ? {
-          attachments: message.attachments.map((a) => ({
-            type: a.type,
-            url: a.url,
-            name: a.name,
-            mimeType: a.mimeType,
-            size: a.size,
+          attachments: storedAttachments.map(({ type, name, mimeType, size, storageKey }) => ({
+            type,
+            name,
+            mimeType,
+            size,
+            storageKey,
           })),
         }
       : undefined;
@@ -176,6 +189,7 @@ export class AgentInboundHandler {
           channelId: thread.channelId,
           isDM: thread.isDM,
         },
+        storedAttachments: message.attachments?.length ? storedAttachments : undefined,
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
@@ -254,11 +268,25 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
-    const reaction: BridgeReaction = {
+    let sourceMessageStoredAttachments: StoredAttachment[] | undefined;
+
+    if (event.message?.attachments?.length) {
+      sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(event.message.attachments, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        conversationId: String(conversation._id),
+        platformMessageId: event.message.id ?? `unknown-${Date.now()}`,
+      });
+    }
+
+    const reactionPayload: BridgeReaction = {
       emoji: event.emoji.name,
       added: event.added,
       messageId: event.messageId,
       sourceMessage: event.message,
+      sourceMessageStoredAttachments: event.message?.attachments?.length
+        ? sourceMessageStoredAttachments
+        : undefined,
     };
 
     await this.bridgeExecutor.execute({
@@ -273,7 +301,7 @@ export class AgentInboundHandler {
         channelId: event.thread?.channelId ?? '',
         isDM: event.thread?.isDM ?? false,
       },
-      reaction,
+      reaction: reactionPayload,
     });
   }
 
