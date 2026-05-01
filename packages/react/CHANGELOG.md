@@ -1,3 +1,19 @@
+## v3.16.0 (2026-04-27)
+
+### 🚀 Features
+
+- **react:** add realtime opt-out to provider and hooks fixes NV-7438 ([#10886](https://github.com/novuhq/novu/pull/10886))
+- **react:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
+## v3.15.0 (2026-04-13)
+
+This was a version bump only for @novu/react to align it with other projects, there were no code changes.
+
 ## v3.14.1 (2026-02-27)
 
 ### 🚀 Features

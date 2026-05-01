@@ -8,8 +8,6 @@ run-name: >
   }}${{
     github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
   }}${{
-    github.event.inputs.build_webhook == 'true' && 'webhook, ' || ''
-  }}${{
     github.event.inputs.build_ws == 'true' && 'ws' || ''
   }}
 
@@ -45,11 +43,6 @@ on:
         required: false
         type: boolean
         default: true
-      build_webhook:
-        description: "Build Webhook service"
-        required: false
-        type: boolean
-        default: true
       build_ws:
         description: "Build WebSocket service"
         required: false
@@ -74,7 +67,6 @@ jobs:
           if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
              [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
              [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_webhook }}" != "true" ] && \
              [ "${{ github.event.inputs.build_ws }}" != "true" ]; then
             echo "Error: At least one service must be selected for building."
             exit 1
@@ -85,7 +77,7 @@ jobs:
         run: |
           # If triggered by tag push, build all services
           if [ "${{ github.event_name }}" == "push" ]; then
-            matrix='["novu/api","novu/worker","novu/dashboard","novu/webhook","novu/ws"]'
+            matrix='["novu/api","novu/worker","novu/dashboard","novu/ws"]'
           else
             # If triggered by workflow_dispatch, build only selected services
             services=()
@@ -98,9 +90,6 @@ jobs:
             fi
             if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
               services+=("\"novu/dashboard\"")
-            fi
-            if [ "${{ github.event.inputs.build_webhook }}" == "true" ]; then
-              services+=("\"novu/webhook\"")
             fi
             if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
               services+=("\"novu/ws\"")
@@ -213,7 +202,7 @@ jobs:
           fi
 
           # Switch from PM2 cluster mode to single node process for open source builds
-          if [[ "${{ env.SERVICE_NAME }}" =~ ^(api|worker|webhook|ws)$ ]]; then
+          if [[ "${{ env.SERVICE_NAME }}" =~ ^(api|worker|ws)$ ]]; then
             echo "Switching ${{ env.SERVICE_NAME }} from PM2 cluster mode to single node process for open source"
             sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
           fi

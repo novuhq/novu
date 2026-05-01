@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-export const Copy = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
+export const Copy = (props?: JSX.SvgSVGAttributes<SVGSVGElement>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 12 12" {...props}>
       <path

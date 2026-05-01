@@ -33,35 +33,29 @@ RUN cp src/.env.production dist/.env.production
 # Set the working directory to the root of the app
 WORKDIR /usr/src/app
 
-# ------- ASSETS BUILD ----------
-# Create a new stage for building assets
-FROM dev AS assets
+# ------- DEPLOY ----------
+FROM dev AS deploy
 
-# Remove source files but KEEP node_modules (already compiled)
-RUN pnpm recursive exec -- rm -rf ./src
+WORKDIR /usr/src/app
+RUN pnpm --filter @novu/webhook deploy --legacy --prod /usr/src/deploy
 
 # ------- PRODUCTION BUILD ----------
 # Use clean base for production (NO Python)
 FROM node:22.22.1-alpine3.22 AS prod
-ARG PACKAGE_PATH
 
-# Set environment variables for production
 ENV CI=true
-ENV NX_DAEMON=false
 
 # Install only runtime dependencies
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0
+RUN npm --no-update-notifier --no-fund --global install pm2 && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER 1000
-
-# Set the working directory to the root of the app
 WORKDIR /usr/src/app
 
-# Copy necessary directories from the build stage
-COPY --chown=1000:1000 ./meta ./
-# Copy build artifacts AND pre-compiled node_modules from assets
-COPY --chown=1000:1000 --from=assets /usr/src/app .
+# Flat node_modules from pnpm deploy (no symlinks, no hoisting issues)
+COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 
-# Set the working directory to the webhook app and start the application using pm2-runtime
-WORKDIR /usr/src/app/apps/webhook
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/webhook -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]
+# Built output (not included by pnpm deploy because dist is gitignored)
+COPY --chown=1000:1000 --from=dev /usr/src/app/apps/webhook/dist ./dist
+
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]

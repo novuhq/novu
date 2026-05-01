@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, JobTitleEnum, OrganizationTypeEnum } from '../../types';
+import { ChannelTypeEnum, IndustryEnum, JobTitleEnum, OrganizationTypeEnum } from '../../types';
 
 export type UpdateExternalOrganizationDto = {
   jobTitle?: JobTitleEnum;
@@ -8,4 +8,5 @@ export type UpdateExternalOrganizationDto = {
   companySize?: string;
   organizationType?: OrganizationTypeEnum;
   useCases?: ChannelTypeEnum[];
+  industry?: IndustryEnum;
 };

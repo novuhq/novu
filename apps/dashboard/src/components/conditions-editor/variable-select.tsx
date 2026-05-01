@@ -131,7 +131,7 @@ export const VariableSelect = (props: VariableSelectProps) => {
         <PopoverAnchor asChild>
           <div className="w-full">
             <InputRoot size="2xs" hasError={!!error}>
-              <InputWrapper>
+              <InputWrapper className="has-[input:disabled]:[background:transparent]">
                 {leftIcon}
                 <InputPure
                   ref={inputRef}

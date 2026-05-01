@@ -17,7 +17,9 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InboundDomainRouteDelivery,
   InMemoryProviderService,
+  MsTeamsTokenService,
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
@@ -37,6 +39,8 @@ import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ContextRepository,
+  DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -67,6 +71,8 @@ import {
 } from './usecases';
 import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { DomainRouteStrategy } from './usecases/inbound-email-parse/strategies/domain-route.strategy';
+import { ReplyToStrategy } from './usecases/inbound-email-parse/strategies/reply-to.strategy';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
 import { ResolveChannelEndpoints } from './usecases/send-message/channel-endpoint-resolution/resolve-channel-endpoints.usecase';
 import { ExecuteCodeFirstCustomStep } from './usecases/send-message/execute-code-first-custom-step.usecase';
@@ -98,6 +104,8 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [
+  DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,
@@ -192,6 +200,9 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  InboundDomainRouteDelivery,
+  ReplyToStrategy,
+  DomainRouteStrategy,
   ExecuteBridgeJob,
   ExecuteStepResolverRequest,
   GetPreferences,
@@ -199,7 +210,7 @@ const USE_CASES = [
   ResolveChannelEndpoints,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

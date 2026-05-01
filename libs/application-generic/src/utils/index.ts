@@ -16,6 +16,7 @@ export * from './generate-id';
 export * from './generate-payload-example';
 export * from './hmac';
 export * from './html';
+export * from './inbound-email-references';
 export * from './issues';
 export * from './json-schema-mock';
 export * from './json-schema-utils';

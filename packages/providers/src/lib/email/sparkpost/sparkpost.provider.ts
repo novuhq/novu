@@ -40,7 +40,7 @@ export class SparkPostEmailProvider extends BaseProvider implements IEmailProvid
   }
 
   async sendMessage(
-    { from, to, subject, text, html, attachments }: IEmailOptions,
+    { from, to, subject, text, html, attachments, headers }: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const recipients: { address: string }[] = to.map((recipient) => {
@@ -65,6 +65,7 @@ export class SparkPostEmailProvider extends BaseProvider implements IEmailProvid
         text,
         html,
         attachments: files,
+        ...(headers && Object.keys(headers).length > 0 && { headers }),
       },
     });
 

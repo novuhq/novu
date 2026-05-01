@@ -86,6 +86,8 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
         type: attachment.mime,
         name: attachment?.name,
       })),
+      ...(emailOptions.headers &&
+        Object.keys(emailOptions.headers).length > 0 && { headers: emailOptions.headers }),
     };
 
     const { customData } = emailOptions;

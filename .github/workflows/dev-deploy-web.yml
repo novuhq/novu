@@ -1,0 +1,48 @@
+name: Deploy DEV WEB
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: "Skip E2E tests"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test_web:
+    if: ${{ !inputs.skip_tests }}
+    uses: ./.github/workflows/reusable-web-e2e.yml
+    with:
+      ee: true
+    secrets: inherit
+
+  deploy_web:
+    needs: test_web
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') && (success() || inputs.skip_tests) }}
+    uses: ./.github/workflows/reusable-web-deploy.yml
+    with:
+      environment: Development
+      react_app_api_url: https://api.novu-staging.co
+      react_app_ws_url: https://dev.ws.novu.co
+      react_app_webhook_url: https://dev.webhook.novu.co
+      react_app_widget_embed_path: https://dev.embed.novu.co/embed.umd.min.js
+      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
+      react_app_environment: dev
+      react_app_mail_server_domain: dev.inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
+      netlify_deploy_message: Dev deployment
+      netlify_alias: dev
+      netlify_gh_env: development
+      netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
+      clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
+      clerk_is_ee_auth_enabled: true
+      new_dashboard_url: https://dashboard.novu-staging.co
+      extra_env_variables: ${{ vars.STAGING_EXTRA_VARIABLES || '' }}
+    secrets: inherit

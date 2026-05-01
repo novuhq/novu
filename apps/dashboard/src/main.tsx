@@ -41,10 +41,16 @@ import { UpdateIntegrationSidebar } from './components/integrations/components/u
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
+import { AgentDetailsPage } from './pages/agent-details';
+import { AgentsPage } from './pages/agents';
+import { AgentsSetupPage } from './pages/agents-setup-page';
+import { AgentsUsecasePage } from './pages/agents-usecase-page';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
+import { DomainDetailPage } from './pages/domain-detail';
+import { DomainsPage } from './pages/domains';
 import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
 import { EditContextPage } from './pages/edit-context';
 import { EditLayoutPage } from './pages/edit-layout';
@@ -63,6 +69,7 @@ import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { UpsertVariablePage } from './pages/upsert-variable';
+import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
@@ -130,6 +137,18 @@ const router = createBrowserRouter([
         path: '/onboarding',
         element: <OnboardingParentRoute />,
         children: [
+          {
+            path: ROUTES.USECASE_SELECT,
+            element: <UsecaseSelectPage />,
+          },
+          {
+            path: ROUTES.AGENTS_USECASE,
+            element: <AgentsUsecasePage />,
+          },
+          {
+            path: ROUTES.AGENTS_SETUP,
+            element: <AgentsSetupPage />,
+          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
@@ -350,6 +369,43 @@ const router = createBrowserRouter([
                 ],
               },
               {
+                path: ROUTES.AGENTS,
+                element: <AgentsPage />,
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_TAB,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.DOMAINS,
+                element: !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+              },
+              {
+                path: ROUTES.DOMAIN_DETAIL,
+                element:
+                  !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+              },
+              {
                 path: ROUTES.API_KEYS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
@@ -393,6 +449,14 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.ACTIVITY_REQUESTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ACTIVITY_CONVERSATIONS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
@@ -616,7 +680,11 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+
+if (!rootElement) throw new Error('Root element not found');
+
+createRoot(rootElement).render(
   <StrictMode>
     <FeatureFlagsProvider>
       <RouterProvider router={router} />

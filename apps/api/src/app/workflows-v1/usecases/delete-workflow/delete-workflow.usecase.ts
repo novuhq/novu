@@ -32,7 +32,9 @@ export class DeleteWorkflowUseCase {
     private moduleRef: ModuleRef,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: DeleteWorkflowCommand): Promise<void> {

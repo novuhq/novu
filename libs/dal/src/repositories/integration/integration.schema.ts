@@ -66,6 +66,8 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       senderId: Schema.Types.String,
       servicePlanId: Schema.Types.String,
       tenantId: Schema.Types.String,
+      signingSecret: Schema.Types.String,
+      outboundIntegrationId: Schema.Types.String,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,
@@ -109,6 +111,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       },
     ],
     connected: Schema.Types.Boolean,
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      required: false,
+      default: null,
+    },
   },
   schemaOptions
 );

@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-export function Key(props?: JSX.HTMLAttributes<SVGSVGElement>) {
+export function Key(props?: JSX.SvgSVGAttributes<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" {...props}>
       <path

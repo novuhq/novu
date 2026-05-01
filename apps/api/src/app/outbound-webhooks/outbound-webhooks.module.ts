@@ -9,21 +9,31 @@ import { GetWebhookPortalTokenUsecase } from './usecases/get-webhook-portal-toke
 @Module({})
 class OutboundWebhooksModuleDefinition {}
 
+const cachedOutboundWebhooksRootModule: Partial<Record<'enterprise' | 'community', DynamicModule>> = {};
+
 export const OutboundWebhooksModule = {
   forRoot(): DynamicModule {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true';
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const cacheKey = isEnterprise ? 'enterprise' : 'community';
+    const hit = cachedOutboundWebhooksRootModule[cacheKey];
+
+    if (hit) {
+      return hit;
+    }
 
     if (isEnterprise) {
-      return {
+      cachedOutboundWebhooksRootModule.enterprise = {
         module: OutboundWebhooksModuleDefinition,
         imports: [SharedModule],
         controllers: [OutboundWebhooksController],
         providers: [GetWebhookPortalTokenUsecase, CreateWebhookPortalUsecase, SvixProviderService, SendWebhookMessage],
         exports: [SendWebhookMessage],
       };
+
+      return cachedOutboundWebhooksRootModule.enterprise;
     }
 
-    return {
+    cachedOutboundWebhooksRootModule.community = {
       module: OutboundWebhooksModuleDefinition,
       imports: [SharedModule],
       providers: [
@@ -34,5 +44,7 @@ export const OutboundWebhooksModule = {
       ],
       exports: [SendWebhookMessage],
     };
+
+    return cachedOutboundWebhooksRootModule.community;
   },
 };

@@ -5,6 +5,7 @@ export type TableIntegration = {
   name: string;
   identifier: string;
   provider: string;
+  providerId: string;
   channel: ChannelTypeEnum;
   environment: string;
   active: boolean;

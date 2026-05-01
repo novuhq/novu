@@ -3,9 +3,11 @@ import {
   AiMessageRoleEnum,
   AiResourceTypeEnum,
   IEnvironment,
+  StepTypeEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { UIMessage } from 'ai';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { getApiBaseUrl, getV2, postV2 } from './api.client';
 
 export type GenerateWorkflowRequest = {
@@ -134,6 +136,31 @@ export async function revertMessage({
   });
 }
 
+export type WorkflowSuggestionResponse = {
+  id: string;
+  title: string;
+  description: string;
+  examplePrompt: string;
+  steps: StepTypeEnum[];
+};
+
+export async function fetchWorkflowSuggestions({
+  environment,
+  refresh,
+}: {
+  environment: IEnvironment;
+  refresh?: boolean;
+}): Promise<WorkflowSuggestionResponse[]> {
+  if (!IS_AI_FEATURES_ENABLED) return [];
+
+  const endpoint = refresh ? '/ai/workflow-suggestions?refresh=true' : '/ai/workflow-suggestions';
+  const { data: responseData } = await getV2<{ data: WorkflowSuggestionResponse[] }>(endpoint, {
+    environment,
+  });
+
+  return responseData;
+}
+
 export async function cancelStream({
   environment,
   chatId,
@@ -145,6 +172,28 @@ export async function cancelStream({
     environment,
     body: { chatId },
   });
+
+  return responseData;
+}
+
+export type OnboardingSuggestionsResponse = {
+  status: 'pending' | 'generating' | 'completed' | 'failed' | 'skipped' | null;
+  suggestions: WorkflowResponseDto[];
+};
+
+export async function fetchOnboardingWorkflowSuggestions({
+  environment,
+}: {
+  environment: IEnvironment;
+}): Promise<OnboardingSuggestionsResponse> {
+  if (!IS_AI_FEATURES_ENABLED) return { status: 'skipped', suggestions: [] };
+
+  const { data: responseData } = await getV2<{ data: OnboardingSuggestionsResponse }>(
+    '/ai/workflow-suggestions/onboarding',
+    {
+      environment,
+    }
+  );
 
   return responseData;
 }

@@ -434,9 +434,10 @@ function processTagToken({
     const forMatch = output.match(/^\s*{%\s*for\s+(\w+)\s+in\s+(.+?)\s*%}/);
     if (forMatch) {
       const [, iteratorVariable, collectionExpression] = forMatch;
+      const isRangeExpression = collectionExpression.trim().match(/^\(.+?\.\..+?\)$/);
 
       // Check if it's a range expression
-      if (collectionExpression.trim().match(/^\(.+?\.\..+?\)$/)) {
+      if (isRangeExpression) {
         // Extract variables from range
         const rangeVariables = extractVariablesFromRange(collectionExpression.trim());
         rangeVariables.forEach((variableName) => {
@@ -472,14 +473,21 @@ function processTagToken({
       newLocalVariables.add(iteratorVariable);
       newLocalVariables.add('forloop'); // Add forloop built-in variable
 
+      const nestedTemplates = (template as any).templates || [];
+
       // process nested templates with new local variables
       processTemplates({
-        templates: (template as any).templates || [],
+        templates: nestedTemplates,
         validVariables,
         invalidVariables,
         variableSchema,
         localVariables: newLocalVariables,
       });
+
+      if (!isRangeExpression) {
+        const collectionVar = extractVariableFromExpression(collectionExpression);
+        annotateCollectionVariable(iteratorVariable, collectionVar, nestedTemplates, validVariables, invalidVariables);
+      }
     }
   } else if (template instanceof IfTag || template instanceof UnlessTag) {
     // Extract variables from condition
@@ -599,9 +607,10 @@ function processTagToken({
     const tablerowMatch = output.match(/^\s*{%\s*tablerow\s+(\w+)\s+in\s+(.+?)\s*%}/);
     if (tablerowMatch) {
       const [, iteratorVariable, collectionExpression] = tablerowMatch;
+      const isRangeExpression = collectionExpression.trim().match(/^\(.+?\.\..+?\)$/);
 
       // Check if it's a range expression
-      if (collectionExpression.trim().match(/^\(.+?\.\..+?\)$/)) {
+      if (isRangeExpression) {
         // Extract variables from range
         const rangeVariables = extractVariablesFromRange(collectionExpression.trim());
         rangeVariables.forEach((variableName) => {
@@ -638,14 +647,19 @@ function processTagToken({
       newLocalVariables.add(iteratorVariable);
       newLocalVariables.add('tablerowloop'); // Add tablerowloop built-in variable
 
-      const templates = (template as any).templates || [];
+      const nestedTemplates = (template as any).templates || [];
       processTemplates({
-        templates,
+        templates: nestedTemplates,
         validVariables,
         invalidVariables,
         variableSchema,
         localVariables: newLocalVariables,
       });
+
+      if (!isRangeExpression) {
+        const collectionVar = extractVariableFromExpression(collectionExpression);
+        annotateCollectionVariable(iteratorVariable, collectionVar, nestedTemplates, validVariables, invalidVariables);
+      }
     }
   } else if (template instanceof CaseTag) {
     // Extract case variable: {% case variable %}
@@ -919,6 +933,70 @@ function validateFilters(filters: Filter[], isDigestEventsVariable: boolean): Li
 
     return [...acc, ...filterIssues];
   }, [] as LiquidFilterIssue[]);
+}
+
+function extractRawVariableNames(templates: Template[]): string[] {
+  const names: string[] = [];
+  for (const tmpl of templates) {
+    if (isOutputToken(tmpl)) {
+      const result = extractProps(tmpl);
+      if (result.valid) {
+        const varName = buildVariable(result.props);
+        if (varName) names.push(varName);
+      }
+    }
+    if (isTagToken(tmpl)) {
+      if (tmpl instanceof ForTag || tmpl instanceof TablerowTag) {
+        const { token } = tmpl;
+        const tagOutput = token.input.slice(token.begin, token.end);
+        const tagName = tmpl instanceof ForTag ? 'for' : 'tablerow';
+        const loopMatch = tagOutput.match(new RegExp(`^\\s*{%\\s*${tagName}\\s+\\w+\\s+in\\s+(.+?)\\s*%}`));
+        if (loopMatch) {
+          const collExpr = loopMatch[1].trim();
+          if (!collExpr.match(/^\(.+?\.\..+?\)$/)) {
+            const collVar = extractVariableFromExpression(collExpr);
+            if (collVar) names.push(collVar);
+          }
+        }
+      }
+
+      const nested = (tmpl as any).templates || [];
+      names.push(...extractRawVariableNames(nested));
+      const branches = (tmpl as any).branches || [];
+      for (const branch of branches) {
+        names.push(...extractRawVariableNames(branch.templates || []));
+      }
+      const elseTemplates = (tmpl as any).elseTemplates || [];
+      names.push(...extractRawVariableNames(elseTemplates));
+    }
+  }
+
+  return names;
+}
+
+function annotateCollectionVariable(
+  iteratorVariable: string,
+  collectionVariable: string | null,
+  nestedTemplates: Template[],
+  validVariables: Array<Variable>,
+  invalidVariables: Array<Variable>
+) {
+  if (!collectionVariable) return;
+
+  const rawNames = extractRawVariableNames(nestedTemplates);
+  const iteratorPrefix = `${iteratorVariable}.`;
+  const iteratorProps = [
+    ...new Set(
+      rawNames.filter((name) => name.startsWith(iteratorPrefix)).map((name) => name.slice(iteratorPrefix.length))
+    ),
+  ];
+
+  const allVariables = [...validVariables, ...invalidVariables];
+  const collectionVar = allVariables.find((v) => v.name === collectionVariable);
+  if (collectionVar) {
+    collectionVar.isForLoopCollection = true;
+    collectionVar.iteratorProperties = iteratorProps;
+  }
 }
 
 function extractVariablesFromValue(value: any): string[] {

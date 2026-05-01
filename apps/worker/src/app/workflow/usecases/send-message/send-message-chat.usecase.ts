@@ -502,6 +502,15 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     if (!integration) {
+      Logger.warn(
+        {
+          hasChatWebhookUrl: Boolean(chatWebhookUrl),
+          hasPhoneNumber: Boolean(phoneNumber),
+          messageId: String(message?._id ?? ''),
+        },
+        `${LOG_CONTEXT} — sendErrors: missing integration (unexpected if getAndValidateIntegration succeeded)`
+      );
+
       await this.sendErrorStatus(
         message,
         'warning',
@@ -643,6 +652,20 @@ export class SendMessageChat extends SendMessageBase {
         : integrationId
           ? `Integration with integrationId: ${integrationId} is either deleted or not active`
           : `Integration is either deleted or not active`;
+
+      Logger.warn(
+        {
+          reason,
+          providerId,
+          hasIntegrationId: Boolean(integrationId),
+          hasIntegrationIdentifier: Boolean(integrationIdentifier),
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          jobId: String(command.job?._id ?? ''),
+          hasJobTenant: Boolean(command.job.tenant),
+        },
+        `${LOG_CONTEXT} — getAndValidateIntegration: no integration from SelectIntegration`
+      );
 
       await this.createExecutionDetail(
         command,

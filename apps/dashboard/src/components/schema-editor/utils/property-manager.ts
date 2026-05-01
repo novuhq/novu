@@ -22,14 +22,14 @@ export function parsePropertyPath(fullPath: string): PropertyPath | null {
     return null;
   }
 
-  const segments = fullPath.split('.');
-  const keyName = segments[segments.length - 1];
-  const parentPath = segments.slice(0, -1);
+  const segments = fullPath.split('.').filter((s) => s.trim() !== '');
 
-  if (keyName.trim() === '') {
-    console.error('The final key name in the path cannot be empty.');
+  if (segments.length === 0) {
     return null;
   }
+
+  const keyName = segments[segments.length - 1];
+  const parentPath = segments.slice(0, -1);
 
   return { segments, keyName, parentPath };
 }
@@ -52,7 +52,7 @@ export function findOrCreatePropertyPath(propertyList: PropertyListItem[], pathS
 
   for (const segment of pathSegments) {
     if (segment.trim() === '') {
-      throw new Error(`Invalid empty segment in path`);
+      continue;
     }
 
     let parentItem = targetList.find((p) => p.keyName === segment);

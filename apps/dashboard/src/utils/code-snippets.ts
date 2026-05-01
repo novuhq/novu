@@ -73,7 +73,7 @@ export const createCurlSnippet = ({ identifier, to, payload, secretKey = SECRET_
   )}'`;
 };
 
-export const createTriggerRequestBody = ({
+const createTriggerRequestBody = ({
   workflowId,
   to,
   payload,

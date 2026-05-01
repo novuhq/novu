@@ -29,6 +29,19 @@ jobs:
           echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
           echo "branch_name=release_$(date +'%Y_%m_%d_%H_%M')" >> "$GITHUB_OUTPUT"
 
+      - name: Close existing cloud release PRs
+        id: close-existing-prs
+        run: |
+          gh pr list --base prod --state open --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
+          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
+            echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
+            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
+            git push origin --delete "$BRANCH_NAME" || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Novu Cloud release branch
         run: git checkout -b ${{ steps.output-variables.outputs.branch_name }}
 

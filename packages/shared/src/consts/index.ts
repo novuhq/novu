@@ -11,6 +11,8 @@ export * from './productFeatureEnabledForServiceLevel';
 export * from './providers';
 export * from './rate-limiting';
 export * from './severity';
+export * from './slack-agent-oauth-scopes';
+export * from './slug-identifier';
 export * from './template-store';
 export * from './translation';
 export * from './upsert-validation-constants';

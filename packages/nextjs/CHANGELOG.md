@@ -1,3 +1,17 @@
+## v3.16.0 (2026-04-27)
+
+### 🚀 Features
+
+- **nextjs:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
+## v3.15.0 (2026-04-13)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
 ## v3.14.1 (2026-02-27)
 
 This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.

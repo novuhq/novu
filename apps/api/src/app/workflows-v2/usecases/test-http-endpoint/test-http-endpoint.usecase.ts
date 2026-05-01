@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
@@ -9,6 +9,7 @@ import {
   HttpRequestOptions,
   InstrumentUsecase,
   KeyValuePair,
+  resolveHttpRequestBody,
   shouldIncludeBody,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -47,36 +48,58 @@ export class TestHttpEndpointUsecase {
 
     const compileContext = this.buildCompileContext(previewPayload);
 
-    const compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+    let compiled: typeof controlValues;
+    try {
+      compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Unknown error';
+
+      throw new BadRequestException(`HTTP request step template compilation failed: ${message}`);
+    }
 
     const resolvedUrl = (compiled.url as string) ?? '';
     const method = (compiled.method as string) ?? 'GET';
     const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
-    const compiledBody = (compiled.body as KeyValuePair[]) ?? [];
+    const compiledBody = compiled.body as string | KeyValuePair[] | undefined;
 
     const resolvedHeaders: Record<string, string> = Object.fromEntries(
       compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
     );
 
-    const resolvedBodyPairs: Record<string, unknown> = Object.fromEntries(
-      compiledBody.filter(({ key }) => key).map(({ key, value }) => [key, value])
-    );
+    const startTime = performance.now();
 
-    const hasBody = shouldIncludeBody(resolvedBodyPairs, method);
+    let resolvedBody: Record<string, unknown> | unknown[] | undefined;
+    try {
+      resolvedBody = resolveHttpRequestBody(compiledBody);
+    } catch (parseError) {
+      const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
+
+      return {
+        statusCode: 400,
+        body: { error: `Invalid raw JSON body: ${errorMessage}` },
+        headers: {},
+        durationMs: Math.round(performance.now() - startTime),
+        resolvedRequest: {
+          url: resolvedUrl,
+          method,
+          headers: resolvedHeaders,
+        },
+      };
+    }
+
+    const hasBody = shouldIncludeBody(resolvedBody, method);
 
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
     );
-    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBodyPairs : {});
-
-    const startTime = performance.now();
+    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBody : {});
 
     try {
       const response = await this.httpClientService.request<string>({
         url: resolvedUrl,
         method: method as HttpRequestOptions['method'],
         headers: resolvedHeaders,
-        ...(hasBody ? { body: resolvedBodyPairs } : {}),
+        ...(hasBody ? { body: resolvedBody } : {}),
         timeout: 30_000,
         responseType: 'text',
       });
@@ -91,7 +114,7 @@ export class TestHttpEndpointUsecase {
           url: resolvedUrl,
           method,
           headers: resolvedHeaders,
-          ...(hasBody ? { body: resolvedBodyPairs } : {}),
+          ...(hasBody ? { body: resolvedBody } : {}),
         },
       };
     } catch (error) {
@@ -113,7 +136,7 @@ export class TestHttpEndpointUsecase {
             url: resolvedUrl,
             method,
             headers: resolvedHeaders,
-            ...(hasBody ? { body: resolvedBodyPairs } : {}),
+            ...(hasBody ? { body: resolvedBody } : {}),
           },
         };
       }
@@ -145,7 +168,7 @@ export class TestHttpEndpointUsecase {
     try {
       return JSON.parse(compiled);
     } catch {
-      return values;
+      throw new Error('Rendered template output is not valid JSON');
     }
   }
 }

@@ -1,6 +1,7 @@
 import { type MxRecord, promises } from 'node:dns';
 import { BadRequestException, Injectable, Scope } from '@nestjs/common';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
+import { getMailServerDomain } from '../../../domains/utils/dns-records';
 import { GetMxRecordResponseDto } from '../../dtos/get-mx-record.dto';
 import { GetMxRecordCommand } from './get-mx-record.command';
 
@@ -45,7 +46,7 @@ export class GetMxRecord {
 
   private async checkMxRecordExistence(inboundParseDomain: string) {
     const relativeDnsRecords = await this.getMxRecords(inboundParseDomain);
-    const INBOUND_DOMAIN = process.env.MAIL_SERVER_DOMAIN?.replace('https://', '').replace('/', '');
+    const INBOUND_DOMAIN = getMailServerDomain();
     if (!INBOUND_DOMAIN) {
       throw new BadRequestException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
     }

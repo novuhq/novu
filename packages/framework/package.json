@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.10.0",
+  "version": "2.10.1-alpha.4",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -26,6 +26,8 @@
     "remix",
     "step-resolver",
     "sveltekit",
+    "jsx-runtime",
+    "jsx-dev-runtime",
     "validators",
     "README.md"
   ],
@@ -71,6 +73,26 @@
       "import": {
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
+      }
+    },
+    "./jsx-runtime": {
+      "require": {
+        "types": "./dist/cjs/jsx-runtime.d.cts",
+        "default": "./dist/cjs/jsx-runtime.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/jsx-runtime.d.ts",
+        "default": "./dist/esm/jsx-runtime.js"
+      }
+    },
+    "./jsx-dev-runtime": {
+      "require": {
+        "types": "./dist/cjs/jsx-dev-runtime.d.cts",
+        "default": "./dist/cjs/jsx-dev-runtime.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/jsx-dev-runtime.d.ts",
+        "default": "./dist/esm/jsx-dev-runtime.js"
       }
     },
     "./express": {
@@ -252,6 +274,7 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
+    "chat": "^4.25.0",
     "ajv": "^8.18.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
@@ -259,7 +282,7 @@
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",
-    "liquidjs": "^10.25.5",
+    "liquidjs": "^10.25.7",
     "pluralize": "^8.0.0",
     "sanitize-html": "^2.13.0"
   },

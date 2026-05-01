@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 
-export function TimelineStepNumber({ index }: { index: number }) {
+function TimelineStepNumber({ index }: { index: number }) {
   return (
     <div className="text-label-xs bg-bg-weak text-text-strong flex h-6 w-6 shrink-0 items-center justify-center rounded-full p-0.5 text-xs font-medium shadow-[0px_0px_0px_1px_#FFF,0px_0px_0px_2px_#E1E4EA]">
       {index + 1}
@@ -8,7 +8,7 @@ export function TimelineStepNumber({ index }: { index: number }) {
   );
 }
 
-export function TimelineLine({ variant = 'default' }: { variant?: 'default' | 'continuous' }) {
+function TimelineLine({ variant = 'default' }: { variant?: 'default' | 'continuous' }) {
   if (variant === 'continuous') {
     return (
       <div

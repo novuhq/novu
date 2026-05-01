@@ -16,6 +16,56 @@ import {
 
 const LOG_CONTEXT = 'SqsConsumerService';
 
+/**
+ * Bounded retry config for SQS DeleteMessage calls.
+ *
+ * AWS SDK v3's default retry strategy does NOT classify Node DNS errors
+ * (EAI_AGAIN, ENOTFOUND, etc.) as transient, so a single resolver hiccup
+ * causes the delete to fail on the first attempt. When that happens after
+ * a successful processor run, SQS will redeliver the message after the
+ * visibility timeout, leading to duplicate processing. This bounded retry
+ * with exponential backoff prevents that for typical sub-second blips.
+ */
+const DELETE_MAX_ATTEMPTS = 3;
+const DELETE_BACKOFF_BASE_MS = 200;
+/**
+ * Proportional jitter added on top of the exponential backoff (0..25%).
+ * Prevents synchronized retry storms when many in-flight deletes hit the
+ * same transient failure (e.g. region-wide DNS blip).
+ */
+const DELETE_BACKOFF_JITTER_FACTOR = 0.25;
+
+/**
+ * SQS / AWS service error names that indicate a permanent failure - retrying
+ * cannot succeed, so we should log and stop immediately to avoid burning
+ * the retry budget and flooding logs.
+ *
+ * - ReceiptHandleIsInvalid: receipt handle expired (visibility timeout passed)
+ *   or never valid; the message will be redelivered regardless of what we do.
+ * - InvalidParameterValue / InvalidAddress: malformed request.
+ * - AccessDenied / AccessDeniedException: IAM/policy issue, won't self-heal.
+ */
+const NON_RETRYABLE_DELETE_ERROR_NAMES = new Set([
+  'ReceiptHandleIsInvalid',
+  'InvalidParameterValue',
+  'InvalidAddress',
+  'AccessDenied',
+  'AccessDeniedException',
+]);
+
+function isNonRetryableDeleteError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const errorName = (error as { name?: string }).name;
+  const errorCode = (error as { Code?: string; code?: string }).Code ?? (error as { code?: string }).code;
+
+  return (
+    (typeof errorName === 'string' && NON_RETRYABLE_DELETE_ERROR_NAMES.has(errorName)) ||
+    (typeof errorCode === 'string' && NON_RETRYABLE_DELETE_ERROR_NAMES.has(errorCode))
+  );
+}
+
 export type SqsMessageProcessor<T = unknown> = (data: T, meta: ISqsMessageMeta) => Promise<void>;
 
 /**
@@ -195,26 +245,7 @@ export class SqsConsumerService {
 
     this.processMessage(message)
       .then(async () => {
-        try {
-          await this.sqsService.getClient().send(
-            new DeleteMessageCommand({
-              QueueUrl: this.queueUrl,
-              ReceiptHandle: message.ReceiptHandle,
-            })
-          );
-
-          this.logger?.debug({ messageId, topic: this.topic }, 'SQS message processed and deleted');
-        } catch (deleteError) {
-          Logger.error(
-            {
-              error: deleteError instanceof Error ? deleteError.message : String(deleteError),
-              messageId,
-              topic: this.topic,
-            },
-            'Failed to delete SQS message after successful processing',
-            LOG_CONTEXT
-          );
-        }
+        await this.deleteMessageWithRetry(message, messageId);
       })
       .catch((error) => {
         Logger.error(
@@ -230,6 +261,76 @@ export class SqsConsumerService {
       .finally(() => {
         this.pool.release();
       });
+  }
+
+  /**
+   * Delete an SQS message with bounded exponential backoff retry.
+   *
+   * The processor has already succeeded by this point - failing to delete
+   * means SQS will redeliver and we'll do duplicate work. We retry a few
+   * times to absorb short-lived DNS/network blips before giving up.
+   */
+  private async deleteMessageWithRetry(message: Message, messageId: string): Promise<void> {
+    for (let attempt = 1; attempt <= DELETE_MAX_ATTEMPTS; attempt++) {
+      try {
+        await this.sqsService.getClient().send(
+          new DeleteMessageCommand({
+            QueueUrl: this.queueUrl,
+            ReceiptHandle: message.ReceiptHandle,
+          })
+        );
+
+        this.logger?.debug(
+          { messageId, topic: this.topic, attempt, maxAttempts: DELETE_MAX_ATTEMPTS },
+          'SQS message processed and deleted'
+        );
+
+        return;
+      } catch (deleteError) {
+        const errorMessage = deleteError instanceof Error ? deleteError.message : String(deleteError);
+        const errorName = deleteError instanceof Error ? deleteError.name : undefined;
+        const isFinalAttempt = attempt === DELETE_MAX_ATTEMPTS;
+        const isNonRetryable = isNonRetryableDeleteError(deleteError);
+
+        if (isNonRetryable || isFinalAttempt) {
+          Logger.error(
+            {
+              error: errorMessage,
+              errorName,
+              messageId,
+              topic: this.topic,
+              attempt,
+              maxAttempts: DELETE_MAX_ATTEMPTS,
+              nonRetryable: isNonRetryable,
+            },
+            'Failed to delete SQS message after successful processing',
+            LOG_CONTEXT
+          );
+
+          return;
+        }
+
+        Logger.warn(
+          {
+            error: errorMessage,
+            errorName,
+            messageId,
+            topic: this.topic,
+            attempt,
+            maxAttempts: DELETE_MAX_ATTEMPTS,
+          },
+          'Transient error deleting SQS message, retrying',
+          LOG_CONTEXT
+        );
+
+        const baseBackoffMs = DELETE_BACKOFF_BASE_MS * 2 ** (attempt - 1);
+        const jitterMs = Math.floor(Math.random() * baseBackoffMs * DELETE_BACKOFF_JITTER_FACTOR);
+        const backoffMs = baseBackoffMs + jitterMs;
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, backoffMs);
+        });
+      }
+    }
   }
 
   private async processMessage(message: Message): Promise<void> {

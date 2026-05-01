@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.8.0",
+  "version": "2.8.1-rc.5",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -72,7 +72,7 @@
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "async-sema": "3.0.1",
-    "axios": "^1.9.0",
+    "axios": "^1.15.2",
     "chalk": "4.1.2",
     "commander": "^9.0.0",
     "configstore": "^5.0.0",

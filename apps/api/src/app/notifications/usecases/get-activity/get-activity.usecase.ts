@@ -75,7 +75,9 @@ export class GetActivity {
     private workflowRunRepository: WorkflowRunRepository,
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetActivityCommand): Promise<ActivityNotificationResponseDto> {
     this.analyticsService.track('Get Activity Feed Item - [Activity Feed]', command.userId, {
