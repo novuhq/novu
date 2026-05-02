@@ -199,10 +199,26 @@ export class ParseEventRequest {
 
       // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
       if (command.payload && Array.isArray(command.payload.attachments)) {
-        this.modifyAttachments(command);
-        await this.storageHelperService.uploadAttachments(command.payload.attachments);
-        // eslint-disable-next-line no-param-reassign
-        command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
+        try {
+          this.modifyAttachments(command);
+          await this.storageHelperService.uploadAttachments(command.payload.attachments);
+          // eslint-disable-next-line no-param-reassign
+          command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
+        } catch (error) {
+          if (error instanceof PayloadValidationException) {
+            await this.createRequestTrace({
+              requestId,
+              command,
+              eventType: 'request_payload_validation_failed',
+              transactionId,
+              status: 'error',
+              message: 'Payload validation failed',
+              rawData: { validationErrors: error.message, payload: command.payload },
+            });
+          }
+
+          throw error;
+        }
       }
 
       const result = await this.dispatchEventToWorkflowQueue({
@@ -416,19 +432,30 @@ export class ParseEventRequest {
 
   @Instrument()
   private modifyAttachments(command: ParseEventRequestCommand): void {
-    // eslint-disable-next-line no-param-reassign
-    command.payload.attachments = command.payload.attachments
-      .filter((attachment) => typeof attachment.file === 'string')
-      .map((attachment) => {
-        const randomId = randomBytes(16).toString('hex');
+    const invalidAttachmentIndices = command.payload.attachments
+      .map((attachment, index) => (typeof attachment?.file === 'string' ? -1 : index))
+      .filter((index) => index >= 0);
 
-        return {
-          ...attachment,
-          name: attachment.name,
-          file: Buffer.from(attachment.file, 'base64'),
-          storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
-        };
-      });
+    if (invalidAttachmentIndices.length > 0) {
+      throw new PayloadValidationException(
+        invalidAttachmentIndices.map((index) => ({
+          field: `attachments.${index}.file`,
+          message: 'Each attachment must include a base64-encoded string in the file property',
+        }))
+      );
+    }
+
+    // eslint-disable-next-line no-param-reassign
+    command.payload.attachments = command.payload.attachments.map((attachment) => {
+      const randomId = randomBytes(16).toString('hex');
+
+      return {
+        ...attachment,
+        name: attachment.name,
+        file: Buffer.from(attachment.file, 'base64'),
+        storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
+      };
+    });
   }
 
   /**
