@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ArrowRight } from 'lucide-react';
-import { useCallback, useId, useMemo } from 'react';
+import { useCallback, useId, useMemo, type ComponentProps } from 'react';
 import { Link } from 'react-router-dom';
 import { Area, ComposedChart, XAxis, YAxis } from 'recharts';
 import { type WorkflowRunsTrendDataPoint } from '../../../api/activity';
@@ -13,6 +13,31 @@ import { generateDummyWorkflowRunsData } from './chart-dummy-data';
 import { type WorkflowRunsChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 import { FlickeringGrid } from './flickering-grid';
+
+function periodHasWorkflowErrors(points: WorkflowRunsTrendDataPoint[] | undefined): boolean {
+  if (!points?.length) {
+    return false;
+  }
+
+  return points.some((p) => (p.error ?? 0) > 0);
+}
+
+function WorkflowRunsChartTooltip({
+  omitDataKeys,
+  ...props
+}: ComponentProps<typeof NovuTooltip> & { omitDataKeys?: readonly string[] }) {
+  const filteredPayload = useMemo(() => {
+    if (!omitDataKeys?.length || !props.payload) {
+      return props.payload;
+    }
+
+    const omit = new Set(omitDataKeys);
+
+    return props.payload.filter((item) => !omit.has(String(item.dataKey)));
+  }, [omitDataKeys, props.payload]);
+
+  return <NovuTooltip {...props} payload={filteredPayload} />;
+}
 
 type WorkflowRunsChartDataWithTotal = WorkflowRunsChartData & { total: number };
 
@@ -100,9 +125,17 @@ type ChartContentParams = {
   config: ChartConfig;
   seriesKeys: readonly string[];
   baseId: string;
+  omitTooltipDataKeys?: readonly string[];
 };
 
-function renderWorkflowRunsChartContent({ data, includeTooltip, config, seriesKeys, baseId }: ChartContentParams) {
+function renderWorkflowRunsChartContent({
+  data,
+  includeTooltip,
+  config,
+  seriesKeys,
+  baseId,
+  omitTooltipDataKeys,
+}: ChartContentParams) {
   return (
     <div className="relative w-full -mx-1 group/chart h-full flex flex-col">
       <div className={`pointer-events-none absolute left-0 right-0 top-0 z-0`} style={{ height: CHART_HEIGHT }}>
@@ -143,7 +176,18 @@ function renderWorkflowRunsChartContent({ data, includeTooltip, config, seriesKe
             padding={{ left: 8, right: 8 }}
           />
           <YAxis hide domain={[0, 'auto']} />
-          {includeTooltip && <ChartTooltip cursor={false} content={<NovuTooltip showTotal />} />}
+          {includeTooltip && (
+            <ChartTooltip
+              cursor={false}
+              content={
+                omitTooltipDataKeys?.length ? (
+                  <WorkflowRunsChartTooltip showTotal omitDataKeys={omitTooltipDataKeys} />
+                ) : (
+                  <NovuTooltip showTotal />
+                )
+              }
+            />
+          )}
           {seriesKeys.map((key) => {
             const entry = config[key as keyof typeof config];
             if (!entry || !('color' in entry)) return null;
@@ -223,7 +267,30 @@ function WorkflowRunsTrendChartInner({
   error,
 }: WorkflowRunsTrendChartProps & { variant: Variant }) {
   const baseId = useId();
-  const { config, seriesKeys, getTotal } = VARIANT_CONFIG[variant];
+  const { config: fullChartConfig, seriesKeys: allSeriesKeys, getTotal } = VARIANT_CONFIG[variant];
+
+  const showErrorSeries = useMemo(() => periodHasWorkflowErrors(data), [data]);
+
+  const { chartConfig, seriesKeys, omitTooltipDataKeys } = useMemo(() => {
+    if (showErrorSeries) {
+      return {
+        chartConfig: fullChartConfig,
+        seriesKeys: allSeriesKeys,
+        omitTooltipDataKeys: undefined as readonly string[] | undefined,
+      };
+    }
+
+    const seriesKeysFiltered = allSeriesKeys.filter((key) => key !== 'error');
+    const chartConfig = Object.fromEntries(
+      Object.entries(fullChartConfig).filter(([key]) => key !== 'error')
+    ) as ChartConfig;
+
+    return {
+      chartConfig,
+      seriesKeys: seriesKeysFiltered,
+      omitTooltipDataKeys: ['error'] as const,
+    };
+  }, [allSeriesKeys, fullChartConfig, showErrorSeries]);
 
   const chartData = useMemo(
     () => data?.map((p) => VARIANT_CONFIG[variant].mapDataPoint(p)) ?? undefined,
@@ -246,11 +313,12 @@ function WorkflowRunsTrendChartInner({
       renderWorkflowRunsChartContent({
         data: chartDataToRender,
         includeTooltip,
-        config,
+        config: chartConfig,
         seriesKeys,
         baseId,
+        omitTooltipDataKeys,
       }),
-    [baseId, config, seriesKeys]
+    [baseId, chartConfig, omitTooltipDataKeys, seriesKeys]
   );
 
   const renderEmptyState = useCallback(
