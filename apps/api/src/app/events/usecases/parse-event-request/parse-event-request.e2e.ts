@@ -263,6 +263,32 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     expect(command.payload.age).to.equal(25);
     expect(command.payload.isActive).to.equal(false);
   });
+
+  it('should not throw when attachments have missing file property', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'valid.txt', file: Buffer.from('hello').toString('base64'), mime: 'text/plain' },
+        { name: 'missing-file.txt', mime: 'text/plain' },
+        { name: 'null-file.txt', file: null, mime: 'text/plain' },
+        { name: 'number-file.txt', file: 123, mime: 'text/plain' },
+      ],
+    };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+    expect(command.payload.attachments).to.have.length(1);
+    expect(command.payload.attachments[0].name).to.equal('valid.txt');
+  });
 });
 
 const buildCommand = (
