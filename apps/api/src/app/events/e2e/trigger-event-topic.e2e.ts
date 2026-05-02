@@ -82,7 +82,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         },
         {
           name: 'text2.txt',
-          file: Buffer.from('hello world!', 'utf-8'),
+          file: Buffer.from('hello world!', 'utf-8').toString('base64'),
         },
       ];
 
@@ -870,7 +870,7 @@ describe('Topic Trigger Event #novu-v2', () => {
         },
         {
           name: 'text2.txt',
-          file: Buffer.from('hello world!', 'utf-8'),
+          file: Buffer.from('hello world!', 'utf-8').toString('base64'),
         },
       ];
 
