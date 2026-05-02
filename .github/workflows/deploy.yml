@@ -528,3 +528,26 @@ jobs:
             -H "Content-Type: application/json" \
             -H "x-api-key: ${{ secrets.BUG0_SECRET_KEY }}" \
             -d '{"url": "https://eu.dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
+
+  linear_release_cloud:
+    name: Linear Release Sync (Cloud)
+    needs: [deploy, prepare-matrix]
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      needs.deploy.result == 'success' &&
+      contains(github.event.inputs.environment, 'production')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Sync release to Linear
+        uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
+          name: ${{ github.event.inputs.environment }}
+          version: ${{ github.event.inputs.environment }}-${{ github.sha }}
