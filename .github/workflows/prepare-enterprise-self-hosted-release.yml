@@ -265,16 +265,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Normalize Linear release version
+        env:
+          RAW_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          ver="${RAW_VERSION#v}"
+          echo "LINEAR_RELEASE_VERSION=$ver" >> "$GITHUB_ENV"
+
       - name: Sync release to Linear
-        uses: linear/linear-release-action@v0
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
-          name: v${{ github.event.inputs.version }}
-          version: ${{ github.event.inputs.version }}
+          name: v${{ env.LINEAR_RELEASE_VERSION }}
+          version: ${{ env.LINEAR_RELEASE_VERSION }}
 
       - name: Complete release in Linear
-        uses: linear/linear-release-action@v0
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
           command: complete
-          version: ${{ github.event.inputs.version }}
+          version: ${{ env.LINEAR_RELEASE_VERSION }}

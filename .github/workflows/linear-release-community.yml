@@ -29,6 +29,6 @@ jobs:
           fetch-depth: 0
 
       - name: Sync release to Linear
-        uses: linear/linear-release-action@v0
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_COMMUNITY }}
