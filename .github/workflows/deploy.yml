@@ -530,13 +530,22 @@ jobs:
             -d '{"url": "https://eu.dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
 
   linear_release_cloud:
-    name: Linear Release Sync (Cloud)
+    # Scheduled Linear pipeline: sync issues for this commit, then either move the
+    # release to the staging stage (staging deploys) or complete it (production).
+    # In Linear: set the Cloud pipeline to "Scheduled", add a stage named exactly
+    # "staging" (or change the `stage` input below to match your Linear stage name).
+    # Pass the same commit SHA as `version` from staging → prod for one release.
+    name: Linear Release (Cloud)
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
     if: |
       always() &&
       needs.deploy.result == 'success' &&
-      contains(github.event.inputs.environment, 'production')
+      (
+        github.event.inputs.environment == 'staging' ||
+        github.event.inputs.environment == 'staging-sg' ||
+        contains(github.event.inputs.environment, 'production')
+      )
     permissions:
       contents: read
     steps:
@@ -549,5 +558,23 @@ jobs:
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
-          name: ${{ github.event.inputs.environment }}
-          version: ${{ github.event.inputs.environment }}-${{ github.sha }}
+          version: ${{ github.sha }}
+
+      - name: Update Linear stage — staging
+        if: |
+          github.event.inputs.environment == 'staging' ||
+          github.event.inputs.environment == 'staging-sg'
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
+          command: update
+          stage: staging
+          version: ${{ github.sha }}
+
+      - name: Complete Linear release — production
+        if: contains(github.event.inputs.environment, 'production')
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
+          command: complete
+          version: ${{ github.sha }}
