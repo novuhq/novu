@@ -129,7 +129,7 @@ overrides:
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.4': ^3.47.4
   protobufjs@<7.5.5: ^7.5.5
   protobufjs@>=8.0.0 <8.0.1: ^8.0.1
-  newrelic: 13.18.0
+  newrelic: 13.1.0
 
 patchedDependencies:
   smtp-server@1.17.0:
@@ -532,8 +532,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.1.0
+        version: 13.1.0
       nimma:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1240,8 +1240,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.2
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.1.0
+        version: 13.1.0
       pino:
         specifier: ^8.17.2
         version: 8.17.2
@@ -1382,8 +1382,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.1.0
+        version: 13.1.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1587,8 +1587,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.1.0
+        version: 13.1.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1790,8 +1790,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.1.0
+        version: 13.1.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -2610,8 +2610,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@8.3.3)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.1.0
+        version: 13.1.0
       node-fetch:
         specifier: ^3.2.10
         version: 3.3.2
@@ -4472,12 +4472,6 @@ packages:
   '@apimatic/schema@0.6.0':
     resolution: {integrity: sha512-JgG32LQRLphHRWsn64vIt7wD2m+JH46swM6ZrY7g1rdiGiKV5m+A+TBrJKoUUQRmS14azMgePNZY30NauWqzLg==}
     engines: {node: '>=10.4.0'}
-
-  '@apm-js-collab/code-transformer@0.10.0':
-    resolution: {integrity: sha512-6Y0pDhTIiVetgioIiHeFQ+vwpxd7Pz2h5xI33n0R9juRbxBaFUfhBfGOAUF+Y4TdcT5ccpjS6/5sLLYDDS3FHw==}
-
-  '@apm-js-collab/tracing-hooks@0.5.0':
-    resolution: {integrity: sha512-Fj2E03RnXtMkn5/XupRnNRC7CJcXRPVPmlTcw1ZJ3F/2iDyTXYMVKImuhU+Q9R7L0nxnuvwaP3ITpl2Y8mtXng==}
 
   '@arethetypeswrong/cli@0.17.4':
     resolution: {integrity: sha512-AeiKxtf67XD/NdOqXgBOE5TZWH3EOCt+0GkbUpekOzngc+Q/cRZ5azjWyMxISxxfp0EItgm5NoSld9p7BAA5xQ==}
@@ -6746,10 +6740,6 @@ packages:
   '@cypress/xvfb@1.2.4':
     resolution: {integrity: sha512-skbBzPggOVYCbnGgV+0dmBdW/s77ZkAOXIC1knS8NagwDjBrNC1LuXtQJeiN6l+m7lzmHtaoUw/ctJKdqkG57Q==}
 
-  '@datadog/pprof@5.14.1':
-    resolution: {integrity: sha512-MlODCE9Gltmx7WChOg1BkIm7W2iE4CDW7K72BMwgzCvxFkG9rFWVsuA7/NEZL1nDvJ0qDe2du7DZZdZHTjcVPw==}
-    engines: {node: '>=16'}
-
   '@date-fns/utc@2.1.0':
     resolution: {integrity: sha512-176grgAgU2U303rD2/vcOmNg0kGPbhzckuH1TEP2al7n0AQipZIy9P15usd2TKQCG1g+E1jX/ZVQSzs4sUDwgA==}
 
@@ -8496,9 +8486,9 @@ packages:
     resolution: {integrity: sha512-l0MTkuazDMaEDWJk4ufHVgco4ssWhk/uSUYTn33dFOHAqpHLyxZHxxzKJb4vyZkhRy11UaKNhmNiAiXH557SJQ==}
     engines: {node: '>=20', npm: '>=6'}
 
-  '@newrelic/security-agent@3.0.1':
-    resolution: {integrity: sha512-H01RudIv1QqnOIUwaXRf2YGoiAR/KBPXrPZY+rSQ41v7jKNJXBVcz2nLSIofQxJO657L2YzsgE4xVZ2pDyzyMw==}
-    engines: {node: '>=20', npm: '>=6.0.0'}
+  '@newrelic/security-agent@2.4.4':
+    resolution: {integrity: sha512-KQs76SGqTOG/pTuqRGwzy1lNAm96z8gbb5XHl9FsbOY7Kt9Ltbr46AiiovDHhNQbXFTPnHEY7FfmNJ4GK4W5dQ==}
+    engines: {node: '>=18', npm: '>=6.0.0'}
 
   '@next/env@15.5.15':
     resolution: {integrity: sha512-vcmyu5/MyFzN7CdqRHO3uHO44p/QPCZkuTUXroeUmhNP8bL5PHFEhik22JUazt+CDDoD6EpBYRCaS2pISL+/hg==}
@@ -22083,8 +22073,8 @@ packages:
   new-date@1.0.3:
     resolution: {integrity: sha512-0fsVvQPbo2I18DT2zVHpezmeeNYV2JaJSrseiHLc17GNOxJzUdx5mvSigPu8LtIfZSij5i1wXnXFspEs2CD6hA==}
 
-  newrelic@13.18.0:
-    resolution: {integrity: sha512-9GYhtXTzjcsH4HUPeGwN6i24z6YZuB/ikWced3h9D/SH984MH9GxpWJjlurouA92GP667fIN0TjGuTNIfYa54Q==}
+  newrelic@13.1.0:
+    resolution: {integrity: sha512-IXyKRY9nFUmUtrglAtMUtbc1i3HjiSrLt1P19FdX1jnAF8qJXTVbP3VAvtj0I4VpEOM0uLVVMhPE+Sp8LYW1iQ==}
     engines: {node: '>=20', npm: '>=6.0.0'}
     hasBin: true
 
@@ -22223,10 +22213,6 @@ packages:
 
   node-gyp-build-optional-packages@5.0.7:
     resolution: {integrity: sha512-YlCCc6Wffkx0kHkmam79GKvDQ6x+QZkMjFGrIMxgFNILFvGSbCp2fCBC55pGTT9gVaz8Na5CLmxt/urtzRv36w==}
-    hasBin: true
-
-  node-gyp-build@3.9.0:
-    resolution: {integrity: sha512-zLcTg6P4AbcHPq465ZMFNXx7XpKKJh+7kkN699NiQWisR2uWYOWNWqRHAmbnmKiL4e9aLSlmy5U7rEMUXV59+A==}
     hasBin: true
 
   node-gyp-build@4.8.4:
@@ -23535,9 +23521,6 @@ packages:
 
   postmark@4.0.2:
     resolution: {integrity: sha512-2zlCv+KVVQ0KoamXZHE7d+gXzLlr8tPE+PxQmtUaIZhbHzZAq4D6yH2b+ykhA8wYCc5ISodcx8U1aNLenXBs9g==}
-
-  pprof-format@2.2.1:
-    resolution: {integrity: sha512-p4tVN7iK19ccDqQv8heyobzUmbHyds4N2FI6aBMcXz6y99MglTWDxIyhFkNaLeEXs6IFUEzT0zya0icbSLLY0g==}
 
   prebuildify@6.0.1:
     resolution: {integrity: sha512-8Y2oOOateom/s8dNBsGIcnm6AxPmLH4/nanQzL5lQMU+sC0CMhzARZHizwr36pUPLdvBnOkCNQzxg4djuFSgIw==}
@@ -27619,16 +27602,6 @@ snapshots:
   '@apimatic/schema@0.6.0':
     dependencies:
       tslib: 2.8.1
-
-  '@apm-js-collab/code-transformer@0.10.0': {}
-
-  '@apm-js-collab/tracing-hooks@0.5.0':
-    dependencies:
-      '@apm-js-collab/code-transformer': 0.10.0
-      debug: 4.4.3(supports-color@8.1.1)
-      module-details-from-path: 1.0.4
-    transitivePeerDependencies:
-      - supports-color
 
   '@arethetypeswrong/cli@0.17.4':
     dependencies:
@@ -32135,13 +32108,6 @@ snapshots:
       - supports-color
     optional: true
 
-  '@datadog/pprof@5.14.1':
-    dependencies:
-      node-gyp-build: 3.9.0
-      pprof-format: 2.2.1
-      source-map: 0.7.4
-    optional: true
-
   '@date-fns/utc@2.1.0': {}
 
   '@dependents/detective-less@5.0.0':
@@ -34533,8 +34499,9 @@ snapshots:
       - bare-buffer
     optional: true
 
-  '@newrelic/security-agent@3.0.1':
+  '@newrelic/security-agent@2.4.4':
     dependencies:
+      axios: 1.15.2
       check-disk-space: 3.4.0
       content-type: 1.0.5
       cron: 3.1.7
@@ -34552,13 +34519,13 @@ snapshots:
       request-ip: 3.3.0
       ringbufferjs: 2.0.0
       semver: 7.7.4
-      undici: 7.24.3
       unescape: 1.0.1
       unescape-js: 1.1.4
       uuid: 9.0.1
       ws: 8.20.0
     transitivePeerDependencies:
       - bufferutil
+      - debug
       - supports-color
       - utf-8-validate
 
@@ -52943,12 +52910,11 @@ snapshots:
     dependencies:
       '@segment/isodate': 1.0.3
 
-  newrelic@13.18.0:
+  newrelic@13.1.0:
     dependencies:
-      '@apm-js-collab/tracing-hooks': 0.5.0
       '@grpc/grpc-js': 1.14.3
       '@grpc/proto-loader': 0.7.13
-      '@newrelic/security-agent': 3.0.1
+      '@newrelic/security-agent': 2.4.4
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.203.0
       '@opentelemetry/core': 2.5.0(@opentelemetry/api@1.9.0)
@@ -52969,13 +52935,13 @@ snapshots:
       semver: 7.7.4
       winston-transport: 4.5.0
     optionalDependencies:
-      '@datadog/pprof': 5.14.1
       '@newrelic/fn-inspect': 4.4.0
       '@newrelic/native-metrics': 12.0.0
       '@prisma/prisma-fmt-wasm': 4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
+      - debug
       - supports-color
       - utf-8-validate
 
@@ -53160,9 +53126,6 @@ snapshots:
   node-forge@1.4.0: {}
 
   node-gyp-build-optional-packages@5.0.7:
-    optional: true
-
-  node-gyp-build@3.9.0:
     optional: true
 
   node-gyp-build@4.8.4:
@@ -54648,9 +54611,6 @@ snapshots:
       axios: 1.15.2
     transitivePeerDependencies:
       - debug
-
-  pprof-format@2.2.1:
-    optional: true
 
   prebuildify@6.0.1:
     dependencies:
