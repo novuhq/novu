@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 import { MsTeamsConnectButton, MsTeamsLinkUser, NovuProvider, useNovu } from '@novu/react';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -28,6 +28,7 @@ import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { QueryKeys } from '@/utils/query-keys';
@@ -681,6 +682,7 @@ export function TeamsSetupGuide({
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MSTEAMS_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -706,6 +708,7 @@ export function TeamsSetupGuide({
   const azurePopupRef = useRef<Window | null>(null);
   const hasCheckedOnMountRef = useRef(false);
   const [initialCheckLoading, setInitialCheckLoading] = useState(false);
+  const activeSetupMode = isQuickSetupEnabled ? setupMode : 'manual';
 
   const { integrations } = useFetchIntegrations();
 
@@ -740,7 +743,7 @@ export function TeamsSetupGuide({
   // If any check is still pending/failed we show the HealthCheckView so the user
   // sees live status rather than a falsely-completed step.
   useEffect(() => {
-    if (!hasCredentials || !currentEnvironment || hasCheckedOnMountRef.current) {
+    if (!isQuickSetupEnabled || !hasCredentials || !currentEnvironment || hasCheckedOnMountRef.current) {
       return;
     }
 
@@ -770,7 +773,7 @@ export function TeamsSetupGuide({
         setInitialCheckLoading(false);
       }
     })();
-  }, [hasCredentials, hasQuickSetupProvisioning, currentEnvironment, integrationId]);
+  }, [hasCredentials, hasQuickSetupProvisioning, currentEnvironment, integrationId, isQuickSetupEnabled]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -861,7 +864,7 @@ export function TeamsSetupGuide({
   const base = stepOffset;
 
   // Manual flow: poll only the checks needed to drive steps 4-6 once credentials are saved.
-  const manualHealth = useManualHealthPoll(integrationId, hasCredentials && setupMode === 'manual');
+  const manualHealth = useManualHealthPoll(integrationId, hasCredentials && activeSetupMode === 'manual');
 
   // Build the webhook URL used in the manual Bot deployment instructions.
   const webhookUrl = `${getApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
@@ -1641,12 +1644,12 @@ export function TeamsSetupGuide({
     </div>
   );
 
-  const activeSteps = setupMode === 'quick' ? quickSteps : steps;
+  const activeSteps = activeSetupMode === 'quick' ? quickSteps : steps;
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className="px-6 pt-4 pb-2">{modeToggle}</div>
+        {isQuickSetupEnabled && <div className="px-6 pt-4 pb-2">{modeToggle}</div>}
         <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6')}>
           <div
             className="absolute bottom-0 left-[22px] top-0 w-px"
@@ -1664,7 +1667,7 @@ export function TeamsSetupGuide({
 
   return (
     <>
-      {modeToggle}
+      {isQuickSetupEnabled && modeToggle}
       {activeSteps}
       {listening}
       {credentialsSidebar}

@@ -26,9 +26,7 @@ const REQUIRED_GRAPH_PERMISSIONS = [
   { id: '59a6b24b-4225-4393-8165-ebaec5f55d7a', type: 'Role' }, // Channel.ReadBasic.All
   { id: 'e12dae10-5a57-4817-b79d-dfbec5348930', type: 'Role' }, // AppCatalog.Read.All
   { id: '9f67436c-5415-4e7f-8ac1-3014a7132630', type: 'Role' }, // TeamsAppInstallation.ReadWriteSelfForTeam.All
-  // TeamsAppInstallation.ReadWriteSelfForUser.All intentionally excluded: the bot install API
-  // is no longer called during link_user. Users add the app themselves via the Teams deep link,
-  // which produces the same conversationUpdate event without requiring this slow-propagating permission.
+  { id: '908de74d-f8b2-4d6b-a9ed-2a17b3b78179', type: 'Role' }, // TeamsAppInstallation.ReadWriteSelfForUser.All
 ];
 
 /** Graph resource ID for Microsoft Graph (constant) */

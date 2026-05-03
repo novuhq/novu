@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials, PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, MsTeamsTokenService, PinoLogger } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   EnvironmentRepository,
@@ -22,6 +22,8 @@ import {
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 
+const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
+
 @Injectable()
 export class MsTeamsOauthCallback {
   private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
@@ -32,6 +34,7 @@ export class MsTeamsOauthCallback {
     private environmentRepository: EnvironmentRepository,
     private createChannelConnection: CreateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
+    private msTeamsTokenService: MsTeamsTokenService,
     private logger: PinoLogger,
     private generateMsTeamsOauthUrl: GenerateMsTeamsOauthUrl
   ) {
@@ -48,7 +51,18 @@ export class MsTeamsOauthCallback {
     const credentials = await this.getIntegrationCredentials(integration);
 
     if (stateData.mode === 'link_user') {
-      await this.linkUserEndpoint(command, stateData, integration, credentials);
+      try {
+        await this.linkUserEndpoint(command, stateData, integration, credentials);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (message.includes('MS Teams bot installation failed')) {
+          return { type: ResponseTypeEnum.HTML, result: this.buildErrorHtml(message) };
+        }
+
+        throw error;
+      }
+
       this.logger.info(
         `MS Teams link_user completed successfully: subscriberId=${stateData.subscriberId} integrationId=${integration._id}`
       );
@@ -152,14 +166,8 @@ export class MsTeamsOauthCallback {
     const decrypted = decryptCredentials(credentials);
     const oid = await this.exchangeCodeForAadObjectId(command.providerCode, decrypted);
 
-    /*
-     * We no longer call installBotForUser here. The user adds the bot to Teams themselves by
-     * clicking the "Add in Teams" deep link shown in the setup guide (teams.microsoft.com/l/app/…).
-     * When the user adds the app, Teams sends a conversationUpdate activity to the bot webhook
-     * which establishes the conversation reference — the same outcome as the API install.
-     * This removes the dependency on TeamsAppInstallation.ReadWriteSelfForUser.All, which can
-     * take up to 5 hours to propagate after admin consent and blocked Quick Setup entirely.
-     */
+    await this.installBotForUser(oid, decrypted);
+
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
         organizationId: stateData.organizationId,

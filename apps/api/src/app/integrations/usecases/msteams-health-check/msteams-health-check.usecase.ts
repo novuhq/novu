@@ -44,7 +44,7 @@ export class MsTeamsHealthCheck {
     '59a6b24b-4225-4393-8165-ebaec5f55d7a', // Channel.ReadBasic.All
     'e12dae10-5a57-4817-b79d-dfbec5348930', // AppCatalog.Read.All
     '9f67436c-5415-4e7f-8ac1-3014a7132630', // TeamsAppInstallation.ReadWriteSelfForTeam.All
-    // TeamsAppInstallation.ReadWriteSelfForUser.All removed: bot install API no longer called
+    '908de74d-f8b2-4d6b-a9ed-2a17b3b78179', // TeamsAppInstallation.ReadWriteSelfForUser.All
   ]);
 
   constructor(

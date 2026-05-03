@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { MsTeamsTokenService } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
@@ -61,8 +62,10 @@ describe('MsTeamsOauthCallback', () => {
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let createChannelConnection: sinon.SinonStubbedInstance<CreateChannelConnection>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
+  let msTeamsTokenService: sinon.SinonStubbedInstance<MsTeamsTokenService>;
   let generateMsTeamsOauthUrl: sinon.SinonStubbedInstance<GenerateMsTeamsOauthUrl>;
   let axiosPost: sinon.SinonStub;
+  let axiosGet: sinon.SinonStub;
   let originalApiRootUrl: string | undefined;
 
   beforeEach(() => {
@@ -70,6 +73,7 @@ describe('MsTeamsOauthCallback', () => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
+    msTeamsTokenService = sinon.createStubInstance(MsTeamsTokenService);
     generateMsTeamsOauthUrl = sinon.createStubInstance(GenerateMsTeamsOauthUrl);
 
     const logger = { setContext: sinon.stub(), info: sinon.stub(), error: sinon.stub(), warn: sinon.stub() };
@@ -79,12 +83,13 @@ describe('MsTeamsOauthCallback', () => {
       environmentRepository as any,
       createChannelConnection as any,
       createChannelEndpoint as any,
+      msTeamsTokenService as any,
       logger as any,
       generateMsTeamsOauthUrl as any
     );
 
     originalApiRootUrl = process.env.API_ROOT_URL;
-    process.env.API_ROOT_URL = MOCK_API_ROOT_URL;
+    Reflect.set(process.env, 'API_ROOT_URL', MOCK_API_ROOT_URL);
 
     environmentRepository.findOne.resolves({
       _id: MOCK_ENVIRONMENT_ID,
@@ -96,7 +101,12 @@ describe('MsTeamsOauthCallback', () => {
 
   afterEach(() => {
     sinon.restore();
-    process.env.API_ROOT_URL = originalApiRootUrl;
+
+    if (originalApiRootUrl === undefined) {
+      Reflect.deleteProperty(process.env, 'API_ROOT_URL');
+    } else {
+      Reflect.set(process.env, 'API_ROOT_URL', originalApiRootUrl);
+    }
   });
 
   describe('admin consent (connect) mode', () => {
@@ -295,6 +305,7 @@ describe('MsTeamsOauthCallback', () => {
   describe('link_user mode', () => {
     beforeEach(() => {
       axiosPost = sinon.stub(axios, 'post');
+      axiosGet = sinon.stub(axios, 'get');
     });
 
     function buildLinkUserState(overrides: Record<string, unknown> = {}) {
@@ -314,8 +325,15 @@ describe('MsTeamsOauthCallback', () => {
       axiosPost.onFirstCall().resolves({ data: { id_token: idToken, access_token: 'at-123' } });
     }
 
-    it('should exchange code and create an MS_TEAMS_USER endpoint on success (no bot install)', async () => {
+    function stubBotInstall() {
+      msTeamsTokenService.getGraphToken.resolves('graph-token-123');
+      axiosGet.resolves({ data: { value: [{ id: 'teams-app-id-123' }] } });
+      axiosPost.onSecondCall().resolves({});
+    }
+
+    it('should exchange code, install the bot, and create an MS_TEAMS_USER endpoint on success', async () => {
       stubTokenExchange();
+      stubBotInstall();
       createChannelEndpoint.execute.resolves({ identifier: 'ep-xyz' } as any);
 
       const command = MsTeamsOauthCallbackCommand.create({
@@ -325,8 +343,10 @@ describe('MsTeamsOauthCallback', () => {
 
       await usecase.execute(command);
 
-      // Only one axios.post call: the token exchange — no bot install call
-      expect(axiosPost.callCount).to.equal(1);
+      expect(msTeamsTokenService.getGraphToken.calledOnceWith(MOCK_CLIENT_ID, MOCK_SECRET_KEY, MOCK_TENANT_ID)).to.be
+        .true;
+      expect(axiosGet.calledOnce).to.be.true;
+      expect(axiosPost.callCount).to.equal(2);
 
       expect(createChannelEndpoint.execute.calledOnce).to.be.true;
       const callArg = createChannelEndpoint.execute.firstCall.args[0];
