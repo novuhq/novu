@@ -444,7 +444,7 @@ export class IntegrationsController {
   })
   @ApiExcludeEndpoint()
   @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async getMsTeamsArmTemplateDeployUrl(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
