@@ -45,6 +45,7 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
+  EnvironmentTypeEnum,
   PreferenceLevelEnum,
   PreferencesTypeEnum,
   ResourceOriginEnum,
@@ -283,7 +284,7 @@ export class Session {
       unreadCount,
       removeNovuBranding,
       maxSnoozeDurationHours,
-      isDevelopmentMode: environment.name.toLowerCase() !== 'production',
+      isDevelopmentMode: this.isInboxDevelopmentMode(environment),
       schedule,
       contextKeys,
     };
@@ -327,6 +328,22 @@ export class Session {
     );
 
     return updatedGlobalPreference.schedule;
+  }
+
+  /**
+   * Live (production-type) environments must not show the Inbox "Development mode" footer,
+   * regardless of display name. Legacy orgs may lack `type`; fall back to the old name check.
+   */
+  private isInboxDevelopmentMode(environment: EnvironmentEntity): boolean {
+    if (environment.type === EnvironmentTypeEnum.PROD) {
+      return false;
+    }
+
+    if (environment.type === EnvironmentTypeEnum.DEV) {
+      return true;
+    }
+
+    return environment.name.toLowerCase() !== 'production';
   }
 
   private validateRequestData(requestData: SubscriberSessionRequestDto): void {

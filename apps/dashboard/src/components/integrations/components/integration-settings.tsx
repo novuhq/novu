@@ -22,6 +22,8 @@ import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
+import { SlackCredentialsPaste } from './slack-credentials-paste';
+import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
 
 type IntegrationFormData = {
@@ -119,6 +121,12 @@ export function IntegrationSettings({
 
   const isDemo = integration && isDemoIntegration(integration.providerId);
   const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
+  const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
+  const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
+    control,
+    setValue,
+    isEnabled: isSlackOnboarding && !isReadOnly,
+  });
 
   const providerCredentials = useMemo(() => {
     let credentials = provider.credentials;
@@ -237,15 +245,20 @@ export function IntegrationSettings({
                       />
                     )}
                     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
-                      {providerCredentials.map((credential) => (
-                        <CredentialSection
-                          key={`${credential.key}-${integration?._id || 'no-id'}`}
-                          credential={credential}
-                          control={control}
-                          isReadOnly={isReadOnly}
-                          integrationId={integration?._id}
-                        />
-                      ))}
+                      {isSlackOnboarding && (
+                        <SlackCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
+                      )}
+                      <div onPasteCapture={handleSlackCredentialsPaste} className="flex flex-col gap-2">
+                        {providerCredentials.map((credential) => (
+                          <CredentialSection
+                            key={`${credential.key}-${integration?._id || 'no-id'}`}
+                            credential={credential}
+                            control={control}
+                            isReadOnly={isReadOnly}
+                            integrationId={integration?._id}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

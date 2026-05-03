@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivitySenderTypeEnum,
+  ConversationParticipantTypeEnum,
+  SubscriberRepository,
+} from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
@@ -16,6 +22,60 @@ const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 
 Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
+
+function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
+  const rawAttachments = richContent?.attachments;
+
+  if (!Array.isArray(rawAttachments)) {
+    return [];
+  }
+
+  return rawAttachments.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+
+    const attachment = item as Record<string, unknown>;
+    const storageKey = attachment.storageKey;
+
+    if (typeof storageKey !== 'string' || storageKey.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        type: typeof attachment.type === 'string' ? attachment.type : 'file',
+        name: typeof attachment.name === 'string' ? attachment.name : undefined,
+        mimeType: typeof attachment.mimeType === 'string' ? attachment.mimeType : undefined,
+        size: typeof attachment.size === 'number' ? attachment.size : undefined,
+        storageKey,
+        url: typeof attachment.url === 'string' ? attachment.url : undefined,
+      },
+    ];
+  });
+}
+
+function findSourceMessageStoredAttachments(
+  history: ConversationActivityEntity[],
+  messageIds: string[]
+): StoredAttachment[] | undefined {
+  const messageIdSet = new Set(messageIds);
+  const sourceActivity = history.find(
+    (activity) => activity.platformMessageId && messageIdSet.has(activity.platformMessageId)
+  );
+
+  if (!sourceActivity) {
+    return undefined;
+  }
+
+  const storedAttachments = mapStoredAttachmentsFromRichContent(sourceActivity.richContent);
+
+  if (!storedAttachments.length) {
+    return undefined;
+  }
+
+  return storedAttachments;
+}
 
 export interface InboundReactionEvent {
   emoji: EmojiValue;
@@ -34,7 +94,8 @@ export class AgentInboundHandler {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly attachmentStorage: AgentAttachmentStorage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -82,14 +143,25 @@ export class AgentInboundHandler {
       ? ConversationActivitySenderTypeEnum.SUBSCRIBER
       : ConversationActivitySenderTypeEnum.PLATFORM_USER;
 
-    const richContent = message.attachments?.length
+    let storedAttachments: StoredAttachment[] | undefined;
+
+    if (message.attachments?.length) {
+      storedAttachments = await this.attachmentStorage.storeInbound(message.attachments, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        conversationId: String(conversation._id),
+        platformMessageId: message.id ?? `unknown-${Date.now()}`,
+      });
+    }
+
+    const richContent = storedAttachments?.length
       ? {
-          attachments: message.attachments.map((a) => ({
-            type: a.type,
-            url: a.url,
-            name: a.name,
-            mimeType: a.mimeType,
-            size: a.size,
+          attachments: storedAttachments.map(({ type, name, mimeType, size, storageKey }) => ({
+            type,
+            name,
+            mimeType,
+            size,
+            storageKey,
           })),
         }
       : undefined;
@@ -176,6 +248,7 @@ export class AgentInboundHandler {
           channelId: thread.channelId,
           isDM: thread.isDM,
         },
+        storedAttachments: message.attachments?.length ? storedAttachments : undefined,
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
@@ -254,11 +327,26 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
-    const reaction: BridgeReaction = {
+    const sourceMessageIds = [event.messageId, event.message?.id].filter((id): id is string => Boolean(id));
+    let sourceMessageStoredAttachments = findSourceMessageStoredAttachments(history, sourceMessageIds);
+
+    if (!sourceMessageStoredAttachments && event.message?.attachments?.length) {
+      sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(event.message.attachments, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        conversationId: String(conversation._id),
+        platformMessageId: event.message.id ?? event.messageId ?? `unknown-${Date.now()}`,
+      });
+    }
+
+    const reactionPayload: BridgeReaction = {
       emoji: event.emoji.name,
       added: event.added,
       messageId: event.messageId,
       sourceMessage: event.message,
+      sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
+        ? sourceMessageStoredAttachments
+        : undefined,
     };
 
     await this.bridgeExecutor.execute({
@@ -273,7 +361,7 @@ export class AgentInboundHandler {
         channelId: event.thread?.channelId ?? '',
         isDM: event.thread?.isDM ?? false,
       },
-      reaction,
+      reaction: reactionPayload,
     });
   }
 

@@ -63,7 +63,7 @@
     "lodash": "^4.18.0",
     "lru-cache": "^11.2.4",
     "nest-raven": "10.1.0",
-    "newrelic": "^13.19.2",
+    "newrelic": "13.18.0",
     "reflect-metadata": "0.2.2",
     "rimraf": "^3.0.2",
     "rxjs": "7.8.2",

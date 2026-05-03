@@ -64,7 +64,7 @@ export function SetupStep({
         <StepIndicator status={status} index={index} />
       </div>
       <div className="flex gap-5">
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 max-w-[400px] flex-1 flex-col">
           <div className="flex flex-col gap-2">
             {sectionLabel && (
               <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">

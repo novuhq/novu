@@ -1,8 +1,6 @@
 import * as dns from 'node:dns';
 import { LRUCache } from 'lru-cache';
 
-/* Keep in sync with packages/shared/src/utils/ssrf-url-validation.ts */
-
 /**
  * Resolves a webhook-style URL for outbound HTTP requests.
  * Host-only or path-first values (no scheme) are treated as https, matching axios behavior.
@@ -46,7 +44,7 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
   ttl: 1000 * 60 * 5, // 5 minutes
 });
 
-function isPrivateIp(ip: string): boolean {
+export function isPrivateIp(ip: string): boolean {
   const privateRanges = [
     /^0\.0\.0\.0$/i,
     /^127\./,
@@ -64,8 +62,8 @@ function isPrivateIp(ip: string): boolean {
     /^f[cd][0-9a-f]{2}:/i,
     /^::ffff:f[cd][0-9a-f]{2}:/i,
     /* Link-local fe80::/10 (fe80–febf first hextet) */
-    /^fe[89ab][0-9a-f]{2}:/i,
-    /^::ffff:fe[89ab][0-9a-f]{2}:/i,
+    /^fe[89ab][0-9a-f]:/i,
+    /^::ffff:fe[89ab][0-9a-f]:/i,
   ];
 
   return privateRanges.some((range) => range.test(ip));

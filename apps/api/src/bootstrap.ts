@@ -114,7 +114,7 @@ export async function bootstrap(
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
 
-  app.use('/v1/agents', bodyParser.json({ verify: agentRawBodyBuffer }));
+  app.use('/v1/agents', bodyParser.json({ limit: '8mb', verify: agentRawBodyBuffer }));
 
   // Add text/plain parser specifically for inbound webhooks (SNS confirmations)
   app.use(

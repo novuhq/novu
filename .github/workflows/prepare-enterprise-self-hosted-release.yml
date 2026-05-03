@@ -252,3 +252,36 @@ jobs:
           echo "  - $REGISTRY/novu/$REPO_NAME:$IMAGE_TAG"
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"
+
+  linear_release_complete:
+    name: Complete Linear Release (Enterprise)
+    needs: build_docker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Normalize Linear release version
+        env:
+          RAW_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          ver="${RAW_VERSION#v}"
+          echo "LINEAR_RELEASE_VERSION=$ver" >> "$GITHUB_ENV"
+
+      - name: Sync release to Linear
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
+          name: v${{ env.LINEAR_RELEASE_VERSION }}
+          version: ${{ env.LINEAR_RELEASE_VERSION }}
+
+      - name: Complete release in Linear
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
+          command: complete
+          version: ${{ env.LINEAR_RELEASE_VERSION }}
