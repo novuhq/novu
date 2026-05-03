@@ -22,6 +22,7 @@ import {
   GetDecryptedIntegrations,
   IntegrationResponseDto,
   OtelSpan,
+  PinoLogger,
   RequirePermissions,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
@@ -117,8 +118,11 @@ export class IntegrationsController {
     private getMsTeamsArmTemplateUsecase: GetMsTeamsArmTemplate,
     private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
-    private msTeamsHealthCheckUsecase: MsTeamsHealthCheck
-  ) {}
+    private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(IntegrationsController.name);
+  }
 
   @Get('/')
   @ApiOkResponse({
@@ -594,12 +598,17 @@ export class IntegrationsController {
 
       res.type('html').send(result.html);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during Azure setup';
+      this.logger.error({ err }, 'Azure OAuth callback failed');
 
       res
         .status(200)
         .type('html')
-        .send(AzureSetupOauthCallback.buildPopupHtml({ success: false, errorMessage }));
+        .send(
+          AzureSetupOauthCallback.buildPopupHtml({
+            success: false,
+            errorMessage: 'An unexpected error occurred while completing Azure setup.',
+          })
+        );
     }
   }
 

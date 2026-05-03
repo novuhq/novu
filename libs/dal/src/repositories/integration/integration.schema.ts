@@ -80,7 +80,10 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       inboxCount: Schema.Types.String,
     },
     provisioning: {
-      status: Schema.Types.String,
+      status: {
+        type: Schema.Types.String,
+        enum: ['pending', 'ready', 'failed'],
+      },
       startedAt: Schema.Types.String,
       completedAt: Schema.Types.String,
       errorMessage: Schema.Types.String,
