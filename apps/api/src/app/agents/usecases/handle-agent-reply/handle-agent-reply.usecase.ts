@@ -245,6 +245,12 @@ export class HandleAgentReply {
       return title ?? '[Card]';
     }
 
+    if (content.files?.length) {
+      const firstName = content.files[0]?.filename;
+
+      return firstName ? `[Attachment: ${firstName}]` : '[Attachment]';
+    }
+
     return '';
   }
 

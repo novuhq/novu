@@ -92,6 +92,29 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
     });
 
+    it('should accept reply with files only (empty markdown) for attachment-only agent messages', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        reply: {
+          files: [{ filename: 'photo.png', url: 'https://example.com/photo.png' }],
+        },
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data?.messageId).to.equal('platform-msg-1');
+
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+      const agentActivity = activities.find(
+        (a) =>
+          a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
+      );
+      expect(agentActivity).to.exist;
+      expect(agentActivity!.content).to.equal('[Attachment: photo.png]');
+    });
+
     it('should edit a previously sent message and persist an edit activity', async () => {
       const conversationId = await seedConversation(ctx);
 

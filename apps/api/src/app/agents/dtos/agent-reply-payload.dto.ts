@@ -73,6 +73,28 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   validate(content: ReplyContentDto): boolean {
     if (!content) return true;
 
+    const hasMarkdown = content.markdown !== undefined;
+    const hasCard = content.card !== undefined;
+    const hasFiles = (content.files?.length ?? 0) > 0;
+
+    if (hasMarkdown && hasCard) return false;
+
+    if (hasCard && hasFiles) return false;
+
+    if (hasFiles && !hasMarkdown && !hasCard) {
+      if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
+
+      for (const file of content.files ?? []) {
+        const sources = [file.data, file.url].filter(Boolean);
+        if (sources.length !== 1) return false;
+        if (typeof file.data === 'string' && file.data.replace(/\s/g, '').length > MAX_INLINE_FILE_BASE64_CHARS) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
     const fields = [content.markdown, content.card].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
@@ -92,7 +114,8 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
 
   defaultMessage(): string {
     return (
-      'Content must have exactly one of markdown or card. Files only allowed with markdown. ' +
+      'Content must have exactly one of markdown or card, or files only (no markdown/card). ' +
+      'Files with markdown are allowed; files are not allowed with card. ' +
       `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
       'Inline data must be 5 MB or smaller.'
     );
