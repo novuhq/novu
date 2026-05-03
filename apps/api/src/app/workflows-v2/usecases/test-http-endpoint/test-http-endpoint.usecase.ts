@@ -104,6 +104,7 @@ export class TestHttpEndpointUsecase {
           url: resolvedUrl,
           method,
           headers: resolvedHeaders,
+          ...(hasBody ? { body: resolvedBody } : {}),
         },
       };
     }
