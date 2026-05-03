@@ -191,11 +191,9 @@ export class GenerateMsTeamsOauthUrl {
     if (!process.env.API_ROOT_URL) {
       throw new Error('API_ROOT_URL environment variable is required');
     }
-
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
 
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
-    // return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
