@@ -282,6 +282,7 @@
       "@clerk/shared",
       "@clerk/types",
       "@contrast/fn-inspect",
+      "@datadog/pprof",
       "@firebase/util",
       "@fortawesome/fontawesome-common-types",
       "@fortawesome/fontawesome-svg-core",

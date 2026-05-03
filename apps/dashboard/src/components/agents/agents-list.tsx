@@ -1,4 +1,4 @@
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -14,13 +14,16 @@ import {
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
+import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { ListNoResults } from '@/components/list-no-results';
+import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -33,7 +36,7 @@ export function AgentsList() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
@@ -208,7 +211,14 @@ export function AgentsList() {
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;
 
+  const isProductionEnv =
+    Boolean(currentEnvironment) && (readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
+
   if (showEmptyBlank) {
+    if (isProductionEnv) {
+      return <AgentsProductionEmptyState />;
+    }
+
     return (
       <>
         <AgentsEmptyTeaser
@@ -246,17 +256,38 @@ export function AgentsList() {
           onChange={setSearch}
           placeholder="Search by identifier..."
         />
-        <PermissionButton
-          permission={PermissionsEnum.AGENT_WRITE}
-          size="xs"
-          variant="primary"
-          mode="gradient"
-          className="gap-1.5"
-          leadingIcon={RiRobot2Line}
-          onClick={() => setCreateOpen(true)}
-        >
-          Add Agent
-        </PermissionButton>
+        {isProductionEnv ? (
+          <Tooltip>
+            <TooltipTrigger className="cursor-not-allowed">
+              <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
+                Add Agent
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-60">
+              {'Add agents in your development environment. '}
+              <a
+                href="https://docs.novu.co/platform/agents"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="underline"
+              >
+                Learn More ↗
+              </a>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <PermissionButton
+            permission={PermissionsEnum.AGENT_WRITE}
+            size="xs"
+            variant="primary"
+            mode="gradient"
+            className="gap-1.5"
+            leadingIcon={RiRobot2Line}
+            onClick={() => setCreateOpen(true)}
+          >
+            Add Agent
+          </PermissionButton>
+        )}
       </div>
 
       {listQuery.isError ? (

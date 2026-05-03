@@ -1,12 +1,21 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { AGENTS_LIST_QUERY_KEY, type AgentResponse, deleteAgent, getAgent, getAgentDetailQueryKey } from '@/api/agents';
+import {
+  AGENTS_LIST_QUERY_KEY,
+  type AgentResponse,
+  deleteAgent,
+  getAgent,
+  getAgentDetailQueryKey,
+  getAgentIntegrationsQueryKey,
+  listAgentIntegrations,
+} from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
+import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
@@ -79,9 +88,10 @@ export function AgentDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
+  const [setupModalDismissed, setSetupModalDismissed] = useState(false);
   const track = useTelemetry();
   const lastAgentDetailsTelemetryKey = useRef<string | null>(null);
 
@@ -111,6 +121,34 @@ export function AgentDetailsPage() {
       showErrorToast(message, 'Delete failed');
     },
   });
+
+  const agentIntegrationsQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agentIdentifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier,
+        limit: 100,
+      }),
+    enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
+  });
+
+  const hasConnectedIntegration = useMemo(() => {
+    const links = agentIntegrationsQuery.data?.data;
+    if (!links?.length) return false;
+
+    return links.some((link) => Boolean(link.connectedAt));
+  }, [agentIntegrationsQuery.data?.data]);
+
+  const isProductionEnv = readOnly;
+  const agent = agentQuery.data;
+  const showSetupModal =
+    isProductionEnv &&
+    agent != null &&
+    agentIntegrationsQuery.isSuccess &&
+    !agent.active &&
+    !hasConnectedIntegration &&
+    !setupModalDismissed;
 
   const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
@@ -163,7 +201,6 @@ export function AgentDetailsPage() {
   }
 
   const isLoading = agentQuery.isLoading;
-  const agent = agentQuery.data;
   const error = agentQuery.error;
   const isNotFound = error instanceof NovuApiError && error.status === 404;
 
@@ -300,6 +337,15 @@ export function AgentDetailsPage() {
               agentName={agentToDelete?.name ?? ''}
               agentIdentifier={agentToDelete?.identifier ?? ''}
               isDeleting={deleteMutation.isPending}
+            />
+
+            <AgentSetupModal
+              isOpen={showSetupModal}
+              onClose={() => setSetupModalDismissed(true)}
+              onSetupClick={() => {
+                setSetupModalDismissed(true);
+                handleTabChange('integrations');
+              }}
             />
           </>
         ) : null}

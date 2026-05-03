@@ -23,12 +23,14 @@ export default mailin.start(
     smtpOptions: env.smtpOptions,
   },
   (err) => {
-    logger.error(err);
+    if (err) {
+      logger.error({ err, context: LOG_CONTEXT }, 'Failed to start mailin');
+      process.exit(1);
+    }
 
-    if (err) process.exit(1);
-
-    if (mailin.configuration.disableDkim) logger.info('Dkim checking is disabled');
-    if (mailin.configuration.disableSpf) logger.info('Spf checking is disabled');
-    if (mailin.configuration.disableSpamScore) logger.info('Spam score computation is disabled');
+    if (mailin.configuration.disableDkim) logger.info({ context: LOG_CONTEXT }, 'Dkim checking is disabled');
+    if (mailin.configuration.disableSpf) logger.info({ context: LOG_CONTEXT }, 'Spf checking is disabled');
+    if (mailin.configuration.disableSpamScore)
+      logger.info({ context: LOG_CONTEXT }, 'Spam score computation is disabled');
   }
 );

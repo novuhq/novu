@@ -7,6 +7,8 @@ export const SLACK_AGENT_OAUTH_SCOPES = [
   'channels:history',
   'channels:read',
   'chat:write',
+  'files:read',
+  'files:write',
   'groups:history',
   'groups:read',
   'im:history',

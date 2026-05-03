@@ -2,6 +2,7 @@ export * from './base62';
 export * from './bridge';
 export * from './build-slug';
 export * from './build-variables';
+export * from './slugify-or-random';
 export * from './buildBridgeEndpointUrl';
 export * from './compute-workflow-status';
 export * from './create-schema';

@@ -44,6 +44,7 @@ import { IWorkflowSuggestion } from '@/components/template-store/types';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -167,7 +168,8 @@ export const WorkflowsPage = () => {
     };
   }, [form, debouncedSearch, updateSearchParams]);
 
-  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isAiWorkflowGenerationEnabled =
+    useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
   const {
     status: onboardingStatus,
@@ -220,7 +222,7 @@ export const WorkflowsPage = () => {
 
       return fetchWorkflowSuggestions({ environment: currentEnvironment });
     },
-    enabled: !!currentEnvironment,
+    enabled: isAiWorkflowGenerationEnabled && !!currentEnvironment,
     staleTime: 24 * 60 * 60 * 1000,
   });
 
@@ -378,19 +380,23 @@ export const WorkflowsPage = () => {
                         animate="visible"
                         variants={startWithCardsRowVariants}
                       >
-                        <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
-                          <WorkflowCard
-                            name="Generate with Copilot"
-                            description="Create a workflow with AI assistance"
-                            steps={[]}
-                            onClick={() => {
-                              track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-                              navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                            }}
-                          >
-                            <AiThinking className="w-[100px]" />
-                          </WorkflowCard>
-                        </motion.div>
+                        {isAiWorkflowGenerationEnabled && (
+                          <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
+                            <WorkflowCard
+                              name="Generate with Copilot"
+                              description="Create a workflow with AI assistance"
+                              steps={[]}
+                              onClick={() => {
+                                track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                                navigate(
+                                  buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' })
+                                );
+                              }}
+                            >
+                              <AiThinking className="w-[100px]" />
+                            </WorkflowCard>
+                          </motion.div>
+                        )}
                         {personalizedQuickTemplates.map((template, index) => (
                           <motion.div key={template.workflowId} className="w-[250px] shrink-0" variants={itemVariants}>
                             <WorkflowCard

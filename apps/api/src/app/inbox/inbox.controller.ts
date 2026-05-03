@@ -17,10 +17,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { FeatureFlagsService } from '@novu/application-generic';
 import {
   AddressingTypeEnum,
-  FeatureFlagsKeysEnum,
   MessageActionStatusEnum,
   PreferenceLevelEnum,
   TriggerRequestCategoryEnum,
@@ -44,12 +42,9 @@ import { TriggerEventRequestDto } from '../events/dtos';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
 import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
 import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
-import { GenerateChatOauthUrlRequestDto } from '../integrations/dtos/generate-chat-oauth-url.dto';
 import { GenerateChatOAuthUrlResponseDto } from '../integrations/dtos/generate-chat-oauth-url-response.dto';
 import { GenerateConnectOauthUrlRequestDto } from '../integrations/dtos/generate-connect-oauth-url-request.dto';
 import { GenerateLinkUserOauthUrlRequestDto } from '../integrations/dtos/generate-link-user-oauth-url-request.dto';
-import { GenerateChatOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
-import { GenerateChatOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GenerateConnectOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
@@ -143,10 +138,8 @@ export class InboxController {
     private listChannelEndpointsUsecase: ListChannelEndpoints,
     private getChannelEndpointUsecase: GetChannelEndpoint,
     private deleteChannelEndpointUsecase: DeleteChannelEndpoint,
-    private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
     private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
-    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
-    private featureFlagsService: FeatureFlagsService
+    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl
   ) {}
 
   @KeylessAccessible()
@@ -675,8 +668,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Query() query: ListChannelConnectionsQueryDto
   ): Promise<InboxListChannelConnectionsResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const result = await this.listChannelConnectionsUsecase.execute(
       ListChannelConnectionsCommand.create({
         user: {
@@ -710,8 +701,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<InboxChannelConnectionResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const channelConnection = await this.getChannelConnectionUsecase.execute(
       GetChannelConnectionCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -734,8 +723,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const channelConnection = await this.getChannelConnectionUsecase.execute(
       GetChannelConnectionCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -763,8 +750,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Query() query: ListChannelEndpointsQueryDto
   ): Promise<InboxListChannelEndpointsResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const result = await this.listChannelEndpointsUsecase.execute(
       ListChannelEndpointsCommand.create({
         user: {
@@ -800,8 +785,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const channelEndpoint = await this.getChannelEndpointUsecase.execute(
       GetChannelEndpointCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -829,8 +812,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: GenerateConnectOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const url = await this.generateConnectOauthUrlUsecase.execute(
       GenerateConnectOauthUrlCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -854,8 +835,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: GenerateLinkUserOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    await this.checkChannelFeatureEnabled(subscriberSession._organizationId);
-
     const url = await this.generateLinkUserOauthUrlUsecase.execute(
       GenerateLinkUserOauthUrlCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -869,17 +848,5 @@ export class InboxController {
     );
 
     return { url };
-  }
-
-  private async checkChannelFeatureEnabled(organizationId: string): Promise<void> {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!isEnabled) {
-      throw new NotFoundException('Feature not enabled');
-    }
   }
 }
