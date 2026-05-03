@@ -129,7 +129,11 @@ export class AzureSetupOauthCallback {
         }
       : { type: 'novu:azure-setup-complete', success: false, error: errorMessage ?? 'Unknown error' };
 
-    const messageJson = JSON.stringify(message);
+    const messageJson = JSON.stringify(message)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029');
 
     return `<script>
   try { window.opener && window.opener.postMessage(${messageJson}, '*'); } catch (_) {}
