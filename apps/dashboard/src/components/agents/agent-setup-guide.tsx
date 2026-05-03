@@ -132,7 +132,6 @@ export function AgentSetupGuide({ agent }: AgentSetupGuideProps) {
               rightContent={
                 <ProviderDropdown
                   agentIdentifier={agent.identifier}
-                  agentName={agent.name}
                   selectedIntegrationId={selectedIntegrationId ?? defaultFromAgent?.integrationId}
                   linkedIntegrationIds={linkedIntegrationIds}
                   onSelect={(_providerId, integration) => {

@@ -1,5 +1,4 @@
 import {
-  ChannelTypeEnum,
   CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   EmailProviderIdEnum,
@@ -59,8 +58,6 @@ type ProviderDropdownProps = {
   fallbackProviderId?: string;
   onSelect: (providerId: string, integration?: IIntegration) => void;
   agentIdentifier: string;
-  /** Agent display name — used to derive the integration name for chat providers (e.g. "My Agent Bot"). */
-  agentName?: string;
   /** Integration IDs already linked to the agent — selecting one of these skips the link API call. */
   linkedIntegrationIds?: Set<string>;
   /** When true, hide integrations whose _id is in `linkedIntegrationIds` from the list. */
@@ -154,7 +151,6 @@ export function ProviderDropdown({
   fallbackProviderId,
   onSelect,
   agentIdentifier,
-  agentName,
   linkedIntegrationIds,
   excludeLinked = false,
   renderTrigger,
@@ -335,8 +331,8 @@ export function ProviderDropdown({
         onSelect(item.providerId, item.integration);
         setOpen(false);
       } else {
-        const channel = PROVIDER_ID_TO_CHANNEL_MAP[item.providerId];
-        const uniqueName = channel === ChannelTypeEnum.CHAT && agentName ? `${agentName} - Bot` : item.displayName;
+        const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
+        const uniqueName = sameProviderCount > 0 ? `${item.displayName} ${sameProviderCount + 1}` : item.displayName;
 
         const created = await createIntegrationMutation.mutateAsync({
           providerId: item.providerId,

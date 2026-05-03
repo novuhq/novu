@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { MsTeamsTokenService } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
@@ -9,6 +10,7 @@ import { CreateChannelConnection } from '../../../../channel-connections/usecase
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { encodeOAuthState } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrl } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
+import { ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 import { MsTeamsOauthCallback } from './msteams-oauth-callback.usecase';
 
@@ -22,6 +24,7 @@ const MOCK_INTEGRATION_IDENTIFIER = 'msteams-integration';
 const MOCK_SUBSCRIBER_ID = 'subscriber-abc';
 const MOCK_AAD_OID = 'aad-object-id-xyz';
 const MOCK_API_ROOT_URL = 'https://api.novu.co';
+const MOCK_TEAMS_APP_ID = 'teams-internal-app-id';
 
 function buildMockIntegration(overrides: Record<string, unknown> = {}) {
   return {
@@ -61,8 +64,10 @@ describe('MsTeamsOauthCallback', () => {
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let createChannelConnection: sinon.SinonStubbedInstance<CreateChannelConnection>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
+  let msTeamsTokenService: sinon.SinonStubbedInstance<MsTeamsTokenService>;
   let generateMsTeamsOauthUrl: sinon.SinonStubbedInstance<GenerateMsTeamsOauthUrl>;
   let axiosPost: sinon.SinonStub;
+  let axiosGet: sinon.SinonStub;
   let originalApiRootUrl: string | undefined;
 
   beforeEach(() => {
@@ -70,6 +75,7 @@ describe('MsTeamsOauthCallback', () => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
+    msTeamsTokenService = sinon.createStubInstance(MsTeamsTokenService);
     generateMsTeamsOauthUrl = sinon.createStubInstance(GenerateMsTeamsOauthUrl);
 
     const logger = { setContext: sinon.stub(), info: sinon.stub(), error: sinon.stub(), warn: sinon.stub() };
@@ -80,6 +86,7 @@ describe('MsTeamsOauthCallback', () => {
       createChannelConnection as any,
       createChannelEndpoint as any,
       logger as any,
+      msTeamsTokenService as any,
       generateMsTeamsOauthUrl as any
     );
 
@@ -92,6 +99,8 @@ describe('MsTeamsOauthCallback', () => {
     } as any);
 
     integrationRepository.findOne.resolves(buildMockIntegration());
+
+    msTeamsTokenService.getGraphToken.resolves('mock-graph-token');
   });
 
   afterEach(() => {
@@ -295,6 +304,10 @@ describe('MsTeamsOauthCallback', () => {
   describe('link_user mode', () => {
     beforeEach(() => {
       axiosPost = sinon.stub(axios, 'post');
+      axiosGet = sinon.stub(axios, 'get');
+
+      axiosGet.resolves({ data: { value: [{ id: MOCK_TEAMS_APP_ID }] } });
+      axiosPost.onSecondCall().resolves({ status: 201, data: {} });
     });
 
     function buildLinkUserState(overrides: Record<string, unknown> = {}) {
@@ -314,7 +327,7 @@ describe('MsTeamsOauthCallback', () => {
       axiosPost.onFirstCall().resolves({ data: { id_token: idToken, access_token: 'at-123' } });
     }
 
-    it('should exchange code and create an MS_TEAMS_USER endpoint on success (no bot install)', async () => {
+    it('should exchange code, install bot, and create an MS_TEAMS_USER endpoint on success', async () => {
       stubTokenExchange();
       createChannelEndpoint.execute.resolves({ identifier: 'ep-xyz' } as any);
 
@@ -325,14 +338,150 @@ describe('MsTeamsOauthCallback', () => {
 
       await usecase.execute(command);
 
-      // Only one axios.post call: the token exchange — no bot install call
-      expect(axiosPost.callCount).to.equal(1);
+      expect(msTeamsTokenService.getGraphToken.calledOnce).to.be.true;
+
+      expect(axiosGet.calledOnce).to.be.true;
+      const catalogUrl: string = axiosGet.firstCall.args[0];
+      expect(catalogUrl).to.include('/appCatalogs/teamsApps');
+      expect(catalogUrl).to.include(MOCK_CLIENT_ID);
+
+      expect(axiosPost.callCount).to.equal(2);
+      const installUrl: string = axiosPost.secondCall.args[0];
+      expect(installUrl).to.include(`/users/${MOCK_AAD_OID}/teamwork/installedApps`);
 
       expect(createChannelEndpoint.execute.calledOnce).to.be.true;
       const callArg = createChannelEndpoint.execute.firstCall.args[0];
       expect(callArg.type).to.equal(ENDPOINT_TYPES.MS_TEAMS_USER);
-      expect((callArg.endpoint as { userId: string }).userId).to.equal(MOCK_AAD_OID);
+      expect(callArg.endpoint.userId).to.equal(MOCK_AAD_OID);
       expect(callArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
+    });
+
+    it('should treat 409 (already installed) as success', async () => {
+      stubTokenExchange();
+      const conflict = Object.assign(new Error('Conflict'), {
+        isAxiosError: true,
+        response: { status: 409, data: {} },
+      });
+      sinon.stub(axios, 'isAxiosError').returns(true);
+      axiosPost.onSecondCall().rejects(conflict);
+      createChannelEndpoint.execute.resolves({ identifier: 'ep-xyz' } as any);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.calledOnce).to.be.true;
+      expect(result).to.not.have.property('error');
+    });
+
+    it('should return error HTML and NOT create endpoint when install returns 403', async () => {
+      stubTokenExchange();
+      const forbidden = Object.assign(new Error('Forbidden'), {
+        isAxiosError: true,
+        response: { status: 403, data: {} },
+      });
+      sinon.stub(axios, 'isAxiosError').returns(true);
+      axiosPost.onSecondCall().rejects(forbidden);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.called).to.be.false;
+      expect(result.result).to.include('MS Teams Bot Installation Failed');
+      expect(result.result).to.include('TeamsAppInstallation.ReadWriteSelfForUser.All');
+    });
+
+    it('should return error HTML and NOT create endpoint when install returns 404', async () => {
+      stubTokenExchange();
+      const notFound = Object.assign(new Error('Not Found'), {
+        isAxiosError: true,
+        response: { status: 404, data: {} },
+      });
+      sinon.stub(axios, 'isAxiosError').returns(true);
+      axiosPost.onSecondCall().rejects(notFound);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.called).to.be.false;
+      expect(result.result).to.include('MS Teams Bot Installation Failed');
+    });
+
+    it('should return error HTML when app catalog returns no results', async () => {
+      stubTokenExchange();
+      axiosGet.resolves({ data: { value: [] } });
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.called).to.be.false;
+      expect(result.result).to.include('MS Teams Bot Installation Failed');
+      expect(result.result).to.include('catalog');
+    });
+
+    it('should return error HTML when catalog lookup returns 403', async () => {
+      stubTokenExchange();
+      const forbidden = Object.assign(new Error('Forbidden'), {
+        isAxiosError: true,
+        response: { status: 403, data: {} },
+      });
+      sinon.stub(axios, 'isAxiosError').returns(true);
+      axiosGet.rejects(forbidden);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.called).to.be.false;
+      expect(result.result).to.include('MS Teams Bot Installation Failed');
+      expect(result.result).to.include('AppCatalog.Read.All');
+    });
+
+    it('should return error HTML when id_token is missing from token response', async () => {
+      axiosPost.onFirstCall().resolves({ data: { access_token: 'at-123' } });
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.called).to.be.false;
+      expect(result.result).to.include('MS Teams Bot Installation Failed');
+    });
+
+    it('should return error HTML when oid claim is absent from id_token', async () => {
+      const idToken = buildIdToken({ sub: 'sub-123', tid: MOCK_TENANT_ID });
+      axiosPost.onFirstCall().resolves({ data: { id_token: idToken, access_token: 'at-123' } });
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(createChannelEndpoint.execute.called).to.be.false;
+      expect(result.result).to.include('MS Teams Bot Installation Failed');
     });
 
     it('should throw if subscriberId is absent in link_user mode', async () => {
@@ -343,60 +492,19 @@ describe('MsTeamsOauthCallback', () => {
         state,
       });
 
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected an error');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.include('subscriberId is required for link_user mode');
-      }
+      const result = await usecase.execute(command);
+
+      expect(result.type).to.equal(ResponseTypeEnum.HTML);
+      expect(result.result).to.include('subscriberId is required for link_user mode');
     });
 
     it('should throw if providerCode is missing in link_user mode', async () => {
       const command = MsTeamsOauthCallbackCommand.create({ state: buildLinkUserState() });
 
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected an error');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.include('Missing authorization code for link_user mode');
-      }
-    });
+      const result = await usecase.execute(command);
 
-    it('should throw if id_token is missing from token response', async () => {
-      axiosPost.onFirstCall().resolves({ data: { access_token: 'at-123' } });
-
-      const command = MsTeamsOauthCallbackCommand.create({
-        providerCode: 'auth-code-abc',
-        state: buildLinkUserState(),
-      });
-
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected an error');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.include('missing id_token');
-      }
-    });
-
-    it('should throw if oid claim is absent from id_token', async () => {
-      const idToken = buildIdToken({ sub: 'sub-123', tid: MOCK_TENANT_ID });
-      axiosPost.onFirstCall().resolves({ data: { id_token: idToken, access_token: 'at-123' } });
-
-      const command = MsTeamsOauthCallbackCommand.create({
-        providerCode: 'auth-code-abc',
-        state: buildLinkUserState(),
-      });
-
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected an error');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.include('oid claim');
-      }
+      expect(result.type).to.equal(ResponseTypeEnum.HTML);
+      expect(result.result).to.include('Missing authorization code for link_user mode');
     });
   });
 });
