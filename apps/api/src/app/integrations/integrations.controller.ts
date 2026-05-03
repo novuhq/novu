@@ -56,11 +56,15 @@ import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
+import { AzureSetupOauthCallbackCommand } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.command';
+import { AzureSetupOauthCallback } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.response';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
+import { GenerateAzureSetupOauthUrlCommand } from './usecases/generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.command';
+import { GenerateAzureSetupOauthUrl } from './usecases/generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
 import { GenerateChatOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
 import { GenerateChatOauthUrl } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GenerateConnectOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
@@ -76,6 +80,11 @@ import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrat
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { MsTeamsHealthCheckCommand } from './usecases/msteams-health-check/msteams-health-check.command';
+import {
+  MsTeamsHealthCheck,
+  MsTeamsHealthCheckResult,
+} from './usecases/msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
@@ -106,7 +115,10 @@ export class IntegrationsController {
     private chatOauthCallbackUsecase: ChatOauthCallback,
     private featureFlagsService: FeatureFlagsService,
     private generateMsTeamsArmTemplateUsecase: GenerateMsTeamsArmTemplate,
-    private getMsTeamsArmTemplateUsecase: GetMsTeamsArmTemplate
+    private getMsTeamsArmTemplateUsecase: GetMsTeamsArmTemplate,
+    private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
+    private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
+    private msTeamsHealthCheckUsecase: MsTeamsHealthCheck
   ) {}
 
   @Get('/')
@@ -466,6 +478,130 @@ export class IntegrationsController {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-store');
     res.send(JSON.stringify(template, null, 2));
+  }
+
+  /**
+   * Quick Setup: generate an Azure AD OAuth URL so Novu can create the App Registration
+   * on the user's behalf via Microsoft Graph.
+   */
+  @Get('/:integrationId/msteams-azure-setup/oauth-url')
+  @ApiOkResponse({
+    description: 'Azure AD OAuth URL for the Quick Setup flow (Novu creates the app registration).',
+  })
+  @ApiOperation({
+    summary: 'Get Azure Quick Setup OAuth URL',
+    description:
+      'Returns an Azure AD OAuth URL that authorizes Novu to create an App Registration and client secret on your behalf via Microsoft Graph.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async getAzureSetupOauthUrl(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<{ url: string }> {
+    const url = await this.generateAzureSetupOauthUrlUsecase.execute(
+      GenerateAzureSetupOauthUrlCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        integrationId,
+      })
+    );
+
+    return { url };
+  }
+
+  /**
+   * Health-check endpoint polled by the dashboard to determine if the saved MS Teams
+   * credentials, app catalog entry, and Graph permissions are ready after the Quick
+   * Setup OAuth flow.
+   */
+  @Get('/:integrationId/msteams-health')
+  @ApiOkResponse({
+    description: 'Per-checkpoint health status for an MS Teams integration after Quick Setup.',
+  })
+  @ApiOperation({
+    summary: 'Get MS Teams integration health status',
+    description:
+      'Returns the readiness status of the stored MS Teams credentials, app catalog entry, and Graph permissions. Poll this endpoint after the OAuth setup completes to determine when it is safe to proceed to admin consent.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getMsTeamsHealth(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string,
+    @Query('checks') checksParam?: string
+  ): Promise<MsTeamsHealthCheckResult> {
+    const checks = checksParam
+      ? checksParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    return this.msTeamsHealthCheckUsecase.execute(
+      MsTeamsHealthCheckCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId,
+        checks,
+      })
+    );
+  }
+
+  /**
+   * Quick Setup callback: Azure AD redirects here after the user authorizes Novu.
+   * Creates the App Registration, secret, and service principal via Graph, saves
+   * credentials to the integration, then attempts to upload the Teams app to the catalog.
+   * Returns a self-closing script that posts a message to the opener tab and closes itself.
+   */
+  @Get('/chat/oauth/azure-setup/callback')
+  @ApiExcludeEndpoint()
+  @ApiOperation({ summary: 'Azure Quick Setup OAuth callback' })
+  async handleAzureSetupOauthCallback(
+    @Res() res: Response,
+    @Query('code') code?: string,
+    @Query('state') state?: string,
+    @Query('error') error?: string,
+    @Query('error_description') errorDescription?: string
+  ): Promise<void> {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+
+    if (!state) {
+      res
+        .status(400)
+        .type('html')
+        .send(
+          AzureSetupOauthCallback.buildPopupHtml({
+            success: false,
+            errorMessage: 'Missing required OAuth parameter: state',
+          })
+        );
+
+      return;
+    }
+
+    try {
+      const result = await this.azureSetupOauthCallbackUsecase.execute(
+        AzureSetupOauthCallbackCommand.create({
+          state,
+          code,
+          error,
+          errorDescription,
+        })
+      );
+
+      res.type('html').send(result.html);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during Azure setup';
+
+      res
+        .status(200)
+        .type('html')
+        .send(AzureSetupOauthCallback.buildPopupHtml({ success: false, errorMessage }));
+    }
   }
 
   /**

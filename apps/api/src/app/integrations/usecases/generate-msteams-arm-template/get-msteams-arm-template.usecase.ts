@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { GetDecryptedIntegrations } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { GenerateMsTeamsArmTemplate } from './generate-msteams-arm-template.usecase';
 
@@ -13,8 +13,7 @@ export class GetMsTeamsArmTemplate {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
-    private agentIntegrationRepository: AgentIntegrationRepository,
-    private agentRepository: AgentRepository
+    private agentIntegrationRepository: AgentIntegrationRepository
   ) {}
 
   async execute(integrationId: string, sig: string, exp: string): Promise<GetMsTeamsArmTemplateResult> {
@@ -49,17 +48,21 @@ export class GetMsTeamsArmTemplate {
 
     const botName = this.sanitizeBotName(integration.name ?? 'NovuBot');
     const displayName = integration.name ?? 'Novu Bot';
-    const agentIdentifier = await this.resolveAgentIdentifier(
+    const agentId = await this.resolveLinkedAgentId(
       integrationId,
       integration._environmentId,
       integration._organizationId
     );
-    const endpoint = this.buildWebhookUrl(agentIdentifier, integration.identifier);
+    const endpoint = this.buildWebhookUrl(agentId, integration.identifier);
 
     return { template: buildArmTemplate({ appId, tenantId, botName, displayName, endpoint }) };
   }
 
-  private async resolveAgentIdentifier(
+  /**
+   * Webhook routing resolves the agent via `findByIdForWebhook` — the path segment must be the agent document `_id`,
+   * not the human-readable `identifier` (same as the dashboard manual Teams setup instructions).
+   */
+  private async resolveLinkedAgentId(
     integrationId: string,
     environmentId: string,
     organizationId: string
@@ -73,20 +76,7 @@ export class GetMsTeamsArmTemplate {
       ['_agentId']
     );
 
-    if (!link) {
-      return null;
-    }
-
-    const agent = await this.agentRepository.findOne(
-      {
-        _id: link._agentId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['identifier']
-    );
-
-    return agent?.identifier ?? null;
+    return link?._agentId ?? null;
   }
 
   private sanitizeBotName(name: string): string {
@@ -105,14 +95,15 @@ export class GetMsTeamsArmTemplate {
     return sanitized;
   }
 
-  private buildWebhookUrl(agentIdentifier: string | null, integrationIdentifier: string): string {
-    const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+  private buildWebhookUrl(agentId: string | null, integrationIdentifier: string): string {
+    // const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    const base = 'https://gosha.ngrok.app';
 
-    if (!agentIdentifier) {
+    if (!agentId) {
       return `${base}/v1/agents/unknown/webhook/${integrationIdentifier}`;
     }
 
-    return `${base}/v1/agents/${agentIdentifier}/webhook/${integrationIdentifier}`;
+    return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
   }
 }
 

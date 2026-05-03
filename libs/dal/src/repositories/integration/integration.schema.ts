@@ -79,6 +79,13 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       configurationSetName: Schema.Types.String,
       inboxCount: Schema.Types.String,
     },
+    provisioning: {
+      status: Schema.Types.String,
+      startedAt: Schema.Types.String,
+      completedAt: Schema.Types.String,
+      errorMessage: Schema.Types.String,
+      teamsAppCatalogId: Schema.Types.String,
+    },
     active: {
       type: Schema.Types.Boolean,
       default: false,
