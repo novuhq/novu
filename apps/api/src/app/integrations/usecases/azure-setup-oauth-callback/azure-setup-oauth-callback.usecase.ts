@@ -108,12 +108,8 @@ export class AzureSetupOauthCallback {
     return { html: AzureSetupOauthCallback.buildPopupHtml({ success: true }) };
   }
 
-  static buildPopupHtml({ success, errorMessage }: { success: boolean; errorMessage?: string }): string {
-    const statusText = success
-      ? 'Setup complete. This window will close automatically.'
-      : (errorMessage ?? 'Setup failed. Please try again.');
-
-    return `<!DOCTYPE html><html><body><p>${statusText}</p><script>window.close();\x3c/script></body></html>`;
+  static buildPopupHtml(_options: { success: boolean; errorMessage?: string }): string {
+    return `<!DOCTYPE html><html><body><script>window.close();\x3c/script></body></html>`;
   }
 
   private async decodeAndVerifyState(state: string): Promise<AzureSetupStateData> {
