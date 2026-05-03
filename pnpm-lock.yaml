@@ -129,6 +129,7 @@ overrides:
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.4': ^3.47.4
   protobufjs@<7.5.5: ^7.5.5
   protobufjs@>=8.0.0 <8.0.1: ^8.0.1
+  newrelic: 13.18.0
 
 patchedDependencies:
   smtp-server@1.17.0:
@@ -531,8 +532,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: ^13.19.2
-        version: 13.19.2
+        specifier: 13.18.0
+        version: 13.18.0
       nimma:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1239,8 +1240,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.2
       newrelic:
-        specifier: ^13.12.0
-        version: 13.12.0
+        specifier: 13.18.0
+        version: 13.18.0
       pino:
         specifier: ^8.17.2
         version: 8.17.2
@@ -1381,8 +1382,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: ^13.12.0
-        version: 13.12.0
+        specifier: 13.18.0
+        version: 13.18.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1586,8 +1587,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: ^13.19.2
-        version: 13.19.2
+        specifier: 13.18.0
+        version: 13.18.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1789,8 +1790,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: ^13.19.2
-        version: 13.19.2
+        specifier: 13.18.0
+        version: 13.18.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -2609,8 +2610,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@8.3.3)
       newrelic:
-        specifier: ^13.19.2
-        version: 13.19.2
+        specifier: 13.18.0
+        version: 13.18.0
       node-fetch:
         specifier: ^3.2.10
         version: 3.3.2
@@ -4472,17 +4473,11 @@ packages:
     resolution: {integrity: sha512-JgG32LQRLphHRWsn64vIt7wD2m+JH46swM6ZrY7g1rdiGiKV5m+A+TBrJKoUUQRmS14azMgePNZY30NauWqzLg==}
     engines: {node: '>=10.4.0'}
 
-  '@apm-js-collab/code-transformer@0.12.0':
-    resolution: {integrity: sha512-5F2ob4cMYezbaUGAk+YltbDvb9BFIghN92ubct9Ho/0MFx4FkChCxYV99NkU6Kx+RAgaqBV6yxKuWreQ6K8SOw==}
+  '@apm-js-collab/code-transformer@0.10.0':
+    resolution: {integrity: sha512-6Y0pDhTIiVetgioIiHeFQ+vwpxd7Pz2h5xI33n0R9juRbxBaFUfhBfGOAUF+Y4TdcT5ccpjS6/5sLLYDDS3FHw==}
 
-  '@apm-js-collab/code-transformer@0.8.2':
-    resolution: {integrity: sha512-YRjJjNq5KFSjDUoqu5pFUWrrsvGOxl6c3bu+uMFc9HNNptZ2rNU/TI2nLw4jnhQNtka972Ee2m3uqbvDQtPeCA==}
-
-  '@apm-js-collab/tracing-hooks@0.3.1':
-    resolution: {integrity: sha512-Vu1CbmPURlN5fTboVuKMoJjbO5qcq9fA5YXpskx3dXe/zTBvjODFoerw+69rVBlRLrJpwPqSDqEuJDEKIrTldw==}
-
-  '@apm-js-collab/tracing-hooks@0.6.0':
-    resolution: {integrity: sha512-akdKDRbvPWC7mRfyoJ2f/tpmKqn5rLDPJMQ3+ZImgtiRJsC3LSoDJF3enrEufURIieH/H0S7Le6KLnRaCTk9rQ==}
+  '@apm-js-collab/tracing-hooks@0.5.0':
+    resolution: {integrity: sha512-Fj2E03RnXtMkn5/XupRnNRC7CJcXRPVPmlTcw1ZJ3F/2iDyTXYMVKImuhU+Q9R7L0nxnuvwaP3ITpl2Y8mtXng==}
 
   '@arethetypeswrong/cli@0.17.4':
     resolution: {integrity: sha512-AeiKxtf67XD/NdOqXgBOE5TZWH3EOCt+0GkbUpekOzngc+Q/cRZ5azjWyMxISxxfp0EItgm5NoSld9p7BAA5xQ==}
@@ -7401,10 +7396,6 @@ packages:
     resolution: {integrity: sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-
-  '@grpc/grpc-js@1.13.4':
-    resolution: {integrity: sha512-GsFaMXCkMqkKIvwCQjCrwH+GHbPKBjhwo/8ZuUkWHqbI73Kky9I+pQltrlT0+MWpedCoosda53lgjYfyEPgxBg==}
-    engines: {node: '>=12.10.0'}
 
   '@grpc/grpc-js@1.14.3':
     resolution: {integrity: sha512-Iq8QQQ/7X3Sac15oB6p0FmUg/klxQvXLeileoqrTRGJYLV+/9tubbr9ipz0GKHjmXVsgFPo/+W+2cA8eNcR+XA==}
@@ -18104,10 +18095,6 @@ packages:
     resolution: {integrity: sha512-ca9pw9fomFcKPvFLXhBKUK90ZvGibiGOvRJNbjljY7s7uq/5YO4BOzcYtJqExdx99rF6aAcnRxHmcUHcz6sQsg==}
     engines: {node: '>=0.10'}
 
-  esquery@1.7.0:
-    resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
-    engines: {node: '>=0.10'}
-
   esrap@2.2.4:
     resolution: {integrity: sha512-suICpxAmZ9A8bzJjEl/+rLJiDKC0X4gYWUxT6URAWBLvlXmtbZd5ySMu/N2ZGEtMCAmflUDPSehrP9BQcsGcSg==}
 
@@ -19309,10 +19296,6 @@ packages:
   https-proxy-agent@5.0.1:
     resolution: {integrity: sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==}
     engines: {node: '>= 6'}
-
-  https-proxy-agent@7.0.5:
-    resolution: {integrity: sha512-1e4Wqeblerz+tMKPIq2EMGiiWW1dIjZOksyHWSUm1rmuvw/how9hBHZ38lAGj5ID4Ik6EdkOw7NmWPy6LAwalw==}
-    engines: {node: '>= 14'}
 
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
@@ -21514,10 +21497,6 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
 
-  meriyah@6.1.4:
-    resolution: {integrity: sha512-Sz8FzjzI0kN13GK/6MVEsVzMZEPvOhnmmI1lU5+/1cGOiK3QUahntrNNtdVeihrO7t9JpoH75iMNXg6R6uWflQ==}
-    engines: {node: '>=18.0.0'}
-
   mermaid@11.12.2:
     resolution: {integrity: sha512-n34QPDPEKmaeCG4WDMGy0OT6PSyxKCfy2pJgShP+Qow2KLrvWjclwbc3yXfSIf4BanqWEhQEpngWwNp/XhZt6w==}
 
@@ -21823,9 +21802,6 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  module-details-from-path@1.0.3:
-    resolution: {integrity: sha512-ySViT69/76t8VhE1xXHK6Ch4NcDd26gx0MzKXLO+F7NOtnqH68d9zF94nT8ZWSxXh8ELOERsnJO/sWt1xZYw5A==}
-
   module-details-from-path@1.0.4:
     resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
 
@@ -22107,13 +22083,8 @@ packages:
   new-date@1.0.3:
     resolution: {integrity: sha512-0fsVvQPbo2I18DT2zVHpezmeeNYV2JaJSrseiHLc17GNOxJzUdx5mvSigPu8LtIfZSij5i1wXnXFspEs2CD6hA==}
 
-  newrelic@13.12.0:
-    resolution: {integrity: sha512-tLIhkHK2+5nYGeeuTMiKI/F0qUnk5rK4m6UV0M4bk7D5r80+FV0EbB9eUtepkFRSp1hqPO4SfumlraAKRJuDAw==}
-    engines: {node: '>=20', npm: '>=6.0.0'}
-    hasBin: true
-
-  newrelic@13.19.2:
-    resolution: {integrity: sha512-PfiLkjjsz1tBrTqnPtHbiRcC44r+U9numOhPQztH5jnTf+xksqMoH7mlyTZi7BtD1Pkm6c+zY3SVnWjyzSNG0w==}
+  newrelic@13.18.0:
+    resolution: {integrity: sha512-9GYhtXTzjcsH4HUPeGwN6i24z6YZuB/ikWced3h9D/SH984MH9GxpWJjlurouA92GP667fIN0TjGuTNIfYa54Q==}
     engines: {node: '>=20', npm: '>=6.0.0'}
     hasBin: true
 
@@ -24676,9 +24647,6 @@ packages:
 
   selderee@0.11.0:
     resolution: {integrity: sha512-5TF+l7p4+OsnP8BCCvSyZiSPc4x4//p5uPwK8TCnVPJYRmU2aYKMpOXvw8zM5a5JvuuCGN1jmsMwuU2W02ukfA==}
-
-  semifies@1.0.0:
-    resolution: {integrity: sha512-xXR3KGeoxTNWPD4aBvL5NUpMTT7WMANr3EWnaS190QVkY52lqqcVRD7Q05UVbBhiWDGWMlJEUam9m7uFFGVScw==}
 
   semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
@@ -27652,28 +27620,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@apm-js-collab/code-transformer@0.12.0':
-    dependencies:
-      '@types/estree': 1.0.8
-      astring: 1.9.0
-      esquery: 1.7.0
-      meriyah: 6.1.4
-      semifies: 1.0.0
-      source-map: 0.6.1
+  '@apm-js-collab/code-transformer@0.10.0': {}
 
-  '@apm-js-collab/code-transformer@0.8.2': {}
-
-  '@apm-js-collab/tracing-hooks@0.3.1':
+  '@apm-js-collab/tracing-hooks@0.5.0':
     dependencies:
-      '@apm-js-collab/code-transformer': 0.8.2
-      debug: 4.4.3(supports-color@8.1.1)
-      module-details-from-path: 1.0.4
-    transitivePeerDependencies:
-      - supports-color
-
-  '@apm-js-collab/tracing-hooks@0.6.0':
-    dependencies:
-      '@apm-js-collab/code-transformer': 0.12.0
+      '@apm-js-collab/code-transformer': 0.10.0
       debug: 4.4.3(supports-color@8.1.1)
       module-details-from-path: 1.0.4
     transitivePeerDependencies:
@@ -31337,7 +31288,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.6)
+      better-call: 1.3.2(zod@4.3.5)
       jose: 6.1.3
       kysely: 0.28.14
       nanostores: 1.2.0
@@ -32816,11 +32767,6 @@ snapshots:
   '@graphql-typed-document-node/core@3.2.0(graphql@16.9.0)':
     dependencies:
       graphql: 16.9.0
-
-  '@grpc/grpc-js@1.13.4':
-    dependencies:
-      '@grpc/proto-loader': 0.7.13
-      '@js-sdsl/ordered-map': 4.4.2
 
   '@grpc/grpc-js@1.14.3':
     dependencies:
@@ -44996,7 +44942,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.6)
+      better-call: 1.3.2(zod@4.3.5)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.14
@@ -45014,6 +44960,15 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
+
+  better-call@1.3.2(zod@4.3.5):
+    dependencies:
+      '@better-auth/utils': 0.3.1
+      '@better-fetch/fetch': 1.1.21
+      rou3: 0.7.12
+      set-cookie-parser: 3.1.0
+    optionalDependencies:
+      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:
@@ -46624,6 +46579,7 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+    optional: true
 
   debug@4.3.1(supports-color@8.1.1):
     dependencies:
@@ -47486,10 +47442,6 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esquery@1.7.0:
-    dependencies:
-      estraverse: 5.3.0
-
   esrap@2.2.4:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -48103,7 +48055,7 @@ snapshots:
       minimatch: 3.1.5
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.7.3
+      semver: 7.7.4
       tapable: 2.2.1
       typescript: 5.3.3
       webpack: 5.105.4(@swc/core@1.7.26(@swc/helpers@0.5.15))(esbuild@0.27.3)
@@ -49188,13 +49140,6 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.3(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-
-  https-proxy-agent@7.0.5:
-    dependencies:
-      agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
@@ -52238,8 +52183,6 @@ snapshots:
 
   merge2@1.4.1: {}
 
-  meriyah@6.1.4: {}
-
   mermaid@11.12.2:
     dependencies:
       '@braintree/sanitize-url': 7.1.1
@@ -52723,8 +52666,6 @@ snapshots:
       ast-module-types: 6.0.0
       node-source-walk: 7.0.0
 
-  module-details-from-path@1.0.3: {}
-
   module-details-from-path@1.0.4: {}
 
   module-lookup-amd@9.0.2:
@@ -52950,7 +52891,7 @@ snapshots:
 
   needle@3.2.0:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.6.3
       sax: 1.5.0
     transitivePeerDependencies:
@@ -53002,44 +52943,9 @@ snapshots:
     dependencies:
       '@segment/isodate': 1.0.3
 
-  newrelic@13.12.0:
+  newrelic@13.18.0:
     dependencies:
-      '@apm-js-collab/tracing-hooks': 0.3.1
-      '@grpc/grpc-js': 1.13.4
-      '@grpc/proto-loader': 0.7.13
-      '@newrelic/security-agent': 3.0.1
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/api-logs': 0.203.0
-      '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/exporter-metrics-otlp-proto': 0.201.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-logs': 0.203.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-metrics': 2.0.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
-      '@tyriar/fibonacci-heap': 2.0.9
-      concat-stream: 2.0.0
-      https-proxy-agent: 7.0.5
-      import-in-the-middle: 1.14.2
-      json-bigint: 1.0.0
-      json-stringify-safe: 5.0.1
-      module-details-from-path: 1.0.3
-      readable-stream: 3.6.2
-      require-in-the-middle: 7.4.0
-      semver: 7.7.3
-      winston-transport: 4.5.0
-    optionalDependencies:
-      '@newrelic/fn-inspect': 4.4.0
-      '@newrelic/native-metrics': 12.0.0
-      '@prisma/prisma-fmt-wasm': 4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085
-    transitivePeerDependencies:
-      - bare-buffer
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  newrelic@13.19.2:
-    dependencies:
-      '@apm-js-collab/tracing-hooks': 0.6.0
+      '@apm-js-collab/tracing-hooks': 0.5.0
       '@grpc/grpc-js': 1.14.3
       '@grpc/proto-loader': 0.7.13
       '@newrelic/security-agent': 3.0.1
@@ -54276,7 +54182,7 @@ snapshots:
   portfinder@1.0.32:
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7(supports-color@5.5.0)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
@@ -56122,8 +56028,6 @@ snapshots:
   selderee@0.11.0:
     dependencies:
       parseley: 0.12.1
-
-  semifies@1.0.0: {}
 
   semver-compare@1.0.0: {}
 

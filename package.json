@@ -276,7 +276,8 @@
       "@clerk/shared@>=2.20.17 <2.22.1": "^2.22.1",
       "@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.4": "^3.47.4",
       "protobufjs@<7.5.5": "^7.5.5",
-      "protobufjs@>=8.0.0 <8.0.1": "^8.0.1"
+      "protobufjs@>=8.0.0 <8.0.1": "^8.0.1",
+      "newrelic": "13.18.0"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
