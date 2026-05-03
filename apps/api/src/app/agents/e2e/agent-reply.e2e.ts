@@ -92,8 +92,14 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
     });
 
-    it('should accept reply with files only (empty markdown) for attachment-only agent messages', async () => {
+    it('should accept reply with files only (no markdown) for attachment-only agent messages', async () => {
       const conversationId = await seedConversation(ctx);
+
+      const convBefore = await conversationRepository.findOne(
+        { _id: conversationId, _environmentId: ctx.session.environment._id },
+        '*'
+      );
+      const countBefore = convBefore!.messageCount;
 
       const res = await postReply({
         conversationId,
@@ -113,6 +119,13 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       );
       expect(agentActivity).to.exist;
       expect(agentActivity!.content).to.equal('[Attachment: photo.png]');
+
+      const convAfter = await conversationRepository.findOne(
+        { _id: conversationId, _environmentId: ctx.session.environment._id },
+        '*'
+      );
+      expect(convAfter!.lastMessagePreview).to.equal('[Attachment: photo.png]');
+      expect(convAfter!.messageCount).to.equal(countBefore + 1);
     });
 
     it('should edit a previously sent message and persist an edit activity', async () => {

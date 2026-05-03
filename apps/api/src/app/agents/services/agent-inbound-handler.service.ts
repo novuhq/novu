@@ -82,6 +82,7 @@ function inboundMessageBodyText(message: Message): string {
   const raw = message.text;
 
   if (typeof raw === 'string') {
+
     return raw;
   }
 
@@ -94,6 +95,7 @@ function inboundMessageBodyText(message: Message): string {
  */
 function firstMessageTextForConversation(message: Message, bodyText: string): string {
   if (bodyText.length > 0) {
+
     return bodyText;
   }
 
@@ -101,10 +103,12 @@ function firstMessageTextForConversation(message: Message, bodyText: string): st
   const name = first && typeof first.name === 'string' ? first.name : undefined;
 
   if (name && name.length > 0) {
+
     return `[Attachment: ${name}]`;
   }
 
   if (message.attachments?.length) {
+
     return '[Attachment]';
   }
 
@@ -161,6 +165,10 @@ export class AgentInboundHandler {
       : ConversationParticipantTypeEnum.PLATFORM_USER;
 
     const inboundBodyText = inboundMessageBodyText(message);
+    if (message.text !== inboundBodyText) {
+      (message as { text?: string }).text = inboundBodyText;
+    }
+
     const firstMessageText = firstMessageTextForConversation(message, inboundBodyText);
 
     const conversation = await this.conversationService.createOrGetConversation({
