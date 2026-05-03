@@ -238,28 +238,6 @@ export function SlackSetupGuide({
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
         title="Verify by installing the app to your workspace"
         description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Tip:"
-            description={
-              <>
-                Novu provides a{' '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<SlackConnectButton />'}</code>
-                {' component, to let your users easily connect this agent to their Slack workspace. '}
-                <a
-                  href="https://docs.novu.co"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-text-sub underline"
-                >
-                  Read docs
-                </a>
-              </>
-            }
-          />
-        }
         rightContent={
           user?.externalId && currentEnvironment?.identifier ? (
             <NovuProvider
