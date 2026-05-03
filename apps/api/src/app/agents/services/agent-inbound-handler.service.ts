@@ -13,7 +13,7 @@ import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
-import { AgentConversationService } from './agent-conversation.service';
+import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 
@@ -136,7 +136,9 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: message.text,
+      firstMessageText: getInboundActivityPreview(message.text, {
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+      }),
     });
 
     const senderType = subscriberId
@@ -179,6 +181,7 @@ export class AgentInboundHandler {
       senderName: message.author.fullName,
       content: message.text,
       richContent,
+      hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
