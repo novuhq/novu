@@ -26,6 +26,7 @@ import { GetMsTeamsArmTemplate } from './generate-msteams-arm-template/get-mstea
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
+import { MsTeamsHealthCheck } from './msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
@@ -60,4 +61,5 @@ export const USE_CASES = [
   SlackOauthCallback,
   MsTeamsOauthCallback,
   ChatOauthCallback,
+  MsTeamsHealthCheck,
 ];

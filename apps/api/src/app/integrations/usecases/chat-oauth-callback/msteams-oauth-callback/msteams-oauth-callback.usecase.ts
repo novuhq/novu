@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials, MsTeamsTokenService, PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   EnvironmentRepository,
@@ -22,8 +22,6 @@ import {
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 
-const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
-
 @Injectable()
 export class MsTeamsOauthCallback {
   private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
@@ -35,7 +33,6 @@ export class MsTeamsOauthCallback {
     private createChannelConnection: CreateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
     private logger: PinoLogger,
-    private msTeamsTokenService: MsTeamsTokenService,
     private generateMsTeamsOauthUrl: GenerateMsTeamsOauthUrl
   ) {
     this.logger.setContext(MsTeamsOauthCallback.name);
@@ -51,24 +48,10 @@ export class MsTeamsOauthCallback {
     const credentials = await this.getIntegrationCredentials(integration);
 
     if (stateData.mode === 'link_user') {
-      try {
-        await this.linkUserEndpoint(command, stateData, integration, credentials);
-        this.logger.info(
-          `MS Teams link_user completed successfully: subscriberId=${stateData.subscriberId} integrationId=${integration._id}`
-        );
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'An unexpected error occurred during bot installation.';
-
-        this.logger.error(
-          `MS Teams link_user failed: subscriberId=${stateData.subscriberId} integrationId=${integration._id} error="${message}"`
-        );
-
-        return {
-          type: ResponseTypeEnum.HTML,
-          result: this.buildErrorHtml(message),
-        };
-      }
+      await this.linkUserEndpoint(command, stateData, integration, credentials);
+      this.logger.info(
+        `MS Teams link_user completed successfully: subscriberId=${stateData.subscriberId} integrationId=${integration._id}`
+      );
     } else {
       await this.createAdminConsentConnection(command, stateData, integration);
       this.logger.info(
@@ -169,8 +152,14 @@ export class MsTeamsOauthCallback {
     const decrypted = decryptCredentials(credentials);
     const oid = await this.exchangeCodeForAadObjectId(command.providerCode, decrypted);
 
-    await this.installBotForUser(oid, decrypted);
-
+    /*
+     * We no longer call installBotForUser here. The user adds the bot to Teams themselves by
+     * clicking the "Add in Teams" deep link shown in the setup guide (teams.microsoft.com/l/app/…).
+     * When the user adds the app, Teams sends a conversationUpdate activity to the bot webhook
+     * which establishes the conversation reference — the same outcome as the API install.
+     * This removes the dependency on TeamsAppInstallation.ReadWriteSelfForUser.All, which can
+     * take up to 5 hours to propagate after admin consent and blocked Quick Setup entirely.
+     */
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
         organizationId: stateData.organizationId,
@@ -228,9 +217,8 @@ export class MsTeamsOauthCallback {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         throw new BadRequestException(
-          'MS Teams bot installation failed: missing Azure permissions. ' +
-            'Please grant AppCatalog.Read.All and TeamsAppInstallation.ReadWriteSelfForUser.All ' +
-            'application permissions in Azure Portal and re-run admin consent.'
+          'MS Teams bot installation failed: missing AppCatalog.Read.All permission. ' +
+            'Please grant AppCatalog.Read.All application permission in Azure Portal and re-run admin consent.'
         );
       }
 
@@ -286,9 +274,7 @@ export class MsTeamsOauthCallback {
 
         if (status === 403) {
           throw new BadRequestException(
-            'MS Teams bot installation failed: missing Azure permissions. ' +
-              'Please grant TeamsAppInstallation.ReadWriteSelfForUser.All ' +
-              'application permission in Azure Portal and re-run admin consent.'
+            'MS Teams bot installation failed: the TeamsAppInstallation.ReadWriteSelfForUser.All permission has not yet propagated.'
           );
         }
 
@@ -314,12 +300,13 @@ export class MsTeamsOauthCallback {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
 
-    const isPermissionError = message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All');
+    const isPermissionError =
+      message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
     const cachingNote = isPermissionError
       ? `
   <div class="cache-note">
     <strong>Azure permission changes may take time to propagate.</strong>
-    If you have already granted the required permissions, Azure AD can take up to <strong>60 minutes</strong> to apply the changes due to caching. Wait a few minutes and then try to <strong>Link Teams Identity</strong> again.
+    If you have already granted the required permissions, Azure AD can take up to <strong>60 minutes</strong> to apply the changes. Wait a few minutes and then try to <strong>Link Teams Identity</strong> again.
   </div>`
       : '';
 

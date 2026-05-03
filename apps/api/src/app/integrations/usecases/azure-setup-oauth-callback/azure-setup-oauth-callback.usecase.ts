@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import axios, { AxiosError } from 'axios';
 import {
   AZURE_SETUP_OAUTH_SCOPES,
@@ -12,6 +12,9 @@ import { AzureSetupOauthCallbackCommand } from './azure-setup-oauth-callback.com
 
 const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 const MS_LOGIN_BASE_URL = 'https://login.microsoftonline.com';
+const MS_ARM_BASE_URL = 'https://management.azure.com';
+const MS_ARM_API_VERSION = '2022-09-01';
+const MS_BOT_SERVICE_API_VERSION = '2023-09-15-preview';
 
 /**
  * Graph permissions required on the customer's bot app registration.
@@ -23,7 +26,9 @@ const REQUIRED_GRAPH_PERMISSIONS = [
   { id: '59a6b24b-4225-4393-8165-ebaec5f55d7a', type: 'Role' }, // Channel.ReadBasic.All
   { id: 'e12dae10-5a57-4817-b79d-dfbec5348930', type: 'Role' }, // AppCatalog.Read.All
   { id: '9f67436c-5415-4e7f-8ac1-3014a7132630', type: 'Role' }, // TeamsAppInstallation.ReadWriteSelfForTeam.All
-  { id: '908de74d-f8b2-4d6b-a9ed-2a17b3b78179', type: 'Role' }, // TeamsAppInstallation.ReadWriteSelfForUser.All
+  // TeamsAppInstallation.ReadWriteSelfForUser.All intentionally excluded: the bot install API
+  // is no longer called during link_user. Users add the app themselves via the Teams deep link,
+  // which produces the same conversationUpdate event without requiring this slow-propagating permission.
 ];
 
 /** Graph resource ID for Microsoft Graph (constant) */
@@ -34,11 +39,17 @@ export type AzureSetupResult = {
   html: string;
 };
 
+type TokenResponse = {
+  accessToken: string;
+  refreshToken: string | null;
+};
+
 @Injectable()
 export class AzureSetupOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(AzureSetupOauthCallback.name);
@@ -64,7 +75,7 @@ export class AzureSetupOauthCallback {
       `Azure setup OAuth callback: creating app registration for integrationId=${stateData.integrationId} organizationId=${stateData.organizationId}`
     );
 
-    const accessToken = await this.exchangeCodeForToken(command.code);
+    const { accessToken, refreshToken } = await this.exchangeCodeForToken(command.code);
 
     const { appId, secretValue, tenantId } = await this.createAppRegistration(accessToken, stateData);
 
@@ -76,7 +87,26 @@ export class AzureSetupOauthCallback {
 
     this.logger.info(`Azure setup: credentials saved for integrationId=${stateData.integrationId}`);
 
-    const teamsAppUploaded = await this.tryUploadTeamsApp(accessToken, appId, stateData);
+    const teamsAppCatalogId = await this.tryUploadTeamsApp(accessToken, appId, stateData);
+    const teamsAppUploaded = teamsAppCatalogId !== null;
+
+    // Fire-and-forget: deploy the Bot Service via ARM (health-check polling catches readiness)
+    if (refreshToken) {
+      void this.tryDeployBotService(refreshToken, appId, tenantId, stateData).catch((err) => {
+        this.logger.warn(
+          `Azure setup: ARM deployment failed (non-fatal, health check will reflect) integrationId=${stateData.integrationId} error="${this.axiosErrorMessage(err)}" responseBody=${JSON.stringify((err as AxiosError)?.response?.data ?? null)}`
+        );
+      });
+    } else {
+      this.logger.warn(
+        `Azure setup: no refresh token available, skipping ARM deployment integrationId=${stateData.integrationId}`
+      );
+      void this.writeProvisioning(stateData, {
+        status: 'failed',
+        completedAt: new Date().toISOString(),
+        errorMessage: 'No refresh token available — ARM deployment was skipped.',
+      });
+    }
 
     return { html: AzureSetupOauthCallback.buildPopupHtml({ success: true, teamsAppUploaded }) };
   }
@@ -85,13 +115,20 @@ export class AzureSetupOauthCallback {
     success,
     errorMessage,
     teamsAppUploaded,
+    armDeployStarted,
   }: {
     success: boolean;
     errorMessage?: string;
     teamsAppUploaded?: boolean;
+    armDeployStarted?: boolean;
   }): string {
     const message = success
-      ? { type: 'novu:azure-setup-complete', success: true, teamsAppUploaded: teamsAppUploaded ?? false }
+      ? {
+          type: 'novu:azure-setup-complete',
+          success: true,
+          teamsAppUploaded: teamsAppUploaded ?? false,
+          armDeployStarted: armDeployStarted ?? false,
+        }
       : { type: 'novu:azure-setup-complete', success: false, error: errorMessage ?? 'Unknown error' };
 
     const messageJson = JSON.stringify(message);
@@ -157,7 +194,7 @@ export class AzureSetupOauthCallback {
   // Token exchange
   // ---------------------------------------------------------------------------
 
-  private async exchangeCodeForToken(code: string): Promise<string> {
+  private async exchangeCodeForToken(code: string): Promise<TokenResponse> {
     const clientId = process.env.NOVU_AZURE_CLIENT_ID;
     const clientSecret = process.env.NOVU_AZURE_CLIENT_SECRET;
 
@@ -165,26 +202,61 @@ export class AzureSetupOauthCallback {
       throw new NotFoundException('Azure Quick Setup is not configured on this Novu instance');
     }
 
+    const graphScopes = AZURE_SETUP_OAUTH_SCOPES.filter((s) => s.startsWith('https://graph.microsoft.com/')).join(' ');
+
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: clientId,
       client_secret: clientSecret,
       code,
       redirect_uri: GenerateAzureSetupOauthUrl.buildRedirectUri(),
-      scope: AZURE_SETUP_OAUTH_SCOPES.filter((s) => s.startsWith('https://graph.microsoft.com/')).join(' '),
+      scope: graphScopes,
     });
 
     try {
-      const response = await axios.post<{ access_token: string; tenant?: string }>(
+      const response = await axios.post<{ access_token: string; refresh_token?: string }>(
         `${MS_LOGIN_BASE_URL}/organizations/oauth2/v2.0/token`,
         params.toString(),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
 
-      return response.data.access_token;
+      return {
+        accessToken: response.data.access_token,
+        refreshToken: response.data.refresh_token ?? null,
+      };
     } catch (error) {
       throw new BadRequestException(`Failed to exchange authorization code: ${this.axiosErrorMessage(error)}`);
     }
+  }
+
+  /**
+   * Exchanges a refresh token for an Azure Management API access token.
+   * The refresh token is obtained from the initial Graph token exchange (offline_access scope).
+   * Microsoft issues tokens per-resource, so a separate exchange is needed for management.azure.com.
+   */
+  private async exchangeRefreshTokenForManagementToken(refreshToken: string): Promise<string> {
+    const clientId = process.env.NOVU_AZURE_CLIENT_ID;
+    const clientSecret = process.env.NOVU_AZURE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      throw new Error('Azure credentials not configured');
+    }
+
+    const params = new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      scope: 'https://management.azure.com/.default offline_access',
+    });
+
+    const response = await axios.post<{ access_token: string }>(
+      `${MS_LOGIN_BASE_URL}/organizations/oauth2/v2.0/token`,
+      params.toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    return response.data.access_token;
   }
 
   // ---------------------------------------------------------------------------
@@ -372,14 +444,279 @@ export class AzureSetupOauthCallback {
   }
 
   // ---------------------------------------------------------------------------
+  // ARM: Bot Service deployment (fire-and-forget, health-check polling detects readiness)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Deploys the Azure Bot resource + MsTeamsChannel into the user's Azure subscription
+   * using the ARM REST API and a management-scoped access token derived from the refresh token.
+   *
+   * Flow:
+   *   1. Exchange refresh token for management.azure.com access token
+   *   2. List subscriptions and pick the first one
+   *   3. Create resource group rg-{botName}
+   *   4. PUT Bot Service (SingleTenant, F0, messaging endpoint = Novu webhook)
+   *   5. PUT MsTeamsChannel on the Bot Service
+   *
+   * Writes integration.provisioning.status throughout so the health-check endpoint
+   * can answer "was the Azure Bot created?" without needing ARM credentials at query time.
+   * All errors are non-fatal — provisioning.status=failed is written and propagation continues.
+   */
+  private async tryDeployBotService(
+    refreshToken: string,
+    appId: string,
+    tenantId: string,
+    stateData: AzureSetupStateData
+  ): Promise<void> {
+    this.logger.info(`Azure setup: starting ARM bot deployment for integrationId=${stateData.integrationId}`);
+
+    await this.writeProvisioning(stateData, { status: 'pending', startedAt: new Date().toISOString() });
+
+    try {
+      let managementToken: string;
+
+      try {
+        managementToken = await this.exchangeRefreshTokenForManagementToken(refreshToken);
+        this.logger.info(`Azure setup: management token acquired integrationId=${stateData.integrationId}`);
+      } catch (error) {
+        throw new Error(
+          `ARM step [exchange-management-token] failed: ${this.axiosErrorMessage(error)} responseBody=${JSON.stringify((error as AxiosError)?.response?.data ?? null)}`
+        );
+      }
+
+      const subscriptionId = await this.getFirstSubscriptionId(managementToken);
+
+      if (!subscriptionId) {
+        this.logger.warn(
+          `Azure setup: no Azure subscription found — marking provisioning failed integrationId=${stateData.integrationId}`
+        );
+        await this.writeProvisioning(stateData, {
+          status: 'failed',
+          completedAt: new Date().toISOString(),
+          errorMessage: 'No enabled Azure subscription found in the account.',
+        });
+
+        return;
+      }
+
+      const integration = await this.integrationRepository.findOne({
+        _id: stateData.integrationId,
+        _organizationId: stateData.organizationId,
+      });
+
+      const botName = this.sanitizeBotName(integration?.name ?? 'NovuBot');
+      const displayName = integration?.name ?? 'Novu Bot';
+      const resourceGroupName = `rg-${botName}`;
+      const webhookEndpoint = await this.resolveWebhookEndpoint(stateData);
+
+      this.logger.info(
+        `Azure setup: ARM parameters integrationId=${stateData.integrationId} subscriptionId=${subscriptionId} resourceGroup=${resourceGroupName} botName=${botName} webhookEndpoint=${webhookEndpoint}`
+      );
+
+      const armHeaders = {
+        Authorization: `Bearer ${managementToken}`,
+        'Content-Type': 'application/json',
+      };
+
+      // 1. Create resource group
+      const rgUrl = `${MS_ARM_BASE_URL}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}?api-version=${MS_ARM_API_VERSION}`;
+
+      try {
+        await axios.put(
+          rgUrl,
+          { location: 'eastus', tags: { 'created-by': 'novu-quick-setup' } },
+          { headers: armHeaders }
+        );
+        this.logger.info(
+          `Azure setup: resource group created/ensured rg=${resourceGroupName} sub=${subscriptionId} integrationId=${stateData.integrationId}`
+        );
+      } catch (error) {
+        throw new Error(
+          `ARM step [create-resource-group] failed url=${rgUrl} error="${this.axiosErrorMessage(error)}" responseBody=${JSON.stringify((error as AxiosError)?.response?.data ?? null)}`
+        );
+      }
+
+      // 2. Create Bot Service
+      const botUrl = `${MS_ARM_BASE_URL}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.BotService/botServices/${botName}?api-version=${MS_BOT_SERVICE_API_VERSION}`;
+
+      try {
+        await axios.put(
+          botUrl,
+          {
+            location: 'global',
+            kind: 'azurebot',
+            sku: { name: 'F0' },
+            properties: {
+              displayName,
+              endpoint: webhookEndpoint,
+              msaAppId: appId,
+              msaAppTenantId: tenantId,
+              msaAppType: 'SingleTenant',
+            },
+          },
+          { headers: armHeaders }
+        );
+        this.logger.info(
+          `Azure setup: Bot Service created botName=${botName} appId=${appId} tenantId=${tenantId} integrationId=${stateData.integrationId}`
+        );
+      } catch (error) {
+        throw new Error(
+          `ARM step [create-bot-service] failed url=${botUrl} appId=${appId} tenantId=${tenantId} webhookEndpoint=${webhookEndpoint} error="${this.axiosErrorMessage(error)}" responseBody=${JSON.stringify((error as AxiosError)?.response?.data ?? null)}`
+        );
+      }
+
+      // 3. Enable Teams channel
+      const channelUrl = `${MS_ARM_BASE_URL}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.BotService/botServices/${botName}/channels/MsTeamsChannel?api-version=${MS_BOT_SERVICE_API_VERSION}`;
+
+      try {
+        await axios.put(
+          channelUrl,
+          {
+            location: 'global',
+            kind: 'azurebot',
+            properties: {
+              channelName: 'MsTeamsChannel',
+              location: 'global',
+              properties: { isEnabled: true, enableCalling: false, acceptedTerms: true },
+            },
+          },
+          { headers: armHeaders }
+        );
+        this.logger.info(
+          `Azure setup: Teams channel enabled botName=${botName} integrationId=${stateData.integrationId}`
+        );
+      } catch (error) {
+        throw new Error(
+          `ARM step [enable-teams-channel] failed url=${channelUrl} error="${this.axiosErrorMessage(error)}" responseBody=${JSON.stringify((error as AxiosError)?.response?.data ?? null)}`
+        );
+      }
+
+      await this.writeProvisioning(stateData, { status: 'ready', completedAt: new Date().toISOString() });
+
+      this.logger.info(
+        `Azure setup: ARM deployment complete integrationId=${stateData.integrationId} subscriptionId=${subscriptionId} resourceGroup=${resourceGroupName} botName=${botName}`
+      );
+    } catch (error) {
+      const errorMessage = this.axiosErrorMessage(error);
+
+      this.logger.warn(
+        `Azure setup: ARM deployment failed — marking provisioning failed integrationId=${stateData.integrationId} error="${errorMessage}"`
+      );
+
+      await this.writeProvisioning(stateData, {
+        status: 'failed',
+        completedAt: new Date().toISOString(),
+        errorMessage,
+      });
+
+      throw error;
+    }
+  }
+
+  private async writeProvisioning(
+    stateData: AzureSetupStateData,
+    provisioning: {
+      status: 'pending' | 'ready' | 'failed';
+      startedAt?: string;
+      completedAt?: string;
+      errorMessage?: string;
+      teamsAppCatalogId?: string;
+    }
+  ): Promise<void> {
+    try {
+      /*
+       * Use dot-notation $set so each call only updates the provided fields, not the whole
+       * provisioning sub-document. This preserves teamsAppCatalogId when subsequent calls
+       * (e.g. from tryDeployBotService) update status/completedAt without knowing the catalog ID.
+       */
+      const fields: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(provisioning)) {
+        if (value !== undefined) {
+          fields[`provisioning.${key}`] = value;
+        }
+      }
+
+      await this.integrationRepository.update(
+        { _id: stateData.integrationId, _organizationId: stateData.organizationId },
+        { $set: fields }
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Azure setup: failed to write provisioning state integrationId=${stateData.integrationId} status=${provisioning.status} error="${(err as Error).message}"`
+      );
+    }
+  }
+
+  private async getFirstSubscriptionId(managementToken: string): Promise<string | null> {
+    try {
+      const response = await axios.get<{ value: Array<{ subscriptionId: string; state: string }> }>(
+        `${MS_ARM_BASE_URL}/subscriptions?api-version=${MS_ARM_API_VERSION}`,
+        { headers: { Authorization: `Bearer ${managementToken}` } }
+      );
+
+      const enabled = response.data.value.find((s) => s.state === 'Enabled') ?? response.data.value[0];
+
+      return enabled?.subscriptionId ?? null;
+    } catch (error) {
+      this.logger.warn(`Azure setup: failed to list subscriptions: ${this.axiosErrorMessage(error)}`);
+
+      return null;
+    }
+  }
+
+  private sanitizeBotName(name: string): string {
+    const sanitized = name
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 64);
+
+    return sanitized.length < 2 ? 'novubot' : sanitized;
+  }
+
+  private async resolveWebhookEndpoint(stateData: AzureSetupStateData): Promise<string> {
+    // TODO: revert before merging — ngrok override for local dev
+    // const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+    const base = 'https://gosha.ngrok.app';
+
+    const link = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: stateData.integrationId,
+        _environmentId: stateData.environmentId,
+        _organizationId: stateData.organizationId,
+      },
+      ['_agentId']
+    );
+
+    if (!link) {
+      return `${base}/v1/agents/unknown/webhook/${stateData.integrationId}`;
+    }
+
+    const integration = await this.integrationRepository.findOne({
+      _id: stateData.integrationId,
+      _organizationId: stateData.organizationId,
+    });
+
+    const integrationIdentifier = integration?.identifier ?? stateData.integrationId;
+
+    return `${base}/v1/agents/${link._agentId}/webhook/${integrationIdentifier}`;
+  }
+
+  // ---------------------------------------------------------------------------
   // Teams app catalog upload (best-effort, falls back gracefully)
   // ---------------------------------------------------------------------------
 
+  /**
+   * Uploads the Teams app zip to the org catalog and returns the catalog's internal app ID,
+   * which differs from the Azure client ID (appId) and is required for the add-to-Teams deep link.
+   * Returns null on failure — the user will need to upload manually.
+   */
   private async tryUploadTeamsApp(
     accessToken: string,
     appId: string,
     stateData: AzureSetupStateData
-  ): Promise<boolean> {
+  ): Promise<string | null> {
     this.logger.info(
       `Azure setup: attempting automatic Teams app catalog upload for appId=${appId} integrationId=${stateData.integrationId}`
     );
@@ -392,18 +729,29 @@ export class AzureSetupOauthCallback {
 
       const zip = await this.buildTeamsAppZip(appId, integration?.name ?? 'Novu Bot');
 
-      await axios.post(`${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps`, zip, {
+      const response = await axios.post<{ id: string }>(`${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps`, zip, {
         headers: {
           ...this.graphHeaders(accessToken),
           'Content-Type': 'application/zip',
         },
       });
 
+      const catalogId = response.data?.id ?? null;
+
       this.logger.info(
-        `Azure setup: Teams app uploaded to catalog successfully appId=${appId} integrationId=${stateData.integrationId}`
+        `Azure setup: Teams app uploaded to catalog successfully appId=${appId} catalogId=${catalogId} integrationId=${stateData.integrationId}`
       );
 
-      return true;
+      if (catalogId) {
+        // Persist the catalog ID so the frontend can build the add-to-Teams deep link.
+        // Only teamsAppCatalogId is written here — status/startedAt are written by tryDeployBotService.
+        await this.writeProvisioning(stateData, {
+          status: 'pending',
+          teamsAppCatalogId: catalogId,
+        });
+      }
+
+      return catalogId;
     } catch (error) {
       const message = this.axiosErrorMessage(error);
       const status =
@@ -416,7 +764,7 @@ export class AzureSetupOauthCallback {
         `Azure setup: Teams app catalog upload failed (user must upload manually) appId=${appId} integrationId=${stateData.integrationId} httpStatus=${status ?? 'n/a'} error="${message}"`
       );
 
-      return false;
+      return null;
     }
   }
 

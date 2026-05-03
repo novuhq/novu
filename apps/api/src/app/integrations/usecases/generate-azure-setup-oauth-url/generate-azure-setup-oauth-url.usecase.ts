@@ -20,6 +20,7 @@ export const AZURE_SETUP_OAUTH_SCOPES = [
   'https://graph.microsoft.com/Application.ReadWrite.All',
   'https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All',
   'https://graph.microsoft.com/AppCatalog.ReadWrite.All',
+  'https://management.azure.com/user_impersonation',
 ] as const;
 
 export type AzureSetupStateData = {

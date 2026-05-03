@@ -21,7 +21,7 @@ export class MsTeamsTokenService {
 
   /**
    * Acquires an app-only Microsoft Graph token using the client credentials flow.
-   * Required permissions: AppCatalog.Read.All, TeamsAppInstallation.ReadWriteSelfForUser.All
+   * Required permissions: AppCatalog.Read.All, TeamsAppInstallation.ReadWriteSelfForTeam.All
    * Cache key: msteams:graph-token:{clientId}:{appTenantId}:{secretHash}, TTL 55 minutes.
    * The secretHash (first 8 hex chars of SHA-256) ensures cache entries are
    * automatically invalidated after a secret rotation.

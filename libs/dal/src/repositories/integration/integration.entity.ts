@@ -8,6 +8,15 @@ export type ICredentialsEntity = ICredentials;
 
 export type ConfigConfigurationEntity = IConfigurations;
 
+export interface IProvisioningState {
+  status: 'pending' | 'ready' | 'failed';
+  startedAt?: string;
+  completedAt?: string;
+  errorMessage?: string;
+  /** Internal Teams app catalog ID returned by Graph POST /appCatalogs/teamsApps. Used to build the add-to-Teams deep link. */
+  teamsAppCatalogId?: string;
+}
+
 export class IntegrationEntity {
   _id: string;
 
@@ -22,6 +31,8 @@ export class IntegrationEntity {
   credentials: ICredentialsEntity;
 
   configurations?: ConfigConfigurationEntity;
+
+  provisioning?: IProvisioningState;
 
   active: boolean;
 

@@ -94,7 +94,7 @@ export class AgentsWebhookController {
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+        throw err;
       }
     }
   }

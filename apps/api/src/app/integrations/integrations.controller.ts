@@ -80,6 +80,11 @@ import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrat
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { MsTeamsHealthCheckCommand } from './usecases/msteams-health-check/msteams-health-check.command';
+import {
+  MsTeamsHealthCheck,
+  MsTeamsHealthCheckResult,
+} from './usecases/msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
@@ -112,7 +117,8 @@ export class IntegrationsController {
     private generateMsTeamsArmTemplateUsecase: GenerateMsTeamsArmTemplate,
     private getMsTeamsArmTemplateUsecase: GetMsTeamsArmTemplate,
     private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
-    private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback
+    private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
+    private msTeamsHealthCheckUsecase: MsTeamsHealthCheck
   ) {}
 
   @Get('/')
@@ -504,6 +510,45 @@ export class IntegrationsController {
     );
 
     return { url };
+  }
+
+  /**
+   * Health-check endpoint polled by the dashboard to determine if the saved MS Teams
+   * credentials, app catalog entry, and Graph permissions are ready after the Quick
+   * Setup OAuth flow.
+   */
+  @Get('/:integrationId/msteams-health')
+  @ApiOkResponse({
+    description: 'Per-checkpoint health status for an MS Teams integration after Quick Setup.',
+  })
+  @ApiOperation({
+    summary: 'Get MS Teams integration health status',
+    description:
+      'Returns the readiness status of the stored MS Teams credentials, app catalog entry, and Graph permissions. Poll this endpoint after the OAuth setup completes to determine when it is safe to proceed to admin consent.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getMsTeamsHealth(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string,
+    @Query('checks') checksParam?: string
+  ): Promise<MsTeamsHealthCheckResult> {
+    const checks = checksParam
+      ? checksParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    return this.msTeamsHealthCheckUsecase.execute(
+      MsTeamsHealthCheckCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId,
+        checks,
+      })
+    );
   }
 
   /**
