@@ -1,8 +1,8 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { OrganizationCommand } from '../../../shared/commands/organization.command';
 
 export class GenerateMsTeamsArmTemplateCommand extends OrganizationCommand {
-  @IsDefined()
+  @IsNotEmpty()
   @IsString()
-  integrationId: string;
+  readonly integrationId: string;
 }

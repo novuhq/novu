@@ -85,8 +85,7 @@ export class AzureSetupOauthCallback {
 
     this.logger.info(`Azure setup: credentials saved for integrationId=${stateData.integrationId}`);
 
-    const teamsAppCatalogId = await this.tryUploadTeamsApp(accessToken, appId, stateData);
-    const teamsAppUploaded = teamsAppCatalogId !== null;
+    await this.tryUploadTeamsApp(accessToken, appId, stateData);
 
     // Fire-and-forget: deploy the Bot Service via ARM (health-check polling catches readiness)
     if (refreshToken) {
@@ -106,39 +105,15 @@ export class AzureSetupOauthCallback {
       });
     }
 
-    return { html: AzureSetupOauthCallback.buildPopupHtml({ success: true, teamsAppUploaded }) };
+    return { html: AzureSetupOauthCallback.buildPopupHtml({ success: true }) };
   }
 
-  static buildPopupHtml({
-    success,
-    errorMessage,
-    teamsAppUploaded,
-    armDeployStarted,
-  }: {
-    success: boolean;
-    errorMessage?: string;
-    teamsAppUploaded?: boolean;
-    armDeployStarted?: boolean;
-  }): string {
-    const message = success
-      ? {
-          type: 'novu:azure-setup-complete',
-          success: true,
-          teamsAppUploaded: teamsAppUploaded ?? false,
-          armDeployStarted: armDeployStarted ?? false,
-        }
-      : { type: 'novu:azure-setup-complete', success: false, error: errorMessage ?? 'Unknown error' };
+  static buildPopupHtml({ success, errorMessage }: { success: boolean; errorMessage?: string }): string {
+    const statusText = success
+      ? 'Setup complete. This window will close automatically.'
+      : (errorMessage ?? 'Setup failed. Please try again.');
 
-    const messageJson = JSON.stringify(message)
-      .replace(/</g, '\\u003c')
-      .replace(/>/g, '\\u003e')
-      .replace(/\u2028/g, '\\u2028')
-      .replace(/\u2029/g, '\\u2029');
-
-    return `<script>
-  try { window.opener && window.opener.postMessage(${messageJson}, '*'); } catch (_) {}
-  window.close();
-</script>`;
+    return `<!DOCTYPE html><html><body><p>${statusText}</p><script>window.close();\x3c/script></body></html>`;
   }
 
   private async decodeAndVerifyState(state: string): Promise<AzureSetupStateData> {

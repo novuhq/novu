@@ -775,27 +775,6 @@ export function TeamsSetupGuide({
     })();
   }, [hasCredentials, hasQuickSetupProvisioning, currentEnvironment, integrationId, isQuickSetupEnabled]);
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type !== 'novu:azure-setup-complete') {
-        return;
-      }
-
-      azurePopupRef.current?.close();
-      azurePopupRef.current = null;
-
-      if (event.data.success) {
-        setTeamsAppUploaded(event.data.teamsAppUploaded === true);
-        setShowHealthCheck(true);
-        void queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    return () => window.removeEventListener('message', handleMessage);
-  }, [queryClient]);
-
   const handleConnected = useCallback(() => {
     setIsConnected(true);
     onStepsCompleted?.();
@@ -1028,6 +1007,7 @@ export function TeamsSetupGuide({
               onReady={() => {
                 setHealthCheckCleared(true);
                 setShowHealthCheck(false);
+                queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
               }}
             />
           ) : undefined
