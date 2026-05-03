@@ -91,8 +91,7 @@ export class GenerateAzureSetupOauthUrl {
       throw new Error('API_ROOT_URL environment variable is required');
     }
 
-    // const base = process.env.API_ROOT_URL.replace(/\/$/, '');
-    const base = 'https://gosha.ngrok.app';
+    const base = process.env.API_ROOT_URL.replace(/\/$/, '');
 
     return `${base}/v1/integrations/chat/oauth/azure-setup/callback`;
   }

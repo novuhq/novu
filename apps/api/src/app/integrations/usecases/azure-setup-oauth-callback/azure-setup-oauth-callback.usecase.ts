@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import { buildZip, createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import axios, { AxiosError } from 'axios';
 import {
@@ -188,10 +188,6 @@ export class AzureSetupOauthCallback {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Token exchange
-  // ---------------------------------------------------------------------------
-
   private async exchangeCodeForToken(code: string): Promise<TokenResponse> {
     const clientId = process.env.NOVU_AZURE_CLIENT_ID;
     const clientSecret = process.env.NOVU_AZURE_CLIENT_SECRET;
@@ -256,10 +252,6 @@ export class AzureSetupOauthCallback {
 
     return response.data.access_token;
   }
-
-  // ---------------------------------------------------------------------------
-  // Graph: App Registration creation
-  // ---------------------------------------------------------------------------
 
   private async createAppRegistration(
     accessToken: string,
@@ -415,10 +407,6 @@ export class AzureSetupOauthCallback {
       return '';
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Save credentials into the integration
-  // ---------------------------------------------------------------------------
 
   private async saveCredentials(
     stateData: AzureSetupStateData,
@@ -674,9 +662,7 @@ export class AzureSetupOauthCallback {
   }
 
   private async resolveWebhookEndpoint(stateData: AzureSetupStateData): Promise<string> {
-    // TODO: revert before merging — ngrok override for local dev
-    // const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
-    const base = 'https://gosha.ngrok.app';
+    const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
 
     const link = await this.agentIntegrationRepository.findOne(
       {
@@ -704,7 +690,6 @@ export class AzureSetupOauthCallback {
   // ---------------------------------------------------------------------------
   // Teams app catalog upload (best-effort, falls back gracefully)
   // ---------------------------------------------------------------------------
-
   /**
    * Uploads the Teams app zip to the org catalog and returns the catalog's internal app ID,
    * which differs from the Azure client ID (appId) and is required for the add-to-Teams deep link.
@@ -776,92 +761,11 @@ export class AzureSetupOauthCallback {
       'base64'
     );
 
-    return this.buildZip([
+    return buildZip([
       { name: 'manifest.json', data: manifestBytes },
       { name: 'color.png', data: transparentPng },
       { name: 'outline.png', data: transparentPng },
     ]);
-  }
-
-  /**
-   * Minimal ZIP builder (store-only, no compression) — no external dependencies.
-   */
-  private buildZip(files: { name: string; data: Buffer }[]): Buffer {
-    const parts: Buffer[] = [];
-    const centralEntries: Buffer[] = [];
-    let offset = 0;
-
-    for (const file of files) {
-      const nameBytes = Buffer.from(file.name, 'utf-8');
-      const crc = this.crc32(file.data);
-
-      // Local file header
-      const local = Buffer.allocUnsafe(30 + nameBytes.length);
-      local.writeUInt32LE(0x04034b50, 0); // signature
-      local.writeUInt16LE(20, 4); // version needed
-      local.writeUInt16LE(0, 6); // flags
-      local.writeUInt16LE(0, 8); // compression (store)
-      local.writeUInt16LE(0, 10); // mod time
-      local.writeUInt16LE(0, 12); // mod date
-      local.writeUInt32LE(crc, 14);
-      local.writeUInt32LE(file.data.length, 18); // compressed size
-      local.writeUInt32LE(file.data.length, 22); // uncompressed size
-      local.writeUInt16LE(nameBytes.length, 26);
-      local.writeUInt16LE(0, 28); // extra field length
-      nameBytes.copy(local, 30);
-
-      parts.push(local, file.data);
-
-      // Central directory entry
-      const central = Buffer.allocUnsafe(46 + nameBytes.length);
-      central.writeUInt32LE(0x02014b50, 0); // signature
-      central.writeUInt16LE(20, 4); // version made by
-      central.writeUInt16LE(20, 6); // version needed
-      central.writeUInt16LE(0, 8); // flags
-      central.writeUInt16LE(0, 10); // compression
-      central.writeUInt16LE(0, 12); // mod time
-      central.writeUInt16LE(0, 14); // mod date
-      central.writeUInt32LE(crc, 16);
-      central.writeUInt32LE(file.data.length, 20); // compressed size
-      central.writeUInt32LE(file.data.length, 24); // uncompressed size
-      central.writeUInt16LE(nameBytes.length, 28);
-      central.writeUInt16LE(0, 30); // extra field length
-      central.writeUInt16LE(0, 32); // comment length
-      central.writeUInt16LE(0, 34); // disk start
-      central.writeUInt16LE(0, 36); // internal attributes
-      central.writeUInt32LE(0, 38); // external attributes
-      central.writeUInt32LE(offset, 42); // local header offset
-      nameBytes.copy(central, 46);
-
-      centralEntries.push(central);
-      offset += 30 + nameBytes.length + file.data.length;
-    }
-
-    const centralSize = centralEntries.reduce((s, e) => s + e.length, 0);
-    const eocd = Buffer.allocUnsafe(22);
-    eocd.writeUInt32LE(0x06054b50, 0); // signature
-    eocd.writeUInt16LE(0, 4); // disk number
-    eocd.writeUInt16LE(0, 6); // disk with central dir
-    eocd.writeUInt16LE(files.length, 8); // entries on disk
-    eocd.writeUInt16LE(files.length, 10); // total entries
-    eocd.writeUInt32LE(centralSize, 12);
-    eocd.writeUInt32LE(offset, 16);
-    eocd.writeUInt16LE(0, 20); // comment length
-
-    return Buffer.concat([...parts, ...centralEntries, eocd]);
-  }
-
-  private crc32(data: Buffer): number {
-    let crc = 0xffffffff;
-
-    for (let i = 0; i < data.length; i++) {
-      crc ^= data[i];
-      for (let j = 0; j < 8; j++) {
-        crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
-      }
-    }
-
-    return (crc ^ 0xffffffff) >>> 0;
   }
 
   private buildManifest(appId: string, agentName: string): Record<string, unknown> {
@@ -907,10 +811,6 @@ export class AzureSetupOauthCallback {
       },
     };
   }
-
-  // ---------------------------------------------------------------------------
-  // Utilities
-  // ---------------------------------------------------------------------------
 
   private graphHeaders(accessToken: string): Record<string, string> {
     return {
