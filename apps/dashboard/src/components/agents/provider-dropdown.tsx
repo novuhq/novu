@@ -331,8 +331,12 @@ export function ProviderDropdown({
         onSelect(item.providerId, item.integration);
         setOpen(false);
       } else {
-        const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
-        const uniqueName = sameProviderCount > 0 ? `${item.displayName} ${sameProviderCount + 1}` : item.displayName;
+        const existingNames = new Set(
+          (integrations ?? []).filter((i) => i.providerId === item.providerId).map((i) => i.name)
+        );
+        let suffix = existingNames.size + 1;
+        while (existingNames.has(`${item.displayName} ${suffix}`)) suffix += 1;
+        const uniqueName = existingNames.size > 0 ? `${item.displayName} ${suffix}` : item.displayName;
 
         const created = await createIntegrationMutation.mutateAsync({
           providerId: item.providerId,
