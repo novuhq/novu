@@ -57,6 +57,10 @@ function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string,
   description: "${displayDescription}"
 
 features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
   bot_user:
     display_name: "${botName}"
     always_online: true
@@ -88,9 +92,15 @@ settings:
   token_rotation_enabled: false`;
 }
 
-function ManifestSection({ createSlackAppUrl, manifestYaml }: { createSlackAppUrl: string; manifestYaml: string }) {
-  const [showManifest, setShowManifest] = useState(false);
-
+function ManifestControls({
+  createSlackAppUrl,
+  showManifest,
+  onToggle,
+}: {
+  createSlackAppUrl: string;
+  showManifest: boolean;
+  onToggle: () => void;
+}) {
   return (
     <div className="flex flex-col gap-2">
       <a href={createSlackAppUrl} target="_blank" rel="noopener noreferrer">
@@ -103,27 +113,31 @@ function ManifestSection({ createSlackAppUrl, manifestYaml }: { createSlackAppUr
 
       <button
         type="button"
-        className="text-text-sub hover:text-text-strong flex items-center gap-1 self-start py-1 transition-colors"
-        onClick={() => setShowManifest((prev) => !prev)}
+        className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 self-start py-1 transition-colors"
+        onClick={onToggle}
       >
         <RiArrowDownSLine className={cn('size-3.5 transition-transform duration-200', showManifest && 'rotate-180')} />
         <span className="text-label-xs font-medium">{showManifest ? 'Hide manifest' : 'Show manifest'}</span>
       </button>
-
-      <AnimatePresence initial={false}>
-        {showManifest && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <CodeBlock code={manifestYaml} language="shell" title="slack-app-manifest.yaml" />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
+  );
+}
+
+function ManifestCode({ manifestYaml, show }: { manifestYaml: string; show: boolean }) {
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeInOut' }}
+          className="overflow-hidden"
+        >
+          <CodeBlock code={manifestYaml} language="shell" title="slack-app-manifest.yaml" />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -139,6 +153,7 @@ export function SlackSetupGuide({
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
+  const [showManifest, setShowManifest] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
@@ -187,7 +202,14 @@ export function SlackSetupGuide({
         status={deriveStepStatus(base, firstIncompleteStep)}
         title="Create Slack App via Manifest"
         description="Click the button to create a Slack app with a pre-filled manifest, or expand to view and copy the YAML manually."
-        rightContent={<ManifestSection createSlackAppUrl={createSlackAppUrl} manifestYaml={manifestYaml} />}
+        rightContent={
+          <ManifestControls
+            createSlackAppUrl={createSlackAppUrl}
+            showManifest={showManifest}
+            onToggle={() => setShowManifest((prev) => !prev)}
+          />
+        }
+        fullWidthContent={<ManifestCode manifestYaml={manifestYaml} show={showManifest} />}
       />
 
       <SetupStep
@@ -197,17 +219,8 @@ export function SlackSetupGuide({
         description={
           <span>
             {
-              'Paste the App ID, Client ID, Client Secret and Signing Secret from your Slack app into the integration. View '
+              'Paste the App Credentials block from your Slack app (You can also CMD+A and CMD+C the whole page!) — the App ID, Client ID, Client Secret and Signing Secret are filled automatically in the configure tab.'
             }
-            <a
-              href="https://docs.novu.co/integrations/chat/slack"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              setup guide
-            </a>
-            .
           </span>
         }
         rightContent={
@@ -251,7 +264,7 @@ export function SlackSetupGuide({
           user?.externalId && currentEnvironment?.identifier ? (
             <NovuProvider
               subscriber={{
-                subscriberId: user.externalId + ':agent-quickstart:' + agent._id,
+                subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
                 firstName: user.firstName ?? '',
                 lastName: user.lastName ?? '',
                 avatar: user.imageUrl ?? '',
@@ -262,11 +275,16 @@ export function SlackSetupGuide({
             >
               <SlackConnectButton
                 integrationIdentifier={selectedIntegrationIdentifier}
-                connectionIdentifier={user.externalId + ':agent-quickstart:' + agent._id}
+                connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
                 connectionMode="subscriber"
                 connectLabel={`Install ${agent.name} ↗`}
                 connectedLabel="Connected to Slack"
                 onConnectSuccess={handleSlackWorkspaceConnected}
+                appearance={{
+                  elements: {
+                    channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
+                  },
+                }}
               />
             </NovuProvider>
           ) : null
@@ -303,6 +321,7 @@ export function SlackSetupGuide({
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => setIsCredentialsSaved(true)}
+          agentOnboarding
         />
       </div>
     );
@@ -317,6 +336,7 @@ export function SlackSetupGuide({
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => setIsCredentialsSaved(true)}
+        agentOnboarding
       />
     </>
   );

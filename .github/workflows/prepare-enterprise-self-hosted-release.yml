@@ -8,7 +8,9 @@ run-name: >
   }}${{
     github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
   }}${{
-    github.event.inputs.build_ws == 'true' && 'ws ' || ''
+    github.event.inputs.build_ws == 'true' && 'ws, ' || ''
+  }}${{
+    github.event.inputs.build_inbound_mail == 'true' && 'inbound-mail ' || ''
   }}
 
 env:
@@ -41,6 +43,11 @@ on:
         required: true
         type: boolean
         default: true
+      build_inbound_mail:
+        description: "Build Inbound Mail service"
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -59,7 +66,8 @@ jobs:
           if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
              [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
              [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_ws }}" != "true" ]; then
+             [ "${{ github.event.inputs.build_ws }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_inbound_mail }}" != "true" ]; then
             echo "Error: At least one service must be selected for building."
             exit 1
           fi
@@ -81,6 +89,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
             services+=("\"ws-ee\"")
+          fi
+          if [ "${{ github.event.inputs.build_inbound_mail }}" == "true" ]; then
+            services+=("\"inbound-mail-ee\"")
           fi
 
           matrix="[$(IFS=','; echo "${services[*]}")]"
@@ -241,3 +252,36 @@ jobs:
           echo "  - $REGISTRY/novu/$REPO_NAME:$IMAGE_TAG"
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"
+
+  linear_release_complete:
+    name: Complete Linear Release (Enterprise)
+    needs: build_docker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Normalize Linear release version
+        env:
+          RAW_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          ver="${RAW_VERSION#v}"
+          echo "LINEAR_RELEASE_VERSION=$ver" >> "$GITHUB_ENV"
+
+      - name: Sync release to Linear
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
+          name: v${{ env.LINEAR_RELEASE_VERSION }}
+          version: ${{ env.LINEAR_RELEASE_VERSION }}
+
+      - name: Complete release in Linear
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
+          command: complete
+          version: ${{ env.LINEAR_RELEASE_VERSION }}

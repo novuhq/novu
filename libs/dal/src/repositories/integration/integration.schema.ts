@@ -118,6 +118,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       },
     ],
     connected: Schema.Types.Boolean,
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      required: false,
+      default: null,
+    },
   },
   schemaOptions
 );

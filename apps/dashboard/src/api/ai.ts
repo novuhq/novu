@@ -7,6 +7,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { UIMessage } from 'ai';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { getApiBaseUrl, getV2, postV2 } from './api.client';
 
 export type GenerateWorkflowRequest = {
@@ -150,6 +151,8 @@ export async function fetchWorkflowSuggestions({
   environment: IEnvironment;
   refresh?: boolean;
 }): Promise<WorkflowSuggestionResponse[]> {
+  if (!IS_AI_FEATURES_ENABLED) return [];
+
   const endpoint = refresh ? '/ai/workflow-suggestions?refresh=true' : '/ai/workflow-suggestions';
   const { data: responseData } = await getV2<{ data: WorkflowSuggestionResponse[] }>(endpoint, {
     environment,
@@ -183,6 +186,8 @@ export async function fetchOnboardingWorkflowSuggestions({
 }: {
   environment: IEnvironment;
 }): Promise<OnboardingSuggestionsResponse> {
+  if (!IS_AI_FEATURES_ENABLED) return { status: 'skipped', suggestions: [] };
+
   const { data: responseData } = await getV2<{ data: OnboardingSuggestionsResponse }>(
     '/ai/workflow-suggestions/onboarding',
     {

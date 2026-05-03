@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -12,10 +13,11 @@ import {
   AgentIntegrationRepository,
   AgentRepository,
   CommunityOrganizationRepository,
+  EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, EmailProviderIdEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { ApiServiceLevelEnum, EmailProviderIdEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 
 import { trackAgentIntegrationConnected } from '../../agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../dtos';
@@ -30,11 +32,14 @@ export class AddAgentIntegration {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail,
     private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
+    await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
+
     if (!command.integrationIdentifier && !command.providerId) {
       throw new BadRequestException('Either integrationIdentifier or providerId must be provided.');
     }
@@ -193,6 +198,17 @@ export class AddAgentIntegration {
 
     if (existing.length > 0) {
       throw new ConflictException('Only one email integration per agent is allowed.');
+    }
+  }
+
+  private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
+    const environment = await this.environmentRepository.findOne(
+      { _id: environmentId, _organizationId: organizationId },
+      ['type', 'name']
+    );
+
+    if (environment?.type === EnvironmentTypeEnum.PROD) {
+      throw new ForbiddenException('Agent integrations cannot be added in production environments.');
     }
   }
 

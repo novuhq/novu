@@ -18,7 +18,7 @@ export function AgentOverviewTab({ agent }: AgentOverviewTabProps) {
   const [wasBridgeConnectedOnMount] = useState(isBridgeConnected);
 
   return (
-    <div className="flex gap-6 px-6 pt-4">
+    <div className="flex items-start gap-6 px-6 pt-4">
       <AgentSidebarWidget agent={agent} />
       {wasBridgeConnectedOnMount ? <AgentConnectedOverview agent={agent} /> : <AgentSetupGuide agent={agent} />}
     </div>

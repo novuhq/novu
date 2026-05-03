@@ -1615,6 +1615,7 @@ export function TeamsSetupGuide({
       isOpen={isCredentialsSidebarOpen}
       onClose={() => setIsCredentialsSidebarOpen(false)}
       onSaveSuccess={() => {}}
+      agentOnboarding
     />
   );
 

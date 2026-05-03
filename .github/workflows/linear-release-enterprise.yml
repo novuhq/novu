@@ -1,0 +1,34 @@
+name: Linear Release - Enterprise Edition
+
+# Scheduled Linear pipeline for the Enterprise self-hosted release stream.
+# - Push to `next`: incrementally syncs commits/issues to the in-progress release.
+# - Manual enterprise build: handled inside
+#   `prepare-enterprise-self-hosted-release.yml`, which syncs and completes the
+#   Linear release using the dispatched `version` input after images are built.
+
+on:
+  push:
+    branches:
+      - next
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linear-release-enterprise-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync to Linear (Enterprise)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Sync release to Linear
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}

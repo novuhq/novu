@@ -53,6 +53,8 @@ export class IntegrationEntity {
   conditions?: StepFilter[];
 
   connected?: boolean;
+
+  _parentId?: string;
 }
 
 export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;

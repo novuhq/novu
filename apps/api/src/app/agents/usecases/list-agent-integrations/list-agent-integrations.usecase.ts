@@ -14,7 +14,9 @@ export class ListAgentIntegrations {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: ListAgentIntegrationsCommand): Promise<ListAgentIntegrationsResponseDto> {

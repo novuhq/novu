@@ -80,9 +80,18 @@ export interface AgentPlatformContext {
 export interface FileRef {
   filename: string;
   mimeType?: string;
-  /** Base64-encoded file data (< 1 MB decoded) */
-  data?: string;
-  /** Publicly-accessible HTTPS URL */
+  /**
+   * Inline file data. Binary values are encoded to base64 before being sent to Novu.
+   * Node Buffers are supported because Buffer extends Uint8Array.
+   *
+   * Limit: <= 5 MB decoded. Use `url` for larger files.
+   */
+  data?: string | Uint8Array | ArrayBuffer | Blob;
+  /**
+   * Publicly-accessible HTTP(S) URL. Recommended for larger files.
+   *
+   * Server-side limits: 25 MB per file, 15 files per message, 50 MB aggregate.
+   */
   url?: string;
 }
 
@@ -199,10 +208,10 @@ export interface AgentContext {
 }
 
 export interface AgentHandlers {
-  onMessage:   (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onMessage: (ctx: AgentContext) => Awaitable<MessageContent | void>;
   onReaction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onAction?:   (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onResolve?:  (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onAction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {

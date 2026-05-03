@@ -28,7 +28,9 @@ function isLogoMode(value: unknown): value is IBrandLogo['mode'] {
 export class BrandRetrievalService {
   private client: ContextDev | null = null;
 
-  constructor(private readonly logger: PinoLogger) {}
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async initialize(): Promise<void> {
     const apiKey = process.env.CONTEXT_DEV_API_KEY;

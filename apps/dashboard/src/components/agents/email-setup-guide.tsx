@@ -83,7 +83,17 @@ export function EmailSetupGuide({
     if (!testConnected) return testStepIndex;
 
     return testStepIndex + 1;
-  }, [base, outboundId, needsCredentialsStep, hasOutboundCredentials, credentialsStepIndex, hasAddresses, inboundStepIndex, testStepIndex, testConnected]);
+  }, [
+    base,
+    outboundId,
+    needsCredentialsStep,
+    hasOutboundCredentials,
+    credentialsStepIndex,
+    hasAddresses,
+    inboundStepIndex,
+    testStepIndex,
+    testConnected,
+  ]);
 
   const stepsColumn = (
     <>
@@ -193,6 +203,7 @@ export function EmailSetupGuide({
         integrationId={outboundId}
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
+        agentOnboarding
       />
     ) : null;
 
