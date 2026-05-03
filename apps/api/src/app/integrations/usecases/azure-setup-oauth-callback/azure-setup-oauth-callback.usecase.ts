@@ -137,10 +137,6 @@ export class AzureSetupOauthCallback {
 </script>`;
   }
 
-  // ---------------------------------------------------------------------------
-  // State verification
-  // ---------------------------------------------------------------------------
-
   private async decodeAndVerifyState(state: string): Promise<AzureSetupStateData> {
     let preliminaryData: Partial<AzureSetupStateData>;
 
