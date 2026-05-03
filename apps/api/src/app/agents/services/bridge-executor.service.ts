@@ -263,7 +263,7 @@ export class BridgeExecutorService {
     signingContext?: AttachmentSigningContext
   ): Promise<AgentMessage> {
     const mapped: AgentMessage = {
-      text: message.text,
+      text: message.text ?? '',
       platformMessageId: message.id,
       author: {
         userId: message.author.userId,

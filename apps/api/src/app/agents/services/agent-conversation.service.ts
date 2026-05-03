@@ -133,7 +133,7 @@ export class AgentConversationService {
         },
       ],
       status: ConversationStatusEnum.ACTIVE,
-      title: params.firstMessageText.slice(0, 200),
+      title: (params.firstMessageText ?? '').slice(0, 200) || 'New conversation',
       metadata: {},
       _environmentId: environmentId,
       _organizationId: organizationId,

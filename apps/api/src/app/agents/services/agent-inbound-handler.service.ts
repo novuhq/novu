@@ -77,6 +77,40 @@ function findSourceMessageStoredAttachments(
   return storedAttachments;
 }
 
+/** Slack and other providers omit `text` when the message is attachment-only. */
+function inboundMessageBodyText(message: Message): string {
+  const raw = message.text;
+
+  if (typeof raw === 'string') {
+    return raw;
+  }
+
+  return '';
+}
+
+/**
+ * Conversation title / firstMessageText: use body when present; otherwise a short
+ * placeholder when only attachments exist (avoids empty required `title`).
+ */
+function firstMessageTextForConversation(message: Message, bodyText: string): string {
+  if (bodyText.length > 0) {
+    return bodyText;
+  }
+
+  const first = message.attachments?.[0];
+  const name = first && typeof first.name === 'string' ? first.name : undefined;
+
+  if (name && name.length > 0) {
+    return `[Attachment: ${name}]`;
+  }
+
+  if (message.attachments?.length) {
+    return '[Attachment]';
+  }
+
+  return '';
+}
+
 export interface InboundReactionEvent {
   emoji: EmojiValue;
   added: boolean;
@@ -126,6 +160,9 @@ export class AgentInboundHandler {
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
 
+    const inboundBodyText = inboundMessageBodyText(message);
+    const firstMessageText = firstMessageTextForConversation(message, inboundBodyText);
+
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
       organizationId: config.organizationId,
@@ -136,7 +173,7 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: message.text,
+      firstMessageText,
     });
 
     const senderType = subscriberId
@@ -177,7 +214,7 @@ export class AgentInboundHandler {
       senderType,
       senderId: participantId,
       senderName: message.author.fullName,
-      content: message.text,
+      content: inboundBodyText,
       richContent,
       platformMessageId: message.id,
       environmentId: config.environmentId,
