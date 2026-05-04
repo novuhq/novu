@@ -194,7 +194,6 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
             rightContent={
               <ProviderDropdown
                 agentIdentifier={agent.identifier}
-                agentName={agent.name}
                 selectedIntegrationId={validatedSelectedId ?? defaultFromAgent?.integrationId}
                 linkedIntegrationIds={linkedIntegrationIds}
                 onSelect={(_providerId, integration) => {
