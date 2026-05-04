@@ -5,7 +5,6 @@ import type {
   AddReactionPayload,
   AgentAction,
   AgentBridgeRequest,
-  AgentContext,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
@@ -247,7 +246,7 @@ class ReplyHandleImpl implements ReplyHandle {
   }
 }
 
-export class AgentContextImpl implements AgentContext {
+export class AgentContextImpl {
   readonly event: string;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;

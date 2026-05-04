@@ -222,28 +222,7 @@ export interface AgentResolveContext extends AgentContextBase {
   readonly event: 'onResolve';
 }
 
-/**
- * @deprecated Use the handler-specific context types instead:
- * `AgentMessageContext`, `AgentActionContext`, `AgentReactionContext`, `AgentResolveContext`.
- */
-export interface AgentContext {
-  readonly event: string;
-  readonly action: AgentAction | null;
-  readonly message: AgentMessage | null;
-  readonly reaction: AgentReaction | null;
-  readonly conversation: AgentConversation;
-  readonly subscriber: AgentSubscriber | null;
-  readonly history: AgentHistoryEntry[];
-  readonly platform: string;
-  readonly platformContext: AgentPlatformContext;
-  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
-  resolve(summary?: string): void;
-  metadata: {
-    set(key: string, value: unknown): void;
-  };
-  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
-  addReaction(messageId: string, emojiName: Emoji): void;
-}
+export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
 
 export interface AgentHandlers {
   onMessage: (ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
