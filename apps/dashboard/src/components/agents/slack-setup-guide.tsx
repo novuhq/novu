@@ -259,6 +259,7 @@ export function SlackSetupGuide({
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
     setIsSlackWorkspaceConnected(false);
+    setIsCredentialsSaved(false);
     setPendingOauthUrl(null);
   }, [integrationId]);
 
