@@ -1132,34 +1132,6 @@ export function TeamsSetupGuide({
             )}
           </div>
         }
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="How your users connect:"
-            description={
-              <>
-                {'A '}
-                <strong>Teams admin</strong>
-                {' must connect once using '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<MsTeamsConnectButton />'}</code>
-                {' to grant tenant-wide consent. Each '}
-                <strong>end user</strong>
-                {' then links their personal Teams identity using '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<MsTeamsLinkUser />'}</code>
-                {' so Novu can deliver notifications directly to them. '}
-                <a
-                  href="https://docs.novu.co"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-text-sub underline"
-                >
-                  Read docs
-                </a>
-              </>
-            }
-          />
-        }
       />
     </>
   );
@@ -1570,34 +1542,6 @@ export function TeamsSetupGuide({
               </>
             )}
           </div>
-        }
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="How your users connect:"
-            description={
-              <>
-                {'A '}
-                <strong>Teams admin</strong>
-                {' must connect once using '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<MsTeamsConnectButton />'}</code>
-                {' to grant tenant-wide consent. Each '}
-                <strong>end user</strong>
-                {' then links their personal Teams identity using '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<MsTeamsLinkUser />'}</code>
-                {' so Novu can deliver notifications directly to them. '}
-                <a
-                  href="https://docs.novu.co"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-text-sub underline"
-                >
-                  Read docs
-                </a>
-              </>
-            }
-          />
         }
       />
     </>
