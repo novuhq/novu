@@ -52,6 +52,7 @@ import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-
 import { GenerateConnectOauthUrlRequestDto } from './dtos/generate-connect-oauth-url-request.dto';
 import { GenerateLinkUserOauthUrlRequestDto } from './dtos/generate-link-user-oauth-url-request.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
@@ -76,6 +77,8 @@ import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-i
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
 import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
+import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick-setup.command';
+import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 
@@ -100,6 +103,7 @@ export class IntegrationsController {
     private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
     private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
     private chatOauthCallbackUsecase: ChatOauthCallback,
+    private slackQuickSetupUsecase: SlackQuickSetup,
     private featureFlagsService: FeatureFlagsService
   ) {}
 
@@ -560,6 +564,35 @@ export class IntegrationsController {
     }
 
     res.redirect(result.result);
+  }
+
+  @Post('/:integrationId/slack-quick-setup')
+  @ApiResponse(SlackQuickSetupResponseDto, 201)
+  @ApiOperation({
+    summary: 'Quick-setup a Slack integration',
+    description: `Creates a Slack app from a manifest using the provided App Configuration Token, 
+    automatically saves the resulting credentials (client ID, client secret, signing secret) on the integration, 
+    and returns a Slack OAuth authorize URL for the user to install the app.
+    The configuration token is used ephemerally and is never stored.`,
+  })
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async slackQuickSetup(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string,
+    @Body() body: SlackQuickSetupRequestDto
+  ): Promise<SlackQuickSetupResponseDto> {
+    return this.slackQuickSetupUsecase.execute(
+      SlackQuickSetupCommand.create({
+        organizationId: user.organizationId,
+        userId: user._id,
+        integrationId,
+        agentId: body.agentId,
+        configToken: body.configToken,
+        subscriberId: body.subscriberId,
+        connectionIdentifier: body.connectionIdentifier,
+      })
+    );
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {

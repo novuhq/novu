@@ -4,7 +4,7 @@ import { CheckCircle2, Loader } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
-import { RiArrowRightUpLine } from 'react-icons/ri';
+import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
@@ -20,6 +20,37 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import type { StepStatus } from './setup-guide-step-utils';
+
+export type SetupMode = 'quick' | 'manual';
+
+export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
+  return (
+    <div className="flex w-fit items-center gap-1 rounded-lg border border-stroke-soft bg-bg-weak p-1">
+      <button
+        type="button"
+        onClick={() => onChange('quick')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
+          mode === 'quick' ? 'bg-bg-white text-text-strong shadow-xs' : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiFlashlightLine className="size-3.5" />
+        Quick Setup
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('manual')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
+          mode === 'manual' ? 'bg-bg-white text-text-strong shadow-xs' : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiListCheck2 className="size-3.5" />
+        Manual Setup
+      </button>
+    </div>
+  );
+}
 
 function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
   if (status === 'completed') {

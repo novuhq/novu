@@ -1,20 +1,31 @@
 import { useUser } from '@clerk/clerk-react';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
 import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiArrowDownSLine, RiArrowRightUpLine, RiKey2Line } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowRightUpLine, RiFlashlightLine, RiKey2Line, RiLoader4Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { slackQuickSetup } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Input } from '@/components/primitives/input';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { API_HOSTNAME } from '@/config';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import type { SetupMode } from './setup-guide-primitives';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  SetupButton,
+  SetupModeToggle,
+  SetupStep,
+} from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 
 export type SlackSetupGuideProps = {
@@ -141,6 +152,88 @@ function ManifestCode({ manifestYaml, show }: { manifestYaml: string; show: bool
   );
 }
 
+function QuickSetupStep({
+  integrationId,
+  agentId,
+  subscriberId,
+  user,
+  onSuccess,
+}: {
+  integrationId: string;
+  agentId: string;
+  subscriberId: string;
+  user: { firstName?: string | null; lastName?: string | null; imageUrl?: string } | null | undefined;
+  onSuccess: (oauthAuthorizeUrl: string) => void;
+}) {
+  const { currentEnvironment } = useEnvironment();
+  const [configToken, setConfigToken] = useState('');
+
+  const connectionIdentifier = subscriberId;
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      return slackQuickSetup(
+        integrationId,
+        { configToken: configToken.trim(), agentId, subscriberId, connectionIdentifier },
+        environment
+      );
+    },
+    onSuccess: (data) => {
+      onSuccess(data.oauthAuthorizeUrl);
+    },
+    onError: (error: Error) => {
+      showErrorToast(error.message ?? 'Failed to create Slack app');
+    },
+  });
+
+  const novuProviderContent = currentEnvironment?.identifier ? (
+    <NovuProvider
+      subscriber={{
+        subscriberId,
+        firstName: user?.firstName ?? '',
+        lastName: user?.lastName ?? '',
+        avatar: user?.imageUrl ?? '',
+      }}
+      applicationIdentifier={currentEnvironment.identifier}
+      apiUrl={apiHostnameManager.getHostname()}
+      socketUrl={apiHostnameManager.getWebSocketHostname()}
+    >
+      {/* Mounting NovuProvider upserts the subscriber so it exists when the OAuth callback fires */}
+      <span />
+    </NovuProvider>
+  ) : null;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {novuProviderContent}
+      <div className="flex items-center gap-2">
+        <Input
+          type="password"
+          placeholder="xoxe.xoxp-1-..."
+          value={configToken}
+          onChange={(e) => setConfigToken(e.target.value)}
+          className="font-mono text-xs"
+        />
+        <SetupButton
+          onClick={() => mutation.mutate()}
+          disabled={!configToken.trim() || mutation.isPending}
+          leadingIcon={
+            mutation.isPending ? (
+              <RiLoader4Line className="size-3.5 animate-spin" />
+            ) : (
+              <RiFlashlightLine className="size-3.5" />
+            )
+          }
+        >
+          {mutation.isPending ? 'Creating…' : 'Create app'}
+        </SetupButton>
+      </div>
+    </div>
+  );
+}
+
 export function SlackSetupGuide({
   agent,
   integrationId,
@@ -154,16 +247,30 @@ export function SlackSetupGuide({
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
+  const [setupMode, setSetupMode] = useState<SetupMode>('quick');
+  const [pendingOauthUrl, setPendingOauthUrl] = useState<string | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
     setIsSlackWorkspaceConnected(false);
+    setPendingOauthUrl(null);
   }, [integrationId]);
 
   const handleSlackWorkspaceConnected = useCallback(() => {
     setIsSlackWorkspaceConnected(true);
     onStepsCompleted?.();
   }, [onStepsCompleted]);
+
+  const handleQuickSetupSuccess = useCallback((oauthAuthorizeUrl: string) => {
+    setIsCredentialsSaved(true);
+    setPendingOauthUrl(oauthAuthorizeUrl);
+  }, []);
+
+  const handleInstallClick = useCallback(() => {
+    if (pendingOauthUrl) {
+      window.open(pendingOauthUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, [pendingOauthUrl]);
 
   const { integrations } = useFetchIntegrations();
 
@@ -185,18 +292,134 @@ export function SlackSetupGuide({
 
   const firstIncompleteStep = useMemo(() => {
     if (isSlackWorkspaceConnected) {
-      return base + 3;
+      return setupMode === 'quick' ? base + 2 : base + 3;
     }
 
     if (!isCredentialsSaved) {
       return base;
     }
 
-    return base + 2;
-  }, [base, isCredentialsSaved, isSlackWorkspaceConnected]);
+    return setupMode === 'quick' ? base + 1 : base + 2;
+  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, setupMode]);
 
-  const stepsColumn = (
+  const modeSwitcher = <SetupModeToggle mode={setupMode} onChange={setSetupMode} />;
+
+  const connectButton =
+    user?.externalId && currentEnvironment?.identifier ? (
+      <NovuProvider
+        subscriber={{
+          subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
+          firstName: user.firstName ?? '',
+          lastName: user.lastName ?? '',
+          avatar: user.imageUrl ?? '',
+        }}
+        applicationIdentifier={currentEnvironment.identifier}
+        apiUrl={apiHostnameManager.getHostname()}
+        socketUrl={apiHostnameManager.getWebSocketHostname()}
+      >
+        <SlackConnectButton
+          integrationIdentifier={selectedIntegrationIdentifier}
+          connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
+          connectionMode="subscriber"
+          connectLabel={`Install ${agent.name} ↗`}
+          connectedLabel="Connected to Slack"
+          onConnectSuccess={handleSlackWorkspaceConnected}
+          appearance={{
+            elements: {
+              channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
+            },
+          }}
+        />
+      </NovuProvider>
+    ) : null;
+
+  const quickStepsColumn = (
     <>
+      {modeSwitcher}
+
+      <SetupStep
+        index={base}
+        status={deriveStepStatus(base, firstIncompleteStep)}
+        title="Create Slack App automatically"
+        description={
+          <span>
+            {
+              'Generate a Slack App Configuration Token on the Slack API page (under Your App Configuration Tokens → Generate Token). Paste it below — it will be used once to create your app and then discarded.'
+            }
+          </span>
+        }
+        rightContent={<SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>}
+        extraContent={
+          !isCredentialsSaved ? (
+            <div className="mt-2">
+              <QuickSetupStep
+                integrationId={integrationId}
+                agentId={agent._id}
+                subscriberId={`${user?.externalId}:agent-quickstart:${agent._id}`}
+                user={user}
+                onSuccess={handleQuickSetupSuccess}
+              />
+            </div>
+          ) : (
+            <InlineToast
+              className="mt-2 w-full"
+              variant="success"
+              title="App created!"
+              description="Your Slack app credentials have been saved to the integration."
+            />
+          )
+        }
+      />
+
+      <SetupStep
+        index={base + 1}
+        status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        title="Install app to your workspace"
+        description="Click to open the Slack authorization page and install the newly created app."
+        rightContent={
+          pendingOauthUrl ? (
+            <Button variant="primary" size="sm" onClick={handleInstallClick}>
+              <ProviderIcon
+                providerId={ChatProviderIdEnum.Slack}
+                providerDisplayName="Slack"
+                className="size-4 shrink-0 brightness-200"
+              />
+              Install to Slack ↗
+            </Button>
+          ) : (
+            connectButton
+          )
+        }
+        extraContent={
+          <InlineToast
+            className="mt-2 w-full"
+            variant="tip"
+            title="Tip:"
+            description={
+              <>
+                Novu provides a{' '}
+                <code className="font-code text-[12px] tracking-[-0.24px]">{'<SlackConnectButton />'}</code>
+                {' component, to let your users easily connect this agent to their Slack workspace. '}
+                <a
+                  href="https://docs.novu.co"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-sub underline"
+                >
+                  Read docs
+                </a>
+              </>
+            }
+          />
+        }
+      />
+    </>
+  );
+
+  const manualStepsColumn = (
+    <>
+      {modeSwitcher}
+
       <SetupStep
         index={base}
         status={deriveStepStatus(base, firstIncompleteStep)}
@@ -236,8 +459,9 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
-        title="Verify by installing the app to your workspace"
-        description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
+        title="Install app to your workspace"
+        description="Click to open the Slack authorization page and install the newly created app."
+        rightContent={connectButton}
         extraContent={
           <InlineToast
             className="mt-2 w-full"
@@ -260,38 +484,11 @@ export function SlackSetupGuide({
             }
           />
         }
-        rightContent={
-          user?.externalId && currentEnvironment?.identifier ? (
-            <NovuProvider
-              subscriber={{
-                subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-                firstName: user.firstName ?? '',
-                lastName: user.lastName ?? '',
-                avatar: user.imageUrl ?? '',
-              }}
-              applicationIdentifier={currentEnvironment.identifier}
-              apiUrl={apiHostnameManager.getHostname()}
-              socketUrl={apiHostnameManager.getWebSocketHostname()}
-            >
-              <SlackConnectButton
-                integrationIdentifier={selectedIntegrationIdentifier}
-                connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-                connectionMode="subscriber"
-                connectLabel={`Install ${agent.name} ↗`}
-                connectedLabel="Connected to Slack"
-                onConnectSuccess={handleSlackWorkspaceConnected}
-                appearance={{
-                  elements: {
-                    channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
-                  },
-                }}
-              />
-            </NovuProvider>
-          ) : null
-        }
       />
     </>
   );
+
+  const stepsColumn = setupMode === 'quick' ? quickStepsColumn : manualStepsColumn;
 
   const listening = (
     <ListeningStatus

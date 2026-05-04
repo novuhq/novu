@@ -80,3 +80,27 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
     environment: environment,
   });
 }
+
+export type SlackQuickSetupResponse = {
+  oauthAuthorizeUrl: string;
+};
+
+export type SlackQuickSetupParams = {
+  configToken: string;
+  agentId: string;
+  subscriberId?: string;
+  connectionIdentifier?: string;
+};
+
+export async function slackQuickSetup(
+  integrationId: string,
+  params: SlackQuickSetupParams,
+  environment: IEnvironment
+): Promise<SlackQuickSetupResponse> {
+  const response = await post<{ data: SlackQuickSetupResponse }>(`/integrations/${integrationId}/slack-quick-setup`, {
+    body: params,
+    environment,
+  });
+
+  return response.data;
+}
