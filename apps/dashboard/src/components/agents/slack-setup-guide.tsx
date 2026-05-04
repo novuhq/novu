@@ -1,7 +1,7 @@
 import { useUser } from '@clerk/clerk-react';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiFlashlightLine, RiKey2Line, RiLoader4Line } from 'react-icons/ri';
@@ -18,6 +18,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import type { SetupMode } from './setup-guide-primitives';
 import {
@@ -167,6 +168,7 @@ function QuickSetupStep({
   onSuccess: (oauthAuthorizeUrl: string) => void;
 }) {
   const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
   const [configToken, setConfigToken] = useState('');
 
   const connectionIdentifier = subscriberId;
@@ -182,6 +184,7 @@ function QuickSetupStep({
       );
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
       onSuccess(data.oauthAuthorizeUrl);
     },
     onError: (error: Error) => {
