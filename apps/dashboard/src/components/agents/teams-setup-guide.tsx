@@ -5,15 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  RiArrowDownSLine,
-  RiCheckLine,
-  RiCloseLine,
-  RiFlashlightLine,
-  RiKey2Line,
-  RiListCheck2,
-  RiLoader4Line,
-} from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiCloseLine, RiKey2Line, RiLoader4Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import {
   getAzureSetupOauthUrl,
@@ -33,7 +25,14 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  SetupButton,
+  type SetupMode,
+  SetupModeToggle,
+  SetupStep,
+} from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { downloadTeamsAppPackage } from './teams-app-package';
 
@@ -292,37 +291,6 @@ function ManualBotDeployFallback({ webhookUrl }: { webhookUrl: string }) {
 // ---------------------------------------------------------------------------
 // Setup mode toggle
 // ---------------------------------------------------------------------------
-
-type SetupMode = 'quick' | 'manual';
-
-function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
-  return (
-    <div className="flex items-center gap-1 rounded-lg border border-stroke-soft bg-bg-weak p-1">
-      <button
-        type="button"
-        onClick={() => onChange('quick')}
-        className={cn(
-          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
-          mode === 'quick' ? 'bg-bg-white text-text-strong shadow-xs' : 'text-text-sub hover:text-text-strong'
-        )}
-      >
-        <RiFlashlightLine className="size-3.5" />
-        Quick Setup
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('manual')}
-        className={cn(
-          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
-          mode === 'manual' ? 'bg-bg-white text-text-strong shadow-xs' : 'text-text-sub hover:text-text-strong'
-        )}
-      >
-        <RiListCheck2 className="size-3.5" />
-        Manual Setup
-      </button>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Health-check constants and components

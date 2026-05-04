@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
@@ -48,6 +49,7 @@ export class SlackQuickSetup {
   async execute(command: SlackQuickSetupCommand): Promise<SlackQuickSetupResult> {
     const integration = await this.integrationRepository.findOne({
       _id: command.integrationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
@@ -82,14 +84,23 @@ export class SlackQuickSetup {
     }
 
     const { client_id, client_secret, signing_secret } = slackResponse.credentials;
+    const pendingSetupId = randomUUID();
 
-    await this.saveCredentials(command, client_id, client_secret, signing_secret, slackResponse.app_id);
+    await this.storePendingCredentials(
+      command,
+      pendingSetupId,
+      client_id,
+      client_secret,
+      signing_secret,
+      slackResponse.app_id
+    );
 
-    this.logger.info(`Slack quick setup: credentials saved for integrationId=${command.integrationId}`);
+    this.logger.info(`Slack quick setup: pending credentials staged for integrationId=${command.integrationId}`);
 
     const oauthAuthorizeUrl = await this.buildOAuthUrl(
       client_id,
       integration,
+      pendingSetupId,
       command.subscriberId,
       command.connectionIdentifier
     );
@@ -181,6 +192,7 @@ export class SlackQuickSetup {
         params.toString(),
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          timeout: 5000,
         }
       );
 
@@ -194,6 +206,7 @@ export class SlackQuickSetup {
   private async buildOAuthUrl(
     clientId: string,
     integration: { _environmentId: string; _organizationId: string; identifier: string },
+    pendingSetupId: string,
     subscriberId?: string,
     connectionIdentifier?: string
   ): Promise<string> {
@@ -207,6 +220,7 @@ export class SlackQuickSetup {
       providerId: ChatProviderIdEnum.Slack,
       timestamp: Date.now(),
       mode: 'connect',
+      pendingSetupId,
       ...(subscriberId && { subscriberId, connectionMode: 'subscriber' }),
       ...(connectionIdentifier && { identifier: connectionIdentifier }),
     };
@@ -241,14 +255,32 @@ export class SlackQuickSetup {
     return apiKeys[0].key;
   }
 
-  private async saveCredentials(
+  private async storePendingCredentials(
     command: SlackQuickSetupCommand,
+    pendingSetupId: string,
     clientId: string,
     clientSecret: string,
     signingSecret: string,
     applicationId?: string
   ): Promise<void> {
-    const credentials = encryptCredentials({
+    /*
+     * Two-phase commit: we stage the newly-created Slack app credentials in
+     * provisioning.pendingCredentials rather than writing straight to
+     * integration.credentials. This preserves two invariants:
+     *
+     * 1. `integration.credentials` always represents the live, working credentials.
+     *    Writing here before the OAuth install completes would mark the integration
+     *    as "configured" even if the user abandons the Slack install screen.
+     *
+     * 2. Re-installs are safe. If this method runs against an integration that already
+     *    has working credentials (e.g. the user is rotating the app), the live creds
+     *    are not touched until the callback confirms a successful install.
+     *
+     * The OAuth callback handler verifies provisioning.pendingSetupId matches the value
+     * embedded in the signed state parameter, then atomically promotes pendingCredentials
+     * → credentials and clears both pending fields.
+     */
+    const pendingCredentials = encryptCredentials({
       clientId,
       secretKey: clientSecret,
       signingSecret,
@@ -256,8 +288,13 @@ export class SlackQuickSetup {
     });
 
     await this.integrationRepository.update(
-      { _id: command.integrationId, _organizationId: command.organizationId },
-      { $set: { credentials, active: true } }
+      { _id: command.integrationId, _environmentId: command.environmentId, _organizationId: command.organizationId },
+      {
+        $set: {
+          'provisioning.pendingSetupId': pendingSetupId,
+          'provisioning.pendingCredentials': pendingCredentials,
+        },
+      }
     );
   }
 }

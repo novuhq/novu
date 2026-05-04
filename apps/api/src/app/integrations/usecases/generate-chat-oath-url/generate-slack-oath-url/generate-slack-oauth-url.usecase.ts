@@ -22,6 +22,7 @@ export type OAuthMode = 'connect' | 'link_user';
 
 export type StateData = {
   identifier?: string;
+  pendingSetupId?: string;
   subscriberId?: string;
   context?: ContextPayload;
   environmentId: string;

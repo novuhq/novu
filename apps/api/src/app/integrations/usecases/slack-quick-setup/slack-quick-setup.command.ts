@@ -5,6 +5,10 @@ import { OrganizationCommand } from '../../../shared/commands/organization.comma
 export class SlackQuickSetupCommand extends OrganizationCommand {
   @IsDefined()
   @IsMongoId()
+  environmentId: string;
+
+  @IsDefined()
+  @IsMongoId()
   integrationId: string;
 
   @IsDefined()

@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
-import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -15,6 +15,7 @@ import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { API_HOSTNAME } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
@@ -243,12 +244,14 @@ export function SlackSetupGuide({
 }: SlackSetupGuideProps) {
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
+  const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
   const [pendingOauthUrl, setPendingOauthUrl] = useState<string | null>(null);
+  const activeSetupMode = isQuickSetupEnabled ? setupMode : 'manual';
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
@@ -292,17 +295,17 @@ export function SlackSetupGuide({
 
   const firstIncompleteStep = useMemo(() => {
     if (isSlackWorkspaceConnected) {
-      return setupMode === 'quick' ? base + 2 : base + 3;
+      return activeSetupMode === 'quick' ? base + 2 : base + 3;
     }
 
     if (!isCredentialsSaved) {
       return base;
     }
 
-    return setupMode === 'quick' ? base + 1 : base + 2;
-  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, setupMode]);
+    return activeSetupMode === 'quick' ? base + 1 : base + 2;
+  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, activeSetupMode]);
 
-  const modeSwitcher = <SetupModeToggle mode={setupMode} onChange={setSetupMode} />;
+  const modeSwitcher = isQuickSetupEnabled ? <SetupModeToggle mode={setupMode} onChange={setSetupMode} /> : null;
 
   const connectButton =
     user?.externalId && currentEnvironment?.identifier ? (
@@ -488,7 +491,7 @@ export function SlackSetupGuide({
     </>
   );
 
-  const stepsColumn = setupMode === 'quick' ? quickStepsColumn : manualStepsColumn;
+  const stepsColumn = activeSetupMode === 'quick' ? quickStepsColumn : manualStepsColumn;
 
   const listening = (
     <ListeningStatus

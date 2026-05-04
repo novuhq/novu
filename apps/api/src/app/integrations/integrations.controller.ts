@@ -784,6 +784,7 @@ export class IntegrationsController {
   ): Promise<SlackQuickSetupResponseDto> {
     return this.slackQuickSetupUsecase.execute(
       SlackQuickSetupCommand.create({
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         integrationId,
