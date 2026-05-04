@@ -9,6 +9,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -263,7 +264,7 @@ export function SlackSetupGuide({
                 connectedLabel="Connected to Slack"
                 onConnectSuccess={handleSlackWorkspaceConnected}
                 onConnectError={(error) => {
-                  toast.error('Failed to connect to Slack. Please try again.');
+                  showErrorToast('Failed to connect to Slack. Please try again.');
                   console.error(error);
                 }}
                 appearance={{
