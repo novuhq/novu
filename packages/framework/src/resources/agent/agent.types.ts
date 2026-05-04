@@ -142,11 +142,7 @@ export interface ReplyHandle {
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-export interface AgentContext {
-  readonly event: string;
-  readonly action: AgentAction | null;
-  readonly message: AgentMessage | null;
-  readonly reaction: AgentReaction | null;
+interface AgentContextBase {
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly history: AgentHistoryEntry[];
@@ -207,11 +203,53 @@ export interface AgentContext {
   addReaction(messageId: string, emojiName: Emoji): void;
 }
 
+export interface AgentMessageContext extends AgentContextBase {
+  readonly event: 'onMessage';
+  readonly message: AgentMessage;
+}
+
+export interface AgentActionContext extends AgentContextBase {
+  readonly event: 'onAction';
+  readonly action: AgentAction;
+}
+
+export interface AgentReactionContext extends AgentContextBase {
+  readonly event: 'onReaction';
+  readonly reaction: AgentReaction;
+}
+
+export interface AgentResolveContext extends AgentContextBase {
+  readonly event: 'onResolve';
+}
+
+/**
+ * @deprecated Use the handler-specific context types instead:
+ * `AgentMessageContext`, `AgentActionContext`, `AgentReactionContext`, `AgentResolveContext`.
+ */
+export interface AgentContext {
+  readonly event: string;
+  readonly action: AgentAction | null;
+  readonly message: AgentMessage | null;
+  readonly reaction: AgentReaction | null;
+  readonly conversation: AgentConversation;
+  readonly subscriber: AgentSubscriber | null;
+  readonly history: AgentHistoryEntry[];
+  readonly platform: string;
+  readonly platformContext: AgentPlatformContext;
+  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  resolve(summary?: string): void;
+  metadata: {
+    set(key: string, value: unknown): void;
+  };
+  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
+  addReaction(messageId: string, emojiName: Emoji): void;
+}
+
 export interface AgentHandlers {
-  onMessage: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onReaction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onAction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onResolve?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onMessage: (ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onReaction?: (ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onAction?: (ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {

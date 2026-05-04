@@ -6,7 +6,7 @@ import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
 import { AgentDeliveryError } from './agent.errors';
 import { agent } from './agent.resource';
-import type { AgentBridgeRequest } from './agent.types';
+import type { AgentActionContext, AgentBridgeRequest, AgentMessageContext, AgentReactionContext, AgentResolveContext } from './agent.types';
 import { Button, Card, CardText } from './index';
 
 function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
@@ -1608,5 +1608,157 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyCalls).toHaveLength(2);
     expect(JSON.parse(replyCalls[0][1].body).reply.markdown).toBe('Thinking…');
     expect(JSON.parse(replyCalls[1][1].body).reply.markdown).toBe('Final answer');
+  });
+
+  it('should provide discriminated AgentMessageContext to onMessage', async () => {
+    let messageText: string | undefined;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (ctx: AgentMessageContext) => {
+        messageText = ctx.message.text;
+        await ctx.reply(ctx.message.text);
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(messageText).toBeDefined());
+
+    expect(messageText).toBe('Hello bot!');
+  });
+
+  it('should provide discriminated AgentActionContext to onAction', async () => {
+    let actionId: string | undefined;
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onAction: async (ctx: AgentActionContext) => {
+        actionId = ctx.action.actionId;
+        await ctx.reply('handled');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onAction',
+          action: { actionId: 'confirm', value: 'yes' },
+          message: null,
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(actionId).toBeDefined());
+
+    expect(actionId).toBe('confirm');
+  });
+
+  it('should provide discriminated AgentReactionContext to onReaction', async () => {
+    let emojiName: string | undefined;
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onReaction: async (ctx: AgentReactionContext) => {
+        emojiName = ctx.reaction.emoji.name;
+        await ctx.reply('reaction noted');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onReaction',
+          message: null,
+          reaction: {
+            messageId: 'msg-reacted',
+            emoji: { name: 'thumbs_up' },
+            added: true,
+            message: null,
+          },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onReaction`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(emojiName).toBeDefined());
+
+    expect(emojiName).toBe('thumbs_up');
+  });
+
+  it('should provide discriminated AgentResolveContext to onResolve', async () => {
+    let resolveEvent: string | undefined;
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onResolve: async (ctx: AgentResolveContext) => {
+        resolveEvent = ctx.event;
+        ctx.metadata.set('resolved', true);
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({ event: 'onResolve', message: null });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onResolve`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(resolveEvent).toBeDefined());
+
+    expect(resolveEvent).toBe('onResolve');
   });
 });
