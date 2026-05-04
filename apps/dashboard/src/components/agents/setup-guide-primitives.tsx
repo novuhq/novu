@@ -28,6 +28,7 @@ export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange:
     <div className="flex w-fit items-center gap-1 rounded-lg border border-stroke-soft bg-bg-weak p-1">
       <button
         type="button"
+        aria-pressed={mode === 'quick'}
         onClick={() => onChange('quick')}
         className={cn(
           'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
@@ -39,6 +40,7 @@ export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange:
       </button>
       <button
         type="button"
+        aria-pressed={mode === 'manual'}
         onClick={() => onChange('manual')}
         className={cn(
           'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
