@@ -95,10 +95,41 @@ export const installTemplate = async ({
         `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
       );
     }
-    const agentFile = path.join(root, 'app', 'novu', 'agents', 'support-agent.tsx');
+
+    const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
+    const agentsDir = path.join(root, 'app', 'novu', 'agents');
+    const oldFile = path.join(agentsDir, 'support-agent.tsx');
+    const newFile = path.join(agentsDir, `${agentIdentifier}.tsx`);
+
+    let agentSrc = await fs.readFile(oldFile, 'utf8');
+    agentSrc = agentSrc.replace('supportAgent', camelName).replace("agent('support-agent',", `agent('${agentIdentifier}',`);
+    await fs.writeFile(newFile, agentSrc);
+    await fs.unlink(oldFile);
+
+    const indexFile = path.join(agentsDir, 'index.ts');
     await fs.writeFile(
-      agentFile,
-      (await fs.readFile(agentFile, 'utf8')).replace("agent('support-agent',", `agent('${agentIdentifier}',`)
+      indexFile,
+      (await fs.readFile(indexFile, 'utf8'))
+        .replace('supportAgent', camelName)
+        .replace('./support-agent', `./${agentIdentifier}`)
+    );
+
+    const routeFile = path.join(root, 'app', 'api', 'novu', 'route.ts');
+    await fs.writeFile(
+      routeFile,
+      (await fs.readFile(routeFile, 'utf8')).replace(/supportAgent/g, camelName)
+    );
+
+    const pageFile = path.join(root, 'app', 'page.tsx');
+    await fs.writeFile(
+      pageFile,
+      (await fs.readFile(pageFile, 'utf8')).replace('support-agent.tsx', `${agentIdentifier}.tsx`)
+    );
+
+    const readmeFile = path.join(root, 'README.md');
+    await fs.writeFile(
+      readmeFile,
+      (await fs.readFile(readmeFile, 'utf8')).replace(/support-agent\.tsx/g, `${agentIdentifier}.tsx`)
     );
   }
 
