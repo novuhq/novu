@@ -359,13 +359,15 @@ export function SlackSetupGuide({
         extraContent={
           !isCredentialsSaved ? (
             <div className="mt-2">
-              <QuickSetupStep
-                integrationId={integrationId}
-                agentId={agent._id}
-                subscriberId={`${user?.externalId}:agent-quickstart:${agent._id}`}
-                user={user}
-                onSuccess={handleQuickSetupSuccess}
-              />
+              {user?.externalId ? (
+                <QuickSetupStep
+                  integrationId={integrationId}
+                  agentId={agent._id}
+                  subscriberId={`${user.externalId}:agent-quickstart:${agent._id}`}
+                  user={user}
+                  onSuccess={handleQuickSetupSuccess}
+                />
+              ) : null}
             </div>
           ) : (
             <InlineToast
