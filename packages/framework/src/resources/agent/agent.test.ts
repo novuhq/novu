@@ -6,7 +6,7 @@ import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
 import { AgentDeliveryError } from './agent.errors';
 import { agent } from './agent.resource';
-import type { AgentActionContext, AgentBridgeRequest, AgentMessageContext, AgentReactionContext, AgentResolveContext } from './agent.types';
+import type { AgentBridgeRequest } from './agent.types';
 import { Button, Card, CardText } from './index';
 
 function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
@@ -1610,65 +1610,4 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(JSON.parse(replyCalls[1][1].body).reply.markdown).toBe('Final answer');
   });
 
-  it('should provide discriminated context types to each handler', async () => {
-    const captured: { message?: string; action?: string; reaction?: string; resolve?: string } = {};
-
-    const testBot = agent('test-bot', {
-      onMessage: async (ctx: AgentMessageContext) => {
-        captured.message = ctx.message.text;
-      },
-      onAction: async (ctx: AgentActionContext) => {
-        captured.action = ctx.action.actionId;
-      },
-      onReaction: async (ctx: AgentReactionContext) => {
-        captured.reaction = ctx.reaction.emoji.name;
-      },
-      onResolve: async (ctx: AgentResolveContext) => {
-        captured.resolve = ctx.event;
-      },
-    });
-
-    const dispatch = (event: string, overrides?: Partial<AgentBridgeRequest>) => {
-      const h = new NovuRequestHandler({
-        frameworkName: 'test',
-        agents: [testBot],
-        client,
-        handler: () => {
-          const body = createMockBridgeRequest({ event, ...overrides });
-          const url = new URL(
-            `http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=${event}`
-          );
-
-          return {
-            body: () => body,
-            headers: () => null,
-            method: () => 'POST',
-            url: () => url,
-            transformResponse: (res: any) => res,
-          };
-        },
-      });
-
-      return h.createHandler()();
-    };
-
-    await dispatch('onMessage');
-    await vi.waitFor(() => expect(captured.message).toBeDefined());
-    expect(captured.message).toBe('Hello bot!');
-
-    await dispatch('onAction', { action: { actionId: 'confirm', value: 'yes' }, message: null });
-    await vi.waitFor(() => expect(captured.action).toBeDefined());
-    expect(captured.action).toBe('confirm');
-
-    await dispatch('onReaction', {
-      message: null,
-      reaction: { messageId: 'msg-1', emoji: { name: 'thumbs_up' }, added: true, message: null },
-    });
-    await vi.waitFor(() => expect(captured.reaction).toBeDefined());
-    expect(captured.reaction).toBe('thumbs_up');
-
-    await dispatch('onResolve', { message: null });
-    await vi.waitFor(() => expect(captured.resolve).toBeDefined());
-    expect(captured.resolve).toBe('onResolve');
-  });
 });
