@@ -66,6 +66,13 @@ export const installTemplate = async ({
     copySource.push(mode === 'ts' ? 'tailwind.config.ts' : '!tailwind.config.js', '!postcss.config.cjs');
   }
 
+  const renameAgent = template === TemplateTypeEnum.APP_AGENT && agentIdentifier;
+  if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
+    throw new Error(
+      `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
+    );
+  }
+
   await copy(copySource, root, {
     parents: true,
     cwd: templatePath,
@@ -82,6 +89,9 @@ export const installTemplate = async ({
         case 'README-template.md': {
           return 'README.md';
         }
+        case 'support-agent.tsx': {
+          return renameAgent ? `${agentIdentifier}.tsx` : name;
+        }
         default: {
           return name;
         }
@@ -89,35 +99,14 @@ export const installTemplate = async ({
     },
   });
 
-  if (template === TemplateTypeEnum.APP_AGENT && agentIdentifier) {
-    if (!/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
-      throw new Error(
-        `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
-      );
-    }
-
+  if (renameAgent) {
     const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
-    const agentsDir = path.join(root, 'app', 'novu', 'agents');
-    await fs.rename(path.join(agentsDir, 'support-agent.tsx'), path.join(agentsDir, `${agentIdentifier}.tsx`));
-
-    const replacements: [RegExp, string][] = [
-      [/supportAgent/g, camelName],
-      [/support-agent/g, agentIdentifier],
-    ];
-    const targets = [
-      path.join(agentsDir, `${agentIdentifier}.tsx`),
-      path.join(agentsDir, 'index.ts'),
-      path.join(root, 'app', 'api', 'novu', 'route.ts'),
-      path.join(root, 'app', 'page.tsx'),
-      path.join(root, 'README.md'),
-    ];
+    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true });
     await Promise.all(
-      targets.map(async (file) => {
-        let content = await fs.readFile(file, 'utf8');
-        for (const [pattern, replacement] of replacements) {
-          content = content.replace(pattern, replacement);
-        }
-        await fs.writeFile(file, content);
+      files.map(async (file) => {
+        const before = await fs.readFile(file, 'utf8');
+        const after = before.replace(/supportAgent/g, camelName).replace(/support-agent/g, agentIdentifier);
+        if (after !== before) await fs.writeFile(file, after);
       })
     );
   }
