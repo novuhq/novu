@@ -115,6 +115,8 @@ export interface ReplyContent {
 export interface AgentAction {
   actionId: string;
   value?: string;
+  /** Platform-native message ID of the message containing the clicked button/action. */
+  sourceMessageId?: string;
 }
 
 // ---------------------------------------------------------------------------
