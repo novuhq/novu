@@ -101,7 +101,7 @@ export const installTemplate = async ({
 
   if (renameAgent) {
     const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
-    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true });
+    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true, followSymbolicLinks: false });
     await Promise.all(
       files.map(async (file) => {
         const before = await fs.readFile(file, 'utf8');
