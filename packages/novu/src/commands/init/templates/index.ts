@@ -98,38 +98,27 @@ export const installTemplate = async ({
 
     const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
     const agentsDir = path.join(root, 'app', 'novu', 'agents');
-    const oldFile = path.join(agentsDir, 'support-agent.tsx');
-    const newFile = path.join(agentsDir, `${agentIdentifier}.tsx`);
+    await fs.rename(path.join(agentsDir, 'support-agent.tsx'), path.join(agentsDir, `${agentIdentifier}.tsx`));
 
-    let agentSrc = await fs.readFile(oldFile, 'utf8');
-    agentSrc = agentSrc.replace('supportAgent', camelName).replace("agent('support-agent',", `agent('${agentIdentifier}',`);
-    await fs.writeFile(newFile, agentSrc);
-    await fs.unlink(oldFile);
-
-    const indexFile = path.join(agentsDir, 'index.ts');
-    await fs.writeFile(
-      indexFile,
-      (await fs.readFile(indexFile, 'utf8'))
-        .replace('supportAgent', camelName)
-        .replace('./support-agent', `./${agentIdentifier}`)
-    );
-
-    const routeFile = path.join(root, 'app', 'api', 'novu', 'route.ts');
-    await fs.writeFile(
-      routeFile,
-      (await fs.readFile(routeFile, 'utf8')).replace(/supportAgent/g, camelName)
-    );
-
-    const pageFile = path.join(root, 'app', 'page.tsx');
-    await fs.writeFile(
-      pageFile,
-      (await fs.readFile(pageFile, 'utf8')).replace('support-agent.tsx', `${agentIdentifier}.tsx`)
-    );
-
-    const readmeFile = path.join(root, 'README.md');
-    await fs.writeFile(
-      readmeFile,
-      (await fs.readFile(readmeFile, 'utf8')).replace(/support-agent\.tsx/g, `${agentIdentifier}.tsx`)
+    const replacements: [RegExp, string][] = [
+      [/supportAgent/g, camelName],
+      [/support-agent/g, agentIdentifier],
+    ];
+    const targets = [
+      path.join(agentsDir, `${agentIdentifier}.tsx`),
+      path.join(agentsDir, 'index.ts'),
+      path.join(root, 'app', 'api', 'novu', 'route.ts'),
+      path.join(root, 'app', 'page.tsx'),
+      path.join(root, 'README.md'),
+    ];
+    await Promise.all(
+      targets.map(async (file) => {
+        let content = await fs.readFile(file, 'utf8');
+        for (const [pattern, replacement] of replacements) {
+          content = content.replace(pattern, replacement);
+        }
+        await fs.writeFile(file, content);
+      })
     );
   }
 
