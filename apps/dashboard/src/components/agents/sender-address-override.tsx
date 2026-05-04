@@ -42,6 +42,7 @@ export function SenderAddressOverride({
   }, [serverEnabled, serverValue, enabled, value]);
 
   const placeholder = outboundFromAddress || 'no-reply@yourdomain.com';
+  const inputErrorId = `${inputId}-error`;
 
   const trimmedValue = value.trim();
   const isDirty = enabled !== serverEnabled || trimmedValue !== serverValue.trim();
@@ -80,17 +81,25 @@ export function SenderAddressOverride({
       </div>
 
       {enabled && (
-        <Input
-          id={inputId}
-          type="email"
-          size="2xs"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => setValue(e.target.value)}
-          hasError={hasInvalidValue}
-          aria-invalid={hasInvalidValue || undefined}
-          disabled={isSaving}
-        />
+        <div className="flex w-full flex-col gap-1">
+          <Input
+            id={inputId}
+            type="email"
+            size="2xs"
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => setValue(e.target.value)}
+            hasError={hasInvalidValue}
+            aria-invalid={hasInvalidValue ? true : undefined}
+            aria-errormessage={hasInvalidValue ? inputErrorId : undefined}
+            disabled={isSaving}
+          />
+          {hasInvalidValue && (
+            <p id={inputErrorId} className="text-destructive text-label-xs leading-4">
+              Enter a valid email address (for example, name@company.com).
+            </p>
+          )}
+        </div>
       )}
 
       <AddressPreview from={resolvedFrom} replyTo={resolvedReplyTo} />

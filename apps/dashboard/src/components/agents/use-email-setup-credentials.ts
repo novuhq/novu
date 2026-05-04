@@ -91,6 +91,7 @@ export function useEmailSetupCredentials({
   const queryClient = useQueryClient();
 
   const [outboundId, setOutboundId] = useState('');
+  const lastConfirmedOutboundIdRef = useRef('');
 
   const serverCredentials = useMemo(() => emailIntegration?.credentials ?? {}, [emailIntegration?.credentials]);
   const serverUseFromAddressOverride =
@@ -107,6 +108,10 @@ export function useEmailSetupCredentials({
       }
     }
     credentialsRef.current = merged;
+    const serverOutbound = serverCredentials.outboundIntegrationId;
+    if (typeof serverOutbound === 'string') {
+      lastConfirmedOutboundIdRef.current = serverOutbound;
+    }
   }, [serverCredentials]);
 
   const hasInitializedFromServer = useRef(false);
@@ -185,10 +190,16 @@ export function useEmailSetupCredentials({
   // sequentially so concurrent calls cannot interleave on the integration document.
   function saveCredentials(patch: Record<string, unknown>): Promise<void> {
     if (!emailIntegration) return Promise.resolve();
-    credentialsRef.current = { ...credentialsRef.current, ...patch };
-    for (const key of Object.keys(patch)) pendingKeysRef.current.add(key);
-    const snapshot = { ...credentialsRef.current };
     const patchKeys = Object.keys(patch);
+    const prePatchByKey: Record<string, unknown> = {};
+    for (const key of patchKeys) {
+      if (Object.prototype.hasOwnProperty.call(credentialsRef.current, key)) {
+        prePatchByKey[key] = credentialsRef.current[key];
+      }
+    }
+    credentialsRef.current = { ...credentialsRef.current, ...patch };
+    for (const key of patchKeys) pendingKeysRef.current.add(key);
+    const snapshot = { ...credentialsRef.current };
     const next = saveQueueRef.current.then(() =>
       updateIntegration({
         integrationId: emailIntegration._id,
@@ -212,7 +223,14 @@ export function useEmailSetupCredentials({
         for (const key of patchKeys) pendingKeysRef.current.delete(key);
       },
       () => {
-        for (const key of patchKeys) pendingKeysRef.current.delete(key);
+        for (const key of patchKeys) {
+          if (Object.prototype.hasOwnProperty.call(prePatchByKey, key)) {
+            credentialsRef.current[key] = prePatchByKey[key];
+          } else {
+            delete credentialsRef.current[key];
+          }
+          pendingKeysRef.current.delete(key);
+        }
       }
     );
 
@@ -299,6 +317,7 @@ export function useEmailSetupCredentials({
   function onOutboundSelect(id: string) {
     setOutboundId(id);
     saveCredentials({ outboundIntegrationId: id }).catch((err: unknown) => {
+      setOutboundId(lastConfirmedOutboundIdRef.current);
       const message = err instanceof Error ? err.message : 'Could not save provider selection.';
       showErrorToast(message, 'Settings not saved');
     });

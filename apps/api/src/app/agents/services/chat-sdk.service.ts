@@ -721,6 +721,8 @@ export class ChatSdkService implements OnModuleDestroy {
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
       outboundIntegrationId: c.outboundIntegrationId ?? null,
+      useFromAddressOverride: c.useFromAddressOverride ?? null,
+      fromAddressOverride: c.fromAddressOverride ?? null,
     });
   }
 

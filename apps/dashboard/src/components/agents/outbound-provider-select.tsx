@@ -161,6 +161,7 @@ export function OutboundProviderSelect({
           <PopoverTrigger asChild>
             <button
               type="button"
+              aria-label={hideLabel ? 'Send emails via, select email provider' : undefined}
               disabled={isBusy}
               className={cn(
                 'border-stroke-soft bg-bg-white flex h-7 w-full items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60',
