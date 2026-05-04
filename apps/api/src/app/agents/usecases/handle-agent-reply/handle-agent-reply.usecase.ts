@@ -188,6 +188,7 @@ export class HandleAgentReply {
 
     await this.conversationService.persistAgentMessage({
       conversationId: conversation._id,
+      agentId: conversation._agentId,
       channel,
       platformThreadId: sent.platformThreadId || undefined,
       platformMessageId: sent.messageId,
@@ -222,6 +223,7 @@ export class HandleAgentReply {
 
     await this.conversationService.persistAgentEdit({
       conversationId: conversation._id,
+      agentId: conversation._agentId,
       channel,
       platformThreadId: sent.platformThreadId || undefined,
       platformMessageId: sent.messageId,
@@ -263,6 +265,7 @@ export class HandleAgentReply {
       await this.validateMetadataSignalKeys(metadataSignals);
       await this.conversationService.updateMetadata({
         conversationId: conversation._id,
+        agentId: conversation._agentId,
         channel,
         currentMetadata: conversation.metadata ?? {},
         signals: metadataSignals,
@@ -327,6 +330,7 @@ export class HandleAgentReply {
       try {
         await this.conversationService.persistTriggerSignal({
           conversationId: conversation._id,
+          agentId: conversation._agentId,
           channel,
           agentIdentifier: command.agentIdentifier,
           workflowId: signal.workflowId,
@@ -364,6 +368,7 @@ export class HandleAgentReply {
   ): Promise<void> {
     await this.conversationService.resolveConversation({
       conversationId: conversation._id,
+      agentId: conversation._agentId,
       channel,
       agentIdentifier: command.agentIdentifier,
       summary: options.summary,

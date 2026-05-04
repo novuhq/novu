@@ -23,6 +23,13 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
     return this.mapProjectedEntity(doc) as AgentEntity;
   }
 
+  async touchLastInteracted(environmentId: string, organizationId: string, agentId: string): Promise<void> {
+    await this.update(
+      { _id: agentId, _environmentId: environmentId, _organizationId: organizationId },
+      { $max: { lastInteractedAt: new Date() } } as any
+    );
+  }
+
   async listAgents({
     organizationId,
     environmentId,

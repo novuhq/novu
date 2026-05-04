@@ -146,6 +146,9 @@ function AgentsTableSkeletonRow() {
       <TableCell className="p-3">
         <Skeleton className="h-5 w-[9ch] rounded-full" />
       </TableCell>
+      <TableCell className="p-3">
+        <Skeleton className="h-5 w-[9ch] rounded-full" />
+      </TableCell>
       <TableCell className="w-[52px] p-3 text-right">
         <RiMore2Fill className="text-foreground-600 size-4 opacity-50" aria-hidden />
       </TableCell>
@@ -166,6 +169,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
           <TableHead className="h-11 px-3 py-2.5">Agent</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Status</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Integrations</TableHead>
+          <TableHead className="h-11 px-3 py-2.5">Last interacted</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Last updated</TableHead>
           <TableHead className="h-11 w-[52px] px-3 py-2.5">
             <span className="sr-only">Actions</span>
@@ -218,6 +222,14 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                   to={agentDetailsPath}
                   className="text-foreground-600 p-3 align-middle text-sm font-medium"
                 >
+                  <span className="text-label-sm">
+                    {agent.lastInteractedAt ? formatDateSimple(agent.lastInteractedAt) : 'Never'}
+                  </span>
+                </AgentNavTableCell>
+                <AgentNavTableCell
+                  to={agentDetailsPath}
+                  className="text-foreground-600 p-3 align-middle text-sm font-medium"
+                >
                   <span className="text-label-sm">{formatDateSimple(agent.updatedAt)}</span>
                 </AgentNavTableCell>
                 <AgentNavTableCell className="w-1 p-3 text-right align-middle">
@@ -249,7 +261,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       {!isLoading && agents.length > 0 ? (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={5} className="p-0">
+            <TableCell colSpan={6} className="p-0">
               <TablePaginationFooter
                 pageSize={paginationProps.pageSize}
                 currentPageItemsCount={paginationProps.currentItemsCount}

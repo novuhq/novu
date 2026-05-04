@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
+  AgentRepository,
   ConversationActivityEntity,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
@@ -50,6 +51,7 @@ export interface CreateOrGetConversationParams {
 
 export interface PersistInboundMessageParams {
   conversationId: string;
+  agentId: string;
   platform: string;
   integrationId: string;
   platformThreadId: string;
@@ -66,6 +68,7 @@ export interface PersistInboundMessageParams {
 
 export interface ConversationActivityContext {
   conversationId: string;
+  agentId: string;
   channel: ConversationChannel;
   agentIdentifier: string;
   environmentId: string;
@@ -101,6 +104,7 @@ export class AgentConversationService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
+    private readonly agentRepository: AgentRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -141,27 +145,32 @@ export class AgentConversationService {
       return existing;
     }
 
-    const conversation = await this.conversationRepository.create({
-      identifier: `conv_${shortId(12)}`,
-      _agentId: params.agentId,
-      participants: [
-        { type: params.participantType, id: params.participantId },
-        { type: ConversationParticipantTypeEnum.AGENT, id: params.agentId },
-      ],
-      channels: [
-        {
-          platform: params.platform,
-          _integrationId: params.integrationId,
-          platformThreadId,
-        },
-      ],
-      status: ConversationStatusEnum.ACTIVE,
-      title: params.firstMessageText.slice(0, 200),
-      metadata: {},
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      lastActivityAt: new Date().toISOString(),
-    });
+    const now = new Date();
+
+    const [conversation] = await Promise.all([
+      this.conversationRepository.create({
+        identifier: `conv_${shortId(12)}`,
+        _agentId: params.agentId,
+        participants: [
+          { type: params.participantType, id: params.participantId },
+          { type: ConversationParticipantTypeEnum.AGENT, id: params.agentId },
+        ],
+        channels: [
+          {
+            platform: params.platform,
+            _integrationId: params.integrationId,
+            platformThreadId,
+          },
+        ],
+        status: ConversationStatusEnum.ACTIVE,
+        title: params.firstMessageText.slice(0, 200),
+        metadata: {},
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        lastActivityAt: now.toISOString(),
+      }),
+      this.agentRepository.touchLastInteracted(environmentId, organizationId, params.agentId),
+    ]);
 
     this.logger.debug(`Created conversation ${conversation._id} for thread ${platformThreadId}`);
 
@@ -231,6 +240,7 @@ export class AgentConversationService {
         params.conversationId,
         preview
       ),
+      this.agentRepository.touchLastInteracted(params.environmentId, params.organizationId, params.agentId),
     ]);
 
     return activity;
@@ -328,6 +338,7 @@ export class AgentConversationService {
         organizationId: params.organizationId,
       }),
       touchFn(params.environmentId, params.organizationId, params.conversationId, params.content),
+      this.agentRepository.touchLastInteracted(params.environmentId, params.organizationId, params.agentId),
     ]);
 
     return activity;

@@ -51,6 +51,7 @@ export type AgentResponse = {
   devBridgeActive?: boolean;
   _environmentId: string;
   _organizationId: string;
+  lastInteractedAt?: string;
   createdAt: string;
   updatedAt: string;
   integrations?: AgentIntegrationSummary[];

@@ -28,6 +28,7 @@ const agentSchema = new Schema<AgentDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    lastInteractedAt: Schema.Types.Date,
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

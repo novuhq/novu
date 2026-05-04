@@ -15,6 +15,7 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     devBridgeActive: agent.devBridgeActive,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
+    lastInteractedAt: agent.lastInteractedAt,
     createdAt: agent.createdAt,
     updatedAt: agent.updatedAt,
   };

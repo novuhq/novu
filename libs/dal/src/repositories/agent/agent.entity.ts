@@ -30,6 +30,8 @@ export class AgentEntity {
 
   _organizationId: OrganizationId;
 
+  lastInteractedAt?: string;
+
   createdAt: string;
 
   updatedAt: string;

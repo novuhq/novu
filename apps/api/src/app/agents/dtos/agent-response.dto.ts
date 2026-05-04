@@ -37,6 +37,9 @@ export class AgentResponseDto {
   @ApiProperty()
   _organizationId: string;
 
+  @ApiPropertyOptional({ description: 'Timestamp of the last interaction with this agent' })
+  lastInteractedAt?: string;
+
   @ApiProperty()
   createdAt: string;
 

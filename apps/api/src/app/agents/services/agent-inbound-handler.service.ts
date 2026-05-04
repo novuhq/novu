@@ -217,6 +217,7 @@ export class AgentInboundHandler {
 
     await this.conversationService.persistInboundMessage({
       conversationId: conversation._id,
+      agentId,
       platform: config.platform,
       integrationId: config.integrationId,
       platformThreadId,
@@ -311,6 +312,7 @@ export class AgentInboundHandler {
         const channel = this.conversationService.getPrimaryChannel(conversation);
         await this.conversationService.persistAgentMessage({
           conversationId: conversation._id,
+          agentId,
           channel,
           platformMessageId: (sent as { id?: string })?.id ?? '',
           agentIdentifier: config.agentIdentifier,
