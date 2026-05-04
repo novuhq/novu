@@ -68,6 +68,8 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       tenantId: Schema.Types.String,
       signingSecret: Schema.Types.String,
       outboundIntegrationId: Schema.Types.String,
+      useFromAddressOverride: Schema.Types.Boolean,
+      fromAddressOverride: Schema.Types.String,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,

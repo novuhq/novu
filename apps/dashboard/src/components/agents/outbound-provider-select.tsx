@@ -68,9 +68,11 @@ function getItemKey(item: OutboundDropdownItem, index: number): string {
 export function OutboundProviderSelect({
   selectedId,
   onSelect,
+  hideLabel = false,
 }: {
   selectedId: string | undefined;
   onSelect: (integrationId: string) => void;
+  hideLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -144,21 +146,26 @@ export function OutboundProviderSelect({
   }
 
   return (
-    <div className="flex w-full flex-col gap-1 min-w-[300px]">
-      <div className="flex items-center gap-px">
-        <span className="text-text-sub text-label-xs font-medium leading-4">Send emails via</span>
-        <span aria-hidden="true" className="text-text-soft ml-0.5 text-[10px]">
-          &#9432;
-        </span>
-      </div>
+    <div className={cn('flex w-full flex-col gap-1', !hideLabel && 'min-w-[300px]')}>
+      {!hideLabel && (
+        <div className="flex items-center gap-px">
+          <span className="text-text-sub text-label-xs font-medium leading-4">Send emails via</span>
+          <span aria-hidden="true" className="text-text-soft ml-0.5 text-[10px]">
+            &#9432;
+          </span>
+        </div>
+      )}
 
-      <div className="w-full max-w-[320px]">
+      <div className={cn('w-full', !hideLabel && 'max-w-[320px]')}>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
               type="button"
               disabled={isBusy}
-              className="border-stroke-soft bg-bg-white flex h-7 w-full max-w-[320px] items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60"
+              className={cn(
+                'border-stroke-soft bg-bg-white flex h-7 w-full items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60',
+                !hideLabel && 'max-w-[320px]'
+              )}
             >
               {selected ? (
                 <div className="flex items-center gap-1">
@@ -181,7 +188,10 @@ export function OutboundProviderSelect({
           </PopoverTrigger>
 
           <PopoverContent
-            className="w-(--radix-popover-trigger-width) max-w-[320px] min-w-[220px] overflow-hidden p-0"
+            className={cn(
+              'w-(--radix-popover-trigger-width) min-w-[220px] overflow-hidden p-0',
+              !hideLabel && 'max-w-[320px]'
+            )}
             align="start"
           >
             <Command>

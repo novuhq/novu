@@ -803,8 +803,23 @@ export class ChatSdkService implements OnModuleDestroy {
       }
 
       const decrypted = decryptCredentials(integration.credentials);
+
+      // The chat-adapter-email contract guarantees params.from is the agent's inbound address
+      // (see packages/chat-adapter-email/src/adapter.ts postMessage/addReaction). We treat it as
+      // the Reply-To target so subscriber replies still reach the agent's inbox even when the
+      // outbound From is rewritten to the sending provider's configured sender (or a per-agent
+      // override). When neither override nor outbound.from is set, we fall back to the agent
+      // address for From and skip Reply-To — preserving the legacy behavior.
+      const agentInboundAddress = params.from;
+      const overrideFrom = config.credentials.useFromAddressOverride
+        ? config.credentials.fromAddressOverride?.trim() || undefined
+        : undefined;
+      const outboundFrom = (decrypted.from as string | undefined)?.trim() || undefined;
+      const effectiveFrom = overrideFrom || outboundFrom || agentInboundAddress;
+      const replyToHeader = effectiveFrom !== agentInboundAddress ? agentInboundAddress : undefined;
+
       const mailFactory = new MailFactory();
-      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, params.from);
+      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
 
       const mailOptions: IEmailOptions = {
         to: [params.to],
@@ -812,7 +827,8 @@ export class ChatSdkService implements OnModuleDestroy {
         html: params.html,
         text: params.text,
         alternatives: params.alternatives,
-        from: params.from,
+        from: effectiveFrom,
+        ...(replyToHeader ? { replyTo: replyToHeader } : {}),
         senderName: config.credentials.senderName || undefined,
         headers: {
           ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
