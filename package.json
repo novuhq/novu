@@ -275,6 +275,7 @@
       "follow-redirects@<=1.15.11": "^1.16.0",
       "@clerk/shared@>=2.20.17 <2.22.1": "^2.22.1",
       "@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5": "^3.47.5",
+      "@tootallnate/once@<3.0.1": "^3.0.1",
       "protobufjs@<7.5.5": "^7.5.5",
       "protobufjs@>=8.0.0 <8.0.1": "^8.0.1",
       "newrelic": "13.18.0"
