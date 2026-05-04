@@ -70,5 +70,5 @@ export function OnboardingSetupGuide({ onBridgeConnected }: OnboardingSetupGuide
     return null;
   }
 
-  return <AgentSetupSteps agent={agent} onBridgeConnected={onBridgeConnected} />;
+  return <AgentSetupSteps agent={agent} onBridgeConnected={onBridgeConnected} hideAddProvider />;
 }

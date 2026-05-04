@@ -15,7 +15,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
-import { deriveStepStatus } from './setup-guide-step-utils';
+import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
 export type SlackSetupGuideProps = {
   agent: AgentResponse;
@@ -151,13 +151,14 @@ export function SlackSetupGuide({
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
-  const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
+  const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
     setIsSlackWorkspaceConnected(false);
+    setCredentialsSavedLocally(false);
   }, [integrationId]);
 
   const handleSlackWorkspaceConnected = useCallback(() => {
@@ -167,11 +168,14 @@ export function SlackSetupGuide({
 
   const { integrations } = useFetchIntegrations();
 
-  const selectedIntegrationIdentifier = useMemo(() => {
-    const row = integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.Slack);
+  const selectedIntegration = useMemo(
+    () => integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.Slack),
+    [integrations, integrationId]
+  );
 
-    return row?.identifier ?? '';
-  }, [integrations, integrationId]);
+  const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
+  const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
+  const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
   const webhookHandlerUrl = buildAgentSlackWebhookUrl(
     agent._id,
@@ -258,6 +262,10 @@ export function SlackSetupGuide({
                 connectLabel={`Install ${agent.name} ↗`}
                 connectedLabel="Connected to Slack"
                 onConnectSuccess={handleSlackWorkspaceConnected}
+                onConnectError={(error) => {
+                  toast.error('Failed to connect to Slack. Please try again.');
+                  console.error(error);
+                }}
                 appearance={{
                   elements: {
                     channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
@@ -293,12 +301,14 @@ export function SlackSetupGuide({
           />
           {stepsColumn}
         </div>
-        {listening}
+        <div className="pl-8">
+          {listening}
+        </div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
-          onSaveSuccess={() => setIsCredentialsSaved(true)}
+          onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
         />
       </div>
@@ -313,7 +323,7 @@ export function SlackSetupGuide({
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
-        onSaveSuccess={() => setIsCredentialsSaved(true)}
+        onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
       />
     </>

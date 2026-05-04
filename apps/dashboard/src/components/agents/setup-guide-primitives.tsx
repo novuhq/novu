@@ -52,7 +52,7 @@ export function SetupStep({
   index: number;
   status: StepStatus;
   sectionLabel?: string;
-  title: string;
+  title: ReactNode;
   description: ReactNode;
   rightContent?: ReactNode;
   extraContent?: ReactNode;
@@ -63,7 +63,7 @@ export function SetupStep({
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex gap-5">
+      <div className="flex gap-20">
         <div className="flex min-w-0 max-w-[400px] flex-1 flex-col">
           <div className="flex flex-col gap-2">
             {sectionLabel && (
@@ -76,7 +76,7 @@ export function SetupStep({
           </div>
           {extraContent}
         </div>
-        {rightContent && <div className="flex min-h-0 min-w-0 shrink-0 flex-col items-start">{rightContent}</div>}
+        {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
       </div>
       {fullWidthContent}
     </div>
@@ -253,7 +253,7 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className="flex flex-col gap-2 py-4 pl-8">
+      <div className="flex flex-col gap-2 py-4 pl-6">
         <div className="flex flex-col gap-3">
           {connectedAt ? (
             <div className="flex items-center gap-1">

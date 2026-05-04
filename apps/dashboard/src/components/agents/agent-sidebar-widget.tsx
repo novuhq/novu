@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAlertFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
@@ -53,18 +54,19 @@ type BridgeUrlSectionProps = {
 
 function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly }: BridgeUrlSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [bridgeUrl, setBridgeUrl] = useState(agent.bridgeUrl ?? '');
-  const urlBeforeEditRef = useRef(agent.bridgeUrl ?? '');
+  const displayUrl = agent.devBridgeActive ? (agent.devBridgeUrl ?? '') : (agent.bridgeUrl ?? '');
+  const [bridgeUrl, setBridgeUrl] = useState(displayUrl);
+  const urlBeforeEditRef = useRef(displayUrl);
 
   useEffect(() => {
     if (!isEditing) {
-      setBridgeUrl(agent.bridgeUrl ?? '');
+      setBridgeUrl(displayUrl);
     }
-  }, [agent.bridgeUrl, isEditing]);
+  }, [displayUrl, isEditing]);
 
   const persistBridgeUrl = useCallback(async () => {
     const trimmed = bridgeUrl.trim();
-    const server = (agent.bridgeUrl ?? '').trim();
+    const server = displayUrl.trim();
 
     if (trimmed === server) {
       setIsEditing(false);
@@ -80,12 +82,15 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
 
     setIsEditing(false);
     await onUpdate({ bridgeUrl: trimmed });
-  }, [agent.bridgeUrl, bridgeUrl, canWrite, onUpdate]);
+  }, [displayUrl, bridgeUrl, canWrite, onUpdate]);
 
   return (
     <>
       <div className="flex h-8 items-center justify-between gap-2 px-1.5">
-        <span className="text-text-soft text-label-xs font-medium shrink-0">Bridge URL</span>
+        <span className="text-text-soft text-label-xs font-medium shrink-0 flex items-center gap-0.5">
+          Bridge URL
+          {!displayUrl && <RiAlertFill className="size-3.5 text-orange-500" />}
+        </span>
         <div className="relative flex h-8 min-w-0 flex-1 items-center justify-end">
           <AnimatePresence mode="wait">
             {isEditing && canWrite ? (
@@ -143,7 +148,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
                 )}
               >
                 <span className="block w-full min-w-0 truncate text-right">
-                  {agent.bridgeUrl || <span className="text-text-soft italic">Not configured</span>}
+                  {displayUrl || <span className="text-text-disabled">Not configured</span>}
                 </span>
               </motion.button>
             )}
@@ -153,11 +158,9 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
       {!readOnly && (
         <DetailsSidebarRow label="Bridge">
           <div className="flex items-center gap-1.5">
-            {!agent.devBridgeActive ? (
-              <Badge variant="lighter" color="green" size="sm">
-                DEVELOPMENT
-              </Badge>
-            ) : null}
+            <Badge variant="lighter" color={!agent.devBridgeActive ? 'green' : 'gray'} size="sm">
+              DEVELOPMENT
+            </Badge>
             <Switch
               checked={agent.devBridgeActive ?? false}
               disabled={!canWrite || isUpdatePending}
@@ -165,11 +168,9 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
                 void onUpdate({ devBridgeActive: checked });
               }}
             />
-            {agent.devBridgeActive ? (
-              <Badge variant="lighter" color="orange" size="sm">
-                LOCAL
-              </Badge>
-            ) : null}
+            <Badge variant="lighter" color={agent.devBridgeActive ? 'orange' : 'gray'} size="sm">
+              LOCAL
+            </Badge>
           </div>
         </DetailsSidebarRow>
       )}

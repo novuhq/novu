@@ -9,7 +9,7 @@ import { API_HOSTNAME } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
-import { deriveStepStatus } from './setup-guide-step-utils';
+import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
 export type WhatsAppSetupGuideProps = {
   agent: AgentResponse;
@@ -53,12 +53,13 @@ export function WhatsAppSetupGuide({
   embedded = false,
 }: WhatsAppSetupGuideProps) {
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
-  const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
+  const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
     setIsConnected(false);
+    setCredentialsSavedLocally(false);
   }, [integrationId]);
 
   const handleConnected = useCallback(() => {
@@ -68,13 +69,15 @@ export function WhatsAppSetupGuide({
 
   const { integrations } = useFetchIntegrations();
 
-  const selectedIntegrationIdentifier = useMemo(() => {
-    const row = integrations?.find(
-      (i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.WhatsAppBusiness
-    );
+  const selectedIntegration = useMemo(
+    () =>
+      integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.WhatsAppBusiness),
+    [integrations, integrationId]
+  );
 
-    return row?.identifier ?? '';
-  }, [integrations, integrationId]);
+  const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
+  const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
+  const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
   const webhookUrl = buildAgentWebhookUrl(agent._id, selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
 
@@ -265,7 +268,7 @@ export function WhatsAppSetupGuide({
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
-          onSaveSuccess={() => setIsCredentialsSaved(true)}
+          onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
         />
       </div>
@@ -280,7 +283,7 @@ export function WhatsAppSetupGuide({
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
-        onSaveSuccess={() => setIsCredentialsSaved(true)}
+        onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
       />
     </>

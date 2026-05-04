@@ -13,9 +13,11 @@ import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indic
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
+const PROD_READ_ONLY_TOOLTIP = 'This setting is read-only in production. Edit in Development and promote to apply changes.';
 
 function useAgentEmoji() {
   const { currentEnvironment } = useEnvironment();
@@ -127,7 +129,7 @@ type AgentBehaviorSectionProps = {
 
 export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const { emojiList, unicodeMap } = useAgentEmoji();
 
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
@@ -158,24 +160,52 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             label="Acknowledge incoming messages"
             tooltip='Show a "Typing…" indicator while the agent works. On platforms that don&#39;t support typing, react with an "eyes" emoji instead.'
           >
-            <Switch
-              checked={acknowledgeOnReceived}
-              disabled={isPending}
-              onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
-            />
+            {readOnly ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Switch checked={acknowledgeOnReceived} disabled />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Switch
+                checked={acknowledgeOnReceived}
+                disabled={isPending}
+                onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
+              />
+            )}
           </ToggleRow>
 
           <ToggleRow
             label="React to the first message when a conversation is resolved"
             tooltip="Add an emoji reaction to the first message in the thread when the agent resolves the conversation."
           >
-            <ResolvedEmojiPicker
-              currentEmoji={reactionOnResolved}
-              emojiList={emojiList}
-              unicodeMap={unicodeMap}
-              disabled={isPending}
-              onSelect={(emojiName) => mutate({ reactionOnResolved: emojiName })}
-            />
+            {readOnly ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <ResolvedEmojiPicker
+                      currentEmoji={reactionOnResolved}
+                      emojiList={emojiList}
+                      unicodeMap={unicodeMap}
+                      disabled
+                      onSelect={() => {}}
+                    />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <ResolvedEmojiPicker
+                currentEmoji={reactionOnResolved}
+                emojiList={emojiList}
+                unicodeMap={unicodeMap}
+                disabled={isPending}
+                onSelect={(emojiName) => mutate({ reactionOnResolved: emojiName })}
+              />
+            )}
           </ToggleRow>
         </div>
       </div>

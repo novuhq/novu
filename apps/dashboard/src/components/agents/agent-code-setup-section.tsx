@@ -1,12 +1,13 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { RiCheckLine, RiFileCopyLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
+import { Button } from '@/components/primitives/button';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { ExternalLink } from '@/components/shared/external-link';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -112,15 +113,56 @@ function TerminalBlock({ displayCommand, copyCommand }: { displayCommand: string
   );
 }
 
-function getProviderCallToAction(providerId: string | undefined): string {
+function getProviderSlackMessage(agentName: string): string {
+  return `Hey @${agentName}, can you help me?`;
+}
+
+function getProviderSendDescription(providerId: string | undefined, agentName: string): string {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
-      return 'Head back to Slack and mention your bot again — this time your agent server will handle the message.';
+      return `Open your Slack workspace and send a message to ${agentName}. Make sure to send in a channel or directly to the bot.`;
     case ChatProviderIdEnum.WhatsAppBusiness:
-      return 'Send a message to your WhatsApp number again — this time your agent server will handle it.';
+      return `Send a message to your WhatsApp number to test the connection.`;
     default:
-      return 'Send a message to your bot from the connected provider again — this time your agent server will handle it.';
+      return `Send a message to your bot from the connected provider to test the connection.`;
   }
+}
+
+
+function CopySlackMessageButton({ agentName }: { agentName: string }) {
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(getProviderSlackMessage(agentName));
+      setCopied(true);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard write failed silently
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
+    >
+      {copied ? (
+        <RiCheckLine className="size-4" />
+      ) : (
+        <RiFileCopyLine className="size-4" />
+      )}
+      <span className="text-label-xs font-medium">{copied ? 'Copied!' : 'Copy Slack message'}</span>
+    </button>
+  );
 }
 
 function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: () => void) {
@@ -179,41 +221,48 @@ function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: ()
 
 function BridgeConnectionStatus({
   connected,
-  providerId,
+  onAddProvider,
 }: {
   connected: boolean;
-  providerId: string | undefined;
+  onAddProvider?: () => void;
 }) {
 
   if (connected) {
     return (
-      <div className="flex flex-col gap-2 py-4 pl-8">
-        <div className="flex items-center gap-1">
-          <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
-          <span className="text-text-strong text-label-sm font-medium">Bridge connected — try your agent</span>
-        </div>
-        <p className="text-text-soft text-label-xs font-medium leading-4">{getProviderCallToAction(providerId)}</p>
-        <p className="text-text-soft text-label-xs font-medium leading-4">
-          Edit <code className="font-code text-[12px] tracking-[-0.24px]">app/novu/agents/</code> to customize how your
-          agent responds.
-        </p>
-        <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
-          Agent documentation
-        </ExternalLink>
+      <div className="flex items-center gap-2 py-4 pl-6">
+        <RiCheckLine className="size-3.5 shrink-0 text-[#dd2476]" />
+        <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
+          Setup complete
+        </span>
+        {onAddProvider && (
+          <span className="text-text-soft text-label-xs font-medium">·</span>
+        )}
+        {onAddProvider && (
+          <Button
+            variant="secondary"
+            mode="outline"
+            size="xs"
+            className="text-text-sub gap-0.5 px-2 py-1.5"
+            onClick={onAddProvider}
+          >
+            <span className="text-label-xs font-medium">Add another provider</span>
+            <RiArrowRightSLine className="size-4" />
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 py-4 pl-8">
+    <div className="flex flex-col gap-2 py-4 pl-6">
       <div className="flex items-center gap-1">
         <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
         <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
-          Waiting for bridge connection…
+          Waiting for your agent to connect
         </span>
       </div>
       <p className="text-text-soft text-label-xs font-medium leading-4">
-        Run the commands above to scaffold your project and start the dev tunnel.
+        Run the commands above, then come back here; we'll detect the connection automatically.
       </p>
     </div>
   );
@@ -224,9 +273,10 @@ type AgentCodeSetupSectionProps = {
   stepOffset: number;
   providerId?: string;
   onBridgeConnected?: () => void;
+  onAddProvider?: () => void;
 };
 
-export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeConnected }: AgentCodeSetupSectionProps) {
+export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeConnected, onAddProvider }: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
 
@@ -235,22 +285,31 @@ export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeC
 
   const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
-  const firstIncompleteStep = bridgeConnected ? stepOffset + 2 : stepOffset;
+  const firstIncompleteStep = bridgeConnected ? stepOffset + 3 : stepOffset;
 
   return (
     <>
       <SetupStep
         index={stepOffset}
         status={deriveStepStatus(stepOffset, firstIncompleteStep)}
-        sectionLabel="2/2 CONNECT YOUR CODE"
-        title="Scaffold your agent project"
-        description={
-          <span>
-            Run this to create a Next.js project with the bridge endpoint pre-configured for your agent. The CLI
-            installs dependencies and writes your secret key to{' '}
-            <code className="font-code text-[12px] tracking-[-0.24px]">.env.local</code> automatically.
+        sectionLabel="2/2 SETUP AGENT HANDLER"
+        title={
+          <span className="inline-flex items-center gap-1">
+            Scaffold your agent project
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-text-soft inline-block">
+                  <RiInformation2Line className="size-4" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                Novu routes messages to your agent. This step generates starter scaffolding for its response logic, runs
+                it locally, and connects it to Novu automatically via bridge.
+              </TooltipContent>
+            </Tooltip>
           </span>
         }
+        description="Run this to create a Next.js project with the bridge endpoint pre-configured for your agent. The CLI installs dependencies and writes your secret key to .env.local automatically."
         rightContent={
           apiKeysQuery.isLoading || !secretKey ? (
             <Skeleton className="h-[80px] w-full rounded-lg" />
@@ -278,9 +337,10 @@ export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeC
         title="Start the dev tunnel"
         description={
           <span>
-            Start your app with <code className="font-code text-[12px] tracking-[-0.24px]">npm run dev</code>, then run
-            this in a second terminal from your project directory. It creates a tunnel and registers the bridge URL with
-            Novu.
+            Start your app with npm run dev, then run this in a second terminal from your project directory.
+            <br />
+            <br />
+            It creates a tunnel and registers the bridge URL with Novu.
           </span>
         }
         rightContent={
@@ -291,7 +351,17 @@ export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeC
         }
       />
 
-      <BridgeConnectionStatus connected={bridgeConnected} providerId={providerId} />
+      <SetupStep
+        index={stepOffset + 2}
+        status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
+        title="Send a message to the Slack App on Slack"
+        description={getProviderSendDescription(providerId, agent.name)}
+        rightContent={
+          providerId === ChatProviderIdEnum.Slack ? <CopySlackMessageButton agentName={agent.name} /> : undefined
+        }
+      />
+
+      <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} />
     </>
   );
 }
