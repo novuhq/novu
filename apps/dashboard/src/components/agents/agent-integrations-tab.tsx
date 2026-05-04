@@ -13,9 +13,9 @@ import {
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { InlineToast } from '@/components/primitives/inline-toast';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -489,6 +489,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                 {!readOnly && (
                   <ProviderDropdown
                     agentIdentifier={agent.identifier}
+                    agentName={agent.name}
                     selectedIntegrationId={selectedIntegration?.integration._id}
                     linkedIntegrationIds={linkedIntegrationIdSet}
                     excludeLinked

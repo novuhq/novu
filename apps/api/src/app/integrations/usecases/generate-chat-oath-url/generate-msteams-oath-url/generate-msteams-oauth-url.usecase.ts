@@ -33,7 +33,7 @@ export class GenerateMsTeamsOauthUrl {
    * - Messages sent as bot/app identity, not as user
    * - Requires application permissions configured in Azure app registration:
    *   Team.ReadBasic.All, Channel.ReadBasic.All, AppCatalog.Read.All,
-   *   TeamsAppInstallation.ReadWriteSelfForTeam.All, TeamsAppInstallation.ReadWriteSelfForUser.All
+   *   TeamsAppInstallation.ReadWriteSelfForTeam.All
    */
   private readonly MS_TEAMS_ADMIN_CONSENT_URL = 'https://login.microsoftonline.com/organizations/v2.0/adminconsent?';
 
@@ -191,8 +191,8 @@ export class GenerateMsTeamsOauthUrl {
     if (!process.env.API_ROOT_URL) {
       throw new Error('API_ROOT_URL environment variable is required');
     }
-
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
+
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 

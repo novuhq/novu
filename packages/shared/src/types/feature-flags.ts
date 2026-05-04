@@ -93,6 +93,8 @@ export enum FeatureFlagsKeysEnum {
   IS_ACTION_STEP_RESOLVER_ENABLED = 'IS_ACTION_STEP_RESOLVER_ENABLED',
   /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
+  /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
+  IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */

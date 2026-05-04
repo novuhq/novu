@@ -10,10 +10,10 @@ import type { AgentAction } from '@novu/framework';
 import type { EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
-import { AgentConversationService } from './agent-conversation.service';
+import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 
@@ -22,6 +22,49 @@ const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
 
 Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
+  const raw = asRecord(message.raw);
+
+  return asRecord(raw?.event) ?? raw;
+}
+
+function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
+  const rawEvent = getMessageRawEvent(message);
+  const rawThreadTs = rawEvent?.thread_ts;
+  const threadRoot = typeof rawThreadTs === 'string' && rawThreadTs.length > 0 ? rawThreadTs : message.id;
+
+  if (platform !== AgentPlatformEnum.SLACK || !thread.isDM || !threadRoot || !thread.id.endsWith(':')) {
+    return thread.id;
+  }
+
+  return `${thread.id}${threadRoot}`;
+}
+
+function applyPlatformThreadIdToSerializedThread(serializedThread: Record<string, unknown>, platformThreadId: string) {
+  serializedThread.id = platformThreadId;
+
+  const currentMessage = asRecord(serializedThread.currentMessage ?? serializedThread.message);
+  if (!currentMessage) {
+    return;
+  }
+
+  currentMessage.threadId = platformThreadId;
+}
+
+function applyPlatformThreadIdToThread(thread: Thread, platformThreadId: string) {
+  // Chat SDK currently gives top-level Slack DMs an empty-root thread id (`slack:D...:`).
+  // Patch the in-memory handle before posting fallback replies so Slack receives a real thread root.
+  (thread as unknown as { id: string }).id = platformThreadId;
+}
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
   const rawAttachments = richContent?.attachments;
@@ -125,6 +168,7 @@ export class AgentInboundHandler {
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
+    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
@@ -132,11 +176,13 @@ export class AgentInboundHandler {
       agentId,
       platform: config.platform,
       integrationId: config.integrationId,
-      platformThreadId: thread.id,
+      platformThreadId,
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: message.text,
+      firstMessageText: getInboundActivityPreview(message.text, {
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+      }),
     });
 
     const senderType = subscriberId
@@ -173,12 +219,13 @@ export class AgentInboundHandler {
       conversationId: conversation._id,
       platform: config.platform,
       integrationId: config.integrationId,
-      platformThreadId: thread.id,
+      platformThreadId,
       senderType,
       senderId: participantId,
       senderName: message.author.fullName,
       content: message.text,
       richContent,
+      hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
@@ -198,7 +245,13 @@ export class AgentInboundHandler {
 
     if (isFirstMessage && message.id) {
       this.conversationService
-        .setFirstPlatformMessageId(config.environmentId, config.organizationId, conversation._id, thread.id, message.id)
+        .setFirstPlatformMessageId(
+          config.environmentId,
+          config.organizationId,
+          conversation._id,
+          platformThreadId,
+          message.id
+        )
         .catch((err) => {
           this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
         });
@@ -220,11 +273,12 @@ export class AgentInboundHandler {
     }
 
     const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
+    applyPlatformThreadIdToSerializedThread(serializedThread, platformThreadId);
     await this.conversationService.updateChannelThread(
       config.environmentId,
       config.organizationId,
       conversation._id,
-      thread.id,
+      platformThreadId,
       serializedThread
     );
 
@@ -244,7 +298,7 @@ export class AgentInboundHandler {
         history,
         message,
         platformContext: {
-          threadId: thread.id,
+          threadId: platformThreadId,
           channelId: thread.channelId,
           isDM: thread.isDM,
         },
@@ -252,6 +306,7 @@ export class AgentInboundHandler {
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
+        applyPlatformThreadIdToThread(thread, platformThreadId);
         const sent = await thread.post(ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN);
         const channel = this.conversationService.getPrimaryChannel(conversation);
         await this.conversationService.persistAgentMessage({

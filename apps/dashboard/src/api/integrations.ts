@@ -1,6 +1,16 @@
 import { ChannelTypeEnum, IEnvironment, IIntegration } from '@novu/shared';
 import { del, get, post, put } from './api.client';
 
+export type HealthCheckStatus = 'ready' | 'pending' | 'failed';
+
+export type MsTeamsHealthCheckResult = {
+  appRegistration: HealthCheckStatus | null;
+  azureBotCreated: HealthCheckStatus | null;
+  teamsAppCatalog: HealthCheckStatus | null;
+  permissions: HealthCheckStatus | null;
+  allReady: boolean;
+};
+
 export type CreateIntegrationData = {
   providerId: string;
   channel: ChannelTypeEnum;
@@ -103,4 +113,42 @@ export async function slackQuickSetup(
   });
 
   return response.data;
+}
+
+export async function getMsTeamsArmTemplateDeployUrl(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<{ deployUrl: string }> {
+  const { data } = await get<{ data: { deployUrl: string } }>(
+    `/integrations/${integrationId}/msteams-arm-template/deploy-url`,
+    { environment }
+  );
+
+  return data;
+}
+
+export async function getAzureSetupOauthUrl(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<{ url: string }> {
+  const { data } = await get<{ data: { url: string } }>(
+    `/integrations/${integrationId}/msteams-azure-setup/oauth-url`,
+    { environment }
+  );
+
+  return data;
+}
+
+export async function getMsTeamsHealthCheck(
+  integrationId: string,
+  environment: IEnvironment,
+  checks?: string[]
+): Promise<MsTeamsHealthCheckResult> {
+  const params = checks?.length ? `?checks=${checks.join(',')}` : '';
+  const { data } = await get<{ data: MsTeamsHealthCheckResult }>(
+    `/integrations/${integrationId}/msteams-health${params}`,
+    { environment }
+  );
+
+  return data;
 }

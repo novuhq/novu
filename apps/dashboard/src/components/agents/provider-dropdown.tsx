@@ -1,4 +1,5 @@
 import {
+  ChannelTypeEnum,
   CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   EmailProviderIdEnum,
@@ -58,6 +59,8 @@ type ProviderDropdownProps = {
   fallbackProviderId?: string;
   onSelect: (providerId: string, integration?: IIntegration) => void;
   agentIdentifier: string;
+  /** Agent display name — used to derive the integration name for chat providers (e.g. "My Agent Bot"). */
+  agentName?: string;
   /** Integration IDs already linked to the agent — selecting one of these skips the link API call. */
   linkedIntegrationIds?: Set<string>;
   /** When true, hide integrations whose _id is in `linkedIntegrationIds` from the list. */
@@ -151,6 +154,7 @@ export function ProviderDropdown({
   fallbackProviderId,
   onSelect,
   agentIdentifier,
+  agentName,
   linkedIntegrationIds,
   excludeLinked = false,
   renderTrigger,
@@ -331,8 +335,8 @@ export function ProviderDropdown({
         onSelect(item.providerId, item.integration);
         setOpen(false);
       } else {
-        const sameProviderCount = (integrations ?? []).filter((i) => i.providerId === item.providerId).length;
-        const uniqueName = sameProviderCount > 0 ? `${item.displayName} ${sameProviderCount + 1}` : item.displayName;
+        const channel = PROVIDER_ID_TO_CHANNEL_MAP[item.providerId];
+        const uniqueName = channel === ChannelTypeEnum.CHAT && agentName ? `${agentName} - Bot` : item.displayName;
 
         const created = await createIntegrationMutation.mutateAsync({
           providerId: item.providerId,
@@ -426,13 +430,15 @@ export function ProviderDropdown({
                 const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable;
 
                 const rowContent = (
-                  <div className="flex w-full items-center gap-1">
+                  <div className="flex w-full min-w-0 items-center gap-1 break-normal">
                     <ProviderIcon
                       providerId={item.providerId}
                       providerDisplayName={item.displayName}
                       className="size-4 shrink-0"
                     />
-                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">{item.displayName}</span>
+                    <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+                      {item.displayName}
+                    </span>
 
                     {isRowPending && (
                       <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
@@ -457,7 +463,10 @@ export function ProviderDropdown({
                       !isLocked &&
                       item.integration &&
                       item.providerId !== EmailProviderIdEnum.NovuAgent && (
-                        <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
+                        <span
+                          className="font-code text-text-sub max-w-[min(7.5rem,38%)] min-w-0 shrink truncate text-[10px] leading-[15px] tracking-[-0.2px]"
+                          title={item.integration.identifier}
+                        >
                           {item.integration.identifier}
                         </span>
                       )}
@@ -476,7 +485,7 @@ export function ProviderDropdown({
                       void handleSelect(item, index);
                     }}
                     className={cn(
-                      'flex items-center gap-2 rounded-md p-1',
+                      'flex min-w-0 items-center gap-2 rounded-md p-1',
                       item.integration?._id === selectedIntegrationId && 'bg-bg-muted',
                       isLocked && '!pointer-events-auto opacity-60'
                     )}
@@ -578,7 +587,7 @@ export function ProviderDropdown({
   }
 
   return (
-    <div className="flex w-full flex-col gap-1">
+    <div className="flex w-full flex-col gap-1 min-w-[300px]">
       <div className="flex items-center gap-px">
         <span className="text-text-sub text-label-xs font-medium leading-4">
           What provider would you like to start with

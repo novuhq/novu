@@ -459,8 +459,8 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
-        title="Install app to your workspace"
-        description="Click to open the Slack authorization page and install the newly created app."
+        title="Verify by installing the app to your workspace"
+        description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
         rightContent={connectButton}
         extraContent={
           <InlineToast

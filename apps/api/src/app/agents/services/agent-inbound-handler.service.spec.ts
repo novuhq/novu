@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
+import { NoBridgeUrlError } from './bridge-executor.service';
 
 describe('AgentInboundHandler', () => {
   const config = {
@@ -29,17 +30,23 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeHandler(overrides: { history?: any[]; storedAttachments?: any[] } = {}) {
+  function makeHandler(overrides: { history?: any[]; storedAttachments?: any[]; bridgeError?: Error } = {}) {
     const logger = makeLogger();
     const subscriberResolver = {
       resolve: sinon.stub().resolves(null),
     };
     const conversationService = {
+      createOrGetConversation: sinon.stub().resolves(conversation),
+      getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
+      persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
+      persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
+      setFirstPlatformMessageId: sinon.stub().resolves(undefined),
+      updateChannelThread: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
     };
     const bridgeExecutor = {
-      execute: sinon.stub().resolves(undefined),
+      execute: overrides.bridgeError ? sinon.stub().rejects(overrides.bridgeError) : sinon.stub().resolves(undefined),
     };
     const subscriberRepository = {
       findBySubscriberId: sinon.stub(),
@@ -60,7 +67,46 @@ describe('AgentInboundHandler', () => {
       attachmentStorage as any
     );
 
-    return { handler, attachmentStorage, bridgeExecutor };
+    return { handler, attachmentStorage, bridgeExecutor, conversationService };
+  }
+
+  function makeSlackDmThread() {
+    return {
+      id: 'slack:D123:',
+      channelId: 'slack:D123',
+      isDM: true,
+      toJSON: () => ({
+        id: 'slack:D123:',
+        channelId: 'slack:D123',
+        isDM: true,
+        currentMessage: {
+          id: '1777837477.371619',
+          threadId: 'slack:D123:',
+        },
+      }),
+      startTyping: sinon.stub().resolves(undefined),
+      post: sinon.stub().resolves({ id: '1777837479.427739', threadId: 'slack:D123:1777837477.371619' }),
+    };
+  }
+
+  function makeSlackDmMessage() {
+    return {
+      id: '1777837477.371619',
+      threadId: 'slack:D123:',
+      text: 'hello',
+      author: {
+        userId: 'user1',
+        fullName: 'User One',
+        userName: 'userone',
+        isBot: false,
+      },
+      raw: {
+        type: 'message',
+        channel_type: 'im',
+        ts: '1777837477.371619',
+      },
+      attachments: [],
+    };
   }
 
   function makeReactionEvent() {
@@ -93,6 +139,44 @@ describe('AgentInboundHandler', () => {
       },
     };
   }
+
+  describe('handle', () => {
+    it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
+      const { handler, bridgeExecutor, conversationService } = makeHandler();
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+      const expectedThreadId = 'slack:D123:1777837477.371619';
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
+      expect(conversationService.persistInboundMessage.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
+      expect(conversationService.setFirstPlatformMessageId.firstCall.args[3]).to.equal(expectedThreadId);
+      expect(conversationService.updateChannelThread.firstCall.args[3]).to.equal(expectedThreadId);
+      expect(conversationService.updateChannelThread.firstCall.args[4].id).to.equal(expectedThreadId);
+      expect(conversationService.updateChannelThread.firstCall.args[4].currentMessage.threadId).to.equal(
+        expectedThreadId
+      );
+      expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
+    });
+
+    it('should post no-bridge Slack DM auto-replies with the message-rooted platform thread id', async () => {
+      const { handler } = makeHandler({ bridgeError: new NoBridgeUrlError('support-agent') });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+      const expectedThreadId = 'slack:D123:1777837477.371619';
+
+      thread.post.callsFake(async () => {
+        expect(thread.id).to.equal(expectedThreadId);
+
+        return { id: '1777837479.427739', threadId: thread.id };
+      });
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(thread.post.calledOnce).to.equal(true);
+    });
+  });
 
   describe('handleReaction', () => {
     it('should reuse stored source message attachments from history', async () => {
