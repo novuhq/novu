@@ -38,11 +38,12 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
 
   const domainPlaceholder = useMemo(() => {
     const emailDomain = currentUser?.email?.split('@')[1];
+
     if (!emailDomain) {
       return DEFAULT_PLACEHOLDER;
     }
 
-    return `inbound.${emailDomain}`;
+    return emailDomain;
   }, [currentUser?.email]);
 
   const form = useForm<AddDomainFormData>({
