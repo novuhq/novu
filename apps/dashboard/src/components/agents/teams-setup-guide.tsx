@@ -364,9 +364,10 @@ type HealthCheckViewProps = {
   /** True while the Azure setup popup is still open — polling is suspended until credentials are saved */
   waitingForSetup: boolean;
   onReady: () => void;
+  compact?: boolean;
 };
 
-function HealthCheckView({ integrationId, waitingForSetup, onReady }: HealthCheckViewProps) {
+function HealthCheckView({ integrationId, waitingForSetup, onReady, compact = false }: HealthCheckViewProps) {
   const { currentEnvironment } = useEnvironment();
   const [status, setStatus] = useState<MsTeamsHealthCheckResult | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -415,12 +416,14 @@ function HealthCheckView({ integrationId, waitingForSetup, onReady }: HealthChec
   const hasFailed = status?.appRegistration === 'failed' || status?.azureBotCreated === 'failed';
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-text-sub text-paragraph-sm">
-        {waitingForSetup
-          ? 'Complete authorization in the popup window. Teams readiness will be verified once setup finishes.'
-          : 'Verifying that the Teams app, bot credentials, and permissions are ready. This usually takes 1–3 minutes; permissions can take up to 60 minutes to propagate.'}
-      </p>
+    <div className={cn('flex flex-col', compact ? 'w-[260px] gap-2.5' : 'gap-4')}>
+      {!compact && (
+        <p className="text-text-sub text-paragraph-sm">
+          {waitingForSetup
+            ? 'Complete authorization in the popup window. Teams readiness will be verified once setup finishes.'
+            : 'Verifying that the Teams app, bot credentials, and permissions are ready. This usually takes 1–3 minutes; permissions can take up to 60 minutes to propagate.'}
+        </p>
+      )}
 
       <div className="flex flex-col gap-2.5 rounded-lg border border-stroke-soft bg-bg-weak p-4">
         {checkpoints.map(({ key, label, status: s }) => (
@@ -1009,6 +1012,7 @@ export function TeamsSetupGuide({
                 setShowHealthCheck(false);
                 queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
               }}
+              compact
             />
           ) : undefined
         }
