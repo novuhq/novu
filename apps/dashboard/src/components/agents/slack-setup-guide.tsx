@@ -165,7 +165,7 @@ function QuickSetupStep({
   agentId: string;
   subscriberId: string;
   user: { firstName?: string | null; lastName?: string | null; imageUrl?: string } | null | undefined;
-  onSuccess: (oauthAuthorizeUrl: string) => void;
+  onSuccess: () => void;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -183,9 +183,9 @@ function QuickSetupStep({
         environment
       );
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
-      onSuccess(data.oauthAuthorizeUrl);
+      onSuccess();
     },
     onError: (error: Error) => {
       showErrorToast(error.message ?? 'Failed to create Slack app');
@@ -261,14 +261,12 @@ export function SlackSetupGuide({
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
-  const [pendingOauthUrl, setPendingOauthUrl] = useState<string | null>(null);
   const activeSetupMode = isQuickSetupEnabled ? setupMode : 'manual';
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
     setIsSlackWorkspaceConnected(false);
     setCredentialsSavedLocally(false);
-    setPendingOauthUrl(null);
   }, [integrationId]);
 
   const handleSlackWorkspaceConnected = useCallback(() => {
@@ -276,16 +274,9 @@ export function SlackSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
-  const handleQuickSetupSuccess = useCallback((oauthAuthorizeUrl: string) => {
+  const handleQuickSetupSuccess = useCallback(() => {
     setCredentialsSavedLocally(true);
-    setPendingOauthUrl(oauthAuthorizeUrl);
   }, []);
-
-  const handleInstallClick = useCallback(() => {
-    if (pendingOauthUrl) {
-      window.open(pendingOauthUrl, '_blank', 'noopener,noreferrer');
-    }
-  }, [pendingOauthUrl]);
 
   const { integrations } = useFetchIntegrations();
 
@@ -398,22 +389,9 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
-        title="Install app to your workspace"
-        description="Click to open the Slack authorization page and install the newly created app."
-        rightContent={
-          pendingOauthUrl ? (
-            <Button variant="primary" size="sm" onClick={handleInstallClick}>
-              <ProviderIcon
-                providerId={ChatProviderIdEnum.Slack}
-                providerDisplayName="Slack"
-                className="size-4 shrink-0 brightness-200"
-              />
-              Install to Slack ↗
-            </Button>
-          ) : (
-            connectButton
-          )
-        }
+        title="Verify by installing the app to your workspace"
+        description="This is what your users need to do to install the slack app to their workspace to start interacting with it."
+        rightContent={connectButton}
       />
 
       <SetupStep

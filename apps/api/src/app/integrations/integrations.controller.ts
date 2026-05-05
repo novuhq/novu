@@ -770,10 +770,7 @@ export class IntegrationsController {
   @ApiResponse(SlackQuickSetupResponseDto, 201)
   @ApiOperation({
     summary: 'Quick-setup a Slack integration',
-    description: `Creates a Slack app from a manifest using the provided App Configuration Token, 
-    automatically saves the resulting credentials (client ID, client secret, signing secret) on the integration, 
-    and returns a Slack OAuth authorize URL for the user to install the app.
-    The configuration token is used ephemerally and is never stored.`,
+    description: `Creates a Slack app from a manifest using the provided App Configuration Token and saves the resulting credentials (client ID, client secret, signing secret) directly on the integration. The configuration token is used ephemerally and is never stored.`,
   })
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)

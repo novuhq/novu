@@ -38,10 +38,4 @@ export class SlackQuickSetupRequestDto {
   connectionIdentifier?: string;
 }
 
-export class SlackQuickSetupResponseDto {
-  @ApiProperty({
-    description: 'Slack OAuth authorize URL to redirect the user to so they can install the newly created app.',
-    example: 'https://slack.com/oauth/v2/authorize?client_id=...&scope=...',
-  })
-  oauthAuthorizeUrl: string;
-}
+export class SlackQuickSetupResponseDto {}

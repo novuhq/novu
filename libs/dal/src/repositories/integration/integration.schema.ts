@@ -88,13 +88,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       completedAt: Schema.Types.String,
       errorMessage: Schema.Types.String,
       teamsAppCatalogId: Schema.Types.String,
-      pendingSetupId: Schema.Types.String,
-      pendingCredentials: {
-        clientId: Schema.Types.String,
-        secretKey: Schema.Types.String,
-        signingSecret: Schema.Types.String,
-        applicationId: Schema.Types.String,
-      },
     },
     active: {
       type: Schema.Types.Boolean,

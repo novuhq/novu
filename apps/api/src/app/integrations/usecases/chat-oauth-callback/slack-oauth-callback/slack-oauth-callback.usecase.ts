@@ -41,13 +41,9 @@ export class SlackOauthCallback {
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
     const stateData = await this.decodeSlackState(command.state);
     const integration = await this.getIntegration(stateData);
-    const credentials = await this.getIntegrationCredentials(integration, stateData.pendingSetupId);
+    const credentials = await this.getIntegrationCredentials(integration);
 
     const authData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
-
-    if (stateData.pendingSetupId) {
-      await this.finalizePendingQuickSetupCredentials(integration, stateData.pendingSetupId);
-    }
 
     if (stateData.mode === 'link_user') {
       await this.linkUserEndpoint(stateData, integration, authData);
@@ -178,16 +174,9 @@ export class SlackOauthCallback {
     return integration;
   }
 
-  private async getIntegrationCredentials(
-    integration: IntegrationEntity,
-    pendingSetupId?: string
-  ): Promise<ICredentialsEntity> {
+  private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
     if (integration.providerId === ChatProviderIdEnum.Novu) {
       return this.getDemoNovuSlackCredentials(integration);
-    }
-
-    if (pendingSetupId) {
-      return this.getPendingQuickSetupCredentials(integration, pendingSetupId);
     }
 
     if (!integration.credentials) {
@@ -199,55 +188,6 @@ export class SlackOauthCallback {
     }
 
     return integration.credentials;
-  }
-
-  private getPendingQuickSetupCredentials(integration: IntegrationEntity, pendingSetupId: string): ICredentialsEntity {
-    const provisioning = integration.provisioning;
-
-    if (!provisioning?.pendingSetupId || provisioning.pendingSetupId !== pendingSetupId) {
-      throw new BadRequestException('Invalid or expired Slack quick setup state');
-    }
-
-    if (!provisioning.pendingCredentials?.clientId || !provisioning.pendingCredentials?.secretKey) {
-      throw new NotFoundException('Slack quick setup pending credentials are incomplete');
-    }
-
-    return provisioning.pendingCredentials;
-  }
-
-  private async finalizePendingQuickSetupCredentials(
-    integration: IntegrationEntity,
-    pendingSetupId: string
-  ): Promise<void> {
-    const provisioning = integration.provisioning;
-
-    if (!provisioning?.pendingSetupId || provisioning.pendingSetupId !== pendingSetupId) {
-      throw new BadRequestException('Invalid or expired Slack quick setup state');
-    }
-
-    /*
-     * Promote the staged credentials to the live integration and clear the pending fields.
-     * See the two-phase commit comment in SlackQuickSetup.storePendingCredentials for the
-     * full rationale. This is the commit step: credentials are only written here, after
-     * Slack has confirmed a successful OAuth install via the code exchange above.
-     */
-    await this.integrationRepository.update(
-      {
-        _id: integration._id,
-        _environmentId: integration._environmentId,
-        _organizationId: integration._organizationId,
-      },
-      {
-        $set: {
-          credentials: provisioning.pendingCredentials,
-          active: true,
-        },
-        $unset: {
-          'provisioning.pendingSetupId': 1,
-          'provisioning.pendingCredentials': 1,
-        },
-      }
-    );
   }
 
   private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {

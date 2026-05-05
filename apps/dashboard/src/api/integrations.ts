@@ -91,10 +91,6 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
   });
 }
 
-export type SlackQuickSetupResponse = {
-  oauthAuthorizeUrl: string;
-};
-
 export type SlackQuickSetupParams = {
   configToken: string;
   agentId: string;
@@ -106,13 +102,11 @@ export async function slackQuickSetup(
   integrationId: string,
   params: SlackQuickSetupParams,
   environment: IEnvironment
-): Promise<SlackQuickSetupResponse> {
-  const response = await post<{ data: SlackQuickSetupResponse }>(`/integrations/${integrationId}/slack-quick-setup`, {
+): Promise<void> {
+  await post(`/integrations/${integrationId}/slack-quick-setup`, {
     body: params,
     environment,
   });
-
-  return response.data;
 }
 
 export async function getMsTeamsArmTemplateDeployUrl(
