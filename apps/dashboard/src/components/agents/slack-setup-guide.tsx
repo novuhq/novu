@@ -317,7 +317,7 @@ export function SlackSetupGuide({
     </div>
   ) : null;
 
-  const connectButton =
+  const slackInstallConnectControl =
     user?.externalId && currentEnvironment?.identifier ? (
       <NovuProvider
         subscriber={{
@@ -337,6 +337,10 @@ export function SlackSetupGuide({
           connectLabel={`Install ${agent.name} ↗`}
           connectedLabel="Connected to Slack"
           onConnectSuccess={handleSlackWorkspaceConnected}
+          onConnectError={(error: unknown) => {
+            showErrorToast('Failed to connect to Slack. Please try again.');
+            console.error(error);
+          }}
           appearance={{
             elements: {
               channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
@@ -345,6 +349,21 @@ export function SlackSetupGuide({
         />
       </NovuProvider>
     ) : null;
+
+  const renderSlackInstallStepRightContent = (completePrerequisiteStepIndex: number) => (
+    <div className="flex min-w-0 flex-col gap-3">
+      {isCredentialsSaved && slackInstallConnectControl ? (
+        slackInstallConnectControl
+      ) : (
+        <>
+          <SetupButton disabled>{`Install ${agent.name} ↗`}</SetupButton>
+          {!isCredentialsSaved && (
+            <p className="text-text-soft text-label-xs">Complete step {completePrerequisiteStepIndex} first.</p>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   const quickStepsColumn = (
     <>
@@ -391,7 +410,7 @@ export function SlackSetupGuide({
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
         title="Verify by installing the app to your workspace"
         description="This is what your users need to do to install the slack app to their workspace to start interacting with it."
-        rightContent={connectButton}
+        rightContent={renderSlackInstallStepRightContent(base)}
       />
 
       <SetupStep
@@ -456,39 +475,7 @@ export function SlackSetupGuide({
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
         title="Verify by installing the app to your workspace"
         description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
-        rightContent={
-          user?.externalId && currentEnvironment?.identifier ? (
-            <NovuProvider
-              subscriber={{
-                subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-                firstName: user.firstName ?? '',
-                lastName: user.lastName ?? '',
-                avatar: user.imageUrl ?? '',
-              }}
-              applicationIdentifier={currentEnvironment.identifier}
-              apiUrl={apiHostnameManager.getHostname()}
-              socketUrl={apiHostnameManager.getWebSocketHostname()}
-            >
-              <SlackConnectButton
-                integrationIdentifier={selectedIntegrationIdentifier}
-                connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-                connectionMode="subscriber"
-                connectLabel={`Install ${agent.name} ↗`}
-                connectedLabel="Connected to Slack"
-                onConnectSuccess={handleSlackWorkspaceConnected}
-                onConnectError={(error: unknown) => {
-                  showErrorToast('Failed to connect to Slack. Please try again.');
-                  console.error(error);
-                }}
-                appearance={{
-                  elements: {
-                    channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
-                  },
-                }}
-              />
-            </NovuProvider>
-          ) : null
-        }
+        rightContent={renderSlackInstallStepRightContent(base + 1)}
       />
     </>
   );
