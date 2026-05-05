@@ -25,7 +25,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "mongoose": "^8.9.5",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "shortid": "^2.2.17",
     "stripe": "^11.18.0",
     "stripe-event-types": "^3.1.0"
@@ -48,7 +48,7 @@
     "@nestjs/jwt": "10.2.0",
     "@nestjs/platform-express": "10.4.18",
     "@nestjs/swagger": "7.4.0",
-    "@nestjs/throttler": "6.2.1",
+    "@nestjs/throttler": "6.5.0",
     "@novu/dal": "workspace:*"
   }
 }

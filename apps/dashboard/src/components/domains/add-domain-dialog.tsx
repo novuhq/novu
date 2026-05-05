@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
@@ -13,6 +13,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateDomain } from '@/hooks/use-domains';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -26,11 +27,24 @@ type AddDomainDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+const DEFAULT_PLACEHOLDER = 'inbound.acme.com';
+
 export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
+  const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const createDomain = useCreateDomain();
   const [isPending, setIsPending] = useState(false);
+
+  const domainPlaceholder = useMemo(() => {
+    const emailDomain = currentUser?.email?.split('@')[1];
+
+    if (!emailDomain) {
+      return DEFAULT_PLACEHOLDER;
+    }
+
+    return emailDomain;
+  }, [currentUser?.email]);
 
   const form = useForm<AddDomainFormData>({
     defaultValues: { name: '' },
@@ -84,7 +98,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
                 <FormItem>
                   <FormLabel>Domain</FormLabel>
                   <FormControl>
-                    <Input placeholder="inbound.acme.com" {...field} />
+                    <Input placeholder={domainPlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

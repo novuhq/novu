@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import type { Signal } from '@novu/framework';
 import { UserSessionData } from '@novu/shared';
 import { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -21,7 +22,7 @@ import { AgentReplyPayloadDto, AgentStatusPayloadDto } from './dtos/agent-reply-
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
-import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { UpdateAgentStatusCommand } from './usecases/update-agent-status/update-agent-status.command';
 import { UpdateAgentStatus } from './usecases/update-agent-status/update-agent-status.usecase';
@@ -125,7 +126,7 @@ export class AgentsWebhookController {
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+        throw err;
       }
     }
   }

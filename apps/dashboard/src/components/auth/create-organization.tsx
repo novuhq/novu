@@ -1,6 +1,8 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { RegionSelector, useRegion } from '@/context/region';
 import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
 import { useEffect, useRef, useState } from 'react';
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
 import { ROUTES } from '../../utils/routes';
@@ -23,7 +25,6 @@ const ORGANIZATION_FORM_CONFIG = {
   hidePersonal: true,
   skipInvitationScreen: true,
   afterSelectOrganizationUrl: ROUTES.ENV,
-  afterCreateOrganizationUrl: ROUTES.INBOX_USECASE,
 } as const;
 
 const FORM_APPEARANCE = {
@@ -62,11 +63,10 @@ function FormContainer({ children }: FormContainerProps) {
 
 function OrganizationForm() {
   const [showRegionSelector, setShowRegionSelector] = useState(false);
+  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
 
   useEffect(() => {
-    // Watch for DOM changes to detect when we're on the form page (Page 2)
     const observer = new MutationObserver(() => {
-      // Check if the organization creation form (with name input) is visible
       const nameInput = document.querySelector('input[name="name"]');
       const isOnFormPage = !!nameInput;
 
@@ -75,7 +75,6 @@ function OrganizationForm() {
       }
     });
 
-    // Start observing
     observer.observe(document.body, {
       childList: true,
       subtree: true,
@@ -84,16 +83,21 @@ function OrganizationForm() {
     return () => observer.disconnect();
   }, [showRegionSelector]);
 
+  const afterCreateUrl = isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE;
+
   return (
     <div className="relative">
-      {/* Region selector - only visible on Page 2 (form page), aligned with form content */}
       {showRegionSelector && (
         <div className="absolute -top-14 left-4 z-20">
           <RegionSelector />
         </div>
       )}
 
-      <OrganizationListForm appearance={FORM_APPEARANCE} {...ORGANIZATION_FORM_CONFIG} />
+      <OrganizationListForm
+        appearance={FORM_APPEARANCE}
+        {...ORGANIZATION_FORM_CONFIG}
+        afterCreateOrganizationUrl={afterCreateUrl}
+      />
     </div>
   );
 }

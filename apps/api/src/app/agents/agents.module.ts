@@ -15,6 +15,7 @@ import { AgentsWebhookController } from './agents-webhook.controller';
 import { AgentRuntimeFactory } from './runtimes/agent-runtime.factory';
 import { BridgeRuntime } from './runtimes/bridge.runtime';
 import { ClaudeManagedRuntime } from './runtimes/claude-managed.runtime';
+import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
 import { AgentConfigResolver } from './services/agent-config-resolver.service';
 import { AgentConversationService } from './services/agent-conversation.service';
 import { AgentInboundHandler } from './services/agent-inbound-handler.service';
@@ -33,6 +34,7 @@ import { USE_CASES } from './usecases';
     ChannelEndpointRepository,
     ConversationRepository,
     ConversationActivityRepository,
+    AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
     AnthropicAgentCredentialsService,

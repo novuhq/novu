@@ -21,7 +21,9 @@ export class DuplicateLayoutUseCase {
     private analyticsService: AnalyticsService,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: DuplicateLayoutCommand): Promise<LayoutResponseDto> {
     const originalLayout = await this.getLayoutUseCase.execute(

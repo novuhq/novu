@@ -24,6 +24,20 @@ type ConversationTimelineProps = {
   conversationStatus?: string;
 };
 
+const ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
+
+function getActivityContent(activity: ConversationActivityDto): string {
+  if (activity.content.trim().length > 0) {
+    return activity.content;
+  }
+
+  if (activity.richContent?.attachments?.length) {
+    return ATTACHMENT_ONLY_PREVIEW;
+  }
+
+  return '';
+}
+
 function formatActivityTimestamp(dateStr: string | undefined): string {
   if (!dateStr?.trim()) {
     return '—';
@@ -151,6 +165,7 @@ function MessageContent({ content }: { content: string }) {
 
 function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   const isAgent = activity.senderType === 'agent';
+  const content = getActivityContent(activity);
 
   return (
     <div className={cn('border-stroke-soft flex flex-col rounded-md border', isAgent ? 'bg-bg-weak' : 'bg-white')}>
@@ -159,7 +174,7 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
           <SenderHeader activity={activity} />
           <MessageTimestamp activity={activity} />
         </div>
-        {activity.content && <MessageContent content={activity.content} />}
+        {content && <MessageContent content={content} />}
       </div>
     </div>
   );
@@ -232,7 +247,12 @@ function ResolvedFooter({ totalCount }: { totalCount: number }) {
   );
 }
 
-export function ConversationTimeline({ activities, isLoading, totalCount, conversationStatus }: ConversationTimelineProps) {
+export function ConversationTimeline({
+  activities,
+  isLoading,
+  totalCount,
+  conversationStatus,
+}: ConversationTimelineProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 p-3">

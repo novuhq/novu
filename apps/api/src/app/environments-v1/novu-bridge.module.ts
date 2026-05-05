@@ -25,6 +25,7 @@ import {
 } from '@novu/dal';
 import { NovuClient, NovuHandler } from '@novu/framework/nest';
 import { GetOrganizationSettings } from '../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { SharedModule } from '../shared/shared.module';
 import { NovuBridgeController } from './novu-bridge.controller';
 import { NovuBridgeClient } from './novu-bridge-client';
 import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
@@ -50,6 +51,7 @@ export const featureFlagsService = {
 };
 
 @Module({
+  imports: [SharedModule],
   controllers: [NovuBridgeController],
   providers: [
     {

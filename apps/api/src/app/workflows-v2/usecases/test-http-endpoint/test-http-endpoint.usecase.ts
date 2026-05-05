@@ -11,6 +11,7 @@ import {
   KeyValuePair,
   resolveHttpRequestBody,
   shouldIncludeBody,
+  validateUrlSsrf,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { Liquid } from 'liquidjs';
@@ -88,6 +89,25 @@ export class TestHttpEndpointUsecase {
     }
 
     const hasBody = shouldIncludeBody(resolvedBody, method);
+
+    const ssrfValidationError = await validateUrlSsrf(resolvedUrl);
+
+    if (ssrfValidationError) {
+      const durationMs = Math.round(performance.now() - startTime);
+
+      return {
+        statusCode: 400,
+        body: { error: ssrfValidationError },
+        headers: {},
+        durationMs,
+        resolvedRequest: {
+          url: resolvedUrl,
+          method,
+          headers: resolvedHeaders,
+          ...(hasBody ? { body: resolvedBody } : {}),
+        },
+      };
+    }
 
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })

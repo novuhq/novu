@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentTypeEnum } from '@novu/shared';
 
 import { trackAgentIntegrationRemoved } from '../../agent-analytics';
 import { CleanupNovuEmail } from '../cleanup-novu-email/cleanup-novu-email.usecase';
@@ -11,11 +12,14 @@ export class RemoveAgentIntegration {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly environmentRepository: EnvironmentRepository,
     private readonly cleanupNovuEmail: CleanupNovuEmail,
     private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: RemoveAgentIntegrationCommand): Promise<void> {
+    await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.agentIdentifier,
@@ -62,5 +66,16 @@ export class RemoveAgentIntegration {
       agentIdentifier: command.agentIdentifier,
       agentIntegrationId: command.agentIntegrationId,
     });
+  }
+
+  private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
+    const environment = await this.environmentRepository.findOne(
+      { _id: environmentId, _organizationId: organizationId },
+      ['type', 'name']
+    );
+
+    if (environment?.type === EnvironmentTypeEnum.PROD) {
+      throw new ForbiddenException('Agent integrations cannot be removed in production environments.');
+    }
   }
 }

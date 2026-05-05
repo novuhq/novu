@@ -11,6 +11,7 @@ import { ListAgentIntegrations } from './list-agent-integrations/list-agent-inte
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-email.usecase';
+import { SyncAgentToEnvironment } from './sync-agent-to-environment/sync-agent-to-environment.usecase';
 import { TestClaudeManagedAgent } from './test-claude-managed-agent/test-claude-managed-agent.usecase';
 import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
@@ -33,6 +34,7 @@ export const USE_CASES = [
   RemoveAgentIntegration,
   HandleAgentReply,
   SendAgentTestEmail,
+  SyncAgentToEnvironment,
   TestClaudeManagedAgent,
   UpdateAgentStatus,
   UpdateAnthropicAgentCredentials,

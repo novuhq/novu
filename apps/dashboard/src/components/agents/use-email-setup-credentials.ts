@@ -91,8 +91,13 @@ export function useEmailSetupCredentials({
   const queryClient = useQueryClient();
 
   const [outboundId, setOutboundId] = useState('');
+  const lastConfirmedOutboundIdRef = useRef('');
 
   const serverCredentials = useMemo(() => emailIntegration?.credentials ?? {}, [emailIntegration?.credentials]);
+  const serverUseFromAddressOverride =
+    typeof serverCredentials.useFromAddressOverride === 'boolean' ? serverCredentials.useFromAddressOverride : false;
+  const serverFromAddressOverride =
+    typeof serverCredentials.fromAddressOverride === 'string' ? serverCredentials.fromAddressOverride : '';
   const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
   const pendingKeysRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -103,6 +108,10 @@ export function useEmailSetupCredentials({
       }
     }
     credentialsRef.current = merged;
+    const serverOutbound = serverCredentials.outboundIntegrationId;
+    if (typeof serverOutbound === 'string') {
+      lastConfirmedOutboundIdRef.current = serverOutbound;
+    }
   }, [serverCredentials]);
 
   const hasInitializedFromServer = useRef(false);
@@ -176,35 +185,56 @@ export function useEmailSetupCredentials({
 
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
-  function saveCredentials(patch: Record<string, unknown>) {
-    if (!emailIntegration) return;
-    credentialsRef.current = { ...credentialsRef.current, ...patch };
-    for (const key of Object.keys(patch)) pendingKeysRef.current.add(key);
-    const snapshot = { ...credentialsRef.current };
+  // Returns a promise that resolves on successful persistence and rejects on failure.
+  // Callers are responsible for showing user-facing error feedback. Saves are queued
+  // sequentially so concurrent calls cannot interleave on the integration document.
+  function saveCredentials(patch: Record<string, unknown>): Promise<void> {
+    if (!emailIntegration) return Promise.resolve();
     const patchKeys = Object.keys(patch);
-    saveQueueRef.current = saveQueueRef.current
-      .then(() =>
-        updateIntegration({
-          integrationId: emailIntegration._id,
-          data: {
-            name: emailIntegration.name,
-            identifier: emailIntegration.identifier,
-            active: emailIntegration.active,
-            primary: emailIntegration.primary ?? false,
-            credentials: snapshot,
-            configurations: {},
-            check: false,
-          },
-        })
-      )
-      .then(() => {
-        for (const key of patchKeys) pendingKeysRef.current.delete(key);
+    const prePatchByKey: Record<string, unknown> = {};
+    for (const key of patchKeys) {
+      if (Object.prototype.hasOwnProperty.call(credentialsRef.current, key)) {
+        prePatchByKey[key] = credentialsRef.current[key];
+      }
+    }
+    credentialsRef.current = { ...credentialsRef.current, ...patch };
+    for (const key of patchKeys) pendingKeysRef.current.add(key);
+    const snapshot = { ...credentialsRef.current };
+    const next = saveQueueRef.current.then(() =>
+      updateIntegration({
+        integrationId: emailIntegration._id,
+        data: {
+          name: emailIntegration.name,
+          identifier: emailIntegration.identifier,
+          active: emailIntegration.active,
+          primary: emailIntegration.primary ?? false,
+          credentials: snapshot,
+          configurations: {},
+          check: false,
+        },
       })
-      .catch((err: unknown) => {
+    );
+
+    // Always clean up pendingKeys regardless of outcome; swallow the rejection on the
+    // queue so a failed save doesn't poison subsequent queued saves. The caller still
+    // observes the rejection through the returned promise below.
+    saveQueueRef.current = next.then(
+      () => {
         for (const key of patchKeys) pendingKeysRef.current.delete(key);
-        const message = err instanceof Error ? err.message : 'Could not save credentials.';
-        showErrorToast(message, 'Settings not saved');
-      });
+      },
+      () => {
+        for (const key of patchKeys) {
+          if (Object.prototype.hasOwnProperty.call(prePatchByKey, key)) {
+            credentialsRef.current[key] = prePatchByKey[key];
+          } else {
+            delete credentialsRef.current[key];
+          }
+          pendingKeysRef.current.delete(key);
+        }
+      }
+    );
+
+    return next.then(() => undefined);
   }
 
   const { mutate: mutateDomainRoutes } = useMutation({
@@ -286,8 +316,18 @@ export function useEmailSetupCredentials({
 
   function onOutboundSelect(id: string) {
     setOutboundId(id);
-    saveCredentials({ outboundIntegrationId: id });
+    saveCredentials({ outboundIntegrationId: id }).catch((err: unknown) => {
+      setOutboundId(lastConfirmedOutboundIdRef.current);
+      const message = err instanceof Error ? err.message : 'Could not save provider selection.';
+      showErrorToast(message, 'Settings not saved');
+    });
   }
+
+  function saveSenderOverride({ enabled, value }: { enabled: boolean; value: string }): Promise<void> {
+    return saveCredentials({ useFromAddressOverride: enabled, fromAddressOverride: value });
+  }
+
+  const outboundFromAddress = (outboundIntegration?.credentials?.from as string | undefined) ?? '';
 
   return {
     outboundId,
@@ -301,5 +341,9 @@ export function useEmailSetupCredentials({
     onOutboundSelect,
     addAddress,
     removeAddress,
+    serverUseFromAddressOverride,
+    serverFromAddressOverride,
+    outboundFromAddress,
+    saveSenderOverride,
   };
 }

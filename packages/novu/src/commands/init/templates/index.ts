@@ -66,6 +66,13 @@ export const installTemplate = async ({
     copySource.push(mode === 'ts' ? 'tailwind.config.ts' : '!tailwind.config.js', '!postcss.config.cjs');
   }
 
+  const renameAgent = template === TemplateTypeEnum.APP_AGENT && agentIdentifier;
+  if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
+    throw new Error(
+      `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
+    );
+  }
+
   await copy(copySource, root, {
     parents: true,
     cwd: templatePath,
@@ -82,6 +89,9 @@ export const installTemplate = async ({
         case 'README-template.md': {
           return 'README.md';
         }
+        case 'support-agent.tsx': {
+          return renameAgent ? `${agentIdentifier}.tsx` : name;
+        }
         default: {
           return name;
         }
@@ -89,16 +99,15 @@ export const installTemplate = async ({
     },
   });
 
-  if (template === TemplateTypeEnum.APP_AGENT && agentIdentifier) {
-    if (!/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
-      throw new Error(
-        `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
-      );
-    }
-    const agentFile = path.join(root, 'app', 'novu', 'agents', 'support-agent.tsx');
-    await fs.writeFile(
-      agentFile,
-      (await fs.readFile(agentFile, 'utf8')).replace("agent('support-agent',", `agent('${agentIdentifier}',`)
+  if (renameAgent) {
+    const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
+    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true, followSymbolicLinks: false });
+    await Promise.all(
+      files.map(async (file) => {
+        const before = await fs.readFile(file, 'utf8');
+        const after = before.replace(/supportAgent/g, camelName).replace(/support-agent/g, agentIdentifier);
+        if (after !== before) await fs.writeFile(file, after);
+      })
     );
   }
 

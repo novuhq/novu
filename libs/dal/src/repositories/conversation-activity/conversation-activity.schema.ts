@@ -24,7 +24,7 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     },
     content: {
       type: Schema.Types.String,
-      required: true,
+      default: '',
     },
     platform: {
       type: Schema.Types.String,
