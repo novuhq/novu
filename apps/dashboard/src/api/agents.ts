@@ -259,6 +259,21 @@ export function removeAgentIntegration(
   });
 }
 
+export async function sendAgentDm(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  params: {
+    integrationIdentifier: string;
+    subscriberId: string;
+    message: { markdown: string };
+  }
+): Promise<{ success: boolean }> {
+  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/send-dm`, {
+    environment,
+    body: params,
+  });
+}
+
 export async function sendAgentTestEmail(
   environment: IEnvironment,
   agentIdentifier: string,

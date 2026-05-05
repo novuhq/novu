@@ -18,11 +18,14 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
+import { SendAgentDmRequestDto } from './dtos/send-agent-dm-request.dto';
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { SendAgentDmCommand } from './usecases/send-agent-dm/send-agent-dm.command';
+import { SendAgentDm } from './usecases/send-agent-dm/send-agent-dm.usecase';
 
 @Controller('/agents')
 @UseGuards(AgentConversationEnabledGuard)
@@ -30,7 +33,8 @@ import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-rep
 export class AgentsWebhookController {
   constructor(
     private chatSdkService: ChatSdkService,
-    private handleAgentReplyUsecase: HandleAgentReply
+    private handleAgentReplyUsecase: HandleAgentReply,
+    private sendAgentDmUsecase: SendAgentDm
   ) {}
 
   @Post('/:agentId/reply')
@@ -55,6 +59,27 @@ export class AgentsWebhookController {
         resolve: body.resolve,
         signals: body.signals as Signal[],
         addReactions: body.addReactions,
+      })
+    );
+  }
+
+  @Post('/:agentId/send-dm')
+  @HttpCode(HttpStatus.OK)
+  @RequireAuthentication()
+  async sendAgentDm(
+    @UserSession() user: UserSessionData,
+    @Param('agentId') agentId: string,
+    @Body() body: SendAgentDmRequestDto
+  ) {
+    return this.sendAgentDmUsecase.execute(
+      SendAgentDmCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: agentId,
+        integrationIdentifier: body.integrationIdentifier,
+        subscriberId: body.subscriberId,
+        markdown: body.message.markdown,
       })
     );
   }

@@ -3,9 +3,10 @@ import { NovuProvider, SlackConnectButton } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiFlashlightLine, RiKey2Line, RiLoader4Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { sendAgentDm } from '@/api/agents';
 import { slackQuickSetup } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
@@ -275,21 +276,7 @@ export function SlackSetupGuide({
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
   const activeSetupMode = isQuickSetupEnabled ? setupMode : 'manual';
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
-  useEffect(() => {
-    setIsSlackWorkspaceConnected(false);
-    setCredentialsSavedLocally(false);
-  }, [integrationId]);
-
-  const handleSlackWorkspaceConnected = useCallback(() => {
-    setIsSlackWorkspaceConnected(true);
-    onStepsCompleted?.();
-  }, [onStepsCompleted]);
-
-  const handleQuickSetupSuccess = useCallback(() => {
-    setCredentialsSavedLocally(true);
-  }, []);
+  const welcomeSentRef = useRef(false);
 
   const { integrations } = useFetchIntegrations();
 
@@ -301,6 +288,43 @@ export function SlackSetupGuide({
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
+  useEffect(() => {
+    setIsSlackWorkspaceConnected(false);
+    setCredentialsSavedLocally(false);
+    welcomeSentRef.current = false;
+  }, [integrationId]);
+
+  const handleSlackWorkspaceConnected = useCallback(() => {
+    setIsSlackWorkspaceConnected(true);
+    onStepsCompleted?.();
+
+    if (!welcomeSentRef.current && user?.externalId && currentEnvironment) {
+      welcomeSentRef.current = true;
+      sendAgentDm(currentEnvironment, agent.identifier, {
+        integrationIdentifier: selectedIntegrationIdentifier,
+        subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
+        message: {
+          markdown: `👋 Hi! I'm **${agent.name}** and I'm ready to go.\n\nType \`@${agent.name}\` in any channel to mention me, or just reply directly to this message — and I'll respond.`,
+        },
+      }).catch((err) => {
+        console.error('[SlackSetupGuide] Failed to send welcome DM:', err);
+      });
+    }
+  }, [
+    agent._id,
+    agent.identifier,
+    agent.name,
+    currentEnvironment,
+    onStepsCompleted,
+    selectedIntegrationIdentifier,
+    user?.externalId,
+  ]);
+
+  const handleQuickSetupSuccess = useCallback(() => {
+    setCredentialsSavedLocally(true);
+  }, []);
 
   const webhookHandlerUrl = buildAgentSlackWebhookUrl(
     agent._id,
