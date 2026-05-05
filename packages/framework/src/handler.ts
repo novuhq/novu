@@ -309,12 +309,12 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    const handlerMap: Partial<Record<AgentEventEnum, (ctx: AgentContextImpl) => Awaitable<MessageContent | void>>> = {
+    const handlerMap = {
       [AgentEventEnum.ON_MESSAGE]: registeredAgent.handlers.onMessage,
       [AgentEventEnum.ON_REACTION]: registeredAgent.handlers.onReaction,
       [AgentEventEnum.ON_ACTION]: registeredAgent.handlers.onAction,
       [AgentEventEnum.ON_RESOLVE]: registeredAgent.handlers.onResolve,
-    };
+    } as Partial<Record<AgentEventEnum, (ctx: AgentContextImpl) => Awaitable<MessageContent | void>>>;
 
     if (!Object.prototype.hasOwnProperty.call(handlerMap, event)) {
       throw new InvalidActionError(event, AgentEventEnum);

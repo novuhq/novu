@@ -28,7 +28,7 @@ import {
   SetupModeToggle,
   SetupStep,
 } from './setup-guide-primitives';
-import { deriveStepStatus } from './setup-guide-step-utils';
+import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
 export type SlackSetupGuideProps = {
   agent: AgentResponse;
@@ -249,7 +249,7 @@ export function SlackSetupGuide({
   const { currentEnvironment } = useEnvironment();
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
-  const [isCredentialsSaved, setIsCredentialsSaved] = useState(false);
+  const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
@@ -259,7 +259,7 @@ export function SlackSetupGuide({
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
     setIsSlackWorkspaceConnected(false);
-    setIsCredentialsSaved(false);
+    setCredentialsSavedLocally(false);
     setPendingOauthUrl(null);
   }, [integrationId]);
 
@@ -269,7 +269,7 @@ export function SlackSetupGuide({
   }, [onStepsCompleted]);
 
   const handleQuickSetupSuccess = useCallback((oauthAuthorizeUrl: string) => {
-    setIsCredentialsSaved(true);
+    setCredentialsSavedLocally(true);
     setPendingOauthUrl(oauthAuthorizeUrl);
   }, []);
 
@@ -281,11 +281,14 @@ export function SlackSetupGuide({
 
   const { integrations } = useFetchIntegrations();
 
-  const selectedIntegrationIdentifier = useMemo(() => {
-    const row = integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.Slack);
+  const selectedIntegration = useMemo(
+    () => integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.Slack),
+    [integrations, integrationId]
+  );
 
-    return row?.identifier ?? '';
-  }, [integrations, integrationId]);
+  const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
+  const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
+  const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
   const webhookHandlerUrl = buildAgentSlackWebhookUrl(
     agent._id,
@@ -470,28 +473,38 @@ export function SlackSetupGuide({
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
         title="Verify by installing the app to your workspace"
         description={`This is what your users need to do to install the slack app to their workspace to start interacting with it.`}
-        rightContent={connectButton}
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Tip:"
-            description={
-              <>
-                Novu provides a{' '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<SlackConnectButton />'}</code>
-                {' component, to let your users easily connect this agent to their Slack workspace. '}
-                <a
-                  href="https://docs.novu.co"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-text-sub underline"
-                >
-                  Read docs
-                </a>
-              </>
-            }
-          />
+        rightContent={
+          user?.externalId && currentEnvironment?.identifier ? (
+            <NovuProvider
+              subscriber={{
+                subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
+                firstName: user.firstName ?? '',
+                lastName: user.lastName ?? '',
+                avatar: user.imageUrl ?? '',
+              }}
+              applicationIdentifier={currentEnvironment.identifier}
+              apiUrl={apiHostnameManager.getHostname()}
+              socketUrl={apiHostnameManager.getWebSocketHostname()}
+            >
+              <SlackConnectButton
+                integrationIdentifier={selectedIntegrationIdentifier}
+                connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
+                connectionMode="subscriber"
+                connectLabel={`Install ${agent.name} ↗`}
+                connectedLabel="Connected to Slack"
+                onConnectSuccess={handleSlackWorkspaceConnected}
+                onConnectError={(error: unknown) => {
+                  showErrorToast('Failed to connect to Slack. Please try again.');
+                  console.error(error);
+                }}
+                appearance={{
+                  elements: {
+                    channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
+                  },
+                }}
+              />
+            </NovuProvider>
+          ) : null
         }
       />
     </>
@@ -521,12 +534,12 @@ export function SlackSetupGuide({
           />
           {stepsColumn}
         </div>
-        {listening}
+        <div className="pl-8">{listening}</div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
-          onSaveSuccess={() => setIsCredentialsSaved(true)}
+          onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
         />
       </div>
@@ -541,7 +554,7 @@ export function SlackSetupGuide({
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
-        onSaveSuccess={() => setIsCredentialsSaved(true)}
+        onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
       />
     </>

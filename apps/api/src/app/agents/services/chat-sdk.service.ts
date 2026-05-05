@@ -982,6 +982,7 @@ export class ChatSdkService implements OnModuleDestroy {
           {
             actionId: event.actionId,
             value: event.value,
+            sourceMessageId: event.messageId,
           },
           event.user.userId
         );
