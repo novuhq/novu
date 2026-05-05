@@ -90,12 +90,8 @@ const MAX_AGGREGATE_FILE_BYTES = 50 * 1024 * 1024;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const FILE_FETCH_TIMEOUT_MS = 10_000;
 const MAX_FILE_FETCH_REDIRECTS = 3;
-const SUPPORTED_FILE_PLATFORMS = new Set<string>([
-  AgentPlatformEnum.SLACK,
-  AgentPlatformEnum.TEAMS,
-  AgentPlatformEnum.WHATSAPP,
-]);
-const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL]);
+const SUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.SLACK, AgentPlatformEnum.TEAMS]);
+const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL, AgentPlatformEnum.WHATSAPP]);
 // EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
 // alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
 // Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.
