@@ -58,8 +58,18 @@ function buildChatOAuthCallbackUrl(): string {
   return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
+/**
+ * Slack rejects display_name values that contain the reserved word "slack" (case-insensitive).
+ * Strip it and fall back to a safe default when nothing is left.
+ */
+function sanitizeBotDisplayName(name: string): string {
+  const sanitized = name.replace(/slack/gi, '').trim();
+
+  return sanitized.length > 0 ? sanitized : 'Novu Bot';
+}
+
 function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string, chatOAuthCallbackUrl: string): string {
-  const botName = escapeYamlDoubleQuoted(agent.name);
+  const botName = escapeYamlDoubleQuoted(sanitizeBotDisplayName(agent.name));
   const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
   const oauthCallbackQuoted = escapeYamlDoubleQuoted(chatOAuthCallbackUrl);
   const webhookHandlerUrlQuoted = escapeYamlDoubleQuoted(webhookHandlerUrl);
@@ -74,6 +84,8 @@ features:
     home_tab_enabled: false
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
+  assistant_view:
+    assistant_description: "Agent built with Novu"
   bot_user:
     display_name: "${botName}"
     always_online: true
@@ -184,6 +196,7 @@ function QuickSetupStep({
       );
     },
     onSuccess: () => {
+      setConfigToken('');
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
       onSuccess();
     },
@@ -301,7 +314,7 @@ export function SlackSetupGuide({
 
   const firstIncompleteStep = useMemo(() => {
     if (isSlackWorkspaceConnected) {
-      return activeSetupMode === 'quick' ? base + 3 : base + 3;
+      return base + 3;
     }
 
     if (!isCredentialsSaved) {

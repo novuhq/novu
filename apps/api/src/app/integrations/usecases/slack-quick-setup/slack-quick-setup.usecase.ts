@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
@@ -50,7 +50,7 @@ export class SlackQuickSetup {
     }
 
     if (integration.providerId !== ChatProviderIdEnum.Slack) {
-      throw new UnauthorizedException('Slack quick setup is only supported for Slack integrations');
+      throw new BadRequestException('Slack quick setup is only supported for Slack integrations');
     }
 
     const manifest = this.buildManifest(integration.name ?? 'Novu Bot', integration.identifier, command.agentId);
@@ -111,6 +111,9 @@ export class SlackQuickSetup {
           home_tab_enabled: false,
           messages_tab_enabled: true,
           messages_tab_read_only_enabled: false,
+        },
+        assistant_view: {
+          assistant_description: 'Agent built with Novu',
         },
         bot_user: {
           display_name: displayName,
