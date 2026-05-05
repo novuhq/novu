@@ -3,7 +3,7 @@ RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
 # Install global dependencies
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0&& \
+RUN npm --no-update-notifier --no-fund --global install pm2@6.0.14 pnpm@10.33.0&& \
     pnpm --version
 
 # Set non-root user
@@ -62,7 +62,7 @@ ENV CI=true
 
 RUN apk upgrade --no-cache && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 musl musl-utils && \
-    npm --no-update-notifier --no-fund --global install pm2 && \
+    npm --no-update-notifier --no-fund --global install pm2@6.0.14 && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Set non-root user
