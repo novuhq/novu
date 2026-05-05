@@ -65,6 +65,8 @@ import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integrati
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
 import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
+import { SendAgentWelcomeMessageCommand } from './usecases/send-agent-welcome-message/send-agent-welcome-message.command';
+import { SendAgentWelcomeMessage } from './usecases/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
@@ -89,7 +91,8 @@ export class AgentsController {
     private readonly updateAgentIntegrationUsecase: UpdateAgentIntegration,
     private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
     private readonly listAgentEmojiUsecase: ListAgentEmoji,
-    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail
+    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
+    private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage
   ) {}
 
   @Get('/emoji')
@@ -292,6 +295,25 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         targetAddress: body.targetAddress,
+      })
+    );
+  }
+
+  @Post('/:identifier/welcome-message')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentWelcomeMessage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: { integrationIdentifier: string }
+  ): Promise<{ sent: boolean }> {
+    return this.sendAgentWelcomeMessageUsecase.execute(
+      SendAgentWelcomeMessageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier: body.integrationIdentifier,
       })
     );
   }

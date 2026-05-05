@@ -189,6 +189,31 @@ export class ChatSdkService implements OnModuleDestroy {
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
 
+  async sendDirectMessage(
+    agentId: string,
+    integrationIdentifier: string,
+    platformUserId: string,
+    content: ReplyContentDto
+  ): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const dmThread = await chat.openDM(platformUserId);
+    const deliveryContent = await this.prepareContentForDelivery(content, config.platform, agentId);
+
+    const postArg = deliveryContent.card
+      ? (deliveryContent.card as unknown as AdapterPostableMessage)
+      : ({
+          markdown: deliveryContent.markdown ?? '',
+          files: deliveryContent.files,
+        } as unknown as AdapterPostableMessage);
+
+    const sent = await dmThread.post(postArg).catch(toDeliveryError);
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
   async editInConversation(
     agentId: string,
     integrationIdentifier: string,
