@@ -153,6 +153,17 @@ export class AzureSetupOauthCallback {
         throw new Error('State expired');
       }
 
+      // Defense-in-depth: ensure the environmentId in the signed payload matches
+      // the environment used to derive the signing key, so a replayed/tampered state
+      // from a different environment of the same org cannot pass signature verification
+      // and then target a different environment's integration on the write path.
+      if (
+        data.environmentId !== preliminaryData.environmentId ||
+        data.organizationId !== preliminaryData.organizationId
+      ) {
+        throw new Error('State environment/organization mismatch');
+      }
+
       return data;
     } catch {
       throw new BadRequestException('Invalid or expired Azure setup OAuth state');
@@ -230,6 +241,7 @@ export class AzureSetupOauthCallback {
   ): Promise<{ appId: string; secretValue: string; tenantId: string }> {
     const integration = await this.integrationRepository.findOne({
       _id: stateData.integrationId,
+      _environmentId: stateData.environmentId,
       _organizationId: stateData.organizationId,
     });
 
@@ -394,6 +406,7 @@ export class AzureSetupOauthCallback {
     await this.integrationRepository.update(
       {
         _id: stateData.integrationId,
+        _environmentId: stateData.environmentId,
         _organizationId: stateData.organizationId,
       },
       { $set: { credentials } }
@@ -458,6 +471,7 @@ export class AzureSetupOauthCallback {
 
       const integration = await this.integrationRepository.findOne({
         _id: stateData.integrationId,
+        _environmentId: stateData.environmentId,
         _organizationId: stateData.organizationId,
       });
 
@@ -594,7 +608,11 @@ export class AzureSetupOauthCallback {
       }
 
       await this.integrationRepository.update(
-        { _id: stateData.integrationId, _organizationId: stateData.organizationId },
+        {
+          _id: stateData.integrationId,
+          _environmentId: stateData.environmentId,
+          _organizationId: stateData.organizationId,
+        },
         { $set: fields }
       );
     } catch (err) {
@@ -650,6 +668,7 @@ export class AzureSetupOauthCallback {
 
     const integration = await this.integrationRepository.findOne({
       _id: stateData.integrationId,
+      _environmentId: stateData.environmentId,
       _organizationId: stateData.organizationId,
     });
 
@@ -678,6 +697,7 @@ export class AzureSetupOauthCallback {
     try {
       const integration = await this.integrationRepository.findOne({
         _id: stateData.integrationId,
+        _environmentId: stateData.environmentId,
         _organizationId: stateData.organizationId,
       });
 
