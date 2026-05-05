@@ -497,8 +497,8 @@ importers:
         specifier: 4.7.9
         version: 4.7.9
       helmet:
-        specifier: ^6.0.1
-        version: 6.1.4
+        specifier: ^8.1.0
+        version: 8.1.0
       i18next:
         specifier: ^23.7.6
         version: 23.7.11
@@ -1564,8 +1564,8 @@ importers:
         specifier: ^8.1.1
         version: 8.1.1
       helmet:
-        specifier: ^6.0.1
-        version: 6.1.4
+        specifier: ^8.1.0
+        version: 8.1.0
       i18next:
         specifier: ^23.7.6
         version: 23.7.11
@@ -1776,8 +1776,8 @@ importers:
         specifier: ^8.1.1
         version: 8.1.1
       helmet:
-        specifier: ^6.0.1
-        version: 6.1.4
+        specifier: ^8.1.0
+        version: 8.1.0
       ioredis:
         specifier: 5.10.1
         version: 5.10.1
@@ -19151,9 +19151,9 @@ packages:
   header-case@1.0.1:
     resolution: {integrity: sha512-i0q9mkOeSuhXw6bGgiQCCBgY/jlZuV/7dZXyZ9c6LcBrqwvT8eT719E9uxE5LiZftdl+z81Ugbg/VvXV4OJOeQ==}
 
-  helmet@6.1.4:
-    resolution: {integrity: sha512-nCJIriKjOYcRmHRpK+Z5DayEh6xwOKO0U0qzWL3MEIwsB8OSxxBu/mUE9U5PRH8ln/+WySlK2eYe5FOlo0v9aA==}
-    engines: {node: '>=14.0.0'}
+  helmet@8.1.0:
+    resolution: {integrity: sha512-jOiHyAZsmnr8LqoPGmCjYAaiuWwjAPLgY8ZX2XrmHawt99/u1y6RgrZMTeoPfpUbV96HOalYgz1qzkRbw54Pmg==}
+    engines: {node: '>=18.0.0'}
 
   help-me@4.2.0:
     resolution: {integrity: sha512-TAOnTB8Tz5Dw8penUuzHVrKNKlCIbwwbHnXraNJxPwf8LRtE2HlM84RYuezMFcwOJmoYOCWVDyJ8TQGxn9PgxA==}
@@ -48940,7 +48940,7 @@ snapshots:
       no-case: 2.3.2
       upper-case: 1.1.3
 
-  helmet@6.1.4: {}
+  helmet@8.1.0: {}
 
   help-me@4.2.0:
     dependencies:
