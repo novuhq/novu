@@ -112,14 +112,6 @@ export class SlackQuickSetup {
           messages_tab_enabled: true,
           messages_tab_read_only_enabled: false,
         },
-        /*
-         * assistant_view is required by Slack's manifest schema when subscribing to
-         * assistant_thread_started or assistant_thread_context_changed bot events.
-         * Without it the manifest is rejected with invalid_manifest.
-         */
-        assistant_view: {
-          assistant_description: 'Agent built with Novu',
-        },
         bot_user: {
           display_name: displayName,
           always_online: true,
