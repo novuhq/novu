@@ -179,32 +179,44 @@ function SegmentedToggle({
 
 function PromptTemplateChips({
   onSelect,
+  activeTemplateId,
   disabled,
 }: {
   onSelect: (template: PromptTemplate) => void;
+  activeTemplateId?: string;
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-text-soft inline-flex items-center gap-1 text-paragraph-xs leading-4">
-        <RiSparkling2Line className="size-3.5 shrink-0" aria-hidden />
-        Start from
-      </span>
-      {PROMPT_TEMPLATES.map((template) => (
-        <button
-          key={template.id}
-          type="button"
-          disabled={disabled}
-          onClick={() => onSelect(template)}
-          className={cn(
-            'border-stroke-soft bg-bg-white text-text-sub rounded-md border px-1.5 py-0.5 text-label-xs leading-4 transition-colors',
-            'hover:border-stroke-strong hover:text-text-strong cursor-pointer',
-            'disabled:cursor-not-allowed disabled:opacity-50'
-          )}
-        >
-          {template.label}
-        </button>
-      ))}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1">
+        <RiSparkling2Line className="text-text-soft size-3.5 shrink-0" aria-hidden />
+        <span className="text-text-strong text-label-xs font-medium">Start from a template</span>
+        <span className="text-text-soft text-paragraph-xs leading-4">— fills the name and instructions</span>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {PROMPT_TEMPLATES.map((template) => {
+          const isActive = activeTemplateId === template.id;
+
+          return (
+            <button
+              key={template.id}
+              type="button"
+              disabled={disabled}
+              aria-pressed={isActive}
+              onClick={() => onSelect(template)}
+              className={cn(
+                'rounded-md border px-2 py-1 text-label-xs leading-4 transition-colors',
+                isActive
+                  ? 'border-primary-base bg-primary-alpha-10 text-text-strong'
+                  : 'border-stroke-soft bg-bg-white text-text-sub hover:border-stroke-strong hover:text-text-strong cursor-pointer',
+                'disabled:cursor-not-allowed disabled:opacity-50'
+              )}
+            >
+              {template.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -245,6 +257,7 @@ export function CreateAgentDialog({
   const [apiKey, setApiKey] = useState('');
   const [forceApiKeyEntry, setForceApiKeyEntry] = useState(false);
   const [system, setSystem] = useState('');
+  const [activeTemplateId, setActiveTemplateId] = useState<string | undefined>();
   const [disabledTools, setDisabledTools] = useState<Set<AgentToolName>>(() => new Set());
   const [claudeAgentId, setClaudeAgentId] = useState('');
   const [claudeEnvironmentId, setClaudeEnvironmentId] = useState('');
@@ -268,6 +281,7 @@ export function CreateAgentDialog({
     setApiKey('');
     setForceApiKeyEntry(false);
     setSystem('');
+    setActiveTemplateId(undefined);
     setDisabledTools(new Set());
     setClaudeAgentId('');
     setClaudeEnvironmentId('');
@@ -299,6 +313,7 @@ export function CreateAgentDialog({
 
   const applyTemplate = (template: PromptTemplate) => {
     setSystem(template.prompt);
+    setActiveTemplateId(template.id);
     setErrors((prev) => ({ ...prev, system: undefined }));
 
     if (!name.trim()) {
@@ -451,6 +466,54 @@ export function CreateAgentDialog({
         <form onSubmit={handleSubmit}>
           <div className="border-stroke-soft bg-background max-h-[70vh] overflow-y-auto border-y">
             <div className="flex flex-col gap-5 p-4">
+              {isClaudeManagedAgentsEnabled ? (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor={runtimeId} className="text-text-strong text-label-xs font-medium">
+                    Runtime
+                  </label>
+                  <Select value={runtime} onValueChange={(value) => setRuntime(value as AgentRuntime)}>
+                    <SelectTrigger id={runtimeId} size="2xs" className="shadow-xs h-auto min-h-8 py-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bridge" className="text-label-xs">
+                        Bring your own code (Bridge)
+                      </SelectItem>
+                      <SelectItem value="claude_managed" className="text-label-xs">
+                        Claude Managed Agent
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Hint className="text-text-soft text-paragraph-xs leading-4">
+                    <HintIcon as={RiInformationFill} />
+                    Novu hosts the loop on Anthropic Managed Agents. We can either provision a new agent for you or
+                    reference one you already created.
+                  </Hint>
+                </div>
+              ) : null}
+
+              {isClaudeManagedAgentsEnabled && runtime === 'claude_managed' ? (
+                <SegmentedToggle
+                  value={setupMode}
+                  onChange={(mode) => {
+                    setSetupMode(mode);
+                    setErrors({});
+                  }}
+                  options={[
+                    { value: 'create', label: 'Create new' },
+                    { value: 'existing', label: 'Use existing IDs' },
+                  ]}
+                />
+              ) : null}
+
+              {isClaudeCreateMode ? (
+                <PromptTemplateChips
+                  onSelect={applyTemplate}
+                  activeTemplateId={activeTemplateId}
+                  disabled={isSubmitting}
+                />
+              ) : null}
+
               <div className="flex flex-col gap-2">
                 <RequiredFieldLabel htmlFor={nameId}>Agent name</RequiredFieldLabel>
                 <Input
@@ -510,6 +573,38 @@ export function CreateAgentDialog({
                 ) : null}
               </div>
 
+              {isClaudeCreateMode ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <RequiredFieldLabel htmlFor={systemFieldId}>Instructions</RequiredFieldLabel>
+                    <span className="text-text-soft text-paragraph-xs leading-4">
+                      Sent to Claude as the system prompt
+                    </span>
+                  </div>
+                  <Textarea
+                    id={systemFieldId}
+                    value={system}
+                    onChange={(e) => {
+                      setSystem(e.target.value);
+                      setActiveTemplateId(undefined);
+                      setErrors((prev) => ({ ...prev, system: undefined }));
+                    }}
+                    placeholder="You are a helpful assistant for the team. Always reply concisely and cite sources when you can..."
+                    className="min-h-32 text-sm"
+                    aria-invalid={errors.system ? true : undefined}
+                  />
+                  <Hint className="text-text-soft text-paragraph-xs leading-4">
+                    <HintIcon as={RiInformationFill} />
+                    The first sentence is shown as the agent description in Novu.
+                  </Hint>
+                  {errors.system ? (
+                    <p className="text-error-base text-label-xs" role="alert">
+                      {errors.system}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {showDescriptionField ? (
                 <div className="flex flex-col gap-1">
                   <label htmlFor={descriptionId} className="text-text-strong text-label-xs font-medium">
@@ -527,225 +622,154 @@ export function CreateAgentDialog({
                 </div>
               ) : null}
 
-              {isClaudeManagedAgentsEnabled ? (
+              {isClaudeCreateMode ? (
                 <div className="flex flex-col gap-1">
-                  <label htmlFor={runtimeId} className="text-text-strong text-label-xs font-medium">
-                    Runtime
-                  </label>
-                  <Select value={runtime} onValueChange={(value) => setRuntime(value as AgentRuntime)}>
-                    <SelectTrigger id={runtimeId} size="2xs" className="shadow-xs h-auto min-h-8 py-1.5">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bridge" className="text-label-xs">
-                        Bring your own code (Bridge)
-                      </SelectItem>
-                      <SelectItem value="claude_managed" className="text-label-xs">
-                        Claude Managed Agent
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Hint className="text-text-soft text-paragraph-xs leading-4">
-                    <HintIcon as={RiInformationFill} />
-                    Novu hosts the loop on Anthropic Managed Agents. We can either provision a new agent for you or
-                    reference one you already created.
-                  </Hint>
+                  {showApiKeyField ? (
+                    <>
+                      <RequiredFieldLabel htmlFor={apiKeyFieldId}>Anthropic API key</RequiredFieldLabel>
+                      <SecretInput
+                        id={apiKeyFieldId}
+                        size="2xs"
+                        value={apiKey}
+                        onChange={(value) => {
+                          setApiKey(value);
+                          setErrors((prev) => ({ ...prev, apiKey: undefined }));
+                        }}
+                        placeholder="sk-ant-..."
+                        hasError={Boolean(errors.apiKey)}
+                        aria-invalid={errors.apiKey ? true : undefined}
+                      />
+                      <Hint className="text-text-soft text-paragraph-xs leading-4">
+                        <HintIcon as={RiLockLine} />
+                        Stored as an encrypted environment secret. Used only to create sessions for this environment.
+                      </Hint>
+                      {errors.apiKey ? (
+                        <p className="text-error-base text-label-xs" role="alert">
+                          {errors.apiKey}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className="border-stroke-soft bg-bg-weak flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5">
+                      <span className="text-text-sub flex items-center gap-1.5 text-label-xs">
+                        <RiCheckLine className="text-success-base size-4 shrink-0" aria-hidden />
+                        Using saved Anthropic API key
+                      </span>
+                      <button
+                        type="button"
+                        className="text-text-soft hover:text-text-strong cursor-pointer text-label-xs underline-offset-2 hover:underline"
+                        onClick={() => setForceApiKeyEntry(true)}
+                      >
+                        Replace
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : null}
 
-              {isClaudeManagedAgentsEnabled && runtime === 'claude_managed' ? (
-                <div className="flex flex-col gap-3">
-                  <SegmentedToggle
-                    value={setupMode}
-                    onChange={(mode) => {
-                      setSetupMode(mode);
-                      setErrors({});
-                    }}
-                    options={[
-                      { value: 'create', label: 'Create new' },
-                      { value: 'existing', label: 'Use existing IDs' },
-                    ]}
-                  />
+              {isClaudeManagedAgentsEnabled && runtime === 'claude_managed' && setupMode === 'existing' ? (
+                <div className="grid grid-cols-1 gap-3">
+                  <Hint className="text-text-soft text-paragraph-xs leading-4">
+                    <HintIcon as={RiInformationFill} />
+                    Reference an Anthropic Managed Agent that you already created in the Anthropic Console.
+                  </Hint>
 
-                  {setupMode === 'create' ? (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-1">
-                        {showApiKeyField ? (
-                          <>
-                            <RequiredFieldLabel htmlFor={apiKeyFieldId}>Anthropic API key</RequiredFieldLabel>
-                            <SecretInput
-                              id={apiKeyFieldId}
-                              size="2xs"
-                              value={apiKey}
-                              onChange={(value) => {
-                                setApiKey(value);
-                                setErrors((prev) => ({ ...prev, apiKey: undefined }));
-                              }}
-                              placeholder="sk-ant-..."
-                              hasError={Boolean(errors.apiKey)}
-                              aria-invalid={errors.apiKey ? true : undefined}
+                  <div className="flex flex-col gap-1">
+                    <RequiredFieldLabel htmlFor={claudeAgentIdFieldId}>Anthropic agent ID</RequiredFieldLabel>
+                    <Input
+                      id={claudeAgentIdFieldId}
+                      size="2xs"
+                      className="font-mono"
+                      value={claudeAgentId}
+                      onChange={(e) => {
+                        setClaudeAgentId(e.target.value);
+                        setErrors((prev) => ({ ...prev, claudeAgentId: undefined }));
+                      }}
+                      placeholder="agent_011..."
+                      hasError={Boolean(errors.claudeAgentId)}
+                      aria-invalid={errors.claudeAgentId ? true : undefined}
+                    />
+                    {errors.claudeAgentId ? (
+                      <p className="text-error-base text-label-xs" role="alert">
+                        {errors.claudeAgentId}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <RequiredFieldLabel htmlFor={claudeEnvironmentIdFieldId}>
+                      Anthropic environment ID
+                    </RequiredFieldLabel>
+                    <Input
+                      id={claudeEnvironmentIdFieldId}
+                      size="2xs"
+                      className="font-mono"
+                      value={claudeEnvironmentId}
+                      onChange={(e) => {
+                        setClaudeEnvironmentId(e.target.value);
+                        setErrors((prev) => ({ ...prev, claudeEnvironmentId: undefined }));
+                      }}
+                      placeholder="env_013..."
+                      hasError={Boolean(errors.claudeEnvironmentId)}
+                      aria-invalid={errors.claudeEnvironmentId ? true : undefined}
+                    />
+                    {errors.claudeEnvironmentId ? (
+                      <p className="text-error-base text-label-xs" role="alert">
+                        {errors.claudeEnvironmentId}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor={vaultIdsFieldId} className="text-text-strong text-label-xs font-medium">
+                      Vault IDs (optional)
+                    </label>
+                    <Input
+                      id={vaultIdsFieldId}
+                      size="2xs"
+                      className="font-mono"
+                      value={vaultIdsInput}
+                      onChange={(e) => setVaultIdsInput(e.target.value)}
+                      placeholder="vlt_..., vlt_..."
+                    />
+                    <Hint className="text-text-soft text-paragraph-xs leading-4">
+                      <HintIcon as={RiInformationFill} />
+                      Comma-separated. Used to authenticate MCP servers attached to the agent.
+                    </Hint>
+                  </div>
+                </div>
+              ) : null}
+
+              {isClaudeCreateMode ? (
+                <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
+                  <div className="flex items-center justify-between px-2 py-1.5">
+                    <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
+                      Capabilities
+                    </span>
+                    <span className="text-text-soft text-paragraph-xs leading-4">All tools enabled</span>
+                  </div>
+                  <div className="bg-bg-white shadow-box-xs flex flex-col overflow-hidden rounded-md">
+                    <div className="flex flex-col divide-y divide-stroke-soft">
+                      {AGENT_TOOL_NAMES.map((tool) => {
+                        const isEnabled = !disabledTools.has(tool);
+
+                        return (
+                          <label
+                            key={tool}
+                            htmlFor={`${formId}-tool-${tool}`}
+                            className="flex cursor-pointer items-center justify-between gap-2 px-3 py-2"
+                          >
+                            <span className="text-text-sub text-label-xs font-medium">{TOOL_LABELS[tool]}</span>
+                            <Switch
+                              id={`${formId}-tool-${tool}`}
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleTool(tool)}
                             />
-                            <Hint className="text-text-soft text-paragraph-xs leading-4">
-                              <HintIcon as={RiLockLine} />
-                              Stored as an encrypted environment secret. Used only to create sessions for this
-                              environment.
-                            </Hint>
-                            {errors.apiKey ? (
-                              <p className="text-error-base text-label-xs" role="alert">
-                                {errors.apiKey}
-                              </p>
-                            ) : null}
-                          </>
-                        ) : (
-                          <div className="border-stroke-soft bg-bg-weak flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5">
-                            <span className="text-text-sub flex items-center gap-1.5 text-label-xs">
-                              <RiCheckLine className="text-success-base size-4 shrink-0" aria-hidden />
-                              Using saved Anthropic API key
-                            </span>
-                            <button
-                              type="button"
-                              className="text-text-soft hover:text-text-strong cursor-pointer text-label-xs underline-offset-2 hover:underline"
-                              onClick={() => setForceApiKeyEntry(true)}
-                            >
-                              Replace
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <RequiredFieldLabel htmlFor={systemFieldId}>Instructions</RequiredFieldLabel>
-                          <span className="text-text-soft text-paragraph-xs leading-4">
-                            Sent to Claude as the system prompt
-                          </span>
-                        </div>
-                        <PromptTemplateChips onSelect={applyTemplate} disabled={isSubmitting} />
-                        <Textarea
-                          id={systemFieldId}
-                          value={system}
-                          onChange={(e) => {
-                            setSystem(e.target.value);
-                            setErrors((prev) => ({ ...prev, system: undefined }));
-                          }}
-                          placeholder="You are a helpful assistant for the team. Always reply concisely and cite sources when you can..."
-                          className="min-h-32 text-sm"
-                          aria-invalid={errors.system ? true : undefined}
-                        />
-                        <Hint className="text-text-soft text-paragraph-xs leading-4">
-                          <HintIcon as={RiInformationFill} />
-                          The first sentence is shown as the agent description in Novu.
-                        </Hint>
-                        {errors.system ? (
-                          <p className="text-error-base text-label-xs" role="alert">
-                            {errors.system}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
-                        <div className="flex items-center justify-between px-2 py-1.5">
-                          <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
-                            Capabilities
-                          </span>
-                          <span className="text-text-soft text-paragraph-xs leading-4">All tools enabled</span>
-                        </div>
-                        <div className="bg-bg-white shadow-box-xs flex flex-col overflow-hidden rounded-md">
-                          <div className="flex flex-col divide-y divide-stroke-soft">
-                            {AGENT_TOOL_NAMES.map((tool) => {
-                              const isEnabled = !disabledTools.has(tool);
-
-                              return (
-                                <label
-                                  key={tool}
-                                  htmlFor={`${formId}-tool-${tool}`}
-                                  className="flex cursor-pointer items-center justify-between gap-2 px-3 py-2"
-                                >
-                                  <span className="text-text-sub text-label-xs font-medium">{TOOL_LABELS[tool]}</span>
-                                  <Switch
-                                    id={`${formId}-tool-${tool}`}
-                                    checked={isEnabled}
-                                    onCheckedChange={() => toggleTool(tool)}
-                                  />
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
+                          </label>
+                        );
+                      })}
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      <Hint className="text-text-soft text-paragraph-xs leading-4">
-                        <HintIcon as={RiInformationFill} />
-                        Reference an Anthropic Managed Agent that you already created in the Anthropic Console.
-                      </Hint>
-
-                      <div className="flex flex-col gap-1">
-                        <RequiredFieldLabel htmlFor={claudeAgentIdFieldId}>Anthropic agent ID</RequiredFieldLabel>
-                        <Input
-                          id={claudeAgentIdFieldId}
-                          size="2xs"
-                          className="font-mono"
-                          value={claudeAgentId}
-                          onChange={(e) => {
-                            setClaudeAgentId(e.target.value);
-                            setErrors((prev) => ({ ...prev, claudeAgentId: undefined }));
-                          }}
-                          placeholder="agent_011..."
-                          hasError={Boolean(errors.claudeAgentId)}
-                          aria-invalid={errors.claudeAgentId ? true : undefined}
-                        />
-                        {errors.claudeAgentId ? (
-                          <p className="text-error-base text-label-xs" role="alert">
-                            {errors.claudeAgentId}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <RequiredFieldLabel htmlFor={claudeEnvironmentIdFieldId}>
-                          Anthropic environment ID
-                        </RequiredFieldLabel>
-                        <Input
-                          id={claudeEnvironmentIdFieldId}
-                          size="2xs"
-                          className="font-mono"
-                          value={claudeEnvironmentId}
-                          onChange={(e) => {
-                            setClaudeEnvironmentId(e.target.value);
-                            setErrors((prev) => ({ ...prev, claudeEnvironmentId: undefined }));
-                          }}
-                          placeholder="env_013..."
-                          hasError={Boolean(errors.claudeEnvironmentId)}
-                          aria-invalid={errors.claudeEnvironmentId ? true : undefined}
-                        />
-                        {errors.claudeEnvironmentId ? (
-                          <p className="text-error-base text-label-xs" role="alert">
-                            {errors.claudeEnvironmentId}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <label htmlFor={vaultIdsFieldId} className="text-text-strong text-label-xs font-medium">
-                          Vault IDs (optional)
-                        </label>
-                        <Input
-                          id={vaultIdsFieldId}
-                          size="2xs"
-                          className="font-mono"
-                          value={vaultIdsInput}
-                          onChange={(e) => setVaultIdsInput(e.target.value)}
-                          placeholder="vlt_..., vlt_..."
-                        />
-                        <Hint className="text-text-soft text-paragraph-xs leading-4">
-                          <HintIcon as={RiInformationFill} />
-                          Comma-separated. Used to authenticate MCP servers attached to the agent.
-                        </Hint>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               ) : null}
             </div>
