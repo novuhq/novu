@@ -197,6 +197,7 @@ export class AgentInboundHandler {
         environmentId: config.environmentId,
         conversationId: String(conversation._id),
         platformMessageId: message.id ?? `unknown-${Date.now()}`,
+        platform: config.platform,
       });
     }
 
@@ -391,6 +392,7 @@ export class AgentInboundHandler {
         environmentId: config.environmentId,
         conversationId: String(conversation._id),
         platformMessageId: event.message.id ?? event.messageId ?? `unknown-${Date.now()}`,
+        platform: config.platform,
       });
     }
 

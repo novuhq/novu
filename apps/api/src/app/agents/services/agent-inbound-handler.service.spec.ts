@@ -223,6 +223,7 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', whatsappConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(attachmentStorage.storeInbound.calledOnceWith(message.attachments)).to.equal(true);
+      expect(attachmentStorage.storeInbound.firstCall.args[1].platform).to.equal('whatsapp');
       expect(conversationService.persistInboundMessage.firstCall.args[0].richContent).to.deep.equal({
         attachments: [
           {
