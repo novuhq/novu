@@ -21,6 +21,8 @@ import { AgentConversationService } from './services/agent-conversation.service'
 import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { AnthropicAgentCredentialsService } from './services/anthropic-agent-credentials.service';
+import { AnthropicEnvironmentRegistryService } from './services/anthropic-environment-registry.service';
+import { AnthropicProvisioningService } from './services/anthropic-provisioning.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { USE_CASES } from './usecases';
@@ -38,6 +40,8 @@ import { USE_CASES } from './usecases';
     AgentConfigResolver,
     AgentSubscriberResolver,
     AnthropicAgentCredentialsService,
+    AnthropicEnvironmentRegistryService,
+    AnthropicProvisioningService,
     AgentConversationService,
     AgentInboundHandler,
     BridgeExecutorService,

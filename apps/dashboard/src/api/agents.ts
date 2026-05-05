@@ -50,6 +50,32 @@ export type AgentManagedRuntime = {
   vaultIds?: string[];
 };
 
+export const AGENT_TOOL_NAMES = ['bash', 'edit', 'read', 'write', 'glob', 'grep', 'web_fetch', 'web_search'] as const;
+
+export type AgentToolName = (typeof AGENT_TOOL_NAMES)[number];
+
+export type AgentToolToggle = {
+  name: AgentToolName;
+  enabled: boolean;
+};
+
+export type CreateManagedRuntimeSetup = {
+  mode: 'create';
+  apiKey?: string;
+  system: string;
+  tools?: AgentToolToggle[];
+};
+
+export type ExistingManagedRuntimeSetup = {
+  mode: 'existing';
+  provider: 'anthropic';
+  agentId: string;
+  environmentId: string;
+  vaultIds?: string[];
+};
+
+export type ManagedRuntimeSetup = CreateManagedRuntimeSetup | ExistingManagedRuntimeSetup;
+
 export type AgentResponse = {
   _id: string;
   name: string;
@@ -83,7 +109,7 @@ export type CreateAgentBody = {
   description?: string;
   active?: boolean;
   runtime?: AgentRuntime;
-  managedRuntime?: AgentManagedRuntime;
+  managedRuntime?: ManagedRuntimeSetup;
 };
 
 export type UpdateAgentBody = {

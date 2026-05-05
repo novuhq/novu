@@ -3,7 +3,7 @@ import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 
-import { AgentRuntimeEnum, ManagedRuntimeDto } from './agent-runtime.dto';
+import { AgentRuntimeEnum, ManagedRuntimeSetupDto } from './agent-runtime.dto';
 
 export class CreateAgentRequestDto {
   @ApiProperty()
@@ -34,9 +34,9 @@ export class CreateAgentRequestDto {
   @IsOptional()
   runtime?: AgentRuntimeEnum;
 
-  @ApiPropertyOptional({ type: ManagedRuntimeDto })
+  @ApiPropertyOptional({ type: ManagedRuntimeSetupDto })
   @ValidateNested()
-  @Type(() => ManagedRuntimeDto)
+  @Type(() => ManagedRuntimeSetupDto)
   @IsOptional()
-  managedRuntime?: ManagedRuntimeDto;
+  managedRuntime?: ManagedRuntimeSetupDto;
 }

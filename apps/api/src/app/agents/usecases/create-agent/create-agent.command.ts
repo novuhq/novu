@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ManagedRuntimeDto } from '../../dtos/agent-runtime.dto';
+import { ManagedRuntimeSetupDto } from '../../dtos/agent-runtime.dto';
 
 export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -25,7 +25,7 @@ export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   runtime?: AgentRuntimeEnum;
 
-  @Type(() => ManagedRuntimeDto)
+  @Type(() => ManagedRuntimeSetupDto)
   @IsOptional()
-  managedRuntime?: ManagedRuntimeDto;
+  managedRuntime?: ManagedRuntimeSetupDto;
 }

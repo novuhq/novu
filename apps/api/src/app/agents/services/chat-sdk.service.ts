@@ -188,6 +188,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const chat = await this.getOrCreate(instanceKey, agentId, platform, config);
     const handler = chat.webhooks[platform];
+    console.log({ handler });
     if (!handler) {
       throw new BadRequestException(`Platform ${platform} not configured for agent ${agentId}`);
     }
@@ -864,6 +865,7 @@ export class ChatSdkService implements OnModuleDestroy {
     const freshFingerprint = this.adapterFingerprint(config);
     const existing = this.instances.get(instanceKey);
 
+    console.log({ freshFingerprint, existing });
     if (existing) {
       if (existing.adapterFingerprint === freshFingerprint) {
         existing.config = config;
@@ -886,6 +888,7 @@ export class ChatSdkService implements OnModuleDestroy {
     // dispose hook shuts down the superseded Chat.
     const pendingKey = `${instanceKey}:${freshFingerprint}`;
     const pending = this.pendingCreations.get(pendingKey);
+    console.log({ pending });
     if (pending) return pending;
 
     const creation = this.createAndCache(instanceKey, agentId, platform, config, freshFingerprint);
@@ -906,6 +909,7 @@ export class ChatSdkService implements OnModuleDestroy {
     adapterFingerprint: string
   ): Promise<Chat> {
     const chat = await this.createChatInstance(instanceKey, platform, config);
+    console.log({ chat });
     await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
     this.registerEventHandlers(agentId, cached);
@@ -1084,6 +1088,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const adapters = await this.buildAdapters(platform, config);
     const client = this.cacheService.client;
+    console.log({ client });
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
     }
@@ -1117,6 +1122,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     switch (platform) {
       case AgentPlatformEnum.SLACK: {
+        console.log({ connectionAccessToken, credentials });
         if (!connectionAccessToken || !credentials.signingSecret) {
           throw new BadRequestException('Slack agent integration requires botToken and signingSecret credentials');
         }

@@ -19,24 +19,113 @@ import { deriveStepStatus } from './setup-guide-step-utils';
 
 const ANTHROPIC_CONSOLE_URL = 'https://console.anthropic.com/';
 
+function buildAnthropicConsoleAgentUrl(agentId: string): string {
+  return `${ANTHROPIC_CONSOLE_URL}console/agents/${encodeURIComponent(agentId)}`;
+}
+
 type ClaudeManagedSetupSectionProps = {
   agent: AgentResponse;
   stepOffset: number;
 };
 
 export function ClaudeManagedSetupSection({ agent, stepOffset }: ClaudeManagedSetupSectionProps) {
-  const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
-  const [apiKey, setApiKey] = useState('');
-  const [agentId, setAgentId] = useState(agent.managedRuntime?.agentId ?? '');
-  const [environmentId, setEnvironmentId] = useState(agent.managedRuntime?.environmentId ?? '');
-  const [vaultIds, setVaultIds] = useState(agent.managedRuntime?.vaultIds?.join(', ') ?? '');
 
   const credentialsQuery = useQuery({
     queryKey: getClaudeAgentCredentialsQueryKey(currentEnvironment?._id),
     queryFn: () => getClaudeAgentCredentials(requireEnvironment(currentEnvironment, 'No environment selected')),
     enabled: Boolean(currentEnvironment),
   });
+
+  const hasCredentials = credentialsQuery.data?.configured ?? false;
+  const hasManagedRuntime = Boolean(agent.managedRuntime?.agentId && agent.managedRuntime?.environmentId);
+  const isProvisioned = hasCredentials && hasManagedRuntime;
+
+  const testConnectionMutation = useMutation({
+    mutationFn: () =>
+      testClaudeManagedAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier),
+    onSuccess: () => {
+      showSuccessToast('Claude Managed Agent connection verified.', 'Connection successful');
+    },
+    onError: () => {
+      showErrorToast('Could not verify the Claude Managed Agent connection.', 'Connection failed');
+    },
+  });
+
+  if (isProvisioned) {
+    return (
+      <SetupStep
+        index={stepOffset}
+        status={deriveStepStatus(stepOffset, stepOffset + 1)}
+        sectionLabel="2/2 CLAUDE MANAGED AGENT"
+        title="Provisioned in Anthropic"
+        description={
+          <span>
+            Novu created this agent for you in your Anthropic workspace. Manage the model, prompt, and tools from the
+            Anthropic Console.
+          </span>
+        }
+        rightContent={
+          <div className="flex w-full max-w-md flex-col gap-2">
+            <div className="border-stroke-soft bg-bg-white flex flex-col gap-1 rounded-md border p-3 text-label-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-text-soft">Agent ID</span>
+                <span className="font-mono text-text-strong">{agent.managedRuntime?.agentId}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-text-soft">Environment ID</span>
+                <span className="font-mono text-text-strong">{agent.managedRuntime?.environmentId}</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                mode="outline"
+                size="xs"
+                leadingIcon={RiCheckLine}
+                isLoading={testConnectionMutation.isPending}
+                onClick={() => testConnectionMutation.mutate()}
+              >
+                Test connection
+              </Button>
+              <a
+                href={
+                  agent.managedRuntime?.agentId
+                    ? buildAnthropicConsoleAgentUrl(agent.managedRuntime.agentId)
+                    : ANTHROPIC_CONSOLE_URL
+                }
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-text-soft hover:text-text-sub inline-flex items-center gap-1 text-label-xs underline-offset-2 hover:underline"
+              >
+                Open in Anthropic Console
+                <RiExternalLinkLine className="size-3.5 shrink-0" aria-hidden />
+              </a>
+            </div>
+          </div>
+        }
+      />
+    );
+  }
+
+  return <ClaudeManagedManualSection agent={agent} stepOffset={stepOffset} hasCredentials={hasCredentials} />;
+}
+
+type ClaudeManagedManualSectionProps = {
+  agent: AgentResponse;
+  stepOffset: number;
+  hasCredentials: boolean;
+};
+
+function ClaudeManagedManualSection({ agent, stepOffset, hasCredentials }: ClaudeManagedManualSectionProps) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  const [apiKey, setApiKey] = useState('');
+  const [agentId, setAgentId] = useState(agent.managedRuntime?.agentId ?? '');
+  const [environmentId, setEnvironmentId] = useState(agent.managedRuntime?.environmentId ?? '');
+  const [vaultIds, setVaultIds] = useState(agent.managedRuntime?.vaultIds?.join(', ') ?? '');
 
   const updateCredentialsMutation = useMutation({
     mutationFn: () =>
@@ -87,8 +176,7 @@ export function ClaudeManagedSetupSection({ agent, stepOffset }: ClaudeManagedSe
     },
   });
 
-  const hasCredentials = credentialsQuery.data?.configured ?? false;
-  const hasManagedRuntime = Boolean(agent.managedRuntime?.agentId && agent.managedRuntime?.environmentId);
+  const hasManagedRuntime = Boolean(agentId.trim() && environmentId.trim());
   const firstIncompleteStep =
     hasCredentials && hasManagedRuntime ? stepOffset + 3 : hasCredentials ? stepOffset + 1 : stepOffset;
 
