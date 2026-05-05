@@ -12,9 +12,7 @@ import { name, version } from '../package.json';
 startOtel(name, version);
 
 // biome-ignore lint: must execute after startOtel() so New Relic layers on top
-if (process.env.NEW_RELIC_LICENSE_KEY) {
-  require('newrelic');
-}
+require('newrelic');
 
 // biome-ignore lint: lazy require so @sentry/nestjs loads after OTEL instrumentations are installed
 const { init } = require('@sentry/nestjs');
