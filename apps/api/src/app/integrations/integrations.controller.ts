@@ -772,6 +772,7 @@ export class IntegrationsController {
     summary: 'Quick-setup a Slack integration',
     description: `Creates a Slack app from a manifest using the provided App Configuration Token and saves the resulting credentials (client ID, client secret, signing secret) directly on the integration. The configuration token is used ephemerally and is never stored.`,
   })
+  @ApiExcludeEndpoint()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async slackQuickSetup(
