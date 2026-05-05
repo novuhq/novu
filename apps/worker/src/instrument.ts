@@ -12,7 +12,9 @@ import { name, version } from '../package.json';
 startOtel(name, version);
 
 // biome-ignore lint: must execute after startOtel() so New Relic layers on top
-require('newrelic');
+if (process.env.NEW_RELIC_LICENSE_KEY) {
+  require('newrelic');
+}
 
 // biome-ignore lint: lazy require so @sentry/nestjs loads after OTEL instrumentations are installed
 const { init } = require('@sentry/nestjs');
@@ -23,5 +25,11 @@ if (process.env.SENTRY_DSN) {
     environment: process.env.NODE_ENV,
     release: `v${version}`,
     ignoreErrors: ['Non-Error exception captured'],
+    // When startOtel() already registered the OTEL SDK (ENABLE_OTEL=true),
+    // Sentry must not register its own providers — doing so triggers
+    // "Attempted duplicate registration of API: trace/context/propagation"
+    // errors that corrupt the shared OTEL state and break New Relic's
+    // data pipeline. With this flag Sentry reuses the existing SDK.
+    skipOpenTelemetrySetup: process.env.ENABLE_OTEL === 'true',
   });
 }
