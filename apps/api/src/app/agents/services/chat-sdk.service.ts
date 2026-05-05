@@ -24,10 +24,32 @@ import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
+function getErrorResponseBody(err: unknown): unknown {
+  if (!err || typeof err !== 'object') {
+    return undefined;
+  }
+
+  return (err as { response?: { body?: unknown } }).response?.body;
+}
+
+function getDeliveryErrorDetail(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') {
+    return undefined;
+  }
+
+  const responseBody = body as { errors?: Array<{ message?: unknown }>; message?: unknown };
+  const firstErrorMessage = responseBody.errors?.[0]?.message;
+  if (typeof firstErrorMessage === 'string') {
+    return firstErrorMessage;
+  }
+
+  return typeof responseBody.message === 'string' ? responseBody.message : undefined;
+}
+
 function toDeliveryError(err: unknown): never {
   const base = err instanceof Error ? err.message : String(err);
-  const body = (err as any)?.response?.body;
-  const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
+  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
+
   throw new BadGatewayException({
     error: 'delivery_failed',
     message: detail ? `${base}: ${detail}` : base,
@@ -721,6 +743,8 @@ export class ChatSdkService implements OnModuleDestroy {
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
       outboundIntegrationId: c.outboundIntegrationId ?? null,
+      useFromAddressOverride: c.useFromAddressOverride ?? null,
+      fromAddressOverride: c.fromAddressOverride ?? null,
     });
   }
 
@@ -803,8 +827,23 @@ export class ChatSdkService implements OnModuleDestroy {
       }
 
       const decrypted = decryptCredentials(integration.credentials);
+
+      // The chat-adapter-email contract guarantees params.from is the agent's inbound address
+      // (see packages/chat-adapter-email/src/adapter.ts postMessage/addReaction). We treat it as
+      // the Reply-To target so subscriber replies still reach the agent's inbox even when the
+      // outbound From is rewritten to the sending provider's configured sender (or a per-agent
+      // override). When neither override nor outbound.from is set, we fall back to the agent
+      // address for From and skip Reply-To — preserving the legacy behavior.
+      const agentInboundAddress = params.from;
+      const overrideFrom = config.credentials.useFromAddressOverride
+        ? config.credentials.fromAddressOverride?.trim() || undefined
+        : undefined;
+      const outboundFrom = (decrypted.from as string | undefined)?.trim() || undefined;
+      const effectiveFrom = overrideFrom || outboundFrom || agentInboundAddress;
+      const replyToHeader = effectiveFrom !== agentInboundAddress ? agentInboundAddress : undefined;
+
       const mailFactory = new MailFactory();
-      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, params.from);
+      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
 
       const mailOptions: IEmailOptions = {
         to: [params.to],
@@ -812,7 +851,8 @@ export class ChatSdkService implements OnModuleDestroy {
         html: params.html,
         text: params.text,
         alternatives: params.alternatives,
-        from: params.from,
+        from: effectiveFrom,
+        ...(replyToHeader ? { replyTo: replyToHeader } : {}),
         senderName: config.credentials.senderName || undefined,
         headers: {
           ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
@@ -982,6 +1022,7 @@ export class ChatSdkService implements OnModuleDestroy {
           {
             actionId: event.actionId,
             value: event.value,
+            sourceMessageId: event.messageId,
           },
           event.user.userId
         );

@@ -55,4 +55,6 @@ export interface ICredentials {
   tenantId?: string;
   signingSecret?: string;
   outboundIntegrationId?: string;
+  useFromAddressOverride?: boolean;
+  fromAddressOverride?: string;
 }

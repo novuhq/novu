@@ -13,6 +13,20 @@ export interface BrandData {
 
 const LOG_CONTEXT = 'BrandRetrievalService';
 
+// context.dev returns HTTP 400 with this message when the submitted domain is
+// not present in its database. This is an expected outcome for long-tail signup
+// domains — not an error worth paging on — so we treat it like an empty result.
+const BRAND_NOT_PRESENT_MARKER = 'domain branding not present';
+
+function isBrandNotPresentError(error: unknown): boolean {
+  if (!(error instanceof ContextDev.APIError)) return false;
+  if (error.status !== 400) return false;
+
+  const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+
+  return message.includes(BRAND_NOT_PRESENT_MARKER);
+}
+
 const LOGO_TYPES = new Set<IBrandLogo['type']>(['icon', 'logo']);
 const LOGO_MODES = new Set<IBrandLogo['mode']>(['light', 'dark', 'has_opaque_background']);
 
@@ -55,7 +69,19 @@ export class BrandRetrievalService {
       return {};
     }
 
-    const response = await this.client.brand.retrieve({ domain });
+    let response;
+    try {
+      response = await this.client.brand.retrieve({ domain });
+    } catch (error) {
+      if (isBrandNotPresentError(error)) {
+        this.logger.info({ domain }, 'Brand enrichment unavailable for domain — not in provider database');
+
+        return {};
+      }
+
+      throw error;
+    }
+
     const brand = response?.brand;
 
     if (!brand) return {};

@@ -115,6 +115,8 @@ export interface ReplyContent {
 export interface AgentAction {
   actionId: string;
   value?: string;
+  /** Platform-native message ID of the message containing the clicked button/action. */
+  sourceMessageId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,11 +144,7 @@ export interface ReplyHandle {
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-export interface AgentContext {
-  readonly event: string;
-  readonly action: AgentAction | null;
-  readonly message: AgentMessage | null;
-  readonly reaction: AgentReaction | null;
+interface AgentContextBase {
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly history: AgentHistoryEntry[];
@@ -207,11 +205,32 @@ export interface AgentContext {
   addReaction(messageId: string, emojiName: Emoji): void;
 }
 
+export interface AgentMessageContext extends AgentContextBase {
+  readonly event: 'onMessage';
+  readonly message: AgentMessage;
+}
+
+export interface AgentActionContext extends AgentContextBase {
+  readonly event: 'onAction';
+  readonly action: AgentAction;
+}
+
+export interface AgentReactionContext extends AgentContextBase {
+  readonly event: 'onReaction';
+  readonly reaction: AgentReaction;
+}
+
+export interface AgentResolveContext extends AgentContextBase {
+  readonly event: 'onResolve';
+}
+
+export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+
 export interface AgentHandlers {
-  onMessage: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onReaction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onAction?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
-  onResolve?: (ctx: AgentContext) => Awaitable<MessageContent | void>;
+  onMessage: (ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onReaction?: (ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onAction?: (ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {

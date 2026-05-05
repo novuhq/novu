@@ -4,7 +4,7 @@ import { CheckCircle2, Loader } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
-import { RiArrowRightUpLine } from 'react-icons/ri';
+import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
@@ -20,6 +20,43 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import type { StepStatus } from './setup-guide-step-utils';
+
+export type SetupMode = 'quick' | 'manual';
+
+export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
+  return (
+    <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">
+      <button
+        type="button"
+        aria-pressed={mode === 'quick'}
+        onClick={() => onChange('quick')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'quick'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiFlashlightLine className="size-3.5" />
+        Quick Setup
+      </button>
+      <button
+        type="button"
+        aria-pressed={mode === 'manual'}
+        onClick={() => onChange('manual')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'manual'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiListCheck2 className="size-3.5" />
+        Manual Setup
+      </button>
+    </div>
+  );
+}
 
 function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
   if (status === 'completed') {
@@ -52,7 +89,7 @@ export function SetupStep({
   index: number;
   status: StepStatus;
   sectionLabel?: string;
-  title: string;
+  title: ReactNode;
   description: ReactNode;
   rightContent?: ReactNode;
   extraContent?: ReactNode;
@@ -63,7 +100,7 @@ export function SetupStep({
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex gap-5">
+      <div className="flex gap-20">
         <div className="flex min-w-0 max-w-[400px] flex-1 flex-col">
           <div className="flex flex-col gap-2">
             {sectionLabel && (
@@ -76,7 +113,7 @@ export function SetupStep({
           </div>
           {extraContent}
         </div>
-        {rightContent && <div className="flex min-h-0 min-w-0 shrink-0 flex-col items-start">{rightContent}</div>}
+        {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
       </div>
       {fullWidthContent}
     </div>
@@ -253,7 +290,7 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className="flex flex-col gap-2 py-4 pl-8">
+      <div className="flex flex-col gap-2 py-4 pl-6">
         <div className="flex flex-col gap-3">
           {connectedAt ? (
             <div className="flex items-center gap-1">

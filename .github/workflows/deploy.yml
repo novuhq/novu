@@ -530,11 +530,8 @@ jobs:
             -d '{"url": "https://eu.dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
 
   linear_release_cloud:
-    # Scheduled Linear pipeline: sync issues for this commit, then either move the
-    # release to the staging stage (staging deploys) or complete it (production).
-    # In Linear: set the Cloud pipeline to "Scheduled", add a stage named exactly
-    # "staging" (or change the `stage` input below to match your Linear stage name).
-    # Pass the same commit SHA as `version` from staging → prod for one release.
+    # Cloud uses two continuous Linear pipelines: staging and production.
+    # Each successful deploy syncs a completed release to the matching pipeline.
     name: Linear Release (Cloud)
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
@@ -554,27 +551,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sync release to Linear
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
-        with:
-          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
-          version: ${{ github.sha }}
-
-      - name: Update Linear stage — staging
+      - name: Sync staging release to Linear
         if: |
           github.event.inputs.environment == 'staging' ||
           github.event.inputs.environment == 'staging-sg'
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
-          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
-          command: update
-          stage: staging
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_STAGING }}
           version: ${{ github.sha }}
 
-      - name: Complete Linear release — production
+      - name: Sync production release to Linear
         if: contains(github.event.inputs.environment, 'production')
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
-          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD }}
-          command: complete
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_PROD }}
           version: ${{ github.sha }}
