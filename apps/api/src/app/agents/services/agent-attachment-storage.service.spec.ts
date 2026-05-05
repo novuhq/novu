@@ -143,7 +143,7 @@ describe('AgentAttachmentStorage', () => {
     expect(logger.warn.calledWithMatch({ size: 20 * mb, aggregateCap: 50 * mb })).to.equal(true);
   });
 
-  it('should skip fetchData attachments without size metadata before downloading', async () => {
+  it('should upload fetchData attachments without size metadata', async () => {
     const storageService = makeStorageService();
     const logger = makeLogger();
     const service = new AgentAttachmentStorage(storageService, logger as any);
@@ -152,10 +152,16 @@ describe('AgentAttachmentStorage', () => {
 
     const result = await service.storeInbound(attachments, ctx);
 
-    expect(result).to.have.length(0);
-    expect(fetchData.called).to.equal(false);
-    expect(storageService.uploadFile.called).to.equal(false);
-    expect(logger.warn.called).to.equal(true);
+    expect(result).to.have.length(1);
+    expect(fetchData.calledOnce).to.equal(true);
+    expect(storageService.uploadFile.calledOnce).to.equal(true);
+    expect(result[0]).to.include({
+      type: 'file',
+      name: 'unknown.bin',
+      size: 1,
+      url: 'https://signed/read',
+    });
+    expect(result[0].mimeType).to.equal(undefined);
   });
 
   it('should skip blob attachments when trusted size metadata is missing', async () => {
@@ -252,6 +258,28 @@ describe('AgentAttachmentStorage', () => {
 
     expect(result).to.have.length(0);
     expect(storageService.uploadFile.called).to.equal(false);
+  });
+
+  it('should skip fetchData attachment without size metadata when fetched data exceeds size limit', async () => {
+    const storageService = {
+      uploadFile: sinon.stub(),
+      getReadSignedUrl: sinon.stub(),
+      fileExists: sinon.stub(),
+    } as unknown as StorageService;
+
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const attachment: Attachment = {
+      type: 'file',
+      fetchData: async () => Buffer.alloc(26 * 1024 * 1024),
+    };
+
+    const result = await service.storeInbound([attachment], ctx);
+
+    expect(result).to.have.length(0);
+    expect(storageService.uploadFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
   });
 
   it('should signRead when object exists', async () => {

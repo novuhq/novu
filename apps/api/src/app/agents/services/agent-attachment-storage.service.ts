@@ -45,11 +45,7 @@ function buildStorageKey(params: {
 
 async function bufferFromAttachment(attachment: Attachment): Promise<Buffer | null> {
   if (!attachment.data) {
-    if (attachment.size == null) {
-      throw new Error('Inbound attachment size is required before download');
-    }
-
-    if (attachment.size > MAX_ATTACHMENT_BYTES) {
+    if (attachment.size != null && attachment.size > MAX_ATTACHMENT_BYTES) {
       throw new Error('Inbound attachment exceeds size limit');
     }
 

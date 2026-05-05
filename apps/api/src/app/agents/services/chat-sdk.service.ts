@@ -24,10 +24,32 @@ import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
+function getErrorResponseBody(err: unknown): unknown {
+  if (!err || typeof err !== 'object') {
+    return undefined;
+  }
+
+  return (err as { response?: { body?: unknown } }).response?.body;
+}
+
+function getDeliveryErrorDetail(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') {
+    return undefined;
+  }
+
+  const responseBody = body as { errors?: Array<{ message?: unknown }>; message?: unknown };
+  const firstErrorMessage = responseBody.errors?.[0]?.message;
+  if (typeof firstErrorMessage === 'string') {
+    return firstErrorMessage;
+  }
+
+  return typeof responseBody.message === 'string' ? responseBody.message : undefined;
+}
+
 function toDeliveryError(err: unknown): never {
   const base = err instanceof Error ? err.message : String(err);
-  const body = (err as any)?.response?.body;
-  const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
+  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
+
   throw new BadGatewayException({
     error: 'delivery_failed',
     message: detail ? `${base}: ${detail}` : base,
@@ -68,8 +90,12 @@ const MAX_AGGREGATE_FILE_BYTES = 50 * 1024 * 1024;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const FILE_FETCH_TIMEOUT_MS = 10_000;
 const MAX_FILE_FETCH_REDIRECTS = 3;
-const SUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.SLACK, AgentPlatformEnum.TEAMS]);
-const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL, AgentPlatformEnum.WHATSAPP]);
+const SUPPORTED_FILE_PLATFORMS = new Set<string>([
+  AgentPlatformEnum.SLACK,
+  AgentPlatformEnum.TEAMS,
+  AgentPlatformEnum.WHATSAPP,
+]);
+const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL]);
 // EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
 // alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
 // Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.

@@ -368,32 +368,26 @@ describe('ChatSdkService', () => {
       });
     });
 
-    it('should drop files with a warning for whatsapp', async () => {
-      const logger = {
-        warn: sinon.stub(),
-        error: sinon.stub(),
-        debug: sinon.stub(),
-        info: sinon.stub(),
-        setContext: sinon.stub(),
-      };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
-
+    it('should convert whatsapp file data to a Buffer before passing content to the chat SDK', async () => {
+      const service = makeService();
       const result = await (service as any).prepareContentForDelivery(
         {
           markdown: 'Here is the file',
-          files: [{ filename: 'sample.txt', data: Buffer.from('hello').toString('base64') }],
+          files: [
+            {
+              filename: 'sample.txt',
+              mimeType: 'text/plain',
+              data: Buffer.from('hello').toString('base64'),
+            },
+          ],
         },
-        'whatsapp',
-        'agent-id'
+        'whatsapp'
       );
 
-      expect(result.files).to.equal(undefined);
-      expect(logger.warn.calledOnce).to.equal(true);
-      expect(logger.warn.firstCall.args[0]).to.deep.include({
-        agentId: 'agent-id',
-        platform: 'whatsapp',
-        droppedCount: 1,
-      });
+      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
+      expect(result.files[0].data.toString()).to.equal('hello');
+      expect(result.files[0].filename).to.equal('sample.txt');
+      expect(result.files[0].mimeType).to.equal('text/plain');
     });
   });
 
