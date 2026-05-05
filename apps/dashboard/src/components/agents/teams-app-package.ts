@@ -1,5 +1,5 @@
 /**
- * Generates a Teams app package (.zip) in the browser — no server or dependencies needed.
+ * Generates a Teams app package (.zip) in the browser without a server or extra dependencies.
  *
  * Contains: manifest.json (pre-filled), color.png (192x192), outline.png (32x32).
  * Uses store-only zip (no compression) since PNGs are already compressed and the JSON is tiny.

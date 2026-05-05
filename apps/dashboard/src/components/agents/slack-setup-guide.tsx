@@ -53,7 +53,7 @@ function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: strin
   return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
-/** Matches API `CHAT_OAUTH_CALLBACK_PATH` — Slack OAuth redirect after connect. */
+/** Same as API `CHAT_OAUTH_CALLBACK_PATH`: Slack OAuth redirect after connect. */
 function buildChatOAuthCallbackUrl(): string {
   return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
@@ -212,28 +212,36 @@ function QuickSetupStep({
   return (
     <div className="flex flex-col gap-3">
       {novuProviderContent}
-      <div className="flex items-center gap-2">
-        <Input
-          type="password"
-          placeholder="xoxe.xoxp-1-..."
-          value={configToken}
-          onChange={(e) => setConfigToken(e.target.value)}
-          className="font-mono text-xs"
-        />
-        <SetupButton
-          onClick={() => mutation.mutate()}
-          disabled={!configToken.trim() || mutation.isPending}
-          leadingIcon={
-            mutation.isPending ? (
+      <Input
+        size="xs"
+        type="password"
+        placeholder="xoxe.xoxp-1-..."
+        value={configToken}
+        onChange={(e) => setConfigToken(e.target.value)}
+        className="font-mono"
+        leadingIcon={RiKey2Line}
+        trailingNode={
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            disabled={!configToken.trim() || mutation.isPending}
+            className={cn(
+              'flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5',
+              'text-text-sub text-label-xs font-medium',
+              'transition duration-200 ease-out',
+              'hover:bg-bg-weak hover:text-text-strong',
+              'disabled:pointer-events-none disabled:text-text-disabled'
+            )}
+          >
+            {mutation.isPending ? (
               <RiLoader4Line className="size-3.5 animate-spin" />
             ) : (
               <RiFlashlightLine className="size-3.5" />
-            )
-          }
-        >
-          {mutation.isPending ? 'Creating…' : 'Create app'}
-        </SetupButton>
-      </div>
+            )}
+            {mutation.isPending ? 'Creating…' : 'Create app'}
+          </button>
+        }
+      />
     </div>
   );
 }
@@ -302,7 +310,7 @@ export function SlackSetupGuide({
 
   const firstIncompleteStep = useMemo(() => {
     if (isSlackWorkspaceConnected) {
-      return activeSetupMode === 'quick' ? base + 2 : base + 3;
+      return activeSetupMode === 'quick' ? base + 3 : base + 3;
     }
 
     if (!isCredentialsSaved) {
@@ -358,7 +366,7 @@ export function SlackSetupGuide({
         description={
           <span>
             {
-              'Generate a Slack App Configuration Token on the Slack API page (under Your App Configuration Tokens → Generate Token). Paste it below — it will be used once to create your app and then discarded.'
+              'Generate a Slack App Configuration Token on the Slack API page (under Your App Configuration Tokens → Generate Token). Paste it below. It is used once to create your app and then discarded.'
             }
           </span>
         }
@@ -406,27 +414,20 @@ export function SlackSetupGuide({
             connectButton
           )
         }
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Tip:"
-            description={
-              <>
-                Novu provides a{' '}
-                <code className="font-code text-[12px] tracking-[-0.24px]">{'<SlackConnectButton />'}</code>
-                {' component, to let your users easily connect this agent to their Slack workspace. '}
-                <a
-                  href="https://docs.novu.co"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-text-sub underline"
-                >
-                  Read docs
-                </a>
-              </>
-            }
-          />
+      />
+
+      <SetupStep
+        index={base + 2}
+        status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        title="Send your first message"
+        description={
+          <span>
+            {'Open a channel in your Slack workspace, type '}
+            <code className="bg-bg-weak rounded px-1 py-0.5 font-code text-xs">@</code>
+            {' and select '}
+            <code className="bg-bg-weak rounded px-1 py-0.5 font-code text-xs">{agent.name}</code>
+            {' from the suggestions, then send a message. You should see the agent respond.'}
+          </span>
         }
       />
     </>
@@ -458,7 +459,7 @@ export function SlackSetupGuide({
         description={
           <span>
             {
-              'Paste the App Credentials block from your Slack app (You can also CMD+A and CMD+C the whole page!) — the App ID, Client ID, Client Secret and Signing Secret are filled automatically in the configure tab.'
+              'Paste the App Credentials block from your Slack app (you can also CMD+A and CMD+C the whole page!). The App ID, Client ID, Client Secret and Signing Secret are filled automatically in the configure tab.'
             }
           </span>
         }

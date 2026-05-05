@@ -88,7 +88,7 @@ function buildManifest(appId: string, agentName: string): Record<string, unknown
       privacyUrl: 'https://your-domain.com/privacy',
       termsOfUseUrl: 'https://your-domain.com/terms',
     },
-    name: { short: name, full: `${name} — powered by Novu` },
+    name: { short: name, full: `${name}, powered by Novu` },
     description: { short: `${name} bot`, full: 'A conversational agent powered by Novu.' },
     icons: { outline: 'outline.png', color: 'color.png' },
     accentColor: '#FFFFFF',
@@ -329,7 +329,7 @@ function CheckpointRow({ label, status }: { label: string; status: HealthCheckSt
 
 type HealthCheckViewProps = {
   integrationId: string;
-  /** True while the Azure setup popup is still open — polling is suspended until credentials are saved */
+  /** True while the Azure setup popup is still open, polling is suspended until credentials are saved */
   waitingForSetup: boolean;
   onReady: () => void;
   compact?: boolean;
@@ -363,7 +363,7 @@ function HealthCheckView({ integrationId, waitingForSetup, onReady, compact = fa
         return;
       }
     } catch {
-      // ignore transient errors — keep polling
+      // ignore transient errors and keep polling
     }
   }, [currentEnvironment, integrationId, waitingForSetup, stopPolling]);
 
@@ -481,7 +481,7 @@ function ConnectAndLinkSection({
           setNeedsLinkUser(true);
         }
       } catch {
-        // ignore — will be surfaced after the next connect attempt
+        // ignore, surfaced after the next connect attempt
       }
     })();
 
@@ -618,7 +618,7 @@ function useManualHealthPoll(integrationId: string, enabled: boolean): ManualHea
         stopPolling();
       }
     } catch {
-      // ignore transient errors — keep polling
+      // ignore transient errors and keep polling
     }
   }, [currentEnvironment, enabled, integrationId, stopPolling]);
 
@@ -667,7 +667,7 @@ export function TeamsSetupGuide({
    * Whether the health-check gate has been cleared.
    * Set to `true` once the health-check poll confirms Teams readiness.
    * On page load with existing credentials we run a one-time check; if it passes immediately
-   * we skip the polling UI — if not, we show the full HealthCheckView.
+   * we skip the polling UI, if not, we show the full HealthCheckView.
    */
   const [healthCheckCleared, setHealthCheckCleared] = useState(false);
   /**
@@ -862,7 +862,7 @@ export function TeamsSetupGuide({
     if (healthCheckCleared) return base + 2; // check confirmed all resources ready
     if (showHealthCheck) return base + 1; // health-check actively running (polling)
 
-    return base + 1; // has credentials but neither cleared nor actively showing — shouldn't happen in practice
+    return base + 1; // has credentials but neither cleared nor actively showing; uncommon edge case
   }, [
     base,
     hasCredentials,
@@ -890,7 +890,7 @@ export function TeamsSetupGuide({
 
   const quickSteps = (
     <>
-      {/* Step 1: Single "Set Up Azure" button — creates App Registration + Bot Service */}
+      {/* Step 1: Single "Set Up Azure" button (creates App Registration + Bot Service) */}
       <SetupStep
         index={base}
         status={deriveStepStatus(base, quickFirstIncomplete)}
@@ -909,7 +909,7 @@ export function TeamsSetupGuide({
               {', deploy an '}
               <strong>Azure Bot Service</strong>
               {
-                ", and enable the Teams channel — all in one click. Novu will also attempt to upload the Teams app to your org's app catalog automatically."
+                ", and enable the Teams channel in one click. Novu will also attempt to upload the Teams app to your org's app catalog automatically."
               }
             </span>
           )
@@ -948,7 +948,7 @@ export function TeamsSetupGuide({
               ) : (
                 <span>
                   {
-                    'Creates the App Registration, Bot Service resource, enables the Teams channel, and grants the required Graph permissions — no manual Azure Portal steps needed.'
+                    'Creates the App Registration, Bot Service resource, enables the Teams channel, and grants the required Graph permissions without manual Azure Portal steps.'
                   }
                 </span>
               )
@@ -1135,11 +1135,11 @@ export function TeamsSetupGuide({
               Click <strong>Register</strong> at the bottom.
             </li>
             <li>
-              On the <strong>Overview</strong> page that opens, copy the <strong>Application (client) ID</strong> — you
+              On the <strong>Overview</strong> page that opens, copy the <strong>Application (client) ID</strong>. You
               will need it in Step 3.
             </li>
             <li>
-              On the same page, copy the <strong>Directory (tenant) ID</strong> — you will need it in Step 3.
+              On the same page, copy the <strong>Directory (tenant) ID</strong>. You will need it in Step 3.
             </li>
             <li>
               In the left sidebar, scroll to the <strong>Manage</strong> section and click{' '}
@@ -1150,7 +1150,7 @@ export function TeamsSetupGuide({
               expiry period, then click <strong>Add</strong>.
             </li>
             <li>
-              In the <strong>Value</strong> column of the new secret, click the copy icon immediately — this value is
+              In the <strong>Value</strong> column of the new secret, click the copy icon immediately. This value is
               only shown once and will be hidden after you navigate away. Save it for Step 3.
             </li>
           </ol>
@@ -1216,16 +1216,16 @@ export function TeamsSetupGuide({
                   <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForTeam.All</code>
                   <span className="text-text-soft">
                     {' '}
-                    — allows the bot to install itself into Teams channels automatically. Without it, users must add the
-                    bot to each channel manually.
+                    Lets the bot install itself into Teams channels automatically. Without it, users must add the bot to
+                    each channel manually.
                   </span>
                 </li>
                 <li>
                   <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForUser.All</code>
                   <span className="text-text-soft">
                     {' '}
-                    — allows the bot to install itself for individual users automatically. Without it, users must
-                    manually install the bot before they can receive direct messages.
+                    Lets the bot install itself for individual users automatically. Without it, users must manually
+                    install the bot before they can receive direct messages.
                   </span>
                 </li>
               </ul>
@@ -1234,7 +1234,7 @@ export function TeamsSetupGuide({
               Back on the API permissions page, click <strong>Grant admin consent for [your organization]</strong> and
               confirm when prompted.{' '}
               <span className="text-text-soft">
-                (Requires Global Admin or Privileged Role Administrator rights — ask your IT admin if you don't see this
+                (Requires Global Admin or Privileged Role Administrator rights. Ask your IT admin if you don't see this
                 button.)
               </span>
             </li>
@@ -1295,7 +1295,7 @@ export function TeamsSetupGuide({
           <div className="flex flex-col gap-3">
             <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
               <li>
-                Click <strong>Deploy to Azure</strong> — this opens the Azure Portal with a pre-filled deployment
+                Click <strong>Deploy to Azure</strong>. This opens the Azure Portal with a pre-filled deployment
                 template.
               </li>
               <li>
@@ -1401,7 +1401,7 @@ export function TeamsSetupGuide({
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <p className="text-text-strong text-label-xs font-medium">
-                Option A — Organization-wide (recommended for production)
+                Option A: Organization-wide (recommended for production)
               </p>
               <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
                 <li>
@@ -1438,7 +1438,7 @@ export function TeamsSetupGuide({
             </div>
             <div className="flex flex-col gap-2">
               <p className="text-text-strong text-label-xs font-medium">
-                Option B — Personal sideload (for testing only)
+                Option B: Personal sideload (for testing only)
               </p>
               <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
                 <li>Open Microsoft Teams.</li>
