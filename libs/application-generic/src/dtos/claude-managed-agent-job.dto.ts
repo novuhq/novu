@@ -23,6 +23,8 @@ export interface IClaudeManagedAgentDataDto {
   progressTasks?: AgentProgressTask[];
   placeholderMessageId?: string;
   placeholderPlatformThreadId?: string;
+  /** Subscriber id of the human who triggered the job, if known. */
+  subscriberId?: string;
 }
 
 export interface IClaudeManagedAgentJobDto {

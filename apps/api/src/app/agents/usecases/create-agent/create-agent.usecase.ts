@@ -6,6 +6,7 @@ import { trackAgentCreated } from '../../agent-analytics';
 import type { AgentResponseDto } from '../../dtos';
 import { type ManagedRuntimeSetupDto } from '../../dtos/agent-runtime.dto';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
+import { catalogEntryToAgentMcpServer, isMcpCatalogId } from '../../runtimes/mcp-catalog';
 import { AnthropicAgentCredentialsService } from '../../services/anthropic-agent-credentials.service';
 import { AnthropicProvisioningService } from '../../services/anthropic-provisioning.service';
 import { CreateAgentCommand } from './create-agent.command';
@@ -157,10 +158,35 @@ export class CreateAgent {
         agentId: params.setup.agentId,
         environmentId: params.setup.environmentId,
         vaultIds: params.setup.vaultIds,
+        mcpServers: this.hydrateMcpServers(params.setup.mcpServers),
       };
     }
 
     return this.provisionManagedRuntime(params.command, params.setup);
+  }
+
+  private hydrateMcpServers(selections?: ManagedRuntimeSetupDto['mcpServers']) {
+    if (!selections?.length) {
+      return undefined;
+    }
+
+    const seen = new Set<string>();
+    const hydrated: ReturnType<typeof catalogEntryToAgentMcpServer>[] = [];
+
+    for (const selection of selections) {
+      if (!isMcpCatalogId(selection.id)) {
+        throw new BadRequestException(`Unknown MCP catalog id "${selection.id}".`);
+      }
+
+      if (seen.has(selection.id)) {
+        continue;
+      }
+
+      seen.add(selection.id);
+      hydrated.push(catalogEntryToAgentMcpServer(selection.id));
+    }
+
+    return hydrated;
   }
 
   private async provisionManagedRuntime(
@@ -189,18 +215,22 @@ export class CreateAgent {
       apiKey,
     });
 
+    const mcpServers = this.hydrateMcpServers(setup.mcpServers);
+
     const { agentId } = await this.provisioningService.createAgent({
       apiKey,
       name: command.name,
       description: command.description,
       system: setup.system,
       tools: setup.tools,
+      mcpServers,
     });
 
     return {
       provider: 'anthropic',
       agentId,
       environmentId: anthropicEnvironmentId,
+      mcpServers,
     };
   }
 

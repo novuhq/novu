@@ -32,6 +32,17 @@ const agentSchema = new Schema<AgentDBModel>(
       agentId: Schema.Types.String,
       environmentId: Schema.Types.String,
       vaultIds: [Schema.Types.String],
+      mcpServers: [
+        {
+          _id: false,
+          name: Schema.Types.String,
+          displayName: Schema.Types.String,
+          url: Schema.Types.String,
+          authType: Schema.Types.String,
+          scope: Schema.Types.String,
+          oauthProvider: Schema.Types.String,
+        },
+      ],
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,

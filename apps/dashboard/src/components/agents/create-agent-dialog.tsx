@@ -1,5 +1,5 @@
 import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { FormEvent, ReactNode } from 'react';
 import { useId, useMemo, useState } from 'react';
 import {
@@ -18,6 +18,13 @@ import {
   type CreateAgentBody,
   getClaudeAgentCredentials,
   getClaudeAgentCredentialsQueryKey,
+  getMcpCatalogQueryKey,
+  getSharedMcpCredentialsQueryKey,
+  listMcpCatalog,
+  listSharedMcpCredentials,
+  type McpCatalogEntry,
+  type SharedMcpCredentialStatus,
+  setSharedMcpCredential,
 } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -26,6 +33,7 @@ import { Hint, HintIcon } from '@/components/primitives/hint';
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -177,6 +185,160 @@ function SegmentedToggle({
   );
 }
 
+function McpAuthBadge({ entry }: { entry: McpCatalogEntry }) {
+  if (entry.authType === 'oauth') {
+    return (
+      <span className="text-text-soft border-stroke-soft bg-bg-weak rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+        OAuth · per user
+      </span>
+    );
+  }
+
+  if (entry.authType === 'static_bearer') {
+    return (
+      <span className="text-text-soft border-stroke-soft bg-bg-weak rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+        Org token
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-text-soft border-stroke-soft bg-bg-weak rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+      No auth
+    </span>
+  );
+}
+
+function SharedTokenInput({ mcpServerName }: { mcpServerName: string }) {
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+  const [token, setToken] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      setSharedMcpCredential(requireEnvironment(currentEnvironment, 'No environment selected'), {
+        mcpServerName,
+        token: token.trim(),
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: getSharedMcpCredentialsQueryKey(currentEnvironment?._id) });
+      setToken('');
+      setOpen(false);
+      showSuccessToast('Shared MCP credential saved.', 'External tools');
+    },
+    onError: () => {
+      showErrorToast('Could not save the shared credential.', 'External tools');
+    },
+  });
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="text-text-soft hover:text-text-strong cursor-pointer text-label-xs underline-offset-2 hover:underline"
+        onClick={() => setOpen(true)}
+      >
+        Set token
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex w-full items-center gap-1">
+      <SecretInput size="2xs" value={token} onChange={setToken} placeholder="Static bearer token" />
+      <Button
+        type="button"
+        size="xs"
+        variant="secondary"
+        mode="outline"
+        disabled={!token.trim()}
+        isLoading={mutation.isPending}
+        onClick={() => mutation.mutate()}
+      >
+        Save
+      </Button>
+    </div>
+  );
+}
+
+function SharedMcpStatus({
+  mcpServerName,
+  credentials,
+}: {
+  mcpServerName: string;
+  credentials: SharedMcpCredentialStatus[];
+}) {
+  const status = credentials.find((c) => c.mcpServerName === mcpServerName);
+  const configured = status?.configured ?? false;
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <span
+        className={cn(
+          'rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+          configured ? 'bg-success-lighter text-success-base' : 'bg-bg-weak text-text-soft'
+        )}
+      >
+        {configured ? 'Configured' : 'Not set'}
+      </span>
+      <SharedTokenInput mcpServerName={mcpServerName} />
+    </div>
+  );
+}
+
+function McpServerPickerSection({
+  formId,
+  catalog,
+  selectedIds,
+  onToggle,
+  sharedCredentials,
+}: {
+  formId: string;
+  catalog: McpCatalogEntry[];
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+  sharedCredentials: SharedMcpCredentialStatus[];
+}) {
+  return (
+    <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
+      <div className="flex items-center justify-between px-2 py-1.5">
+        <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
+          External tools (MCP)
+        </span>
+        <span className="text-text-soft text-paragraph-xs leading-4">Optional — connect later or now</span>
+      </div>
+      <div className="bg-bg-white shadow-box-xs flex flex-col overflow-hidden rounded-md">
+        <div className="flex flex-col divide-y divide-stroke-soft">
+          {catalog.map((entry) => {
+            const isSelected = selectedIds.has(entry.name);
+            const inputId = `${formId}-mcp-${entry.name}`;
+            const isSharedBearer = entry.scope === 'shared' && entry.authType === 'static_bearer';
+
+            return (
+              <div key={entry.name} className="flex items-start justify-between gap-3 px-3 py-2">
+                <label htmlFor={inputId} className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-text-strong text-label-xs font-medium">{entry.displayName}</span>
+                    <McpAuthBadge entry={entry} />
+                  </div>
+                  <span className="text-text-soft text-paragraph-xs leading-4">{entry.description}</span>
+                </label>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <Switch id={inputId} checked={isSelected} onCheckedChange={() => onToggle(entry.name)} />
+                  {isSelected && isSharedBearer ? (
+                    <SharedMcpStatus mcpServerName={entry.name} credentials={sharedCredentials} />
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PromptTemplateChips({
   onSelect,
   activeTemplateId,
@@ -259,12 +421,28 @@ export function CreateAgentDialog({
   const [system, setSystem] = useState('');
   const [activeTemplateId, setActiveTemplateId] = useState<string | undefined>();
   const [disabledTools, setDisabledTools] = useState<Set<AgentToolName>>(() => new Set());
+  const [selectedMcpIds, setSelectedMcpIds] = useState<Set<string>>(() => new Set());
   const [claudeAgentId, setClaudeAgentId] = useState('');
   const [claudeEnvironmentId, setClaudeEnvironmentId] = useState('');
   const [vaultIdsInput, setVaultIdsInput] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   // Once the user edits the identifier manually, stop auto-syncing it from the name.
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
+
+  const mcpCatalogQuery = useQuery({
+    queryKey: getMcpCatalogQueryKey(),
+    queryFn: () => listMcpCatalog(requireEnvironment(currentEnvironment, 'No environment selected')),
+    enabled: Boolean(currentEnvironment) && isClaudeManagedAgentsEnabled && open,
+    staleTime: Infinity,
+  });
+  const mcpCatalog = mcpCatalogQuery.data ?? [];
+
+  const sharedMcpCredentialsQuery = useQuery({
+    queryKey: getSharedMcpCredentialsQueryKey(currentEnvironment?._id),
+    queryFn: () => listSharedMcpCredentials(requireEnvironment(currentEnvironment, 'No environment selected')),
+    enabled: Boolean(currentEnvironment) && isClaudeManagedAgentsEnabled && open,
+  });
+  const sharedMcpCredentials = sharedMcpCredentialsQuery.data ?? [];
 
   const isClaudeCreateMode = runtime === 'claude_managed' && setupMode === 'create';
   const showApiKeyField = !hasSavedApiKey || forceApiKeyEntry;
@@ -283,6 +461,7 @@ export function CreateAgentDialog({
     setSystem('');
     setActiveTemplateId(undefined);
     setDisabledTools(new Set());
+    setSelectedMcpIds(new Set());
     setClaudeAgentId('');
     setClaudeEnvironmentId('');
     setVaultIdsInput('');
@@ -305,6 +484,19 @@ export function CreateAgentDialog({
         next.delete(tool);
       } else {
         next.add(tool);
+      }
+
+      return next;
+    });
+  };
+
+  const toggleMcp = (id: string) => {
+    setSelectedMcpIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
       }
 
       return next;
@@ -402,6 +594,8 @@ export function CreateAgentDialog({
     }
 
     if (runtime === 'claude_managed') {
+      const mcpServerSelections = Array.from(selectedMcpIds).map((id) => ({ id }));
+
       if (setupMode === 'create') {
         const toolToggles = Array.from(disabledTools).map((tool) => ({ name: tool, enabled: false }));
         body.managedRuntime = {
@@ -409,6 +603,7 @@ export function CreateAgentDialog({
           system: trimmedSystem,
           ...(trimmedApiKey ? { apiKey: trimmedApiKey } : {}),
           ...(toolToggles.length ? { tools: toolToggles } : {}),
+          ...(mcpServerSelections.length ? { mcpServers: mcpServerSelections } : {}),
         };
       } else {
         const vaultIds = vaultIdsInput
@@ -422,6 +617,7 @@ export function CreateAgentDialog({
           agentId: claudeAgentId.trim(),
           environmentId: claudeEnvironmentId.trim(),
           ...(vaultIds.length ? { vaultIds } : {}),
+          ...(mcpServerSelections.length ? { mcpServers: mcpServerSelections } : {}),
         };
       }
     }
@@ -771,6 +967,16 @@ export function CreateAgentDialog({
                     </div>
                   </div>
                 </div>
+              ) : null}
+
+              {isClaudeManagedAgentsEnabled && runtime === 'claude_managed' && mcpCatalog.length > 0 ? (
+                <McpServerPickerSection
+                  formId={formId}
+                  catalog={mcpCatalog}
+                  selectedIds={selectedMcpIds}
+                  onToggle={toggleMcp}
+                  sharedCredentials={sharedMcpCredentials}
+                />
               ) : null}
             </div>
           </div>

@@ -34,6 +34,8 @@ export interface ResolvedAgentConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
+  /** Novu agent _id (mongo). Distinct from the Anthropic-side agent id. */
+  agentId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
   integrationId: string;
@@ -171,6 +173,7 @@ export class AgentConfigResolver {
       connectionAccessToken,
       environmentId,
       organizationId,
+      agentId: agent._id,
       agentIdentifier: agent.identifier,
       integrationIdentifier,
       integrationId: integration._id,

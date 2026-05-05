@@ -19,11 +19,14 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto, AgentStatusPayloadDto } from './dtos/agent-reply-payload.dto';
+import { IssueMcpConnectLinkRequestDto, IssueMcpConnectLinkResponseDto } from './dtos/issue-mcp-connect-link.dto';
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { IssueMcpConnectLinkCommand } from './usecases/issue-mcp-connect-link/issue-mcp-connect-link.command';
+import { IssueMcpConnectLink } from './usecases/issue-mcp-connect-link/issue-mcp-connect-link.usecase';
 import { UpdateAgentStatusCommand } from './usecases/update-agent-status/update-agent-status.command';
 import { UpdateAgentStatus } from './usecases/update-agent-status/update-agent-status.usecase';
 
@@ -34,7 +37,8 @@ export class AgentsWebhookController {
   constructor(
     private chatSdkService: ChatSdkService,
     private handleAgentReplyUsecase: HandleAgentReply,
-    private updateAgentStatusUsecase: UpdateAgentStatus
+    private updateAgentStatusUsecase: UpdateAgentStatus,
+    private issueMcpConnectLinkUsecase: IssueMcpConnectLink
   ) {}
 
   @Post('/:agentId/reply')
@@ -87,6 +91,28 @@ export class AgentsWebhookController {
         progressRenderer: body.progressRenderer,
         progressTasks: body.progressTasks,
         retryAfterMs: body.retryAfterMs,
+      })
+    );
+  }
+
+  @Post('/:agentId/mcp/connect-link')
+  @HttpCode(HttpStatus.OK)
+  @RequireAuthentication()
+  @ExternalApiAccessible()
+  async issueMcpConnectLink(
+    @UserSession() user: UserSessionData,
+    @Param('agentId') agentId: string,
+    @Body() body: IssueMcpConnectLinkRequestDto
+  ): Promise<IssueMcpConnectLinkResponseDto> {
+    return this.issueMcpConnectLinkUsecase.execute(
+      IssueMcpConnectLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: agentId,
+        conversationId: body.conversationId,
+        subscriberId: body.subscriberId,
+        mcpServerName: body.mcpServerName,
       })
     );
   }

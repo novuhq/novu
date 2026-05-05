@@ -12,6 +12,12 @@ const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 const CLAUDE_AGENT_CREDENTIALS_QUERY_KEY = 'fetchClaudeAgentCredentials' as const;
 
+const MCP_CATALOG_QUERY_KEY = 'fetchMcpCatalog' as const;
+
+const SHARED_MCP_CREDENTIALS_QUERY_KEY = 'fetchSharedMcpCredentials' as const;
+
+const SUBSCRIBER_MCP_CONNECTIONS_QUERY_KEY = 'fetchSubscriberMcpConnections' as const;
+
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
 }
@@ -43,11 +49,30 @@ export type AgentBehavior = {
 
 export type AgentRuntime = 'bridge' | 'claude_managed';
 
+export type AgentMcpServerAuthType = 'oauth' | 'static_bearer' | 'none';
+
+export type AgentMcpServerScope = 'shared' | 'per_subscriber';
+
+export type AgentMcpServer = {
+  /** Catalog id (e.g. "github"). */
+  name: string;
+  displayName: string;
+  url: string;
+  authType: AgentMcpServerAuthType;
+  scope: AgentMcpServerScope;
+  oauthProvider?: string;
+};
+
+export type McpCatalogEntry = AgentMcpServer & {
+  description: string;
+};
+
 export type AgentManagedRuntime = {
   provider: 'anthropic';
   agentId: string;
   environmentId: string;
   vaultIds?: string[];
+  mcpServers?: AgentMcpServer[];
 };
 
 export const AGENT_TOOL_NAMES = ['bash', 'edit', 'read', 'write', 'glob', 'grep', 'web_fetch', 'web_search'] as const;
@@ -59,11 +84,17 @@ export type AgentToolToggle = {
   enabled: boolean;
 };
 
+export type AgentMcpServerSelection = {
+  /** Catalog id, e.g. "github". */
+  id: string;
+};
+
 export type CreateManagedRuntimeSetup = {
   mode: 'create';
   apiKey?: string;
   system: string;
   tools?: AgentToolToggle[];
+  mcpServers?: AgentMcpServerSelection[];
 };
 
 export type ExistingManagedRuntimeSetup = {
@@ -72,6 +103,7 @@ export type ExistingManagedRuntimeSetup = {
   agentId: string;
   environmentId: string;
   vaultIds?: string[];
+  mcpServers?: AgentMcpServerSelection[];
 };
 
 export type ManagedRuntimeSetup = CreateManagedRuntimeSetup | ExistingManagedRuntimeSetup;
@@ -372,4 +404,107 @@ export async function testClaudeManagedAgent(
   );
 
   return response.data;
+}
+
+export function getMcpCatalogQueryKey() {
+  return [MCP_CATALOG_QUERY_KEY] as const;
+}
+
+export async function listMcpCatalog(environment: IEnvironment, signal?: AbortSignal): Promise<McpCatalogEntry[]> {
+  const response = await get<{ data: McpCatalogEntry[] }>('/agents/mcp/catalog', { environment, signal });
+
+  return response.data;
+}
+
+export async function updateAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpServers: AgentMcpServerSelection[]
+): Promise<AgentResponse> {
+  const response = await put<AgentApiEnvelope>(`/agents/${encodeURIComponent(agentIdentifier)}/claude/mcp`, {
+    environment,
+    body: { mcpServers },
+  });
+
+  return response.data;
+}
+
+export type SharedMcpCredentialStatus = {
+  mcpServerName: string;
+  displayName: string;
+  configured: boolean;
+};
+
+export function getSharedMcpCredentialsQueryKey(environmentId: string | undefined) {
+  return [SHARED_MCP_CREDENTIALS_QUERY_KEY, environmentId] as const;
+}
+
+export async function listSharedMcpCredentials(
+  environment: IEnvironment,
+  signal?: AbortSignal
+): Promise<SharedMcpCredentialStatus[]> {
+  const response = await get<{ data: SharedMcpCredentialStatus[] }>('/agents/claude/mcp/credentials/shared', {
+    environment,
+    signal,
+  });
+
+  return response.data;
+}
+
+export async function setSharedMcpCredential(
+  environment: IEnvironment,
+  body: { mcpServerName: string; token: string }
+): Promise<{ configured: boolean }> {
+  const response = await put<{ data: { configured: boolean } }>('/agents/claude/mcp/credentials/shared', {
+    environment,
+    body,
+  });
+
+  return response.data;
+}
+
+export function removeSharedMcpCredential(environment: IEnvironment, mcpServerName: string): Promise<void> {
+  return del(`/agents/claude/mcp/credentials/shared/${encodeURIComponent(mcpServerName)}`, { environment });
+}
+
+export type SubscriberMcpConnectionStatus = {
+  mcpServerName: string;
+  displayName: string;
+  status: 'not_connected' | 'connected' | 'expired' | 'failed';
+  connectedAt?: string;
+  lastUsedAt?: string;
+};
+
+export function getSubscriberMcpConnectionsQueryKey(
+  environmentId: string | undefined,
+  agentIdentifier: string | undefined,
+  subscriberId: string | undefined
+) {
+  return [SUBSCRIBER_MCP_CONNECTIONS_QUERY_KEY, environmentId, agentIdentifier, subscriberId] as const;
+}
+
+export async function listSubscriberMcpConnections(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  subscriberId: string,
+  signal?: AbortSignal
+): Promise<SubscriberMcpConnectionStatus[]> {
+  const response = await get<{ data: SubscriberMcpConnectionStatus[] }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp/connections/${encodeURIComponent(subscriberId)}`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export function disconnectSubscriberMcp(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  subscriberId: string,
+  mcpServerName: string
+): Promise<void> {
+  return del(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp/connections/${encodeURIComponent(subscriberId)}/${encodeURIComponent(mcpServerName)}`,
+    { environment }
+  );
 }

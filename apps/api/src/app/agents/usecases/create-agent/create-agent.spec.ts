@@ -157,11 +157,11 @@ describe('CreateAgent usecase', () => {
       const createArg = provisioningService.createAgent.firstCall.args[0];
       expect(createArg.system).to.equal('You are a sommelier.');
       expect(createArg.tools).to.deep.equal([{ name: 'web_fetch', enabled: false }]);
-      expect(agentRepo.create.firstCall.args[0].managedRuntime).to.deep.equal({
-        provider: 'anthropic',
-        agentId: 'agent_anthropic_1',
-        environmentId: 'env_anthropic_1',
-      });
+      const persistedManagedRuntime = agentRepo.create.firstCall.args[0].managedRuntime;
+      expect(persistedManagedRuntime.provider).to.equal('anthropic');
+      expect(persistedManagedRuntime.agentId).to.equal('agent_anthropic_1');
+      expect(persistedManagedRuntime.environmentId).to.equal('env_anthropic_1');
+      expect(persistedManagedRuntime.mcpServers).to.equal(undefined);
       expect(result.runtime).to.equal(AgentRuntimeEnum.CLAUDE_MANAGED);
     });
 

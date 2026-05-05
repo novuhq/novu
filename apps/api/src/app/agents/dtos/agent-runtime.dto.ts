@@ -14,8 +14,10 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { MCP_CATALOG_IDS, type McpCatalogId } from '../runtimes/mcp-catalog';
 
 export const ANTHROPIC_API_KEY_ENV_VAR = 'NOVU_AGENT_ANTHROPIC_API_KEY' as const;
+export const ANTHROPIC_ORG_VAULT_ID_ENV_VAR = 'NOVU_AGENT_ANTHROPIC_ORG_VAULT_ID' as const;
 
 const ANTHROPIC_AGENT_ID_REGEX = /^agent_[a-zA-Z0-9]+$/;
 const ANTHROPIC_ENVIRONMENT_ID_REGEX = /^env_[a-zA-Z0-9]+$/;
@@ -37,6 +39,89 @@ export class AgentToolToggleDto {
   @ApiProperty()
   @IsBoolean()
   enabled: boolean;
+}
+
+const MCP_AUTH_TYPES = ['oauth', 'static_bearer', 'none'] as const;
+const MCP_SCOPES = ['shared', 'per_subscriber'] as const;
+
+/**
+ * Request shape for picking an MCP server from the curated catalog. The server
+ * hydrates the rest (URL, auth type, scope) from the catalog at persistence time.
+ */
+export class AgentMcpServerSelectionDto {
+  @ApiProperty({ enum: MCP_CATALOG_IDS, description: 'Catalog id of the MCP server to attach.' })
+  @IsString()
+  @IsIn(MCP_CATALOG_IDS as unknown as string[])
+  id: McpCatalogId;
+}
+
+/** Hydrated catalog entry — what the agent stores and the API returns. */
+export class AgentMcpServerDto {
+  @ApiProperty({ description: 'Catalog id (github, linear, notion, ...).' })
+  name: string;
+
+  @ApiProperty()
+  displayName: string;
+
+  @ApiProperty()
+  url: string;
+
+  @ApiProperty({ enum: MCP_AUTH_TYPES })
+  authType: 'oauth' | 'static_bearer' | 'none';
+
+  @ApiProperty({ enum: MCP_SCOPES })
+  scope: 'shared' | 'per_subscriber';
+
+  @ApiPropertyOptional()
+  oauthProvider?: string;
+}
+
+/** Catalog entry shape returned by GET /agents/mcp/catalog. */
+export class McpCatalogEntryDto extends AgentMcpServerDto {
+  @ApiProperty({ enum: MCP_CATALOG_IDS })
+  declare name: McpCatalogId;
+
+  @ApiProperty()
+  description: string;
+}
+
+export class ListMcpCatalogResponseDto {
+  @ApiProperty({ type: [McpCatalogEntryDto] })
+  data: McpCatalogEntryDto[];
+}
+
+export class SharedMcpCredentialStatusDto {
+  @ApiProperty({ enum: MCP_CATALOG_IDS })
+  mcpServerName: McpCatalogId;
+
+  @ApiProperty()
+  displayName: string;
+
+  @ApiProperty()
+  configured: boolean;
+}
+
+export class ListSharedMcpCredentialsResponseDto {
+  @ApiProperty({ type: [SharedMcpCredentialStatusDto] })
+  data: SharedMcpCredentialStatusDto[];
+}
+
+export class SetSharedMcpCredentialRequestDto {
+  @ApiProperty({ enum: MCP_CATALOG_IDS, description: 'Catalog id of the shared MCP server.' })
+  @IsString()
+  @IsIn(MCP_CATALOG_IDS as unknown as string[])
+  mcpServerName: McpCatalogId;
+
+  @ApiProperty({ description: 'Static bearer token used to authenticate to the MCP server.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(8192)
+  token: string;
+}
+
+export class SetSharedMcpCredentialResponseDto {
+  @ApiProperty()
+  configured: boolean;
 }
 
 /**
@@ -72,6 +157,17 @@ export class ManagedRuntimeSetupDto {
   @Type(() => AgentToolToggleDto)
   @ArrayMaxSize(AGENT_TOOL_NAMES.length)
   tools?: AgentToolToggleDto[];
+
+  @ApiPropertyOptional({
+    type: [AgentMcpServerSelectionDto],
+    description: 'MCP servers to attach. Pick by catalog id; the rest is hydrated server-side.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AgentMcpServerSelectionDto)
+  @ArrayMaxSize(MCP_CATALOG_IDS.length)
+  mcpServers?: AgentMcpServerSelectionDto[];
 
   @ApiPropertyOptional({ enum: ['anthropic'] })
   @ValidateIf((o: ManagedRuntimeSetupDto) => o.mode === 'existing')
@@ -130,6 +226,11 @@ export class ManagedRuntimeDto {
   @ArrayMaxSize(10)
   @IsOptional()
   vaultIds?: string[];
+
+  @ApiPropertyOptional({ type: [AgentMcpServerDto], description: 'MCP servers attached to this agent.' })
+  @IsArray()
+  @IsOptional()
+  mcpServers?: AgentMcpServerDto[];
 }
 
 export class AgentCredentialsResponseDto {

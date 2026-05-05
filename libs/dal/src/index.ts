@@ -34,6 +34,7 @@ export * from './repositories/projection.types';
 export * from './repositories/schema-default.options';
 export * from './repositories/snapshot';
 export * from './repositories/subscriber';
+export * from './repositories/subscriber-agent-vault';
 export * from './repositories/tenant';
 export * from './repositories/topic';
 export * from './repositories/translation-group';

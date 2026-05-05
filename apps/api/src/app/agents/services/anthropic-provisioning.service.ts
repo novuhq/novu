@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
+import type { AgentMcpServer } from '@novu/dal';
 import { AnthropicEnvironmentRegistryService } from './anthropic-environment-registry.service';
 
 const DEFAULT_MODEL = 'claude-opus-4-7' as const;
@@ -20,6 +21,16 @@ export type AnthropicProvisioningCreateAgentParams = {
   description?: string;
   system?: string;
   tools?: AgentToolToggle[];
+  mcpServers?: AgentMcpServer[];
+};
+
+export type AnthropicProvisioningUpdateAgentParams = {
+  apiKey: string;
+  agentId: string;
+  description?: string;
+  system?: string;
+  tools?: AgentToolToggle[];
+  mcpServers?: AgentMcpServer[];
 };
 
 @Injectable()
@@ -59,7 +70,7 @@ export class AnthropicProvisioningService {
     return created.id;
   }
 
-  async createAgent(params: AnthropicProvisioningCreateAgentParams): Promise<{ agentId: string }> {
+  async createAgent(params: AnthropicProvisioningCreateAgentParams): Promise<{ agentId: string; version: number }> {
     const client = this.buildClient(params.apiKey);
 
     const created = await client.beta.agents.create({
@@ -67,15 +78,32 @@ export class AnthropicProvisioningService {
       model: DEFAULT_MODEL,
       description: params.description,
       system: params.system,
-      tools: [
-        {
-          type: 'agent_toolset_20260401',
-          configs: this.buildToolConfigs(params.tools),
-        },
-      ],
+      mcp_servers: this.buildMcpServers(params.mcpServers),
+      tools: this.buildTools(params.tools, params.mcpServers),
     });
 
-    return { agentId: created.id };
+    return { agentId: created.id, version: created.version };
+  }
+
+  /**
+   * Update an existing Anthropic agent. Anthropic uses array-replacement semantics for
+   * `tools` and `mcp_servers`, so callers must always send the full desired set.
+   */
+  async updateAgent(params: AnthropicProvisioningUpdateAgentParams): Promise<{ version: number }> {
+    const client = this.buildClient(params.apiKey);
+    const current = await client.beta.agents.retrieve(params.agentId);
+
+    const updated = await client.beta.agents.update(params.agentId, {
+      version: current.version,
+      ...(params.description !== undefined ? { description: params.description } : {}),
+      ...(params.system !== undefined ? { system: params.system } : {}),
+      ...(params.mcpServers !== undefined ? { mcp_servers: this.buildMcpServers(params.mcpServers) } : {}),
+      ...(params.tools !== undefined || params.mcpServers !== undefined
+        ? { tools: this.buildTools(params.tools, params.mcpServers) }
+        : {}),
+    });
+
+    return { version: updated.version };
   }
 
   async archiveAgent(apiKey: string, agentId: string): Promise<void> {
@@ -107,5 +135,30 @@ export class AnthropicProvisioningService {
       name: toggle.name,
       enabled: toggle.enabled,
     }));
+  }
+
+  private buildMcpServers(mcpServers?: AgentMcpServer[]) {
+    if (!mcpServers?.length) {
+      return undefined;
+    }
+
+    return mcpServers.map((server) => ({
+      type: 'url' as const,
+      name: server.name,
+      url: server.url,
+    }));
+  }
+
+  private buildTools(tools?: AgentToolToggle[], mcpServers?: AgentMcpServer[]) {
+    return [
+      {
+        type: 'agent_toolset_20260401' as const,
+        configs: this.buildToolConfigs(tools),
+      },
+      ...(mcpServers ?? []).map((server) => ({
+        type: 'mcp_toolset' as const,
+        mcp_server_name: server.name,
+      })),
+    ];
   }
 }

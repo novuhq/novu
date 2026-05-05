@@ -1,5 +1,6 @@
 import type { AgentResponse } from '@/api/agents';
 import { AgentBehaviorSection } from './agent-behavior-section';
+import { AgentMcpConnectionsSection } from './agent-mcp-connections-section';
 import { ConnectedProvidersSection } from './connected-providers-section';
 import { RecentConversationsSection } from './recent-conversations-section';
 
@@ -12,6 +13,7 @@ export function AgentConnectedOverview({ agent }: AgentConnectedOverviewProps) {
     <div className="flex min-w-0 flex-1 flex-col gap-4">
       <AgentBehaviorSection agent={agent} />
       <ConnectedProvidersSection agent={agent} />
+      {agent.runtime === 'claude_managed' ? <AgentMcpConnectionsSection agent={agent} /> : null}
       <RecentConversationsSection agent={agent} />
     </div>
   );

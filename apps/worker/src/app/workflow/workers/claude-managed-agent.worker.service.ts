@@ -21,6 +21,15 @@ const ANTHROPIC_API_KEY_ENV_VAR = 'NOVU_AGENT_ANTHROPIC_API_KEY';
 const TERMINAL_ERROR_MARKDOWN = "Sorry, I couldn't finish that. Please try again.";
 const MIN_STATUS_INTERVAL_MS = 750;
 
+/**
+ * Action ids on the approval card that come back through
+ * `chat.onAction` → `AgentEventEnum.ON_ACTION` → `ClaudeManagedRuntime`.
+ * Keep these stable; the runtime parses them.
+ */
+export const MCP_APPROVE_ACTION_ID = 'mcp:allow';
+export const MCP_DENY_ACTION_ID = 'mcp:deny';
+const MAX_TOOL_INPUT_PREVIEW_CHARS = 1500;
+
 type AgentStatusState = 'thinking' | 'tool_use' | 'tool_result' | 'compacting' | 'retrying' | 'error' | 'typing';
 
 type StatusPayload = {
@@ -33,6 +42,12 @@ type StatusResponse = {
   messageId?: string;
   platformThreadId?: string;
   progressRenderer?: AgentProgressRenderer;
+};
+
+type PendingApproval = {
+  toolName: string;
+  input: Record<string, unknown>;
+  mcpServerName?: string;
 };
 
 @Injectable()
@@ -69,6 +84,9 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
       let pendingStatus: StatusPayload | null = null;
       let isFinalizing = false;
       const inFlightStatusUpdates = new Set<Promise<void>>();
+      // Keyed by tool_use event id; populated when a tool emits `evaluated_permission: 'ask'`.
+      // Drained on `session.status_idle` with `stop_reason.type === 'requires_action'`.
+      const pendingApprovals = new Map<string, PendingApproval>();
 
       const sendStatus = async (payload: StatusPayload): Promise<void> => {
         if (!data.interimEditsSupported || isFinalizing) {
@@ -183,6 +201,9 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
             );
             this.completeProgressTask(progressTasks, 'thinking', 'Request understood');
             this.ensureProgressTask(progressTasks, `tool:${event.id}`, `Using tool: ${event.name}`, 'in_progress');
+            if (event.evaluated_permission === 'ask') {
+              pendingApprovals.set(event.id, { toolName: event.name, input: event.input ?? {} });
+            }
             await scheduleStatus({ state: 'tool_use', toolName: event.name });
           }
 
@@ -195,6 +216,13 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
             );
             this.completeProgressTask(progressTasks, 'thinking', 'Request understood');
             this.ensureProgressTask(progressTasks, `tool:${event.id}`, `Using tool: ${toolName}`, 'in_progress');
+            if (event.evaluated_permission === 'ask') {
+              pendingApprovals.set(event.id, {
+                toolName,
+                input: event.input ?? {},
+                mcpServerName: event.mcp_server_name,
+              });
+            }
             await scheduleStatus({ state: 'tool_use', toolName });
           }
 
@@ -229,6 +257,23 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
           }
 
           if (event.type === 'session.error') {
+            // MCP authentication failure → DM the subscriber a signed connect link so
+            // they can OAuth into the missing service. Anthropic auto-retries on the
+            // next status_idle → status_running transition once we store the
+            // credential, so we don't need to do anything else here.
+            if ('error' in event && (event.error as { type?: string }).type === 'mcp_authentication_failed_error') {
+              const mcpServerName = (event.error as { mcp_server_name?: string }).mcp_server_name;
+              if (mcpServerName) {
+                await this.postMcpConnectPrompt(data, secretKey, mcpServerName).catch((err) =>
+                  Logger.warn(
+                    { err: err instanceof Error ? err.message : String(err), sessionId: data.sessionId },
+                    'Failed to post MCP connect prompt',
+                    LOG_CONTEXT
+                  )
+                );
+              }
+            }
+
             this.ensureProgressTask(progressTasks, 'retrying', 'Anthropic retrying', 'in_progress');
             await scheduleStatus({ state: 'retrying' });
           }
@@ -249,6 +294,21 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
           }
 
           if (event.type === 'session.status_idle') {
+            if (event.stop_reason?.type === 'requires_action') {
+              await this.handleRequiresAction({
+                data,
+                secretKey,
+                stopEventIds: event.stop_reason.event_ids ?? [],
+                pendingApprovals,
+                progressTasks,
+                placeholderMessageId,
+                placeholderPlatformThreadId,
+                progressRenderer,
+                stopStatusUpdates,
+              });
+
+              return;
+            }
             break;
           }
         }
@@ -407,6 +467,123 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
     }
   }
 
+  /**
+   * Anthropic emitted `session.status_idle` with `stop_reason.type === 'requires_action'`,
+   * meaning the agent paused on one or more tool uses with `evaluated_permission: 'ask'`.
+   * For each event the agent is blocked on, post an Approve/Deny card to the conversation.
+   * The buttons carry the `tool_use_id` in their `value` so the runtime can dispatch a
+   * `user.tool_confirmation` when the user clicks.
+   */
+  private async handleRequiresAction(args: {
+    data: IClaudeManagedAgentDataDto;
+    secretKey: string;
+    stopEventIds: string[];
+    pendingApprovals: Map<string, PendingApproval>;
+    progressTasks: AgentProgressTask[];
+    placeholderMessageId?: string;
+    placeholderPlatformThreadId?: string;
+    progressRenderer?: AgentProgressRenderer;
+    stopStatusUpdates: () => Promise<void>;
+  }): Promise<void> {
+    const {
+      data,
+      secretKey,
+      stopEventIds,
+      pendingApprovals,
+      progressTasks,
+      placeholderMessageId,
+      placeholderPlatformThreadId,
+      progressRenderer,
+      stopStatusUpdates,
+    } = args;
+
+    for (const eventId of stopEventIds) {
+      const approval = pendingApprovals.get(eventId);
+      if (!approval) continue;
+      this.completeProgressTask(progressTasks, `tool:${eventId}`, 'Awaiting your approval', 'in_progress');
+    }
+
+    if (data.interimEditsSupported && placeholderMessageId) {
+      try {
+        await this.postStatus(data, secretKey, {
+          state: 'tool_use',
+          messageId: placeholderMessageId,
+          platformThreadId: placeholderPlatformThreadId,
+          progressRenderer,
+          progressTasks,
+        });
+      } catch (err) {
+        Logger.warn(
+          { err: err instanceof Error ? err.message : String(err), sessionId: data.sessionId },
+          'Failed to flush awaiting-approval status before posting cards',
+          LOG_CONTEXT
+        );
+      }
+    }
+
+    await stopStatusUpdates();
+
+    let postedAny = false;
+    for (const eventId of stopEventIds) {
+      const approval = pendingApprovals.get(eventId);
+      if (!approval) {
+        Logger.warn(
+          { sessionId: data.sessionId, eventId },
+          'Session requires action for an event we never observed; ignoring',
+          LOG_CONTEXT
+        );
+        continue;
+      }
+
+      try {
+        await this.postApprovalCard(data, secretKey, eventId, approval);
+        postedAny = true;
+      } catch (err) {
+        Logger.error(
+          { err: err instanceof Error ? err.message : String(err), sessionId: data.sessionId, eventId },
+          'Failed to post Claude managed approval card',
+          LOG_CONTEXT
+        );
+      }
+    }
+
+    if (!postedAny) {
+      Logger.warn(
+        { sessionId: data.sessionId, stopEventIds },
+        'Session paused for approval but no cards were delivered',
+        LOG_CONTEXT
+      );
+    }
+  }
+
+  private async postApprovalCard(
+    data: IClaudeManagedAgentDataDto,
+    secretKey: string,
+    toolUseId: string,
+    approval: PendingApproval
+  ): Promise<void> {
+    const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
+    const url = `${apiRootUrl}/v1/agents/${encodeURIComponent(data.agentIdentifier)}/reply`;
+    const card = buildApprovalCard(toolUseId, approval);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `ApiKey ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversationId: data.conversationId,
+        integrationIdentifier: data.integrationIdentifier,
+        reply: { card },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Approval card post failed: ${response.status} ${response.statusText}`);
+    }
+  }
+
   private async postReply(
     data: IClaudeManagedAgentDataDto,
     secretKey: string,
@@ -445,4 +622,117 @@ export class ClaudeManagedAgentWorker extends WorkerBaseService {
       throw new Error(`Claude managed agent reply failed: ${response.status} ${response.statusText}`);
     }
   }
+
+  /**
+   * Asks the API to mint a signed connect link for an MCP server, then DMs that link
+   * back to the subscriber via the existing reply pipeline. Anthropic will retry the
+   * tool call on the next status_idle → status_running transition once the credential
+   * lands in the subscriber's vault.
+   */
+  private async postMcpConnectPrompt(
+    data: IClaudeManagedAgentDataDto,
+    secretKey: string,
+    mcpServerName: string
+  ): Promise<void> {
+    if (!data.subscriberId) {
+      Logger.warn({ sessionId: data.sessionId }, 'Cannot prompt MCP connect — no subscriberId on the job', LOG_CONTEXT);
+
+      return;
+    }
+
+    const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
+    const linkResponse = await fetch(
+      `${apiRootUrl}/v1/agents/${encodeURIComponent(data.agentIdentifier)}/mcp/connect-link`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `ApiKey ${secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: data.conversationId,
+          subscriberId: data.subscriberId,
+          mcpServerName,
+        }),
+      }
+    );
+
+    if (!linkResponse.ok) {
+      throw new Error(`MCP connect link issuance failed: ${linkResponse.status} ${linkResponse.statusText}`);
+    }
+
+    const body = await linkResponse.json().catch(() => null);
+    const url = body?.url ?? body?.data?.url;
+    if (!url) {
+      throw new Error('MCP connect link response did not include a url.');
+    }
+
+    const markdown = `I need access to **${mcpServerName}** to answer that. [Connect now →](${url})`;
+    const replyUrl = `${apiRootUrl}/v1/agents/${encodeURIComponent(data.agentIdentifier)}/reply`;
+    await fetch(replyUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `ApiKey ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversationId: data.conversationId,
+        integrationIdentifier: data.integrationIdentifier,
+        reply: { markdown },
+      }),
+    });
+  }
+}
+
+/**
+ * Build the JSON `card` body delivered through the Novu chat SDK. Buttons carry the
+ * `tool_use_id` in `value`; `ClaudeManagedRuntime.execute` reads `actionId === 'mcp:allow'`
+ * (or `'mcp:deny'`) plus `value` to dispatch the corresponding `user.tool_confirmation`.
+ */
+function buildApprovalCard(toolUseId: string, approval: PendingApproval): Record<string, unknown> {
+  const inputPreview = formatToolInputPreview(approval.input);
+  const subtitle = approval.mcpServerName
+    ? `${approval.mcpServerName} → ${approval.toolName.split('.').slice(-1)[0]}`
+    : approval.toolName;
+
+  const children: Record<string, unknown>[] = [
+    { type: 'text', content: 'The agent wants to run a tool that requires your approval.' },
+  ];
+
+  if (inputPreview) {
+    children.push({ type: 'text', content: inputPreview, style: 'muted' });
+  }
+
+  children.push({
+    type: 'actions',
+    children: [
+      { type: 'button', id: MCP_APPROVE_ACTION_ID, label: 'Approve', style: 'primary', value: toolUseId },
+      { type: 'button', id: MCP_DENY_ACTION_ID, label: 'Deny', style: 'danger', value: toolUseId },
+    ],
+  });
+
+  return {
+    type: 'card',
+    title: `Approval needed: ${approval.toolName}`,
+    subtitle,
+    children,
+  };
+}
+
+function formatToolInputPreview(input: Record<string, unknown>): string | null {
+  const keys = Object.keys(input ?? {});
+  if (keys.length === 0) return null;
+
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(input, null, 2);
+  } catch {
+    return null;
+  }
+
+  if (serialized.length > MAX_TOOL_INPUT_PREVIEW_CHARS) {
+    serialized = `${serialized.slice(0, MAX_TOOL_INPUT_PREVIEW_CHARS)}\n…`;
+  }
+
+  return ['```json', serialized, '```'].join('\n');
 }

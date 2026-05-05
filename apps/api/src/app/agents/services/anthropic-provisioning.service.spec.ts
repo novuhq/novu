@@ -32,7 +32,12 @@ describe('AnthropicProvisioningService', () => {
       logger?: ReturnType<typeof makeLogger>;
       sdkStubs?: {
         environments?: { create?: sinon.SinonStub };
-        agents?: { create?: sinon.SinonStub; archive?: sinon.SinonStub };
+        agents?: {
+          create?: sinon.SinonStub;
+          archive?: sinon.SinonStub;
+          retrieve?: sinon.SinonStub;
+          update?: sinon.SinonStub;
+        };
       };
     } = {}
   ) {
@@ -42,17 +47,30 @@ describe('AnthropicProvisioningService', () => {
 
     const environmentsCreate =
       overrides.sdkStubs?.environments?.create ?? sinon.stub().resolves({ id: 'env_anthropic_1' });
-    const agentsCreate = overrides.sdkStubs?.agents?.create ?? sinon.stub().resolves({ id: 'agent_anthropic_1' });
+    const agentsCreate =
+      overrides.sdkStubs?.agents?.create ?? sinon.stub().resolves({ id: 'agent_anthropic_1', version: 1 });
     const agentsArchive = overrides.sdkStubs?.agents?.archive ?? sinon.stub().resolves({});
+    const agentsRetrieve =
+      overrides.sdkStubs?.agents?.retrieve ?? sinon.stub().resolves({ id: 'agent_anthropic_1', version: 3 });
+    const agentsUpdate = overrides.sdkStubs?.agents?.update ?? sinon.stub().resolves({ version: 4 });
 
     sinon.stub(service as any, 'buildClient').callsFake(() => ({
       beta: {
         environments: { create: environmentsCreate },
-        agents: { create: agentsCreate, archive: agentsArchive },
+        agents: { create: agentsCreate, archive: agentsArchive, retrieve: agentsRetrieve, update: agentsUpdate },
       },
     }));
 
-    return { service, registry, logger, environmentsCreate, agentsCreate, agentsArchive };
+    return {
+      service,
+      registry,
+      logger,
+      environmentsCreate,
+      agentsCreate,
+      agentsArchive,
+      agentsRetrieve,
+      agentsUpdate,
+    };
   }
 
   afterEach(() => sinon.restore());
@@ -157,6 +175,85 @@ describe('AnthropicProvisioningService', () => {
         { name: 'web_fetch', enabled: false },
         { name: 'web_search', enabled: false },
       ]);
+    });
+
+    it('forwards mcp_servers and mcp_toolset entries', async () => {
+      const { service, agentsCreate } = buildService();
+
+      await service.createAgent({
+        apiKey: API_KEY,
+        name: 'Researcher',
+        system: 'system',
+        mcpServers: [
+          {
+            name: 'github',
+            displayName: 'GitHub',
+            url: 'https://api.githubcopilot.com/mcp/',
+            authType: 'oauth',
+            scope: 'per_subscriber',
+            oauthProvider: 'github',
+          },
+          {
+            name: 'confluence',
+            displayName: 'Confluence',
+            url: 'https://mcp.atlassian.com/v1/sse',
+            authType: 'static_bearer',
+            scope: 'shared',
+          },
+        ],
+      });
+
+      const arg = agentsCreate.firstCall.args[0];
+      expect(arg.mcp_servers).to.deep.equal([
+        { type: 'url', name: 'github', url: 'https://api.githubcopilot.com/mcp/' },
+        { type: 'url', name: 'confluence', url: 'https://mcp.atlassian.com/v1/sse' },
+      ]);
+      expect(arg.tools).to.have.length(3);
+      expect(arg.tools[1]).to.deep.equal({ type: 'mcp_toolset', mcp_server_name: 'github' });
+      expect(arg.tools[2]).to.deep.equal({ type: 'mcp_toolset', mcp_server_name: 'confluence' });
+    });
+  });
+
+  describe('updateAgent', () => {
+    it('retrieves the current version and bumps it with the new MCP/tool config', async () => {
+      const { service, agentsRetrieve, agentsUpdate } = buildService();
+
+      const result = await service.updateAgent({
+        apiKey: API_KEY,
+        agentId: 'agent_anthropic_1',
+        mcpServers: [
+          {
+            name: 'github',
+            displayName: 'GitHub',
+            url: 'https://api.githubcopilot.com/mcp/',
+            authType: 'oauth',
+            scope: 'per_subscriber',
+          },
+        ],
+      });
+
+      expect(agentsRetrieve.calledOnceWith('agent_anthropic_1')).to.equal(true);
+      expect(agentsUpdate.calledOnce).to.equal(true);
+      const [agentId, body] = agentsUpdate.firstCall.args;
+      expect(agentId).to.equal('agent_anthropic_1');
+      expect(body.version).to.equal(3);
+      expect(body.mcp_servers).to.have.length(1);
+      expect(body.tools).to.have.length(2);
+      expect(result.version).to.equal(4);
+    });
+
+    it('clears mcp_servers when the new list is empty', async () => {
+      const { service, agentsUpdate } = buildService();
+
+      await service.updateAgent({
+        apiKey: API_KEY,
+        agentId: 'agent_anthropic_1',
+        mcpServers: [],
+      });
+
+      const body = agentsUpdate.firstCall.args[1];
+      expect(body.mcp_servers).to.equal(undefined);
+      expect(body.tools).to.have.length(1);
     });
   });
 

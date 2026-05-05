@@ -43,9 +43,14 @@ import {
   ListAgentIntegrationsResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  ListMcpCatalogResponseDto,
+  ListSharedMcpCredentialsResponseDto,
+  SetSharedMcpCredentialRequestDto,
+  SetSharedMcpCredentialResponseDto,
   TestClaudeManagedAgentResponseDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentIntegrationRequestDto,
+  UpdateAgentMcpServersRequestDto,
   UpdateAgentRequestDto,
   UpdateAnthropicAgentCredentialsRequestDto,
 } from './dtos';
@@ -57,6 +62,8 @@ import { CreateAgentCommand } from './usecases/create-agent/create-agent.command
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
 import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command';
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
+import { DisconnectSubscriberMcpCommand } from './usecases/disconnect-subscriber-mcp/disconnect-subscriber-mcp.command';
+import { DisconnectSubscriberMcp } from './usecases/disconnect-subscriber-mcp/disconnect-subscriber-mcp.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
 import { GetAnthropicAgentCredentialsCommand } from './usecases/get-anthropic-agent-credentials/get-anthropic-agent-credentials.command';
@@ -66,16 +73,27 @@ import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
+import { ListMcpCatalog } from './usecases/list-mcp-catalog/list-mcp-catalog.usecase';
+import { ListSharedMcpCredentialsCommand } from './usecases/list-shared-mcp-credentials/list-shared-mcp-credentials.command';
+import { ListSharedMcpCredentials } from './usecases/list-shared-mcp-credentials/list-shared-mcp-credentials.usecase';
+import { ListSubscriberMcpConnectionsCommand } from './usecases/list-subscriber-mcp-connections/list-subscriber-mcp-connections.command';
+import { ListSubscriberMcpConnections } from './usecases/list-subscriber-mcp-connections/list-subscriber-mcp-connections.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
+import { RemoveSharedMcpCredentialCommand } from './usecases/remove-shared-mcp-credential/remove-shared-mcp-credential.command';
+import { RemoveSharedMcpCredential } from './usecases/remove-shared-mcp-credential/remove-shared-mcp-credential.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
 import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
+import { SetSharedMcpCredentialCommand } from './usecases/set-shared-mcp-credential/set-shared-mcp-credential.command';
+import { SetSharedMcpCredential } from './usecases/set-shared-mcp-credential/set-shared-mcp-credential.usecase';
 import { TestClaudeManagedAgentCommand } from './usecases/test-claude-managed-agent/test-claude-managed-agent.command';
 import { TestClaudeManagedAgent } from './usecases/test-claude-managed-agent/test-claude-managed-agent.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
 import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
+import { UpdateAgentMcpServersCommand } from './usecases/update-agent-mcp-servers/update-agent-mcp-servers.command';
+import { UpdateAgentMcpServers } from './usecases/update-agent-mcp-servers/update-agent-mcp-servers.usecase';
 import { UpdateAnthropicAgentCredentialsCommand } from './usecases/update-anthropic-agent-credentials/update-anthropic-agent-credentials.command';
 import { UpdateAnthropicAgentCredentials } from './usecases/update-anthropic-agent-credentials/update-anthropic-agent-credentials.usecase';
 
@@ -101,7 +119,14 @@ export class AgentsController {
     private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
     private readonly getAnthropicAgentCredentialsUsecase: GetAnthropicAgentCredentials,
     private readonly updateAnthropicAgentCredentialsUsecase: UpdateAnthropicAgentCredentials,
-    private readonly testClaudeManagedAgentUsecase: TestClaudeManagedAgent
+    private readonly testClaudeManagedAgentUsecase: TestClaudeManagedAgent,
+    private readonly listMcpCatalogUsecase: ListMcpCatalog,
+    private readonly updateAgentMcpServersUsecase: UpdateAgentMcpServers,
+    private readonly listSharedMcpCredentialsUsecase: ListSharedMcpCredentials,
+    private readonly setSharedMcpCredentialUsecase: SetSharedMcpCredential,
+    private readonly removeSharedMcpCredentialUsecase: RemoveSharedMcpCredential,
+    private readonly listSubscriberMcpConnectionsUsecase: ListSubscriberMcpConnections,
+    private readonly disconnectSubscriberMcpUsecase: DisconnectSubscriberMcp
   ) {}
 
   @Get('/emoji')
@@ -198,6 +223,155 @@ export class AgentsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         apiKey: body.apiKey,
+      })
+    );
+  }
+
+  @Get('/mcp/catalog')
+  @ApiResponse(ListMcpCatalogResponseDto)
+  @ApiOperation({
+    summary: 'List the curated MCP server catalog',
+    description: 'Returns the MCP servers a Claude Managed agent can be connected to.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listMcpCatalog(): ListMcpCatalogResponseDto {
+    return this.listMcpCatalogUsecase.execute();
+  }
+
+  @Get('/claude/mcp/credentials/shared')
+  @ApiResponse(ListSharedMcpCredentialsResponseDto)
+  @ApiOperation({
+    summary: 'List shared MCP credentials',
+    description: 'Returns the per-MCP configured/not-set status for shared-scope MCP servers in the org vault.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listSharedMcpCredentials(@UserSession() user: UserSessionData): Promise<ListSharedMcpCredentialsResponseDto> {
+    return this.listSharedMcpCredentialsUsecase.execute(
+      ListSharedMcpCredentialsCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Put('/claude/mcp/credentials/shared')
+  @ApiResponse(SetSharedMcpCredentialResponseDto)
+  @ApiOperation({
+    summary: 'Store a shared static-bearer credential for an MCP server',
+    description:
+      'Writes a static-bearer credential into the org-level Anthropic vault for a shared-scope MCP server. Replaces any prior credential for the same server URL.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  setSharedMcpCredential(
+    @UserSession() user: UserSessionData,
+    @Body() body: SetSharedMcpCredentialRequestDto
+  ): Promise<SetSharedMcpCredentialResponseDto> {
+    return this.setSharedMcpCredentialUsecase.execute(
+      SetSharedMcpCredentialCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        mcpServerName: body.mcpServerName,
+        token: body.token,
+      })
+    );
+  }
+
+  @Delete('/claude/mcp/credentials/shared/:mcpServerName')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiOperation({
+    summary: 'Remove a shared MCP credential',
+    description: 'Archives the static-bearer credential for the given MCP server in the org vault.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async removeSharedMcpCredential(
+    @UserSession() user: UserSessionData,
+    @Param('mcpServerName') mcpServerName: string
+  ): Promise<void> {
+    await this.removeSharedMcpCredentialUsecase.execute(
+      RemoveSharedMcpCredentialCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        mcpServerName: mcpServerName as never,
+      })
+    );
+  }
+
+  @Get('/:identifier/mcp/connections/:subscriberId')
+  @ApiOperation({
+    summary: "Admin: list a subscriber's MCP connections for an agent",
+    description:
+      'Returns the per-subscriber MCP connection state (Connected / Not connected / Expired) for the agent. Useful for the admin "Connections" view in the dashboard.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listSubscriberMcpConnections(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('subscriberId') subscriberId: string
+  ) {
+    return this.listSubscriberMcpConnectionsUsecase.execute(
+      ListSubscriberMcpConnectionsCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        agentIdentifier: identifier,
+        subscriberId,
+      })
+    );
+  }
+
+  @Delete('/:identifier/mcp/connections/:subscriberId/:mcpServerName')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiOperation({
+    summary: "Admin: disconnect a subscriber's MCP connection for an agent",
+    description: 'Archives the per-subscriber Anthropic credential for the given MCP server.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async disconnectSubscriberMcp(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('subscriberId') subscriberId: string,
+    @Param('mcpServerName') mcpServerName: string
+  ): Promise<void> {
+    await this.disconnectSubscriberMcpUsecase.execute(
+      DisconnectSubscriberMcpCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        agentIdentifier: identifier,
+        subscriberId,
+        mcpServerName,
+      })
+    );
+  }
+
+  @Put('/:identifier/claude/mcp')
+  @ApiResponse(AgentResponseDto)
+  @ApiOperation({
+    summary: 'Replace MCP servers attached to a Claude Managed agent',
+    description:
+      'Replaces the MCP server list on the agent and bumps the corresponding Anthropic agent version. Pass an empty array to detach all MCP servers.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateAgentMcpServers(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: UpdateAgentMcpServersRequestDto
+  ): Promise<AgentResponseDto> {
+    return this.updateAgentMcpServersUsecase.execute(
+      UpdateAgentMcpServersCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpServers: body.mcpServers,
       })
     );
   }
