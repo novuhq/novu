@@ -9,6 +9,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
+import { ClaudeManagedSetupSection } from './claude-managed-setup-section';
 import { EmailSetupGuide } from './email-setup-guide';
 import { ProviderDropdown } from './provider-dropdown';
 import { SetupStep } from './setup-guide-primitives';
@@ -219,7 +220,11 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
         </div>
       </motion.div>
 
-      {hasConnectedIntegration && (
+      {hasConnectedIntegration && agent.runtime === 'claude_managed' ? (
+        <ClaudeManagedSetupSection agent={agent} stepOffset={5} />
+      ) : null}
+
+      {hasConnectedIntegration && agent.runtime !== 'claude_managed' ? (
         <AgentCodeSetupSection
           agent={agent}
           stepOffset={5}
@@ -227,7 +232,7 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
           onBridgeConnected={onBridgeConnected}
           onAddProvider={hideAddProvider ? undefined : handleAddProvider}
         />
-      )}
+      ) : null}
     </div>
   );
 }
