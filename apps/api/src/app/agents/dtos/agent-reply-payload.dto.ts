@@ -68,13 +68,17 @@ export class IsValidTriggerRecipient implements ValidatorConstraintInterface {
   }
 
   private isSubscriberObject(obj: unknown): boolean {
-    return (
-      typeof obj === 'object' && obj !== null && 'subscriberId' in obj && typeof (obj as any).subscriberId === 'string'
-    );
+    if (typeof obj !== 'object' || obj === null) return false;
+    const subscriberId = (obj as { subscriberId?: unknown }).subscriberId;
+
+    return typeof subscriberId === 'string' && subscriberId.trim().length > 0;
   }
 
   private isTopicObject(obj: unknown): boolean {
-    return typeof obj === 'object' && obj !== null && 'type' in obj && 'topicKey' in obj;
+    if (typeof obj !== 'object' || obj === null) return false;
+    const { type, topicKey } = obj as { type?: unknown; topicKey?: unknown };
+
+    return typeof type === 'string' && type.length > 0 && typeof topicKey === 'string' && topicKey.length > 0;
   }
 
   defaultMessage(): string {
