@@ -25,14 +25,16 @@ export type SetupMode = 'quick' | 'manual';
 
 export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
   return (
-    <div className="flex w-fit items-center gap-1 rounded-lg border border-stroke-soft bg-bg-weak p-1">
+    <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">
       <button
         type="button"
         aria-pressed={mode === 'quick'}
         onClick={() => onChange('quick')}
         className={cn(
-          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
-          mode === 'quick' ? 'bg-bg-white text-text-strong shadow-xs' : 'text-text-sub hover:text-text-strong'
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'quick'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
         )}
       >
         <RiFlashlightLine className="size-3.5" />
@@ -43,8 +45,10 @@ export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange:
         aria-pressed={mode === 'manual'}
         onClick={() => onChange('manual')}
         className={cn(
-          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-label-xs font-medium transition-colors',
-          mode === 'manual' ? 'bg-bg-white text-text-strong shadow-xs' : 'text-text-sub hover:text-text-strong'
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'manual'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
         )}
       >
         <RiListCheck2 className="size-3.5" />

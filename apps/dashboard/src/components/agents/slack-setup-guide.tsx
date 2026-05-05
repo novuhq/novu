@@ -312,7 +312,11 @@ export function SlackSetupGuide({
     return activeSetupMode === 'quick' ? base + 1 : base + 2;
   }, [base, isCredentialsSaved, isSlackWorkspaceConnected, activeSetupMode]);
 
-  const modeSwitcher = isQuickSetupEnabled ? <SetupModeToggle mode={setupMode} onChange={setSetupMode} /> : null;
+  const modeSwitcher = isQuickSetupEnabled ? (
+    <div className="pl-6">
+      <SetupModeToggle mode={setupMode} onChange={setSetupMode} />
+    </div>
+  ) : null;
 
   const connectButton =
     user?.externalId && currentEnvironment?.identifier ? (

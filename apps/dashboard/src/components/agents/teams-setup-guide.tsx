@@ -1536,7 +1536,7 @@ export function TeamsSetupGuide({
   );
 
   const modeToggle = (
-    <div className="mb-2 flex items-start">
+    <div className="flex items-start pl-6">
       <SetupModeToggle mode={setupMode} onChange={setSetupMode} />
     </div>
   );
@@ -1546,7 +1546,7 @@ export function TeamsSetupGuide({
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        {isQuickSetupEnabled && <div className="px-6 pt-4 pb-2">{modeToggle}</div>}
+        {isQuickSetupEnabled && <div className="pt-4 pb-2">{modeToggle}</div>}
         <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6')}>
           <div
             className="absolute bottom-0 left-[22px] top-0 w-px"
