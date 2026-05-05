@@ -4,8 +4,6 @@ import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } f
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { AddReactionPayloadDto, EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 
-export type { Signal } from '@novu/framework';
-
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()

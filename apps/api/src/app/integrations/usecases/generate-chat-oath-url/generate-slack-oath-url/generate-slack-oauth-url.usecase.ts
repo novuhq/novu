@@ -228,6 +228,7 @@ export class GenerateSlackOauthUrl {
     }
 
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
+
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 

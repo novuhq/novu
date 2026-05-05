@@ -863,7 +863,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       handler: () => {
         const body = createMockBridgeRequest({
           event: 'onAction',
-          action: { actionId: 'confirm', value: 'yes' },
+          action: { actionId: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' },
           message: null,
         });
         const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
@@ -882,7 +882,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(capturedCtx).toBeDefined());
 
     expect(capturedCtx.event).toBe('onAction');
-    expect(capturedCtx.action).toEqual({ actionId: 'confirm', value: 'yes' });
+    expect(capturedCtx.action).toEqual({ actionId: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' });
     expect(capturedCtx.message).toBeNull();
 
     const replyCall = fetchMock.mock.calls.find(
@@ -890,6 +890,54 @@ describe('agent dispatch via NovuRequestHandler', () => {
     );
     const replyBody = JSON.parse(replyCall![1].body);
     expect(replyBody.reply.markdown).toBe('Action received');
+  });
+
+  it('should expose sourceMessageId on action so handler can react to the card message', async () => {
+    let capturedCtx: any;
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onAction: async (ctx) => {
+        capturedCtx = ctx;
+        if (ctx.action?.sourceMessageId) {
+          ctx.addReaction(ctx.action.sourceMessageId, 'eyes');
+        }
+        await ctx.reply('Acknowledged');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onAction',
+          action: { actionId: 'play', sourceMessageId: 'msg-ttt-board' },
+          message: null,
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(capturedCtx).toBeDefined());
+
+    expect(capturedCtx.action?.sourceMessageId).toBe('msg-ttt-board');
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+    expect(replyBody.addReactions).toEqual([{ messageId: 'msg-ttt-board', emojiName: 'eyes' }]);
   });
 
   it('should have null action on onMessage events', async () => {

@@ -1,8 +1,8 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { EmailConfigurationCard } from '@/components/agents/email-configuration-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
-import { AgentIntegrationGuideSection } from './agent-integration-guide-section';
 
 type EmailAgentIntegrationGuideProps = {
   onBack: () => void;
@@ -38,22 +38,8 @@ export function EmailAgentIntegrationGuide({
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
     >
-      <AgentIntegrationGuideSection title="Overview">
-        {isConnected ? (
-          <p>
-            This agent is connected to email. Subscribers can send emails to the configured inbound address to start
-            conversations, and the agent will reply through the selected outbound provider.
-          </p>
-        ) : (
-          <p>
-            Connect email so this agent can send and receive messages via email. Configure an outbound email provider and
-            an inbound address below.
-          </p>
-        )}
-      </AgentIntegrationGuideSection>
-      {!isConnected && integrationId && (
-        <EmailSetupGuide agent={agent} integrationId={integrationId} embedded />
-      )}
+      {integrationId && <EmailConfigurationCard agent={agent} integrationId={integrationId} />}
+      {!isConnected && integrationId && <EmailSetupGuide agent={agent} integrationId={integrationId} embedded />}
     </AgentIntegrationGuideLayout>
   );
 }

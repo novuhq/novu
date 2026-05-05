@@ -2,6 +2,7 @@ import type { StorageService } from '@novu/application-generic';
 import { expect } from 'chai';
 import type { Attachment } from 'chat';
 import sinon from 'sinon';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { AgentAttachmentStorage, READ_URL_TTL_SECONDS } from './agent-attachment-storage.service';
 
 describe('AgentAttachmentStorage', () => {
@@ -143,14 +144,35 @@ describe('AgentAttachmentStorage', () => {
     expect(logger.warn.calledWithMatch({ size: 20 * mb, aggregateCap: 50 * mb })).to.equal(true);
   });
 
-  it('should skip fetchData attachments without size metadata before downloading', async () => {
+  it('should upload whatsapp fetchData attachments without size metadata', async () => {
     const storageService = makeStorageService();
     const logger = makeLogger();
     const service = new AgentAttachmentStorage(storageService, logger as any);
     const fetchData = sinon.stub().resolves(Buffer.from('x'));
     const attachments = [{ type: 'file', name: 'unknown.bin', fetchData }] as Attachment[];
 
-    const result = await service.storeInbound(attachments, ctx);
+    const result = await service.storeInbound(attachments, { ...ctx, platform: AgentPlatformEnum.WHATSAPP });
+
+    expect(result).to.have.length(1);
+    expect(fetchData.calledOnce).to.equal(true);
+    expect(storageService.uploadFile.calledOnce).to.equal(true);
+    expect(result[0]).to.include({
+      type: 'file',
+      name: 'unknown.bin',
+      size: 1,
+      url: 'https://signed/read',
+    });
+    expect(result[0].mimeType).to.equal(undefined);
+  });
+
+  it('should skip non-whatsapp fetchData attachments without size metadata before downloading', async () => {
+    const storageService = makeStorageService();
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const fetchData = sinon.stub().resolves(Buffer.from('x'));
+    const attachments = [{ type: 'file', name: 'unknown.bin', fetchData }] as Attachment[];
+
+    const result = await service.storeInbound(attachments, { ...ctx, platform: AgentPlatformEnum.SLACK });
 
     expect(result).to.have.length(0);
     expect(fetchData.called).to.equal(false);
@@ -252,6 +274,28 @@ describe('AgentAttachmentStorage', () => {
 
     expect(result).to.have.length(0);
     expect(storageService.uploadFile.called).to.equal(false);
+  });
+
+  it('should skip whatsapp fetchData attachment without size metadata when fetched data exceeds size limit', async () => {
+    const storageService = {
+      uploadFile: sinon.stub(),
+      getReadSignedUrl: sinon.stub(),
+      fileExists: sinon.stub(),
+    } as unknown as StorageService;
+
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const attachment: Attachment = {
+      type: 'file',
+      fetchData: async () => Buffer.alloc(26 * 1024 * 1024),
+    };
+
+    const result = await service.storeInbound([attachment], { ...ctx, platform: AgentPlatformEnum.WHATSAPP });
+
+    expect(result).to.have.length(0);
+    expect(storageService.uploadFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
   });
 
   it('should signRead when object exists', async () => {

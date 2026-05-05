@@ -60,7 +60,7 @@ function SetupGuideWithHeader({
   );
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full max-w-[1100px] flex-col gap-4">
       <AgentIntegrationGuideHeader
         providerId={providerId}
         providerDisplayName={providerDisplayName}
