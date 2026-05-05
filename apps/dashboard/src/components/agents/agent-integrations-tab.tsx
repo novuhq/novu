@@ -489,6 +489,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                 {!readOnly && (
                   <ProviderDropdown
                     agentIdentifier={agent.identifier}
+                    agentName={agent.name}
                     selectedIntegrationId={selectedIntegration?.integration._id}
                     linkedIntegrationIds={linkedIntegrationIdSet}
                     excludeLinked
