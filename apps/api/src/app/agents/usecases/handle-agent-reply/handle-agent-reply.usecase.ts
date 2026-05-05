@@ -9,7 +9,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
-import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
+import { AddressingTypeEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
 import { trackAgentReplyProcessed } from '../../agent-analytics';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
@@ -289,7 +289,7 @@ export class HandleAgentReply {
     );
 
     for (const signal of signals) {
-      const to = (signal.to as TriggerRecipientsPayload | undefined) ?? subscriberParticipant?.id;
+      const to = signal.to ?? subscriberParticipant?.id;
 
       if (!to) {
         this.logger.warn(

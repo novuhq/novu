@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import type { Signal } from '@novu/framework';
 import { UserSessionData } from '@novu/shared';
 import { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -21,7 +22,7 @@ import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { ChatSdkService } from './services/chat-sdk.service';
-import { HandleAgentReplyCommand, Signal } from './usecases/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
 
 @Controller('/agents')
