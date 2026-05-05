@@ -13,7 +13,7 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { API_HOSTNAME } from '@/config';
+import { AGENT_API_HOSTNAME, API_HOSTNAME } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -49,8 +49,12 @@ function getApiBaseUrl(): string {
   return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
 }
 
+function getAgentWebhookBaseUrl(): string {
+  return (AGENT_API_HOSTNAME ?? API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
+}
+
 function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentWebhookBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 /** Same as API `CHAT_OAUTH_CALLBACK_PATH`: Slack OAuth redirect after connect. */

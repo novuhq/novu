@@ -9,6 +9,7 @@ import {
   RiExternalLinkLine,
   RiInformationFill,
   RiLockLine,
+  RiSparkling2Line,
 } from 'react-icons/ri';
 import {
   AGENT_TOOL_NAMES,
@@ -20,28 +21,74 @@ import {
 } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
-import { Checkbox } from '@/components/primitives/checkbox';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
 import { Hint, HintIcon } from '@/components/primitives/hint';
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { cn } from '@/utils/ui';
 
 const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co';
+const NOVU_DESCRIPTION_MAX_LENGTH = 200;
 
-const TOOL_LABELS: Record<AgentToolName, { label: string; description: string }> = {
-  bash: { label: 'Bash', description: 'Run shell commands.' },
-  read: { label: 'Read', description: 'Read files in the agent sandbox.' },
-  write: { label: 'Write', description: 'Write files in the agent sandbox.' },
-  edit: { label: 'Edit', description: 'Edit files via string replacement.' },
-  glob: { label: 'Glob', description: 'Find files by pattern.' },
-  grep: { label: 'Grep', description: 'Search file contents.' },
-  web_fetch: { label: 'Web fetch', description: 'Fetch a URL.' },
-  web_search: { label: 'Web search', description: 'Search the public web.' },
+const TOOL_LABELS: Record<AgentToolName, string> = {
+  bash: 'Bash',
+  read: 'Read files',
+  write: 'Write files',
+  edit: 'Edit files',
+  glob: 'Glob search',
+  grep: 'Grep search',
+  web_fetch: 'Fetch URL',
+  web_search: 'Web search',
 };
+
+type PromptTemplate = {
+  id: string;
+  label: string;
+  name: string;
+  prompt: string;
+};
+
+const PROMPT_TEMPLATES: PromptTemplate[] = [
+  {
+    id: 'support',
+    label: 'Customer Support',
+    name: 'Support Agent',
+    prompt:
+      'You are a friendly customer support agent. Always respond with empathy, ask clarifying questions when the request is ambiguous, and surface relevant documentation links when applicable. Escalate to a human teammate when the issue requires account-level changes.',
+  },
+  {
+    id: 'sommelier',
+    label: 'Wine Sommelier',
+    name: 'Wine Sommelier',
+    prompt:
+      'You are an expert wine sommelier. Pair wines with the dishes the user mentions, explain why the pairing works (acidity, tannins, body, flavor notes), and suggest two price tiers for each recommendation.',
+  },
+  {
+    id: 'code_reviewer',
+    label: 'Code Reviewer',
+    name: 'Code Reviewer',
+    prompt:
+      'You are a senior code reviewer. Read code snippets the user shares, point out bugs, suggest concrete improvements with code examples, and call out testability and security concerns. Stay concise and prioritize the most impactful feedback first.',
+  },
+  {
+    id: 'docs',
+    label: 'Docs Helper',
+    name: 'Docs Helper',
+    prompt:
+      'You are a technical documentation expert. Help the team draft clear, concise docs from rough notes, suggest structure (headings, examples, prerequisites), and rewrite passages for clarity while preserving the original meaning.',
+  },
+  {
+    id: 'devops',
+    label: 'DevOps Buddy',
+    name: 'DevOps Buddy',
+    prompt:
+      'You are a DevOps engineer with deep experience in AWS, Kubernetes, Terraform, and CI pipelines. Diagnose deployment issues from logs and command output, suggest infrastructure changes with trade-offs, and produce ready-to-run shell snippets when appropriate.',
+  },
+];
 
 type SetupMode = 'create' | 'existing';
 
@@ -58,9 +105,31 @@ type FormErrors = {
   identifier?: string;
   apiKey?: string;
   system?: string;
+  description?: string;
   claudeAgentId?: string;
   claudeEnvironmentId?: string;
 };
+
+/**
+ * Derive a short Novu-side description from the longer system prompt, so the user
+ * doesn't have to type the same thing twice. Prefers the first sentence; falls back
+ * to a hard truncation. Returns at most {@link NOVU_DESCRIPTION_MAX_LENGTH} chars.
+ */
+function deriveDescriptionFromSystem(system: string): string {
+  const trimmed = system.trim();
+  if (!trimmed) return '';
+
+  const sentenceMatch = trimmed.match(/^[^.!?\n]+[.!?]/);
+  if (sentenceMatch && sentenceMatch[0].length <= NOVU_DESCRIPTION_MAX_LENGTH) {
+    return sentenceMatch[0].trim();
+  }
+
+  if (trimmed.length <= NOVU_DESCRIPTION_MAX_LENGTH) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, NOVU_DESCRIPTION_MAX_LENGTH - 3).trimEnd()}...`;
+}
 
 function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
   return (
@@ -83,7 +152,7 @@ function SegmentedToggle({
   options: Array<{ value: SetupMode; label: string }>;
 }) {
   return (
-    <div className="border-stroke-soft inline-flex w-full rounded-md border p-0.5">
+    <div className="bg-bg-weak inline-flex w-full items-center gap-px rounded-md p-px">
       {options.map((option) => {
         const isActive = option.value === value;
 
@@ -91,12 +160,12 @@ function SegmentedToggle({
           <button
             key={option.value}
             type="button"
+            aria-pressed={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex-1 rounded text-label-xs font-medium transition-colors',
-              'px-2 py-1.5',
+              'flex-1 rounded-[5px] px-2 py-1 text-label-xs font-medium transition-colors',
               isActive
-                ? 'bg-bg-white text-text-strong shadow-xs'
+                ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_1px_2px_-1px_rgba(0,0,0,0.08)]'
                 : 'text-text-soft hover:text-text-strong cursor-pointer'
             )}
           >
@@ -104,6 +173,38 @@ function SegmentedToggle({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function PromptTemplateChips({
+  onSelect,
+  disabled,
+}: {
+  onSelect: (template: PromptTemplate) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-text-soft inline-flex items-center gap-1 text-paragraph-xs leading-4">
+        <RiSparkling2Line className="size-3.5 shrink-0" aria-hidden />
+        Start from
+      </span>
+      {PROMPT_TEMPLATES.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          disabled={disabled}
+          onClick={() => onSelect(template)}
+          className={cn(
+            'border-stroke-soft bg-bg-white text-text-sub rounded-md border px-1.5 py-0.5 text-label-xs leading-4 transition-colors',
+            'hover:border-stroke-strong hover:text-text-strong cursor-pointer',
+            'disabled:cursor-not-allowed disabled:opacity-50'
+          )}
+        >
+          {template.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -149,9 +250,14 @@ export function CreateAgentDialog({
   const [claudeEnvironmentId, setClaudeEnvironmentId] = useState('');
   const [vaultIdsInput, setVaultIdsInput] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
+  // Once the user edits the identifier manually, stop auto-syncing it from the name.
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
 
+  const isClaudeCreateMode = runtime === 'claude_managed' && setupMode === 'create';
   const showApiKeyField = !hasSavedApiKey || forceApiKeyEntry;
+  // The Description field is hidden in Claude create mode — the system prompt doubles
+  // as both the Anthropic instructions and the (derived) Novu-side description.
+  const showDescriptionField = !isClaudeCreateMode;
 
   const reset = () => {
     setName('');
@@ -191,6 +297,21 @@ export function CreateAgentDialog({
     });
   };
 
+  const applyTemplate = (template: PromptTemplate) => {
+    setSystem(template.prompt);
+    setErrors((prev) => ({ ...prev, system: undefined }));
+
+    if (!name.trim()) {
+      setName(template.name);
+      setErrors((prev) => ({ ...prev, name: undefined }));
+
+      if (!isIdentifierTouched) {
+        setIdentifier(slugify(template.name));
+        setErrors((prev) => ({ ...prev, identifier: undefined }));
+      }
+    }
+  };
+
   const submitLabel = useMemo(() => {
     if (runtime === 'claude_managed' && setupMode === 'create') {
       return 'Create agent';
@@ -210,6 +331,7 @@ export function CreateAgentDialog({
     const trimmedIdentifier = identifier.trim();
     const trimmedApiKey = apiKey.trim();
     const trimmedSystem = system.trim();
+    const trimmedDescription = description.trim();
     const nextErrors: FormErrors = {};
 
     if (!trimmedName) {
@@ -229,7 +351,7 @@ export function CreateAgentDialog({
         }
 
         if (!trimmedSystem) {
-          nextErrors.system = 'System prompt is required.';
+          nextErrors.system = 'Instructions are required.';
         }
       } else {
         if (!claudeAgentId.trim()) {
@@ -256,10 +378,12 @@ export function CreateAgentDialog({
       runtime,
     };
 
-    const trimmedDescription = description.trim();
+    // In Claude create mode the system prompt is the source of truth — derive a short
+    // Novu-side description from it so the agent card has a useful summary.
+    const resolvedDescription = isClaudeCreateMode ? deriveDescriptionFromSystem(trimmedSystem) : trimmedDescription;
 
-    if (trimmedDescription) {
-      body.description = trimmedDescription;
+    if (resolvedDescription) {
+      body.description = resolvedDescription;
     }
 
     if (runtime === 'claude_managed') {
@@ -325,7 +449,7 @@ export function CreateAgentDialog({
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="border-stroke-soft bg-background border-y max-h-[70vh] overflow-y-auto">
+          <div className="border-stroke-soft bg-background max-h-[70vh] overflow-y-auto border-y">
             <div className="flex flex-col gap-5 p-4">
               <div className="flex flex-col gap-2">
                 <RequiredFieldLabel htmlFor={nameId}>Agent name</RequiredFieldLabel>
@@ -386,20 +510,22 @@ export function CreateAgentDialog({
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label htmlFor={descriptionId} className="text-text-strong text-label-xs font-medium">
-                  Description
-                </label>
-                <Textarea
-                  id={descriptionId}
-                  placeholder="What does this agent do..."
-                  maxLength={200}
-                  showCounter
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-24 text-sm"
-                />
-              </div>
+              {showDescriptionField ? (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor={descriptionId} className="text-text-strong text-label-xs font-medium">
+                    Description
+                  </label>
+                  <Textarea
+                    id={descriptionId}
+                    placeholder="What does this agent do..."
+                    maxLength={NOVU_DESCRIPTION_MAX_LENGTH}
+                    showCounter
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="min-h-24 text-sm"
+                  />
+                </div>
+              ) : null}
 
               {isClaudeManagedAgentsEnabled ? (
                 <div className="flex flex-col gap-1">
@@ -428,24 +554,21 @@ export function CreateAgentDialog({
               ) : null}
 
               {isClaudeManagedAgentsEnabled && runtime === 'claude_managed' ? (
-                <div className="border-stroke-soft bg-bg-weak flex flex-col gap-4 rounded-md border p-3">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-text-strong text-label-xs font-medium">Setup mode</span>
-                    <SegmentedToggle
-                      value={setupMode}
-                      onChange={(mode) => {
-                        setSetupMode(mode);
-                        setErrors({});
-                      }}
-                      options={[
-                        { value: 'create', label: 'Create new' },
-                        { value: 'existing', label: 'Use existing IDs' },
-                      ]}
-                    />
-                  </div>
+                <div className="flex flex-col gap-3">
+                  <SegmentedToggle
+                    value={setupMode}
+                    onChange={(mode) => {
+                      setSetupMode(mode);
+                      setErrors({});
+                    }}
+                    options={[
+                      { value: 'create', label: 'Create new' },
+                      { value: 'existing', label: 'Use existing IDs' },
+                    ]}
+                  />
 
                   {setupMode === 'create' ? (
-                    <>
+                    <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-1">
                         {showApiKeyField ? (
                           <>
@@ -474,14 +597,14 @@ export function CreateAgentDialog({
                             ) : null}
                           </>
                         ) : (
-                          <div className="border-stroke-soft bg-bg-white flex items-center justify-between gap-2 rounded-md border p-2">
+                          <div className="border-stroke-soft bg-bg-weak flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5">
                             <span className="text-text-sub flex items-center gap-1.5 text-label-xs">
                               <RiCheckLine className="text-success-base size-4 shrink-0" aria-hidden />
                               Using saved Anthropic API key
                             </span>
                             <button
                               type="button"
-                              className="text-text-soft hover:text-text-strong text-label-xs underline-offset-2 hover:underline"
+                              className="text-text-soft hover:text-text-strong cursor-pointer text-label-xs underline-offset-2 hover:underline"
                               onClick={() => setForceApiKeyEntry(true)}
                             >
                               Replace
@@ -490,8 +613,14 @@ export function CreateAgentDialog({
                         )}
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <RequiredFieldLabel htmlFor={systemFieldId}>System prompt</RequiredFieldLabel>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <RequiredFieldLabel htmlFor={systemFieldId}>Instructions</RequiredFieldLabel>
+                          <span className="text-text-soft text-paragraph-xs leading-4">
+                            Sent to Claude as the system prompt
+                          </span>
+                        </div>
+                        <PromptTemplateChips onSelect={applyTemplate} disabled={isSubmitting} />
                         <Textarea
                           id={systemFieldId}
                           value={system}
@@ -503,6 +632,10 @@ export function CreateAgentDialog({
                           className="min-h-32 text-sm"
                           aria-invalid={errors.system ? true : undefined}
                         />
+                        <Hint className="text-text-soft text-paragraph-xs leading-4">
+                          <HintIcon as={RiInformationFill} />
+                          The first sentence is shown as the agent description in Novu.
+                        </Hint>
                         {errors.system ? (
                           <p className="text-error-base text-label-xs" role="alert">
                             {errors.system}
@@ -510,37 +643,37 @@ export function CreateAgentDialog({
                         ) : null}
                       </div>
 
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-text-strong text-label-xs font-medium">Capabilities</span>
-                          <span className="text-text-soft text-label-xs">All tools enabled by default</span>
+                      <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
+                        <div className="flex items-center justify-between px-2 py-1.5">
+                          <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
+                            Capabilities
+                          </span>
+                          <span className="text-text-soft text-paragraph-xs leading-4">All tools enabled</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {AGENT_TOOL_NAMES.map((tool) => {
-                            const isDisabled = disabledTools.has(tool);
-                            const meta = TOOL_LABELS[tool];
+                        <div className="bg-bg-white shadow-box-xs flex flex-col overflow-hidden rounded-md">
+                          <div className="flex flex-col divide-y divide-stroke-soft">
+                            {AGENT_TOOL_NAMES.map((tool) => {
+                              const isEnabled = !disabledTools.has(tool);
 
-                            return (
-                              <label
-                                key={tool}
-                                htmlFor={`${formId}-tool-${tool}`}
-                                className="border-stroke-soft bg-bg-white flex cursor-pointer items-start gap-2 rounded-md border p-2 hover:border-stroke-strong transition-colors"
-                              >
-                                <Checkbox
-                                  id={`${formId}-tool-${tool}`}
-                                  checked={!isDisabled}
-                                  onCheckedChange={() => toggleTool(tool)}
-                                />
-                                <div className="flex min-w-0 flex-col gap-0.5">
-                                  <span className="text-text-strong text-label-xs font-medium">{meta.label}</span>
-                                  <span className="text-text-soft text-paragraph-xs leading-4">{meta.description}</span>
-                                </div>
-                              </label>
-                            );
-                          })}
+                              return (
+                                <label
+                                  key={tool}
+                                  htmlFor={`${formId}-tool-${tool}`}
+                                  className="flex cursor-pointer items-center justify-between gap-2 px-3 py-2"
+                                >
+                                  <span className="text-text-sub text-label-xs font-medium">{TOOL_LABELS[tool]}</span>
+                                  <Switch
+                                    id={`${formId}-tool-${tool}`}
+                                    checked={isEnabled}
+                                    onCheckedChange={() => toggleTool(tool)}
+                                  />
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-3">
                       <Hint className="text-text-soft text-paragraph-xs leading-4">

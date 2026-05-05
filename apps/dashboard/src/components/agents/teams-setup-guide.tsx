@@ -18,7 +18,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { API_HOSTNAME } from '@/config';
+import { AGENT_API_HOSTNAME, API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -58,6 +58,10 @@ type IntegrationProvisioningState = {
 
 function getApiBaseUrl(): string {
   return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
+}
+
+function getAgentWebhookBaseUrl(): string {
+  return (AGENT_API_HOSTNAME ?? API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
 }
 
 function getApiHostname(): string {
@@ -817,7 +821,7 @@ export function TeamsSetupGuide({
   const manualHealth = useManualHealthPoll(integrationId, hasCredentials && activeSetupMode === 'manual');
 
   // Build the webhook URL used in the manual Bot deployment instructions.
-  const webhookUrl = `${getApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
+  const webhookUrl = `${getAgentWebhookBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
 
   // Steps: App Reg + Redirect URI (base+0), Graph perms (base+1),
   //        Credentials (base+2), Deploy to Azure (base+3), Download pkg (base+4), Upload (base+5), Connect (base+6)

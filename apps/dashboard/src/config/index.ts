@@ -15,6 +15,14 @@ export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
 
+/**
+ * Optional hostname that serves the agent webhook endpoints (`/v1/agents/:id/webhook/...`).
+ * Falls back to {@link API_HOSTNAME} when not set. Use this when the agent webhook traffic
+ * is routed through a separate ingress (e.g. a public reverse proxy) than the main API.
+ */
+export const AGENT_API_HOSTNAME =
+  window._env_?.VITE_AGENT_API_HOSTNAME || import.meta.env.VITE_AGENT_API_HOSTNAME || API_HOSTNAME;
+
 export const BETTER_AUTH_BASE_URL =
   window._env_?.VITE_BETTER_AUTH_BASE_URL ||
   import.meta.env.VITE_BETTER_AUTH_BASE_URL ||
