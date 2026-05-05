@@ -393,11 +393,11 @@ export function SlackSetupGuide({
             }
           </span>
         }
-        rightContent={<SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>}
-        extraContent={
-          !isCredentialsSaved ? (
-            <div className="mt-2">
-              {user?.externalId ? (
+        rightContent={
+          <div className="flex min-w-0 flex-col gap-3">
+            <SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>
+            {!isCredentialsSaved ? (
+              user?.externalId ? (
                 <QuickSetupStep
                   integrationId={integrationId}
                   agentId={agent._id}
@@ -405,16 +405,16 @@ export function SlackSetupGuide({
                   user={user}
                   onSuccess={handleQuickSetupSuccess}
                 />
-              ) : null}
-            </div>
-          ) : (
-            <InlineToast
-              className="mt-2 w-full"
-              variant="success"
-              title="App created!"
-              description="Your Slack app credentials have been saved to the integration."
-            />
-          )
+              ) : null
+            ) : (
+              <InlineToast
+                className="w-full"
+                variant="success"
+                title="App created!"
+                description="Your Slack app credentials have been saved to the integration."
+              />
+            )}
+          </div>
         }
       />
 
