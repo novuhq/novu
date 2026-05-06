@@ -14,6 +14,7 @@ export enum AgentEventEnum {
 // User-facing types (visible on ctx properties)
 // ---------------------------------------------------------------------------
 
+/** Identity of the user or bot that authored a message. */
 export interface AgentMessageAuthor {
   userId: string;
   fullName: string;
@@ -21,6 +22,7 @@ export interface AgentMessageAuthor {
   isBot: boolean | 'unknown';
 }
 
+/** A file or media attachment included with a message. */
 export interface AgentAttachment {
   type: string;
   url?: string;
@@ -29,24 +31,37 @@ export interface AgentAttachment {
   size?: number;
 }
 
+/** An incoming message from the user in the current conversation. */
 export interface AgentMessage {
+  /** Plain-text content of the message. */
   text: string;
+  /** Platform-native message ID (e.g. Slack `ts`, Teams `activityId`). */
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
 }
 
+/** Live state of the current conversation thread. */
 export interface AgentConversation {
+  /** Stable identifier for this conversation. */
   identifier: string;
+  /** Lifecycle status (e.g. `'open'`, `'resolved'`). */
   status: string;
+  /**
+   * Key/value store for this conversation.
+   * Values are written via `ctx.metadata.set()` and readable on subsequent messages.
+   */
   metadata: Record<string, unknown>;
+  /** Number of messages exchanged so far; starts at 1 for the first message. */
   messageCount: number;
   createdAt: string;
   lastActivityAt: string;
 }
 
+/** The Novu subscriber who initiated or is participating in the conversation. */
 export interface AgentSubscriber {
+  /** Stable Novu subscriber ID. */
   subscriberId: string;
   firstName?: string;
   lastName?: string;
@@ -54,22 +69,36 @@ export interface AgentSubscriber {
   phone?: string;
   avatar?: string;
   locale?: string;
+  /** Arbitrary custom data attached to the subscriber in Novu. */
   data?: Record<string, unknown>;
 }
 
+/**
+ * A single entry in the conversation history.
+ * `ctx.history` is an ordered array of these entries — map them to your LLM's
+ * message format before making a model call.
+ */
 export interface AgentHistoryEntry {
+  /** Message role: `'user'`, `'assistant'`, or `'system'`. */
   role: string;
+  /** Content type: `'text'`, `'card'`, etc. */
   type: string;
+  /** Plain-text representation of the message content. */
   content: string;
   richContent?: Record<string, unknown>;
   senderName?: string;
+  /** Present on system entries that carry a Novu signal (e.g. metadata updates). */
   signalData?: { type: string; payload?: Record<string, unknown> };
   createdAt: string;
 }
 
+/** Platform-specific identifiers for the thread and channel. */
 export interface AgentPlatformContext {
+  /** Platform-native thread ID (e.g. Slack thread `ts`, Teams conversation ID). */
   threadId: string;
+  /** Platform-native channel or chat ID. */
   channelId: string;
+  /** Whether the message arrived in a direct message rather than a shared channel. */
   isDM: boolean;
 }
 
@@ -112,8 +141,11 @@ export interface ReplyContent {
   files?: FileRef[];
 }
 
+/** Data carried by a button click or other interactive action. */
 export interface AgentAction {
+  /** The `id` prop of the clicked `<Button>` or action element. */
   actionId: string;
+  /** The `value` prop of the clicked element, if set. */
   value?: string;
   /** Platform-native message ID of the message containing the clicked button/action. */
   sourceMessageId?: string;
@@ -123,10 +155,14 @@ export interface AgentAction {
 // Context + handlers
 // ---------------------------------------------------------------------------
 
+/** An emoji reaction added to or removed from a message. */
 export interface AgentReaction {
+  /** Platform-native ID of the message that was reacted to. */
   messageId: string;
   emoji: { name: string };
+  /** `true` when the reaction was added, `false` when it was removed. */
   added: boolean;
+  /** The message that was reacted to, if available. */
   message: AgentMessage | null;
 }
 
@@ -145,10 +181,22 @@ export interface ReplyHandle {
 }
 
 interface AgentContextBase {
+  /** Live state of the current conversation, including persisted metadata. */
   readonly conversation: AgentConversation;
+  /**
+   * The Novu subscriber who sent the message, or `null` if Novu could not
+   * resolve a subscriber for this conversation.
+   */
   readonly subscriber: AgentSubscriber | null;
+  /**
+   * Full conversation history as an ordered array of entries.
+   * Map to your LLM's message format before making a model call:
+   * `ctx.history.map(h => ({ role: h.role, content: h.content }))`
+   */
   readonly history: AgentHistoryEntry[];
+  /** Platform identifier (e.g. `'slack'`, `'msteams'`, `'in-app'`). */
   readonly platform: string;
+  /** Platform-specific thread and channel identifiers. */
   readonly platformContext: AgentPlatformContext;
 
   /**
@@ -165,7 +213,16 @@ interface AgentContextBase {
    *   });
    */
   reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  /**
+   * Mark the conversation as resolved. Optionally provide a summary for the resolution record.
+   * Triggers the `onResolve` handler if one is registered.
+   */
   resolve(summary?: string): void;
+  /**
+   * Write key/value pairs to the conversation's persistent metadata store.
+   * Values are flushed to Novu with the next `ctx.reply()` call, or automatically
+   * when the handler completes. Read stored values via `ctx.conversation.metadata`.
+   */
   metadata: {
     set(key: string, value: unknown): void;
   };
@@ -205,32 +262,66 @@ interface AgentContextBase {
   addReaction(messageId: string, emojiName: Emoji): void;
 }
 
+/** Context passed to the `onMessage` handler. */
 export interface AgentMessageContext extends AgentContextBase {
   readonly event: 'onMessage';
+  /** The incoming message that triggered this handler. */
   readonly message: AgentMessage;
 }
 
+/** Context passed to the `onAction` handler. */
 export interface AgentActionContext extends AgentContextBase {
   readonly event: 'onAction';
+  /** The button click or interactive action that triggered this handler. */
   readonly action: AgentAction;
 }
 
+/** Context passed to the `onReaction` handler. */
 export interface AgentReactionContext extends AgentContextBase {
   readonly event: 'onReaction';
+  /** The emoji reaction that triggered this handler. */
   readonly reaction: AgentReaction;
 }
 
+/** Context passed to the `onResolve` handler. */
 export interface AgentResolveContext extends AgentContextBase {
   readonly event: 'onResolve';
 }
 
 export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
 
+/** Event handlers for a conversational agent. */
 export interface AgentHandlers {
-  onMessage: (ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
-  onReaction?: (ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
-  onAction?: (ctx: AgentActionContext) => Awaitable<MessageContent | void>;
-  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  /**
+   * Fires on every text message the user sends.
+   * `message` is the incoming message. `ctx` provides conversation history, subscriber,
+   * metadata, and reply/trigger methods.
+   * Return a string or JSX card to reply, or call `ctx.reply()` directly
+   * for more control (e.g. editing a message in place).
+   */
+  onMessage: (payload: { message: AgentMessage; ctx: AgentMessageContext }) => Awaitable<MessageContent | void>;
+  /**
+   * Fires when the user adds or removes an emoji reaction to a message.
+   * `reaction` carries the emoji and whether it was added or removed.
+   * Return a string or card to post a reply, or return nothing to silently acknowledge.
+   */
+  onReaction?: (payload: { reaction: AgentReaction; ctx: AgentReactionContext }) => Awaitable<MessageContent | void>;
+  /**
+   * Fires when the user clicks a `<Button>` or other interactive element.
+   * `actionId` is the `id` prop of the clicked element; `value` is its `value` prop.
+   * Return a string or card to reply, or return nothing to silently acknowledge the click.
+   */
+  onAction?: (payload: {
+    actionId: string;
+    value?: string;
+    ctx: AgentActionContext;
+  }) => Awaitable<MessageContent | void>;
+  /**
+   * Fires after `ctx.resolve()` is called and the conversation is marked resolved.
+   * Use for post-resolution side-effects (e.g. triggering a follow-up workflow).
+   * Access subscriber and conversation via `ctx.subscriber` and `ctx.conversation`.
+   */
+  onResolve?: (payload: { ctx: AgentResolveContext }) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {
