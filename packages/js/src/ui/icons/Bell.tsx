@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-type BellProps = JSX.HTMLAttributes<SVGSVGElement>;
+type BellProps = JSX.SvgSVGAttributes<SVGSVGElement>;
 
 export function Bell(props: BellProps) {
   return (

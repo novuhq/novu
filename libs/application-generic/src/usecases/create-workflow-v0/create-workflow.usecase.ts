@@ -17,7 +17,6 @@ import {
   isBridgeWorkflow,
   ResourceOriginEnum,
   ResourceTypeEnum,
-  slugify,
   TriggerTypeEnum,
 } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
@@ -25,7 +24,7 @@ import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { AnalyticsService, ContentService } from '../../services';
 import { ResourceValidatorService } from '../../services/resource-validator.service';
-import { isVariantEmpty, PlatformException, shortId } from '../../utils';
+import { isVariantEmpty, PlatformException, shortId, slugifyOrRandom } from '../../utils';
 import { MANAGE_TRANSLATIONS, TRANSLATIONS_SERVICE } from '../../utils/constants';
 import { NotificationStep, NotificationStepVariantCommand } from '../../value-objects';
 import { CreateChange, CreateChangeCommand } from '../create-change';
@@ -197,7 +196,7 @@ export class CreateWorkflowV0 {
        * For non-bridge workflows, we use a slugified version of the workflow name
        * as the trigger identifier to provide a better trigger DX.
        */
-      triggerIdentifier = slugify(command.name);
+      triggerIdentifier = slugifyOrRandom(command.name);
     }
 
     return triggerIdentifier;

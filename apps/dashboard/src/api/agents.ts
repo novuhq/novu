@@ -230,7 +230,8 @@ export function listAgentIntegrations(params: ListAgentIntegrationsParams): Prom
 }
 
 export type AddAgentIntegrationBody = {
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
+  providerId?: string;
 };
 
 type AgentIntegrationLinkEnvelope = { data: AgentIntegrationLink };
@@ -255,6 +256,17 @@ export function removeAgentIntegration(
 ): Promise<void> {
   return del(`/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`, {
     environment,
+  });
+}
+
+export async function sendAgentTestEmail(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  targetAddress: string
+): Promise<{ success: boolean }> {
+  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/test-email`, {
+    environment,
+    body: { targetAddress },
   });
 }
 

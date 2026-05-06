@@ -40,7 +40,7 @@
     "sinon": "^9.2.4",
     "ts-node": "~10.9.1",
     "typescript": "5.6.2",
-    "liquidjs": "^10.25.5"
+    "liquidjs": "^10.25.7"
   },
   "peerDependencies": {
     "@nestjs/common": "10.4.18",

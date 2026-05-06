@@ -5,6 +5,8 @@ import type {
   CreateChannelConnectionArgs,
   CreateChannelEndpointArgs,
   GenerateChatOAuthUrlArgs,
+  GenerateConnectOAuthUrlArgs,
+  GenerateLinkUserOAuthUrlArgs,
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
@@ -34,7 +36,9 @@ const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 const CHAT_OAUTH_ROUTE = `${INBOX_ROUTE}/chat/oauth`;
 const CHANNEL_CONNECTIONS_ROUTE = `${INBOX_ROUTE}/channel-connections`;
+const CHANNEL_CONNECTIONS_OAUTH_ROUTE = `${CHANNEL_CONNECTIONS_ROUTE}/oauth`;
 const CHANNEL_ENDPOINTS_ROUTE = `${INBOX_ROUTE}/channel-endpoints`;
+const CHANNEL_ENDPOINTS_OAUTH_ROUTE = `${CHANNEL_ENDPOINTS_ROUTE}/oauth`;
 
 type ChannelListBaseArgs = {
   subscriberId?: string;
@@ -542,6 +546,9 @@ export class InboxService {
     return this.#httpClient.delete(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
   }
 
+  /**
+   * @deprecated Use generateConnectOAuthUrl() or generateLinkUserOAuthUrl() instead.
+   */
   generateChatOAuthUrl({
     integrationIdentifier,
     connectionIdentifier,
@@ -551,6 +558,7 @@ export class InboxService {
     userScope,
     mode,
     connectionMode,
+    autoLinkUser,
   }: GenerateChatOAuthUrlArgs): Promise<{ url: string }> {
     return this.#httpClient.post(CHAT_OAUTH_ROUTE, {
       integrationIdentifier,
@@ -561,6 +569,43 @@ export class InboxService {
       userScope,
       mode,
       connectionMode,
+      autoLinkUser,
+    });
+  }
+
+  generateConnectOAuthUrl({
+    integrationIdentifier,
+    connectionIdentifier,
+    subscriberId,
+    context,
+    scope,
+    connectionMode,
+    autoLinkUser,
+  }: GenerateConnectOAuthUrlArgs): Promise<{ url: string }> {
+    return this.#httpClient.post(CHANNEL_CONNECTIONS_OAUTH_ROUTE, {
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      scope,
+      connectionMode,
+      autoLinkUser,
+    });
+  }
+
+  generateLinkUserOAuthUrl({
+    integrationIdentifier,
+    connectionIdentifier,
+    subscriberId,
+    context,
+    userScope,
+  }: GenerateLinkUserOAuthUrlArgs): Promise<{ url: string }> {
+    return this.#httpClient.post(CHANNEL_ENDPOINTS_OAUTH_ROUTE, {
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      userScope,
     });
   }
 

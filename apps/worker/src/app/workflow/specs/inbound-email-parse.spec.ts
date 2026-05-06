@@ -1,6 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CompileTemplate, SendWebhookMessage } from '@novu/application-generic';
-import { DomainRepository, JobRepository, MessageRepository } from '@novu/dal';
+import {
+  CompileTemplate,
+  HttpClientService,
+  InboundDomainRouteDelivery,
+  SendWebhookMessage,
+} from '@novu/application-generic';
+import {
+  AgentIntegrationRepository,
+  DomainRepository,
+  DomainRouteRepository,
+  IntegrationRepository,
+  JobRepository,
+  MessageRepository,
+} from '@novu/dal';
 import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -13,7 +25,7 @@ const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 const USER_MAIL_DOMAIN = 'mail.domain.com';
-const USER_PARSE_WEBHOOK = 'user-parse.com/webhook/{{compiledVariable}}';
+const USER_PARSE_WEBHOOK = 'https://example.com/webhook/{{compiledVariable}}';
 
 describe('Should handle the new arrived mail', () => {
   let inboundEmailParseUsecase: InboundEmailParse;
@@ -35,8 +47,13 @@ describe('Should handle the new arrived mail', () => {
         { provide: JobRepository, useValue: sandbox.createStubInstance(JobRepository) },
         { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
         { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
+        { provide: DomainRouteRepository, useValue: sandbox.createStubInstance(DomainRouteRepository) },
+        { provide: InboundDomainRouteDelivery, useValue: sandbox.createStubInstance(InboundDomainRouteDelivery) },
         { provide: SendWebhookMessage, useValue: sandbox.createStubInstance(SendWebhookMessage) },
         { provide: CompileTemplate, useValue: compileTemplate },
+        { provide: HttpClientService, useValue: sandbox.createStubInstance(HttpClientService) },
+        { provide: IntegrationRepository, useValue: sandbox.createStubInstance(IntegrationRepository) },
+        { provide: AgentIntegrationRepository, useValue: sandbox.createStubInstance(AgentIntegrationRepository) },
       ],
     }).compile();
 
@@ -154,7 +171,7 @@ const getEntitiesStubObject = {
         active: true,
         replyCallback: {
           active: true,
-          url: 'user-parse.com/webhook/{{compiledVariable}}',
+          url: 'https://example.com/webhook/{{compiledVariable}}',
         },
         shouldStopOnFail: false,
         filters: [],
@@ -221,7 +238,7 @@ const getEntitiesStubObject = {
     step: {
       replyCallback: {
         active: true,
-        url: 'user-parse.com/webhook/{{compiledVariable}}',
+        url: 'https://example.com/webhook/{{compiledVariable}}',
       },
       metadata: {
         timed: {

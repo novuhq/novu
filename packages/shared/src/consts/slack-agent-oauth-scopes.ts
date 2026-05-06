@@ -4,9 +4,12 @@
  */
 export const SLACK_AGENT_OAUTH_SCOPES = [
   'app_mentions:read',
+  'assistant:write',
   'channels:history',
   'channels:read',
   'chat:write',
+  'files:read',
+  'files:write',
   'groups:history',
   'groups:read',
   'im:history',

@@ -4,7 +4,7 @@ RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
 # Install global dependencies
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.33.0&& \
+RUN npm --no-update-notifier --no-fund --global install pm2@6.0.14 pnpm@10.33.0&& \
     pnpm --version
 
 # Set non-root user
@@ -46,7 +46,7 @@ FROM node:22.22.1-alpine3.22 AS prod
 ENV CI=true
 
 # Install only runtime dependencies
-RUN npm --no-update-notifier --no-fund --global install pm2 && \
+RUN npm --no-update-notifier --no-fund --global install pm2@6.0.14 && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER 1000
@@ -58,4 +58,4 @@ COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 # Built output (not included by pnpm deploy because dist is gitignored)
 COPY --chown=1000:1000 --from=dev /usr/src/app/apps/webhook/dist ./dist
 
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/webhook -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]

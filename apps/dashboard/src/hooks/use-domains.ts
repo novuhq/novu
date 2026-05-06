@@ -1,14 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CreateDomainBody, createDomain, DomainResponse, deleteDomain, fetchDomains } from '@/api/domains';
-import { useEnvironment } from '@/context/environment/hooks';
+import {
+  CreateDomainBody,
+  CursorPaginatedResponse,
+  createDomain,
+  DomainResponse,
+  deleteDomain,
+  fetchDomains,
+  ListDomainsParams,
+} from '@/api/domains';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
-export function useFetchDomains() {
+export function useFetchDomains(params: ListDomainsParams = {}) {
   const { currentEnvironment } = useEnvironment();
 
-  return useQuery<DomainResponse[]>({
-    queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id],
-    queryFn: () => fetchDomains(currentEnvironment!),
+  return useQuery<CursorPaginatedResponse<DomainResponse>>({
+    queryKey: [QueryKeys.fetchDomains, currentEnvironment?._id, params],
+    queryFn: () => fetchDomains(requireEnvironment(currentEnvironment, 'No environment selected'), params),
     enabled: !!currentEnvironment,
   });
 }
@@ -18,7 +26,8 @@ export function useCreateDomain() {
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
-    mutationFn: (body: CreateDomainBody) => createDomain(body, currentEnvironment!),
+    mutationFn: (body: CreateDomainBody) =>
+      createDomain(body, requireEnvironment(currentEnvironment, 'No environment selected')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains] });
     },
@@ -30,7 +39,8 @@ export function useDeleteDomain() {
   const { currentEnvironment } = useEnvironment();
 
   return useMutation({
-    mutationFn: (domainId: string) => deleteDomain(domainId, currentEnvironment!),
+    mutationFn: (domain: string) =>
+      deleteDomain(domain, requireEnvironment(currentEnvironment, 'No environment selected')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchDomains] });
     },

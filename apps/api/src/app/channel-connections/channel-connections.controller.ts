@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -13,8 +12,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
@@ -50,21 +49,8 @@ export class ChannelConnectionsController {
     private readonly createChannelConnectionUsecase: CreateChannelConnection,
     private readonly updateChannelConnectionUsecase: UpdateChannelConnection,
     private readonly deleteChannelConnectionUsecase: DeleteChannelConnection,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly listChannelConnectionsUsecase: ListChannelConnections
   ) {}
-
-  private async checkFeatureEnabled(user: UserSessionData) {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-    });
-
-    if (!isEnabled) {
-      throw new NotFoundException('Feature not enabled');
-    }
-  }
 
   @Get()
   @ApiOperation({
@@ -79,8 +65,6 @@ export class ChannelConnectionsController {
     @UserSession() user: UserSessionData,
     @Query() query: ListChannelConnectionsQueryDto
   ): Promise<ListChannelConnectionsResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const result = await this.listChannelConnectionsUsecase.execute(
       ListChannelConnectionsCommand.create({
         user,
@@ -102,8 +86,8 @@ export class ChannelConnectionsController {
       data: result.data.map(mapChannelConnectionEntityToDto),
       next: result.next,
       previous: result.previous,
-      totalCount: result.totalCount!,
-      totalCountCapped: result.totalCountCapped!,
+      totalCount: result.totalCount ?? 0,
+      totalCountCapped: result.totalCountCapped ?? false,
     };
   }
 
@@ -120,8 +104,6 @@ export class ChannelConnectionsController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateChannelConnectionRequestDto
   ): Promise<GetChannelConnectionResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const channelConnection = await this.createChannelConnectionUsecase.execute(
       CreateChannelConnectionCommand.create({
         environmentId: user.environmentId,
@@ -153,8 +135,6 @@ export class ChannelConnectionsController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
   ): Promise<GetChannelConnectionResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const channelConnection = await this.getChannelConnectionUsecase.execute(
       GetChannelConnectionCommand.create({
         environmentId: user.environmentId,
@@ -181,8 +161,6 @@ export class ChannelConnectionsController {
     @Param('identifier') identifier: string,
     @Body() body: UpdateChannelConnectionRequestDto
   ): Promise<GetChannelConnectionResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const channelConnection = await this.updateChannelConnectionUsecase.execute(
       UpdateChannelConnectionCommand.create({
         environmentId: user.environmentId,
@@ -210,8 +188,6 @@ export class ChannelConnectionsController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    await this.checkFeatureEnabled(user);
-
     await this.deleteChannelConnectionUsecase.execute(
       DeleteChannelConnectionCommand.create({
         environmentId: user.environmentId,

@@ -29,6 +29,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
     await this.ensureClientInitialized();
 
     const headers: Message['header'] = {
+      ...emailOptions.headers,
       from: emailOptions.from || this.config.from,
       to: emailOptions.to,
       subject: emailOptions.subject,

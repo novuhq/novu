@@ -10,6 +10,10 @@ export type DuplicateLayoutDto = {
    */
   name: string;
   /**
+   * Identifier for the duplicated layout. When omitted, it is derived from the name.
+   */
+  layoutId?: string | undefined;
+  /**
    * Enable or disable translations for this layout
    */
   isTranslationEnabled?: boolean | undefined;
@@ -18,6 +22,7 @@ export type DuplicateLayoutDto = {
 /** @internal */
 export type DuplicateLayoutDto$Outbound = {
   name: string;
+  layoutId?: string | undefined;
   isTranslationEnabled: boolean;
 };
 
@@ -28,6 +33,7 @@ export const DuplicateLayoutDto$outboundSchema: z.ZodType<
   DuplicateLayoutDto
 > = z.object({
   name: z.string(),
+  layoutId: z.string().optional(),
   isTranslationEnabled: z.boolean().default(false),
 });
 

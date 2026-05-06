@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ConversationChannel,
@@ -9,7 +9,9 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
-import { AddressingTypeEnum, TriggerRequestCategoryEnum, type TriggerRecipientsPayload } from '@novu/shared';
+import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
+import { trackAgentReplyProcessed } from '../../agent-analytics';
 import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
@@ -17,10 +19,6 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-c
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import {
-  ParseEventRequest,
-  ParseEventRequestMulticastCommand,
-} from '../../../events/usecases/parse-event-request';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -33,18 +31,27 @@ export class HandleAgentReply {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger,
-    private readonly parseEventRequest: ParseEventRequest
-  ) {}
+    private readonly parseEventRequest: ParseEventRequest,
+    private readonly analyticsService: AnalyticsService
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }
-    if (command.edit && (command.resolve || command.signals?.length)) {
-      throw new BadRequestException('edit cannot be combined with resolve or signals');
+    if (command.edit && (command.resolve || command.signals?.length || command.addReactions?.length)) {
+      throw new BadRequestException('edit cannot be combined with resolve, signals, or addReactions');
     }
-    if (!command.reply && !command.edit && !command.resolve && !command.signals?.length) {
-      throw new BadRequestException('At least one of reply, edit, resolve, or signals must be provided');
+    if (
+      !command.reply &&
+      !command.edit &&
+      !command.resolve &&
+      !command.signals?.length &&
+      !command.addReactions?.length
+    ) {
+      throw new BadRequestException('At least one of reply, edit, resolve, signals, or addReactions must be provided');
     }
 
     const conversation = await this.conversationService.getConversation(
@@ -83,9 +90,49 @@ export class HandleAgentReply {
       await this.executeSignals(command, conversation, channel, command.signals);
     }
 
+    if (command.addReactions?.length) {
+      await Promise.allSettled(
+        command.addReactions.map((r) =>
+          this.chatSdkService.reactToMessage(
+            conversation._agentId,
+            command.integrationIdentifier,
+            channel.platform,
+            channel.platformThreadId,
+            r.messageId,
+            r.emojiName
+          )
+        )
+      );
+    }
+
     if (command.resolve) {
       await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
+
+    const triggerSignalCount = (command.signals ?? []).filter((s) => s.type === 'trigger').length;
+    const metadataSignalCount = (command.signals ?? []).filter((s) => s.type === 'metadata').length;
+    const reactionCount = command.addReactions?.length ?? 0;
+    const actions: string[] = [];
+
+    if (command.reply) actions.push('reply');
+    if (command.edit) actions.push('edit');
+    if (command.resolve) actions.push('resolve');
+    if (triggerSignalCount > 0) actions.push('trigger_signals');
+    if (metadataSignalCount > 0) actions.push('metadata_signals');
+    if (reactionCount > 0) actions.push('add_reactions');
+
+    trackAgentReplyProcessed(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentIdentifier: command.agentIdentifier,
+      conversationId: command.conversationId,
+      integrationIdentifier: command.integrationIdentifier,
+      actions,
+      triggerSignalCount,
+      metadataSignalCount,
+      reactionCount,
+    });
 
     return replyInfo ?? null;
   }
@@ -191,7 +238,6 @@ export class HandleAgentReply {
   }
 
   private extractTextFallback(content: ReplyContentDto): string {
-    if (content.text) return content.text;
     if (content.markdown) return content.markdown;
     if (content.card) {
       const title = (content.card as { title?: string }).title;

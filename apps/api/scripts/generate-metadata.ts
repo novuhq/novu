@@ -26,29 +26,49 @@ const tmpMetadataPath = path.join(srcPath, tmpMetadataFilename);
 
 const defaultContent = `export default async () => { return {}; };\n`;
 
-if (!fs.existsSync(metadataPath)) {
+const hadMetadata = fs.existsSync(metadataPath);
+const originalContent = hadMetadata ? fs.readFileSync(metadataPath, 'utf8') : '';
+const shouldNeutralizeMetadata = originalContent !== defaultContent;
+
+if (shouldNeutralizeMetadata) {
   fs.writeFileSync(metadataPath, defaultContent, 'utf8');
-  console.log('metadata.ts created with default content.');
+  console.log('metadata.ts reset to default content before generation.');
 }
 
-const generator = new PluginMetadataGenerator();
-generator.generate({
-  visitors: [new ReadonlyVisitor({ introspectComments: true, pathToSource: srcPath })],
-  outputDir: srcPath,
-  filename: tmpMetadataFilename,
-  tsconfigPath,
-});
+const restoreOriginalMetadata = () => {
+  if (hadMetadata) {
+    fs.writeFileSync(metadataPath, originalContent, 'utf8');
+  } else if (fs.existsSync(metadataPath)) {
+    fs.unlinkSync(metadataPath);
+  }
+};
 
 try {
-  const nextContent = fs.readFileSync(tmpMetadataPath, 'utf8');
-  const currentContent = fs.existsSync(metadataPath) ? fs.readFileSync(metadataPath, 'utf8') : '';
+  const generator = new PluginMetadataGenerator();
+  generator.generate({
+    visitors: [new ReadonlyVisitor({ introspectComments: true, pathToSource: srcPath })],
+    outputDir: srcPath,
+    filename: tmpMetadataFilename,
+    tsconfigPath,
+  });
 
-  if (nextContent === currentContent) {
+  const nextContent = fs.readFileSync(tmpMetadataPath, 'utf8');
+
+  if (nextContent === originalContent) {
+    if (shouldNeutralizeMetadata) {
+      restoreOriginalMetadata();
+    }
     console.log('metadata.ts is up to date, skipping write.');
   } else {
     fs.renameSync(tmpMetadataPath, metadataPath);
     console.log('metadata.ts updated.');
   }
+} catch (error) {
+  if (shouldNeutralizeMetadata) {
+    restoreOriginalMetadata();
+  }
+
+  throw error;
 } finally {
   if (fs.existsSync(tmpMetadataPath)) {
     fs.unlinkSync(tmpMetadataPath);

@@ -21,8 +21,8 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
-import type { Agent, AgentBridgeRequest } from './resources/agent';
-import { AgentContextImpl, AgentEventEnum } from './resources/agent';
+import type { Agent, AgentBridgeRequest, MessageContent } from './resources/agent';
+import { AgentContextImpl, AgentDeliveryError, AgentEventEnum } from './resources/agent';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient } from './utils';
 
@@ -226,7 +226,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
 
         const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
-          console.error(`[agent:${agentId}] Handler error:`, err);
+          if (err instanceof AgentDeliveryError) {
+            console.error(`[agent:${agentId}] ${err.message}`);
+          } else {
+            console.error(`[agent:${agentId}] Handler error:`, err);
+          }
         });
 
         if (waitUntil) {
@@ -305,12 +309,12 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    const handlerMap: Partial<Record<AgentEventEnum, (ctx: AgentContextImpl) => Promise<void>>> = {
+    const handlerMap = {
       [AgentEventEnum.ON_MESSAGE]: registeredAgent.handlers.onMessage,
       [AgentEventEnum.ON_REACTION]: registeredAgent.handlers.onReaction,
       [AgentEventEnum.ON_ACTION]: registeredAgent.handlers.onAction,
       [AgentEventEnum.ON_RESOLVE]: registeredAgent.handlers.onResolve,
-    };
+    } as Partial<Record<AgentEventEnum, (ctx: AgentContextImpl) => Awaitable<MessageContent | void>>>;
 
     if (!Object.prototype.hasOwnProperty.call(handlerMap, event)) {
       throw new InvalidActionError(event, AgentEventEnum);
@@ -318,7 +322,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
     const handler = handlerMap[event as AgentEventEnum];
     if (handler) {
-      await handler(ctx);
+      const result = await handler(ctx);
+      if (result != null) await ctx.reply(result);
     }
 
     await ctx.flush();

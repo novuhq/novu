@@ -29,8 +29,25 @@ export class UpdateAgent {
       throw new BadRequestException('At least one field must be provided.');
     }
 
-    if (command.devBridgeActive === true || (command.devBridgeUrl !== undefined && command.devBridgeUrl !== null)) {
-      await this.assertNotProductionEnvironment(command.environmentId, command.organizationId);
+    const hasReadOnlyFields =
+      command.name !== undefined ||
+      command.description !== undefined ||
+      hasBehaviorFields;
+
+    if (hasReadOnlyFields) {
+      await this.assertNotProduction(
+        command.environmentId,
+        command.organizationId,
+        'Only the active status and bridge URL can be modified in production environments.'
+      );
+    }
+
+    if (command.devBridgeActive !== undefined || command.devBridgeUrl !== undefined) {
+      await this.assertNotProduction(
+        command.environmentId,
+        command.organizationId,
+        'Dev bridge settings cannot be modified in production environments.'
+      );
     }
 
     // The bridge executor `fetch()`s these URLs from inside the API process on every
@@ -113,14 +130,14 @@ export class UpdateAgent {
     return toAgentResponse(updated);
   }
 
-  private async assertNotProductionEnvironment(environmentId: string, organizationId: string): Promise<void> {
+  private async assertNotProduction(environmentId: string, organizationId: string, message: string): Promise<void> {
     const environment = await this.environmentRepository.findOne(
       { _id: environmentId, _organizationId: organizationId },
       ['type', 'name']
     );
 
     if (environment?.type === EnvironmentTypeEnum.PROD) {
-      throw new ForbiddenException('Dev bridge cannot be activated on production environments.');
+      throw new ForbiddenException(message);
     }
   }
 

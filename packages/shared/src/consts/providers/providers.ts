@@ -23,6 +23,7 @@ export const NOVU_PROVIDERS: ProvidersIdEnum[] = [
   InAppProviderIdEnum.Novu,
   SmsProviderIdEnum.Novu,
   EmailProviderIdEnum.Novu,
+  EmailProviderIdEnum.NovuAgent,
   ChatProviderIdEnum.Novu,
 ];
 

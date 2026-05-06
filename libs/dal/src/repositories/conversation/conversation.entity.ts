@@ -69,4 +69,7 @@ export class ConversationEntity {
   lastActivityAt: string;
 }
 
-export type ConversationDBModel = ChangePropsValueType<ConversationEntity, '_agentId' | '_environmentId' | '_organizationId'>;
+export type ConversationDBModel = ChangePropsValueType<
+  ConversationEntity,
+  '_agentId' | '_environmentId' | '_organizationId'
+>;

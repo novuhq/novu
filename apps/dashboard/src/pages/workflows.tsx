@@ -5,6 +5,7 @@ import {
   PermissionsEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import type { Variants } from 'motion/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -19,6 +20,7 @@ import {
   RiRouteFill,
 } from 'react-icons/ri';
 import { Link, Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { fetchWorkflowSuggestions } from '@/api/ai';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { AiThinking } from '@/components/icons/ai-thinking';
@@ -42,6 +44,7 @@ import { IWorkflowSuggestion } from '@/components/template-store/types';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -53,6 +56,7 @@ import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { itemVariants } from '@/utils/animation';
+import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -164,7 +168,8 @@ export const WorkflowsPage = () => {
     };
   }, [form, debouncedSearch, updateSearchParams]);
 
-  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isAiWorkflowGenerationEnabled =
+    useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
   const {
     status: onboardingStatus,
@@ -209,6 +214,17 @@ export const WorkflowsPage = () => {
 
   const { currentEnvironment } = useEnvironment();
   const { tags } = useTags();
+  // fetch workflow suggestions on the page visit to populate quicker
+  useQuery({
+    queryKey: [QueryKeys.fetchWorkflowSuggestions, currentEnvironment?._id],
+    queryFn: () => {
+      if (!currentEnvironment) throw new Error('Environment not loaded');
+
+      return fetchWorkflowSuggestions({ environment: currentEnvironment });
+    },
+    enabled: isAiWorkflowGenerationEnabled && !!currentEnvironment,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
 
   const queryParam = searchParams.get('query') || '';
   const hasActiveFilters =
@@ -364,19 +380,23 @@ export const WorkflowsPage = () => {
                         animate="visible"
                         variants={startWithCardsRowVariants}
                       >
-                        <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
-                          <WorkflowCard
-                            name="Generate with Copilot"
-                            description="Create a workflow with AI assistance"
-                            steps={[]}
-                            onClick={() => {
-                              track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-                              navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                            }}
-                          >
-                            <AiThinking className="w-[100px]" />
-                          </WorkflowCard>
-                        </motion.div>
+                        {isAiWorkflowGenerationEnabled && (
+                          <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
+                            <WorkflowCard
+                              name="Generate with Copilot"
+                              description="Create a workflow with AI assistance"
+                              steps={[]}
+                              onClick={() => {
+                                track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                                navigate(
+                                  buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' })
+                                );
+                              }}
+                            >
+                              <AiThinking className="w-[100px]" />
+                            </WorkflowCard>
+                          </motion.div>
+                        )}
                         {personalizedQuickTemplates.map((template, index) => (
                           <motion.div key={template.workflowId} className="w-[250px] shrink-0" variants={itemVariants}>
                             <WorkflowCard

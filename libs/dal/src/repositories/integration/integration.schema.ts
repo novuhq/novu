@@ -67,6 +67,9 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       servicePlanId: Schema.Types.String,
       tenantId: Schema.Types.String,
       signingSecret: Schema.Types.String,
+      outboundIntegrationId: Schema.Types.String,
+      useFromAddressOverride: Schema.Types.Boolean,
+      fromAddressOverride: Schema.Types.String,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,
@@ -77,6 +80,16 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       inboundWebhookSigningKey: Schema.Types.String,
       configurationSetName: Schema.Types.String,
       inboxCount: Schema.Types.String,
+    },
+    provisioning: {
+      status: {
+        type: Schema.Types.String,
+        enum: ['pending', 'ready', 'failed'],
+      },
+      startedAt: Schema.Types.String,
+      completedAt: Schema.Types.String,
+      errorMessage: Schema.Types.String,
+      teamsAppCatalogId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
@@ -110,6 +123,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       },
     ],
     connected: Schema.Types.Boolean,
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      required: false,
+      default: null,
+    },
   },
   schemaOptions
 );

@@ -109,11 +109,7 @@ export function IntegrationCard({
             </Tooltip>
           ) : null}
           <div className="shadow-xs ring-stroke-soft/80 flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-white p-2 ring-1">
-            <ProviderIcon
-              providerId={provider.id}
-              providerDisplayName={provider.displayName}
-              className="size-5"
-            />
+            <ProviderIcon providerId={provider.id} providerDisplayName={provider.displayName} className="size-5" />
           </div>
         </div>
         <div className="flex min-h-4 max-w-full items-center gap-2">

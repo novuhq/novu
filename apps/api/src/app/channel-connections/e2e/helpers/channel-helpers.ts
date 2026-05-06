@@ -91,6 +91,5 @@ export async function createWebhookEndpoint(
 }
 
 export function setupChannelTests(session: UserSession) {
-  (process.env as Record<string, string>).IS_SLACK_TEAMS_ENABLED = 'true';
   return initNovuClassSdkInternalAuth(session);
 }

@@ -1,6 +1,5 @@
 import { Fragment, useId, useState } from 'react';
 import {
-  RiArrowRightUpLine,
   RiCheckboxCircleFill,
   RiExpandUpDownLine,
   RiReplyLine,
@@ -22,7 +21,22 @@ type ConversationTimelineProps = {
   activities: ConversationActivityDto[];
   isLoading: boolean;
   totalCount: number;
+  conversationStatus?: string;
 };
+
+const ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
+
+function getActivityContent(activity: ConversationActivityDto): string {
+  if (activity.content.trim().length > 0) {
+    return activity.content;
+  }
+
+  if (activity.richContent?.attachments?.length) {
+    return ATTACHMENT_ONLY_PREVIEW;
+  }
+
+  return '';
+}
 
 function formatActivityTimestamp(dateStr: string | undefined): string {
   if (!dateStr?.trim()) {
@@ -139,7 +153,7 @@ function MessageContent({ content }: { content: string }) {
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={() => setExpanded(!expanded)}
-          className="text-text-soft flex shrink-0 items-center gap-0.5"
+          className="text-text-soft hover:text-text-sub flex shrink-0 cursor-pointer items-center gap-0.5 transition-colors"
         >
           <RiExpandUpDownLine className="size-3.5" />
           <span className="text-[10px] font-medium leading-[14px]">{expanded ? 'Collapse' : 'Show full message'}</span>
@@ -151,6 +165,7 @@ function MessageContent({ content }: { content: string }) {
 
 function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   const isAgent = activity.senderType === 'agent';
+  const content = getActivityContent(activity);
 
   return (
     <div className={cn('border-stroke-soft flex flex-col rounded-md border', isAgent ? 'bg-bg-weak' : 'bg-white')}>
@@ -159,7 +174,7 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
           <SenderHeader activity={activity} />
           <MessageTimestamp activity={activity} />
         </div>
-        {activity.content && <MessageContent content={activity.content} />}
+        {content && <MessageContent content={content} />}
       </div>
     </div>
   );
@@ -189,20 +204,20 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
   return (
     <div className="flex items-center gap-1 overflow-hidden py-0.5 pl-[11px]">
       {icon}
-      <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{activity.content}</span>
+      {activityFeedLink ? (
+        <Link
+          to={activityFeedLink}
+          className="text-text-sub text-label-xs min-w-0 truncate font-medium underline decoration-dashed underline-offset-[3px] decoration-[currentColor]/40 transition-colors hover:text-text-strong hover:decoration-[currentColor]/70"
+        >
+          {activity.content}
+        </Link>
+      ) : (
+        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{activity.content}</span>
+      )}
       <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">•</span>
       <span className="text-text-soft shrink-0 text-[10px] font-medium leading-[14px]">
         {formatActivityTimestamp(activity.createdAt)}
       </span>
-      {activityFeedLink && (
-        <Link
-          to={activityFeedLink}
-          className="text-text-soft hover:text-text-sub ml-auto shrink-0 rounded p-0.5 transition-colors"
-          aria-label="View workflow run in activity feed"
-        >
-          <RiArrowRightUpLine className="size-3.5" />
-        </Link>
-      )}
     </div>
   );
 }
@@ -232,7 +247,12 @@ function ResolvedFooter({ totalCount }: { totalCount: number }) {
   );
 }
 
-export function ConversationTimeline({ activities, isLoading, totalCount }: ConversationTimelineProps) {
+export function ConversationTimeline({
+  activities,
+  isLoading,
+  totalCount,
+  conversationStatus,
+}: ConversationTimelineProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 p-3">
@@ -259,7 +279,7 @@ export function ConversationTimeline({ activities, isLoading, totalCount }: Conv
     );
   }
 
-  const hasResolvedSignal = activities.some((a) => a.type === 'signal' && a.signalData?.type === 'resolve');
+  const isResolved = conversationStatus === 'resolved';
 
   return (
     <div className="flex flex-col gap-3 p-3">
@@ -278,7 +298,7 @@ export function ConversationTimeline({ activities, isLoading, totalCount }: Conv
           </Fragment>
         ))}
 
-        {hasResolvedSignal && (
+        {isResolved && (
           <>
             <TimelineDivider />
             <ResolvedFooter totalCount={totalCount} />

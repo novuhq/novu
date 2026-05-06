@@ -12,6 +12,7 @@ export * from './repositories/control-values';
 export * from './repositories/conversation';
 export * from './repositories/conversation-activity';
 export * from './repositories/domain';
+export * from './repositories/domain-route';
 export * from './repositories/environment';
 export * from './repositories/environment-variable';
 export * from './repositories/execution-details';

@@ -32,7 +32,7 @@ export function ConversationDetail({ conversationId, onClose }: ConversationDeta
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="shrink-0">
         {isConversationLoading ? (
           <OverviewSkeleton />
         ) : conversation ? (
@@ -40,10 +40,16 @@ export function ConversationDetail({ conversationId, onClose }: ConversationDeta
             <ConversationOverview conversation={conversation} />
           </div>
         ) : null}
-
         <Separator />
+      </div>
 
-        <ConversationTimeline activities={activities} isLoading={isActivitiesLoading} totalCount={totalCount} />
+      <div className="flex-1 overflow-y-auto">
+        <ConversationTimeline
+          activities={activities}
+          isLoading={isActivitiesLoading}
+          totalCount={totalCount}
+          conversationStatus={conversation?.status}
+        />
       </div>
     </div>
   );

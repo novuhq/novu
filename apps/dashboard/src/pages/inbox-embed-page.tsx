@@ -20,7 +20,7 @@ function MobileEmbedSkip() {
   const telemetry = useTelemetry();
 
   const handleGoToDashboard = () => {
-    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { skippedFrom: 'mobile-embed-skip' });
+    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { usecase: 'inbox', skippedFrom: 'mobile-embed-skip' });
     navigate(ROUTES.WELCOME);
   };
 
@@ -112,6 +112,7 @@ export function InboxEmbedPage() {
               skipPath={ROUTES.WELCOME}
               onSkip={() =>
                 telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
+                  usecase: 'inbox',
                   skippedFrom: isConnected ? 'inbox-connected-guide' : 'inbox-embed',
                 })
               }

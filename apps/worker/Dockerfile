@@ -3,7 +3,7 @@ RUN apk --update --no-cache add curl g++ make py3-pip
 ENV NX_DAEMON=false
 
 
-RUN npm i pm2 -g
+RUN npm i pm2@6.0.14 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
 RUN pnpm --version
 
@@ -37,6 +37,7 @@ RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
+RUN rm -f dist/.env.test dist/.env.ci
 
 WORKDIR /usr/src/app
 
@@ -65,7 +66,7 @@ ENV CI=true
 RUN apk upgrade --no-cache && \
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main --upgrade libcrypto3 libssl3 musl musl-utils && \
     apk --no-cache add curl && \
-    npm i pm2 -g && \
+    npm i pm2@6.0.14 -g && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER 1000

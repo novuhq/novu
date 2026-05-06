@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { FileRef } from '@novu/framework';
+import type { TriggerRecipientsPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -8,7 +9,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  MaxLength,
   Validate,
   ValidateNested,
   ValidatorConstraint,
@@ -18,6 +18,8 @@ import {
 export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
+const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
+const MAX_FILES_PER_MESSAGE = 15;
 
 /**
  * Allowed characters for a metadata signal key.
@@ -40,6 +42,48 @@ export function isValidMetadataSignalKey(key: unknown): key is string {
   if (FORBIDDEN_METADATA_SIGNAL_KEYS.has(key)) return false;
 
   return METADATA_SIGNAL_KEY_REGEX.test(key);
+}
+
+@ValidatorConstraint({ name: 'isValidTriggerRecipient', async: false })
+export class IsValidTriggerRecipient implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (value === undefined || value === null) return true;
+
+    if (typeof value === 'string') return value.length > 0;
+
+    if (Array.isArray(value)) {
+      return value.length > 0 && value.every((item) => this.isRecipientItem(item));
+    }
+
+    return this.isSubscriberObject(value);
+  }
+
+  private isRecipientItem(item: unknown): boolean {
+    if (typeof item === 'string') return item.length > 0;
+    if (typeof item === 'object' && item !== null) {
+      return this.isSubscriberObject(item) || this.isTopicObject(item);
+    }
+
+    return false;
+  }
+
+  private isSubscriberObject(obj: unknown): boolean {
+    if (typeof obj !== 'object' || obj === null) return false;
+    const subscriberId = (obj as { subscriberId?: unknown }).subscriberId;
+
+    return typeof subscriberId === 'string' && subscriberId.trim().length > 0;
+  }
+
+  private isTopicObject(obj: unknown): boolean {
+    if (typeof obj !== 'object' || obj === null) return false;
+    const { type, topicKey } = obj as { type?: unknown; topicKey?: unknown };
+
+    return typeof type === 'string' && type.length > 0 && typeof topicKey === 'string' && topicKey.length > 0;
+  }
+
+  defaultMessage(): string {
+    return 'to must be a subscriberId string, a subscriber object with subscriberId, a topic object, or an array of those.';
+  }
 }
 
 @ValidatorConstraint({ name: 'isValidSignal', async: false })
@@ -72,32 +116,33 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   validate(content: ReplyContentDto): boolean {
     if (!content) return true;
 
-    const fields = [content.text, content.markdown, content.card].filter((v) => v !== undefined);
+    const fields = [content.markdown, content.card].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
     if (content.files?.length && !content.markdown) return false;
+    if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
 
     for (const file of content.files ?? []) {
       const sources = [file.data, file.url].filter(Boolean);
       if (sources.length !== 1) return false;
+      if (typeof file.data === 'string' && file.data.replace(/\s/g, '').length > MAX_INLINE_FILE_BASE64_CHARS) {
+        return false;
+      }
     }
 
     return true;
   }
 
   defaultMessage(): string {
-    return 'Content must have exactly one of text, markdown, or card. Files only allowed with markdown. Each file needs exactly one of data or url.';
+    return (
+      'Content must have exactly one of markdown or card. Files only allowed with markdown. ' +
+      `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
+      'Inline data must be 5 MB or smaller.'
+    );
   }
 }
 
 export class ReplyContentDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(40_000)
-  text?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -135,6 +180,18 @@ export class ResolveDto {
   summary?: string;
 }
 
+export class AddReactionPayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  emojiName: string;
+}
+
 export class SignalDto {
   @ApiProperty({ enum: SIGNAL_TYPES })
   @IsString()
@@ -157,8 +214,8 @@ export class SignalDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  to?: string;
+  @Validate(IsValidTriggerRecipient)
+  to?: TriggerRecipientsPayload;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -206,4 +263,11 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
+
+  @ApiPropertyOptional({ type: [AddReactionPayloadDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddReactionPayloadDto)
+  addReactions?: AddReactionPayloadDto[];
 }

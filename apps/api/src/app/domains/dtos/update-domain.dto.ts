@@ -1,13 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { DomainRouteDto } from './domain-route.dto';
+import { IsOptional } from 'class-validator';
+import { IsBoundedRecord } from '../validators/bounded-record.validator';
 
 export class UpdateDomainDto {
-  @ApiPropertyOptional({ type: [DomainRouteDto], description: 'Full replacement routes array for this domain.' })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => DomainRouteDto)
+  @ApiPropertyOptional({
+    description: 'Replaces domain metadata when provided (max 10 keys, 500 characters total for keys+values).',
+    type: Object,
+    additionalProperties: { type: 'string' },
+  })
   @IsOptional()
-  routes?: DomainRouteDto[];
+  @IsBoundedRecord()
+  data?: Record<string, string>;
 }

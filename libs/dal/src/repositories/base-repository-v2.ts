@@ -393,8 +393,15 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.mapProjectedEntity(data) as T_MappedEntity;
   }
 
-  async findOneAndDelete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOneAndDelete(query).lean();
+  async findOneAndDelete(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    options: { session?: ClientSession | null } = {}
+  ): Promise<T_MappedEntity | null> {
+    const { session } = options;
+    const builder = this.MongooseModel.findOneAndDelete(query);
+    if (session) builder.session(session);
+
+    const data = await builder.lean();
     if (!data) return null;
 
     return this.mapProjectedEntity(data) as T_MappedEntity;
@@ -514,17 +521,14 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
    */
   async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
     const session = await this._model.db.startSession();
-    let executed = false;
 
     try {
       return await session.withTransaction(async (txnSession) => {
-        executed = true;
-
         return fn(txnSession);
       });
     } catch (error) {
       const errorMessage = (error as Error)?.message || '';
-      if (errorMessage === 'Transaction numbers are only allowed on a replica set member or mongos' && !executed) {
+      if (errorMessage.includes('Transaction numbers are only allowed on')) {
         return fn(null);
       }
 

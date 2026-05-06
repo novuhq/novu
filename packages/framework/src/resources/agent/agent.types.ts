@@ -1,5 +1,6 @@
-import type { CardElement, ChatElement } from 'chat';
+import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
+import type { Awaitable } from '../../types/util.types';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -79,25 +80,33 @@ export interface AgentPlatformContext {
 export interface FileRef {
   filename: string;
   mimeType?: string;
-  /** Base64-encoded file data (< 1 MB decoded) */
-  data?: string;
-  /** Publicly-accessible HTTPS URL */
+  /**
+   * Inline file data. Binary values are encoded to base64 before being sent to Novu.
+   * Node Buffers are supported because Buffer extends Uint8Array.
+   *
+   * Limit: <= 5 MB decoded. Use `url` for larger files.
+   */
+  data?: string | Uint8Array | ArrayBuffer | Blob;
+  /**
+   * Publicly-accessible HTTP(S) URL. Recommended for larger files.
+   *
+   * Server-side limits: 25 MB per file, 15 files per message, 50 MB aggregate.
+   */
   url?: string;
 }
 
 /**
  * Content accepted by ctx.reply() and handle.edit().
  *
- * - `string` — plain text
- * - `{ markdown, files? }` — markdown-formatted text, optionally with file attachments
+ * - `string` — plain text or markdown; converted to platform format by the chat SDK
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
- *   (must be a CardElement at runtime; validated by serializeContent)
+ *
+ * For file attachments, pass a `files` array as the second argument to reply()/edit().
  */
-export type MessageContent = string | { markdown: string; files?: FileRef[] } | ChatElement;
+export type MessageContent = string | ChatElement;
 
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
-  text?: string;
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];
@@ -106,6 +115,8 @@ export interface ReplyContent {
 export interface AgentAction {
   actionId: string;
   value?: string;
+  /** Platform-native message ID of the message containing the clicked button/action. */
+  sourceMessageId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -130,14 +141,10 @@ export interface ReplyHandle {
   /** Platform-native thread id this message lives in. */
   readonly platformThreadId: string;
   /** Edit this message in place with new content. Returns the same handle for chaining. */
-  edit(content: MessageContent): Promise<ReplyHandle>;
+  edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-export interface AgentContext {
-  readonly event: string;
-  readonly action: AgentAction | null;
-  readonly message: AgentMessage | null;
-  readonly reaction: AgentReaction | null;
+interface AgentContextBase {
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly history: AgentHistoryEntry[];
@@ -150,10 +157,14 @@ export interface AgentContext {
    *
    * @example
    *   const msg = await ctx.reply('Thinking…');
-   *   // ... do work ...
    *   await msg.edit('Here is the answer');
+   *
+   * @example with file attachment
+   *   await ctx.reply('Here is your report', {
+   *     files: [{ filename: 'report.pdf', url: 'https://...' }],
+   *   });
    */
-  reply(content: MessageContent): Promise<ReplyHandle>;
+  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
   resolve(summary?: string): void;
   metadata: {
     set(key: string, value: unknown): void;
@@ -179,13 +190,47 @@ export interface AgentContext {
    *   ctx.trigger('team-alert', { to: { type: 'Topic', topicKey: 'support-team' } });
    */
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
+  /**
+   * Add an emoji reaction to any platform message.
+   * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
+   * when the handler completes (same batching contract as `ctx.trigger()`).
+   *
+   * @param messageId - Platform-native message ID to react to (e.g. Slack `ts`).
+   * @param emojiName - Emoji short-name (e.g. `'thumbs_up'`, `'check_mark'`).
+   *
+   * @example
+   *   ctx.addReaction(ctx.reaction!.messageId, 'check_mark');
+   *   await ctx.reply('Done!');
+   */
+  addReaction(messageId: string, emojiName: Emoji): void;
 }
 
+export interface AgentMessageContext extends AgentContextBase {
+  readonly event: 'onMessage';
+  readonly message: AgentMessage;
+}
+
+export interface AgentActionContext extends AgentContextBase {
+  readonly event: 'onAction';
+  readonly action: AgentAction;
+}
+
+export interface AgentReactionContext extends AgentContextBase {
+  readonly event: 'onReaction';
+  readonly reaction: AgentReaction;
+}
+
+export interface AgentResolveContext extends AgentContextBase {
+  readonly event: 'onResolve';
+}
+
+export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+
 export interface AgentHandlers {
-  onMessage: (ctx: AgentContext) => Promise<void>;
-  onReaction?: (ctx: AgentContext) => Promise<void>;
-  onAction?: (ctx: AgentContext) => Promise<void>;
-  onResolve?: (ctx: AgentContext) => Promise<void>;
+  onMessage: (ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onReaction?: (ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onAction?: (ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {
@@ -242,6 +287,12 @@ export interface EditPayload {
   content: ReplyContent;
 }
 
+/** An emoji reaction to be added to a platform message. */
+export interface AddReactionPayload {
+  messageId: string;
+  emojiName: Emoji;
+}
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -249,6 +300,7 @@ export interface AgentReplyPayload {
   edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+  addReactions?: AddReactionPayload[];
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */
