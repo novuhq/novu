@@ -366,7 +366,6 @@ export class HandleAgentReply {
           ops.push({ action: 'delete', key: signal.key });
           break;
         case 'set':
-        default:
           if (!signal.key || !isValidMetadataSignalKey(signal.key)) {
             throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
           }
@@ -375,6 +374,8 @@ export class HandleAgentReply {
           }
           ops.push({ action: 'set', key: signal.key, value: signal.value });
           break;
+        default:
+          throw new BadRequestException(`Unsupported metadata signal action: "${action}"`);
       }
     }
 

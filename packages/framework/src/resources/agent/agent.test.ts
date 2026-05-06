@@ -845,6 +845,156 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'set', key: 'intent', value: 'order_confirm' });
   });
 
+  it('should emit delete signal for ctx.metadata.delete()', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async ({ ctx }) => {
+        ctx.metadata.delete('board');
+        await ctx.reply('Deleted');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () =>
+          createMockBridgeRequest({
+            conversation: {
+              identifier: 'conv-456',
+              status: 'active',
+              metadata: { board: 'chess' },
+              messageCount: 2,
+              createdAt: new Date().toISOString(),
+              lastActivityAt: new Date().toISOString(),
+            },
+          }),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.signals).toHaveLength(1);
+    expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'delete', key: 'board' });
+  });
+
+  it('should emit clear signal for ctx.metadata.clear()', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async ({ ctx }) => {
+        ctx.metadata.clear();
+        await ctx.reply('Cleared');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () => createMockBridgeRequest(),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.signals).toHaveLength(1);
+    expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'clear' });
+  });
+
+  it('should preserve signal ordering for mixed clear, set, and delete', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async ({ ctx }) => {
+        ctx.metadata.clear();
+        ctx.metadata.set('newGame', true);
+        ctx.metadata.delete('oldKey');
+        await ctx.reply('Mixed');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () => createMockBridgeRequest(),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.signals).toHaveLength(3);
+    expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'clear' });
+    expect(replyBody.signals[1]).toEqual({ type: 'metadata', action: 'set', key: 'newGame', value: true });
+    expect(replyBody.signals[2]).toEqual({ type: 'metadata', action: 'delete', key: 'oldKey' });
+  });
+
+  it('should track local state across get, set, delete, and current', async () => {
+    let getResult: unknown;
+    let currentSnapshot: Record<string, unknown>;
+
+    const testBot = agent('test-bot', {
+      onMessage: async ({ ctx }) => {
+        ctx.metadata.set('score', 42);
+        getResult = ctx.metadata.get('score');
+        ctx.metadata.delete('score');
+        currentSnapshot = { ...ctx.metadata.current };
+        await ctx.reply('Done');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () => createMockBridgeRequest(),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    expect(getResult).toBe(42);
+    expect(currentSnapshot!).toEqual({});
+  });
+
   it('should dispatch onAction event with action data on ctx', async () => {
     let capturedCtx: any;
 
