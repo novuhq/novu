@@ -102,7 +102,7 @@
     "es-toolkit": "^1.39.10",
     "express": "^5.0.1",
     "handlebars": "4.7.9",
-    "helmet": "^6.0.1",
+    "helmet": "^8.1.0",
     "i18next": "^23.7.6",
     "ioredis": "5.10.1",
     "json-logic-js": "^2.0.5",

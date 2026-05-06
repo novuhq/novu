@@ -55,7 +55,7 @@
     "date-fns-tz": "^2.0.1",
     "dotenv": "^16.4.5",
     "envalid": "^8.1.1",
-    "helmet": "^6.0.1",
+    "helmet": "^8.1.0",
     "i18next": "^23.7.6",
     "inline-css": "^4.0.3",
     "ioredis": "^5.10.1",
