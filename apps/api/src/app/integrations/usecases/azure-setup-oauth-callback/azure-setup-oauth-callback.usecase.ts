@@ -113,55 +113,43 @@ export class AzureSetupOauthCallback {
   }
 
   private async decodeAndVerifyState(state: string): Promise<AzureSetupStateData> {
-    let preliminaryData: Partial<AzureSetupStateData>;
+    let payload: string;
+    let signature: string;
+    let data: AzureSetupStateData;
 
     try {
-      const { payload } = splitOAuthState(state);
-      preliminaryData = JSON.parse(payload);
+      ({ payload, signature } = splitOAuthState(state));
+      data = JSON.parse(payload) as AzureSetupStateData;
     } catch {
       throw new BadRequestException('Invalid Azure setup OAuth state');
     }
 
-    if (!preliminaryData.environmentId || !preliminaryData.organizationId) {
+    if (!data.environmentId || !data.organizationId) {
       throw new BadRequestException('Azure setup state missing required fields');
     }
 
     const environment = await this.environmentRepository.findOne({
-      _id: preliminaryData.environmentId,
-      _organizationId: preliminaryData.organizationId,
+      _id: data.environmentId,
+      _organizationId: data.organizationId,
     });
 
     if (!environment?.apiKeys?.length) {
-      throw new NotFoundException(`Environment ${preliminaryData.environmentId} not found`);
+      throw new NotFoundException(`Environment ${data.environmentId} not found`);
     }
 
     const signingKey = environment.apiKeys[0].key;
 
     try {
-      const { payload, signature } = splitOAuthState(state);
       const expectedSignature = createHash(signingKey, payload);
 
       if (signature !== expectedSignature) {
         throw new Error('Signature mismatch');
       }
 
-      const data = JSON.parse(payload) as AzureSetupStateData;
-
       const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
       if (Date.now() - data.timestamp > FIFTEEN_MINUTES) {
         throw new Error('State expired');
-      }
-
-      // Defense-in-depth: ensure the environmentId in the signed payload matches
-      // the environment used to derive the signing key, so a replayed/tampered state
-      // from a different environment of the same org cannot pass signature verification
-      // and then target a different environment's integration on the write path.
-      if (
-        data.environmentId !== preliminaryData.environmentId ||
-        data.organizationId !== preliminaryData.organizationId
-      ) {
-        throw new Error('State environment/organization mismatch');
       }
 
       return data;
