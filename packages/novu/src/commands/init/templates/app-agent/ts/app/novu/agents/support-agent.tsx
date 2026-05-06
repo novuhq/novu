@@ -1,4 +1,3 @@
-/** @jsxImportSource @novu/framework */
 import { Actions, agent, Button, Card, CardText } from '@novu/framework';
 
 /**
