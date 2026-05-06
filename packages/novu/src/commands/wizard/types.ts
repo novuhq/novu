@@ -5,9 +5,31 @@ export interface WizardCommandOptions {
   mcpUrl?: string;
   region: 'us' | 'eu' | 'local';
   model?: string;
+  /**
+   * Skip the Bootstrap 5s countdown and auto-pick the first detected MCP
+   * client. Combine with `--ci` for fully unattended runs.
+   */
   yes?: boolean;
-  print?: boolean;
+  /**
+   * Force the non-interactive logging UI: no Bootstrap countdown, no MCP
+   * picker, no Ink TUI. Used in CI / piped-stdin shells.
+   */
+  ci?: boolean;
+  /**
+   * Default scope for the Wizard agent run.
+   *
+   * - `full` — Inbox + workflows + triggers + subscribers (the recommended path)
+   * - `inbox` — Inbox component only
+   * - `workflows` — workflows + triggers only (no Inbox UI)
+   */
+  goal?: 'full' | 'inbox' | 'workflows';
   skillsBranch?: string;
+  /**
+   * When true, the wizard surfaces per-phase and per-agent-todo durations
+   * in the UI and logs a final timing summary. Useful when triaging slow
+   * runs or comparing the cost of different models / goals.
+   */
+  debug?: boolean;
 }
 
 export interface ResolvedAuth {
@@ -34,10 +56,3 @@ export interface ProjectContext {
 }
 
 export type ProjectFramework = 'nextjs-app' | 'nextjs-pages' | 'react-vite' | 'remix' | 'react' | 'unknown';
-
-export interface UserIntent {
-  summary: string;
-  goal: 'integrate-novu' | 'inbox' | 'transactional';
-  preferDashboardWorkflows: boolean;
-  notes: string;
-}

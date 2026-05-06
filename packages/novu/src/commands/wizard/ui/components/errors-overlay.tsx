@@ -1,27 +1,55 @@
 import clipboardy from 'clipboardy';
+import figures from 'figures';
 import { Box, Text, useInput, useStdout } from 'ink';
 import { ScrollView, type ScrollViewRef } from 'ink-scroll-view';
 import React from 'react';
 import { applyScrollAction, type ScrollAction, useScrollKeys } from '../hooks/use-scroll-keys';
-import { glyphs, theme } from '../theme';
-import type { SessionError } from '../types';
+import { useStore } from '../hooks/use-store';
+import type { WizardStore } from '../store';
+import { TrailKind } from '../store';
+import { theme } from '../theme';
 
-interface ErrorsOverlayProps {
-  errors: SessionError[];
+export interface ErrorsOverlayProps {
+  store: WizardStore;
   width: number;
   height: number;
   onDismiss: () => void;
 }
 
-export function ErrorsOverlay({ errors, width, height, onDismiss }: ErrorsOverlayProps): React.ReactElement {
+interface ErrorRow {
+  id: string;
+  at: number;
+  source: string;
+  message: string;
+  detail?: string;
+  toolName?: string;
+}
+
+export function ErrorsOverlay({ store, width, height, onDismiss }: ErrorsOverlayProps): React.ReactElement {
+  const trail = useStore(store.trail);
+  const errors = React.useMemo<ErrorRow[]>(() => {
+    const out: ErrorRow[] = [];
+    for (const entry of trail) {
+      if (entry.kind !== TrailKind.Error) continue;
+      out.push({
+        id: entry.id,
+        at: entry.at,
+        source: entry.source,
+        message: entry.message,
+        detail: entry.detail,
+        toolName: entry.toolName,
+      });
+    }
+
+    return out;
+  }, [trail]);
+
   const scrollRef = React.useRef<ScrollViewRef>(null);
   const { stdout } = useStdout();
   const [copyHint, setCopyHint] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const handler = () => {
-      scrollRef.current?.remeasure();
-    };
+    const handler = () => scrollRef.current?.remeasure();
     stdout?.on('resize', handler);
 
     return () => {
@@ -48,7 +76,7 @@ export function ErrorsOverlay({ errors, width, height, onDismiss }: ErrorsOverla
     }
     if (input === 'c') {
       try {
-        clipboardy.writeSync(formatErrorsForClipboard(errors));
+        clipboardy.writeSync(errors.map(formatRow).join('\n\n----\n\n'));
         setCopyHint('copied all errors to clipboard');
       } catch (error) {
         setCopyHint(`copy failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -79,11 +107,10 @@ export function ErrorsOverlay({ errors, width, height, onDismiss }: ErrorsOverla
     >
       <Box justifyContent="space-between" width={innerWidth}>
         <Text bold color={theme.error}>
-          {glyphs.error} session errors ({errors.length})
+          {figures.cross} session errors ({errors.length})
         </Text>
-        <Text dimColor>esc close · ↑↓/wheel scroll · PgUp/PgDn page · g/G top/bottom · c copy</Text>
+        <Text dimColor>esc close · c copy</Text>
       </Box>
-
       {errors.length === 0 ? (
         <Box marginTop={1}>
           <Text dimColor>no errors recorded yet</Text>
@@ -91,10 +118,10 @@ export function ErrorsOverlay({ errors, width, height, onDismiss }: ErrorsOverla
       ) : (
         <Box flexDirection="column" height={scrollHeight} marginTop={1} flexShrink={1} minHeight={0} overflow="hidden">
           <ScrollView ref={scrollRef} flexDirection="column" width={innerWidth}>
-            {errors.map((error, idx) => (
+            {errors.map((err, idx) => (
               <ErrorBlock
-                key={error.id}
-                error={error}
+                key={err.id}
+                error={err}
                 index={idx + 1}
                 total={errors.length}
                 width={innerWidth}
@@ -104,21 +131,24 @@ export function ErrorsOverlay({ errors, width, height, onDismiss }: ErrorsOverla
           </ScrollView>
         </Box>
       )}
-
       <Box marginTop={1}>{copyHint ? <Text color={theme.ok}>{copyHint}</Text> : <Text dimColor> </Text>}</Box>
     </Box>
   );
 }
 
-interface ErrorBlockProps {
-  error: SessionError;
+function ErrorBlock({
+  error,
+  index,
+  total,
+  width,
+  isLast,
+}: {
+  error: ErrorRow;
   index: number;
   total: number;
   width: number;
   isLast: boolean;
-}
-
-function ErrorBlock({ error, index, total, width, isLast }: ErrorBlockProps): React.ReactElement {
+}): React.ReactElement {
   const ts = new Date(error.at).toLocaleTimeString();
   const tag = `${error.source}${error.toolName ? `:${error.toolName}` : ''}`;
   const messageLines = splitForWidth(error.message, width);
@@ -127,21 +157,15 @@ function ErrorBlock({ error, index, total, width, isLast }: ErrorBlockProps): Re
   return (
     <Box flexDirection="column" marginBottom={isLast ? 0 : 1}>
       <Box>
-        <Text color={theme.error}>{glyphs.error} </Text>
-        <Text dimColor>
-          {`[${index}/${total}] `}
-          {`[${ts}] `}
-        </Text>
+        <Text color={theme.error}>{figures.cross} </Text>
+        <Text dimColor>{`[${index}/${total}] [${ts}] `}</Text>
         <Text color={theme.warn}>{tag}</Text>
-        <Text dimColor>{` · phase ${error.phase}`}</Text>
       </Box>
-
       <Box flexDirection="column" paddingLeft={2}>
         {messageLines.map((line) => (
           <Text key={`m-${line}`}>{line || ' '}</Text>
         ))}
       </Box>
-
       {detailLines.length > 0 ? (
         <Box flexDirection="column" paddingLeft={2} marginTop={1}>
           <Text dimColor bold>
@@ -156,6 +180,12 @@ function ErrorBlock({ error, index, total, width, isLast }: ErrorBlockProps): Re
       ) : null}
     </Box>
   );
+}
+
+function formatRow(error: ErrorRow): string {
+  const tag = `${error.source}${error.toolName ? `:${error.toolName}` : ''}`;
+
+  return `[${new Date(error.at).toISOString()}] (${tag})\n${error.message}${error.detail ? `\n\n${error.detail}` : ''}`;
 }
 
 function splitForWidth(value: string, width: number): string[] {
@@ -175,17 +205,4 @@ function splitForWidth(value: string, width: number): string[] {
   }
 
   return out;
-}
-
-function formatErrorsForClipboard(errors: SessionError[]): string {
-  return errors
-    .map((error) => {
-      const ts = new Date(error.at).toISOString();
-      const tag = `${error.source}${error.toolName ? `:${error.toolName}` : ''}`;
-      const head = `[${ts}] (${tag} · phase ${error.phase})`;
-      const detail = error.detail ? `\n\n${error.detail}` : '';
-
-      return `${head}\n${error.message}${detail}`;
-    })
-    .join('\n\n----\n\n');
 }

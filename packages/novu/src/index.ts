@@ -94,16 +94,18 @@ program
 
 program
   .command('wizard')
-  .description('Integrate Novu into your app with an AI agent (beta)')
+  .description('Integrate Novu into your app with an autonomous AI agent (beta)')
   .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
   .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
   .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('--mcp-url <url>', 'Override the Novu MCP server URL (default: https://mcp.novu.co/)')
   .option('--region <region>', 'us | eu | local', 'us')
   .option('--model <model>', 'Override default model')
-  .option('--yes', 'Non-interactive mode (auto-accept edits)', false)
-  .option('--print', 'Print the final summary as JSON and exit', false)
+  .option('--goal <goal>', 'Default wizard goal: full | inbox | workflows (default: full)', 'full')
+  .option('--yes', 'Skip the bootstrap countdown and auto-pick the first detected MCP editor', false)
+  .option('--ci', 'Force non-interactive logging mode (no Bootstrap countdown, no MCP picker)', false)
   .option('--skills-branch <branch>', 'Override the novuhq/skills git branch/tag/commit to install (default: main)')
+  .option('--debug', 'Show per-phase and per-todo durations in the UI and log a timing summary on exit', false)
   .action(async (options: WizardCommandOptions) => {
     analytics.track({
       identity: {

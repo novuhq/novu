@@ -7,7 +7,21 @@ export interface ToolLabelInfo {
   full: string;
 }
 
-export function extractToolLabel(toolName: string, input: unknown): ToolLabelInfo {
+export interface ExtractToolLabelOptions {
+  /**
+   * Project root used to render file-path labels as paths relative to the
+   * user's project (e.g. `app/api/checkout/route.ts`) instead of just the
+   * file basename. When omitted, the label falls back to the basename so
+   * call sites that don't know the cwd remain backward-compatible.
+   */
+  cwd?: string;
+}
+
+export function extractToolLabel(
+  toolName: string,
+  input: unknown,
+  options: ExtractToolLabelOptions = {}
+): ToolLabelInfo {
   if (!input || typeof input !== 'object') {
     return { short: '', full: '' };
   }
@@ -17,7 +31,7 @@ export function extractToolLabel(toolName: string, input: unknown): ToolLabelInf
   if (toolName === 'Read' || toolName === 'Write' || toolName === 'Edit') {
     const filePath = stringField(data.file_path);
     if (filePath) {
-      return clamp(path.basename(filePath), filePath);
+      return clamp(toProjectRelativeLabel(filePath, options.cwd), filePath);
     }
   }
 
@@ -78,6 +92,15 @@ export function shortenToolName(name: string): string {
 
 function stringField(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function toProjectRelativeLabel(filePath: string, cwd: string | undefined): string {
+  if (!cwd) return path.basename(filePath);
+  const absolute = path.isAbsolute(filePath) ? filePath : path.resolve(cwd, filePath);
+  const relative = path.relative(cwd, absolute);
+  if (relative === '') return path.basename(filePath);
+
+  return relative;
 }
 
 function clamp(short: string, full: string): ToolLabelInfo {

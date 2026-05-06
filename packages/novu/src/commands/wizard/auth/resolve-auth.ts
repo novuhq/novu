@@ -10,6 +10,11 @@ export interface ResolveAuthOptions {
    * leaves this undefined and keeps the legacy stdout output.
    */
   onStatus?: (message: string) => void;
+  /**
+   * When provided, the dashboard login URL is streamed separately from
+   * `onStatus` so the TUI can park it on its own static line.
+   */
+  onDashboardUrl?: (url: string | null) => void;
 }
 
 export async function resolveAuth(
@@ -104,5 +109,6 @@ export async function resolveAuth(
     dashboardUrl,
     region: options.region,
     onStatus: resolveOptions.onStatus,
+    onDashboardUrl: resolveOptions.onDashboardUrl,
   });
 }

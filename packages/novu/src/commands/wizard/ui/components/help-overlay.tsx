@@ -1,18 +1,31 @@
-import { Box, Text } from 'ink';
+import figures from 'figures';
+import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { SLASH_COMMANDS } from '../slash-commands';
-import { glyphs, theme } from '../theme';
+import { theme } from '../theme';
 
-interface HelpOverlayProps {
+export interface HelpOverlayProps {
   width: number;
+  height: number;
   onDismiss: () => void;
 }
 
-export function HelpOverlay({ width }: HelpOverlayProps): React.ReactElement {
+export function HelpOverlay({ width, height, onDismiss }: HelpOverlayProps): React.ReactElement {
+  useInput((input, key) => {
+    if (key.escape || input === 'q') onDismiss();
+  });
+
   return (
-    <Box flexDirection="column" paddingX={1} width={width} marginTop={1}>
+    <Box
+      flexDirection="column"
+      width={width}
+      height={height}
+      borderStyle="round"
+      borderColor={theme.brand}
+      paddingX={1}
+    >
       <Text bold color={theme.brand}>
-        Wizard {glyphs.bullet} commands & shortcuts
+        {figures.bullet} Wizard commands & shortcuts
       </Text>
       <Box flexDirection="column" marginTop={1}>
         <Text bold>slash commands</Text>
@@ -25,43 +38,14 @@ export function HelpOverlay({ width }: HelpOverlayProps): React.ReactElement {
       <Box flexDirection="column" marginTop={1}>
         <Text bold>keybindings</Text>
         <Text>
-          <Text color={theme.brand}>enter</Text> <Text dimColor>send message</Text>
+          <Text color={theme.brand}>esc</Text> <Text dimColor>close any overlay</Text>
         </Text>
         <Text>
-          <Text color={theme.brand}>ctrl+c</Text>{' '}
-          <Text dimColor>interrupt the active turn (twice within 1.5s exits)</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>ctrl+l</Text> <Text dimColor>clear transcript</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>ctrl+r</Text> <Text dimColor>reuse last user message</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>tab</Text> <Text dimColor>autocomplete slash command</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>up/down</Text> <Text dimColor>history / suggestion navigation</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>pgup/pgdn</Text> <Text dimColor>scroll transcript by page</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>shift+up/down</Text> <Text dimColor>scroll transcript by line</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>ctrl/meta+up/down</Text> <Text dimColor>jump to top / bottom of transcript</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>mouse wheel</Text>{' '}
-          <Text dimColor>scroll transcript (shift/alt+wheel = page; hold opt/shift to text-select)</Text>
-        </Text>
-        <Text>
-          <Text color={theme.brand}>esc</Text> <Text dimColor>clear composer / dismiss panels</Text>
+          <Text color={theme.brand}>ctrl+c</Text> <Text dimColor>cancel the wizard</Text>
         </Text>
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>this panel is now part of the transcript — scroll past it freely</Text>
+        <Text dimColor>Press esc or q to close</Text>
       </Box>
     </Box>
   );

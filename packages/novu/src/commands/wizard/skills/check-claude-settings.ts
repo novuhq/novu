@@ -7,8 +7,7 @@ import path from 'node:path';
  * in the SDK env) once we enable `settingSources: ['project']` on the
  * `query()` call.
  *
- * We only *warn* — silently moving the user's settings file aside (PostHog's
- * approach) is invasive enough to deserve an explicit opt-in.
+ * We only *warn* — silently moving the user's settings file aside.
  */
 const BLOCKING_ENV_KEYS = ['ANTHROPIC_API_KEY', 'ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN'] as const;
 const BLOCKING_TOP_LEVEL_KEYS = ['apiKeyHelper'] as const;

@@ -19,6 +19,13 @@ export interface BrowserAuthInput {
    * the plain-text fallback leaves it undefined so the spinner still renders.
    */
   onStatus?: (message: string) => void;
+  /**
+   * Streams the dashboard login URL to the caller separately from the spinner
+   * message. The Ink TUI parks the URL on its own static line so spinner ticks
+   * never re-render it (preserving the user's mouse selection). Pass `null`
+   * once auth resolves to clear the line.
+   */
+  onDashboardUrl?: (url: string | null) => void;
 }
 
 interface CallbackPayload {
@@ -78,23 +85,24 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
         target.searchParams.set('cli_callback', callbackUrl);
         target.searchParams.set('state', state);
         target.searchParams.set('name', 'novu-wizard');
+        const targetUrl = target.toString();
 
-        const waitingMessage = `Waiting for browser authorization at ${target.toString()}`;
         if (useExternalStatus) {
-          input.onStatus?.(waitingMessage);
+          input.onStatus?.('Waiting for browser authorization…');
+          input.onDashboardUrl?.(targetUrl);
         } else {
           spinner = ora({
-            text: waitingMessage,
+            text: `Waiting for browser authorization at ${targetUrl}`,
             discardStdin: false,
           }).start();
         }
 
-        open(target.toString()).catch(() => {
-          const fallbackMessage = `Open this URL in your browser to authorize: ${target.toString()}`;
+        open(targetUrl).catch(() => {
           if (useExternalStatus) {
-            input.onStatus?.(fallbackMessage);
+            input.onStatus?.("If your browser didn't open, copy the URL below.");
+            input.onDashboardUrl?.(targetUrl);
           } else {
-            spinner?.warn(fallbackMessage);
+            spinner?.warn(`Open this URL in your browser to authorize: ${targetUrl}`);
           }
         });
       });
