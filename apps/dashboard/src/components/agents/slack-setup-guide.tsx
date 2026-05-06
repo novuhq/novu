@@ -22,6 +22,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
+import { CopySlackMessageButton } from './agent-code-setup-section';
 import type { SetupMode } from './setup-guide-primitives';
 import {
   IntegrationCredentialsSidebar,
@@ -471,6 +472,7 @@ export function SlackSetupGuide({
             {' from the suggestions, then send a message. You should see the agent respond.'}
           </span>
         }
+        rightContent={<CopySlackMessageButton agentName={agent.name} />}
       />
     </>
   );

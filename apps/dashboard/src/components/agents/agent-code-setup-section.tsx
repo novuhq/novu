@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -117,18 +117,37 @@ function getProviderSlackMessage(agentName: string): string {
   return `Hey @${agentName}, can you help me?`;
 }
 
+function getProviderSendTitle(providerId: string | undefined): string {
+  switch (providerId) {
+    case ChatProviderIdEnum.Slack:
+      return 'Send a message to the Slack App on Slack';
+    case ChatProviderIdEnum.MsTeams:
+      return 'Send a message to the bot on MS Teams';
+    case ChatProviderIdEnum.WhatsAppBusiness:
+      return 'Send a message on WhatsApp';
+    case EmailProviderIdEnum.NovuAgent:
+      return 'Send an email to the agent';
+    default:
+      return 'Send a message to test the connection';
+  }
+}
+
 function getProviderSendDescription(providerId: string | undefined, agentName: string): string {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
       return `Open your Slack workspace and send a message to ${agentName}. Make sure to send in a channel or directly to the bot.`;
+    case ChatProviderIdEnum.MsTeams:
+      return `Open Microsoft Teams and send a message to ${agentName} in a channel or direct chat.`;
     case ChatProviderIdEnum.WhatsAppBusiness:
       return `Send a message to your WhatsApp number to test the connection.`;
+    case EmailProviderIdEnum.NovuAgent:
+      return `Send an email to your agent's configured address to test the connection.`;
     default:
       return `Send a message to your bot from the connected provider to test the connection.`;
   }
 }
 
-function CopySlackMessageButton({ agentName }: { agentName: string }) {
+export function CopySlackMessageButton({ agentName }: { agentName: string }) {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -334,7 +353,7 @@ export function AgentCodeSetupSection({
       <SetupStep
         index={stepOffset + 2}
         status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
-        title="Send a message to the Slack App on Slack"
+        title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
         rightContent={
           providerId === ChatProviderIdEnum.Slack ? <CopySlackMessageButton agentName={agent.name} /> : undefined
