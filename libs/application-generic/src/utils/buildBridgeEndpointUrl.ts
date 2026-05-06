@@ -15,5 +15,5 @@ export const buildBridgeEndpointUrl = (apiKey: string, baseAddress: string): str
  * in sync.
  */
 export const buildBridgeSubdomain = (apiKey: string): string => {
-  return createHash('md5').update(apiKey).digest('hex');
+  return createHash('sha256').update(apiKey).digest('hex').substring(0, 32);
 };
