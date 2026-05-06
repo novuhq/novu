@@ -85,7 +85,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
             >[0],
           })}
         >
-          {t(`channel.${key}` as StringLocalizationKey, getLabel(key as ChannelType))}
+         {t(`channel.${channel()}` as StringLocalizationKey, getLabel(channel()))}
         </label>
       </div>
       <div
