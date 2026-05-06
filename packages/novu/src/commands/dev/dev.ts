@@ -1,4 +1,4 @@
-import { type ChildProcess, spawn } from 'node:child_process';
+import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import { NtfrTunnel } from '@novu/ntfr-client';
 import chalk from 'chalk';
 import open from 'open';
@@ -14,11 +14,25 @@ import { parseOptions, wait } from './utils';
 
 let appProcess: ChildProcess | null = null;
 
+function killProcessTree(child: ChildProcess) {
+  if (!child.pid) return;
+
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: 'ignore' });
+    } else {
+      process.kill(-child.pid, 'SIGTERM');
+    }
+  } catch {
+    child.kill('SIGTERM');
+  }
+}
+
 function cleanup() {
   if (appProcess && !appProcess.killed) {
-    appProcess.kill('SIGTERM');
+    killProcessTree(appProcess);
   }
-  process.exit();
+  setTimeout(() => process.exit(), 200).unref();
 }
 
 process.on('SIGINT', cleanup);
@@ -267,7 +281,7 @@ function spawnAppServer(command: string): ChildProcess {
 
   const child = spawn(shell, [shellFlag, command], {
     stdio: ['ignore', 'inherit', 'inherit'],
-    env: { ...process.env },
+    detached: !isWindows,
   });
 
   child.on('error', (err) => {
