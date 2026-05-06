@@ -329,9 +329,16 @@ export class AgentInboundHandler {
         let dashboardUrl: string | undefined;
         const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
         if (dashboardBase) {
-          const environment = await this.environmentRepository.findOne({ _id: config.environmentId });
-          if (environment) {
-            dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${config.agentIdentifier}/overview`;
+          try {
+            const environment = await this.environmentRepository.findOne({ _id: config.environmentId });
+            if (environment?.identifier) {
+              dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${config.agentIdentifier}/overview`;
+            }
+          } catch (lookupErr) {
+            this.logger.warn(
+              lookupErr,
+              `[agent:${config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
+            );
           }
         }
 

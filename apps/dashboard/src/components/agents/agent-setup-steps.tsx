@@ -84,7 +84,9 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const bridgeMessageSentRef = useRef(false);
+  // Tracks the last conversationId for which a bridge-connected message was sent,
+  // scoping dedup per conversation rather than globally for the component lifetime.
+  const lastSentConversationIdRef = useRef<string | null>(null);
   // Updated every render so handleBridgeConnected can read the latest value
   // without adding searchParams to its dependency array.
   const onboardingConversationIdRef = useRef<string | null>(null);
@@ -164,11 +166,16 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     onBridgeConnected?.();
 
     const conversationId = onboardingConversationIdRef.current;
-    if (!conversationId || !currentEnvironment || !integrationIdentifier || bridgeMessageSentRef.current) {
+    if (
+      !conversationId ||
+      !currentEnvironment ||
+      !integrationIdentifier ||
+      lastSentConversationIdRef.current === conversationId
+    ) {
       return;
     }
 
-    bridgeMessageSentRef.current = true;
+    lastSentConversationIdRef.current = conversationId;
     sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier, conversationId)
       .then(() => {
         setSearchParams((prev) => {
@@ -178,7 +185,9 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
         });
       })
       .catch(() => {
-        bridgeMessageSentRef.current = false;
+        if (lastSentConversationIdRef.current === conversationId) {
+          lastSentConversationIdRef.current = null;
+        }
       });
   }, [onBridgeConnected, currentEnvironment, integrationIdentifier, agent.identifier, setSearchParams]);
 

@@ -216,6 +216,14 @@ export class SendAgentWelcomeMessage {
         organizationId: command.organizationId,
       });
 
+      this.analyticsService.track(`Agent Bridge Connected Message Sent - [Agents]`, command.userId, {
+        _organization: command.organizationId,
+        environmentId: command.environmentId,
+        agentIdentifier: command.agentIdentifier,
+        integrationIdentifier: command.integrationIdentifier,
+        conversationId: conversation._id,
+      });
+
       return { sent: true, conversationId: conversation._id };
     } catch (err) {
       this.logger.warn(err, `Failed to send bridge-connected message for agent "${command.agentIdentifier}"`);

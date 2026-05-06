@@ -47,6 +47,7 @@ import {
   UpdateAgentRequestDto,
 } from './dtos';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
+import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
@@ -301,11 +302,18 @@ export class AgentsController {
 
   @Post('/:identifier/welcome-message')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send onboarding welcome message',
+    description:
+      'Sends a proactive DM to the agent installer after Slack OAuth, or posts a bridge-connected ' +
+      'follow-up message into an existing conversation thread when conversationId is supplied.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   sendAgentWelcomeMessage(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Body() body: { integrationIdentifier: string; conversationId?: string }
+    @Body() body: SendAgentWelcomeMessageRequestDto
   ): Promise<{ sent: boolean; conversationId?: string }> {
     return this.sendAgentWelcomeMessageUsecase.execute(
       SendAgentWelcomeMessageCommand.create({
