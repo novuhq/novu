@@ -194,7 +194,7 @@ export class ChatSdkService implements OnModuleDestroy {
     integrationIdentifier: string,
     platformUserId: string,
     content: ReplyContentDto
-  ): Promise<SentMessageInfo> {
+  ): Promise<SentMessageInfo & { serializedThread: Record<string, unknown> }> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -211,7 +211,23 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
-    return { messageId: sent.id, platformThreadId: sent.threadId };
+    // Slack Assistant Threads return a threadId like "slack:D12345:" — append the
+    // root message ts so it matches the format getInboundPlatformThreadId produces
+    // when the user replies, keeping inbound and outbound on the same conversation.
+    const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
+
+    // DM threads opened via openDM() may not have a currentMessage, so toJSON()
+    // can fail. Build a minimal serialized thread that ThreadImpl.fromJSON() can
+    // reconstruct for later replies.
+    const serializedThread: Record<string, unknown> = {
+      id: platformThreadId,
+      channelId: dmThread.channelId,
+      isDM: true,
+      platform: config.platform,
+      currentMessage: { id: sent.id, threadId: sent.threadId },
+    };
+
+    return { messageId: sent.id, platformThreadId, serializedThread };
   }
 
   async editInConversation(

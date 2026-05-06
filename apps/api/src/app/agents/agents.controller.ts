@@ -305,8 +305,8 @@ export class AgentsController {
   sendAgentWelcomeMessage(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Body() body: { integrationIdentifier: string }
-  ): Promise<{ sent: boolean }> {
+    @Body() body: { integrationIdentifier: string; conversationId?: string }
+  ): Promise<{ sent: boolean; conversationId?: string }> {
     return this.sendAgentWelcomeMessageUsecase.execute(
       SendAgentWelcomeMessageCommand.create({
         userId: user._id,
@@ -314,6 +314,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
+        conversationId: body.conversationId,
       })
     );
   }

@@ -1,10 +1,15 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  type AgentResponse,
+  getAgentIntegrationsQueryKey,
+  listAgentIntegrations,
+  sendAgentWelcomeMessage,
+} from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -78,6 +83,12 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const bridgeMessageSentRef = useRef(false);
+  // Updated every render so handleBridgeConnected can read the latest value
+  // without adding searchParams to its dependency array.
+  const onboardingConversationIdRef = useRef<string | null>(null);
+  onboardingConversationIdRef.current = searchParams.get('onboardingConversationId');
 
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(
     () => sessionStorage.getItem(SESSION_KEY(agent.identifier)) ?? undefined
@@ -126,13 +137,15 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     }
   }, [defaultFromAgent?.integrationId, agent.identifier]);
 
-  const selectedProviderId = useMemo(() => {
+  const selectedIntegration = useMemo(() => {
     if (validatedSelectedId) {
-      return integrations?.find((i) => i._id === validatedSelectedId)?.providerId;
+      return integrations?.find((i) => i._id === validatedSelectedId);
     }
 
-    return defaultFromAgent?.providerId;
-  }, [integrations, validatedSelectedId, defaultFromAgent?.providerId]);
+    return undefined;
+  }, [integrations, validatedSelectedId]);
+
+  const selectedProviderId = selectedIntegration?.providerId ?? defaultFromAgent?.providerId;
 
   const hasProviderSelected = Boolean(effectiveIntegrationId);
 
@@ -144,6 +157,30 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const firstIncompleteStep = hasProviderSelected ? 2 : 1;
 
   const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
+
+  const integrationIdentifier = selectedIntegration?.identifier ?? defaultFromAgent?.identifier;
+
+  const handleBridgeConnected = useCallback(() => {
+    onBridgeConnected?.();
+
+    const conversationId = onboardingConversationIdRef.current;
+    if (!conversationId || !currentEnvironment || !integrationIdentifier || bridgeMessageSentRef.current) {
+      return;
+    }
+
+    bridgeMessageSentRef.current = true;
+    sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier, conversationId)
+      .then(() => {
+        setSearchParams((prev) => {
+          prev.delete('onboardingConversationId');
+
+          return prev;
+        });
+      })
+      .catch(() => {
+        bridgeMessageSentRef.current = false;
+      });
+  }, [onBridgeConnected, currentEnvironment, integrationIdentifier, agent.identifier, setSearchParams]);
 
   const handleProviderStepsCompleted = useCallback(() => {
     queryClient.invalidateQueries({
@@ -219,7 +256,13 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
       </motion.div>
 
       {hasConnectedIntegration && (
-        <AgentCodeSetupSection agent={agent} stepOffset={5} providerId={selectedProviderId} onBridgeConnected={onBridgeConnected} onAddProvider={hideAddProvider ? undefined : handleAddProvider} />
+        <AgentCodeSetupSection
+          agent={agent}
+          stepOffset={5}
+          providerId={selectedProviderId}
+          onBridgeConnected={handleBridgeConnected}
+          onAddProvider={hideAddProvider ? undefined : handleAddProvider}
+        />
       )}
     </div>
   );
