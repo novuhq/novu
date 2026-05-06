@@ -198,6 +198,7 @@ type WorkflowDescriptionProps = JSX.IntrinsicElements['div'] & {
 
 const WorkflowDescription = (props: WorkflowDescriptionProps) => {
   const style = useStyle();
+  const { t } = useLocalization();
 
   const channelNames = () => {
     const channels = [];
@@ -215,7 +216,7 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
             })}
             data-disabled={isDisabled}
           >
-            {getLabel(key as ChannelType)}
+            {t(`channel.${key}` as StringLocalizationKey, getLabel(key as ChannelType))}
           </span>
         );
         channels.push(element);

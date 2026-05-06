@@ -11,6 +11,7 @@ import {
 import { AllAppearanceKey, AllIconKey, InboxAppearanceCallback } from '../../../types';
 import { Switch, SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
+import { StringLocalizationKey, useLocalization } from '../../../context';
 
 type ChannelRowProps = {
   channel: { channel: ChannelType; state: SwitchState };
@@ -23,6 +24,7 @@ type ChannelRowProps = {
 
 export const ChannelRow = (props: ChannelRowProps) => {
   const style = useStyle();
+  const { t } = useLocalization();
 
   const updatePreference = async (enabled: boolean) => {
     props.onChange({ [props.channel.channel]: enabled });
@@ -83,7 +85,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
             >[0],
           })}
         >
-          {getLabel(channel())}
+          {t(`channel.${key}` as StringLocalizationKey, getLabel(key as ChannelType))}
         </label>
       </div>
       <div
