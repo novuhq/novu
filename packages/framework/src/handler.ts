@@ -317,44 +317,53 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    let result: MessageContent | void;
+    const replyIfPresent = async (result: MessageContent | void) => {
+      if (result != null) await ctx.reply(result);
+    };
 
     switch (event) {
       case AgentEventEnum.ON_MESSAGE:
-        result = await registeredAgent.handlers.onMessage({
-          message: ctx.message!,
-          ctx: ctx as unknown as AgentMessageContext,
-        });
+        await replyIfPresent(
+          await registeredAgent.handlers.onMessage({
+            message: ctx.message!,
+            ctx: ctx as unknown as AgentMessageContext,
+          })
+        );
         break;
       case AgentEventEnum.ON_ACTION:
         if (registeredAgent.handlers.onAction) {
-          result = await registeredAgent.handlers.onAction({
-            actionId: ctx.action!.actionId,
-            value: ctx.action!.value,
-            ctx: ctx as unknown as AgentActionContext,
-          });
+          await replyIfPresent(
+            await registeredAgent.handlers.onAction({
+              actionId: ctx.action!.actionId,
+              value: ctx.action!.value,
+              ctx: ctx as unknown as AgentActionContext,
+            })
+          );
         }
         break;
       case AgentEventEnum.ON_REACTION:
         if (registeredAgent.handlers.onReaction) {
-          result = await registeredAgent.handlers.onReaction({
-            reaction: ctx.reaction!,
-            ctx: ctx as unknown as AgentReactionContext,
-          });
+          await replyIfPresent(
+            await registeredAgent.handlers.onReaction({
+              reaction: ctx.reaction!,
+              ctx: ctx as unknown as AgentReactionContext,
+            })
+          );
         }
         break;
       case AgentEventEnum.ON_RESOLVE:
         if (registeredAgent.handlers.onResolve) {
-          result = await registeredAgent.handlers.onResolve({
-            ctx: ctx as unknown as AgentResolveContext,
-          });
+          await replyIfPresent(
+            await registeredAgent.handlers.onResolve({
+              ctx: ctx as unknown as AgentResolveContext,
+            })
+          );
         }
         break;
       default:
         throw new InvalidActionError(event, AgentEventEnum);
     }
 
-    if (result != null) await ctx.reply(result);
     await ctx.flush();
   }
 
