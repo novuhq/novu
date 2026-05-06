@@ -434,7 +434,9 @@ export function ProviderDropdown({
               const isLocked = providerType.requiresBusinessTier && !isAgentEmailAvailable;
               const hasInstances = providerType.integrations.length > 0;
               const isNovuAgent = providerType.providerId === EmailProviderIdEnum.NovuAgent;
-              const isAnyInstanceSelected = providerType.integrations.some((i) => i._id === selectedIntegrationId);
+              const isAnyInstanceSelected =
+                providerType.integrations.some((i) => i._id === selectedIntegrationId) ||
+                (isNovuAgent && selected?.providerId === EmailProviderIdEnum.NovuAgent);
 
               const rowContent = (
                 <div className="flex w-full min-w-0 items-center gap-1 break-normal">
@@ -476,16 +478,26 @@ export function ProviderDropdown({
               );
 
               function handleTypeRowSelect() {
-                if (isBusy || isLocked) return;
+                if (isBusy) return;
+
+                if (isLocked) {
+                  setOpen(false);
+                  setExpandedProviderId(null);
+                  if (IS_SELF_HOSTED) {
+                    openInNewTab(`${SELF_HOSTED_UPGRADE_REDIRECT_URL}?utm_campaign=agent_email_integration`);
+                  } else {
+                    navigate(`${ROUTES.SETTINGS_BILLING}?utm_source=agent_provider_dropdown`);
+                  }
+
+                  return;
+                }
 
                 if (!isNovuAgent && hasInstances) {
-                  // Expand to show instances sub-list.
                   setExpandedProviderId(providerType.providerId);
 
                   return;
                 }
 
-                // 0 instances (or NovuAgent) — create immediately.
                 void handleSelect(
                   {
                     providerId: providerType.providerId,
@@ -501,7 +513,8 @@ export function ProviderDropdown({
                 <CommandItem
                   key={providerType.providerId}
                   value={`${providerType.displayName} ${providerType.providerId}`}
-                  disabled={isBusy || isLocked}
+                  disabled={isBusy}
+                  aria-disabled={isLocked || undefined}
                   onSelect={handleTypeRowSelect}
                   className={cn(
                     'flex min-w-0 items-center gap-2 rounded-md p-1',
@@ -511,7 +524,9 @@ export function ProviderDropdown({
                 >
                   {isLocked ? (
                     <Tooltip>
-                      <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                        <div tabIndex={0} role="button">{rowContent}</div>
+                      </TooltipTrigger>
                       <TooltipContent
                         side="right"
                         align="start"
