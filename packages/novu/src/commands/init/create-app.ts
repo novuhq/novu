@@ -129,7 +129,7 @@ function printNextSteps({
     const cmdLine = `$ ${cmd}`;
     const innerWidth = Math.max(cmdLine.length + 4, 50);
 
-    const agentFileName = agentIdentifier ? `${agentIdentifier}.tsx` : 'support-agent.tsx';
+    const agentFileName = agentIdentifier ? `${agentIdentifier}.ts` : 'support-agent.ts';
     const agentFilePath = path.join(root, 'app', 'novu', 'agents', agentFileName);
     const agentRelPath = `app/novu/agents/${agentFileName}`;
     const fileUrl = `file://${agentFilePath}`;
