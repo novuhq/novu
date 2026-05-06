@@ -103,6 +103,7 @@
         "noShadowRestrictedNames": "warn",
         "noThenProperty": "warn",
         "noUnknownAtRules": "warn",
+        "useIterableCallbackReturn": "warn",
         "noArrayIndexKey": "off",
         "noPrototypeBuiltins": "off"
       }
