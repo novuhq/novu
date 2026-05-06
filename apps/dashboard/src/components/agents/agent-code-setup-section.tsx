@@ -326,21 +326,9 @@ export function AgentCodeSetupSection({
       <SetupStep
         index={stepOffset + 1}
         status={deriveStepStatus(stepOffset + 1, firstIncompleteStep)}
-        title="Start the dev tunnel"
-        description={
-          <span>
-            Start your app with npm run dev, then run this in a second terminal from your project directory.
-            <br />
-            <br />
-            It creates a tunnel and registers the bridge URL with Novu.
-          </span>
-        }
-        rightContent={
-          <TerminalBlock
-            displayCommand={`npx novu@${CLI_PACKAGE_TAG} dev -p 4000 --no-studio`}
-            copyCommand={`npx novu@${CLI_PACKAGE_TAG} dev -p 4000 --no-studio`}
-          />
-        }
+        title="Start your agent locally"
+        description="Run this from your project directory. It starts the app, opens a dev tunnel, and registers the bridge URL with Novu."
+        rightContent={<TerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
       />
 
       <SetupStep

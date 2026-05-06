@@ -10,20 +10,36 @@ import { install } from '../helpers/install';
 
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
 
-function resolveFrameworkVersion(): string {
+function resolveCliPackageJson(): Record<string, any> | null {
   const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
-  if (distIndex === -1) return 'latest';
+  if (distIndex === -1) return null;
 
   const pkgRoot = __dirname.slice(0, distIndex);
   try {
-    const pkg = JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
-    const ver = pkg.dependencies?.['@novu/framework'];
-    if (!ver || ver.startsWith('workspace:')) return 'latest';
-
-    return ver;
+    return JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
   } catch {
-    return 'latest';
+    return null;
   }
+}
+
+function resolveFrameworkVersion(): string {
+  const pkg = resolveCliPackageJson();
+  if (!pkg) return 'latest';
+
+  const ver = pkg.dependencies?.['@novu/framework'];
+  if (!ver || ver.startsWith('workspace:')) return 'latest';
+
+  return ver;
+}
+
+function resolveCliTag(): string {
+  const pkg = resolveCliPackageJson();
+  if (!pkg?.version) return 'latest';
+
+  if (pkg.version.includes('-rc')) return 'rc';
+  if (pkg.version.includes('-alpha')) return 'rc';
+
+  return 'latest';
 }
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
@@ -229,16 +245,23 @@ export const installTemplate = async ({
     baseDependencies['@novu/nextjs'] = '^2.5.0';
   }
 
+  const scripts: Record<string, string> = {
+    dev: 'next dev --port=4000',
+    build: 'next build',
+    start: 'next start',
+    lint: 'next lint',
+  };
+
+  if (isAgentTemplate) {
+    const cliTag = resolveCliTag();
+    scripts['dev:novu'] = `npx novu@${cliTag} dev -p 4000 --no-studio --run "next dev --port=4000"`;
+  }
+
   const packageJson: any = {
     name: appName,
     version: '0.1.0',
     private: true,
-    scripts: {
-      dev: `next dev --port=4000`,
-      build: 'next build',
-      start: 'next start',
-      lint: 'next lint',
-    },
+    scripts,
     dependencies: baseDependencies,
     devDependencies: {},
   };
