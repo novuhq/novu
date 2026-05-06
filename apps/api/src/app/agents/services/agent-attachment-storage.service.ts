@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import type { Attachment } from 'chat';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 
 export interface StoredAttachment {
   type: string;
@@ -16,6 +17,7 @@ export interface StoreInboundAttachmentContext {
   environmentId: string;
   conversationId: string;
   platformMessageId: string;
+  platform?: AgentPlatformEnum;
 }
 
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
@@ -43,13 +45,13 @@ function buildStorageKey(params: {
   return `${params.organizationId}/${params.environmentId}/${AGENTS_FOLDER}/${params.conversationId}/${safeMessageId}/${params.index}-${params.filename}`;
 }
 
-async function bufferFromAttachment(attachment: Attachment): Promise<Buffer | null> {
+async function bufferFromAttachment(attachment: Attachment, allowUnknownSizeDownload = false): Promise<Buffer | null> {
   if (!attachment.data) {
-    if (attachment.size == null) {
+    if (attachment.size == null && !allowUnknownSizeDownload) {
       throw new Error('Inbound attachment size is required before download');
     }
 
-    if (attachment.size > MAX_ATTACHMENT_BYTES) {
+    if (attachment.size != null && attachment.size > MAX_ATTACHMENT_BYTES) {
       throw new Error('Inbound attachment exceeds size limit');
     }
 
@@ -181,7 +183,8 @@ export class AgentAttachmentStorage {
         return null;
       }
 
-      const buffer = await bufferFromAttachment(attachment);
+      const allowUnknownSizeDownload = ctx.platform === AgentPlatformEnum.WHATSAPP;
+      const buffer = await bufferFromAttachment(attachment, allowUnknownSizeDownload);
 
       if (!buffer) {
         this.logger.warn({ name: attachment.name }, 'Inbound attachment has neither fetchData nor data');

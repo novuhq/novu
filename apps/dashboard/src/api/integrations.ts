@@ -91,6 +91,24 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
   });
 }
 
+export type SlackQuickSetupParams = {
+  configToken: string;
+  agentId: string;
+  subscriberId?: string;
+  connectionIdentifier?: string;
+};
+
+export async function slackQuickSetup(
+  integrationId: string,
+  params: SlackQuickSetupParams,
+  environment: IEnvironment
+): Promise<void> {
+  await post(`/integrations/${integrationId}/slack-quick-setup`, {
+    body: params,
+    environment,
+  });
+}
+
 export async function getMsTeamsArmTemplateDeployUrl(
   integrationId: string,
   environment: IEnvironment

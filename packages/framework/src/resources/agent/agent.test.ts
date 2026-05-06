@@ -1657,5 +1657,4 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(JSON.parse(replyCalls[0][1].body).reply.markdown).toBe('Thinking…');
     expect(JSON.parse(replyCalls[1][1].body).reply.markdown).toBe('Final answer');
   });
-
 });

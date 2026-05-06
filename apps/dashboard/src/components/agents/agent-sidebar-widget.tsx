@@ -16,11 +16,11 @@ import {
   ExpandableDetailsTextarea,
 } from '@/components/details-sidebar';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { InlineToast } from '@/components/primitives/inline-toast';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';

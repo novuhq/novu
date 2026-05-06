@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { FileRef } from '@novu/framework';
+import type { TriggerRecipientsPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -41,6 +42,48 @@ export function isValidMetadataSignalKey(key: unknown): key is string {
   if (FORBIDDEN_METADATA_SIGNAL_KEYS.has(key)) return false;
 
   return METADATA_SIGNAL_KEY_REGEX.test(key);
+}
+
+@ValidatorConstraint({ name: 'isValidTriggerRecipient', async: false })
+export class IsValidTriggerRecipient implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (value === undefined || value === null) return true;
+
+    if (typeof value === 'string') return value.length > 0;
+
+    if (Array.isArray(value)) {
+      return value.length > 0 && value.every((item) => this.isRecipientItem(item));
+    }
+
+    return this.isSubscriberObject(value);
+  }
+
+  private isRecipientItem(item: unknown): boolean {
+    if (typeof item === 'string') return item.length > 0;
+    if (typeof item === 'object' && item !== null) {
+      return this.isSubscriberObject(item) || this.isTopicObject(item);
+    }
+
+    return false;
+  }
+
+  private isSubscriberObject(obj: unknown): boolean {
+    if (typeof obj !== 'object' || obj === null) return false;
+    const subscriberId = (obj as { subscriberId?: unknown }).subscriberId;
+
+    return typeof subscriberId === 'string' && subscriberId.trim().length > 0;
+  }
+
+  private isTopicObject(obj: unknown): boolean {
+    if (typeof obj !== 'object' || obj === null) return false;
+    const { type, topicKey } = obj as { type?: unknown; topicKey?: unknown };
+
+    return typeof type === 'string' && type.length > 0 && typeof topicKey === 'string' && topicKey.length > 0;
+  }
+
+  defaultMessage(): string {
+    return 'to must be a subscriberId string, a subscriber object with subscriberId, a topic object, or an array of those.';
+  }
 }
 
 @ValidatorConstraint({ name: 'isValidSignal', async: false })
@@ -171,8 +214,8 @@ export class SignalDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  to?: string;
+  @Validate(IsValidTriggerRecipient)
+  to?: TriggerRecipientsPayload;
 
   @ApiPropertyOptional()
   @IsOptional()

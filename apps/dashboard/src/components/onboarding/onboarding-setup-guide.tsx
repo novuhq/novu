@@ -1,11 +1,6 @@
 import { type IEnvironment } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AGENTS_LIST_QUERY_KEY,
-  type AgentResponse,
-  createAgent,
-  getAgent,
-} from '@/api/agents';
+import { AGENTS_LIST_QUERY_KEY, type AgentResponse, createAgent, getAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentSetupSteps } from '@/components/agents/agent-setup-steps';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -16,10 +11,7 @@ const DEFAULT_AGENT_NAME = 'Support agent';
 const DEFAULT_AGENT_IDENTIFIER = 'support-agent';
 const DEFAULT_AGENT_DESCRIPTION = 'Handles customer questions across your connected channels.';
 
-async function ensureAgent(
-  env: IEnvironment,
-  track: ReturnType<typeof useTelemetry>
-): Promise<AgentResponse> {
+async function ensureAgent(env: IEnvironment, track: ReturnType<typeof useTelemetry>): Promise<AgentResponse> {
   try {
     return await getAgent(env, DEFAULT_AGENT_IDENTIFIER);
   } catch (error) {

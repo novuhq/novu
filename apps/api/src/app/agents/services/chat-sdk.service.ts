@@ -24,10 +24,32 @@ import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
+function getErrorResponseBody(err: unknown): unknown {
+  if (!err || typeof err !== 'object') {
+    return undefined;
+  }
+
+  return (err as { response?: { body?: unknown } }).response?.body;
+}
+
+function getDeliveryErrorDetail(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') {
+    return undefined;
+  }
+
+  const responseBody = body as { errors?: Array<{ message?: unknown }>; message?: unknown };
+  const firstErrorMessage = responseBody.errors?.[0]?.message;
+  if (typeof firstErrorMessage === 'string') {
+    return firstErrorMessage;
+  }
+
+  return typeof responseBody.message === 'string' ? responseBody.message : undefined;
+}
+
 function toDeliveryError(err: unknown): never {
   const base = err instanceof Error ? err.message : String(err);
-  const body = (err as any)?.response?.body;
-  const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
+  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
+
   throw new BadGatewayException({
     error: 'delivery_failed',
     message: detail ? `${base}: ${detail}` : base,

@@ -17,7 +17,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
-const PROD_READ_ONLY_TOOLTIP = 'This setting is read-only in production. Edit in Development and promote to apply changes.';
+const PROD_READ_ONLY_TOOLTIP =
+  'This setting is read-only in production. Edit in Development and promote to apply changes.';
 
 function useAgentEmoji() {
   const { currentEnvironment } = useEnvironment();

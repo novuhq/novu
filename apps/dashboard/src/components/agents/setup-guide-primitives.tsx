@@ -4,7 +4,7 @@ import { CheckCircle2, Loader } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
-import { RiArrowRightUpLine } from 'react-icons/ri';
+import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
@@ -20,6 +20,43 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import type { StepStatus } from './setup-guide-step-utils';
+
+export type SetupMode = 'quick' | 'manual';
+
+export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
+  return (
+    <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">
+      <button
+        type="button"
+        aria-pressed={mode === 'quick'}
+        onClick={() => onChange('quick')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'quick'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiFlashlightLine className="size-3.5" />
+        Quick Setup
+      </button>
+      <button
+        type="button"
+        aria-pressed={mode === 'manual'}
+        onClick={() => onChange('manual')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'manual'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiListCheck2 className="size-3.5" />
+        Manual Setup
+      </button>
+    </div>
+  );
+}
 
 function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
   if (status === 'completed') {

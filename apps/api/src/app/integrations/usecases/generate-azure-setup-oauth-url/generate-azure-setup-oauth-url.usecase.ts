@@ -43,6 +43,7 @@ export class GenerateAzureSetupOauthUrl {
   async execute(command: GenerateAzureSetupOauthUrlCommand): Promise<string> {
     const integration = await this.integrationRepository.findOne({
       _id: command.integrationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 

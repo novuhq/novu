@@ -176,6 +176,67 @@ describe('AgentInboundHandler', () => {
 
       expect(thread.post.calledOnce).to.equal(true);
     });
+
+    it('should store and forward inbound WhatsApp attachments', async () => {
+      const storedAttachments = [
+        {
+          type: 'image',
+          name: 'photo.jpg',
+          mimeType: 'image/jpeg',
+          size: 1234,
+          storageKey: 'org1/env1/agents/conversation1/whatsapp-msg/0-photo.jpg',
+          url: 'https://signed/read',
+        },
+      ];
+      const { handler, attachmentStorage, bridgeExecutor, conversationService } = makeHandler({ storedAttachments });
+      const whatsappConfig = {
+        ...config,
+        platform: 'whatsapp',
+        integrationIdentifier: 'whatsapp-main',
+      };
+      const thread = {
+        id: 'whatsapp:15551234567',
+        channelId: 'whatsapp:15551234567',
+        isDM: true,
+        toJSON: () => ({ id: 'whatsapp:15551234567' }),
+        startTyping: sinon.stub().resolves(undefined),
+      };
+      const message = {
+        id: 'whatsapp-msg',
+        text: 'photo',
+        author: {
+          userId: '15557654321',
+          fullName: 'User One',
+          userName: 'userone',
+          isBot: false,
+        },
+        attachments: [
+          {
+            type: 'image',
+            name: 'photo.jpg',
+            mimeType: 'image/jpeg',
+            size: 1234,
+          },
+        ],
+      };
+
+      await handler.handle('agent1', whatsappConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(attachmentStorage.storeInbound.calledOnceWith(message.attachments)).to.equal(true);
+      expect(attachmentStorage.storeInbound.firstCall.args[1].platform).to.equal('whatsapp');
+      expect(conversationService.persistInboundMessage.firstCall.args[0].richContent).to.deep.equal({
+        attachments: [
+          {
+            type: 'image',
+            name: 'photo.jpg',
+            mimeType: 'image/jpeg',
+            size: 1234,
+            storageKey: 'org1/env1/agents/conversation1/whatsapp-msg/0-photo.jpg',
+          },
+        ],
+      });
+      expect(bridgeExecutor.execute.firstCall.args[0].storedAttachments).to.deep.equal(storedAttachments);
+    });
   });
 
   describe('handleReaction', () => {

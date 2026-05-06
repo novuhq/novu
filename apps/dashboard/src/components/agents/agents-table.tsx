@@ -224,7 +224,12 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                   {canWrite ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <CompactButton variant="ghost" icon={RiMore2Fill} className="z-10 h-8 w-8 p-0" disabled={readOnly}>
+                        <CompactButton
+                          variant="ghost"
+                          icon={RiMore2Fill}
+                          className="z-10 h-8 w-8 p-0"
+                          disabled={readOnly}
+                        >
                           <span className="sr-only">Open menu</span>
                         </CompactButton>
                       </DropdownMenuTrigger>

@@ -70,8 +70,7 @@ export function WhatsAppSetupGuide({
   const { integrations } = useFetchIntegrations();
 
   const selectedIntegration = useMemo(
-    () =>
-      integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.WhatsAppBusiness),
+    () => integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.WhatsAppBusiness),
     [integrations, integrationId]
   );
 

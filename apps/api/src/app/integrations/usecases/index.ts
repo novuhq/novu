@@ -29,6 +29,7 @@ import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhoo
 import { MsTeamsHealthCheck } from './msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
+import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
 
 export const USE_CASES = [
@@ -62,4 +63,5 @@ export const USE_CASES = [
   MsTeamsOauthCallback,
   ChatOauthCallback,
   MsTeamsHealthCheck,
+  SlackQuickSetup,
 ];

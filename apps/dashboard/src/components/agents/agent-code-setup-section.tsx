@@ -128,7 +128,6 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
   }
 }
 
-
 function CopySlackMessageButton({ agentName }: { agentName: string }) {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -155,11 +154,7 @@ function CopySlackMessageButton({ agentName }: { agentName: string }) {
       onClick={handleCopy}
       className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
     >
-      {copied ? (
-        <RiCheckLine className="size-4" />
-      ) : (
-        <RiFileCopyLine className="size-4" />
-      )}
+      {copied ? <RiCheckLine className="size-4" /> : <RiFileCopyLine className="size-4" />}
       <span className="text-label-xs font-medium">{copied ? 'Copied!' : 'Copy Slack message'}</span>
     </button>
   );
@@ -219,14 +214,7 @@ function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: ()
   return connected;
 }
 
-function BridgeConnectionStatus({
-  connected,
-  onAddProvider,
-}: {
-  connected: boolean;
-  onAddProvider?: () => void;
-}) {
-
+function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boolean; onAddProvider?: () => void }) {
   if (connected) {
     return (
       <div className="flex items-center gap-2 py-4 pl-6">
@@ -234,9 +222,7 @@ function BridgeConnectionStatus({
         <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
           Setup complete
         </span>
-        {onAddProvider && (
-          <span className="text-text-soft text-label-xs font-medium">·</span>
-        )}
+        {onAddProvider && <span className="text-text-soft text-label-xs font-medium">·</span>}
         {onAddProvider && (
           <Button
             variant="secondary"
@@ -276,7 +262,13 @@ type AgentCodeSetupSectionProps = {
   onAddProvider?: () => void;
 };
 
-export function AgentCodeSetupSection({ agent, stepOffset, providerId, onBridgeConnected, onAddProvider }: AgentCodeSetupSectionProps) {
+export function AgentCodeSetupSection({
+  agent,
+  stepOffset,
+  providerId,
+  onBridgeConnected,
+  onAddProvider,
+}: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
 
