@@ -1,3 +1,4 @@
+/** @jsxImportSource @novu/framework */
 import { Actions, agent, Button, Card, CardText } from '@novu/framework';
 
 /**
@@ -15,17 +16,16 @@ export const supportAgent = agent('support-agent', {
     if (isFirstMessage) {
       ctx.metadata.set('topic', 'unknown'); // stores a key/value on the conversation
 
-      return Card({
-        title: `Hi${firstName ? `, ${firstName}` : ''}! I'm Support Agent`,
-        children: [
-          CardText('How can I help you today?'),
-          Actions([
-            Button({ id: 'topic-billing', label: 'Billing question', value: 'billing' }),
-            Button({ id: 'topic-technical', label: 'Technical issue', value: 'technical' }),
-            Button({ id: 'topic-other', label: 'Something else', value: 'other' }),
-          ]),
-        ],
-      });
+      return (
+        <Card title={`Hi${firstName ? `, ${firstName}` : ''}! I'm Support Agent`}>
+          <CardText>How can I help you today?</CardText>
+          <Actions>
+            <Button id="topic-billing" label="Billing question" value="billing" />
+            <Button id="topic-technical" label="Technical issue" value="technical" />
+            <Button id="topic-other" label="Something else" value="other" />
+          </Actions>
+        </Card>
+      );
     }
 
     if (text.includes('resolve') || text.includes('thanks')) {

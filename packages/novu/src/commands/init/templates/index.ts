@@ -105,8 +105,8 @@ export const installTemplate = async ({
         case 'README-template.md': {
           return 'README.md';
         }
-        case 'support-agent.ts': {
-          return renameAgent ? `${agentIdentifier}.ts` : name;
+        case 'support-agent.tsx': {
+          return renameAgent ? `${agentIdentifier}.tsx` : name;
         }
         default: {
           return name;
