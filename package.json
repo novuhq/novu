@@ -279,7 +279,6 @@
       "protobufjs@<7.5.5": "^7.5.5",
       "protobufjs@>=8.0.0 <8.0.1": "^8.0.1",
       "mongoose@>=8.0.0 <8.22.1": "^8.22.1",
-      "@clerk/express@>=0.1.0 <1.7.79": "^1.7.79",
       "newrelic": "13.18.0"
     },
     "onlyBuiltDependencies": [
