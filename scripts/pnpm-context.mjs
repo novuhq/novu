@@ -142,7 +142,6 @@ async function getMetafilesFromPnpmSelector(selector, cwd, options = {}) {
         'package.json',
         'pnpm-lock.yaml',
         'pnpm-workspace.yaml',
-        'patches/**',
         'nx.json',
         'tsconfig.json',
         'tsconfig.build.json',
