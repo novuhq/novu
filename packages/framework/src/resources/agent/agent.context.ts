@@ -257,11 +257,18 @@ export class AgentContextImpl {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
 
-  readonly metadata: { set: (key: string, value: unknown) => void };
+  readonly metadata: {
+    get(key: string): unknown;
+    set(key: string, value: unknown): void;
+    delete(key: string): void;
+    clear(): void;
+    readonly current: Readonly<Record<string, unknown>>;
+  };
 
   private _signals: Signal[] = [];
   private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
+  private _metadataState: Record<string, unknown>;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
   private readonly _integrationIdentifier: string;
@@ -285,9 +292,27 @@ export class AgentContextImpl {
     this._secretKey = secretKey;
     this._poster = { post: (body) => this._post(body) };
 
+    this._metadataState = { ...(request.conversation.metadata ?? {}) };
+
+    const self = this;
     this.metadata = {
-      set: (key: string, value: unknown) => {
-        this._signals.push({ type: 'metadata', key, value });
+      get(key: string) {
+        return self._metadataState[key];
+      },
+      set(key: string, value: unknown) {
+        self._metadataState[key] = value;
+        self._signals.push({ type: 'metadata', action: 'set', key, value });
+      },
+      delete(key: string) {
+        delete self._metadataState[key];
+        self._signals.push({ type: 'metadata', action: 'delete', key });
+      },
+      clear() {
+        self._metadataState = {};
+        self._signals.push({ type: 'metadata', action: 'clear' });
+      },
+      get current() {
+        return { ...self._metadataState } as Readonly<Record<string, unknown>>;
       },
     };
   }

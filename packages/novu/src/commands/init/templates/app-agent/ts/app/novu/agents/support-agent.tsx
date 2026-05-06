@@ -43,7 +43,7 @@ export const supportAgent = agent('support-agent', {
       `**Got it.** You said: "${message.text}"\n\n` +
       `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
-      `**Topic:** ${ctx.conversation.metadata?.topic ?? 'unknown'}`
+      `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
   },
 

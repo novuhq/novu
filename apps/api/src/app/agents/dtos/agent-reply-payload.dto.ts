@@ -18,6 +18,7 @@ import {
 export type { FileRef } from '@novu/framework';
 
 const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
+const METADATA_ACTIONS = ['set', 'delete', 'clear'] as const;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const MAX_FILES_PER_MESSAGE = 15;
 
@@ -92,7 +93,12 @@ export class IsValidSignal implements ValidatorConstraintInterface {
     if (!signal?.type) return false;
 
     if (signal.type === 'metadata') {
-      return isValidMetadataSignalKey(signal.key) && signal.value !== undefined;
+      const action = signal.action ?? 'set';
+      if (action === 'set') return isValidMetadataSignalKey(signal.key) && signal.value !== undefined;
+      if (action === 'delete') return isValidMetadataSignalKey(signal.key);
+      if (action === 'clear') return true;
+
+      return false;
     }
 
     if (signal.type === 'trigger') {
@@ -104,8 +110,9 @@ export class IsValidSignal implements ValidatorConstraintInterface {
 
   defaultMessage(): string {
     return (
-      'metadata signals require a key 1-128 chars of letters, digits and "-", "_", ":" separators ' +
-      '(no leading, trailing or consecutive separators) plus a defined value; ' +
+      'metadata signals require action (set|delete|clear): ' +
+      'set requires a key 1-128 chars of letters, digits and "-", "_", ":" separators plus a defined value; ' +
+      'delete requires a valid key; clear requires no additional fields; ' +
       'trigger signals require workflowId.'
     );
   }
@@ -197,6 +204,12 @@ export class SignalDto {
   @IsString()
   @IsIn(SIGNAL_TYPES)
   type: (typeof SIGNAL_TYPES)[number];
+
+  @ApiPropertyOptional({ enum: METADATA_ACTIONS })
+  @IsOptional()
+  @IsString()
+  @IsIn(METADATA_ACTIONS)
+  action?: (typeof METADATA_ACTIONS)[number];
 
   @ApiPropertyOptional()
   @IsOptional()

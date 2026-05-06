@@ -219,12 +219,20 @@ interface AgentContextBase {
    */
   resolve(summary?: string): void;
   /**
-   * Write key/value pairs to the conversation's persistent metadata store.
-   * Values are flushed to Novu with the next `ctx.reply()` call, or automatically
-   * when the handler completes. Read stored values via `ctx.conversation.metadata`.
+   * Persistent key/value store for this conversation.
+   *
+   * - `get(key)` — read a value from the current metadata state
+   * - `set(key, value)` — write a value (flushed with the next reply or on handler completion)
+   * - `delete(key)` — remove a key
+   * - `clear()` — reset metadata to `{}`
+   * - `current` — readonly snapshot of the current state
    */
   metadata: {
+    get(key: string): unknown;
     set(key: string, value: unknown): void;
+    delete(key: string): void;
+    clear(): void;
+    readonly current: Readonly<Record<string, unknown>>;
   };
   /**
    * Trigger a Novu workflow from within this agent handler.
@@ -352,7 +360,10 @@ export interface AgentBridgeRequest {
   platformContext: AgentPlatformContext;
 }
 
-export type MetadataSignal = { type: 'metadata'; key: string; value: unknown };
+export type MetadataSignal =
+  | { type: 'metadata'; action: 'set'; key: string; value: unknown }
+  | { type: 'metadata'; action: 'delete'; key: string }
+  | { type: 'metadata'; action: 'clear' };
 
 /**
  * Queued by `ctx.trigger()` — instructs Novu to fire a workflow from inside an agent handler.

@@ -229,8 +229,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(replyBody.reply.markdown).toBe('Got it');
     expect(replyBody.signals).toHaveLength(2);
-    expect(replyBody.signals[0]).toEqual({ type: 'metadata', key: 'turnCount', value: 1 });
-    expect(replyBody.signals[1]).toEqual({ type: 'metadata', key: 'language', value: 'en' });
+    expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'set', key: 'turnCount', value: 1 });
+    expect(replyBody.signals[1]).toEqual({ type: 'metadata', action: 'set', key: 'language', value: 'en' });
   });
 
   it('should edit a previously sent reply via the returned handle', async () => {
@@ -361,7 +361,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(flushBody.reply).toBeUndefined();
     expect(flushBody.signals).toHaveLength(2);
-    expect(flushBody.signals[0]).toEqual({ type: 'metadata', key: 'archived', value: true });
+    expect(flushBody.signals[0]).toEqual({ type: 'metadata', action: 'set', key: 'archived', value: true });
     expect(flushBody.signals[1]).toEqual({
       type: 'trigger',
       workflowId: 'post-resolve-workflow',
@@ -842,7 +842,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(replyBody.reply.card.type).toBe('card');
     expect(replyBody.signals).toHaveLength(1);
-    expect(replyBody.signals[0]).toEqual({ type: 'metadata', key: 'intent', value: 'order_confirm' });
+    expect(replyBody.signals[0]).toEqual({ type: 'metadata', action: 'set', key: 'intent', value: 'order_confirm' });
   });
 
   it('should dispatch onAction event with action data on ctx', async () => {
