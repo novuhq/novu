@@ -48,8 +48,8 @@ overrides:
   ws@>=8.0.0 <8.17.1: ^8.17.1
   nextjs>next: 15.5.15
   next@<16.2.3: ^16.2.3
-  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.0
-  fast-xml-parser@>=5.0.0 <5.7.0: 5.7.0
+  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
+  fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   basic-ftp@<=5.2.2: 5.3.0
   axios@>=1.0.0 <1.15.2: ^1.15.2
   seroval@<1.4.1: ^1.4.1
@@ -131,7 +131,7 @@ overrides:
   protobufjs@<7.5.5: ^7.5.5
   protobufjs@>=8.0.0 <8.0.1: ^8.0.1
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
-  newrelic: 13.18.0
+  newrelic: 13.19.2
 
 patchedDependencies:
   smtp-server@1.17.0:
@@ -534,8 +534,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.19.2
+        version: 13.19.2
       nimma:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1242,8 +1242,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.2
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.19.2
+        version: 13.19.2
       pino:
         specifier: ^8.17.2
         version: 8.17.2
@@ -1384,8 +1384,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.19.2
+        version: 13.19.2
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1589,8 +1589,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.19.2
+        version: 13.19.2
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -1792,8 +1792,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.18)(@sentry/node@8.55.0)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.19.2
+        version: 13.19.2
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -2612,8 +2612,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@8.3.3)
       newrelic:
-        specifier: 13.18.0
-        version: 13.18.0
+        specifier: 13.19.2
+        version: 13.19.2
       node-fetch:
         specifier: ^3.2.10
         version: 3.3.2
@@ -4475,11 +4475,11 @@ packages:
     resolution: {integrity: sha512-JgG32LQRLphHRWsn64vIt7wD2m+JH46swM6ZrY7g1rdiGiKV5m+A+TBrJKoUUQRmS14azMgePNZY30NauWqzLg==}
     engines: {node: '>=10.4.0'}
 
-  '@apm-js-collab/code-transformer@0.10.0':
-    resolution: {integrity: sha512-6Y0pDhTIiVetgioIiHeFQ+vwpxd7Pz2h5xI33n0R9juRbxBaFUfhBfGOAUF+Y4TdcT5ccpjS6/5sLLYDDS3FHw==}
+  '@apm-js-collab/code-transformer@0.12.0':
+    resolution: {integrity: sha512-5F2ob4cMYezbaUGAk+YltbDvb9BFIghN92ubct9Ho/0MFx4FkChCxYV99NkU6Kx+RAgaqBV6yxKuWreQ6K8SOw==}
 
-  '@apm-js-collab/tracing-hooks@0.5.0':
-    resolution: {integrity: sha512-Fj2E03RnXtMkn5/XupRnNRC7CJcXRPVPmlTcw1ZJ3F/2iDyTXYMVKImuhU+Q9R7L0nxnuvwaP3ITpl2Y8mtXng==}
+  '@apm-js-collab/tracing-hooks@0.6.0':
+    resolution: {integrity: sha512-akdKDRbvPWC7mRfyoJ2f/tpmKqn5rLDPJMQ3+ZImgtiRJsC3LSoDJF3enrEufURIieH/H0S7Le6KLnRaCTk9rQ==}
 
   '@arethetypeswrong/cli@0.17.4':
     resolution: {integrity: sha512-AeiKxtf67XD/NdOqXgBOE5TZWH3EOCt+0GkbUpekOzngc+Q/cRZ5azjWyMxISxxfp0EItgm5NoSld9p7BAA5xQ==}
@@ -16148,11 +16148,6 @@ packages:
     resolution: {integrity: sha512-WIsKqkSC0ABoBJuT1LEX+2HEvNmNKKgnTAyd0fL8qzK4SH2i9NXg+t08YtdZp/V9IZ33cxe3iV4yM0qg8lMQng==}
     engines: {node: '>=16.20.1'}
 
-  bson@6.8.0:
-    resolution: {integrity: sha512-iOJg8pr7wq2tg/zSlCCHMi3hMm5JTOxLTagf3zxhcenHsFp+c6uOs6K7W5UE7A4QIJGtqh/ZovFNMP4mOPJynQ==}
-    engines: {node: '>=16.20.1'}
-    deprecated: a critical bug affecting only useBigInt64=true deserialization usage is fixed in bson@6.10.3
-
   buffer-crc32@0.2.13:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
 
@@ -18089,6 +18084,10 @@ packages:
     resolution: {integrity: sha512-ca9pw9fomFcKPvFLXhBKUK90ZvGibiGOvRJNbjljY7s7uq/5YO4BOzcYtJqExdx99rF6aAcnRxHmcUHcz6sQsg==}
     engines: {node: '>=0.10'}
 
+  esquery@1.7.0:
+    resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
+    engines: {node: '>=0.10'}
+
   esrap@2.2.4:
     resolution: {integrity: sha512-suICpxAmZ9A8bzJjEl/+rLJiDKC0X4gYWUxT6URAWBLvlXmtbZd5ySMu/N2ZGEtMCAmflUDPSehrP9BQcsGcSg==}
 
@@ -18333,15 +18332,11 @@ packages:
   fast-url-parser@1.1.3:
     resolution: {integrity: sha512-5jOCVXADYNuRkKFzNJ0dCCewsZiYo0dz8QNYljkOpFC6r2U4OBmKtvm/Tsuh4w1YYdDqDb31a8TVhBJ2OJKdqQ==}
 
-  fast-xml-builder@1.1.5:
-    resolution: {integrity: sha512-4TJn/8FKLeslLAH3dnohXqE3QSoxkhvaMzepOIZytwJXZO69Bfz0HBdDHzOTOon6G59Zrk6VQ2bEiv1t61rfkA==}
+  fast-xml-builder@1.1.8:
+    resolution: {integrity: sha512-sDVBc2gg8pSKvcbE8rBmOyjSGQf0AdsbqvHeIOv3D/uYNoV4eCReQXyDF8Pdv8+m1FHazACypSz2hR7O2S1LLw==}
 
-  fast-xml-parser@5.7.0:
-    resolution: {integrity: sha512-MTcrUoRQ1GSQ9iG3QJzBGquYYYeA7piZaJoIWbPFGbRn6Jj6z7xgoAyi4DrZX4y2ZIQQBF59gc/zmvvejjgoFQ==}
-    hasBin: true
-
-  fast-xml-parser@5.7.1:
-    resolution: {integrity: sha512-8Cc3f8GUGUULg34pBch/KGyPLglS+OFs05deyOlY7fL2MTagYPKrVQNmR1fLF/yJ9PH5ZSTd3YDF6pnmeZU+zA==}
+  fast-xml-parser@5.7.3:
+    resolution: {integrity: sha512-C0AaNuC+mscy6vrAQKAc/rMq+zAPHodfHGZu4sGVehvAQt/JLG1O5zEcYcXSY5zSqr4YVgxsB+pHXTq0i7eDlg==}
     hasBin: true
 
   fastest-levenshtein@1.0.16:
@@ -21491,6 +21486,10 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
 
+  meriyah@6.1.4:
+    resolution: {integrity: sha512-Sz8FzjzI0kN13GK/6MVEsVzMZEPvOhnmmI1lU5+/1cGOiK3QUahntrNNtdVeihrO7t9JpoH75iMNXg6R6uWflQ==}
+    engines: {node: '>=18.0.0'}
+
   mermaid@11.12.2:
     resolution: {integrity: sha512-n34QPDPEKmaeCG4WDMGy0OT6PSyxKCfy2pJgShP+Qow2KLrvWjclwbc3yXfSIf4BanqWEhQEpngWwNp/XhZt6w==}
 
@@ -22077,8 +22076,8 @@ packages:
   new-date@1.0.3:
     resolution: {integrity: sha512-0fsVvQPbo2I18DT2zVHpezmeeNYV2JaJSrseiHLc17GNOxJzUdx5mvSigPu8LtIfZSij5i1wXnXFspEs2CD6hA==}
 
-  newrelic@13.18.0:
-    resolution: {integrity: sha512-9GYhtXTzjcsH4HUPeGwN6i24z6YZuB/ikWced3h9D/SH984MH9GxpWJjlurouA92GP667fIN0TjGuTNIfYa54Q==}
+  newrelic@13.19.2:
+    resolution: {integrity: sha512-PfiLkjjsz1tBrTqnPtHbiRcC44r+U9numOhPQztH5jnTf+xksqMoH7mlyTZi7BtD1Pkm6c+zY3SVnWjyzSNG0w==}
     engines: {node: '>=20', npm: '>=6.0.0'}
     hasBin: true
 
@@ -24641,6 +24640,9 @@ packages:
 
   selderee@0.11.0:
     resolution: {integrity: sha512-5TF+l7p4+OsnP8BCCvSyZiSPc4x4//p5uPwK8TCnVPJYRmU2aYKMpOXvw8zM5a5JvuuCGN1jmsMwuU2W02ukfA==}
+
+  semifies@1.0.0:
+    resolution: {integrity: sha512-xXR3KGeoxTNWPD4aBvL5NUpMTT7WMANr3EWnaS190QVkY52lqqcVRD7Q05UVbBhiWDGWMlJEUam9m7uFFGVScw==}
 
   semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
@@ -27614,11 +27616,18 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@apm-js-collab/code-transformer@0.10.0': {}
-
-  '@apm-js-collab/tracing-hooks@0.5.0':
+  '@apm-js-collab/code-transformer@0.12.0':
     dependencies:
-      '@apm-js-collab/code-transformer': 0.10.0
+      '@types/estree': 1.0.8
+      astring: 1.9.0
+      esquery: 1.7.0
+      meriyah: 6.1.4
+      semifies: 1.0.0
+      source-map: 0.6.1
+
+  '@apm-js-collab/tracing-hooks@0.6.0':
+    dependencies:
+      '@apm-js-collab/code-transformer': 0.12.0
       debug: 4.4.3(supports-color@8.1.1)
       module-details-from-path: 1.0.4
     transitivePeerDependencies:
@@ -28581,7 +28590,7 @@ snapshots:
       '@smithy/signature-v4': 3.0.0
       '@smithy/smithy-client': 3.2.0
       '@smithy/types': 3.3.0
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       tslib: 2.8.1
 
   '@aws-sdk/core@3.635.0':
@@ -28594,7 +28603,7 @@ snapshots:
       '@smithy/smithy-client': 3.2.0
       '@smithy/types': 3.3.0
       '@smithy/util-middleware': 3.0.3
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       tslib: 2.8.1
     optional: true
 
@@ -30053,19 +30062,19 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.16':
     dependencies:
       '@smithy/types': 4.13.1
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       tslib: 2.8.1
 
   '@aws-sdk/xml-builder@3.972.19':
     dependencies:
       '@smithy/types': 4.14.1
-      fast-xml-parser: 5.7.1
+      fast-xml-parser: 5.7.3
       tslib: 2.8.1
 
   '@aws-sdk/xml-builder@3.972.5':
     dependencies:
       '@smithy/types': 4.13.1
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.2.3': {}
@@ -31321,7 +31330,7 @@ snapshots:
     dependencies:
       '@better-fetch/fetch': 1.1.21
       better-auth: 1.5.6(58da4474fdc0134baa964fd9efb50afd)
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       jose: 6.1.3
       samlify: 2.10.2
       zod: 4.3.5
@@ -31333,7 +31342,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       better-auth: 1.5.6(58da4474fdc0134baa964fd9efb50afd)
       better-call: 1.3.2(zod@4.3.6)
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       jose: 6.1.3
       samlify: 2.10.2
       tldts: 6.1.86
@@ -32699,7 +32708,7 @@ snapshots:
       duplexify: 4.1.2
       ent: 2.2.0
       extend: 3.0.2
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       gaxios: 5.1.3(encoding@0.1.13)
       google-auth-library: 8.9.0(encoding@0.1.13)
       mime: 3.0.0
@@ -32720,7 +32729,7 @@ snapshots:
       abort-controller: 3.0.0
       async-retry: 1.3.3
       duplexify: 4.1.3
-      fast-xml-parser: 5.7.0
+      fast-xml-parser: 5.7.3
       gaxios: 6.1.1(encoding@0.1.13)
       google-auth-library: 9.15.1(encoding@0.1.13)
       html-entities: 2.5.2
@@ -45105,8 +45114,6 @@ snapshots:
 
   bson@6.10.4: {}
 
-  bson@6.8.0: {}
-
   buffer-crc32@0.2.13:
     optional: true
 
@@ -47406,6 +47413,10 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
+  esquery@1.7.0:
+    dependencies:
+      estraverse: 5.3.0
+
   esrap@2.2.4:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -47767,21 +47778,14 @@ snapshots:
     dependencies:
       punycode: 1.4.1
 
-  fast-xml-builder@1.1.5:
+  fast-xml-builder@1.1.8:
     dependencies:
       path-expression-matcher: 1.5.0
 
-  fast-xml-parser@5.7.0:
+  fast-xml-parser@5.7.3:
     dependencies:
       '@nodable/entities': 2.1.0
-      fast-xml-builder: 1.1.5
-      path-expression-matcher: 1.5.0
-      strnum: 2.2.3
-
-  fast-xml-parser@5.7.1:
-    dependencies:
-      '@nodable/entities': 2.1.0
-      fast-xml-builder: 1.1.5
+      fast-xml-builder: 1.1.8
       path-expression-matcher: 1.5.0
       strnum: 2.2.3
 
@@ -52147,6 +52151,8 @@ snapshots:
 
   merge2@1.4.1: {}
 
+  meriyah@6.1.4: {}
+
   mermaid@11.12.2:
     dependencies:
       '@braintree/sanitize-url': 7.1.1
@@ -52688,7 +52694,7 @@ snapshots:
   mongodb@6.8.0(@aws-sdk/credential-providers@3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7):
     dependencies:
       '@mongodb-js/saslprep': 1.1.8
-      bson: 6.8.0
+      bson: 6.10.4
       mongodb-connection-string-url: 3.0.1
     optionalDependencies:
       '@aws-sdk/credential-providers': 3.637.0(@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0))
@@ -52907,9 +52913,9 @@ snapshots:
     dependencies:
       '@segment/isodate': 1.0.3
 
-  newrelic@13.18.0:
+  newrelic@13.19.2:
     dependencies:
-      '@apm-js-collab/tracing-hooks': 0.5.0
+      '@apm-js-collab/tracing-hooks': 0.6.0
       '@grpc/grpc-js': 1.14.3
       '@grpc/proto-loader': 0.7.13
       '@newrelic/security-agent': 3.0.1
@@ -55992,6 +55998,8 @@ snapshots:
   selderee@0.11.0:
     dependencies:
       parseley: 0.12.1
+
+  semifies@1.0.0: {}
 
   semver-compare@1.0.0: {}
 
