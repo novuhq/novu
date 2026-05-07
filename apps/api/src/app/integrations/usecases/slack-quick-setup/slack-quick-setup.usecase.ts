@@ -138,6 +138,8 @@ export class SlackQuickSetup {
             'member_joined_channel',
             'assistant_thread_started',
             'assistant_thread_context_changed',
+            'reaction_added',
+            'reaction_removed',
           ],
         },
         interactivity: {
