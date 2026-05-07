@@ -283,11 +283,14 @@ export class GetActivityFeed {
         };
       });
 
-      this.logger.debug({
-        notificationCount: notifications.length,
-        jobCount: allJobIds.length,
-        executionDetailsCount: Array.from(executionDetailsByJobId.values()).flat().length,
-      }, 'Successfully enhanced notifications with ClickHouse execution details');
+      this.logger.debug(
+        {
+          notificationCount: notifications.length,
+          jobCount: allJobIds.length,
+          executionDetailsCount: Array.from(executionDetailsByJobId.values()).flat().length,
+        },
+        'Successfully enhanced notifications with ClickHouse execution details'
+      );
 
       return enhancedNotifications;
     } catch (error) {
@@ -336,6 +339,7 @@ export class GetActivityFeed {
     })
       .whereIn('entity_id', entityIds)
       .whereEquals('entity_type', 'step_run')
+      .whereEquals('organization_id', command.organizationId)
       .build();
 
     const traceResult = await this.traceLogRepository.find({
