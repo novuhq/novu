@@ -277,6 +277,12 @@ jobs:
   #
   # Skipped jobs are treated as success. Failure or cancellation of any
   # required dependency will fail the gate.
+  #
+  # IMPORTANT: the `needs:` list below must contain every other job in this
+  # workflow. The first step in this job parses this very file and fails
+  # the run if the list ever drifts (a job is added/removed but `needs:`
+  # is not updated). That guard prevents the gate from going falsely green
+  # because of a forgotten dependency.
   pr-checks-passed:
     name: PR Checks Passed
     runs-on: ubuntu-latest
@@ -292,6 +298,59 @@ jobs:
       - validate_openapi
       - test_e2e_api
     steps:
+      - name: Checkout workflow source
+        uses: actions/checkout@v5
+        with:
+          # We only need the workflow file itself to validate the needs list.
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/on-pr.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Validate aggregator `needs` list matches workflow jobs
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyyaml
+          python3 <<'PY'
+          import pathlib, sys, yaml
+
+          AGGREGATOR = "pr-checks-passed"
+          WORKFLOW = pathlib.Path(".github/workflows/on-pr.yml")
+
+          workflow = yaml.safe_load(WORKFLOW.read_text())
+          jobs = workflow.get("jobs", {}) or {}
+
+          if AGGREGATOR not in jobs:
+              print(f"::error file={WORKFLOW}::aggregator job '{AGGREGATOR}' not found")
+              sys.exit(1)
+
+          declared = set(jobs[AGGREGATOR].get("needs", []) or [])
+          expected = set(jobs) - {AGGREGATOR}
+
+          missing = sorted(expected - declared)
+          extra = sorted(declared - expected)
+
+          if missing:
+              print(
+                  f"::error file={WORKFLOW}::pr-checks-passed.needs is missing jobs "
+                  f"that exist in the workflow: {missing}. "
+                  "Add them so the gate can't go falsely green."
+              )
+          if extra:
+              print(
+                  f"::error file={WORKFLOW}::pr-checks-passed.needs lists jobs that "
+                  f"don't exist in the workflow: {extra}. Remove them."
+              )
+
+          if missing or extra:
+              sys.exit(1)
+
+          print(
+              f"pr-checks-passed.needs correctly covers all {len(expected)} "
+              "other jobs in the workflow."
+          )
+          PY
+
       - name: Verify required jobs succeeded or were skipped
         env:
           NEEDS_JSON: ${{ toJson(needs) }}
