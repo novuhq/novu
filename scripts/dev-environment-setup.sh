@@ -576,10 +576,10 @@ start_database () {
 
     if [[ $already_installed -ne 1 ]]; then
         if [[ -f ./docker/local/.env ]]; then
-+            echo "./docker/local/.env already exists - keeping existing file."
-+       else
-+            cp ./docker/.env.example ./docker/local/.env
-+       fi
+            echo "./docker/local/.env already exists - keeping existing file."
+        else
+            cp ./docker/.env.example ./docker/local/.env
+        fi
 
         if docker compose version &>/dev/null 2>&1; then
             docker compose -f ./docker/local/docker-compose.yml up -d
