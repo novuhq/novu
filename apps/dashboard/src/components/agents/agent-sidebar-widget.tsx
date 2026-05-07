@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
@@ -89,7 +90,16 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
       <div className="flex h-8 items-center justify-between gap-2 px-1.5">
         <span className="text-text-soft text-label-xs font-medium shrink-0 flex items-center gap-0.5">
           Bridge URL
-          {!displayUrl && <RiAlertFill className="size-3.5 text-orange-500" />}
+          {!displayUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-pointer">
+                  <RiAlertFill className="size-3.5 text-orange-500" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Bridge URL is required for the agent to receive messages</TooltipContent>
+            </Tooltip>
+          )}
         </span>
         <div className="relative flex h-8 min-w-0 flex-1 items-center justify-end">
           <AnimatePresence mode="wait">
