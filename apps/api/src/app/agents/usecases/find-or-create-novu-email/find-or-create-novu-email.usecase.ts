@@ -40,7 +40,7 @@ export class FindOrCreateNovuEmail {
    * Integration + link atomically. Idempotent — safe to call concurrently.
    */
   async execute(agentId: string, environmentId: string, organizationId: string): Promise<FindOrCreateNovuEmailResult> {
-    // await this.enforceEmailTier(organizationId);
+    await this.enforceEmailTier(organizationId);
 
     const existing = await this.findExistingLink(agentId, environmentId, organizationId);
     if (existing) return { response: existing, provisionedNewLink: false };

@@ -26,7 +26,7 @@ import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-ag
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
 
 @Controller('/agents')
-// @UseGuards(AgentConversationEnabledGuard)
+@UseGuards(AgentConversationEnabledGuard)
 @ApiExcludeController()
 export class AgentsWebhookController {
   constructor(

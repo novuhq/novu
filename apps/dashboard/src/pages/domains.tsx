@@ -169,7 +169,10 @@ export function DomainsPage() {
   const environmentSlug = currentEnvironment?.slug;
   const isTableLoading = isLoading || !environmentSlug;
 
-  const domainsEnabled = true;
+  const domainsEnabled = getFeatureForTierAsBoolean(
+    FeatureNameEnum.DOMAINS_BOOLEAN,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
   const domains = domainsResponse?.data ?? [];
   const hasActiveCursor = Boolean(afterCursor || beforeCursor);
   const isEmptyDomainsState = !isTableLoading && !search && !hasActiveCursor && domainsResponse?.totalCount === 0;

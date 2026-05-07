@@ -1,6 +1,3 @@
-import * as crypto from 'node:crypto';
-import * as net from 'node:net';
-
 import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, decryptCredentials, InstrumentUsecase, MailFactory } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
@@ -90,15 +87,6 @@ export class SendAgentTestEmail {
       senderName: (senderIntegration.credentials?.senderName as string) || 'Novu',
     };
 
-    await this.sendToLocalEmailServer(mailOptions).catch((err) => {
-      const base = err instanceof Error ? err.message : String(err);
-
-      throw new BadGatewayException({
-        error: 'delivery_failed',
-        message: base,
-      });
-    });
-
     await handler.send(mailOptions).catch((err) => {
       const base = err instanceof Error ? err.message : String(err);
       const body = (err as any)?.response?.body;
@@ -117,125 +105,6 @@ export class SendAgentTestEmail {
     });
 
     return { success: true };
-  }
-
-  /**
-   * Sends the email directly to a local SMTP server (e.g. Mailhog / MailDev).
-   * Mirrors the nodemailer transport used in playground/nextjs/src/pages/api/send-email.ts.
-   * Reads SMTP_HOST (default: localhost) and SMTP_PORT (default: 2525) from env vars.
-   */
-  private sendToLocalEmailServer(mailOptions: IEmailOptions): Promise<void> {
-    const host = process.env.SMTP_HOST ?? 'localhost';
-    const port = parseInt(process.env.SMTP_PORT ?? '2525', 10);
-
-    const to = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to];
-    const from = mailOptions.from ?? 'no-reply@localhost';
-
-    const crlf = '\r\n';
-    const boundary = `boundary_${Date.now()}`;
-    const messageId = `<${crypto.randomUUID()}@novu-agent-test>`;
-    const rawMessage = [
-      `From: ${mailOptions.senderName ? `${mailOptions.senderName} <${from}>` : from}`,
-      `To: ${to.join(', ')}`,
-      `Subject: ${mailOptions.subject ?? ''}`,
-      `Message-ID: ${messageId}`,
-      `Date: ${new Date().toUTCString()}`,
-      'MIME-Version: 1.0',
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
-      '',
-      `--${boundary}`,
-      'Content-Type: text/plain; charset=utf-8',
-      '',
-      mailOptions.text ?? '',
-      '',
-      `--${boundary}`,
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      mailOptions.html ?? '',
-      '',
-      `--${boundary}--`,
-    ].join(crlf);
-
-    return new Promise<void>((resolve, reject) => {
-      const socket = net.createConnection({ host, port });
-      let buffer = '';
-      let step = 0;
-
-      const send = (line: string) => socket.write(`${line}${crlf}`);
-
-      const fail = (reason: string) => {
-        socket.destroy();
-        reject(new Error(reason));
-      };
-
-      socket.setTimeout(10_000);
-      socket.on('timeout', () => fail(`SMTP connection to ${host}:${port} timed out`));
-      socket.on('error', (err) => reject(err));
-
-      socket.on('data', (chunk: Buffer) => {
-        buffer += chunk.toString();
-
-        const lines = buffer.split(crlf);
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const code = parseInt(line.slice(0, 3), 10);
-
-          if (line.startsWith('2') || line.startsWith('3')) {
-            // multi-line responses end with <code> (space); skip continuation lines
-            if (line[3] === '-') continue;
-          }
-
-          switch (step) {
-            case 0:
-              if (code !== 220) return fail(`Expected 220 greeting, got: ${line}`);
-              send(`EHLO localhost`);
-              step = 1;
-              break;
-
-            case 1:
-              if (code !== 250) return fail(`EHLO failed: ${line}`);
-              if (line[3] !== '-') {
-                send(`MAIL FROM:<${from}>`);
-                step = 2;
-              }
-              break;
-
-            case 2:
-              if (code !== 250) return fail(`MAIL FROM rejected: ${line}`);
-              send(`RCPT TO:<${to[0]}>`);
-              step = 3;
-              break;
-
-            case 3:
-              if (code !== 250) return fail(`RCPT TO rejected: ${line}`);
-              send('DATA');
-              step = 4;
-              break;
-
-            case 4:
-              if (code !== 354) return fail(`DATA not accepted: ${line}`);
-              socket.write(`${rawMessage}${crlf}.${crlf}`);
-              step = 5;
-              break;
-
-            case 5:
-              if (code !== 250) return fail(`Message not accepted: ${line}`);
-              send('QUIT');
-              step = 6;
-              break;
-
-            case 6:
-              socket.destroy();
-              resolve();
-              break;
-
-            default:
-              break;
-          }
-        }
-      });
-    });
   }
 
   private async findSenderIntegration(environmentId: string, organizationId: string, outboundIntegrationId?: string) {

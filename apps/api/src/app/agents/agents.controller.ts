@@ -15,8 +15,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ProductFeature, RequirePermissions } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -268,7 +274,7 @@ export class AgentsController {
 
   @Post('/:identifier/test-email')
   @HttpCode(HttpStatus.OK)
-  // @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
+  @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
   @ApiOperation({
     summary: 'Send a test email to the agent inbound address',
     description:
