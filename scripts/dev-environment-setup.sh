@@ -580,7 +580,12 @@ start_database () {
 
         start_success_message "Docker Infrastructure"
     else
-        echo "We recommend removing mongodb and redis from brew with 'brew remove <package_name>'."
+        if [[ "$OS_TYPE" == "Darwin" ]]; then
+            echo "We recommend removing mongodb and redis from brew with 'brew remove <package_name>'."
+        else
+            echo "We recommend stopping mongodb and redis services before proceeding."
+            echo "e.g. 'sudo systemctl stop mongod redis'"
+        fi
         echo "To manually start the containerized databases, go to /docker in the novu project."
     fi
 }
