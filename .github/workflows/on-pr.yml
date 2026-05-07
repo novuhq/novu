@@ -268,6 +268,47 @@ jobs:
       ee: true
     secrets: inherit
 
+  # Aggregator / "all-green" gate. This job depends on every other job in
+  # this workflow and reports a single success/failure status that can be
+  # used as the one required status check in branch protection (and for
+  # GitHub auto-merge). It must always run so that even when a dependency
+  # is skipped — e.g. dynamic jobs that have nothing to do because no
+  # affected projects were detected — the gate still produces a result.
+  #
+  # Skipped jobs are treated as success. Failure or cancellation of any
+  # required dependency will fail the gate.
+  pr-checks-passed:
+    name: PR Checks Passed
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs:
+      - dependency-review
+      - find-flags
+      - get-affected
+      - test_unit_providers
+      - test_unit_packages
+      - test_unit_libs
+      - test_unit_services
+      - validate_openapi
+      - test_e2e_api
+    steps:
+      - name: Verify required jobs succeeded or were skipped
+        env:
+          NEEDS_JSON: ${{ toJson(needs) }}
+        run: |
+          set -euo pipefail
+          echo "Aggregated job results:"
+          echo "$NEEDS_JSON" | jq -r 'to_entries[] | "  - \(.key): \(.value.result)"'
+
+          failed=$(echo "$NEEDS_JSON" | jq -r '[to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key] | join(", ")')
+
+          if [ -n "$failed" ]; then
+            echo "::error::The following required jobs failed or were cancelled: $failed"
+            exit 1
+          fi
+
+          echo "All required jobs passed (or were skipped because they were not affected)."
+
   #test_e2e_dashboard:
   #  name: E2E test Dashboard app
   #  needs: [get-affected]
