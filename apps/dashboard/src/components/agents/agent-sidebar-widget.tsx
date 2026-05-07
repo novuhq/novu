@@ -163,13 +163,17 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
               Bridge
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="text-foreground-400 inline-flex cursor-default">
+                  <button
+                    type="button"
+                    aria-label="What is Bridge?"
+                    className="text-foreground-400 inline-flex cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
                     <RiInformationFill className="size-3.5" />
-                  </span>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  The bridge connects Novu to your self-hosted agent handler. In Development mode the URL points to
-                  Novu's managed bridge; switch to Local to route messages to a tunnel on your machine.
+                  The bridge connects Novu to your hosted agent handler. Switch to Local to route messages to a tunnel
+                  on your machine.
                 </TooltipContent>
               </Tooltip>
             </>
