@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAlertFill, RiInformationFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
@@ -99,8 +98,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Set the public URL of your deployed agent server so it can receive messages outside of local
-                mode
+                Set the public URL of your deployed agent server so it can receive messages outside of local mode
               </TooltipContent>
             </Tooltip>
           )}
