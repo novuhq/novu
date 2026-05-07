@@ -93,11 +93,14 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
           {!displayUrl && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="inline-flex cursor-pointer">
+                <span className="inline-flex cursor-help" tabIndex={0} aria-label="Bridge URL not configured">
                   <RiAlertFill className="size-3.5 text-orange-500" />
                 </span>
               </TooltipTrigger>
-              <TooltipContent>Bridge URL is required for the agent to receive messages</TooltipContent>
+              <TooltipContent>
+                Set the public URL of your deployed agent server so it can receive messages outside of local
+                mode
+              </TooltipContent>
             </Tooltip>
           )}
         </span>
