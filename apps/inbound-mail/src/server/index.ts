@@ -179,14 +179,20 @@ class Mailin extends events.EventEmitter {
             const transaction = nr.getTransaction();
 
             try {
+              /*
+               * Attach only non-PII / non-attacker-controlled metadata. Sender and
+               * recipient addresses, client IPs, and HELO hostnames are intentionally
+               * omitted so attacker-controlled inbound SMTP traffic cannot leak
+               * personal/network identifiers into our APM backend. Use connectionId
+               * to correlate with our own pino logs when investigating an incident.
+               */
               nr.addCustomAttributes({
                 'mail.connectionId': connection.id,
-                'mail.from': connection.envelope?.mailFrom?.address,
-                'mail.to': Array.isArray(connection.envelope?.rcptTo)
-                  ? connection.envelope.rcptTo.map((rcpt) => rcpt.address).join(',')
-                  : undefined,
-                'mail.remoteAddress': connection.remoteAddress,
-                'mail.clientHostname': connection.clientHostname,
+                'mail.envelopeRecipientCount': Array.isArray(connection.envelope?.rcptTo)
+                  ? connection.envelope.rcptTo.length
+                  : 0,
+                'mail.hasEnvelopeFrom': Boolean(connection.envelope?.mailFrom?.address),
+                'mail.transmissionType': connection.secure ? 'secure' : 'plain',
               });
             } catch (attributeError) {
               logger.warn(
@@ -236,14 +242,23 @@ class Mailin extends events.EventEmitter {
               })
               .then((finalizedMessage) => {
                 try {
+                  /*
+                   * Only operational/aggregate metadata — no Message-ID (can echo
+                   * sender content), no addresses, no headers. These are safe to
+                   * export to APM regardless of how attacker-controlled the
+                   * underlying email is.
+                   */
                   nr.addCustomAttributes({
-                    'mail.messageId': finalizedMessage?.messageId,
                     'mail.dkim': finalizedMessage?.dkim,
                     'mail.spf': finalizedMessage?.spf,
                     'mail.spamScore': finalizedMessage?.spamScore,
                     'mail.language': finalizedMessage?.language,
                     'mail.attachmentCount': Array.isArray(finalizedMessage?.attachments)
                       ? finalizedMessage.attachments.length
+                      : 0,
+                    'mail.hasInReplyTo': Boolean(finalizedMessage?.inReplyTo),
+                    'mail.referencesCount': Array.isArray(finalizedMessage?.references)
+                      ? finalizedMessage.references.length
                       : 0,
                   });
                 } catch (attributeError) {
@@ -484,12 +499,19 @@ class Mailin extends events.EventEmitter {
              * (e.g. support@customer.com) fall back to the domain part as the groupId
              * so BullMQ can still bucket concurrent jobs by domain.
              */
-            const groupId = username.includes('-nv-e=') ? username.split('-nv-e=').at(-1) : domainPart;
+            const isLegacyReplyToRoute = username.includes('-nv-e=');
+            const groupId = isLegacyReplyToRoute ? username.split('-nv-e=').at(-1) : domainPart;
 
             try {
+              /*
+               * Only emit groupId when it's a Novu-internal environmentId (legacy
+               * reply-to route). For domain-routed mail the groupId is the
+               * recipient's domain — that's tenant/PII-adjacent metadata, so we
+               * report only the routing strategy instead of the domain itself.
+               */
               nr.addCustomAttributes({
-                'mail.queue.groupId': groupId,
-                'mail.queue.recipientDomain': domainPart,
+                'mail.queue.routeType': isLegacyReplyToRoute ? 'reply-to' : 'domain',
+                ...(isLegacyReplyToRoute ? { 'mail.queue.environmentId': groupId } : {}),
               });
             } catch {
               // ignore — instrumentation must never break the pipeline

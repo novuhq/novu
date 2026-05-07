@@ -68,10 +68,28 @@ describe('Inbound Mail New Relic instrumentation', () => {
     expect(segmentNames).to.include('inbound-mail/post-queue');
     expect(segmentNames).to.include('inbound-mail/unlink-file');
 
-    const attributesCall = addCustomAttributesStub
-      .getCalls()
-      .find((call) => call.args[0] && (call.args[0] as Record<string, unknown>)['mail.from'] === 'tracer@example.com');
-    expect(attributesCall, 'expected mail.from attribute to be attached').to.exist;
+    const allAttributeKeys = new Set<string>();
+    for (const call of addCustomAttributesStub.getCalls()) {
+      const payload = call.args[0] as Record<string, unknown> | undefined;
+      if (!payload) continue;
+      for (const key of Object.keys(payload)) {
+        allAttributeKeys.add(key);
+      }
+    }
+
+    expect(allAttributeKeys, 'expected non-PII connection attribute to be attached').to.include('mail.connectionId');
+    expect(allAttributeKeys, 'expected envelope recipient count attribute to be attached').to.include(
+      'mail.envelopeRecipientCount'
+    );
+    expect(allAttributeKeys, 'expected DKIM result attribute to be attached').to.include('mail.dkim');
+    expect(allAttributeKeys, 'expected SPF result attribute to be attached').to.include('mail.spf');
+    expect(allAttributeKeys, 'expected spam score attribute to be attached').to.include('mail.spamScore');
+    expect(allAttributeKeys, 'expected queue route type attribute to be attached').to.include('mail.queue.routeType');
+
+    const piiKeys = ['mail.from', 'mail.to', 'mail.remoteAddress', 'mail.clientHostname', 'mail.messageId'];
+    for (const piiKey of piiKeys) {
+      expect(allAttributeKeys, `did not expect PII attribute ${piiKey} to be attached`).to.not.include(piiKey);
+    }
   });
 });
 
