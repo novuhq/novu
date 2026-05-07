@@ -22,6 +22,7 @@ export enum ObservabilityBackgroundTransactionEnum {
   WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
   CRON_JOB_QUEUE = 'cron-job-queue',
   CLICKHOUSE_BATCH_FLUSH = 'clickhouse-batch-flush',
+  INBOUND_MAIL_PROCESSING = 'inbound-mail-processing',
 }
 
 export enum JobCronNameEnum {
