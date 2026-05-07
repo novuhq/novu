@@ -27,10 +27,13 @@ import {
   StepTypeEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
+import { subDays } from 'date-fns';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
 import { GetActivityCommand } from './get-activity.command';
+
+const TRACE_AFTER_BUFFER_DAYS = 1;
 
 const workflowRunSelectColumns = [
   'workflow_run_id',
@@ -108,11 +111,14 @@ export class GetActivity {
       }),
     ]);
 
-    this.logger.debug({
-      tracesEnabled,
-      stepRunsEnabled,
-      workflowRunsEnabled,
-    }, 'feature flags');
+    this.logger.debug(
+      {
+        tracesEnabled,
+        stepRunsEnabled,
+        workflowRunsEnabled,
+      },
+      'feature flags'
+    );
 
     let feedItem: NotificationFeedItemEntity | null = null;
 
@@ -163,21 +169,32 @@ export class GetActivity {
 
   private async getExecutionDetailsByEntityId(
     entityIds: string[],
-    command: GetActivityCommand
+    command: GetActivityCommand,
+    /**
+     * Lower bound for the trace `created_at` scan. Should be the parent notification's
+     * creation time — traces (e.g. message_seen, delivery callbacks) can arrive long
+     * after, but never before, the workflow run that produced them. Passing this lets
+     * ClickHouse prune partitions and skip granules on the `toDate(created_at)` sort key.
+     */
+    notificationCreatedAt?: Date
   ): Promise<Map<string, ExecutionDetailFeedItem[]>> {
     if (entityIds.length === 0) {
       return new Map();
     }
 
-    const traceQuery = new QueryBuilder<Trace>({
+    const traceQueryBuilder = new QueryBuilder<Trace>({
       environmentId: command.environmentId,
     })
       .whereIn('entity_id', entityIds)
       .whereEquals('entity_type', 'step_run')
-      .build();
+      .whereEquals('organization_id', command.organizationId);
+
+    if (notificationCreatedAt) {
+      traceQueryBuilder.whereGreaterThanOrEqual('created_at', subDays(notificationCreatedAt, TRACE_AFTER_BUFFER_DAYS));
+    }
 
     const traceResult = await this.traceLogRepository.find({
-      where: traceQuery,
+      where: traceQueryBuilder.build(),
       orderBy: 'created_at',
       orderDirection: 'ASC',
       select: traceSelectColumns,
@@ -240,7 +257,11 @@ export class GetActivity {
     }
 
     const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
-    const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
+    const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(
+      stepRunIds,
+      command,
+      feedItem.createdAt ? new Date(feedItem.createdAt) : undefined
+    );
 
     return stepRunsResult.data.map((stepRun) => mapStepRunToJob(stepRun, executionDetailsByStepRunId));
   }
@@ -384,7 +405,11 @@ export class GetActivity {
         return feedItem;
       }
 
-      const executionDetailsByJobId = await this.getExecutionDetailsByEntityId(jobIds, command);
+      const executionDetailsByJobId = await this.getExecutionDetailsByEntityId(
+        jobIds,
+        command,
+        feedItem.createdAt ? new Date(feedItem.createdAt) : undefined
+      );
 
       feedItem.jobs = feedItem.jobs.map((job) => {
         const executionDetails = executionDetailsByJobId.get(job._id) || [];
