@@ -41,10 +41,7 @@ export function WebhooksPage() {
   const location = useLocation();
   const { environmentSlug } = useParams<{ environmentSlug: string }>();
 
-  const isTierEligibleForWebhooks = getFeatureForTierAsBoolean(
-    FeatureNameEnum.WEBHOOKS,
-    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-  );
+  const isTierEligibleForWebhooks = true;
 
   const isLoadingEligibility = isSubscriptionLoading;
 

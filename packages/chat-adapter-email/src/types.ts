@@ -11,6 +11,18 @@ export interface NovuEmailAdapterConfig {
 
 export type EmailAlternative = IEmailAlternative;
 
+export interface SendEmailAttachment {
+  /** Original filename of the attachment. */
+  filename: string;
+  /** MIME content type (e.g. "application/pdf"). */
+  contentType?: string;
+  /** Binary content of the attachment. */
+  data: Buffer;
+  /** Content-ID for inline (embedded) attachments. */
+  cid?: string;
+  disposition?: 'attachment' | 'inline';
+}
+
 export interface SendEmailParams {
   from: string;
   to: string;
@@ -18,6 +30,7 @@ export interface SendEmailParams {
   html: string;
   text?: string;
   alternatives?: EmailAlternative[];
+  attachments?: SendEmailAttachment[];
   inReplyTo?: string;
   references?: string;
   messageId?: string;

@@ -375,40 +375,36 @@ export class BridgeExecutorService {
       return richContent;
     }
 
-    const mapped = await mapWithConcurrency(
-      rawAttachments,
-      ATTACHMENT_SIGNING_CONCURRENCY,
-      async (item) => {
-        if (!item || typeof item !== 'object') {
-          this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment is malformed; omitting');
-
-          return null;
-        }
-
-        const att = item as Record<string, unknown>;
-        const storageKey = att.storageKey;
-
-        if (typeof storageKey === 'string' && storageKey.length > 0) {
-          const url = await this.signAttachmentForHistory(storageKey, activity);
-
-          if (!url) {
-            return null;
-          }
-
-          return {
-            type: att.type,
-            url,
-            name: att.name,
-            mimeType: att.mimeType,
-            size: att.size,
-          };
-        }
-
-        this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment missing storageKey; omitting');
+    const mapped = await mapWithConcurrency(rawAttachments, ATTACHMENT_SIGNING_CONCURRENCY, async (item) => {
+      if (!item || typeof item !== 'object') {
+        this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment is malformed; omitting');
 
         return null;
       }
-    );
+
+      const att = item as Record<string, unknown>;
+      const storageKey = att.storageKey;
+
+      if (typeof storageKey === 'string' && storageKey.length > 0) {
+        const url = await this.signAttachmentForHistory(storageKey, activity);
+
+        if (!url) {
+          return null;
+        }
+
+        return {
+          type: att.type,
+          url,
+          name: att.name,
+          mimeType: att.mimeType,
+          size: att.size,
+        };
+      }
+
+      this.logger.warn({ activityId: activity._id?.toString() }, 'History attachment missing storageKey; omitting');
+
+      return null;
+    });
 
     const attachments = mapped.flatMap((entry) => (entry ? [entry] : []));
 
@@ -457,25 +453,21 @@ export class BridgeExecutorService {
     storedAttachments: StoredAttachment[],
     signingContext: AttachmentSigningContext
   ) {
-    const mapped = await mapWithConcurrency(
-      storedAttachments,
-      ATTACHMENT_SIGNING_CONCURRENCY,
-      async (attachment) => {
-        const url = await this.signStoredAttachmentForBridge(attachment.storageKey, signingContext);
+    const mapped = await mapWithConcurrency(storedAttachments, ATTACHMENT_SIGNING_CONCURRENCY, async (attachment) => {
+      const url = await this.signStoredAttachmentForBridge(attachment.storageKey, signingContext);
 
-        if (!url) {
-          return null;
-        }
-
-        return {
-          type: attachment.type,
-          url,
-          name: attachment.name,
-          mimeType: attachment.mimeType,
-          size: attachment.size,
-        };
+      if (!url) {
+        return null;
       }
-    );
+
+      return {
+        type: attachment.type,
+        url,
+        name: attachment.name,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+      };
+    });
 
     return mapped.flatMap((entry) => (entry ? [entry] : []));
   }

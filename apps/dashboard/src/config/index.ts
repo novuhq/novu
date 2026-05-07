@@ -42,6 +42,9 @@ export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 
 export const IS_SELF_HOSTED = (window._env_?.VITE_SELF_HOSTED || import.meta.env.VITE_SELF_HOSTED) === 'true';
 
+export const ALLOW_AGENT_EMAIL_TIER_BYPASS =
+  (window._env_?.VITE_ALLOW_AGENT_EMAIL_TIER_BYPASS || import.meta.env.VITE_ALLOW_AGENT_EMAIL_TIER_BYPASS) === 'true';
+
 export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.env.VITE_NOVU_ENTERPRISE) === 'true';
 
 export const IS_AI_FEATURES_ENABLED = !(IS_SELF_HOSTED && IS_ENTERPRISE);

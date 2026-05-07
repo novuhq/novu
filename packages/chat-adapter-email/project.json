@@ -1,0 +1,21 @@
+{
+  "name": "@novu/chat-adapter-email",
+  "sourceRoot": "packages/chat-adapter-email/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/chat-adapter-email run build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/chat-adapter-email"
+      }
+    }
+  },
+  "tags": ["type:package"]
+}

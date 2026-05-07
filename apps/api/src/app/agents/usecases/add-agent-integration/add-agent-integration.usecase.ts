@@ -17,7 +17,13 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, EmailProviderIdEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  EmailProviderIdEnum,
+  EnvironmentTypeEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+} from '@novu/shared';
 
 import { trackAgentIntegrationConnected } from '../../agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../dtos';
@@ -110,11 +116,11 @@ export class AddAgentIntegration {
       throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
     }
 
-    if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
-      await this.enforceEmailTier(command.organizationId);
-      await this.enforceSingletonEmail(agentId, command);
-      await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
-    }
+    // if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+    //   // await this.enforceEmailTier(command.organizationId);
+    //   await this.enforceSingletonEmail(agentId, command);
+    //   await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
+    // }
 
     return this.createLink(agentId, integration, command);
   }

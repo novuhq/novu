@@ -1,10 +1,5 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-  AgentIntegrationRepository,
-  DomainEntity,
-  DomainRouteEntity,
-  IntegrationRepository,
-} from '@novu/dal';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -14,12 +9,11 @@ import {
 } from '@novu/shared';
 import { IFrom, IHeaders, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
-import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
+import { PinoLogger } from '../../logging';
+import { HttpClientService } from '../../services/http-client/http-client.service';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
-import { HttpClientService } from '../../services/http-client/http-client.service';
-
-const LOG_CONTEXT = 'InboundDomainRouteDelivery';
+import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 
 export type RoutableDomain = Pick<
   DomainEntity,
@@ -73,8 +67,11 @@ export class InboundDomainRouteDelivery {
     private readonly sendWebhookMessage: SendWebhookMessage,
     private readonly httpClientService: HttpClientService,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
-  ) {}
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   buildDomainRouteWebhookPayload(
     domain: RoutableDomain,
@@ -137,6 +134,8 @@ export class InboundDomainRouteDelivery {
     mail: InboundDomainRouteMailInput;
     toAddress: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
+    this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
+
     const started = Date.now();
     const agentId = params.route.destination;
 
@@ -168,10 +167,9 @@ export class InboundDomainRouteDelivery {
       timeout: 30_000,
     });
 
-    Logger.log(
-      { toAddress: params.toAddress, agentId, integrationIdentifier },
-      'Forwarded inbound email to agent webhook',
-      LOG_CONTEXT
+    this.logger.info(
+      { toAddress: params.toAddress, agentId, integrationIdentifier, url },
+      'Forwarded inbound email to agent webhook'
     );
 
     return {
@@ -188,6 +186,7 @@ export class InboundDomainRouteDelivery {
   private buildAgentEmailWebhookPayload(mail: InboundDomainRouteMailInput): EmailWebhookPayload {
     const from = mail.from[0];
     const refs = normalizeReferences(mail.references);
+    const attachments = this.mapAttachmentsForWebhook(mail.attachments);
 
     return {
       messageId: mail.messageId,
@@ -201,21 +200,130 @@ export class InboundDomainRouteDelivery {
       subject: mail.subject,
       text: mail.text || undefined,
       html: mail.html || undefined,
-      attachments: mail.attachments?.map((a) => {
-        const att = a as { filename: string; contentType: string; url?: string };
-
-        return {
-          filename: att.filename,
-          contentType: att.contentType,
-          url: att.url,
-        };
-      }),
+      attachments,
       date: (() => {
         const d = new Date(mail.date as unknown as string);
 
         return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
       })(),
     };
+  }
+
+  /**
+   * Reconstruct a Buffer from either a real Buffer instance or the
+   * `{ type: 'Buffer', data: number[] }` shape that BullMQ produces when it
+   * round-trips a Buffer through JSON serialization. Returns null when neither
+   * shape is present.
+   */
+  private coerceToBuffer(value: unknown): Buffer | null {
+    if (Buffer.isBuffer(value)) {
+      return value;
+    }
+
+    if (
+      value !== null &&
+      typeof value === 'object' &&
+      (value as { type?: unknown }).type === 'Buffer' &&
+      Array.isArray((value as { data?: unknown }).data)
+    ) {
+      return Buffer.from((value as { data: number[] }).data);
+    }
+
+    return null;
+  }
+
+  /**
+   * Convert raw mailparser attachments to the NovuEmailAttachment shape.
+   *
+   * Mailparser 0.6 stores parsed bytes in `attachment.content` (a Buffer).
+   * BullMQ JSON-serializes the inbound parse job, so on the worker consumer
+   * side the field arrives as `{ type: 'Buffer', data: number[] }` rather than
+   * a real Buffer instance. coerceToBuffer handles both shapes.
+   *
+   * We base64-encode inline bytes up to per-attachment (5 MB) and aggregate
+   * (5 MB) caps to stay under the /v1/agents 8 MB body-parser limit. Attachments
+   * that exceed a cap are included with metadata only and `truncated: true` so
+   * downstream consumers can still render a placeholder.
+   */
+  private mapAttachmentsForWebhook(
+    rawAttachments: unknown[] | undefined
+  ): import('@novu/shared').NovuEmailAttachment[] | undefined {
+    if (!rawAttachments?.length) {
+      return undefined;
+    }
+
+    const PER_ATTACHMENT_CAP = 5 * 1024 * 1024;
+    const AGGREGATE_CAP = 5 * 1024 * 1024;
+
+    let aggregateBytes = 0;
+    let inlinedCount = 0;
+    let truncatedCount = 0;
+
+    const result = rawAttachments.map((a) => {
+      const att = a as {
+        fileName?: string;
+        filename?: string;
+        generatedFileName?: string;
+        contentType?: string;
+        length?: number;
+        content?: unknown;
+        url?: string;
+      };
+
+      const filename = att.fileName ?? att.generatedFileName ?? att.filename ?? 'attachment';
+      const contentType = att.contentType ?? 'application/octet-stream';
+      const buffer = this.coerceToBuffer(att.content);
+
+      if (!buffer) {
+        truncatedCount += 1;
+
+        return {
+          filename,
+          contentType,
+          ...(typeof att.length === 'number' ? { size: att.length } : {}),
+          truncated: true as const,
+        };
+      }
+
+      const size = buffer.length;
+
+      if (size > PER_ATTACHMENT_CAP) {
+        truncatedCount += 1;
+        this.logger.warn(
+          { filename, size, cap: PER_ATTACHMENT_CAP },
+          'Inbound attachment exceeds per-attachment cap; omitting bytes from webhook payload'
+        );
+
+        return { filename, contentType, size, truncated: true as const };
+      }
+
+      if (aggregateBytes + size > AGGREGATE_CAP) {
+        truncatedCount += 1;
+        this.logger.warn(
+          { filename, size, aggregateBytes, cap: AGGREGATE_CAP },
+          'Inbound attachment would exceed aggregate cap; omitting bytes from webhook payload'
+        );
+
+        return { filename, contentType, size, truncated: true as const };
+      }
+
+      aggregateBytes += size;
+      inlinedCount += 1;
+
+      return {
+        filename,
+        contentType,
+        size,
+        contentBase64: buffer.toString('base64'),
+      };
+    });
+
+    this.logger.info(
+      { count: rawAttachments.length, inlinedCount, truncatedCount, aggregateBytes },
+      'Mapped inbound attachments for agent webhook'
+    );
+
+    return result;
   }
 
   private async resolveIntegration(
@@ -262,7 +370,7 @@ export class InboundDomainRouteDelivery {
   }
 
   private throwError(error: string): never {
-    Logger.error(error, LOG_CONTEXT);
+    this.logger.error({ err: error }, 'Error delivering inbound email to agent');
     throw new BadRequestException(error);
   }
 }
