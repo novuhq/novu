@@ -122,14 +122,14 @@ async function waitForPort(host: string, port: number, timeoutMs: number): Promi
   throw new Error(`SMTP server did not start listening on ${host}:${port} within ${timeoutMs}ms`);
 }
 
-type SmtpMessage = {
+interface SmtpMessage {
   host: string;
   port: number;
   from: string;
   to: string;
   subject: string;
   body: string;
-};
+}
 
 /**
  * Minimal SMTP client used to send a single message to the mailin SMTPServer
