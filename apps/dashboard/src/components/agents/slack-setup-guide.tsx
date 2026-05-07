@@ -115,6 +115,8 @@ settings:
       - member_joined_channel
       - assistant_thread_started
       - assistant_thread_context_changed
+      - reaction_added
+      - reaction_removed
   interactivity:
     is_enabled: true
     request_url: "${webhookHandlerUrlQuoted}"
