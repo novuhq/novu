@@ -604,9 +604,8 @@ clone_monorepo () {
         else
             already_installed_message "Novu monorepo"
         fi
+        export NOVU_REPO_PATH="$NOVU_FOLDER"
     fi
-
-    export NOVU_REPO_PATH="$NOVU_FOLDER"
 }
 
 install_novu_tools () {
