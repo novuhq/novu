@@ -29,11 +29,12 @@ app/
 
 ## Agent API
 
-Your agent handler receives a context object with:
+Your `onMessage` handler receives `{ message, ctx }`:
+
+- **`message`** — The inbound message (text, author, timestamp)
 
 | Method / Property | Description |
 |---|---|
-| `ctx.message` | The inbound message (text, author, timestamp) |
 | `ctx.conversation` | Current conversation state and metadata |
 | `ctx.history` | Recent conversation history |
 | `ctx.subscriber` | Resolved subscriber info |
@@ -48,13 +49,13 @@ Your agent handler receives a context object with:
 Replace the demo handler in `app/novu/agents/support-agent.tsx` with your LLM call:
 
 ```typescript
-onMessage: async (ctx) => {
+onMessage: async ({ message, ctx }) => {
   const response = await openai.chat.completions.create({
     model: 'gpt-4',
     messages: [
       { role: 'system', content: 'You are a helpful support agent.' },
       ...ctx.history.map((h) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: ctx.message?.text ?? '' },
+      { role: 'user', content: message.text },
     ],
   });
 

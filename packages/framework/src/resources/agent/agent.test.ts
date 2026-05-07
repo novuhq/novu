@@ -371,10 +371,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
   it('should provide read-only context properties from bridge payload', async () => {
     let capturedCtx: any;
+    let capturedMessage: any;
 
     const testBot = agent('test-bot', {
-      onMessage: async ({ ctx }) => {
+      onMessage: async ({ message, ctx }) => {
         capturedCtx = ctx;
+        capturedMessage = message;
         await ctx.reply('ok');
       },
     });
@@ -401,7 +403,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(capturedCtx).toBeDefined());
 
     expect(capturedCtx.event).toBe('onMessage');
-    expect(capturedCtx.message?.text).toBe('Hello bot!');
+    expect(capturedMessage.text).toBe('Hello bot!');
     expect(capturedCtx.conversation.identifier).toBe('conv-456');
     expect(capturedCtx.subscriber?.subscriberId).toBe('sub-001');
     expect(capturedCtx.platform).toBe('slack');
@@ -1033,7 +1035,6 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(capturedCtx.event).toBe('onAction');
     expect(capturedCtx.action).toEqual({ actionId: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' });
-    expect(capturedCtx.message).toBeNull();
 
     const replyCall = fetchMock.mock.calls.find(
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'

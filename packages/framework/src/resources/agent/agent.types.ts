@@ -273,8 +273,6 @@ interface AgentContextBase {
 /** Context passed to the `onMessage` handler. */
 export interface AgentMessageContext extends AgentContextBase {
   readonly event: 'onMessage';
-  /** The incoming message that triggered this handler. */
-  readonly message: AgentMessage;
 }
 
 /** Context passed to the `onAction` handler. */
@@ -302,8 +300,8 @@ export type AgentContext = AgentMessageContext | AgentActionContext | AgentReact
 export interface AgentHandlers {
   /**
    * Fires on every text message the user sends.
-   * `message` is the incoming message. `ctx` provides conversation history, subscriber,
-   * metadata, and reply/trigger methods.
+   * `payload.message` is the incoming message. `payload.ctx` provides conversation history,
+   * subscriber, metadata, and reply/trigger methods.
    * Return a string or JSX card to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
