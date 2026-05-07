@@ -62,6 +62,9 @@ export type DomainRouteWebhookPayload = {
   };
 };
 
+/** Maximum bytes accepted per attachment — shared by coerceToBuffer and mapAttachmentsForWebhook. */
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
+
 @Injectable()
 export class InboundDomainRouteDelivery {
   constructor(
@@ -206,13 +209,19 @@ export class InboundDomainRouteDelivery {
   }
 
   /**
-   * Reconstruct a Buffer from either a real Buffer instance or the
-   * `{ type: 'Buffer', data: number[] }` shape that BullMQ produces when it
-   * round-trips a Buffer through JSON serialization. Returns null when neither
-   * shape is present.
+   * Handles both a real Buffer and the `{ type: 'Buffer', data: number[] }` shape
+   * BullMQ produces after JSON round-tripping. The cap is checked before Buffer.from()
+   * to avoid the transient heap spike (a number[] of N elements occupies ~8×N bytes
+   * before compaction).
    */
   private coerceToBuffer(value: unknown): Buffer | null {
     if (Buffer.isBuffer(value)) {
+      if (value.length > MAX_ATTACHMENT_BYTES) {
+        this.logger.warn({ size: value.length, cap: MAX_ATTACHMENT_BYTES }, 'Attachment exceeds cap; skipping');
+
+        return null;
+      }
+
       return value;
     }
 
@@ -222,32 +231,35 @@ export class InboundDomainRouteDelivery {
       (value as { type?: unknown }).type === 'Buffer' &&
       Array.isArray((value as { data?: unknown }).data)
     ) {
-      return Buffer.from((value as { data: number[] }).data);
+      const data = (value as { data: unknown[] }).data;
+
+      if (data.length > MAX_ATTACHMENT_BYTES) {
+        this.logger.warn(
+          { elementCount: data.length, cap: MAX_ATTACHMENT_BYTES },
+          'Serialized attachment exceeds cap before Buffer allocation; skipping'
+        );
+
+        return null;
+      }
+
+      return Buffer.from(data as number[]);
     }
 
     return null;
   }
 
   /**
-   * Convert raw mailparser attachments to the NovuEmailAttachment shape.
-   *
-   * Mailparser 0.6 stores parsed bytes in `attachment.content` (a Buffer).
-   * BullMQ JSON-serializes the inbound parse job, so on the worker consumer
-   * side the field arrives as `{ type: 'Buffer', data: number[] }` rather than
-   * a real Buffer instance. coerceToBuffer handles both shapes.
-   *
-   * We base64-encode inline bytes up to per-attachment (5 MB) and aggregate
-   * (5 MB) caps to stay under the /v1/agents 8 MB body-parser limit. Attachments
-   * that exceed a cap are included with metadata only and `truncated: true` so
-   * downstream consumers can still render a placeholder.
+   * Maps raw mailparser attachments to NovuEmailAttachment. Bytes are base64-encoded
+   * up to per-attachment and aggregate caps (5 MB each); oversized attachments are
+   * included as metadata-only with `truncated: true`.
    */
   private mapAttachmentsForWebhook(rawAttachments: unknown[] | undefined): NovuEmailAttachment[] | undefined {
     if (!rawAttachments?.length) {
       return undefined;
     }
 
-    const PER_ATTACHMENT_CAP = 5 * 1024 * 1024;
-    const AGGREGATE_CAP = 5 * 1024 * 1024;
+    const PER_ATTACHMENT_CAP = MAX_ATTACHMENT_BYTES;
+    const AGGREGATE_CAP = MAX_ATTACHMENT_BYTES;
 
     let aggregateBytes = 0;
     let inlinedCount = 0;
