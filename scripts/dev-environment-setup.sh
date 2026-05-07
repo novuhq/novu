@@ -565,8 +565,8 @@ start_database () {
         brew ls --versions mongodb &>/dev/null && { echo "Warning: MongoDB is already installed via brew. Please uninstall it first."; already_installed=1; }
         brew ls --versions redis    &>/dev/null && { echo "Warning: Redis is already installed via brew. Please uninstall it first.";    already_installed=1; }
     else
-        lsof -Pi :27017 -sTCP:LISTEN -t &>/dev/null && { echo "Warning: MongoDB is running on port 27017. Please stop it first."; already_installed=1; }
-        lsof -Pi :6379  -sTCP:LISTEN -t &>/dev/null && { echo "Warning: Redis is running on port 6379. Please stop it first.";    already_installed=1; }
+        ss -tlnp | grep -q ':27017' && { echo "Warning: MongoDB is running on port 27017. Please stop it first."; already_installed=1; }
+        ss -tlnp | grep -q ':6379'  && { echo "Warning: Redis is running on port 6379. Please stop it first."; already_installed=1; }
     fi
 
     if [[ $already_installed -ne 1 ]]; then
