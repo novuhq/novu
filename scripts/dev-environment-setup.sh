@@ -1,14 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 
-exec </dev/tty
+[ -t 0 ] || exec </dev/tty 2>/dev/null || true
 
-APPLE_CHIP='Apple'
-#INTEL_CHIP='Intel'
 NEGATIVE_RESPONSE="No"
 POSITIVE_RESPONSE="Yes"
 
-#ZSHRC="$HOME/.zshrc"
+# ─── macOS-only globals ────────────────────────────────────────────────────────
+
+APPLE_CHIP='Apple'
 ZPROFILE="$HOME/.zprofile"
+
+# ─── helpers ──────────────────────────────────────────────────
 
 error_message () {
     echo " "
@@ -53,32 +55,51 @@ updating_dependency () {
 }
 
 execute_command_without_error_print () {
-    $1 2> /dev/null
+    eval "$1" 2>/dev/null
 }
+
+# ─── OS / distro detection ────────────────────────────────────────────────────
+
+detect_os() {
+    OS_TYPE="$(uname -s)"
+
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        DISTRO_FAMILY="macos"
+        SHELL_PROFILE="$ZPROFILE"
+        return
+    fi
+
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID_LIKE $ID" in
+            *debian*|*ubuntu*)  DISTRO_FAMILY="debian" ;;
+            *rhel*|*fedora*|*centos*|*amzn*)  DISTRO_FAMILY="rhel" ;;
+            *)                  DISTRO_FAMILY="unknown" ;;
+        esac
+    else
+        DISTRO_FAMILY="unknown"
+    fi
+
+    SHELL_PROFILE="$HOME/.bashrc"
+}
+
+# ─── macOS-specific helpers ───────────────────────────────────────────────────
 
 get_cpu () {
-    SYSTEM_CPU_BRAND='machdep.cpu.brand.string'
-    sysctl -a | grep $SYSTEM_CPU_BRAND | cut -f2 -d":"
-}
-
-refresh_shell() {
-    # Refresh shell to apply changes in current session
-    source "$ZPROFILE"
-    exec $SHELL
+    sysctl -a | grep machdep.cpu.brand.string | cut -f2 -d":"
 }
 
 get_user_groups() {
-    # Get user groups
-    read -r -a USER_GROUP <<< "$(groups $USER)"
+    read -r -a USER_GROUP <<< "$(groups "$USER")"
 }
 
 set_user_dir_ownership() {
-    USER_GROUP="$(get_user_groups)"
+    get_user_groups
     sudo chown -R "$USER":"${USER_GROUP[0]}" "$1"
 }
 
 set_user_ownership() {
-    USER_GROUP="$(get_user_groups)"
+    get_user_groups
     sudo chown "$USER":"${USER_GROUP[0]}" "$1"
 }
 
@@ -88,132 +109,127 @@ set_user_permissions() {
 }
 
 install_apple_chip_dependencies () {
-   CPU=$(get_cpu)
-
-   echo "Your CPU is: $CPU"
-
-   if [[ "$CPU" == *"$APPLE_CHIP"* ]]; then
-       ROSETTA_BOM_FILE="/Library/Apple/System/Library/Receipts/com.apple.pkg.RosettaUpdateAuto.bom"
-       if [[ ! -f $ROSETTA_BOM_FILE ]]; then
-           installing_dependency "Rosetta for Apple CPU"
-           softwareupdate --install-rosetta
-           success_message "Rosetta"
-       else
-           already_installed_message "Rosetta"
-       fi
-   fi
+    CPU=$(get_cpu)
+    echo "Your CPU is: $CPU"
+    if [[ "$CPU" == *"$APPLE_CHIP"* ]]; then
+        ROSETTA_BOM_FILE="/Library/Apple/System/Library/Receipts/com.apple.pkg.RosettaUpdateAuto.bom"
+        if [[ ! -f $ROSETTA_BOM_FILE ]]; then
+            installing_dependency "Rosetta for Apple CPU"
+            softwareupdate --install-rosetta
+            success_message "Rosetta"
+        else
+            already_installed_message "Rosetta"
+        fi
+    fi
 }
 
 install_xcode () {
-  echo ""
-  echo "❓ Do you want to install Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
-  read -p " > " RESPONSE
-  echo ""
-
-  if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
-	  installing_dependency "Xcode"
-	  xcode-select --install &
-	  PID=$!
-	  wait $PID
-	  sudo xcode-select --switch /Library/Developer/CommandLineTools
-	  sudo xcodebuild -license accept
-	  xcodebuild -runFirstLaunch
-	  success_message "Xcode"
-  fi
-
-  if [[ "$RESPONSE" == "$NEGATIVE_RESPONSE" ]]; then
-	  echo ""
-	  echo "❓ Do you want to update Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
-    read -p " > " RESPONSE
-	  echo ""
+    echo ""
+    echo "❓ Do you want to install Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+    read -r -p " > " RESPONSE
+    echo ""
 
     if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
-	    updating_dependency "Xcode"
-      softwareupdate --install --verbose Xcode &
-	    PID=$!
-	    wait $PID
-	    success_message "Xcode"
+        installing_dependency "Xcode"
+        xcode-select --install &
+        PID=$!
+        wait $PID
+        sudo xcode-select --switch /Library/Developer/CommandLineTools
+        sudo xcodebuild -license accept
+        xcodebuild -runFirstLaunch
+        success_message "Xcode"
+    elif [[ "$RESPONSE" == "$NEGATIVE_RESPONSE" ]]; then
+        echo ""
+        echo "❓ Do you want to update Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+        read -r -p " > " RESPONSE
+        echo ""
+        if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
+            updating_dependency "Xcode"
+            softwareupdate --install --verbose Xcode &
+            PID=$!
+            wait $PID
+            success_message "Xcode"
+        fi
     fi
-  fi
 }
 
 set_macosx_generics () {
-    echo "Set MacOSx system configurations"
-
+    echo "Set macOS system configurations"
     defaults write com.apple.finder AppleShowAllFiles YES
 }
 
-install_macosx_dependencies () {
-    install_xcode
-    install_apple_chip_dependencies
-    set_macosx_generics
+make_zsh_default_shell () {
+    if [[ "$SHELL" != "/bin/zsh" ]]; then
+        echo "Let's make ZSH the default shell"
+        chsh -s "$(which zsh)"
+        echo "✅ ZSH made as default shell"
+    fi
 }
 
-install_os_dependencies () {
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        installing_dependency "Linux dependencies"
-        echo "//TODO"
-	  install_novu_tools
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        installing_dependency "MacOsx dependencies"
-        install_macosx_dependencies
-        install_novu_tools
-    else
-        echo "OS not supported"
+install_ohmyzsh () {
+    echo ""
+    echo "❓ Do you want to install Oh My Zsh! ? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+    read -r -p " > " RESPONSE
+    echo ""
+
+    if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
+        OHMYZSH_DIR="$HOME/.oh-my-zsh"
+        if [[ ! -d $OHMYZSH_DIR ]]; then
+            installing_dependency "Oh My Zsh!"
+            curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh | $SHELL
+            if [[ ! -d $OHMYZSH_DIR ]]; then
+                error_message "Oh My Zsh!"
+            else
+                set_user_dir_ownership "$OHMYZSH_DIR"
+                success_message "Oh My Zsh!"
+            fi
+        else
+            already_installed_message "Oh My Zsh!"
+        fi
     fi
 }
 
 check_homebrew () {
     TEST_BREW_CMD=$(execute_command_without_error_print "brew --version")
-
     if [[ -z "$TEST_BREW_CMD" ]] || [[ "$TEST_BREW_CMD" == "zsh: command not found: brew" ]]; then
         error_message "Homebrew"
         echo "⛔️ Homebrew is a hard dependency for this tool"
     fi
 }
 
-
 install_homebrew () {
     TEST_BREW_CMD=$(execute_command_without_error_print "brew --version")
-
     if [[ -z "$TEST_BREW_CMD" ]] || [[ "$TEST_BREW_CMD" == "zsh: command not found: brew" ]]; then
         installing_dependency "Homebrew"
-	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 
-	APPLE_CHIP_BREW_BIN="/opt/homebrew/bin"
+        APPLE_CHIP_BREW_BIN="/opt/homebrew/bin"
         BREW_BIN="/usr/local/bin"
         ENTRY="export PATH=$BREW_BIN:$APPLE_CHIP_BREW_BIN:\$PATH"
-	PARAM_TO_CMD="grep -R $ENTRY $ZPROFILE"
-
-	CMD=$(execute_command_without_error_print "$PARAM_TO_CMD")
+        PARAM_TO_CMD="grep -R $ENTRY $ZPROFILE"
+        CMD=$(execute_command_without_error_print "$PARAM_TO_CMD")
 
         if [[ -z $CMD ]]; then
-	    # Add the Brew paths to the shell profile
             echo "$ENTRY" | sudo tee -a "$ZPROFILE"
-
-            # As executing `tee` as sudo changes ownership and permissions we roll them back appropriately
-	    set_user_permissions "$ZPROFILE"
-	    source "$ZPROFILE"
+            set_user_permissions "$ZPROFILE"
+            source "$ZPROFILE"
         fi
 
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "brew --version")
         if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: brew" ]]; then
-	    error_message "Homebrew"
-	    exit 1
+            error_message "Homebrew"
+            exit 1
         else
             success_message "Homebrew"
         fi
     else
         already_installed_message "Homebrew"
     fi
-
 }
 
 install_homebrew_recipes () {
     SKIP="$(check_homebrew)"
-
     if [[ -z "$SKIP" ]]; then
-        # Update Homebrew recipes
         echo "Update and Upgrade Homebrew"
         brew update
         brew upgrade
@@ -223,98 +239,98 @@ install_homebrew_recipes () {
     fi
 }
 
-make_zsh_default_shell () {
-    if [[ ! "$SHELL" == "/bin/zsh" ]]; then
-        echo "Let's make ZSH the default shell"
-        chsh -s "$(which zsh)"
-        echo "✅ ZSH made as default shell"
+install_macosx_dependencies () {
+    install_xcode
+    install_apple_chip_dependencies
+    set_macosx_generics
+}
+
+# ─── Linux package manager helpers ───────────────────────────────────────────
+
+_pkg_updated=0
+linux_pkg_update () {
+    if [[ $_pkg_updated -eq 0 ]]; then
+        echo "Updating system package index…"
+        if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+            sudo apt-get update -y
+        elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+            sudo yum makecache -y 2>/dev/null || sudo dnf makecache -y
+        fi
+        _pkg_updated=1
     fi
 }
 
-# Depends on Git so depends on having Xcode installed
-install_ohmyzsh () {
-    echo ""
-    echo "❓ Do you want to install Oh My Zsh! ? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
-    read -p " > " RESPONSE
-    echo ""
+linux_pkg_install () {
+    linux_pkg_update
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        sudo apt-get install -y "$@"
+    elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        sudo yum install -y "$@" 2>/dev/null || sudo dnf install -y "$@"
+    else
+        echo "⚠️ Unknown distro family - cannot auto-install packages. Please install manually: $*"
+        return 1
+    fi
+}
 
-    if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
-        OHMYZSH_DIR="$HOME/.oh-my-zsh"
+check_git () {
+    TEST_GIT_CMD=$(execute_command_without_error_print "git --version")
+    if [[ -z "$TEST_GIT_CMD" ]] || [[ "$TEST_GIT_CMD" == *"Failed to locate 'git'"* ]] || [[ "$TEST_GIT_CMD" == *"command not found"* ]]; then
+        error_message "Git"
+        echo "⛔️ Git is a hard dependency to clone the monorepo"
+        exit 1
+    fi
+}
 
-        if [[ ! -d $OHMYZSH_DIR ]]; then
-            installing_dependency "Oh My Zsh!"
-            curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh | $SHELL
-            if [[ ! -d $OHMYZSH_DIR ]]; then
-                error_message "Oh My Zsh!"
-            else
-    	        set_user_dir_ownership "$OHMYZSH_DIR"
-                success_message "Oh My Zsh!"
-            fi
-         else
-             already_installed_message "Oh My Zsh!"
-         fi
+install_git_linux () {
+    if ! command -v git &>/dev/null; then
+        installing_dependency "Git"
+        linux_pkg_install git
+        if ! command -v git &>/dev/null; then
+            error_message "Git"
+            exit 1
+        fi
+        success_message "Git"
+    else
+        already_installed_message "Git"
     fi
 }
 
 check_nvm () {
-    TEST_NVM_CMD=$(execute_command_without_error_print "nvm --version")
+    NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 
-    if [[ -z "$TEST_NVM_CMD" ]] || [[ "$TEST_NVM_CMD" == "zsh: command not found: nvm" ]]; then
+    TEST_NVM_CMD=$(execute_command_without_error_print "nvm --version")
+    if [[ -z "$TEST_NVM_CMD" ]] || [[ "$TEST_NVM_CMD" == *"command not found"* ]]; then
         error_message "NVM"
         echo "⛔️ NVM is a hard dependency for this tool"
     fi
 }
 
-install_node () {
-    NODE_JS_VERSION="v22.22.1"
-    REQUIRED_NODE_MAJOR="22"
-
-    SKIP="$(check_nvm)"
-
-    if [[ -z "$SKIP" ]]; then
-        TEST_CMD=$(execute_command_without_error_print "node --version")
-        if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == "zsh: command not found: node" ]] || [[ "$TEST_CMD" != v${REQUIRED_NODE_MAJOR}.* ]]; then
-            installing_dependency "Node.js $NODE_JS_VERSION"
-
-            nvm install $NODE_JS_VERSION
-            nvm alias default $NODE_JS_VERSION
-	    TEST_NODE_CMD=$(execute_command_without_error_print "node --version")
-
-            if [[ -z "$TEST_NODE_CMD" ]] || [[ "$TEST_NODE_CMD" == "zsh: command not found: node" ]]; then
-                error_message "Node.js"
-	    else
-                success_message "Node.js $NODE_JS_VERSION"
-            fi
-         else
-            already_installed_message "Node.js $NODE_JS_VERSION"
-         fi
-    else
-        skip_message "Node.js $NODE_JS_VERSION"
-        echo "$SKIP"
-    fi
-}
-
-
-# NVM is a Node.js version manager
-# Make sure that you have installed ZSH previously, so NVM can automatically inject the executable to PATH in the .zshrc config file.
 install_nvm () {
-    NVM_DIR="$HOME/.nvm"
+    NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
     LATEST_NVM_VERSION="v0.39.2"
 
+    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+
     TEST_CMD=$(execute_command_without_error_print "nvm --version")
-    if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == "zsh: command not found: nvm" ]]; then
+    if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == *"command not found"* ]]; then
         installing_dependency "NVM"
         URL="https://raw.githubusercontent.com/nvm-sh/nvm/$LATEST_NVM_VERSION/install.sh"
         echo "Downloading NVM from $URL"
-	/bin/bash -c "$(curl -fsSL $URL)"
+        /bin/bash -c "$(curl -fsSL $URL)"
 
-	# Loads NVM
-	source "$NVM_DIR/nvm.sh"
-	#source $ZSHRC
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+
+        NVM_LOADER='export NVM_DIR="$HOME/.nvm"'$'\n''[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
+        if ! grep -q 'NVM_DIR' "$SHELL_PROFILE" 2>/dev/null; then
+            echo "" >> "$SHELL_PROFILE"
+            echo "$NVM_LOADER" >> "$SHELL_PROFILE"
+        fi
 
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "nvm --version")
-        if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: nvm" ]]; then
-	    error_message "NVM"
+        if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == *"command not found"* ]]; then
+            error_message "NVM"
         else
             success_message "NVM"
         fi
@@ -323,36 +339,105 @@ install_nvm () {
     fi
 }
 
-# PNPM is the package manager used in Novu's monorepo
-install_pnpm () {
-    PNPM_VERSION="8.9.0"
-    TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
-    if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == "zsh: command not found: pnpm" ]]; then
-         installing_dependency "PNPM $PNPM_VERSION"
-         npm install -g pnpm@$PNPM_VERSION
+install_node () {
+    NODE_JS_VERSION="v22.22.1"
+    REQUIRED_NODE_MAJOR="22"
 
-	 AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "pnpm --version")
-    	 if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: pnpm" ]]; then
-             error_message "PNPM"
-         else
-             success_message "PNPM $PNPM_VERSION"
-         fi
+    SKIP="$(check_nvm)"
+    if [[ -z "$SKIP" ]]; then
+        NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+        [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+
+        TEST_CMD=$(execute_command_without_error_print "node --version")
+        if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == *"command not found"* ]] || [[ "$TEST_CMD" != v${REQUIRED_NODE_MAJOR}.* ]]; then
+            installing_dependency "Node.js $NODE_JS_VERSION"
+            nvm install "$NODE_JS_VERSION"
+            nvm alias default "$NODE_JS_VERSION"
+
+            TEST_NODE_CMD=$(execute_command_without_error_print "node --version")
+            if [[ -z "$TEST_NODE_CMD" ]] || [[ "$TEST_NODE_CMD" == *"command not found"* ]]; then
+                error_message "Node.js"
+            else
+                success_message "Node.js $NODE_JS_VERSION"
+            fi
+        else
+            already_installed_message "Node.js $NODE_JS_VERSION"
+        fi
     else
-         already_installed_message "PNPM $PNPM_VERSION"
+        skip_message "Node.js $NODE_JS_VERSION"
+        echo "$SKIP"
     fi
 }
 
-install_docker () {
-    SKIP="$(check_homebrew)"
+install_pnpm () {
+    PNPM_VERSION="10.33.0"
+    TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
 
+    if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == *"command not found"* ]]; then
+        installing_dependency "PNPM $PNPM_VERSION"
+        npm install -g pnpm@"$PNPM_VERSION"
+
+        AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "pnpm --version")
+        if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == *"command not found"* ]]; then
+            error_message "PNPM"
+        else
+            success_message "PNPM $PNPM_VERSION"
+        fi
+    else
+        INSTALLED_VER="$TEST_PNPM_CMD"
+        if [[ "$INSTALLED_VER" != "$PNPM_VERSION" ]]; then
+            updating_dependency "PNPM (found $INSTALLED_VER → target $PNPM_VERSION)"
+            npm install -g pnpm@"$PNPM_VERSION"
+            success_message "PNPM $PNPM_VERSION"
+        else
+            already_installed_message "PNPM $PNPM_VERSION"
+        fi
+    fi
+}
+
+install_docker_linux () {
+    if command -v docker &>/dev/null; then
+        already_installed_message "Docker"
+        return
+    fi
+
+    installing_dependency "Docker"
+
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        curl -fsSL https://get.docker.com | sudo sh
+        sudo usermod -aG docker "$USER"
+        echo "Note: You may need to log out and back in for Docker group membership to take effect."
+
+    elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        sudo yum install -y yum-utils 2>/dev/null || sudo dnf install -y yum-utils
+        sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 2>/dev/null || \
+            sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || \
+            sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker "$USER"
+        echo "Note: You may need to log out and back in for Docker group membership to take effect."
+    else
+        echo "⚠️ Unsupported distro. Please install Docker manually: https://docs.docker.com/engine/install/"
+        return 1
+    fi
+
+    if ! command -v docker &>/dev/null; then
+        error_message "Docker"
+    else
+        success_message "Docker"
+    fi
+}
+
+install_docker_macos () {
+    SKIP="$(check_homebrew)"
     if [[ -z "$SKIP" ]]; then
         TEST_DOCKER_CMD=$(execute_command_without_error_print "docker --version")
-
         if [[ -z "$TEST_DOCKER_CMD" ]] || [[ "$TEST_DOCKER_CMD" == "zsh: command not found: docker" ]]; then
             installing_dependency "Docker"
-    	    brew install docker
-    	    AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "docker --version")
-    	    if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: docker" ]]; then
+            brew install --cask docker
+            AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "docker --version")
+            if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: docker" ]]; then
                 error_message "Docker"
             else
                 success_message "Docker"
@@ -366,7 +451,45 @@ install_docker () {
     fi
 }
 
-install_aws_cli () {
+install_docker () {
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        install_docker_macos
+    else
+        install_docker_linux
+    fi
+}
+
+install_aws_cli_linux () {
+    if command -v aws &>/dev/null; then
+        already_installed_message "AWS CLI"
+        return
+    fi
+
+    installing_dependency "AWS CLI"
+
+    ARCH="$(uname -m)"
+    TMP_DIR="$(mktemp -d)"
+    ZIP_FILE="$TMP_DIR/awscliv2.zip"
+
+    if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+        AWS_URL="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+    else
+        AWS_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+    fi
+
+    curl -fsSL "$AWS_URL" -o "$ZIP_FILE"
+    unzip -q "$ZIP_FILE" -d "$TMP_DIR"
+    sudo "$TMP_DIR/aws/install"
+    rm -rf "$TMP_DIR"
+
+    if ! command -v aws &>/dev/null; then
+        error_message "AWS CLI"
+    else
+        success_message "AWS CLI"
+    fi
+}
+
+install_aws_cli_macos () {
     FILE_DESTINATION="$HOME/AWSCLIV2.pkg"
     TEST_AWS_CMD=$(execute_command_without_error_print "aws --version")
 
@@ -376,7 +499,7 @@ install_aws_cli () {
         sudo installer -pkg "$FILE_DESTINATION" -target /
 
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "aws --version")
-    	if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: aws" ]]; then
+        if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: aws" ]]; then
             error_message "AWS CLI"
         else
             success_message "AWS CLI"
@@ -385,133 +508,147 @@ install_aws_cli () {
         already_installed_message "AWS CLI"
     fi
 
-    if [[ -f $FILE_DESTINATION ]]; then
-        rm "$FILE_DESTINATION"
+    [[ -f "$FILE_DESTINATION" ]] && rm "$FILE_DESTINATION"
+}
+
+install_aws_cli () {
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        install_aws_cli_macos
+    else
+        install_aws_cli_linux
     fi
 }
 
-start_database() {
-  # Check if brew is installed
-  command -v brew > /dev/null 2>&1
+# ─── Linux system prerequisites ──────────────────────────────────────────────
 
-  # Initialize flag
-  already_installed=0
+install_linux_base_deps () {
+    installing_dependency "Linux base dependencies (curl, unzip, git…)"
 
-  if [ $? -eq 0 ]; then
-
-
-      # Check if mongodb is installed
-      brew ls --versions mongodb > /dev/null
-      if [ $? -eq 0 ]; then
-        echo "Warning: MongoDB is already installed via brew. Please uninstall it first."
-        already_installed=1
-      fi
-
-      # Check if redis is installed
-      brew ls --versions redis > /dev/null
-      if [ $? -eq 0 ]; then
-        echo "Warning: Redis is already installed via brew. Please uninstall it first."
-        already_installed=1
-      fi
-  else
-      echo "brew is not installed, checking default ports for MongoDB and Redis"
-      # Check MongoDB (port 27017) and Redis (port 6379)
-      if lsof -Pi :27017 -sTCP:LISTEN -t >/dev/null ; then
-        echo "Warning: MongoDB is running on port 27017. Please stop it first."
-        already_installed=1
-      fi
-      if lsof -Pi :6379 -sTCP:LISTEN -t >/dev/null ; then
-        echo "Warning: Redis is running on port 6379. Please stop it first."
-        already_installed=1
-      fi
-  fi
-
-  # Only copy the example env file and start Docker Compose if both MongoDB and Redis are not already installed
-  if [ $already_installed -ne 1 ]; then
-      # Copy the example env file
-      cp ./docker/.env.example ./docker/local/development/.env
-
-      # Start Docker Compose detached
-      docker-compose -f ./docker/local/development/docker-compose.yml up -d
-
-      start_success_message "Docker Infrastructure"
-  else
-      echo "We recommend removing mongodb and redis databases from brew with 'brew remove <package_name>'."
-      echo "To manually start the containerized databases by going to /docker in the novu project"
-  fi
-}
-
-check_git () {
-    TEST_GIT_CMD=$(execute_command_without_error_print "git --version")
-
-    if [[ -z "$TEST_GIT_CMD" ]] || [[ "$TEST_GIT_CMD" == *"Failed to locate 'git'"* ]]; then
-        error_message "Git"
-        echo "⛔️ Git is a hard dependency to clone the monorepo"
-        exit 1
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        linux_pkg_install curl unzip git ca-certificates gnupg lsb-release build-essential
+    elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        linux_pkg_install curl unzip git ca-certificates gnupg2 which
+    else
+        echo "⚠️  Unknown distro - skipping base dependency installation."
     fi
 
-    already_installed_message "git"
+    success_message "Linux base dependencies"
+}
 
+# ─── Database / Docker Compose ───────────────────────────────────────────────
+
+start_database () {
+    echo ""
+    echo "❓ Enter the path to the Novu repo (default: ${NOVU_REPO_PATH:-none}, Enter to skip):"
+    read -r -p " > " INPUT
+    echo ""
+
+    NOVU_FOLDER="${INPUT:-$NOVU_REPO_PATH}"
+
+    if [[ -z "$NOVU_FOLDER" ]]; then
+        skip_message "Database setup"
+        return 0
+    fi
+
+    NOVU_FOLDER="${NOVU_FOLDER%/}"
+
+    if [[ ! -d "$NOVU_FOLDER/docker" ]]; then
+        echo "❌ No docker directory found at $NOVU_FOLDER — skipping database start."
+        return 1
+    fi
+
+    cd "$NOVU_FOLDER" || return 1
+
+    already_installed=0
+
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        brew ls --versions mongodb &>/dev/null && { echo "Warning: MongoDB is already installed via brew. Please uninstall it first."; already_installed=1; }
+        brew ls --versions redis    &>/dev/null && { echo "Warning: Redis is already installed via brew. Please uninstall it first.";    already_installed=1; }
+    else
+        lsof -Pi :27017 -sTCP:LISTEN -t &>/dev/null && { echo "Warning: MongoDB is running on port 27017. Please stop it first."; already_installed=1; }
+        lsof -Pi :6379  -sTCP:LISTEN -t &>/dev/null && { echo "Warning: Redis is running on port 6379. Please stop it first.";    already_installed=1; }
+    fi
+
+    if [[ $already_installed -ne 1 ]]; then
+        cp ./docker/.env.example ./docker/local/.env
+
+        if docker compose version &>/dev/null 2>&1; then
+            docker compose -f ./docker/local/docker-compose.yml up -d
+        else
+            docker-compose -f ./docker/local/docker-compose.yml up -d
+        fi
+
+        start_success_message "Docker Infrastructure"
+    else
+        echo "We recommend removing mongodb and redis from brew with 'brew remove <package_name>'."
+        echo "To manually start the containerized databases, go to /docker in the novu project."
+    fi
 }
 
 clone_monorepo () {
-    SKIP="$(check_git)"
+    check_git
+    REPOSITORY="https://github.com/novuhq/novu.git"
+    DESTINATION_FOLDER="$HOME/Dev"
+    NOVU_FOLDER="$DESTINATION_FOLDER/novu"
 
-    if [[ -z "$SKIP" ]]; then
-        echo ""
-        echo "❓ Do you want to clone Novu's monorepo? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
-        read -p " > " RESPONSE
-	echo ""
+    echo ""
+    echo "❓ Do you want to clone Novu's monorepo? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+    read -r -p " > " RESPONSE
+    echo ""
 
-    	if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
-            REPOSITORY="git@github.com:novuhq/novu.git"
-            DESTINATION_FOLDER="$HOME/Dev"
-            NOVU_FOLDER="$DESTINATION_FOLDER/novu"
-
-            [[ ! -d "$DESTINATION_FOLDER" ]] && mkdir "$DESTINATION_FOLDER"
-            if [[ ! -d "$NOVU_FOLDER" ]]; then
-                git clone "$REPOSITORY $NOVU_FOLDER"
-	        success_message "Novu monorepo"
-            else
-                already_installed_message "Novu monorepo"
-            fi
+    if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
+        [[ ! -d "$DESTINATION_FOLDER" ]] && mkdir -p "$DESTINATION_FOLDER"
+        if [[ ! -d "$NOVU_FOLDER" ]]; then
+            git clone "$REPOSITORY" "$NOVU_FOLDER"
+            success_message "Novu monorepo"
+        else
+            already_installed_message "Novu monorepo"
         fi
-    else
-        skip_message "Novu monorepo"
-        echo "$SKIP"
     fi
+
+    export NOVU_REPO_PATH="$NOVU_FOLDER"
 }
 
-# Novu set of tools chosen
 install_novu_tools () {
     check_git
-    make_zsh_default_shell
-    install_ohmyzsh
-    install_homebrew
-    install_homebrew_recipes
     install_nvm
     install_node
     install_pnpm
     install_docker
     install_aws_cli
-    start_database
 }
 
+# ─── OS entry point ──────────────────────────────────────────────────────────
+
 install_os_dependencies () {
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "Install 🐧 Linux dependencies"
-        echo "//TODO"
-	install_novu_tools
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "Install 👿 MacOSx dependencies"
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        echo "Install 🍎 macOS dependencies"
+        make_zsh_default_shell
+        install_ohmyzsh
+        install_homebrew
+        install_homebrew_recipes
         install_macosx_dependencies
         install_novu_tools
+
+    elif [[ "$OS_TYPE" == "Linux" ]]; then
+        echo "Install 🐧 Linux dependencies (family: $DISTRO_FAMILY)"
+        install_linux_base_deps
+        install_git_linux
+        install_novu_tools
+
     else
-        echo "OS not supported"
+        echo "❌ OS not supported: $OS_TYPE"
+        exit 1
     fi
 }
 
-# Entry point
+# ─── Main ────────────────────────────────────────────────────────────────────
+
+detect_os
 install_os_dependencies
 clone_monorepo
-refresh_shell
+start_database
+
+echo ""
+echo "✅ Setup complete! It may require a terminal restart for some packages to run!!"
+echo ""
