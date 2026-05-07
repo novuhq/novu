@@ -406,7 +406,6 @@ install_docker_linux () {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
         curl -fsSL https://get.docker.com | sudo sh
         sudo usermod -aG docker "$USER"
-        echo "Note: You may need to log out and back in for Docker group membership to take effect."
 
     elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
         sudo yum install -y yum-utils 2>/dev/null || sudo dnf install -y yum-utils
@@ -416,7 +415,6 @@ install_docker_linux () {
             sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         sudo systemctl enable --now docker
         sudo usermod -aG docker "$USER"
-        echo "Note: You may need to log out and back in for Docker group membership to take effect."
     else
         echo "⚠️ Unsupported distro. Please install Docker manually: https://docs.docker.com/engine/install/"
         return 1
@@ -424,9 +422,16 @@ install_docker_linux () {
 
     if ! command -v docker &>/dev/null; then
         error_message "Docker"
-    else
-        success_message "Docker"
+        exit 1
     fi
+
+    success_message "Docker"
+
+    echo ""
+    echo "⚠️ Docker was just installed and requires a system restart to apply group permissions."
+    echo "   Please restart your computer and re-run the setup script to continue."
+    echo ""
+    exit 0
 }
 
 install_docker_macos () {
