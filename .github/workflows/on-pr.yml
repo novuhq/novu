@@ -308,48 +308,51 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Validate aggregator `needs` list matches workflow jobs
+        # Uses `yq` and `jq`, both pre-installed on GitHub-hosted ubuntu
+        # runners — no `pip install` or other dependency setup, so the
+        # check runs in well under a second.
+        env:
+          WORKFLOW: .github/workflows/on-pr.yml
+          AGGREGATOR: pr-checks-passed
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet pyyaml
-          python3 <<'PY'
-          import pathlib, sys, yaml
 
-          AGGREGATOR = "pr-checks-passed"
-          WORKFLOW = pathlib.Path(".github/workflows/on-pr.yml")
+          workflow_json=$(yq -o=json '.' "$WORKFLOW")
 
-          workflow = yaml.safe_load(WORKFLOW.read_text())
-          jobs = workflow.get("jobs", {}) or {}
+          if ! echo "$workflow_json" | jq -e --arg agg "$AGGREGATOR" '.jobs[$agg]' > /dev/null; then
+            echo "::error file=$WORKFLOW::aggregator job '$AGGREGATOR' not found in workflow"
+            exit 1
+          fi
 
-          if AGGREGATOR not in jobs:
-              print(f"::error file={WORKFLOW}::aggregator job '{AGGREGATOR}' not found")
-              sys.exit(1)
+          diff_json=$(echo "$workflow_json" | jq --arg agg "$AGGREGATOR" '
+            .jobs as $jobs
+            | ($jobs[$agg].needs // []) as $declared
+            | ($jobs | keys | map(select(. != $agg))) as $expected
+            | {
+                missing: ($expected - $declared),
+                extra:   ($declared - $expected),
+                total:   ($expected | length)
+              }
+          ')
 
-          declared = set(jobs[AGGREGATOR].get("needs", []) or [])
-          expected = set(jobs) - {AGGREGATOR}
+          missing=$(echo "$diff_json" | jq -r '.missing | join(", ")')
+          extra=$(echo "$diff_json"   | jq -r '.extra   | join(", ")')
+          total=$(echo "$diff_json"   | jq -r '.total')
 
-          missing = sorted(expected - declared)
-          extra = sorted(declared - expected)
+          status=0
+          if [ -n "$missing" ]; then
+            echo "::error file=$WORKFLOW::$AGGREGATOR.needs is missing jobs that exist in the workflow: $missing. Add them so the gate can't go falsely green."
+            status=1
+          fi
+          if [ -n "$extra" ]; then
+            echo "::error file=$WORKFLOW::$AGGREGATOR.needs lists jobs that don't exist in the workflow: $extra. Remove them."
+            status=1
+          fi
 
-          if missing:
-              print(
-                  f"::error file={WORKFLOW}::pr-checks-passed.needs is missing jobs "
-                  f"that exist in the workflow: {missing}. "
-                  "Add them so the gate can't go falsely green."
-              )
-          if extra:
-              print(
-                  f"::error file={WORKFLOW}::pr-checks-passed.needs lists jobs that "
-                  f"don't exist in the workflow: {extra}. Remove them."
-              )
-
-          if missing or extra:
-              sys.exit(1)
-
-          print(
-              f"pr-checks-passed.needs correctly covers all {len(expected)} "
-              "other jobs in the workflow."
-          )
-          PY
+          if [ "$status" -eq 0 ]; then
+            echo "$AGGREGATOR.needs correctly covers all $total other jobs in the workflow."
+          fi
+          exit "$status"
 
       - name: Verify required jobs succeeded or were skipped
         env:
