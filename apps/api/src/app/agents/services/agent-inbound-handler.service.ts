@@ -4,10 +4,11 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
+  EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
-import type { EmojiValue, Message, Thread } from 'chat';
+import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
@@ -19,9 +20,24 @@ import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
-const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
+const ONBOARDING_NO_BRIDGE_TEXT =
+  "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
 
-Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
+function buildNoBridgeReply(dashboardUrl?: string): CardElement {
+  const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
+
+  if (dashboardUrl) {
+    children.push(
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [{ type: 'link-button', label: 'Continue setup', url: dashboardUrl, style: 'primary' }],
+      }
+    );
+  }
+
+  return { type: 'card', children };
+}
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {
@@ -137,6 +153,7 @@ export class AgentInboundHandler {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly attachmentStorage: AgentAttachmentStorage
   ) {
@@ -308,14 +325,33 @@ export class AgentInboundHandler {
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);
-        const sent = await thread.post(ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN);
+
+        let dashboardUrl: string | undefined;
+        const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+        if (dashboardBase) {
+          try {
+            const environment = await this.environmentRepository.findOne({ _id: config.environmentId });
+            if (environment?.identifier) {
+              dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${config.agentIdentifier}/overview`;
+            }
+          } catch (lookupErr) {
+            this.logger.warn(
+              lookupErr,
+              `[agent:${config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
+            );
+          }
+        }
+
+        const reply = buildNoBridgeReply(dashboardUrl);
+        const sent = await thread.post(reply);
         const channel = this.conversationService.getPrimaryChannel(conversation);
         await this.conversationService.persistAgentMessage({
           conversationId: conversation._id,
           channel,
           platformMessageId: (sent as { id?: string })?.id ?? '',
           agentIdentifier: config.agentIdentifier,
-          content: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN,
+          content: ONBOARDING_NO_BRIDGE_TEXT,
+          richContent: { card: reply },
           environmentId: config.environmentId,
           organizationId: config.organizationId,
         });

@@ -211,6 +211,47 @@ export class ChatSdkService implements OnModuleDestroy {
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
 
+  async sendDirectMessage(
+    agentId: string,
+    integrationIdentifier: string,
+    platformUserId: string,
+    content: ReplyContentDto
+  ): Promise<SentMessageInfo & { serializedThread: Record<string, unknown> }> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const dmThread = await chat.openDM(platformUserId);
+    const deliveryContent = await this.prepareContentForDelivery(content, config.platform, agentId);
+
+    const postArg = deliveryContent.card
+      ? (deliveryContent.card as unknown as AdapterPostableMessage)
+      : ({
+          markdown: deliveryContent.markdown ?? '',
+          files: deliveryContent.files,
+        } as unknown as AdapterPostableMessage);
+
+    const sent = await dmThread.post(postArg).catch(toDeliveryError);
+
+    // Slack Assistant Threads return a threadId like "slack:D12345:" — append the
+    // root message ts so it matches the format getInboundPlatformThreadId produces
+    // when the user replies, keeping inbound and outbound on the same conversation.
+    const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
+
+    // DM threads opened via openDM() may not have a currentMessage, so toJSON()
+    // can fail. Build a minimal serialized thread that ThreadImpl.fromJSON() can
+    // reconstruct for later replies.
+    const serializedThread: Record<string, unknown> = {
+      id: platformThreadId,
+      channelId: dmThread.channelId,
+      isDM: true,
+      platform: config.platform,
+      currentMessage: { id: sent.id, threadId: sent.threadId },
+    };
+
+    return { messageId: sent.id, platformThreadId, serializedThread };
+  }
+
   async editInConversation(
     agentId: string,
     integrationIdentifier: string,

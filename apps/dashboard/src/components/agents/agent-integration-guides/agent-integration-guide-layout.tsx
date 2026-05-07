@@ -187,7 +187,7 @@ export function AgentIntegrationGuideLayout({
           <label htmlFor={webhookUrlId} className="text-text-sub text-label-xs font-medium leading-5">
             Webhook URL
           </label>
-          <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+          <div className="border-stroke-soft bg-bg-white flex h-7 w-full max-w-[500px] items-center overflow-hidden rounded-md border shadow-xs">
             <input
               id={webhookUrlId}
               type="text"

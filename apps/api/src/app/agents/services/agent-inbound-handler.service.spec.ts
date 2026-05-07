@@ -51,6 +51,9 @@ describe('AgentInboundHandler', () => {
     const subscriberRepository = {
       findBySubscriberId: sinon.stub(),
     };
+    const environmentRepository = {
+      findOne: sinon.stub().resolves(null),
+    };
     const analyticsService = {
       track: sinon.stub(),
     };
@@ -63,6 +66,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       bridgeExecutor as any,
       subscriberRepository as any,
+      environmentRepository as any,
       analyticsService as any,
       attachmentStorage as any
     );

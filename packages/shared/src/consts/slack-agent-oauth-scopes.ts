@@ -14,6 +14,7 @@ export const SLACK_AGENT_OAUTH_SCOPES = [
   'groups:read',
   'im:history',
   'im:read',
+  'im:write',
   'mpim:history',
   'mpim:read',
   'reactions:read',

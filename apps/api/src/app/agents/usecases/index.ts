@@ -10,6 +10,7 @@ import { ListAgentIntegrations } from './list-agent-integrations/list-agent-inte
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-email.usecase';
+import { SendAgentWelcomeMessage } from './send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SyncAgentToEnvironment } from './sync-agent-to-environment/sync-agent-to-environment.usecase';
 import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
@@ -29,5 +30,6 @@ export const USE_CASES = [
   RemoveAgentIntegration,
   HandleAgentReply,
   SendAgentTestEmail,
+  SendAgentWelcomeMessage,
   SyncAgentToEnvironment,
 ];

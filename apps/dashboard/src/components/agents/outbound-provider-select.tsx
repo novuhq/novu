@@ -6,7 +6,14 @@ import {
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiExpandUpDownLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
+import {
+  RiAddLine,
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
+  RiExpandUpDownLine,
+  RiLoader4Line,
+  RiSearchLine,
+} from 'react-icons/ri';
 import { createIntegration } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
@@ -24,7 +31,13 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 
-type OutboundDropdownItem = {
+type OutboundProviderType = {
+  providerId: string;
+  displayName: string;
+  integrations: IIntegration[];
+};
+
+type OutboundInstanceItem = {
   providerId: string;
   displayName: string;
   integration?: IIntegration;
@@ -33,7 +46,7 @@ type OutboundDropdownItem = {
 const EXCLUDED_OUTBOUND_PROVIDERS = new Set<string>([EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu]);
 const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter((p) => !EXCLUDED_OUTBOUND_PROVIDERS.has(p.id));
 
-function buildOutboundItems(allIntegrations: IIntegration[] | undefined): OutboundDropdownItem[] {
+function buildOutboundItems(allIntegrations: IIntegration[] | undefined): OutboundProviderType[] {
   const integrationsByProvider = new Map<string, IIntegration[]>();
   for (const i of allIntegrations ?? []) {
     if (i.channel !== ChannelTypeEnum.EMAIL) continue;
@@ -43,27 +56,19 @@ function buildOutboundItems(allIntegrations: IIntegration[] | undefined): Outbou
     integrationsByProvider.set(i.providerId, list);
   }
 
-  const items: OutboundDropdownItem[] = [];
-  for (const cfg of OUTBOUND_EMAIL_PROVIDERS) {
-    const existing = integrationsByProvider.get(cfg.id);
-    if (existing?.length) {
-      for (const integration of existing) {
-        items.push({
-          providerId: cfg.id,
-          displayName: integration.name || cfg.displayName,
-          integration,
-        });
-      }
-    }
-    items.push({ providerId: cfg.id, displayName: cfg.displayName });
-  }
-
-  return items;
+  return OUTBOUND_EMAIL_PROVIDERS.map((cfg) => ({
+    providerId: cfg.id,
+    displayName: cfg.displayName,
+    integrations: integrationsByProvider.get(cfg.id) ?? [],
+  }));
 }
 
-function getItemKey(item: OutboundDropdownItem, index: number): string {
+function getInstanceKey(item: OutboundInstanceItem, index: number): string {
   return item.integration ? `${item.providerId}-${item.integration._id}` : `${item.providerId}-new-${index}`;
 }
+
+const groupHeadingClassName =
+  '**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1';
 
 export function OutboundProviderSelect({
   selectedId,
@@ -76,18 +81,34 @@ export function OutboundProviderSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [expandedProviderId, setExpandedProviderId] = useState<string | null>(null);
   const { integrations } = useFetchIntegrations();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
 
-  const items = useMemo(() => buildOutboundItems(integrations), [integrations]);
+  const providerTypes = useMemo(() => buildOutboundItems(integrations), [integrations]);
 
-  const selected = useMemo(
-    () => (selectedId ? items.find((i) => i.integration?._id === selectedId) : undefined),
-    [items, selectedId]
+  const expandedProvider = useMemo(
+    () => (expandedProviderId ? (providerTypes.find((p) => p.providerId === expandedProviderId) ?? null) : null),
+    [expandedProviderId, providerTypes]
   );
 
+  const selected = useMemo(() => {
+    if (!selectedId) return undefined;
+    for (const pt of providerTypes) {
+      const match = pt.integrations.find((i) => i._id === selectedId);
+      if (match) return { providerId: pt.providerId, displayName: match.name || pt.displayName };
+    }
+
+    return undefined;
+  }, [providerTypes, selectedId]);
+
   const isBusy = pendingKey !== null;
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setExpandedProviderId(null);
+  }
 
   const createMutation = useMutation({
     mutationFn: async (vars: { providerId: string; name: string }) => {
@@ -109,7 +130,7 @@ export function OutboundProviderSelect({
     },
   });
 
-  async function handleSelect(item: OutboundDropdownItem, index: number) {
+  async function handleSelect(item: OutboundInstanceItem, index: number) {
     if (isBusy) return;
     if (!currentEnvironment?._id) {
       showErrorToast('No environment selected.', 'Cannot select provider');
@@ -117,7 +138,7 @@ export function OutboundProviderSelect({
       return;
     }
 
-    const key = getItemKey(item, index);
+    const key = getInstanceKey(item, index);
     setPendingKey(key);
 
     try {
@@ -137,6 +158,7 @@ export function OutboundProviderSelect({
         onSelect(created._id);
       }
       setOpen(false);
+      setExpandedProviderId(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not select provider.';
       showErrorToast(message, 'Selection failed');
@@ -144,6 +166,152 @@ export function OutboundProviderSelect({
       setPendingKey(null);
     }
   }
+
+  const collapsedList = (
+    <Command>
+      <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
+        <CommandInput
+          placeholder="Search provider"
+          size="xs"
+          disabled={isBusy}
+          inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
+          inputWrapperClassName="h-4 min-h-4 bg-transparent px-0 py-0 hover:[&:not(&:has(input:focus))]:bg-transparent has-[input:disabled]:bg-transparent"
+          className="text-text-sub text-label-xs leading-4 placeholder:text-text-sub h-4 min-h-4 py-0"
+        />
+        <RiSearchLine className="text-text-soft size-3 shrink-0" />
+      </div>
+      <CommandList className="max-h-[260px] p-1">
+        <CommandEmpty className="text-text-soft text-label-xs py-4">No email providers found.</CommandEmpty>
+        <CommandGroup heading="Email providers" className={groupHeadingClassName}>
+          {providerTypes.map((pt) => {
+            const hasInstances = pt.integrations.length > 0;
+            const isAnyInstanceSelected = pt.integrations.some((i) => i._id === selectedId);
+
+            return (
+              <CommandItem
+                key={pt.providerId}
+                value={`${pt.displayName} ${pt.providerId}`}
+                disabled={isBusy}
+                onSelect={() => {
+                  if (isBusy) return;
+                  if (hasInstances) {
+                    setExpandedProviderId(pt.providerId);
+
+                    return;
+                  }
+                  void handleSelect({ providerId: pt.providerId, displayName: pt.displayName }, 0);
+                }}
+                className={cn('flex items-center gap-2 rounded-md p-1', isAnyInstanceSelected && 'bg-bg-muted')}
+              >
+                <div className="flex w-full min-w-0 items-center gap-1">
+                  <ProviderIcon
+                    providerId={pt.providerId}
+                    providerDisplayName={pt.displayName}
+                    className="size-4 shrink-0"
+                  />
+                  <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+                    {pt.displayName}
+                  </span>
+                  {hasInstances && (
+                    <span className="text-text-soft flex items-center gap-0.5 text-[10px] leading-[15px] shrink-0">
+                      {pt.integrations.length === 1 ? '1 connected' : `${pt.integrations.length} connected`}
+                      <RiArrowRightSLine className="size-3" />
+                    </span>
+                  )}
+                </div>
+              </CommandItem>
+            );
+          })}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+
+  const expandedList = expandedProvider && (
+    <Command>
+      <button
+        type="button"
+        onClick={() => setExpandedProviderId(null)}
+        className="bg-bg-weak border-stroke-weak hover:bg-bg-soft flex w-full items-center gap-1.5 border-b px-2 py-1.5 transition-colors"
+      >
+        <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" />
+        <ProviderIcon
+          providerId={expandedProvider.providerId}
+          providerDisplayName={expandedProvider.displayName}
+          className="size-4 shrink-0"
+        />
+        <span className="text-text-sub text-label-xs font-medium leading-4">{expandedProvider.displayName}</span>
+      </button>
+
+      <CommandList className="max-h-[260px] p-1">
+        <CommandEmpty className="text-text-soft text-label-xs py-4">No integrations found.</CommandEmpty>
+
+        <CommandGroup heading="Existing" className={groupHeadingClassName}>
+          {expandedProvider.integrations.map((integration, index) => {
+            const item: OutboundInstanceItem = {
+              providerId: expandedProvider.providerId,
+              displayName: integration.name || expandedProvider.displayName,
+              integration,
+            };
+            const key = getInstanceKey(item, index);
+            const isRowPending = pendingKey === key;
+
+            return (
+              <CommandItem
+                key={key}
+                value={`${integration.name ?? expandedProvider.displayName} ${integration.identifier}`}
+                disabled={isBusy}
+                onSelect={() => void handleSelect(item, index)}
+                className={cn(
+                  'flex items-center gap-2 rounded-md p-1',
+                  integration._id === selectedId && 'bg-bg-muted'
+                )}
+              >
+                <div className="flex w-full min-w-0 items-center gap-1">
+                  <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+                    {integration.name || expandedProvider.displayName}
+                  </span>
+                  {isRowPending ? (
+                    <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+                  ) : (
+                    <span
+                      className="font-code text-text-soft max-w-[min(7.5rem,45%)] min-w-0 shrink truncate text-[10px] leading-[15px] tracking-[-0.2px]"
+                      title={integration.identifier}
+                    >
+                      {integration.identifier}
+                    </span>
+                  )}
+                </div>
+              </CommandItem>
+            );
+          })}
+        </CommandGroup>
+
+        <div className="bg-stroke-weak mx-1 my-1 h-px" role="presentation" />
+
+        <CommandItem
+          value={`create new ${expandedProvider.displayName}`}
+          disabled={isBusy}
+          onSelect={() =>
+            void handleSelect(
+              { providerId: expandedProvider.providerId, displayName: expandedProvider.displayName },
+              expandedProvider.integrations.length
+            )
+          }
+          className="flex items-center gap-1.5 rounded-md p-1"
+        >
+          {pendingKey === `${expandedProvider.providerId}-new-${expandedProvider.integrations.length}` ? (
+            <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
+          ) : (
+            <RiAddLine className="text-text-soft size-3 shrink-0" aria-hidden />
+          )}
+          <span className="text-text-sub text-label-xs font-medium leading-4">
+            Create another {expandedProvider.displayName} integration
+          </span>
+        </CommandItem>
+      </CommandList>
+    </Command>
+  );
 
   return (
     <div className={cn('flex w-full flex-col gap-1', !hideLabel && 'min-w-[300px]')}>
@@ -157,7 +325,7 @@ export function OutboundProviderSelect({
       )}
 
       <div className={cn('w-full', !hideLabel && 'max-w-[320px]')}>
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={handleOpenChange}>
           <PopoverTrigger asChild>
             <button
               type="button"
@@ -195,66 +363,7 @@ export function OutboundProviderSelect({
             )}
             align="start"
           >
-            <Command>
-              <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
-                <CommandInput
-                  placeholder="Search provider"
-                  size="xs"
-                  disabled={isBusy}
-                  inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
-                  inputWrapperClassName="h-4 min-h-4 bg-transparent px-0 py-0 hover:[&:not(&:has(input:focus))]:bg-transparent has-[input:disabled]:bg-transparent"
-                  className="text-text-sub text-label-xs leading-4 placeholder:text-text-sub h-4 min-h-4 py-0"
-                />
-                <RiSearchLine className="text-text-soft size-3 shrink-0" />
-              </div>
-              <CommandList className="max-h-[260px] p-1">
-                <CommandEmpty className="text-text-soft text-label-xs py-4">No email providers found.</CommandEmpty>
-                <CommandGroup
-                  heading="Email providers"
-                  className="**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1"
-                >
-                  {items.map((item, index) => {
-                    const key = getItemKey(item, index);
-                    const isRowPending = pendingKey === key;
-
-                    return (
-                      <CommandItem
-                        key={key}
-                        value={`${item.displayName} ${item.providerId}${item.integration ? ` ${item.integration.identifier}` : ''}`}
-                        disabled={isBusy}
-                        onSelect={() => {
-                          void handleSelect(item, index);
-                        }}
-                        className={cn(
-                          'flex items-center gap-2 rounded-md p-1',
-                          item.integration?._id === selectedId && 'bg-bg-muted'
-                        )}
-                      >
-                        <div className="flex flex-1 items-center gap-1">
-                          <ProviderIcon
-                            providerId={item.providerId}
-                            providerDisplayName={item.displayName}
-                            className="size-4 shrink-0"
-                          />
-                          <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">
-                            {item.displayName}
-                          </span>
-                        </div>
-                        {isRowPending && (
-                          <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
-                        )}
-                        {!isRowPending && item.integration && (
-                          <span className="font-code text-text-sub shrink-0 text-[10px] leading-[15px] tracking-[-0.2px]">
-                            {item.integration.identifier}
-                          </span>
-                        )}
-                        {!isRowPending && !item.integration && <RiAddLine className="text-text-soft size-3 shrink-0" />}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+            {expandedProvider ? expandedList : collapsedList}
           </PopoverContent>
         </Popover>
       </div>

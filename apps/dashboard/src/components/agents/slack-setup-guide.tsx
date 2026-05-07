@@ -5,7 +5,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiFlashlightLine, RiKey2Line, RiLoader4Line } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
+import { sendAgentWelcomeMessage } from '@/api/agents';
 import { slackQuickSetup } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
@@ -20,6 +22,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
+import { CopySlackMessageButton } from './agent-code-setup-section';
 import type { SetupMode } from './setup-guide-primitives';
 import {
   IntegrationCredentialsSidebar,
@@ -85,7 +88,10 @@ features:
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   assistant_view:
-    assistant_description: "Agent built with Novu"
+    assistant_description: "${displayDescription}"
+    suggested_prompts:
+      - title: "Say hello"
+        message: "Hello!"
   bot_user:
     display_name: "${botName}"
     always_online: true
@@ -268,6 +274,7 @@ export function SlackSetupGuide({
 }: SlackSetupGuideProps) {
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
+  const [, setSearchParams] = useSearchParams();
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
@@ -299,6 +306,32 @@ export function SlackSetupGuide({
   );
 
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
+
+  const handleSlackOAuthSuccess = useCallback(() => {
+    handleSlackWorkspaceConnected();
+
+    if (currentEnvironment && selectedIntegrationIdentifier) {
+      sendAgentWelcomeMessage(currentEnvironment, agent.identifier, selectedIntegrationIdentifier)
+        .then((res) => {
+          if (res.conversationId) {
+            setSearchParams((prev) => {
+              prev.set('onboardingConversationId', res.conversationId as string);
+
+              return prev;
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to send agent welcome message after Slack OAuth:', err);
+        });
+    }
+  }, [
+    handleSlackWorkspaceConnected,
+    currentEnvironment,
+    agent.identifier,
+    selectedIntegrationIdentifier,
+    setSearchParams,
+  ]);
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
@@ -349,7 +382,7 @@ export function SlackSetupGuide({
           connectionMode="subscriber"
           connectLabel={`Install ${agent.name} ↗`}
           connectedLabel="Connected to Slack"
-          onConnectSuccess={handleSlackWorkspaceConnected}
+          onConnectSuccess={handleSlackOAuthSuccess}
           onConnectError={(error: unknown) => {
             showErrorToast('Failed to connect to Slack. Please try again.');
             console.error(error);
@@ -439,6 +472,7 @@ export function SlackSetupGuide({
             {' from the suggestions, then send a message. You should see the agent respond.'}
           </span>
         }
+        rightContent={<CopySlackMessageButton agentName={agent.name} />}
       />
     </>
   );
@@ -500,8 +534,8 @@ export function SlackSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleSlackWorkspaceConnected}
-      connectedMessage="Your Slack workspace is connected. This agent is ready to receive messages."
-      listeningMessage="Tag the Slack bot in your installed workspace and send a message to verify configuration."
+      connectedMessage="Your Slack workspace is connected — check your DMs for a welcome message from the bot!"
+      listeningMessage="Install the app to your Slack workspace to continue."
     />
   );
 

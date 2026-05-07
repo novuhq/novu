@@ -16,6 +16,7 @@ import { AgentEventEnum } from '../../dtos/agent-event.enum';
 import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
+import type { MetadataOp } from '../../services/agent-conversation.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
@@ -254,18 +255,20 @@ export class HandleAgentReply {
     channel: ConversationChannel,
     signals: HandleAgentReplyCommand['signals']
   ): Promise<void> {
-    const metadataSignals = (signals ?? []).filter(
-      (s): s is Extract<NonNullable<HandleAgentReplyCommand['signals']>[number], { type: 'metadata' }> =>
-        s.type === 'metadata'
-    );
+    const rawMetadata = (signals ?? []).filter((s) => s.type === 'metadata') as Array<{
+      type: 'metadata';
+      action?: string;
+      key?: string;
+      value?: unknown;
+    }>;
 
-    if (metadataSignals.length) {
-      await this.validateMetadataSignalKeys(metadataSignals);
+    if (rawMetadata.length) {
+      const ops = this.normalizeMetadataOps(rawMetadata);
       await this.conversationService.updateMetadata({
         conversationId: conversation._id,
         channel,
         currentMetadata: conversation.metadata ?? {},
-        signals: metadataSignals,
+        ops,
         agentIdentifier: command.agentIdentifier,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -344,15 +347,39 @@ export class HandleAgentReply {
     }
   }
 
-  private validateMetadataSignalKeys(signals: Array<{ key: string; value: unknown }>): void {
+  private normalizeMetadataOps(
+    signals: Array<{ type: 'metadata'; action?: string; key?: string; value?: unknown }>
+  ): MetadataOp[] {
+    const ops: MetadataOp[] = [];
+
     for (const signal of signals) {
-      if (!isValidMetadataSignalKey(signal.key)) {
-        throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
-      }
-      if (signal.value === undefined) {
-        throw new BadRequestException(`Metadata signal "${signal.key}" must have a defined value`);
+      const action = signal.action ?? 'set';
+
+      switch (action) {
+        case 'clear':
+          ops.push({ action: 'clear' });
+          break;
+        case 'delete':
+          if (!signal.key || !isValidMetadataSignalKey(signal.key)) {
+            throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
+          }
+          ops.push({ action: 'delete', key: signal.key });
+          break;
+        case 'set':
+          if (!signal.key || !isValidMetadataSignalKey(signal.key)) {
+            throw new BadRequestException(`Invalid metadata signal key: "${signal.key}"`);
+          }
+          if (signal.value === undefined) {
+            throw new BadRequestException(`Metadata signal "${signal.key}" must have a defined value`);
+          }
+          ops.push({ action: 'set', key: signal.key, value: signal.value });
+          break;
+        default:
+          throw new BadRequestException(`Unsupported metadata signal action: "${action}"`);
       }
     }
+
+    return ops;
   }
 
   private async resolveConversation(

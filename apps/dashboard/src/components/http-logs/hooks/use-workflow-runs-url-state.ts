@@ -38,7 +38,9 @@ export function useWorkflowRunsUrlState(): WorkflowRunsUrlState {
       params.delete('channels');
 
       if (filters.channels && filters.channels.length > 0) {
-        filters.channels.forEach((channel) => params.append('channels', channel));
+        for (const channel of filters.channels) {
+          params.append('channels', channel);
+        }
       }
 
       if (filters.subscriberId) {
@@ -50,7 +52,9 @@ export function useWorkflowRunsUrlState(): WorkflowRunsUrlState {
       params.delete('workflows');
 
       if (filters.workflows && filters.workflows.length > 0) {
-        filters.workflows.forEach((workflow) => params.append('workflows', workflow));
+        for (const workflow of filters.workflows) {
+          params.append('workflows', workflow);
+        }
       }
 
       setSearchParams(params);

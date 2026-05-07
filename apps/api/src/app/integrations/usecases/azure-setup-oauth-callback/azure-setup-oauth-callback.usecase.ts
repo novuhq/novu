@@ -113,39 +113,38 @@ export class AzureSetupOauthCallback {
   }
 
   private async decodeAndVerifyState(state: string): Promise<AzureSetupStateData> {
-    let preliminaryData: Partial<AzureSetupStateData>;
+    let payload: string;
+    let signature: string;
+    let data: AzureSetupStateData;
 
     try {
-      const { payload } = splitOAuthState(state);
-      preliminaryData = JSON.parse(payload);
+      ({ payload, signature } = splitOAuthState(state));
+      data = JSON.parse(payload) as AzureSetupStateData;
     } catch {
       throw new BadRequestException('Invalid Azure setup OAuth state');
     }
 
-    if (!preliminaryData.environmentId || !preliminaryData.organizationId) {
+    if (!data.environmentId || !data.organizationId) {
       throw new BadRequestException('Azure setup state missing required fields');
     }
 
     const environment = await this.environmentRepository.findOne({
-      _id: preliminaryData.environmentId,
-      _organizationId: preliminaryData.organizationId,
+      _id: data.environmentId,
+      _organizationId: data.organizationId,
     });
 
     if (!environment?.apiKeys?.length) {
-      throw new NotFoundException(`Environment ${preliminaryData.environmentId} not found`);
+      throw new NotFoundException(`Environment ${data.environmentId} not found`);
     }
 
     const signingKey = environment.apiKeys[0].key;
 
     try {
-      const { payload, signature } = splitOAuthState(state);
       const expectedSignature = createHash(signingKey, payload);
 
       if (signature !== expectedSignature) {
         throw new Error('Signature mismatch');
       }
-
-      const data = JSON.parse(payload) as AzureSetupStateData;
 
       const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
@@ -230,6 +229,7 @@ export class AzureSetupOauthCallback {
   ): Promise<{ appId: string; secretValue: string; tenantId: string }> {
     const integration = await this.integrationRepository.findOne({
       _id: stateData.integrationId,
+      _environmentId: stateData.environmentId,
       _organizationId: stateData.organizationId,
     });
 
@@ -394,6 +394,7 @@ export class AzureSetupOauthCallback {
     await this.integrationRepository.update(
       {
         _id: stateData.integrationId,
+        _environmentId: stateData.environmentId,
         _organizationId: stateData.organizationId,
       },
       { $set: { credentials } }
@@ -458,6 +459,7 @@ export class AzureSetupOauthCallback {
 
       const integration = await this.integrationRepository.findOne({
         _id: stateData.integrationId,
+        _environmentId: stateData.environmentId,
         _organizationId: stateData.organizationId,
       });
 
@@ -594,7 +596,11 @@ export class AzureSetupOauthCallback {
       }
 
       await this.integrationRepository.update(
-        { _id: stateData.integrationId, _organizationId: stateData.organizationId },
+        {
+          _id: stateData.integrationId,
+          _environmentId: stateData.environmentId,
+          _organizationId: stateData.organizationId,
+        },
         { $set: fields }
       );
     } catch (err) {
@@ -650,6 +656,7 @@ export class AzureSetupOauthCallback {
 
     const integration = await this.integrationRepository.findOne({
       _id: stateData.integrationId,
+      _environmentId: stateData.environmentId,
       _organizationId: stateData.organizationId,
     });
 
@@ -678,6 +685,7 @@ export class AzureSetupOauthCallback {
     try {
       const integration = await this.integrationRepository.findOne({
         _id: stateData.integrationId,
+        _environmentId: stateData.environmentId,
         _organizationId: stateData.organizationId,
       });
 

@@ -51,19 +51,15 @@ export function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencie
     );
   }
 
-  const UsageDisplay = () => (
-    <div className="flex items-center gap-px">
-      <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
-      <span className="text-label-2xs text-text-soft">{usageCount}</span>
-    </div>
-  );
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="relative flex cursor-pointer items-center gap-1 p-0">
           <span className="text-xs font-medium leading-3 text-gray-400">Used in</span>
-          <UsageDisplay />
+          <div className="flex items-center gap-px">
+            <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
+            <span className="text-label-2xs text-text-soft">{usageCount}</span>
+          </div>
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="rounded-lg border border-gray-200 bg-white p-1.5 pb-1 pt-1.5 shadow-lg">
