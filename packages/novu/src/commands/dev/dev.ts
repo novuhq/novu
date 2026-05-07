@@ -12,6 +12,25 @@ import { showWelcomeScreen } from '../shared';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
 
+/*
+ * partysocket@0.0.x removes its EventEmitter-based 'error' listener
+ * (_removeListeners) BEFORE calling ws.close(). When the underlying ws
+ * socket is still CONNECTING, ws defers the error via process.nextTick —
+ * which fires after the listener is gone, crashing the process with
+ * "Unhandled 'error' event".
+ *
+ * This subclass attaches a permanent no-op handler through the Node
+ * EventEmitter API so there is always at least one listener when the
+ * deferred error fires. partysocket's reconnect logic is unaffected
+ * because it already schedules a new connection attempt in _handleError.
+ */
+class ResilientWebSocket extends ws {
+  constructor(...args: ConstructorParameters<typeof ws>) {
+    super(...args);
+    this.on('error', () => {});
+  }
+}
+
 let appProcess: ChildProcess | null = null;
 
 function killProcessTree(child: ChildProcess) {
@@ -257,7 +276,7 @@ async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
     parsedOrigin.host,
     false,
     {
-      WebSocket: ws,
+      WebSocket: ResilientWebSocket,
       connectionTimeout: 2000,
       maxRetries: Infinity,
     },
