@@ -1,4 +1,4 @@
-import type { IEmailAlternative } from '@novu/shared';
+import type { IEmailAlternative, NovuEmailAttachment } from '@novu/shared';
 import type { Adapter } from 'chat';
 
 export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
@@ -51,7 +51,7 @@ export interface NovuEmailRawMessage {
   html?: string;
   headers?: Record<string, string>;
   createdAt: string;
-  attachments?: import('@novu/shared').NovuEmailAttachment[];
+  attachments?: NovuEmailAttachment[];
 }
 
 export type NovuEmailAdapter = Adapter<NovuEmailThreadId, NovuEmailRawMessage>;

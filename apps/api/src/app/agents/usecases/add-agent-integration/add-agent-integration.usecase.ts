@@ -117,6 +117,7 @@ export class AddAgentIntegration {
     }
 
     if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+      await this.enforceEmailTier(command.organizationId);
       await this.enforceSingletonEmail(agentId, command);
       await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
     }

@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   EmailWebhookPayload,
+  NovuEmailAttachment,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -167,11 +168,6 @@ export class InboundDomainRouteDelivery {
       timeout: 30_000,
     });
 
-    this.logger.info(
-      { toAddress: params.toAddress, agentId, integrationIdentifier, url },
-      'Forwarded inbound email to agent webhook'
-    );
-
     return {
       httpStatus: response.statusCode,
       body: response.body,
@@ -245,9 +241,7 @@ export class InboundDomainRouteDelivery {
    * that exceed a cap are included with metadata only and `truncated: true` so
    * downstream consumers can still render a placeholder.
    */
-  private mapAttachmentsForWebhook(
-    rawAttachments: unknown[] | undefined
-  ): import('@novu/shared').NovuEmailAttachment[] | undefined {
+  private mapAttachmentsForWebhook(rawAttachments: unknown[] | undefined): NovuEmailAttachment[] | undefined {
     if (!rawAttachments?.length) {
       return undefined;
     }
