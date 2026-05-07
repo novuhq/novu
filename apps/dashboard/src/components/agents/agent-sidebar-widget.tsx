@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAlertFill } from 'react-icons/ri';
+import { RiAlertFill, RiInformationFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
@@ -20,6 +20,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -156,7 +157,24 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
         </div>
       </div>
       {!readOnly && (
-        <DetailsSidebarRow label="Bridge">
+        <DetailsSidebarRow
+          label={
+            <>
+              Bridge
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-foreground-400 inline-flex cursor-default">
+                    <RiInformationFill className="size-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  The bridge connects Novu to your self-hosted agent handler. In Development mode the URL points to
+                  Novu's managed bridge; switch to Local to route messages to a tunnel on your machine.
+                </TooltipContent>
+              </Tooltip>
+            </>
+          }
+        >
           <div className="flex items-center gap-1.5">
             <Badge variant="lighter" color={!agent.devBridgeActive ? 'green' : 'gray'} size="sm">
               DEVELOPMENT
