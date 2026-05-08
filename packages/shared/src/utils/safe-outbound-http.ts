@@ -97,7 +97,7 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
   let currentUrl: string | URL = options.url;
   let currentMethod: SafeOutboundMethod = options.method ?? 'GET';
   let currentBody = options.body;
-  let currentHeaders = { ...(options.headers ?? {}) };
+  const currentHeaders = { ...(options.headers ?? {}) };
 
   for (let redirect = 0; redirect <= maxRedirects; redirect += 1) {
     const parsed = assertSafeOutboundUrl(currentUrl);

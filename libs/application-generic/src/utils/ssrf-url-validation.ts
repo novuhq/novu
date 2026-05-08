@@ -9,6 +9,7 @@ export {
   resolvePublicAddresses,
   SsrfBlockedError,
   type SsrfBlockReason,
+  // biome-ignore lint/style/noRestrictedImports: re-export of the deprecated validateUrlSsrf for backward compatibility — see NV-7560
   validateUrlSsrf,
 } from '@novu/shared/utils/ssrf-url-validation';
 export {

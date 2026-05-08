@@ -277,8 +277,10 @@ describe('safe-outbound-http', () => {
       await new Promise<void>((resolve) => secondUpstream.close(() => resolve()));
 
       expect(upstreamHits).toHaveLength(2);
-      const initialHit = upstreamHits[0];
-      const redirectHit = upstreamHits[1];
+      const [initialHit, redirectHit] = upstreamHits as [
+        (typeof upstreamHits)[number],
+        (typeof upstreamHits)[number],
+      ];
 
       expect(initialHit.headers.authorization).toBe('Bearer secret');
       expect(initialHit.headers['novu-signature']).toBe('v1,t=1,sig');
@@ -320,7 +322,8 @@ describe('safe-outbound-http', () => {
       expect(response.statusCode).toBe(200);
       expect(response.body).toEqual({ ok: true, path: '/ping' });
       expect(upstreamHits).toHaveLength(1);
-      expect(upstreamHits[0].headers.host).toContain('test-upstream.invalid');
+      const hit = upstreamHits[0]!;
+      expect(hit.headers.host).toContain('test-upstream.invalid');
     });
   });
 });

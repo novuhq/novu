@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  assertSafeOutboundUrl,
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
@@ -11,7 +12,7 @@ import {
   KeyValuePair,
   resolveHttpRequestBody,
   shouldIncludeBody,
-  validateUrlSsrf,
+  SsrfBlockedError,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { Liquid } from 'liquidjs';
@@ -91,14 +92,15 @@ export class TestHttpEndpointUsecase {
 
     const hasBody = shouldIncludeBody(resolvedBody, method);
 
-    const ssrfValidationError = await validateUrlSsrf(resolvedUrl);
-
-    if (ssrfValidationError) {
+    try {
+      assertSafeOutboundUrl(resolvedUrl);
+    } catch (err) {
       const durationMs = Math.round(performance.now() - startTime);
+      const message = err instanceof SsrfBlockedError ? err.message : String(err);
 
       return {
         statusCode: 400,
-        body: { error: ssrfValidationError },
+        body: { error: message },
         headers: {},
         durationMs,
         resolvedRequest: {
@@ -110,6 +112,9 @@ export class TestHttpEndpointUsecase {
       };
     }
 
+    // HMAC is computed only after the URL passes the synchronous SSRF policy.
+    // The connect-time DNS guard and redirect re-validation happen inside
+    // HttpClientService when enforceSsrfProtection is enabled.
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
     );
@@ -123,6 +128,7 @@ export class TestHttpEndpointUsecase {
         ...(hasBody ? { body: resolvedBody } : {}),
         timeout: 30_000,
         responseType: 'text',
+        enforceSsrfProtection: true,
       });
       const durationMs = Math.round(performance.now() - startTime);
 

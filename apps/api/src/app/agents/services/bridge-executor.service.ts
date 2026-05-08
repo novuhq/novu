@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import {
+  assertSafeOutboundUrl,
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
-  validateUrlSsrf,
+  resolvePublicAddresses,
+  safeOutboundJsonRequest,
+  SsrfBlockedError,
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
@@ -112,9 +115,8 @@ export class BridgeExecutorService {
       );
 
       const payload = await this.buildPayload(params);
-      const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
 
-      this.fireWithRetries(bridgeUrl, payload, signatureHeader, agentIdentifier).catch((err) => {
+      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
       });
     } catch (err) {
@@ -129,28 +131,35 @@ export class BridgeExecutorService {
   private async fireWithRetries(
     url: string,
     payload: AgentBridgeRequest,
-    signatureHeader: string,
+    secretKey: string,
     agentIdentifier: string
   ): Promise<void> {
-    const body = JSON.stringify(payload);
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      // Re-validate per attempt to defend against (a) agents whose bridgeUrl was
-      // stored before the update-time SSRF guard was added, and (b) DNS rebinding
-      // — a hostname that resolved to a public IP at update-time can later resolve
-      // to a private one. validateUrlSsrf caches DNS lookups for 5 minutes, so
-      // the per-attempt cost is amortized across retries.
-      const ssrfError = await validateUrlSsrf(url);
-      if (ssrfError) {
-        throw new Error(`Bridge URL blocked by SSRF protection: ${ssrfError}`);
+      // Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
+      // safeOutboundJsonRequest call performs the connect-time DNS guard and
+      // re-validates every redirect target.
+      try {
+        assertSafeOutboundUrl(url);
+        await resolvePublicAddresses(new URL(url).hostname);
+      } catch (err) {
+        if (err instanceof SsrfBlockedError) {
+          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+        }
+        throw err;
       }
 
+      // HMAC is computed and attached only after the destination has been
+      // validated, so a blocked URL never sees the signed payload.
+      const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
+
       try {
-        const response = await fetch(url, {
+        const response = await safeOutboundJsonRequest({
+          url,
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'content-type': 'application/json',
             // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
             // this exact header to verify the HMAC. Sending any other name (e.g.
             // `x-novu-signature`) silently disables signature verification on the
@@ -158,16 +167,21 @@ export class BridgeExecutorService {
             // via an attacker-controlled `replyUrl`.
             [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
-          body,
+          body: payload,
         });
 
-        if (response.ok) {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
           return;
         }
 
-        lastError = new Error(`Bridge returned ${response.status}: ${response.statusText}`);
-        this.logger.warn(`[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.status}`);
+        lastError = new Error(`Bridge returned ${response.statusCode}: ${response.statusMessage}`);
+        this.logger.warn(
+          `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.statusCode}`
+        );
       } catch (err) {
+        if (err instanceof SsrfBlockedError) {
+          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+        }
         lastError = err instanceof Error ? err : new Error(String(err));
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
