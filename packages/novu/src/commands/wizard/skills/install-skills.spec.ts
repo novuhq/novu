@@ -33,7 +33,7 @@ describe('installSkills', () => {
     expect(fs.existsSync(path.join(tempDir, '.cursor/skills/env-setup/SKILL.md'))).toBe(true);
   });
 
-  it('installs into the requested hosts only', () => {
+  it('installs into the requested hosts', () => {
     const { installed } = installSkills(tempDir, ['claude']);
     const hosts = Array.from(new Set(installed.map((skill) => skill.host)));
 
@@ -88,7 +88,7 @@ describe('installSkills', () => {
     }
   });
 
-  it('removes the legacy .claude/skills/novu/ folder when it only contains our skill installs', () => {
+  it('removes the legacy .claude/skills/novu/ folder when it contains our skill installs', () => {
     const legacyRoot = path.join(tempDir, '.claude/skills/novu');
     fs.mkdirSync(path.join(legacyRoot, 'old-skill'), { recursive: true });
     fs.writeFileSync(path.join(legacyRoot, 'old-skill/SKILL.md'), '# old');
@@ -140,7 +140,7 @@ describe('detectSkillHosts', () => {
     expect(detectSkillHosts(tempDir)).toContain('copilot');
   });
 
-  it('detects the cross-agent host when only .agents/ exists', () => {
+  it('detects the cross-agent host when .agents/ exists', () => {
     fs.mkdirSync(path.join(tempDir, '.agents'), { recursive: true });
 
     expect(detectSkillHosts(tempDir)).toContain('agents');
@@ -214,7 +214,7 @@ describe('resolveWizardRuntimeSkillHosts', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('always includes claude even when only a non-claude editor is detected', () => {
+  it('always includes claude even when a non-claude editor is detected', () => {
     fs.mkdirSync(path.join(tempDir, '.cursor'), { recursive: true });
 
     const hosts = resolveWizardRuntimeSkillHosts(tempDir);
@@ -222,7 +222,7 @@ describe('resolveWizardRuntimeSkillHosts', () => {
     expect(hosts).toContain('cursor');
   });
 
-  it('forces claude into the host list for windsurf-only repos', () => {
+  it('forces claude into the host list for repos with windsurf', () => {
     fs.mkdirSync(path.join(tempDir, '.windsurf'), { recursive: true });
 
     expect(resolveWizardRuntimeSkillHosts(tempDir).sort()).toEqual(['claude', 'windsurf']);
