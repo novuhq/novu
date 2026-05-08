@@ -19,7 +19,6 @@
     "commit": "cz",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "dev:portless": "mprocs",
-    "dev:portless:batch": "portless --script start:portless",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "g:module": "hygen module new --name=$npm_config_name",
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
