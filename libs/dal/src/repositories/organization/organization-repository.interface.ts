@@ -4,6 +4,11 @@ import { IPartnerConfiguration, OrganizationEntity } from './organization.entity
 export interface IOrganizationRepository extends IOrganizationRepositoryMongo {
   findById(id: string, select?: string): Promise<OrganizationEntity | null>;
   findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]>;
+  /**
+   * Returns the internal Novu organization IDs the user is an active member of.
+   * Used as the source of truth for cross-tenant authorization checks (e.g. partner integrations).
+   */
+  getUserAuthorizedOrganizationIds(userId: string): Promise<string[]>;
   updateBrandingDetails(
     organizationId: string,
     branding: { color: string; logo: string }
@@ -26,7 +31,11 @@ export interface IOrganizationRepository extends IOrganizationRepositoryMongo {
     modified: number;
   }>;
   findByPartnerConfigurationId(args: { userId: string; configurationId: string }): Promise<OrganizationEntity[]>;
-  upsertPartnerConfiguration(args: { organizationId: string; configuration: IPartnerConfiguration }): Promise<{
+  upsertPartnerConfiguration(args: {
+    userId: string;
+    organizationId: string;
+    configuration: IPartnerConfiguration;
+  }): Promise<{
     matched: number;
     modified: number;
   }>;

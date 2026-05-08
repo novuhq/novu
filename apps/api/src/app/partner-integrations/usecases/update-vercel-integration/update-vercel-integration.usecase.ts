@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AnalyticsService, decryptApiKey, PinoLogger } from '@novu/application-generic';
 import {
   CommunityUserRepository,
@@ -55,6 +55,14 @@ export class UpdateVercelIntegration {
     try {
       const { userId, organizationId, configurationId, data: orgIdsToProjectIds } = command;
 
+      const requestedOrganizationIds = Object.keys(orgIdsToProjectIds);
+      const allowedOrganizationIds = await this.organizationRepository.getUserAuthorizedOrganizationIds(userId);
+      const allowedSet = new Set(allowedOrganizationIds);
+      const unauthorizedOrganizationIds = requestedOrganizationIds.filter((id) => !allowedSet.has(id));
+      if (unauthorizedOrganizationIds.length > 0) {
+        throw new UnauthorizedException('Not allowed to write to all requested organizations');
+      }
+
       const configuration = await this.getCurrentOrgPartnerConfiguration({
         userId,
         configurationId,
@@ -73,8 +81,7 @@ export class UpdateVercelIntegration {
         configuration,
       });
 
-      const organizationIds = Object.keys(orgIdsToProjectIds);
-      const environments = await this.getEnvironments(organizationIds);
+      const environments = await this.getEnvironments(requestedOrganizationIds);
 
       for (const env of environments) {
         const projectIds = orgIdsToProjectIds[env._organizationId];
@@ -107,6 +114,9 @@ export class UpdateVercelIntegration {
 
       return { success: true };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException(error.message);
     }
   }

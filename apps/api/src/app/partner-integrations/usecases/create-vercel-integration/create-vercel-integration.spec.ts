@@ -103,6 +103,7 @@ describe('CreateVercelIntegration', () => {
 
     // Verify organization repository call
     assert.calledWith(organizationRepositoryMock.upsertPartnerConfiguration, {
+      userId: command.userId,
       organizationId: command.organizationId,
       configuration: {
         accessToken: 'test-token',

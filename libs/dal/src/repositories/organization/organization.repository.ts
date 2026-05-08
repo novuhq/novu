@@ -13,6 +13,10 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.findUserActiveOrganizations(userId);
   }
 
+  getUserAuthorizedOrganizationIds(userId: string): Promise<string[]> {
+    return this.organizationRepository.getUserAuthorizedOrganizationIds(userId);
+  }
+
   updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
     return this.organizationRepository.updateBrandingDetails(organizationId, branding);
   }
@@ -29,7 +33,7 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.findByPartnerConfigurationId(args);
   }
 
-  upsertPartnerConfiguration(args: { organizationId: string; configuration: IPartnerConfiguration }) {
+  upsertPartnerConfiguration(args: { userId: string; organizationId: string; configuration: IPartnerConfiguration }) {
     return this.organizationRepository.upsertPartnerConfiguration(args);
   }
 

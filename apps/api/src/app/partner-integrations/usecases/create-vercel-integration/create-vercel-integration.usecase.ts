@@ -27,6 +27,7 @@ export class CreateVercelIntegration {
       };
 
       await this.organizationRepository.upsertPartnerConfiguration({
+        userId: command.userId,
         organizationId: command.organizationId,
         configuration,
       });

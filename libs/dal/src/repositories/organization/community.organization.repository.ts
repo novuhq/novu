@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { BaseRepository } from '../base-repository';
 import { CommunityMemberRepository } from '../member';
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
@@ -29,10 +30,14 @@ export class CommunityOrganizationRepository
     });
   }
 
-  private async getUsersMembersOrganizationIds(userId: string): Promise<string[]> {
+  async getUsersMembersOrganizationIds(userId: string): Promise<string[]> {
     const members = await this.memberRepository.findUserActiveMembers(userId);
 
     return members.map((member) => member._organizationId);
+  }
+
+  async getUserAuthorizedOrganizationIds(userId: string): Promise<string[]> {
+    return this.getUsersMembersOrganizationIds(userId);
   }
 
   async updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
@@ -90,6 +95,70 @@ export class CommunityOrganizationRepository
   }
 
   async upsertPartnerConfiguration({
+    userId,
+    organizationId,
+    configuration,
+  }: {
+    userId: string;
+    organizationId: string;
+    configuration: IPartnerConfiguration;
+  }) {
+    const allowedOrganizationIds = await this.getUsersMembersOrganizationIds(userId);
+    this.assertOrganizationsAuthorized([organizationId], allowedOrganizationIds);
+
+    return this.performUpsertPartnerConfiguration({ organizationId, configuration });
+  }
+
+  async bulkUpdatePartnerConfiguration({
+    userId,
+    data,
+    configuration,
+  }: {
+    userId: string;
+    data: Record<string, string[]>;
+    configuration: IPartnerConfiguration;
+  }) {
+    const { teamId } = configuration;
+    const allowedOrganizationIds = await this.getUsersMembersOrganizationIds(userId);
+    const requestedOrgIds = Object.keys(data);
+    this.assertOrganizationsAuthorized(requestedOrgIds, allowedOrganizationIds);
+
+    // remove all existing configurations for this team across the user's organizations
+    await this.update(
+      {
+        _id: { $in: allowedOrganizationIds },
+      },
+      {
+        $pull: {
+          partnerConfigurations: {
+            teamId,
+          },
+        },
+      }
+    );
+
+    const promises = requestedOrgIds.map((orgId) =>
+      this.performUpsertPartnerConfiguration({
+        organizationId: orgId,
+        configuration: {
+          ...configuration,
+          projectIds: data[orgId],
+        },
+      })
+    );
+
+    await Promise.all(promises);
+  }
+
+  private assertOrganizationsAuthorized(requestedOrgIds: string[], allowedOrganizationIds: string[]) {
+    const allowedSet = new Set(allowedOrganizationIds);
+    const unauthorized = requestedOrgIds.filter((id) => !allowedSet.has(id));
+    if (unauthorized.length > 0) {
+      throw new UnauthorizedException('Not allowed to write partner configuration for the requested organization(s)');
+    }
+  }
+
+  private async performUpsertPartnerConfiguration({
     organizationId,
     configuration,
   }: {
@@ -124,45 +193,5 @@ export class CommunityOrganizationRepository
     }
 
     return updateResult;
-  }
-
-  async bulkUpdatePartnerConfiguration({
-    userId,
-    data,
-    configuration,
-  }: {
-    userId: string;
-    data: Record<string, string[]>;
-    configuration: IPartnerConfiguration;
-  }) {
-    const { teamId } = configuration;
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    // remove all existing configurations for this team
-    await this.update(
-      {
-        _id: { $in: organizationIds },
-      },
-      {
-        $pull: {
-          partnerConfigurations: {
-            teamId,
-          },
-        },
-      }
-    );
-
-    const usedOrgIds = Object.keys(data);
-    const promises = usedOrgIds.map((orgId) =>
-      this.upsertPartnerConfiguration({
-        organizationId: orgId,
-        configuration: {
-          ...configuration,
-          projectIds: data[orgId],
-        },
-      })
-    );
-
-    await Promise.all(promises);
   }
 }

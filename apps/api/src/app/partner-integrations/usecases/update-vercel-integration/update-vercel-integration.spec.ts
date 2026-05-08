@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
@@ -80,6 +80,7 @@ describe('UpdateVercelIntegration', () => {
         },
       ]),
       bulkUpdatePartnerConfiguration: stub().resolves(true),
+      getUserAuthorizedOrganizationIds: stub().resolves(['org-id']),
     };
 
     analyticsServiceMock = {
@@ -411,6 +412,34 @@ describe('UpdateVercelIntegration', () => {
       assert.called(httpServiceMock.get);
       assert.called(httpServiceMock.delete);
     }
+  });
+
+  it('should reject cross-tenant writes for organizations the user is not a member of', async () => {
+    organizationRepositoryMock.getUserAuthorizedOrganizationIds.resolves(['org-id']);
+
+    let caught: unknown;
+    try {
+      await updateVercelIntegration.execute({
+        userId: session.user._id,
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        configurationId: 'test-config-id',
+        data: {
+          'org-id': ['project-1'],
+          // attacker injects another tenant's organization id
+          'someone-elses-org-id': ['project-evil'],
+        },
+      });
+      throw new Error('Should not reach here');
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).to.be.instanceOf(UnauthorizedException);
+    assert.notCalled(organizationRepositoryMock.bulkUpdatePartnerConfiguration);
+    assert.notCalled(environmentRepositoryMock.find);
+    assert.notCalled(httpServiceMock.delete);
+    assert.notCalled(httpServiceMock.post);
   });
 
   it('should handle multiple projects with environment variables', async () => {
