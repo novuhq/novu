@@ -32,9 +32,13 @@ const apiUrl = urls['api.novu'];
 const dashboardUrl = urls['dashboard.novu'];
 const wsUrl = urls['ws.novu'];
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 const dashboardOriginRegex = dashboardUrl.replace(
   /^https?:\/\/(.+?)(:\d+)?$/,
-  (_match, host, port = '') => `https://(.*\\.)?${host.replace(/\./g, '\\.')}${port}`
+  (_match, host, port = '') => `https://(.*\\.)?${escapeRegExp(host)}${escapeRegExp(port)}`
 );
 
 const env = {
