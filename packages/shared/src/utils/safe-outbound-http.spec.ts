@@ -290,6 +290,81 @@ describe('safe-outbound-http', () => {
         reason: 'UNSUPPORTED_SCHEME',
       });
     });
+
+    it('refuses to follow cross-origin 307 redirects (method-preserving)', async () => {
+      // 307 must replay the original method+body against the new target. If
+      // that target is a different origin, blanking the body would mask the
+      // attempt; treat it as a hard stop instead.
+      respond = (_req, res) => {
+        res.writeHead(307, { location: 'http://other-host.invalid:9999/elsewhere' });
+        res.end();
+      };
+
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+
+      await expect(
+        safeOutboundRequest({
+          url: `${upstreamUrl}/start`,
+          method: 'POST',
+          headers: { authorization: 'Bearer secret' },
+          body: { sensitive: true },
+        })
+      ).rejects.toMatchObject({
+        name: 'SsrfBlockedError',
+        reason: 'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT',
+      });
+    });
+
+    it('refuses to follow cross-origin 308 redirects (method-preserving)', async () => {
+      respond = (_req, res) => {
+        res.writeHead(308, { location: 'http://other-host.invalid:9999/elsewhere' });
+        res.end();
+      };
+
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+
+      await expect(
+        safeOutboundRequest({
+          url: `${upstreamUrl}/start`,
+          method: 'POST',
+          body: { sensitive: true },
+        })
+      ).rejects.toMatchObject({
+        name: 'SsrfBlockedError',
+        reason: 'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT',
+      });
+    });
+
+    it('allows same-origin 307 redirects (the body and method are safe to replay)', async () => {
+      let hits = 0;
+      respond = (_req, res) => {
+        hits += 1;
+        if (hits === 1) {
+          // Self-redirect: same host, different path. Method-preserving is fine here.
+          res.writeHead(307, { location: '/replayed' });
+          res.end();
+
+          return;
+        }
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ replayed: true }));
+      };
+
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+
+      const response = await safeOutboundJsonRequest<{ replayed: boolean }>({
+        url: `${upstreamUrl}/start`,
+        method: 'POST',
+        body: { keep: true },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual({ replayed: true });
+      expect(upstreamHits).toHaveLength(2);
+      const [, replayHit] = upstreamHits as [(typeof upstreamHits)[number], (typeof upstreamHits)[number]];
+      expect(replayHit.method).toBe('POST');
+      expect(JSON.parse(Buffer.concat(replayHit.bodyChunks).toString('utf8'))).toEqual({ keep: true });
+    });
   });
 
   describe('happy path', () => {

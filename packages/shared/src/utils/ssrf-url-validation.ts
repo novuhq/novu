@@ -93,7 +93,8 @@ export type SsrfBlockReason =
   | 'CREDENTIALS_IN_URL'
   | 'BLOCKED_HOSTNAME'
   | 'DNS_LOOKUP_FAILED'
-  | 'PRIVATE_IP';
+  | 'PRIVATE_IP'
+  | 'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT';
 
 /**
  * Thrown by the safe outbound HTTP layer when a URL or its resolved address is

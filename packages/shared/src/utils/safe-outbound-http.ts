@@ -137,6 +137,21 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
       }
 
       const nextUrl = new URL(location, parsed.toString());
+
+      // 307 and 308 are method-preserving redirects: the upstream is asking us
+      // to replay the original method+body against the new target. If the new
+      // target is on a different origin, we cannot safely strip the body or
+      // downgrade the method without changing semantics, and silently blanking
+      // the body would mask the cross-origin attempt from the caller. Treat it
+      // as a hard stop so the caller can decide what to do.
+      if ((status === 307 || status === 308) && initialOriginHost && nextUrl.host.toLowerCase() !== initialOriginHost) {
+        throw new SsrfBlockedError(
+          'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT',
+          `Refusing to follow ${status} redirect from ${parsed.host} to ${nextUrl.host}: method-preserving redirects across origin boundaries are not allowed.`,
+          { hostname: nextUrl.hostname }
+        );
+      }
+
       currentUrl = nextUrl;
 
       // 303 must rewrite to GET. 301/302 historically also rewrite POST→GET in browsers; we follow that.
