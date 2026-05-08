@@ -1,5 +1,8 @@
-import * as applicationGeneric from '@novu/application-generic';
 import { CompileTemplate, ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
+// The top-level @novu/application-generic re-exports helpers via Object.defineProperty
+// getters, which sinon cannot replace. Stub the underlying source module instead — the
+// re-export getter delegates to it so backend code picks up the stub.
+const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import {
   BuilderGroupValues,
@@ -556,7 +559,7 @@ describe('Message filter matcher', () => {
   });
 
   it('should handle webhook filter', async () => {
-    const safeRequestStub = sinon.stub(applicationGeneric, 'safeOutboundJsonRequest').resolves({
+    const safeRequestStub = sinon.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
       statusCode: 200,
       statusMessage: 'OK',
       headers: {},
@@ -585,7 +588,7 @@ describe('Message filter matcher', () => {
 
   it('should skip async filter if child under OR returned true', async () => {
     const safeRequestStub = sinon
-      .stub(applicationGeneric, 'safeOutboundJsonRequest')
+      .stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest')
       .resolves({ statusCode: 200, statusMessage: 'OK', headers: {}, body: { varField: true } } as any);
 
     let matchedMessage = await conditionsFilter.filter(
@@ -647,7 +650,7 @@ describe('Message filter matcher', () => {
 
   it('should skip async filter if child under AND returned false', async () => {
     const safeRequestStub = sinon
-      .stub(applicationGeneric, 'safeOutboundJsonRequest')
+      .stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest')
       .resolves({ statusCode: 200, statusMessage: 'OK', headers: {}, body: { varField: true } } as any);
 
     let matchedMessage = await conditionsFilter.filter(

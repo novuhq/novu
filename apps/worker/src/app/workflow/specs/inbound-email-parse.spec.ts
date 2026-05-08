@@ -1,11 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import * as applicationGeneric from '@novu/application-generic';
 import {
   CompileTemplate,
   HttpClientService,
   InboundDomainRouteDelivery,
   SendWebhookMessage,
 } from '@novu/application-generic';
+// The top-level @novu/application-generic re-exports helpers via Object.defineProperty
+// getters, which sinon cannot replace. Stub the underlying source module instead — the
+// re-export getter delegates to it so backend code picks up the stub.
+const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
 import {
   AgentIntegrationRepository,
   DomainRepository,
@@ -69,7 +72,7 @@ describe('Should handle the new arrived mail', () => {
   it('should send webhook request to the users webhook', async () => {
     const mail = getMailData();
 
-    const safeRequestStub = sandbox.stub(applicationGeneric, 'safeOutboundJsonRequest').resolves({
+    const safeRequestStub = sandbox.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
       statusCode: 200,
       statusMessage: 'OK',
       headers: {},
