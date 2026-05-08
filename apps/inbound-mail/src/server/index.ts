@@ -271,16 +271,27 @@ class Mailin extends events.EventEmitter {
                 return finalizedMessage;
               })
               .then(postQueue.bind(null, connection))
-              .then(unlinkFile.bind(null, connection))
-              .then(() => resolve())
-              .catch((error) => {
-                nr.noticeError(error);
-                logger.error(
-                  { err: error, context: LOG_CONTEXT, connectionId: connection.id },
-                  `${connection.id} Unable to finish processing message!!`
-                );
-                reject(error);
-              })
+              .then(
+                () => unlinkFileBestEffort(connection).then(() => resolve()),
+                (processingError) => {
+                  nr.noticeError(processingError);
+                  logger.error(
+                    { err: processingError, context: LOG_CONTEXT, connectionId: connection.id },
+                    `${connection.id} Unable to finish processing message!!`
+                  );
+
+                  /*
+                   * Always clean up the temp raw email — even on the failure path.
+                   * SMTP returns 4xx so the sending MTA retries delivery, which
+                   * produces a fresh temp file. Retaining the failed file would
+                   * let an attacker amplify a queue/Redis outage into disk
+                   * exhaustion by repeatedly submitting messages while the
+                   * downstream queue is degraded. Unlink is best-effort so a
+                   * cleanup failure does not mask the original processing error.
+                   */
+                  return unlinkFileBestEffort(connection).then(() => reject(processingError));
+                }
+              )
               .finally(() => {
                 if (transaction) {
                   transaction.end();
@@ -543,6 +554,36 @@ class Mailin extends events.EventEmitter {
             logger.info(
               { context: LOG_CONTEXT, connectionId: connection.id },
               `${connection.id} End processing message, deleted ${connection.mailPath}`
+            );
+          })
+      );
+    }
+
+    /*
+     * Best-effort variant used on the failure path. Swallows ENOENT (the file
+     * may never have been written, e.g. if `retrieveRawEmail` failed) and logs
+     * any other unlink error without rejecting — the caller is already
+     * propagating an upstream processing error and we don't want to mask it
+     * with a cleanup failure. This is what prevents a sustained queue outage
+     * from being amplified into a disk-exhaustion DoS via retained temp files.
+     */
+    function unlinkFileBestEffort(connection): Promise<void> {
+      return nr.startSegment('inbound-mail/unlink-file-best-effort', true, () =>
+        fs.promises
+          .unlink(connection.mailPath)
+          .then(() => {
+            logger.info(
+              { context: LOG_CONTEXT, connectionId: connection.id },
+              `${connection.id} Cleaned up temp file after failure: ${connection.mailPath}`
+            );
+          })
+          .catch((unlinkError: NodeJS.ErrnoException) => {
+            if (unlinkError?.code === 'ENOENT') {
+              return;
+            }
+            logger.warn(
+              { err: unlinkError, context: LOG_CONTEXT, connectionId: connection.id },
+              `${connection.id} Failed to clean up temp file ${connection.mailPath} on failure path`
             );
           })
       );

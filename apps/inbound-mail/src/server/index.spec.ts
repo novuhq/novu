@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import net from 'node:net';
+import path from 'node:path';
 import { InboundParseQueueService } from '@novu/application-generic';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -116,9 +118,25 @@ describe('Mailin SMTP DATA handler — queue persistence', () => {
     sinon.restore();
   });
 
+  /*
+   * The Mailin server writes raw inbound emails into a tmp directory derived
+   * from the configured `tmp` setting (default `.tmp`, relative to cwd at
+   * server start time). After every test we sample the directory to assert
+   * that no temp files leaked from a failed queue insert — a sustained queue
+   * outage must not be amplifiable into a disk-exhaustion DoS.
+   */
+  const tmpDir = path.resolve(mailinServer.configuration.tmp);
+
+  function listTmpFiles(): string[] {
+    if (!fs.existsSync(tmpDir)) return [];
+
+    return fs.readdirSync(tmpDir).filter((name) => !name.startsWith('.'));
+  }
+
   it('returns SMTP 4xx (not 250) when the queue insert fails so the sender retries instead of dropping the message', async () => {
     sinon.stub(InboundParseQueueService.prototype, 'add').rejects(new Error('Simulated queue insert failure'));
 
+    const before = new Set(listTmpFiles());
     const transcript = await sendInboundMessage();
     const postDataReply = findPostDataReply(transcript);
 
@@ -127,16 +145,32 @@ describe('Mailin SMTP DATA handler — queue persistence', () => {
     const code = Number(reply.slice(0, 3));
     expect(code, `expected 4xx retry-eligible response, got: ${reply}`).to.be.gte(400).and.lt(500);
     expect(reply.startsWith('250 '), `unexpected 250 OK on queue failure: ${reply}`).to.equal(false);
+
+    /*
+     * Give the failure-path cleanup (best-effort unlink) a beat to run after
+     * the SMTP transaction terminates. Then assert that no new temp file was
+     * left behind. Without this assertion an attacker could repeatedly submit
+     * messages during a queue outage and accumulate temp files until the disk
+     * is full.
+     */
+    await new Promise((r) => setTimeout(r, 250));
+    const after = listTmpFiles().filter((name) => !before.has(name));
+    expect(after, `temp files leaked on queue-failure path: ${after.join(', ')}`).to.deep.equal([]);
   });
 
-  it('returns SMTP 250 when the queue insert succeeds', async () => {
+  it('returns SMTP 250 when the queue insert succeeds and cleans up the temp file', async () => {
     sinon.stub(InboundParseQueueService.prototype, 'add').resolves(undefined as never);
 
+    const before = new Set(listTmpFiles());
     const transcript = await sendInboundMessage();
     const postDataReply = findPostDataReply(transcript);
 
     expect(postDataReply, `transcript: ${transcript.join(' | ')}`).to.exist;
     const reply = postDataReply ?? '';
     expect(reply.startsWith('250 '), `expected 250 OK, got: ${reply}`).to.equal(true);
+
+    await new Promise((r) => setTimeout(r, 250));
+    const after = listTmpFiles().filter((name) => !before.has(name));
+    expect(after, `temp files leaked on success path: ${after.join(', ')}`).to.deep.equal([]);
   });
 });
