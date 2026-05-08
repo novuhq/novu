@@ -95,6 +95,7 @@ export class UpdateIntegration {
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
     });
     if (!existingIntegration) {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
@@ -104,6 +105,7 @@ export class UpdateIntegration {
     if (identifierHasChanged) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         identifier: command.identifier,
       });
 
@@ -119,12 +121,10 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    const environmentId = command.environmentId ?? existingIntegration._environmentId;
-
     if (command.check) {
       await this.checkIntegration.execute(
         CheckIntegrationCommand.create({
-          environmentId,
+          environmentId: existingIntegration._environmentId,
           organizationId: command.organizationId,
           credentials: command.credentials ?? existingIntegration.credentials ?? {},
           providerId: existingIntegration.providerId,
@@ -143,10 +143,6 @@ export class UpdateIntegration {
 
     if (identifierHasChanged) {
       updatePayload.identifier = command.identifier;
-    }
-
-    if (command.environmentId) {
-      updatePayload._environmentId = environmentId;
     }
 
     if (isActiveDefined) {
@@ -190,6 +186,7 @@ export class UpdateIntegration {
     await this.integrationRepository.update(
       {
         _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
         _environmentId: existingIntegration._environmentId,
       },
       {
@@ -201,14 +198,15 @@ export class UpdateIntegration {
       await this.integrationRepository.recalculatePriorityForAllActive({
         _id: existingIntegration._id,
         _organizationId: existingIntegration._organizationId,
-        _environmentId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._environmentId,
         channel: existingIntegration.channel,
       });
     }
 
     const updatedIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
-      _environmentId: environmentId,
+      _organizationId: existingIntegration._organizationId,
+      _environmentId: existingIntegration._environmentId,
     });
     if (!updatedIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);

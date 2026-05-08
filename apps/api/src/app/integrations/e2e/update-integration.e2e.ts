@@ -202,7 +202,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     expect(data.name).to.eq(payload.name);
   });
 
-  it('should allow updating the integration with just environment', async () => {
+  it('should not allow moving an integration to another environment via update', async () => {
     const integrationOne = await integrationRepository.create({
       name: 'Test',
       identifier: 'identifier',
@@ -213,8 +213,10 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       _environmentId: session.environment._id,
     });
     const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+
     const payload = {
       _environmentId: prodEnv?._id,
+      name: 'Renamed Test',
       check: false,
     };
 
@@ -222,7 +224,37 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       body: { data },
     } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
 
-    expect(data._environmentId).to.equal(prodEnv?._id);
+    expect(data._environmentId).to.equal(session.environment._id);
+    expect(data.name).to.equal('Renamed Test');
+  });
+
+  it('should not allow updating an integration in a different environment of the same organization', async () => {
+    const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+    const otherEnvironmentIntegration = await integrationRepository.create({
+      name: 'OtherEnv',
+      identifier: 'other-env-update',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: prodEnv!._id,
+    });
+
+    const payload = {
+      name: 'Renamed by another env',
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${otherEnvironmentIntegration._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Entity with id ${otherEnvironmentIntegration._id} not found`);
+
+    const untouched = await integrationRepository.findOne({
+      _id: otherEnvironmentIntegration._id,
+      _environmentId: prodEnv!._id,
+    });
+    expect(untouched?.name).to.equal('OtherEnv');
   });
 
   it('should update custom SMTP integration with TLS options successfully', async () => {

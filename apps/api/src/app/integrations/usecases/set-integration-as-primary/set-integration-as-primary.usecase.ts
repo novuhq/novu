@@ -53,6 +53,7 @@ export class SetIntegrationAsPrimary {
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
     });
     if (!existingIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} not found`);

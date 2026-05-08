@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { IntegrationRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -7,6 +7,7 @@ import { expect } from 'chai';
 describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
+  const envRepository = new EnvironmentRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -213,6 +214,31 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', (
     expect(second.primary).to.equal(false);
     expect(second.active).to.equal(true);
     expect(second.priority).to.equal(1);
+  });
+
+  it('should not allow deleting an integration that belongs to another environment in the same organization', async () => {
+    const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+
+    const otherEnvironmentIntegration = await integrationRepository.create({
+      name: 'OtherEnv',
+      identifier: 'other-env-delete',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: prodEnv!._id,
+    });
+
+    const { body } = await session.testAgent.delete(`/v1/integrations/${otherEnvironmentIntegration._id}`).send();
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Entity with id ${otherEnvironmentIntegration._id} not found`);
+
+    const stillExists = await integrationRepository.findOne({
+      _id: otherEnvironmentIntegration._id,
+      _environmentId: prodEnv!._id,
+    });
+    expect(stillExists?._id).to.equal(otherEnvironmentIntegration._id);
   });
 
   it('should remove a newly created integration', async () => {
