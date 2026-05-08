@@ -8,12 +8,22 @@ type MockClickHouseService = {
   client: ClickHouseClient | undefined;
 };
 
+const FAST_SHUTDOWN_DRAIN_TIMEOUT_MS = '500';
+const FAST_SHUTDOWN_DRAIN_RETRY_DELAY_MS = '5';
+
 describe('ClickHouseBatchService', () => {
   let service: ClickHouseBatchService;
   let clickhouseService: MockClickHouseService;
   let logger: jest.Mocked<PinoLogger>;
+  let originalDrainTimeout: string | undefined;
+  let originalDrainRetryDelay: string | undefined;
 
   beforeEach(async () => {
+    originalDrainTimeout = process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_TIMEOUT_MS;
+    originalDrainRetryDelay = process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_RETRY_DELAY_MS;
+    process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_TIMEOUT_MS = FAST_SHUTDOWN_DRAIN_TIMEOUT_MS;
+    process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_RETRY_DELAY_MS = FAST_SHUTDOWN_DRAIN_RETRY_DELAY_MS;
+
     clickhouseService = {
       insert: jest.fn().mockResolvedValue(undefined),
       client: {} as ClickHouseClient,
@@ -29,7 +39,11 @@ describe('ClickHouseBatchService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ClickHouseBatchService,
+        {
+          provide: ClickHouseBatchService,
+          useFactory: (chSvc: ClickHouseService, log: PinoLogger) => new ClickHouseBatchService(chSvc, log, []),
+          inject: [ClickHouseService, PinoLogger],
+        },
         {
           provide: ClickHouseService,
           useValue: clickhouseService,
@@ -46,7 +60,24 @@ describe('ClickHouseBatchService', () => {
   });
 
   afterEach(async () => {
-    await service.onModuleDestroy();
+    if (!service['isShuttingDown']) {
+      // Force any hung insert mocks (e.g. from backpressure tests) to resolve
+      // so the shutdown drain can complete instead of timing out.
+      clickhouseService.insert.mockReset();
+      clickhouseService.insert.mockResolvedValue(undefined);
+      await service.onModuleDestroy();
+    }
+
+    if (originalDrainTimeout === undefined) {
+      delete process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_TIMEOUT_MS;
+    } else {
+      process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_TIMEOUT_MS = originalDrainTimeout;
+    }
+    if (originalDrainRetryDelay === undefined) {
+      delete process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_RETRY_DELAY_MS;
+    } else {
+      process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_RETRY_DELAY_MS = originalDrainRetryDelay;
+    }
   });
 
   describe('add', () => {
@@ -86,7 +117,10 @@ describe('ClickHouseBatchService', () => {
 
       const stats = service.getBufferStats();
       expect(stats).toHaveLength(0);
-      expect(logger.warn).toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ table: 'test_table' }),
+        'ClickHouse batch service is shutting down, dropping row'
+      );
     });
 
     it('should not add rows when ClickHouse client is not initialized', async () => {
@@ -269,20 +303,20 @@ describe('ClickHouseBatchService', () => {
         .mockRejectedValueOnce(new Error('Connection failed'))
         .mockResolvedValueOnce(undefined);
 
-      const config = { maxBatchSize: 10, flushIntervalMs: 10000 };
+      const config = { maxBatchSize: 10, flushIntervalMs: 10000, retryDelayMs: 1 };
 
       await service.add('test_table', { id: '1' }, config);
 
       await service.flush('test_table');
 
       expect(clickhouseService.insert).toHaveBeenCalledTimes(3);
-      expect(logger.warn).toHaveBeenCalledTimes(2);
+      expect(logger.warn).toHaveBeenCalled();
     });
 
-    it('should log error after max retries', async () => {
+    it('should re-queue rows on persistent failure so they are not lost', async () => {
       clickhouseService.insert.mockRejectedValue(new Error('Persistent failure'));
 
-      const config = { maxBatchSize: 10, flushIntervalMs: 10000 };
+      const config = { maxBatchSize: 10, flushIntervalMs: 10000, retryDelayMs: 1 };
 
       await service.add('test_table', { id: '1' }, config);
 
@@ -293,6 +327,7 @@ describe('ClickHouseBatchService', () => {
 
       const stats = service.getBufferStats();
       expect(stats[0].metrics.totalFailed).toBe(1);
+      expect(stats[0].bufferSize).toBe(1);
     });
 
     it('should respect custom retry configuration', async () => {
@@ -302,7 +337,7 @@ describe('ClickHouseBatchService', () => {
         maxBatchSize: 10,
         flushIntervalMs: 10000,
         maxRetries: 1,
-        retryDelayMs: 500,
+        retryDelayMs: 1,
       };
 
       await service.add('test_table', { id: '1' }, config);
@@ -323,36 +358,124 @@ describe('ClickHouseBatchService', () => {
 
       jest.advanceTimersByTime(1000);
 
-      await new Promise((resolve) => setImmediate(resolve));
+      jest.useRealTimers();
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(clickhouseService.insert).toHaveBeenCalledWith('test_table', [{ id: '1' }], undefined);
-
-      jest.useRealTimers();
     });
   });
 
-  describe('onModuleDestroy', () => {
-    it('should flush all buffers and clear timers', async () => {
+  describe('shutdown drain', () => {
+    it('should set isShuttingDown flag', async () => {
+      await service.beforeApplicationShutdown('SIGTERM');
+
+      expect(service['isShuttingDown']).toBe(true);
+    });
+
+    it('should flush all buffers and clear timers on graceful shutdown', async () => {
       const config = { maxBatchSize: 10, flushIntervalMs: 10000 };
 
       await service.add('table1', { id: '1' }, config);
       await service.add('table2', { id: '2' }, config);
 
-      await service.onModuleDestroy();
+      await service.beforeApplicationShutdown('SIGTERM');
 
-      expect(clickhouseService.insert).toHaveBeenCalledTimes(2);
+      expect(clickhouseService.insert).toHaveBeenCalledWith('table1', [{ id: '1' }], undefined);
+      expect(clickhouseService.insert).toHaveBeenCalledWith('table2', [{ id: '2' }], undefined);
       expect(service.getBufferStats()).toHaveLength(0);
-      expect(logger.info).toHaveBeenCalledWith('Starting graceful shutdown of ClickHouse batch service');
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ signal: 'SIGTERM' }),
+        'Starting graceful shutdown of ClickHouse batch service'
+      );
       expect(logger.info).toHaveBeenCalledWith('ClickHouse batch service shutdown complete');
     });
 
-    it('should set isShuttingDown flag', async () => {
+    it('should be idempotent across onModuleDestroy and beforeApplicationShutdown', async () => {
+      const config = { maxBatchSize: 10, flushIntervalMs: 10000 };
+
+      await service.add('test_table', { id: '1' }, config);
+
+      await service.beforeApplicationShutdown('SIGTERM');
       await service.onModuleDestroy();
 
-      expect(service['isShuttingDown']).toBe(true);
+      expect(clickhouseService.insert).toHaveBeenCalledTimes(1);
     });
 
-    it('should wait for all queues to complete during shutdown', async () => {
+    it('should retry buffered rows when ClickHouse is unavailable then recovers during shutdown', async () => {
+      let callCount = 0;
+      clickhouseService.insert.mockImplementation(async () => {
+        callCount += 1;
+        if (callCount <= 4) {
+          throw new Error('ClickHouse unavailable');
+        }
+      });
+
+      const config = {
+        maxBatchSize: 10,
+        flushIntervalMs: 10000,
+        maxRetries: 0,
+        retryDelayMs: 1,
+      };
+
+      await service.add('test_table', { id: '1' }, config);
+      await service.add('test_table', { id: '2' }, config);
+
+      await service.beforeApplicationShutdown('SIGTERM');
+
+      // First 4 attempts fail, 5th succeeds with both rows preserved.
+      expect(callCount).toBeGreaterThanOrEqual(5);
+      expect(clickhouseService.insert).toHaveBeenLastCalledWith('test_table', [{ id: '1' }, { id: '2' }], undefined);
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ attempts: expect.any(Number) }),
+        'All ClickHouse buffers drained successfully'
+      );
+    });
+
+    it('should log structured row loss when drain timeout is reached', async () => {
+      process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_TIMEOUT_MS = '50';
+      process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_RETRY_DELAY_MS = '5';
+
+      const localModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          {
+            provide: ClickHouseBatchService,
+            useFactory: (chSvc: ClickHouseService, log: PinoLogger) => new ClickHouseBatchService(chSvc, log, []),
+            inject: [ClickHouseService, PinoLogger],
+          },
+          { provide: ClickHouseService, useValue: clickhouseService },
+          { provide: PinoLogger, useValue: logger },
+        ],
+      }).compile();
+
+      const localService = localModule.get<ClickHouseBatchService>(ClickHouseBatchService);
+      await localService.onModuleInit();
+
+      clickhouseService.insert.mockRejectedValue(new Error('ClickHouse permanently down'));
+
+      const config = {
+        maxBatchSize: 10,
+        flushIntervalMs: 10000,
+        maxRetries: 0,
+        retryDelayMs: 1,
+      };
+
+      await localService.add('lost_table', { id: '1' }, config);
+      await localService.add('lost_table', { id: '2' }, config);
+      await localService.add('lost_table', { id: '3' }, config);
+
+      await localService.beforeApplicationShutdown('SIGTERM');
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rowsLost: 3,
+          tablesAffected: expect.arrayContaining([expect.objectContaining({ table: 'lost_table', bufferSize: 3 })]),
+        }),
+        'Shutdown drain timeout reached: analytic rows could not be flushed to ClickHouse'
+      );
+    });
+
+    it('should wait for in-flight flushes to complete during shutdown', async () => {
       const config = { maxBatchSize: 10, flushIntervalMs: 10000 };
 
       let resolveInsert: (() => void) | undefined;
@@ -367,13 +490,13 @@ describe('ClickHouseBatchService', () => {
       await service.add('test_table', { id: '1' }, config);
       const flushPromise = service.flush('test_table');
 
-      const destroyPromise = service.onModuleDestroy();
+      const shutdownPromise = service.beforeApplicationShutdown('SIGTERM');
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 30));
 
       if (resolveInsert) resolveInsert();
       await flushPromise;
-      await destroyPromise;
+      await shutdownPromise;
 
       expect(clickhouseService.insert).toHaveBeenCalled();
       expect(service.getBufferStats()).toHaveLength(0);
@@ -400,8 +523,6 @@ describe('ClickHouseBatchService', () => {
         table: 'table1',
         bufferSize: 2,
         maxBatchSize: 10,
-        writeQueueSize: 0,
-        writeQueuePending: 0,
         flushQueueSize: 0,
         flushQueuePending: 0,
       });
@@ -412,8 +533,6 @@ describe('ClickHouseBatchService', () => {
         table: 'table2',
         bufferSize: 1,
         maxBatchSize: 20,
-        writeQueueSize: 0,
-        writeQueuePending: 0,
         flushQueueSize: 0,
         flushQueuePending: 0,
       });

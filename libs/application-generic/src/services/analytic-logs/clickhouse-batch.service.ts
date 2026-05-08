@@ -1,4 +1,4 @@
-import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
@@ -49,6 +49,12 @@ const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
 const DEFAULT_BACKPRESSURE_TIMEOUT_MS = 1500;
 const SHUTDOWN_POLL_INTERVAL_MS = 10_000;
 const SHUTDOWN_MAX_ATTEMPTS = 10;
+// Total time we are willing to spend draining the buffers during shutdown
+// before giving up and logging the row count loss for observability.
+const DEFAULT_SHUTDOWN_DRAIN_TIMEOUT_MS = 30_000;
+// Time to wait between drain iterations when ClickHouse is unavailable
+// to give the upstream a chance to recover before the next attempt.
+const DEFAULT_SHUTDOWN_DRAIN_RETRY_DELAY_MS = 1000;
 
 /**
  * Batches and flushes rows to ClickHouse with concurrent write safety.
@@ -82,13 +88,28 @@ const SHUTDOWN_MAX_ATTEMPTS = 10;
 @Injectable()
 export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, BeforeApplicationShutdown {
   private buffers: Map<string, TableBuffer> = new Map();
+  private isShuttingDown = false;
+  private shutdownDrainTimeoutMs: number = DEFAULT_SHUTDOWN_DRAIN_TIMEOUT_MS;
+  private shutdownDrainRetryDelayMs: number = DEFAULT_SHUTDOWN_DRAIN_RETRY_DELAY_MS;
 
   constructor(
     private readonly clickhouseService: ClickHouseService,
     private readonly logger: PinoLogger,
-    private readonly queueServices: QueueBaseService[] = []
+    @Optional() private readonly queueServices: QueueBaseService[] = []
   ) {
     this.logger.setContext(ClickHouseBatchService.name);
+
+    const drainTimeoutEnv = process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_TIMEOUT_MS;
+    const parsedDrainTimeout = drainTimeoutEnv ? parseInt(drainTimeoutEnv, 10) : NaN;
+    if (Number.isFinite(parsedDrainTimeout) && parsedDrainTimeout > 0) {
+      this.shutdownDrainTimeoutMs = parsedDrainTimeout;
+    }
+
+    const drainRetryDelayEnv = process.env.CLICKHOUSE_BATCH_SHUTDOWN_DRAIN_RETRY_DELAY_MS;
+    const parsedDrainRetryDelay = drainRetryDelayEnv ? parseInt(drainRetryDelayEnv, 10) : NaN;
+    if (Number.isFinite(parsedDrainRetryDelay) && parsedDrainRetryDelay >= 0) {
+      this.shutdownDrainRetryDelayMs = parsedDrainRetryDelay;
+    }
   }
 
   async onModuleInit(): Promise<void> {
@@ -96,6 +117,12 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
   }
 
   async add<T extends Record<string, unknown>>(table: string, row: T, config: BatchConfig): Promise<void> {
+    if (this.isShuttingDown) {
+      this.logger.warn({ table }, 'ClickHouse batch service is shutting down, dropping row');
+
+      return;
+    }
+
     if (!this.clickhouseService.client) {
       this.logger.debug({ table }, 'ClickHouse client not initialized, skipping batch add');
 
@@ -347,25 +374,127 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
   }
 
   async onModuleDestroy(): Promise<void> {
-    this.logger.debug('ClickHouse batch service onModuleDestroy called (no-op)');
+    if (this.isShuttingDown) {
+      this.logger.debug('ClickHouse batch service onModuleDestroy called while already shutting down');
+
+      return;
+    }
+
+    await this.beforeApplicationShutdown('onModuleDestroy');
   }
 
   async beforeApplicationShutdown(signal?: string): Promise<void> {
+    if (this.isShuttingDown) {
+      this.logger.debug({ signal }, 'ClickHouse batch service shutdown already in progress, skipping');
+
+      return;
+    }
+
+    this.isShuttingDown = true;
     this.logger.info({ signal }, 'Starting graceful shutdown of ClickHouse batch service');
 
-    for (const [table, buffer] of this.buffers.entries()) {
-      clearInterval(buffer.timer);
-      this.logger.debug({ table }, 'Cleared flush timer for table');
-    }
+    this.clearTimers();
 
     await this.waitForActiveJobsToComplete();
 
-    await this.flushAll();
-    await this.waitForAllQueues();
+    await this.drainBuffers();
 
     this.buffers.clear();
 
     this.logger.info('ClickHouse batch service shutdown complete');
+  }
+
+  /**
+   * Repeatedly flushes all table buffers until they are empty or the drain
+   * timeout is reached. Failed flushes re-queue rows back into the buffer,
+   * so this loop keeps retrying until either ClickHouse comes back online
+   * or we exhaust the shutdown budget.
+   *
+   * We always enqueue a flush and wait for the queue to drain at least once
+   * to allow any in-flight flush (or one we just enqueued) to either succeed
+   * or re-queue its rows on failure before we evaluate the buffer state.
+   */
+  private async drainBuffers(): Promise<void> {
+    const startedAt = Date.now();
+    let attempt = 0;
+
+    while (true) {
+      attempt++;
+      const elapsed = Date.now() - startedAt;
+
+      this.logger.info(
+        {
+          attempt,
+          totalBufferedRows: this.totalBufferedRows(),
+          elapsedMs: elapsed,
+          timeoutMs: this.shutdownDrainTimeoutMs,
+        },
+        'Draining ClickHouse buffers during shutdown'
+      );
+
+      await this.flushAll();
+      await this.waitForAllQueues();
+
+      if (!this.hasBufferedRows()) {
+        this.logger.info({ attempts: attempt }, 'All ClickHouse buffers drained successfully');
+
+        return;
+      }
+
+      const elapsedAfterFlush = Date.now() - startedAt;
+
+      if (elapsedAfterFlush >= this.shutdownDrainTimeoutMs) {
+        const breakdown = this.getBufferedRowsBreakdown();
+        const totalRowsLost = breakdown.reduce((sum, entry) => sum + entry.bufferSize, 0);
+
+        this.logger.error(
+          {
+            rowsLost: totalRowsLost,
+            tablesAffected: breakdown,
+            elapsedMs: elapsedAfterFlush,
+            timeoutMs: this.shutdownDrainTimeoutMs,
+            attempts: attempt,
+          },
+          'Shutdown drain timeout reached: analytic rows could not be flushed to ClickHouse'
+        );
+
+        return;
+      }
+
+      await this.sleep(this.shutdownDrainRetryDelayMs);
+    }
+  }
+
+  private clearTimers(): void {
+    for (const [table, buffer] of this.buffers.entries()) {
+      clearInterval(buffer.timer);
+      this.logger.debug({ table }, 'Cleared flush timer for table');
+    }
+  }
+
+  private hasBufferedRows(): boolean {
+    for (const buffer of this.buffers.values()) {
+      if (buffer.rows.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private totalBufferedRows(): number {
+    let total = 0;
+    for (const buffer of this.buffers.values()) {
+      total += buffer.rows.length;
+    }
+
+    return total;
+  }
+
+  private getBufferedRowsBreakdown(): Array<{ table: string; bufferSize: number }> {
+    return Array.from(this.buffers.entries())
+      .filter(([, buffer]) => buffer.rows.length > 0)
+      .map(([table, buffer]) => ({ table, bufferSize: buffer.rows.length }));
   }
 
   private async waitForActiveJobsToComplete(): Promise<void> {
