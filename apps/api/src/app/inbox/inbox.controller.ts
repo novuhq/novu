@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Headers,
   HttpCode,
@@ -52,7 +53,7 @@ import { GenerateLinkUserOauthUrl } from '../integrations/usecases/generate-chat
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
-import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
+import { SubscriberSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
 import {
   GetSubscriberGlobalPreference,
@@ -108,6 +109,7 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import { KEYLESS_WORKFLOW_IDENTIFIER } from './utils';
 import type { InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
@@ -630,36 +632,67 @@ export class InboxController {
     );
   }
 
+  /**
+   * Triggers the keyless / demo "hello-world" workflow for the authenticated
+   * subscriber. The endpoint is intentionally restricted: an inbox subscriber
+   * JWT can only fire the keyless demo workflow and only target itself as the
+   * recipient. Any attempt to trigger a different workflow id or specify a
+   * different recipient is rejected to prevent privilege escalation.
+   */
   @KeylessAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/events')
   async keylessEvents(
-    @UserSession() user: UserSessionData,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: TriggerEventRequestDto,
     @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto> {
+    if (body.name !== KEYLESS_WORKFLOW_IDENTIFIER) {
+      throw new ForbiddenException(`Inbox subscribers may only trigger the "${KEYLESS_WORKFLOW_IDENTIFIER}" workflow.`);
+    }
+
+    if (!this.isSelfRecipient(body.to, subscriberSession.subscriberId)) {
+      throw new ForbiddenException('Inbox subscribers may only trigger notifications for themselves.');
+    }
+
     const result = await this.parseEventRequest.execute(
       ParseEventRequestMulticastCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        identifier: body.name,
+        userId: subscriberSession._id,
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        identifier: KEYLESS_WORKFLOW_IDENTIFIER,
         payload: body.payload || {},
-        overrides: body.overrides || {},
-        to: body.to,
-        actor: body.actor,
-        tenant: body.tenant,
-        context: body.context,
-        transactionId: body.transactionId,
+        overrides: {},
+        to: { subscriberId: subscriberSession.subscriberId },
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
-        bridgeUrl: body.bridgeUrl,
-        controls: body.controls,
         requestId: req._nvRequestId,
       })
     );
 
     return result as unknown as TriggerEventResponseDto;
+  }
+
+  /**
+   * Validates that the recipient described by `to` resolves to a single
+   * subscriber and that subscriber matches the authenticated session. Topic and
+   * array-based recipients are rejected outright because they could be used to
+   * notify other subscribers in the environment.
+   */
+  private isSelfRecipient(to: TriggerEventRequestDto['to'], subscriberId: string): boolean {
+    if (typeof to === 'string') {
+      return to === subscriberId;
+    }
+
+    if (Array.isArray(to)) {
+      return false;
+    }
+
+    if (to && typeof to === 'object' && 'subscriberId' in to && typeof to.subscriberId === 'string') {
+      return to.subscriberId === subscriberId;
+    }
+
+    return false;
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
