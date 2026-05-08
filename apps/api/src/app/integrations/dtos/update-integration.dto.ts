@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CredentialsDto, StepFilterDto } from '@novu/application-generic';
 import { IUpdateIntegrationBodyDto } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsMongoId, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @ApiPropertyOptional({ type: String })
@@ -14,6 +14,11 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @IsOptional()
   @IsString()
   identifier?: string;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsMongoId()
+  _environmentId?: string;
 
   @ApiPropertyOptional({
     type: Boolean,

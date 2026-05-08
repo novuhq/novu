@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, encryptCredentials, PinoLogger } from '@novu/application-generic';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -13,6 +13,7 @@ export class UpdateIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
+    private environmentRepository: EnvironmentRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -95,17 +96,25 @@ export class UpdateIntegration {
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
     });
     if (!existingIntegration) {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
+    }
+
+    if (command.environmentId && command.environmentId !== existingIntegration._environmentId) {
+      const targetEnvironment = await this.environmentRepository.findByIdAndOrganization(
+        command.environmentId,
+        command.organizationId
+      );
+      if (!targetEnvironment) {
+        throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
+      }
     }
 
     const identifierHasChanged = command.identifier && command.identifier !== existingIntegration.identifier;
     if (identifierHasChanged) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
         identifier: command.identifier,
       });
 
@@ -121,10 +130,12 @@ export class UpdateIntegration {
       active: command.active,
     });
 
+    const environmentId = command.environmentId ?? existingIntegration._environmentId;
+
     if (command.check) {
       await this.checkIntegration.execute(
         CheckIntegrationCommand.create({
-          environmentId: existingIntegration._environmentId,
+          environmentId,
           organizationId: command.organizationId,
           credentials: command.credentials ?? existingIntegration.credentials ?? {},
           providerId: existingIntegration.providerId,
@@ -143,6 +154,10 @@ export class UpdateIntegration {
 
     if (identifierHasChanged) {
       updatePayload.identifier = command.identifier;
+    }
+
+    if (command.environmentId) {
+      updatePayload._environmentId = environmentId;
     }
 
     if (isActiveDefined) {
@@ -206,7 +221,7 @@ export class UpdateIntegration {
     const updatedIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _organizationId: existingIntegration._organizationId,
-      _environmentId: existingIntegration._environmentId,
+      _environmentId: environmentId,
     });
     if (!updatedIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);

@@ -15,7 +15,6 @@ export class RemoveIntegration {
       const existingIntegration = await this.integrationRepository.findOne({
         _id: command.integrationId,
         _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
       });
       if (!existingIntegration) {
         throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
@@ -24,7 +23,6 @@ export class RemoveIntegration {
       await this.integrationRepository.delete({
         _id: existingIntegration._id,
         _organizationId: existingIntegration._organizationId,
-        _environmentId: existingIntegration._environmentId,
       });
 
       const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);

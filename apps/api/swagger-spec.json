@@ -30910,6 +30910,9 @@
           "identifier": {
             "type": "string"
           },
+          "_environmentId": {
+            "type": "string"
+          },
           "active": {
             "type": "boolean",
             "description": "If the integration is active the validation on the credentials field will run"
