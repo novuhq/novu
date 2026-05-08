@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import type { InstallPackagesResult } from '../pipeline/steps/install-packages';
 import type { InstalledSkill } from '../skills/install-skills';
 import type { ProjectContext, ResolvedAuth, WizardCommandOptions } from '../types';
 import type { WizardGoal } from '../ui/wizard-session';
@@ -63,14 +64,35 @@ const WIZARD_AUTO_ALLOWED_TOOLS = [
   'Glob',
   'Grep',
   'TodoWrite',
-  'Bash(npm install:*)',
-  'Bash(npm i:*)',
-  'Bash(pnpm add:*)',
-  'Bash(pnpm install:*)',
-  'Bash(yarn add:*)',
-  'Bash(yarn install:*)',
-  'Bash(bun add:*)',
-  'Bash(bun install:*)',
+  /**
+   * Subagent dispatch is required for the parallel-fan-out architecture:
+   * the main agent dispatches three subagents (Inbox / Workflows+Triggers /
+   * Subscribers) in a single message so they run concurrently. Without
+   * these entries the SDK falls through to `canUseTool`, which we use as
+   * a defence-in-depth domain guard rather than a primary gate.
+   *
+   * The `claude_code` preset surfaces the dispatch tool as `Agent`, while
+   * older flows / direct API calls use `Task` — auto-allow both so a
+   * preset bump never silently disables fan-out.
+   */
+  'Task',
+  'Agent',
+  /**
+   * Package installs run from the wizard's parent process (see
+   * `pipeline/steps/install-packages.ts`) BEFORE the agent turn starts.
+   * We deliberately don't auto-allow `Bash(npm install:*)` etc. any
+   * more — `WIZARD_DISALLOWED_TOOLS` actively blocks those prefixes so
+   * the agent can't waste minutes retrying inside the sandbox where
+   * macOS `clonefile()` is blocked.
+   * 'Bash(npm install:*)',
+   * 'Bash(npm i:*)',
+   * 'Bash(pnpm add:*)',
+   * 'Bash(pnpm install:*)',
+   * 'Bash(yarn add:*)',
+   * 'Bash(yarn install:*)',
+   * 'Bash(bun add:*)',
+   * 'Bash(bun install:*)',
+   */
   'WebFetch(domain:docs.novu.co)',
   'Skill',
   'ListMcpResourcesTool',
@@ -102,6 +124,20 @@ const WIZARD_DISALLOWED_TOOLS = [
   'Bash(npm publish:*)',
   'Bash(pnpm publish:*)',
   'Bash(yarn publish:*)',
+  /**
+   * Block package-install invocations inside the agent turn — the
+   * wizard CLI pre-installs everything outside the sandbox. A retry
+   * here would cost several minutes for nothing (macOS `clonefile()`
+   * is blocked by the SDK sandbox).
+   */
+  'Bash(npm install:*)',
+  'Bash(npm i:*)',
+  'Bash(pnpm add:*)',
+  'Bash(pnpm install:*)',
+  'Bash(yarn add:*)',
+  'Bash(yarn install:*)',
+  'Bash(bun add:*)',
+  'Bash(bun install:*)',
 ];
 
 const DEFAULT_MCP_URL_US = 'https://mcp.novu.co/';
@@ -212,9 +248,7 @@ export async function createAgentIterator(input: CreateAgentIteratorInput): Prom
       allowedTools: WIZARD_AUTO_ALLOWED_TOOLS,
       disallowedTools: WIZARD_DISALLOWED_TOOLS,
       canUseTool: (toolName, toolInput) => {
-        const decision = novuCanUseTool(toolName, toolInput as Record<string, unknown>);
-
-        return Promise.resolve(decision);
+        return Promise.resolve(novuCanUseTool(toolName, toolInput as Record<string, unknown>));
       },
       sandbox: {
         enabled: true,
@@ -306,6 +340,7 @@ export function buildAutonomousUserMessage(input: {
   project: ProjectContext;
   auth: ResolvedAuth;
   installedSkills: InstalledSkill[];
+  installResult?: InstallPackagesResult;
 }): string {
   return buildUserPrompt(input);
 }

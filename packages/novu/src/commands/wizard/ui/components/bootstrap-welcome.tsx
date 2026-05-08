@@ -1,6 +1,8 @@
 import figures from 'figures';
 import { Box, Text } from 'ink';
 import React from 'react';
+import type { InstallTarget } from '../../context/detect-install-targets';
+import { summariseTopology } from '../../context/summarise-topology';
 import { theme } from '../theme';
 import type { WizardSession } from '../wizard-session';
 
@@ -40,14 +42,15 @@ function renderDetectionRows(session: WizardSession): React.ReactElement[] {
     ];
   }
 
+  const installedNovuPackages = aggregateInstalledNovuPackages(project.topology.targets);
   const rows: { label: string; value: string }[] = [
     { label: 'Directory', value: project.cwd },
-    { label: 'Framework', value: `${project.framework} (detected)` },
+    { label: 'Workspaces', value: summariseTopology(project.topology) },
     { label: 'Package manager', value: project.packageManager },
     { label: 'TypeScript', value: project.hasTypeScript ? 'yes' : 'no' },
     {
       label: 'Existing @novu/* packages',
-      value: project.installedNovuPackages.length ? project.installedNovuPackages.join(', ') : 'none',
+      value: installedNovuPackages.length ? installedNovuPackages.join(', ') : 'none',
     },
   ];
 
@@ -59,4 +62,13 @@ function renderDetectionRows(session: WizardSession): React.ReactElement[] {
       </Text>
     </Box>
   ));
+}
+
+function aggregateInstalledNovuPackages(targets: InstallTarget[]): string[] {
+  const aggregated = new Set<string>();
+  for (const target of targets) {
+    for (const pkg of target.installedNovuPackages) aggregated.add(pkg);
+  }
+
+  return Array.from(aggregated).sort();
 }

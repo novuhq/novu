@@ -41,6 +41,7 @@ export type TrailEntry =
       isError?: boolean;
       endedAt?: number;
       resultText?: string;
+      branch?: string;
     }
   | { kind: TrailKind.Diff; id: string; at: number; file: string; patch: string; added: number; removed: number }
   | {
@@ -68,7 +69,16 @@ export type TodoEntry = {
   durationMs?: number;
 };
 
-export type PipelinePhaseId = 'bootstrap' | 'auth' | 'skills' | 'agent' | 'mcp' | 'report' | 'done';
+export type PipelinePhaseId =
+  | 'bootstrap'
+  | 'auth'
+  | 'skills'
+  | 'install'
+  | 'agent'
+  | 'validate'
+  | 'mcp'
+  | 'report'
+  | 'done';
 
 export type PhaseStatus = 'pending' | 'running' | 'done' | 'error' | 'cancelled';
 
@@ -113,10 +123,10 @@ const INITIAL_PHASES: PipelinePhase[] = [
     status: 'pending',
   },
   {
-    id: 'agent',
-    idleForm: 'Run agent',
-    activeForm: 'Agent running…',
-    completedForm: 'Agent run complete',
+    id: 'install',
+    idleForm: 'Install packages',
+    activeForm: 'Installing Novu packages…',
+    completedForm: 'Packages installed',
     status: 'pending',
   },
   {
@@ -124,6 +134,20 @@ const INITIAL_PHASES: PipelinePhase[] = [
     idleForm: 'Install MCP',
     activeForm: 'Installing Novu MCP…',
     completedForm: 'MCP installed',
+    status: 'pending',
+  },
+  {
+    id: 'agent',
+    idleForm: 'Run agent',
+    activeForm: 'Agent running…',
+    completedForm: 'Agent run complete',
+    status: 'pending',
+  },
+  {
+    id: 'validate',
+    idleForm: 'Validate',
+    activeForm: 'Validating workspaces…',
+    completedForm: 'Validation complete',
     status: 'pending',
   },
   {
@@ -171,7 +195,18 @@ export type WizardStore = {
   setSkills: (installed: InstalledSkill[], message?: string) => void;
   setMcpCandidates: (candidates: McpClientCandidate[]) => void;
   setMcpSelection: (clientId: string | null) => void;
-  setMcpInstalled: (result: McpInstallResult | null, skipped?: boolean) => void;
+  /**
+   * Appends a single successful install to `mcp.installed` and pushes the
+   * `mcp` phase to `running` (the runner finalises the phase via
+   * {@link finishMcpInstalls} once every adapter has been written).
+   */
+  addMcpInstall: (result: McpInstallResult) => void;
+  /**
+   * Marks the MCP phase as `done` (or `cancelled` if `skipped`) without
+   * appending a result. Renders the row hint based on the accumulated
+   * {@link McpInstallResult} list.
+   */
+  finishMcpInstalls: (skipped?: boolean) => void;
   setReport: (path: string) => void;
 
   setPhase: (id: PipelinePhaseId, status: PhaseStatus, hint?: string) => void;
@@ -200,7 +235,7 @@ export function createWizardStore(options: WizardCommandOptions, goal: WizardGoa
     auth: { status: AuthStatus.Idle },
     installedSkills: [],
     runPhase: RunPhase.Idle,
-    mcp: { candidates: [], selectedClientId: null, installed: null, skipped: false },
+    mcp: { candidates: [], selectedClientId: null, installed: [], skipped: false },
     startedAt: Date.now(),
   };
 
@@ -344,10 +379,31 @@ export function createWizardStore(options: WizardCommandOptions, goal: WizardGoa
     setMcpSelection: (clientId) => {
       updateSession((prev) => ({ ...prev, mcp: { ...prev.mcp, selectedClientId: clientId } }));
     },
-    setMcpInstalled: (result, skipped = false) => {
-      updateSession((prev) => ({ ...prev, mcp: { ...prev.mcp, installed: result, skipped } }));
-      const hint = skipped ? 'Skipped' : result ? `Installed into ${result.clientLabel}` : undefined;
-      setPhase('mcp', skipped ? 'cancelled' : result ? 'done' : 'error', hint);
+    addMcpInstall: (result) => {
+      updateSession((prev) => ({
+        ...prev,
+        mcp: { ...prev.mcp, installed: [...prev.mcp.installed, result], skipped: false },
+      }));
+      setPhase('mcp', 'running', `Installed into ${result.clientLabel}`);
+    },
+    finishMcpInstalls: (skipped = false) => {
+      updateSession((prev) => ({ ...prev, mcp: { ...prev.mcp, skipped } }));
+      const installed = session.get().mcp.installed;
+      if (skipped) {
+        setPhase('mcp', 'cancelled', 'Skipped');
+
+        return;
+      }
+      if (installed.length === 0) {
+        setPhase('mcp', 'error');
+
+        return;
+      }
+      const hint =
+        installed.length === 1
+          ? `Installed into ${installed[0].clientLabel}`
+          : `Installed into ${installed.length} editors`;
+      setPhase('mcp', 'done', hint);
     },
     setReport: (path) => {
       updateSession((prev) => ({ ...prev, report: { path } }));

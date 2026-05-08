@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { summariseTopology } from '../context/summarise-topology';
 import type { InstalledSkill } from '../skills/install-skills';
 import type { ProjectContext, ResolvedAuth } from '../types';
 import { printOutroToStdout } from './print-outro';
@@ -42,7 +43,7 @@ export function createLoggingUI(opts: {
 
   return {
     setProject: (project: ProjectContext) => {
-      log(`${chalk.green('✓')} Project detected — ${project.framework} (${project.packageManager})`);
+      log(`${chalk.green('✓')} Project detected — ${summariseTopology(project.topology)}`);
     },
     setGoal: (goal: WizardGoal) => {
       dim(`goal: ${goal}`);
@@ -85,18 +86,11 @@ export function createLoggingUI(opts: {
       const detected = candidates.filter((c) => c.detected);
       dim(`mcp: detected ${detected.length} client(s) — ${detected.map((c) => c.id).join(', ') || 'none'}`);
     },
-    setMcpInstalled: (result: McpInstallResult | null, skipped = false) => {
-      if (skipped) {
-        dim('mcp: skipped');
-
-        return;
-      }
-      if (!result) {
-        log(`${chalk.red('✗')} MCP install failed`);
-
-        return;
-      }
+    addMcpInstall: (result: McpInstallResult) => {
       log(`${chalk.green('✓')} MCP installed into ${result.clientLabel} (${result.configPath})`);
+    },
+    finishMcpInstalls: (skipped = false) => {
+      if (skipped) dim('mcp: skipped');
     },
     setReport: (path: string) => {
       log(`${chalk.green('✓')} Report written — ${path}`);
@@ -118,7 +112,8 @@ export function createLoggingUI(opts: {
     },
     pushTrail: (entry: TrailEntry) => {
       if (entry.kind === 'tool-use') {
-        dim(`▸ ${entry.toolName} ${entry.label}`);
+        const branchTag = entry.branch ? `[${entry.branch}] ` : '';
+        dim(`▸ ${branchTag}${entry.toolName} ${entry.label}`);
       } else if (entry.kind === 'diff') {
         dim(`✎ ${entry.file} (+${entry.added}/-${entry.removed})`);
       } else if (entry.kind === 'error') {

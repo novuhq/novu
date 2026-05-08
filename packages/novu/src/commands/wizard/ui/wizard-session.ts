@@ -6,7 +6,9 @@ export enum RunPhase {
   Bootstrap = 'bootstrap',
   Auth = 'auth',
   Skills = 'skills',
+  Install = 'install',
   Agent = 'agent',
+  Validate = 'validate',
   Mcp = 'mcp',
   Report = 'report',
   Outro = 'outro',
@@ -83,7 +85,13 @@ export type WizardSession = {
   mcp: {
     candidates: McpClientCandidate[];
     selectedClientId: string | null;
-    installed?: McpInstallResult | null;
+    /**
+     * Every successful MCP install. The wizard auto-selects every detected
+     * host (one MCP server per editor) so this list usually has 1–N entries;
+     * the legacy interactive picker installs into a single client and
+     * appends one entry. Empty when MCP install was skipped or failed.
+     */
+    installed: McpInstallResult[];
     skipped?: boolean;
   };
   report?: { path: string };

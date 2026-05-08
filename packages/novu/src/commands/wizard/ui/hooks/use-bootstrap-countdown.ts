@@ -1,36 +1,22 @@
 import React from 'react';
 import type { WizardServices } from '../services';
 
-const COUNTDOWN_MS = 5_000;
-
 /**
- * Background countdown that resolves the `bootstrap` gate after a fixed
- * delay. Renders nothing — the runner reacts to the gate by flipping
- * `RunPhase` to `Auth`, which in turn swaps the right pane.
+ * Resolves the `bootstrap` gate as soon as the screen has mounted. The
+ * historical 5s "look at the detected topology" countdown was removed in
+ * favour of starting the parallel auth/install/skills/mcp block as fast
+ * as possible — users can read the bootstrap row in the pipeline pane
+ * (and the live tail) any time during the rest of the run.
  *
- * For `--ci` and `--yes` runs the gate is resolved immediately so the
- * pipeline can proceed without waiting on a UI tick.
+ * Renders nothing. `--ci` / `--yes` resolve the gate eagerly via the
+ * runner; this hook covers the interactive Ink path.
  */
 export function useBootstrapCountdown(services: WizardServices): void {
   const gateFiredRef = React.useRef(false);
 
   React.useEffect(() => {
     if (gateFiredRef.current) return;
-
-    const session = services.store.session.get();
-    if (session.options.ci || session.options.yes) {
-      services.store.getGate('bootstrap').resolve();
-      gateFiredRef.current = true;
-
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      if (gateFiredRef.current) return;
-      services.store.getGate('bootstrap').resolve();
-      gateFiredRef.current = true;
-    }, COUNTDOWN_MS);
-
-    return () => clearTimeout(timer);
+    services.store.getGate('bootstrap').resolve();
+    gateFiredRef.current = true;
   }, [services]);
 }

@@ -22,7 +22,8 @@ export function createInkUI(store: WizardStore, opts: { onShutdown: () => Promis
     setPhase: store.setPhase,
     setSkills: store.setSkills,
     setMcpCandidates: store.setMcpCandidates,
-    setMcpInstalled: store.setMcpInstalled,
+    addMcpInstall: store.addMcpInstall,
+    finishMcpInstalls: store.finishMcpInstalls,
     setReport: store.setReport,
     setOutroData: store.setOutroData,
 

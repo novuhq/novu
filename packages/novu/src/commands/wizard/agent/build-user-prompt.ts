@@ -1,39 +1,47 @@
 import path from 'node:path';
+import type { InstallPackagesResult } from '../pipeline/steps/install-packages';
 import type { InstalledSkill } from '../skills/install-skills';
 import type { ProjectContext, ResolvedAuth } from '../types';
 import type { WizardGoal } from '../ui/wizard-session';
+import { describeSubagentBranch } from './build-subagent-prompt';
 
 export interface BuildUserPromptInput {
   project: ProjectContext;
   auth: ResolvedAuth;
   goal: WizardGoal;
   installedSkills: InstalledSkill[];
+  /**
+   * Outcome of the wizard's pre-install pipeline step. When present, the
+   * prompt switches STEP 3 from "install packages" to "packages already
+   * installed" and renders a per-workspace topology block so the agent
+   * knows which workspace is `web` / `api` / `fullstack` and which
+   * packages are already on disk.
+   */
+  installResult?: InstallPackagesResult;
 }
 
 /**
- * The autonomous user message.
+ * The autonomous user message for the **main** agent.
  *
- * The system prompt only carries commandments (negative guardrails). All
- * goal-specific guidance — project context, the explicit skill paths to
- * follow, and the numbered STEPs — lives here so the model is told *exactly*
- * what to do, in what order, with which tool. Experience shows the
- * agent ships materially more code edits when the prompt is STEP-numbered
- * and references concrete tool names per step.
+ * The wizard runs the main agent as an orchestrator that:
+ *   1. Surveys the project (read-only).
+ *   2. Installs the right Novu packages.
+ *   3. Dispatches three parallel `Task` subagents (Inbox / Workflows+Triggers /
+ *      Subscribers) in a single assistant message so they run concurrently.
+ *   4. Aggregates each subagent's structured JSON result into one final JSON
+ *      block in its own final message and ends the turn.
+ *
+ * The CLI builds `novu-wizard-report.md` from the tool-call trail + the
+ * aggregated JSON (see `report/build-report.ts`). The agent does NOT write
+ * the report file itself.
  */
 export function buildUserPrompt(input: BuildUserPromptInput): string {
-  const { project, auth, goal, installedSkills } = input;
+  const { project, auth, goal, installedSkills, installResult } = input;
 
   const projectContextLines = [
     `- Project root: \`${project.cwd}\``,
-    `- Framework: ${project.framework}`,
     `- Package manager: ${project.packageManager}`,
     `- TypeScript: ${project.hasTypeScript ? 'yes' : 'no'}`,
-    `- Installed Novu packages: ${
-      project.installedNovuPackages.length ? project.installedNovuPackages.join(', ') : 'none yet'
-    }`,
-    project.hasFrameworkRoute && project.frameworkRoutePath
-      ? `- Existing @novu/framework route: ${project.frameworkRoutePath}`
-      : '- No existing @novu/framework route detected',
   ];
 
   const environmentLines = [
@@ -46,9 +54,10 @@ export function buildUserPrompt(input: BuildUserPromptInput): string {
 
   const skillSection = renderSkillSection(project.cwd, installedSkills);
   const taskList = renderTaskList(goal);
-  const steps = renderSteps(goal, project);
+  const topologySection = renderTopologySection(project, installResult);
+  const steps = renderSteps(goal, installResult);
 
-  return [
+  const sections: string[] = [
     `# Goal`,
     `${describeGoalLine(goal)}`,
     '',
@@ -57,6 +66,11 @@ export function buildUserPrompt(input: BuildUserPromptInput): string {
     '',
     `## Environment`,
     ...environmentLines,
+    '',
+    installResult
+      ? `## Workspace topology (already installed by the wizard CLI)`
+      : `## Workspace topology (detected during bootstrap)`,
+    topologySection,
     '',
     `## Installed Novu skills`,
     skillSection,
@@ -68,20 +82,79 @@ export function buildUserPrompt(input: BuildUserPromptInput): string {
     '',
     `## Instructions (follow these STEPS in order — do not skip or reorder)`,
     ...steps,
-    '',
-    `## Final report`,
-    'Your last action must be `Write ./novu-wizard-report.md` (in the project root) with these sections:',
-    '- `# Novu Wizard Report` (heading)',
-    `- \`## Goal\` (one-line restating: ${describeGoalLine(goal)})`,
-    '- `## Project context` (framework, package manager, auth provider, brand tokens summary — short bullets)',
-    '- `## Files changed` (relative paths grouped by type: created / edited)',
-    '- `## Workflows created` (workflowId → trigger event name)',
-    '- `## Trigger sites wired` (one bullet per workflow: `workflowId` — `server file:line` invoked by `UI file:line` (or external webhook / auth callback / cron). If the invocation is a UI control you added, mark it `(new)`.)',
-    '- `## Manual triggers needed` (workflows you created but could NOT wire to a real invocation path — `workflowId` + one-line note on what the user should do; omit the section if empty)',
-    '- `## Subscriber sync points` (file:line)',
-    '- `## Next steps` (env vars to set, dashboard URL hint, how to test locally)',
-    'Keep the report under ~120 lines. After writing the report, end the turn — do not say goodbye, do not ask questions.',
-  ].join('\n');
+  ];
+
+  return sections.join('\n');
+}
+
+function renderTopologySection(project: ProjectContext, installResult?: InstallPackagesResult): string {
+  const topology = project.topology;
+  const lines: string[] = [];
+
+  if (installResult) {
+    lines.push(
+      `Package manager: \`${installResult.packageManager.label}\` (\`${installResult.packageManager.installCommand}\`).`,
+      ''
+    );
+
+    if (installResult.requestedGoal !== installResult.effectiveGoal) {
+      lines.push(
+        `**Goal rebalanced** from \`${installResult.requestedGoal}\` → \`${installResult.effectiveGoal}\` — ${installResult.rebalanceReason}`,
+        ''
+      );
+    }
+  } else {
+    lines.push(`Package manager: \`${project.packageManager}\`.`, '');
+  }
+
+  if (topology.targets.length === 0) {
+    lines.push('No application workspaces detected — operate on the project root.');
+
+    return lines.join('\n');
+  }
+
+  lines.push('Application workspaces (the agent should ONLY edit code inside these — libraries are skipped):');
+  for (const target of topology.targets) {
+    const label = target.workspaceName ?? target.cwd;
+    const installOutcome = installResult?.targets.find((t) => t.cwd === target.cwd);
+    const role = target.classification.role;
+    const framework = target.classification.framework;
+
+    const frameworkSegment = framework !== 'unknown' ? `, framework \`${framework}\`` : '';
+    lines.push(`- \`${label}\` (\`${role}\`${frameworkSegment}, cwd \`${target.cwd}\`)`);
+    if (target.installedNovuPackages.length > 0) {
+      lines.push(`  - Pre-existing Novu packages: ${target.installedNovuPackages.map((p) => `\`${p}\``).join(', ')}`);
+    }
+    if (target.hasFrameworkRoute && target.frameworkRoutePath) {
+      lines.push(`  - Existing @novu/framework route: \`${target.frameworkRoutePath}\``);
+    }
+    if (installResult && installOutcome) {
+      if (installOutcome.packagesInstalled.length > 0) {
+        lines.push(`  - Installed by wizard: ${installOutcome.packagesInstalled.map((p) => `\`${p}\``).join(', ')}`);
+      }
+      if (installOutcome.packagesEditedDirectly.length > 0) {
+        lines.push(
+          `  - Declared in \`package.json\` only (install failed — the user must run \`${installResult.packageManager.family} install\` afterwards): ${installOutcome.packagesEditedDirectly
+            .map((p) => `\`${p}\``)
+            .join(', ')}`
+        );
+      }
+      if (installOutcome.packagesRequested.length === 0) {
+        lines.push('  - All required packages were already present.');
+      }
+    }
+  }
+
+  const libraryWorkspaces = topology.workspaces.filter((ws) => ws.classification.role === 'library');
+  if (libraryWorkspaces.length > 0) {
+    lines.push('', 'Library workspaces (skipped — do NOT install or edit code there):');
+    for (const ws of libraryWorkspaces) {
+      const label = ws.workspaceName ?? ws.cwd;
+      lines.push(`- \`${label}\` — ${ws.classification.reason}`);
+    }
+  }
+
+  return lines.join('\n');
 }
 
 function renderSkillSection(cwd: string, installedSkills: InstalledSkill[]): string {
@@ -109,21 +182,20 @@ function renderSkillSection(cwd: string, installedSkills: InstalledSkill[]): str
     });
 
   return [
-    'The following Novu skills have been pre-installed on disk. Read each `SKILL.md` once at the start',
-    'of your run and follow its instructions whenever a STEP below names that skill:',
+    'The following Novu skills have been pre-installed on disk. The main agent does NOT need to read every',
+    'one — each subagent reads only the SKILL.md(s) the wizard tells it to. The full list is included so the',
+    'main agent can forward the right paths to each subagent in `STEP 4` below:',
     '',
     ...lines,
     '',
-    'Do NOT call the `Skill` tool to "discover" these — read them directly with the `Read` tool.',
+    'Do NOT call the `Skill` tool to "discover" these — read them directly with the `Read` tool when needed.',
   ].join('\n');
 }
 
 function renderTaskList(goal: WizardGoal): string[] {
   const items: string[] = ['1. "Assess project context" / activeForm "Assessing project context"'];
 
-  items.push('2. "Install Novu packages" / activeForm "Installing Novu packages"');
-
-  let n = 3;
+  let n = 2;
   if (goal === 'inbox' || goal === 'full') {
     items.push(`${n++}. "Add Inbox component" / activeForm "Adding Inbox component"`);
   }
@@ -134,14 +206,19 @@ function renderTaskList(goal: WizardGoal): string[] {
   if (goal === 'full') {
     items.push(`${n++}. "Sync subscribers from auth provider" / activeForm "Syncing subscribers"`);
   }
-  items.push(`${n++}. "Write integration report" / activeForm "Writing integration report"`);
 
   return items;
 }
 
-function renderSteps(goal: WizardGoal, project: ProjectContext): string[] {
+function renderSteps(goal: WizardGoal, installResult?: InstallPackagesResult): string[] {
   const steps: string[] = [];
-  const hasFramework = project.installedNovuPackages.includes('@novu/framework');
+  const wantsInbox = goal === 'inbox' || goal === 'full';
+  const wantsWorkflows = goal === 'workflows' || goal === 'full';
+  const wantsSubscribers = goal === 'full';
+
+  const installLine = installResult
+    ? 'STEP 3: Packages have ALREADY been installed by the wizard CLI before this turn started — see the "Workspace topology" section above. Do NOT call `npm install` / `pnpm add` / `yarn add` / `bun add` (those Bash prefixes are blocked). When code in STEP 4 needs a package that the topology says is missing, write the import anyway and add a NOTE for the subagent so the wizard report can flag it; never retry the install.'
+    : 'STEP 3: Trust the existing `package.json` — the wizard CLI handles installs outside this turn. Never call `npm install` / `pnpm add` / `yarn add` / `bun add` (those prefixes are blocked). If a package you would normally import is missing, write the import anyway and add a NOTE for the subagent.';
 
   steps.push(
     [
@@ -150,69 +227,26 @@ function renderSteps(goal: WizardGoal, project: ProjectContext): string[] {
       '  - business use case from `package.json` (`name`, `description`), top of `README.md`, top-level routes (`app/**/page.tsx`, `pages/**/*.tsx`, `src/routes/**`);',
       '  - brand tokens from `tailwind.config.{ts,js}` (`theme.extend.colors`, `fontFamily`, `borderRadius`), CSS variables in `app/globals.css` / `src/index.css`, `components.json`, logo assets in `public/`;',
       '  - auth provider in use (Clerk, Better Auth, NextAuth, Supabase) — drives `subscriberId`;',
-      '  - candidate trigger events from sign-up / sign-in handlers, checkout / Stripe webhooks, and domain mutations. For EACH candidate, also locate the invocation path that reaches it: the UI control that fires it (button `onClick`, `<form action={serverAction}>`, `<form>` posting to a route, `fetch("/api/...")` from a client component, `useFormStatus`/`useActionState` callers) OR an external trigger (Stripe-style webhook, auth callback, cron/queue). Record both the server site and the invocation site as `server file:line ← UI file:line` so STEP 6 can verify the trigger is reachable.',
-      '  Findings are INTERNAL CONTEXT — do NOT echo them back to the user or paste them into the report.',
-      'STEP 3: Install required Novu packages with the detected package manager. Run the install in the foreground (you have `Bash(npm install:*)` etc. auto-approved). The exact package set depends on the goal — see the relevant SKILL.md.',
+      '  - the workflow path: when `@novu/framework` is already installed in any application workspace, treat it as **code-first**; otherwise the workflow subagent will use the no-code MCP path. Do NOT install `@novu/framework` here — the wizard CLI made that decision before this turn.',
+      '  Findings are INTERNAL CONTEXT — do NOT echo them back to the user. You forward them to the subagents in STEP 4.',
+      installLine,
     ].join('\n')
   );
 
-  if (goal === 'inbox' || goal === 'full') {
-    steps.push(
-      [
-        'STEP 4 (Inbox): Read the `inbox` SKILL.md (path listed above) and implement the `Inbox` component.',
-        '  - Style the `Inbox` component with the brand tokens you extracted.',
-        "  - Reuse the project's existing Provider/Theme wrapper when one exists.",
-        '  - Use `Edit` (not `Write`) to insert the import + JSX into the existing layout/header file rather than recreating it.',
-      ].join('\n')
-    );
-  }
-
-  if (goal === 'workflows' || goal === 'full') {
-    if (hasFramework) {
-      steps.push(
-        [
-          'STEP 5 (Workflows — code-first): `@novu/framework` is installed. Read the `framework` SKILL.md and:',
-          '  - Define each workflow you identified in STEP 2 in code (kebab-case `workflowId`, derived from product nouns).',
-          '  - When a workflow includes an email step, render the body with `@react-email/components` and apply the brand (primary-color buttons, logo header, neutral background, footer with the product name). Add `@react-email/components` via the detected package manager if missing.',
-          '  - Serve workflows via the framework adapter (Next.js route handler, Express middleware, etc.) — match the framework conventions of the project.',
-        ].join('\n')
-      );
-    } else {
-      steps.push(
-        [
-          'STEP 5 (Workflows — no-code): `@novu/framework` is NOT installed. Use the Novu MCP server (tools prefixed `mcp__novu__*`, all auto-approved) to create each workflow you identified in STEP 2:',
-          '  - Before ANY `mcp__novu__*` call, read both `design workflow` SKILL.md and `dashboard workflows` SKILL.md files from the paths listed under "Installed Novu skills" above. Do NOT plan workflows or fill in step controls from prior knowledge — these two skills are the source of truth.',
-          '  - Call `mcp__novu__create_workflow` per workflow with a kebab-case `workflowId` derived from product nouns (e.g. `welcome-{productSlug}` rather than generic `welcome-onboarding-email`).',
-          '  - For step content (subject, body, `editorType`, headers, conditions), follow `dashboard workflows` SKILL.md literally. Brand subjects and bodies with the product name; do NOT include any secret keys or PII placeholders that could be mistaken for real values.',
-        ].join('\n')
-      );
-    }
-
-    steps.push(
-      [
-        'STEP 6 (Triggers): For every workflow you created in STEP 5, add a `novu.trigger(...)` call (or a thin in-app wrapper around it) at the matching call site you identified in STEP 2.',
-        '  - Splice the call into a handler that already has a real invocation path: an existing route handler / server action / API route that an existing UI control already submits to, an external webhook (Stripe, Clerk, etc.), an auth callback, or a cron/queue handler.',
-        '  - If the natural trigger point is a user action that has no existing handler (e.g. an "Invite teammate" button that does not yet POST anywhere), you MUST also wire the UI control: add the `onClick`/`onSubmit` handler, `<form action={...}>`, or `fetch("/api/...")` call on the existing page that owns that flow. Do not invent a new "test page" or standalone demo route.',
-        '  - Never leave a `novu.trigger(...)` call sitting in an orphan API route or server action that nothing in the app invokes. If you cannot find or add a real invocation path for a workflow, skip its trigger and list it under `## Manual triggers needed` in the final report.',
-        '  - Always wrap each trigger in `try/catch` so a Novu outage never blocks the host transaction.',
-        '  - Use `Edit` to splice the call into the existing handler — do not move handlers into new files.',
-      ].join('\n')
-    );
-  }
-
-  if (goal === 'full') {
-    steps.push(
-      [
-        'STEP 7 (Subscribers): When an auth provider is detected, ensure subscribers are created or updated server-side at sign-up, sign-in, and profile-update hooks.',
-        "  - Use the host app's existing user id as the Novu `subscriberId`.",
-        '  - Always wrap in `try/catch` for the same reason as triggers.',
-      ].join('\n')
-    );
-  }
-
   steps.push(
     [
-      'FINAL STEP: Write `./novu-wizard-report.md` (see "Final report" below). End the turn after this — do not say goodbye, do not ask questions.',
+      'STEP 4 — DISPATCH the parallel subagents (CRITICAL):',
+      '  Issue all applicable `Task` tool calls in the **same assistant message** so they run concurrently. The full subagent system prompt for each branch (project context, branch domain, what-to-do, final-message contract) has already been written to `.claude/agents/<subagent_type>.md` by the wizard CLI — the SDK injects it automatically when you set `subagent_type`. Your `prompt` parameter therefore only needs to carry per-run dynamic context the subagent cannot see otherwise.',
+      '',
+      '  For each `Task` call, set:',
+      `    - \`subagent_type\`: one of \`${describeSubagentBranch('inbox')}\` / \`${describeSubagentBranch('workflows')}\` / \`${describeSubagentBranch('subscribers')}\`.`,
+      '    - `description`: a short human-readable label (also contains the wizard branch label).',
+      '    - `prompt`: a SHORT message (3-6 lines) carrying ONLY the per-run dynamic context you gathered in STEP 2 that the subagent cannot rederive — for the Inbox branch, the brand-styling cues you saw (theme tokens, shadcn registry); for the Workflows branch, the business-domain summary (product description, top-level routes) and the resolved workflow path (`code-first` if `@novu/framework` is installed, otherwise `no-code`); for the Subscribers branch, the detected auth-provider name. Do NOT repeat the project context, environment, installed-skills list, branch domain, or JSON contract — those are already in the agent file.',
+      '',
+      '  Branches to dispatch in this run:',
+      ...renderBranchesToDispatch({ wantsInbox, wantsWorkflows, wantsSubscribers }),
+      '',
+      '  Each subagent ends its final assistant message with a fenced JSON block — the wizard CLI parses those directly off the message stream, so once every dispatched `Task` has returned, simply end the turn. Do NOT write `novu-wizard-report.md`, do NOT echo or aggregate the subagent results, do NOT call subagents recursively from inside a subagent — the wizard CLI builds the report from the streamed JSON blocks and the tool trail.',
     ].join('\n')
   );
 
@@ -230,9 +264,33 @@ function renderSteps(goal: WizardGoal, project: ProjectContext): string[] {
   return steps;
 }
 
+function renderBranchesToDispatch(options: {
+  wantsInbox: boolean;
+  wantsWorkflows: boolean;
+  wantsSubscribers: boolean;
+}): string[] {
+  const lines: string[] = [];
+  if (options.wantsInbox) {
+    lines.push(`    - \`${describeSubagentBranch('inbox')}\` — Inbox client UI`);
+  }
+  if (options.wantsWorkflows) {
+    lines.push(`    - \`${describeSubagentBranch('workflows')}\` — Workflows + Triggers (server-side)`);
+  }
+  if (options.wantsSubscribers) {
+    lines.push(
+      `    - \`${describeSubagentBranch('subscribers')}\` — Subscribers (auth hooks). Skip this branch only if STEP 2 found NO auth provider; otherwise dispatch it.`
+    );
+  }
+  if (lines.length === 0) {
+    lines.push('    - (no branches for this goal — should not happen; reach out to the wizard maintainers)');
+  }
+
+  return lines;
+}
+
 function describeGoalLine(goal: WizardGoal): string {
   if (goal === 'inbox') {
-    return 'Inbox-only integration: render the `<Inbox />` component with full personalisation.';
+    return 'Inbox-only integration: render the Inbox component with full personalisation.';
   }
   if (goal === 'workflows') {
     return 'Workflows + triggers integration (no Inbox UI in this run): create workflows and wire `novu.trigger` calls at the matching call sites.';

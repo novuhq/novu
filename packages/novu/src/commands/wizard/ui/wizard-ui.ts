@@ -37,7 +37,14 @@ export type WizardUI = {
   setPhase: (id: PipelinePhaseId, status: PhaseStatus, hint?: string) => void;
   setSkills: (installed: InstalledSkill[], message?: string) => void;
   setMcpCandidates: (candidates: McpClientCandidate[]) => void;
-  setMcpInstalled: (result: McpInstallResult | null, skipped?: boolean) => void;
+  /**
+   * Append a single successful MCP install. The runner calls this once per
+   * adapter when it fans out across every detected host, then closes the
+   * phase out via {@link WizardUI.finishMcpInstalls}.
+   */
+  addMcpInstall: (result: McpInstallResult) => void;
+  /** Close out the MCP phase row after the runner finishes its fan-out. */
+  finishMcpInstalls: (skipped?: boolean) => void;
   setReport: (path: string) => void;
   setOutroData: (data: OutroData) => void;
 

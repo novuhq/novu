@@ -26,13 +26,18 @@ export function McpPane({ services }: McpPaneProps): React.ReactElement {
 
   const options = React.useMemo<PickerOption<string>[]>(() => buildOptions(candidates), [candidates]);
 
-  if (installed) {
+  if (installed.length > 0) {
     return (
       <Box flexDirection="column" gap={1}>
         <Text bold color={theme.ok}>
-          {figures.tick} Installed Novu MCP into {installed.clientLabel}
+          {figures.tick} Installed Novu MCP into{' '}
+          {installed.length === 1 ? installed[0].clientLabel : `${installed.length} editors`}
         </Text>
-        <Text dimColor>{installed.configPath}</Text>
+        {installed.map((entry) => (
+          <Text key={entry.clientId} dimColor>
+            {entry.clientLabel} → {entry.configPath}
+          </Text>
+        ))}
       </Box>
     );
   }

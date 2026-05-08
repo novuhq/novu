@@ -8,13 +8,14 @@
  * just exits — which is exactly the failure mode that produced an empty
  * `Files changed: (none)` report on the user's first run.
  *
- * State machine, in order of priority:
+ * State machine (parallel-fan-out variant), in order of priority:
  *
- * 1. Report has been written      → allow stop.
- * 2. We've already retried `maxRetries` times → allow stop (avoid loops).
- * 3. No tool calls made yet       → block with "do something" prompt.
- * 4. No edits/writes made yet     → block with "actually apply edits" prompt.
- * 5. Edits made but no report     → block with "now write the report" prompt.
+ * 1. We've already retried `maxRetries` times → allow stop (avoid loops).
+ * 2. No tool calls made yet                  → block with "do something" prompt.
+ * 3. No subagents dispatched yet             → block with "fan out now" prompt.
+ * 4. Subagents dispatched, none completed yet → block with "wait for them" prompt.
+ * 5. Some still in flight                    → block with "wait for them" prompt.
+ * 6. All dispatched subagents completed      → allow stop (TS report writer takes over).
  *
  * `WizardStopHookState` is mutated by `run-agent.ts` as messages stream in.
  * The hook itself only reads from it, so the closure is reentrant-safe even
@@ -23,12 +24,14 @@
  */
 
 export interface WizardStopHookState {
-  /** Set true when the agent calls `Write` with `novu-wizard-report.md`. */
-  reportWritten: boolean;
   /** Total tool_use blocks observed across the run. */
   toolCallCount: number;
   /** Total `Write` / `Edit` / `mcp__novu__create_workflow` calls observed. */
   productiveCallCount: number;
+  /** Number of `Task` subagents the main agent has dispatched. */
+  branchesDispatched: number;
+  /** Number of dispatched subagents whose `tool_result` has been observed. */
+  branchesCompleted: number;
 }
 
 export interface CreateStopHookOptions {
@@ -68,12 +71,13 @@ export function createWizardStopHook(
   let retryCount = 0;
 
   return async (input: StopHookInputLike): Promise<SyncHookOutput> => {
-    // Only act on Stop events; let any other hook type pass through cleanly.
     if (input.hook_event_name && input.hook_event_name !== 'Stop') {
       return {};
     }
 
-    if (state.reportWritten) return {};
+    if (state.branchesDispatched > 0 && state.branchesCompleted >= state.branchesDispatched) {
+      return {};
+    }
 
     if (retryCount >= maxRetries) return {};
     retryCount += 1;
@@ -84,28 +88,31 @@ export function createWizardStopHook(
         reason:
           "You haven't called any tools yet. The wizard is autonomous — do not ask the user anything. " +
           'Start now: (1) Read the relevant SKILL.md files installed in `.claude/skills/`, ' +
-          '(2) make the canonical TodoWrite call, then (3) start applying edits with the Write/Edit tools. ' +
-          'When you are genuinely done, your final action MUST be `Write ./novu-wizard-report.md`.',
+          '(2) make the canonical TodoWrite call, then (3) survey the project, install Novu packages, ' +
+          'and dispatch the three parallel `Task` subagents (Inbox / Workflows+Triggers / Subscribers).',
       };
     }
 
-    if (state.productiveCallCount === 0) {
+    if (state.branchesDispatched === 0) {
+      const productiveHint =
+        state.productiveCallCount === 0 ? "You've explored the project but haven't applied any edits yet. " : '';
+
       return {
         decision: 'block',
         reason:
-          "You've explored the project but haven't applied any edits yet. The wizard runs in `acceptEdits` mode — " +
-          'every Write/Edit/mcp__novu__create_workflow call is auto-approved, so apply your plan now. ' +
-          "Don't write the report until you've done at least the package install, the Inbox component (if goal includes inbox), " +
-          'and any workflow + trigger edits required by the goal.',
+          productiveHint +
+          'Dispatch the three parallel `Task` subagents now (Inbox / Workflows+Triggers / Subscribers). ' +
+          'Each subagent owns its own domain; the wizard waits for all of them before ending the run. ' +
+          'Skip the Subscribers branch only if no auth provider was detected during the survey.',
       };
     }
 
     return {
       decision: 'block',
       reason:
-        "You've applied edits but haven't written the wizard report yet. " +
-        'Your final action MUST be `Write ./novu-wizard-report.md` — the CLI reads this file ' +
-        'to render the outro screen and surface what changed. Write it now and then stop.',
+        `You've dispatched ${state.branchesDispatched} subagent(s) but only ${state.branchesCompleted} have ` +
+        'finished. Wait for every dispatched `Task` to return, then end the turn. The wizard CLI parses each ' +
+        "subagent's structured JSON directly off the stream — do NOT aggregate or echo the results yourself.",
     };
   };
 }

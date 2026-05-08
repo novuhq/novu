@@ -66,6 +66,13 @@ export function extractToolLabel(
     return clamp('all servers', 'all servers');
   }
 
+  if (toolName === 'Task' || toolName === 'Agent') {
+    const subagentType = stringField(data.subagent_type);
+    const description = stringField(data.description);
+    const label = subagentType ?? description ?? '';
+    if (label) return clamp(label, label);
+  }
+
   if (toolName.startsWith('mcp__')) {
     const candidate =
       stringField(data.name) ??

@@ -2,50 +2,89 @@ import path from 'node:path';
 
 /**
  * Permission gating callback for the Claude Agent SDK.
- * The wizard runs in `permissionMode: 'acceptEdits'` so
- * file edits auto-approve, but every other tool falls through to this hook.
+ *
+ * The wizard runs in `permissionMode: 'acceptEdits'` so file edits
+ * auto-approve, but every other tool falls through to this hook.
  *
  * Contract:
  * - `allow` lets the SDK proceed with the (possibly mutated) input.
- * - `deny` blocks the call and surfaces `message` back to the model so it can
- *   adjust course instead of silently failing.
+ * - `deny` blocks the call and surfaces `message` back to the model so it
+ *   can adjust course instead of silently failing.
  *
  * The hook is the *only* runtime guardrail for tools that aren't in
- * `allowedTools`. Without it, a missing allow-list entry means the call sits
- * in the SDK's prompt queue forever (interactive) or is silently denied
- * (`bypassPermissions` without `allowDangerouslySkipPermissions`).
+ * `allowedTools`. Without it, a missing allow-list entry means the call
+ * sits in the SDK's prompt queue forever (interactive) or is silently
+ * denied (`bypassPermissions` without `allowDangerouslySkipPermissions`).
+ *
+ * This function is purely about *what* tools are allowed. Concurrent
+ * `Write` / `Edit` calls from different subagents to the same file are
+ * tolerated: the SDK serialises them at the tool-execution layer and
+ * each branch is given its own narrow file domain by the prompt.
  */
 
+/**
+ * Bash prefixes the wizard agent is allowed to run.
+ *
+ * Package installs (`npm install`, `pnpm add`, ...) are deliberately
+ * NOT in this list. They run from the wizard CLI's parent process via
+ * `pipeline/steps/install-packages.ts`, OUTSIDE the SDK sandbox where
+ * macOS `clonefile()` would otherwise block pnpm. The matching
+ * `Bash(...)` prefixes are also added to `WIZARD_DISALLOWED_TOOLS` so
+ * the agent can't waste minutes retrying inside the sandbox.
+ * 'npm install',
+ * 'npm i ',
+ * 'npm i\n',
+ * 'pnpm install',
+ * 'pnpm add',
+ * 'yarn add',
+ * 'yarn install',
+ * 'bun add',
+ * 'bun install',
+ *
+ * Validation commands (lint, typecheck, tests, formatters) are also
+ * NOT here — see {@link VALIDATION_PATTERNS}. The wizard runs ONE
+ * lint + ONE typecheck pass from `pipeline/steps/validate.ts` after
+ * the parallel fan-out completes, so there's no reason for an agent
+ * to retry them inside its turn.
+ * 'tsc',
+ * 'pnpm tsc',
+ * 'npm run typecheck',
+ * 'pnpm typecheck',
+ * 'yarn typecheck',
+ * 'pnpm run lint',
+ * 'npm run lint',
+ * 'yarn lint',
+ * 'eslint',
+ * 'prettier',
+ * 'biome',
+ */
 const SAFE_BASH_PREFIXES: ReadonlyArray<string> = [
-  // Package installs — match what `WIZARD_AUTO_ALLOWED_TOOLS` already auto-approves.
-  'npm install',
-  'npm i ',
-  'npm i\n',
-  'pnpm install',
-  'pnpm add',
-  'yarn add',
-  'yarn install',
-  'bun add',
-  'bun install',
-  // Read-only diagnostics / build verification.
+  // Read-only diagnostics / build verification. Build is sometimes
+  // required by code-first workflow setups (e.g. compiling email
+  // templates) so we keep it allowed.
   'npm run build',
   'pnpm run build',
   'pnpm build',
   'yarn build',
   'bun run build',
-  'tsc',
-  'pnpm tsc',
-  'npm run typecheck',
-  'pnpm typecheck',
-  'yarn typecheck',
-  'pnpm run lint',
-  'npm run lint',
-  'yarn lint',
-  'eslint',
-  'prettier',
 ];
 
 const DANGEROUS_BASH_PATTERNS = /(?:^|[\s|;&])(?:rm|sudo|curl|wget|chmod|chown|mv|kill|killall)\b/;
+
+/**
+ * Validation commands — `tsc`, `eslint`, `prettier`, `biome`, `vitest`,
+ * `jest`, `mocha`, plus the package-manager-script aliases (`pnpm lint`,
+ * `pnpm check-types`, `pnpm typecheck`, `pnpm test`, …).
+ *
+ * The wizard CLI runs a single authoritative validation pass after the
+ * parallel fan-out completes (`pipeline/steps/validate.ts`), so there's
+ * no reason for any subagent to retry these commands during its turn.
+ * Blocking them here means the slowest branch (workflows, today) can't
+ * burn 30+ seconds re-running `pnpm lint` against the whole monorepo
+ * mid-edit.
+ */
+const VALIDATION_PATTERNS =
+  /\b(?:tsc|eslint|prettier|biome|vitest|jest|mocha|pnpm(?:\s+(?:run\s+)?(?:lint|typecheck|check-types|test))|npm\s+run\s+(?:lint|typecheck|check-types|test)|yarn\s+(?:lint|typecheck|test)|bun\s+(?:lint|test|run\s+(?:lint|typecheck|test)))\b/;
 
 const ENV_FILE_PREFIXES = ['.env'];
 
@@ -58,9 +97,6 @@ export type CanUseToolDecision =
  * without spinning up the SDK.
  */
 export function novuCanUseTool(toolName: string, input: Record<string, unknown>): CanUseToolDecision {
-  // Block direct reads/writes of .env files. The user's project might house
-  // long-lived secrets there — the agent should call out the variable names
-  // instead and let the user paste real values themselves.
   if (toolName === 'Read' || toolName === 'Write' || toolName === 'Edit') {
     const filePath = typeof input.file_path === 'string' ? input.file_path : '';
     const basename = path.basename(filePath);
@@ -92,7 +128,16 @@ export function novuCanUseTool(toolName: string, input: Record<string, unknown>)
     return { behavior: 'allow', updatedInput: input };
   }
 
-  // MCP tools: any `mcp__novu__*` is part of the contract — auto-approve.
+  /**
+   * `Task` / `Agent` are the parallel-fan-out entrypoint (the SDK reports
+   * the same dispatch tool under either name depending on the preset).
+   * Allow both everywhere so the main agent can dispatch the three wizard
+   * subagents.
+   */
+  if (toolName === 'Task' || toolName === 'Agent') {
+    return { behavior: 'allow', updatedInput: input };
+  }
+
   if (toolName.startsWith('mcp__novu__')) {
     return { behavior: 'allow', updatedInput: input };
   }
@@ -108,6 +153,15 @@ export function novuCanUseTool(toolName: string, input: Record<string, unknown>)
         message: 'Bash command not allowed. Destructive commands (rm/sudo/curl/wget/chmod/chown/mv/kill) are blocked.',
       };
     }
+    if (VALIDATION_PATTERNS.test(command)) {
+      return {
+        behavior: 'deny',
+        message:
+          'Validation commands (lint, typecheck, tests, formatters) are blocked inside the wizard. ' +
+          'The wizard CLI runs ONE lint + ONE typecheck pass after every subagent completes and surfaces ' +
+          'the results in the report — do not retry them here.',
+      };
+    }
     if (SAFE_BASH_PREFIXES.some((prefix) => command.startsWith(prefix))) {
       return { behavior: 'allow', updatedInput: input };
     }
@@ -115,8 +169,9 @@ export function novuCanUseTool(toolName: string, input: Record<string, unknown>)
     return {
       behavior: 'deny',
       message:
-        'Bash command not allowed. Only package install (npm/pnpm/yarn/bun add|install), build, typecheck, ' +
-        'lint, and formatting commands are permitted.',
+        'Bash command not allowed. Package installs (`npm install`, `pnpm add`, …) run from the wizard CLI ' +
+        'before this turn — do NOT retry them here. Validation (lint/typecheck/test) is also handled by the ' +
+        'wizard CLI after fan-out. Only `build` commands are permitted.',
     };
   }
 

@@ -110,10 +110,13 @@ function TrailRow({ entry, width }: { entry: TrailEntry; width: number }): React
     );
   }
   if (entry.kind === TrailKind.ToolUse) {
+    const branchTag = entry.branch ? `[${entry.branch}] ` : '';
+
     return (
       <Box marginTop={1}>
         <Text dimColor>
-          {figures.pointerSmall} {shortenToolName(entry.toolName)} {entry.label ? `· ${entry.label}` : ''}
+          {figures.pointerSmall} {branchTag}
+          {shortenToolName(entry.toolName)} {entry.label ? `· ${entry.label}` : ''}
         </Text>
       </Box>
     );
