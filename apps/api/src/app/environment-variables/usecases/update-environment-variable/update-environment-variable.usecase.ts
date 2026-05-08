@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptSecret } from '@novu/application-generic';
 import { EnvironmentVariableRepository } from '@novu/dal';
+import { SECRET_MASK } from '@novu/shared';
 import { EnvironmentVariableResponseDto } from '../../dtos/environment-variable-response.dto';
 import { toEnvironmentVariableResponseDto } from '../get-environment-variables/get-environment-variables.usecase';
 import { UpdateEnvironmentVariableCommand } from './update-environment-variable.command';
@@ -12,7 +13,7 @@ export class UpdateEnvironmentVariable {
   async execute(command: UpdateEnvironmentVariableCommand): Promise<EnvironmentVariableResponseDto> {
     const existing = await this.environmentVariableRepository.findOne(
       { key: command.variableKey, _organizationId: command.organizationId },
-      ['_id']
+      '*'
     );
 
     if (!existing) {
@@ -32,10 +33,41 @@ export class UpdateEnvironmentVariable {
     }
 
     if (command.values !== undefined) {
-      updateBody.values = command.values.map((v) => ({
-        _environmentId: v._environmentId,
-        value: encryptSecret(v.value),
-      }));
+      // Defense in depth: never let the public secret mask string be persisted as an
+      // actual variable value. The dashboard returns mask strings on reads, so accepting
+      // them on writes would silently overwrite real secrets.
+      const maskedValue = command.values.find((v) => v.value === SECRET_MASK);
+      if (maskedValue) {
+        throw new BadRequestException(
+          'Submitted value matches the secret mask placeholder; provide the real value or omit the entry to keep the existing one.'
+        );
+      }
+
+      // PATCH semantics: merge values per `_environmentId` instead of replacing the
+      // entire array. Envs not present in the request keep their existing values.
+      const incomingByEnv = new Map(command.values.map((v) => [v._environmentId, v.value]));
+      const mergedEnvIds = new Set<string>();
+
+      const mergedValues = existing.values.map((v) => {
+        if (incomingByEnv.has(v._environmentId)) {
+          mergedEnvIds.add(v._environmentId);
+
+          return {
+            _environmentId: v._environmentId,
+            value: encryptSecret(incomingByEnv.get(v._environmentId) as string),
+          };
+        }
+
+        return { _environmentId: v._environmentId, value: v.value };
+      });
+
+      for (const [_environmentId, value] of incomingByEnv) {
+        if (!mergedEnvIds.has(_environmentId)) {
+          mergedValues.push({ _environmentId, value: encryptSecret(value) });
+        }
+      }
+
+      updateBody.values = mergedValues;
     }
 
     if (Object.keys(updateBody).length === 0) {
