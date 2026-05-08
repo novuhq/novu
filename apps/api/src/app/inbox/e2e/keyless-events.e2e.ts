@@ -1,13 +1,34 @@
-import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  EnvironmentRepository,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import { StepTypeEnum, TriggerTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { KEYLESS_ENVIRONMENT_PREFIX, KEYLESS_WORKFLOW_IDENTIFIER } from '../utils';
 
 describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
   let session: UserSession;
   let helloWorldTemplate: NotificationTemplateEntity;
   let otherTemplate: NotificationTemplateEntity;
   const subscriberRepository = new SubscriberRepository();
+  const environmentRepository = new EnvironmentRepository();
+  const notificationRepository = new NotificationRepository();
+
+  /**
+   * The endpoint only allows callers from a keyless environment, so simulate
+   * one by re-stamping the freshly initialized session environment with the
+   * keyless identifier prefix. The JWT references the environment's _id (not
+   * its identifier) so the existing subscriber token continues to work.
+   */
+  const markEnvironmentAsKeyless = async () => {
+    await environmentRepository.update(
+      { _id: session.environment._id },
+      { $set: { identifier: `${KEYLESS_ENVIRONMENT_PREFIX}${session.environment.identifier}` } }
+    );
+  };
 
   beforeEach(async () => {
     session = new UserSession();
@@ -17,7 +38,7 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
       noFeedId: true,
       triggers: [
         {
-          identifier: 'hello-world',
+          identifier: KEYLESS_WORKFLOW_IDENTIFIER,
           type: TriggerTypeEnum.EVENT,
           variables: [],
         },
@@ -39,6 +60,8 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
         },
       ],
     });
+
+    await markEnvironmentAsKeyless();
   });
 
   const triggerInboxEvent = (body: Record<string, unknown>) =>
@@ -52,12 +75,12 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
     });
 
     expect(status).to.equal(403);
-    expect(body.message).to.contain('hello-world');
+    expect(body.message).to.contain(KEYLESS_WORKFLOW_IDENTIFIER);
   });
 
   it('rejects requests targeting another subscriber id', async () => {
     const { status, body } = await triggerInboxEvent({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: { subscriberId: 'someone-else' },
       payload: {},
     });
@@ -68,7 +91,7 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
 
   it('rejects topic-based recipient payloads', async () => {
     const { status } = await triggerInboxEvent({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: { topicKey: 'all-users', type: 'Topic' },
       payload: {},
     });
@@ -78,7 +101,7 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
 
   it('rejects array-based recipient payloads', async () => {
     const { status } = await triggerInboxEvent({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: [{ subscriberId: session.subscriberId }, { subscriberId: 'someone-else' }],
       payload: {},
     });
@@ -88,7 +111,7 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
 
   it('rejects string recipient that does not match the authenticated subscriber id', async () => {
     const { status } = await triggerInboxEvent({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: 'another-subscriber',
       payload: {},
     });
@@ -96,9 +119,26 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
     expect(status).to.equal(403);
   });
 
+  it('rejects callers from a non-keyless environment even when the workflow id matches', async () => {
+    // Restore the original (non-keyless) identifier so the env check fails.
+    await environmentRepository.update(
+      { _id: session.environment._id },
+      { $set: { identifier: session.environment.identifier } }
+    );
+
+    const { status, body } = await triggerInboxEvent({
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
+      to: { subscriberId: session.subscriberId },
+      payload: {},
+    });
+
+    expect(status).to.equal(403);
+    expect(body.message).to.contain('keyless');
+  });
+
   it('triggers the hello-world workflow when the recipient is the authenticated subscriber', async () => {
     const { status, body } = await triggerInboxEvent({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: { subscriberId: session.subscriberId },
       payload: { foo: 'bar' },
     });
@@ -112,9 +152,11 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
     expect(subscriber).to.be.ok;
   });
 
-  it('ignores user-supplied bridgeUrl, controls, overrides, actor and tenant fields', async () => {
+  it('ignores user-supplied bridgeUrl, controls, overrides, actor, tenant and transactionId fields', async () => {
+    const attackerTransactionId = 'attacker-transaction-id';
+
     const { status } = await triggerInboxEvent({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: { subscriberId: session.subscriberId },
       payload: { foo: 'bar' },
       bridgeUrl: 'https://attacker.example.com/bridge',
@@ -122,16 +164,30 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
       overrides: { providers: { sendgrid: { templateId: 'attacker' } } },
       actor: 'someone-else',
       tenant: 'attacker-tenant',
-      transactionId: 'attacker-transaction-id',
+      transactionId: attackerTransactionId,
     });
 
     expect(status).to.equal(201);
     await session.waitForJobCompletion(helloWorldTemplate._id);
+
+    const notifications = await notificationRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: helloWorldTemplate._id,
+    });
+
+    expect(notifications.length).to.be.greaterThan(0);
+
+    for (const notification of notifications) {
+      // The attacker-supplied transactionId is dropped server-side; the
+      // controller assigns its own value. If the field were forwarded the
+      // notification would be persisted with the attacker's id.
+      expect(notification.transactionId).to.not.equal(attackerTransactionId);
+    }
   });
 
   it('rejects unauthenticated requests', async () => {
     const { status } = await session.testAgent.post('/v1/inbox/events').send({
-      name: 'hello-world',
+      name: KEYLESS_WORKFLOW_IDENTIFIER,
       to: { subscriberId: session.subscriberId },
       payload: {},
     });

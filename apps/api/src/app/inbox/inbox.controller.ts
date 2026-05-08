@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Headers,
   HttpCode,
@@ -18,13 +17,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
-import {
-  AddressingTypeEnum,
-  MessageActionStatusEnum,
-  PreferenceLevelEnum,
-  TriggerRequestCategoryEnum,
-  UserSessionData,
-} from '@novu/shared';
+import { MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
@@ -41,8 +34,6 @@ import { ListChannelEndpointsCommand } from '../channel-endpoints/usecases/list-
 import { ListChannelEndpoints } from '../channel-endpoints/usecases/list-channel-endpoints/list-channel-endpoints.usecase';
 import { TriggerEventRequestDto } from '../events/dtos';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
-import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
-import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
 import { GenerateChatOAuthUrlResponseDto } from '../integrations/dtos/generate-chat-oauth-url-response.dto';
 import { GenerateConnectOauthUrlRequestDto } from '../integrations/dtos/generate-connect-oauth-url-request.dto';
 import { GenerateLinkUserOauthUrlRequestDto } from '../integrations/dtos/generate-link-user-oauth-url-request.dto';
@@ -101,6 +92,8 @@ import { SessionCommand } from './usecases/session/session.command';
 import { Session } from './usecases/session/session.usecase';
 import { SnoozeNotificationCommand } from './usecases/snooze-notification/snooze-notification.command';
 import { SnoozeNotification } from './usecases/snooze-notification/snooze-notification.usecase';
+import { TriggerKeylessEventCommand } from './usecases/trigger-keyless-event/trigger-keyless-event.command';
+import { TriggerKeylessEvent } from './usecases/trigger-keyless-event/trigger-keyless-event.usecase';
 import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
 import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
 import { UpdateAllNotificationsCommand } from './usecases/update-all-notifications/update-all-notifications.command';
@@ -109,7 +102,6 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
-import { KEYLESS_WORKFLOW_IDENTIFIER } from './utils';
 import type { InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
@@ -130,7 +122,7 @@ export class InboxController {
     private snoozeNotificationUsecase: SnoozeNotification,
     private unsnoozeNotificationUsecase: UnsnoozeNotification,
     private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
-    private parseEventRequest: ParseEventRequest,
+    private triggerKeylessEventUsecase: TriggerKeylessEvent,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private deleteNotificationUsecase: DeleteNotification,
     private deleteAllNotificationsUsecase: DeleteAllNotifications,
@@ -635,9 +627,11 @@ export class InboxController {
   /**
    * Triggers the keyless / demo "hello-world" workflow for the authenticated
    * subscriber. The endpoint is intentionally restricted: an inbox subscriber
-   * JWT can only fire the keyless demo workflow and only target itself as the
-   * recipient. Any attempt to trigger a different workflow id or specify a
-   * different recipient is rejected to prevent privilege escalation.
+   * JWT can only fire the keyless demo workflow, only target itself as the
+   * recipient, and only when the caller belongs to a keyless environment. Any
+   * attempt to trigger a different workflow id, target another recipient, or
+   * call from a non-keyless environment is rejected to prevent privilege
+   * escalation. The actual validation lives in `TriggerKeylessEvent`.
    */
   @KeylessAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -647,52 +641,18 @@ export class InboxController {
     @Body() body: TriggerEventRequestDto,
     @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto> {
-    if (body.name !== KEYLESS_WORKFLOW_IDENTIFIER) {
-      throw new ForbiddenException(`Inbox subscribers may only trigger the "${KEYLESS_WORKFLOW_IDENTIFIER}" workflow.`);
-    }
-
-    if (!this.isSelfRecipient(body.to, subscriberSession.subscriberId)) {
-      throw new ForbiddenException('Inbox subscribers may only trigger notifications for themselves.');
-    }
-
-    const result = await this.parseEventRequest.execute(
-      ParseEventRequestMulticastCommand.create({
-        userId: subscriberSession._id,
+    return this.triggerKeylessEventUsecase.execute(
+      TriggerKeylessEventCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
-        identifier: KEYLESS_WORKFLOW_IDENTIFIER,
-        payload: body.payload || {},
-        overrides: {},
-        to: { subscriberId: subscriberSession.subscriberId },
-        addressingType: AddressingTypeEnum.MULTICAST,
-        requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys,
+        workflowIdentifier: body.name,
+        recipient: body.to,
+        payload: body.payload,
         requestId: req._nvRequestId,
       })
     );
-
-    return result as unknown as TriggerEventResponseDto;
-  }
-
-  /**
-   * Validates that the recipient described by `to` resolves to a single
-   * subscriber and that subscriber matches the authenticated session. Topic and
-   * array-based recipients are rejected outright because they could be used to
-   * notify other subscribers in the environment.
-   */
-  private isSelfRecipient(to: TriggerEventRequestDto['to'], subscriberId: string): boolean {
-    if (typeof to === 'string') {
-      return to === subscriberId;
-    }
-
-    if (Array.isArray(to)) {
-      return false;
-    }
-
-    if (to && typeof to === 'object' && 'subscriberId' in to && typeof to.subscriberId === 'string') {
-      return to.subscriberId === subscriberId;
-    }
-
-    return false;
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
