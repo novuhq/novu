@@ -477,7 +477,7 @@ class Mailin extends events.EventEmitter {
         'inbound-mail/post-queue',
         true,
         () =>
-          new Promise((resolve) => {
+          new Promise<void>((resolve, reject) => {
             logger.debug(
               { context: LOG_CONTEXT, connectionId: connection.id },
               `${connection.id} finalized message is: ${finalizedMessage}`
@@ -517,13 +517,20 @@ class Mailin extends events.EventEmitter {
               // ignore — instrumentation must never break the pipeline
             }
 
-            inboundMailService.inboundParseQueueService.add({
-              name: finalizedMessage.messageId,
-              data: finalizedMessage,
-              groupId,
-            });
-
-            return resolve();
+            return inboundMailService.inboundParseQueueService
+              .add({
+                name: finalizedMessage.messageId,
+                data: finalizedMessage,
+                groupId,
+              })
+              .then(() => resolve())
+              .catch((error) => {
+                logger.error(
+                  { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+                  `${connection.id} Failed to add inbound mail to queue`
+                );
+                reject(error);
+              });
           })
       );
     }
@@ -567,8 +574,29 @@ class Mailin extends events.EventEmitter {
         });
 
         stream.on('end', () => {
-          dataReady(connection);
-          onDataCallback();
+          dataReady(connection)
+            .then(() => onDataCallback())
+            .catch((error) => {
+              nr.noticeError(error);
+              logger.error(
+                { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+                `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
+              );
+
+              /*
+               * Signal a transient failure (4xx) to the sending MTA so it retries
+               * delivery instead of treating the message as accepted. Without
+               * this, a queue-insert failure after an unconditional onDataCallback()
+               * would silently drop the message — sender thinks 250 OK, we have
+               * nothing persisted.
+               */
+              const smtpError: Error & { responseCode?: number } =
+                error instanceof Error ? error : new Error(String(error));
+              if (typeof smtpError.responseCode !== 'number') {
+                smtpError.responseCode = 451;
+              }
+              onDataCallback(smtpError);
+            });
         });
 
         stream.on('close', () => {
