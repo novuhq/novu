@@ -5,6 +5,7 @@
   "author": "",
   "private": "true",
   "license": "MIT",
+  "portless": { "name": "api.novu" },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "pnpm build:metadata && nest build",
@@ -14,6 +15,7 @@
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "nest start --watch",
+    "start:portless": "node ../../scripts/with-portless-env.mjs pnpm exec portless run pnpm start:dev",
     "start:test": "cross-env NODE_ENV=test nest start",
     "start:debug": "nest start --debug --watch --inspect",
     "start:prod": "node dist/main.js",
