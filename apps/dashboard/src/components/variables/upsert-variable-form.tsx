@@ -148,7 +148,7 @@ export const UpsertVariableForm = ({
         await updateEnvironmentVariable({
           variableKey: variable.key,
           key: data.key.trim(),
-          values,
+          ...(values.length > 0 ? { values } : {}),
         });
       } else {
         const values = Object.entries(data.environmentValues).map(([_environmentId, value]) => ({
