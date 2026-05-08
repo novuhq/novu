@@ -14,7 +14,11 @@ export class FullPayloadForRender {
   payload: Record<string, unknown>;
   context?: ContextResolved;
   steps: Record<string, unknown>; // step.stepId.unknown
-  env?: Record<string, string>;
+  /**
+   * Environment variables defined in the Novu Dashboard, merged with built-in
+   * environment system variables (`name`, `type`). Available in templates as `{{ env.X }}`.
+   */
+  env?: Record<string, unknown>;
   // this variable is used to pass the layout content to the renderer
   [LAYOUT_CONTENT_VARIABLE]?: string;
 }
