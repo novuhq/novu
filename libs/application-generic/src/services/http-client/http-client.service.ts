@@ -1,11 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import {
-  safeOutboundJsonRequest,
-  safeOutboundRequest,
-  type SafeOutboundRequestOptions,
-  type SafeOutboundResponse,
-} from '@novu/shared/utils/safe-outbound-http';
-import { SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import got, {
   CacheError,
   HTTPError,
@@ -21,6 +14,13 @@ import got, {
   UploadError,
 } from 'got';
 import { PinoLogger } from '../../logging';
+import {
+  type SafeOutboundRequestOptions,
+  type SafeOutboundResponse,
+  SsrfBlockedError,
+  safeOutboundJsonRequest,
+  safeOutboundRequest,
+} from '../../utils/ssrf-url-validation';
 import {
   HttpClientError,
   HttpClientErrorType,

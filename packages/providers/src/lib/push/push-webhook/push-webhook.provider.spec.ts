@@ -13,15 +13,15 @@ beforeAll(() => {
   // so that IP literals like 127.0.0.2 still resolve to themselves and trigger
   // the SSRF rejection path.
   const realLookup = dns.promises.lookup.bind(dns.promises);
-  vi.spyOn(dns.promises, 'lookup').mockImplementation(((hostname: string, opts: any) => {
+  vi.spyOn(dns.promises, 'lookup').mockImplementation(((hostname: string, opts: any): any => {
     if (hostname === 'test-push-webhook.invalid') {
       const result = [{ address: '127.0.0.1', family: 4 }];
 
-      return Promise.resolve(opts && opts.all ? result : result[0]) as never;
+      return Promise.resolve(opts && opts.all ? result : result[0]);
     }
 
-    return realLookup(hostname, opts) as never;
-  }) as typeof dns.promises.lookup);
+    return realLookup(hostname as any, opts);
+  }) as any);
 });
 afterAll(() => {
   vi.restoreAllMocks();

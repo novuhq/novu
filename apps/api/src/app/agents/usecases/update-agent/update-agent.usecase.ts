@@ -29,10 +29,7 @@ export class UpdateAgent {
       throw new BadRequestException('At least one field must be provided.');
     }
 
-    const hasReadOnlyFields =
-      command.name !== undefined ||
-      command.description !== undefined ||
-      hasBehaviorFields;
+    const hasReadOnlyFields = command.name !== undefined || command.description !== undefined || hasBehaviorFields;
 
     if (hasReadOnlyFields) {
       await this.assertNotProduction(

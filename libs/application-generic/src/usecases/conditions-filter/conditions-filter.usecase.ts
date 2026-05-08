@@ -258,9 +258,7 @@ export class ConditionsFilter extends Filter {
       assertSafeOutboundUrl(child.webhookUrl);
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(
-          JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' })
-        );
+        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
       }
       throw err;
     }
@@ -282,14 +280,10 @@ export class ConditionsFilter extends Filter {
       return response.body;
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(
-          JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' })
-        );
+        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
       }
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(
-        JSON.stringify({ message, data: 'Exception while performing webhook request.' })
-      );
+      throw new Error(JSON.stringify({ message, data: 'Exception while performing webhook request.' }));
     }
   }
 

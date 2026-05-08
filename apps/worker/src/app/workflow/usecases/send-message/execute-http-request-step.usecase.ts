@@ -14,8 +14,8 @@ import {
   InstrumentUsecase,
   PinoLogger,
   resolveHttpRequestBody,
-  shouldIncludeBody,
   SsrfBlockedError,
+  shouldIncludeBody,
   toHeadersRecord,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';

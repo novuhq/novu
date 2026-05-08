@@ -1,12 +1,7 @@
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { Readable } from 'node:stream';
-import {
-  assertSafeOutboundUrl,
-  isPrivateIp,
-  resolvePublicAddresses,
-  SsrfBlockedError,
-} from './ssrf-url-validation';
+import { assertSafeOutboundUrl, isPrivateIp, resolvePublicAddresses, SsrfBlockedError } from './ssrf-url-validation';
 
 /**
  * Test-only escape hatch: when this env var is set, the SSRF policy treats
@@ -20,7 +15,12 @@ function getTestAllowList(): Set<string> {
   const raw = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
   if (!raw) return new Set<string>();
 
-  return new Set(raw.split(',').map((s) => s.trim()).filter(Boolean));
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -37,7 +37,7 @@ export interface SafeOutboundRequestOptions {
   /** Headers attached to the original request. Forwarded across redirects only when the host matches. */
   headers?: Record<string, string | undefined>;
   /** Body for the request. Strings, Buffers, and Readables are supported. Objects are JSON-stringified. */
-  body?: string | Buffer | Readable | Record<string, unknown> | unknown[];
+  body?: string | Buffer | Readable | object;
   /** Per-request timeout in ms (applies to each redirect hop). Default {@link DEFAULT_TIMEOUT_MS}. */
   timeoutMs?: number;
   /** Maximum number of redirects to follow. Default {@link DEFAULT_MAX_REDIRECTS}. Set to 0 to disable redirects. */
@@ -332,7 +332,14 @@ function buildOutboundHeaders(
   return out;
 }
 
-const SENSITIVE_HEADER_PATTERNS = [/^authorization$/i, /^cookie$/i, /^proxy-authorization$/i, /^novu-signature$/i, /-signature$/i, /-hmac/i];
+const SENSITIVE_HEADER_PATTERNS = [
+  /^authorization$/i,
+  /^cookie$/i,
+  /^proxy-authorization$/i,
+  /^novu-signature$/i,
+  /-signature$/i,
+  /-hmac/i,
+];
 
 function stripSensitiveHeaders(headers: Record<string, string | undefined>): void {
   for (const key of Object.keys(headers)) {

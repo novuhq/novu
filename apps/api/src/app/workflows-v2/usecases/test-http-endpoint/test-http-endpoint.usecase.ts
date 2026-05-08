@@ -11,8 +11,8 @@ import {
   InstrumentUsecase,
   KeyValuePair,
   resolveHttpRequestBody,
-  shouldIncludeBody,
   SsrfBlockedError,
+  shouldIncludeBody,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { Liquid } from 'liquidjs';

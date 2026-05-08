@@ -1,9 +1,9 @@
-export * from './safe-outbound-http.service';
 export {
-  safeOutboundJsonRequest,
-  safeOutboundRequest,
   type SafeOutboundJsonResponse,
   type SafeOutboundMethod,
   type SafeOutboundRequestOptions,
   type SafeOutboundResponse,
-} from '@novu/shared/utils/safe-outbound-http';
+  safeOutboundJsonRequest,
+  safeOutboundRequest,
+} from '../../utils/ssrf-url-validation';
+export * from './safe-outbound-http.service';

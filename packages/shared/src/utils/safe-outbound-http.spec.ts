@@ -69,18 +69,17 @@ describe('safe-outbound-http', () => {
 
   /** Pin DNS to localhost. The hostname is bogus to ensure no real resolution happens. */
   function dnsLocalhost() {
-    return vi
-      .spyOn(dns.promises, 'lookup')
-      .mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+    return vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
   }
 
   describe('URL-level guards', () => {
     it('rejects credentials embedded in the URL', async () => {
       dnsLocalhost();
 
-      await expect(
-        safeOutboundRequest({ url: 'https://user:pass@example.com/x' })
-      ).rejects.toMatchObject({ name: 'SsrfBlockedError', reason: 'CREDENTIALS_IN_URL' });
+      await expect(safeOutboundRequest({ url: 'https://user:pass@example.com/x' })).rejects.toMatchObject({
+        name: 'SsrfBlockedError',
+        reason: 'CREDENTIALS_IN_URL',
+      });
     });
 
     it('rejects non-http(s) schemes', async () => {
@@ -110,9 +109,9 @@ describe('safe-outbound-http', () => {
     it('rejects metadata.google.internal without DNS', async () => {
       const lookup = vi.spyOn(dns.promises, 'lookup');
 
-      await expect(
-        safeOutboundRequest({ url: 'http://metadata.google.internal/x' })
-      ).rejects.toMatchObject({ reason: 'BLOCKED_HOSTNAME' });
+      await expect(safeOutboundRequest({ url: 'http://metadata.google.internal/x' })).rejects.toMatchObject({
+        reason: 'BLOCKED_HOSTNAME',
+      });
       expect(lookup).not.toHaveBeenCalled();
     });
 
@@ -125,43 +124,37 @@ describe('safe-outbound-http', () => {
 
   describe('DNS guards', () => {
     it('rejects hostnames that resolve to IPv4 RFC1918', async () => {
-      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([
-        { address: '192.168.1.10', family: 4 },
-      ] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '192.168.1.10', family: 4 }] as never);
 
-      await expect(safeOutboundRequest({ url: 'https://malicious.invalid/' })).rejects.toMatchObject(
-        { reason: 'PRIVATE_IP', resolvedAddress: '192.168.1.10' }
-      );
+      await expect(safeOutboundRequest({ url: 'https://malicious.invalid/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+        resolvedAddress: '192.168.1.10',
+      });
     });
 
     it('rejects hostnames that resolve to AWS metadata link-local', async () => {
-      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([
-        { address: '169.254.169.254', family: 4 },
-      ] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '169.254.169.254', family: 4 }] as never);
 
-      await expect(
-        safeOutboundRequest({ url: 'https://metadata-attacker.invalid/' })
-      ).rejects.toMatchObject({ reason: 'PRIVATE_IP', resolvedAddress: '169.254.169.254' });
+      await expect(safeOutboundRequest({ url: 'https://metadata-attacker.invalid/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+        resolvedAddress: '169.254.169.254',
+      });
     });
 
     it('rejects IPv6 link-local', async () => {
-      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([
-        { address: 'fe80::1', family: 6 },
-      ] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: 'fe80::1', family: 6 }] as never);
 
-      await expect(safeOutboundRequest({ url: 'https://v6-attacker.invalid/' })).rejects.toMatchObject(
-        { reason: 'PRIVATE_IP' }
-      );
+      await expect(safeOutboundRequest({ url: 'https://v6-attacker.invalid/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+      });
     });
 
     it('rejects IPv6 unique-local (fc00::/7)', async () => {
-      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([
-        { address: 'fd12:3456:789a::1', family: 6 },
-      ] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: 'fd12:3456:789a::1', family: 6 }] as never);
 
-      await expect(safeOutboundRequest({ url: 'https://v6-ula.invalid/' })).rejects.toMatchObject(
-        { reason: 'PRIVATE_IP' }
-      );
+      await expect(safeOutboundRequest({ url: 'https://v6-ula.invalid/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+      });
     });
 
     it('rejects when ANY resolved address is private (mixed answer attack)', async () => {
@@ -170,19 +163,18 @@ describe('safe-outbound-http', () => {
         { address: '10.0.0.5', family: 4 },
       ] as never);
 
-      await expect(
-        safeOutboundRequest({ url: 'https://mixed.invalid/' })
-      ).rejects.toMatchObject({ reason: 'PRIVATE_IP', resolvedAddress: '10.0.0.5' });
+      await expect(safeOutboundRequest({ url: 'https://mixed.invalid/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+        resolvedAddress: '10.0.0.5',
+      });
     });
 
     it('rejects IPv4-mapped IPv6 of private addresses', async () => {
-      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([
-        { address: '::ffff:127.0.0.1', family: 6 },
-      ] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '::ffff:127.0.0.1', family: 6 }] as never);
 
-      await expect(safeOutboundRequest({ url: 'https://mapped.invalid/' })).rejects.toMatchObject(
-        { reason: 'PRIVATE_IP' }
-      );
+      await expect(safeOutboundRequest({ url: 'https://mapped.invalid/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+      });
     });
   });
 
@@ -227,9 +219,10 @@ describe('safe-outbound-http', () => {
         .mockResolvedValueOnce([{ address: '127.0.0.1', family: 4 }] as never) // initial host
         .mockResolvedValueOnce([{ address: '169.254.169.254', family: 4 }] as never); // redirect target
 
-      await expect(
-        safeOutboundRequest({ url: `${upstreamUrl}/start`, maxRedirects: 5 })
-      ).rejects.toMatchObject({ reason: 'PRIVATE_IP', resolvedAddress: '169.254.169.254' });
+      await expect(safeOutboundRequest({ url: `${upstreamUrl}/start`, maxRedirects: 5 })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+        resolvedAddress: '169.254.169.254',
+      });
 
       expect(lookup).toHaveBeenCalledTimes(2);
     });
@@ -258,9 +251,7 @@ describe('safe-outbound-http', () => {
         res.end();
       };
 
-      vi
-        .spyOn(dns.promises, 'lookup')
-        .mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
 
       await safeOutboundRequest({
         url: `${upstreamUrl}/start`,
@@ -277,10 +268,7 @@ describe('safe-outbound-http', () => {
       await new Promise<void>((resolve) => secondUpstream.close(() => resolve()));
 
       expect(upstreamHits).toHaveLength(2);
-      const [initialHit, redirectHit] = upstreamHits as [
-        (typeof upstreamHits)[number],
-        (typeof upstreamHits)[number],
-      ];
+      const [initialHit, redirectHit] = upstreamHits as [(typeof upstreamHits)[number], (typeof upstreamHits)[number]];
 
       expect(initialHit.headers.authorization).toBe('Bearer secret');
       expect(initialHit.headers['novu-signature']).toBe('v1,t=1,sig');
@@ -297,21 +285,17 @@ describe('safe-outbound-http', () => {
         res.end();
       };
 
-      vi
-        .spyOn(dns.promises, 'lookup')
-        .mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
 
-      await expect(
-        safeOutboundRequest({ url: `${upstreamUrl}/scheme-redirect` })
-      ).rejects.toMatchObject({ reason: 'UNSUPPORTED_SCHEME' });
+      await expect(safeOutboundRequest({ url: `${upstreamUrl}/scheme-redirect` })).rejects.toMatchObject({
+        reason: 'UNSUPPORTED_SCHEME',
+      });
     });
   });
 
   describe('happy path', () => {
     it('reaches a public host and pins to the resolved IP, preserving Host header', async () => {
-      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([
-        { address: '127.0.0.1', family: 4 },
-      ] as never);
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
 
       const response = await safeOutboundJsonRequest<{ ok: boolean; path: string }>({
         url: `${upstreamUrl}/ping`,

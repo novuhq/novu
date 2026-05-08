@@ -4,8 +4,8 @@ import {
   CompileTemplate,
   createHash,
   normalizeOutboundHttpUrl,
-  safeOutboundJsonRequest,
   SsrfBlockedError,
+  safeOutboundJsonRequest,
 } from '@novu/application-generic';
 import {
   JobEntity,

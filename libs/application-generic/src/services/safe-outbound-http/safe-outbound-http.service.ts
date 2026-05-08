@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { PinoLogger } from '../../logging';
 import {
   type SafeOutboundJsonResponse,
   type SafeOutboundRequestOptions,
   type SafeOutboundResponse,
   safeOutboundJsonRequest,
   safeOutboundRequest,
-} from '@novu/shared/utils/safe-outbound-http';
-import { PinoLogger } from '../../logging';
+} from '../../utils/ssrf-url-validation';
 
 /**
  * NestJS-friendly wrapper around the SSRF-safe outbound HTTP primitives.
@@ -26,8 +26,8 @@ import { PinoLogger } from '../../logging';
  *  - Sensitive headers (Authorization, Cookie, signature/HMAC) are stripped
  *    when a redirect crosses an origin boundary.
  *
- * Errors surface as {@link import('@novu/shared/utils/ssrf-url-validation').SsrfBlockedError}
- * for policy rejections, or generic Errors for transport/timeout/parse failures.
+ * Errors surface as `SsrfBlockedError` for policy rejections, or generic
+ * Errors for transport/timeout/parse failures.
  */
 @Injectable()
 export class SafeOutboundHttpService {
