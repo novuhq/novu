@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import * as applicationGeneric from '@novu/application-generic';
 import {
   CompileTemplate,
   HttpClientService,
@@ -68,20 +69,27 @@ describe('Should handle the new arrived mail', () => {
   it('should send webhook request to the users webhook', async () => {
     const mail = getMailData();
 
-    const axiosPostStub = sandbox.stub(axios, 'post').resolves();
+    const safeRequestStub = sandbox.stub(applicationGeneric, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: {},
+    } as any);
     sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
     compileTemplate.execute.resolves(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
 
     await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-    sinon.assert.calledOnce(axiosPostStub);
-    axiosPostStub.calledWith(sinon.match.array);
-    const { args } = axiosPostStub.getCall(0);
+    sinon.assert.calledOnce(safeRequestStub);
+    const callArgs = safeRequestStub.getCall(0).args[0] as {
+      url: string;
+      method: string;
+      body: IUserWebhookPayload;
+    };
 
-    const webhook: string = args[0];
-    const payload: IUserWebhookPayload = args[1];
-
-    expect(webhook).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+    expect(callArgs.url).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+    expect(callArgs.method).to.equal('POST');
+    const payload = callArgs.body;
     expect(payload.mail).to.be.ok;
     expect(payload.payload).to.ok;
     expect(payload.template).to.ok;

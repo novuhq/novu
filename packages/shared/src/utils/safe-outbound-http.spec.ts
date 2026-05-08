@@ -2,7 +2,6 @@ import * as dns from 'node:dns';
 import * as http from 'node:http';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { safeOutboundJsonRequest, safeOutboundRequest } from './safe-outbound-http';
-import { SsrfBlockedError } from './ssrf-url-validation';
 
 const ORIGINAL_ALLOW = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
 beforeAll(() => {
