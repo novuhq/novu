@@ -67,6 +67,7 @@
         "noUnsafeOptionalChaining": "warn",
         "noVoidTypeReturn": "warn",
         "useExhaustiveDependencies": "warn",
+        "useUniqueElementIds": "warn",
         "useYield": "warn"
       },
       "security": {
@@ -101,6 +102,8 @@
         "noRedeclare": "warn",
         "noShadowRestrictedNames": "warn",
         "noThenProperty": "warn",
+        "noUnknownAtRules": "warn",
+        "useIterableCallbackReturn": "warn",
         "noArrayIndexKey": "off",
         "noPrototypeBuiltins": "off"
       }

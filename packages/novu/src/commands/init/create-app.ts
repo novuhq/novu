@@ -102,49 +102,71 @@ export async function createApp({
   }
 
   console.log(`${green('Success!')} Created ${appName} at ${appPath}`);
-  printNextSteps({ template, cdPath, skipCd: appPath === originalDirectory });
+  printNextSteps({ template, cdPath, root, agentIdentifier, skipCd: appPath === originalDirectory });
+}
+
+function terminalLink(text: string, url: string): string {
+  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
 }
 
 function printNextSteps({
   template,
   cdPath,
+  root,
+  agentIdentifier,
   skipCd,
 }: {
   template: TemplateType;
   cdPath: string;
+  root: string;
+  agentIdentifier?: string;
   skipCd: boolean;
 }): void {
   const isAgent = template === TemplateTypeEnum.APP_AGENT;
-  const devCommand = isAgent ? 'npx novu@latest dev -p 4000 --no-studio' : 'npx novu@latest dev';
-  const devCommandHint = isAgent
-    ? 'Opens a tunnel and registers the bridge URL with Novu'
-    : 'Starts Novu Studio and a dev tunnel';
-
-  console.log();
-  console.log(bold('Next steps:'));
-  console.log();
-
-  let step = 1;
-  if (!skipCd) {
-    console.log(`  ${step}. ${cyan(`cd ${cdPath}`)}`);
-    step += 1;
-  }
-  console.log(`  ${step}. ${cyan('npm run dev')}${dim('                          Start your app on :4000')}`);
-  step += 1;
-  console.log(`  ${step}. In a second terminal, run:`);
-  console.log(`     ${cyan(devCommand)}`);
-  console.log(`     ${dim(devCommandHint)}`);
-  console.log();
 
   if (isAgent) {
-    console.log(
-      'Then send a message to your bot from the connected chat provider — your local agent will handle the reply.'
-    );
-    console.log(`Edit ${cyan('app/novu/agents/')} to customize how your agent responds.`);
-    console.log(`Docs: ${cyan('https://docs.novu.co/agents/overview')}`);
+    const cmd = skipCd ? 'npm run dev:novu' : `cd ${cdPath} && npm run dev:novu`;
+    const cmdLine = `$ ${cmd}`;
+    const innerWidth = Math.max(cmdLine.length + 4, 50);
+
+    const agentFileName = agentIdentifier ? `${agentIdentifier}.tsx` : 'support-agent.tsx';
+    const agentFilePath = path.join(root, 'app', 'novu', 'agents', agentFileName);
+    const agentRelPath = `app/novu/agents/${agentFileName}`;
+    const fileUrl = `file://${agentFilePath}`;
+
+    console.log();
+    console.log(dim(`  ╭${'─'.repeat(innerWidth)}╮`));
+    console.log(dim(`  │${' '.repeat(innerWidth)}│`));
+    console.log(dim('  │') + `  ${cyan(cmdLine)}${' '.repeat(innerWidth - cmdLine.length - 2)}` + dim('│'));
+    console.log(dim(`  │${' '.repeat(innerWidth)}│`));
+    console.log(dim(`  ╰${'─'.repeat(innerWidth)}╯`));
+    console.log();
+    console.log(`  Send a message from your chat provider — your agent will reply.`);
+    console.log();
+    console.log(`  ${dim('npm run dev')}        ${dim('Start app without tunnel')}`);
+    console.log(`  ${dim('npm run dev:novu')}   ${dim('Start app + dev tunnel')}`);
+    console.log();
+    console.log(`  ${dim('Your agent')}  ${cyan(terminalLink(agentRelPath, fileUrl))}`);
+    console.log(`  ${dim('Docs')}        ${cyan('https://docs.novu.co/agents/overview')}`);
+    console.log();
   } else {
-    console.log(`Edit ${cyan('app/novu/workflows/')} to customize your notification workflows.`);
-    console.log(`Docs: ${cyan('https://docs.novu.co/framework/introduction')}`);
+    console.log();
+    console.log(bold('Next steps:'));
+    console.log();
+
+    let step = 1;
+    if (!skipCd) {
+      console.log(`  ${step}. ${cyan(`cd ${cdPath}`)}`);
+      step += 1;
+    }
+    console.log(`  ${step}. ${cyan('npm run dev')}${dim('                          Start your app on :4000')}`);
+    step += 1;
+    console.log(`  ${step}. In a second terminal, run:`);
+    console.log(`     ${cyan('npx novu@latest dev')}`);
+    console.log(`     ${dim('Starts Novu Studio and a dev tunnel')}`);
+    console.log();
+    console.log(`  Edit ${cyan('app/novu/workflows/')} to customize your notification workflows.`);
+    console.log(`  Docs: ${cyan('https://docs.novu.co/framework/introduction')}`);
+    console.log();
   }
-  console.log();
 }

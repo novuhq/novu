@@ -186,4 +186,12 @@ export const emailProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/channels/email/email-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
   },
+  {
+    id: EmailProviderIdEnum.NovuAgent,
+    displayName: 'Novu Email',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: [],
+    docReference: `https://docs.novu.co/platform/agents/email${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
 ];

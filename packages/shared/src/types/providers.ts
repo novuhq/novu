@@ -53,6 +53,7 @@ export enum CredentialsKeyEnum {
   ServicePlanId = 'servicePlanId',
   TenantId = 'tenantId',
   SigningSecret = 'signingSecret',
+  OutboundIntegrationId = 'outboundIntegrationId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -79,6 +80,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  NovuAgent = 'novu-email-agent',
 }
 
 export enum SmsProviderIdEnum {

@@ -943,6 +943,127 @@ describe('EmailOutputRendererUsecase', () => {
       const matches = result.body.match(/Item item/g);
       expect(matches).to.have.length(3);
     });
+
+    it('should render repeat block over steps.<digest>.events whose payload contains apostrophes', async () => {
+      const mockTipTapNode: MailyJSONContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'repeat',
+            attrs: {
+              each: 'steps.digest-step.events',
+              isUpdatingKey: false,
+              showIfKey: null,
+            },
+            content: [
+              {
+                type: 'paragraph',
+                attrs: {
+                  textAlign: 'left',
+                },
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Order: ',
+                  },
+                  {
+                    type: 'variable',
+                    attrs: {
+                      id: 'steps.digest-step.events.payload.title',
+                      label: null,
+                      fallback: null,
+                      required: false,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand: EmailOutputRendererCommand = {
+        dbWorkflow: mockDbWorkflow,
+        controlValues: {
+          subject: 'Digest Events Repeat Regression',
+          body: JSON.stringify(mockTipTapNode),
+          disableOutputSanitization: true,
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          steps: {
+            'digest-step': {
+              events: [{ payload: { title: "John's order" } }, { payload: { title: "it's a test" } }],
+            },
+          },
+        },
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include("Order: John's order");
+      expect(result.body).to.include("Order: it's a test");
+
+      const matches = result.body.match(/Order: /g);
+      expect(matches).to.have.length(2);
+    });
+
+    it('should render repeat block over payload.items when string values contain apostrophes', async () => {
+      const mockTipTapNode: MailyJSONContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'repeat',
+            attrs: {
+              each: 'payload.names',
+              isUpdatingKey: false,
+              showIfKey: null,
+            },
+            content: [
+              {
+                type: 'paragraph',
+                attrs: {
+                  textAlign: 'left',
+                },
+                content: [
+                  {
+                    type: 'variable',
+                    attrs: {
+                      id: 'payload.names',
+                      label: null,
+                      fallback: null,
+                      required: false,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand: EmailOutputRendererCommand = {
+        dbWorkflow: mockDbWorkflow,
+        controlValues: {
+          subject: 'Apostrophe primitives repeat',
+          body: JSON.stringify(mockTipTapNode),
+          disableOutputSanitization: true,
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: {
+            names: ["O'Brien", 'Jane'],
+          },
+        },
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include("O'Brien");
+      expect(result.body).to.include('Jane');
+    });
   });
 
   describe('node attrs and marks attrs hydration', () => {
@@ -1432,6 +1553,35 @@ describe('EmailOutputRendererUsecase', () => {
       // Should still attempt to fetch layout but gracefully handle null result
       expect(getLayoutUseCaseV0.execute.calledOnce).to.be.true;
       expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+    });
+
+    it('should interpolate environment variables inside the layout body', async () => {
+      const layoutWithEnvVar =
+        '<html><body><img src="{{env.CDN_BASE_URL}}/logo.png" /><div>{{content}}</div></body></html>';
+      controlValuesRepositoryMock.findOne.resolves({
+        controls: { email: { body: layoutWithEnvVar } },
+      } as any);
+
+      const renderCommand: EmailOutputRendererCommand = {
+        dbWorkflow: mockDbWorkflow,
+        controlValues: {
+          subject: 'Layout Env Var Test',
+          body: simpleBodyContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+          env: { CDN_BASE_URL: 'https://cdn.example.com', name: 'Production', type: 'prod' },
+        },
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('https://cdn.example.com/logo.png');
+      expect(result.body).to.not.include('{{env.CDN_BASE_URL}}');
+      expect(result.body).to.include('Step content John');
     });
   });
 

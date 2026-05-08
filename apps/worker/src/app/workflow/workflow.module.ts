@@ -17,7 +17,9 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InboundDomainRouteDelivery,
   InMemoryProviderService,
+  MsTeamsTokenService,
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
@@ -38,6 +40,7 @@ import {
   CommunityUserRepository,
   ContextRepository,
   DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -102,6 +105,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
 const REPOSITORIES = [
   DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,
@@ -196,6 +200,7 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  InboundDomainRouteDelivery,
   ReplyToStrategy,
   DomainRouteStrategy,
   ExecuteBridgeJob,
@@ -205,7 +210,7 @@ const USE_CASES = [
   ResolveChannelEndpoints,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

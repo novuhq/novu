@@ -30,6 +30,7 @@ export {
   MessageInteractionTrace,
 } from './message-interaction.service';
 export * from './metrics';
+export { MsTeamsTokenService } from './ms-teams-token.service';
 export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';

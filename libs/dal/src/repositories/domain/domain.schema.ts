@@ -1,4 +1,4 @@
-import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
+import { DomainStatusEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -22,13 +22,9 @@ const domainSchema = new Schema<DomainDBModel>(
     dnsProvider: {
       type: Schema.Types.String,
     },
-    routes: [
-      {
-        address: { type: Schema.Types.String, required: true },
-        destination: { type: Schema.Types.String },
-        type: { type: Schema.Types.String, enum: Object.values(DomainRouteTypeEnum), required: true },
-      },
-    ],
+    data: {
+      type: Schema.Types.Mixed,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
@@ -47,17 +43,10 @@ const domainSchema = new Schema<DomainDBModel>(
  */
 domainSchema.index({ name: 1 }, { unique: true });
 
+/*
+ * Supports listDomains queries scoped to a specific environment
+ */
 domainSchema.index({ _environmentId: 1 });
-
-/*
- * Supports listDomains queries scoped to a specific environment + organization.
- */
-domainSchema.index({ _environmentId: 1, _organizationId: 1 });
-
-/*
- * Supports global route-address lookup (findByRouteAddress).
- */
-domainSchema.index({ 'routes.address': 1 });
 
 export const Domain =
   (mongoose.models.Domain as mongoose.Model<DomainDBModel>) || mongoose.model<DomainDBModel>('Domain', domainSchema);

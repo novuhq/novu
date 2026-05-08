@@ -102,7 +102,7 @@ export function ActivityFeed() {
             </TabsTrigger>
             {isConversationalAgentsEnabled && (
               <TabsTrigger value="conversations" variant="regular" size="lg">
-                Conversations
+                Agent conversations
               </TabsTrigger>
             )}
             {isHttpLogsPageEnabled && (

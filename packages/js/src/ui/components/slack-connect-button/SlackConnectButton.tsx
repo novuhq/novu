@@ -8,18 +8,27 @@ import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
 import { SlackColored } from '../../icons/SlackColored';
 import type { ChannelConnectButtonAppearanceCallback } from '../../types';
+import { buildDefaultConnectionIdentifier, DEFAULT_SLACK_CONNECTION_IDENTIFIER } from '../constants';
 import { Button, Motion } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
-import { DEFAULT_CONNECTION_IDENTIFIER, DEFAULT_INTEGRATION_IDENTIFIER } from '../slack-constants';
 
 export type SlackConnectButtonProps = {
-  integrationIdentifier?: string;
+  integrationIdentifier: string;
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
   scope?: string[];
   connectionMode?: ConnectionMode;
+  /**
+   * When true (default), after the workspace connection is created the OAuth
+   * flow also links the subscriber who clicked "Connect" as a personal Slack
+   * endpoint using the authed_user.id already returned by oauth.v2.access.
+   * Set to false to skip the user-linking step and only create the workspace
+   * connection. Raw API callers must pass true explicitly; this component
+   * defaults to true.
+   */
+  autoLinkUser?: boolean;
   onConnectSuccess?: (connectionIdentifier: string) => void;
   onConnectError?: (error: unknown) => void;
   onDisconnectSuccess?: () => void;
@@ -34,19 +43,22 @@ const POLL_TIMEOUT_MS = 120_000;
 export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
-  const integrationIdentifier = () => props.integrationIdentifier ?? DEFAULT_INTEGRATION_IDENTIFIER;
-  const connectionIdentifier = () => props.connectionIdentifier ?? DEFAULT_CONNECTION_IDENTIFIER;
+  const integrationIdentifier = () => props.integrationIdentifier;
+  const connectionMode = () => props.connectionMode ?? 'subscriber';
+  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const resolvedSubscriberId = () =>
+    connectionMode() === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
+  const connectionIdentifier = () =>
+    props.connectionIdentifier ??
+    buildDefaultConnectionIdentifier(DEFAULT_SLACK_CONNECTION_IDENTIFIER, resolvedSubscriberId());
 
-  const { connection, loading, connect, disconnect, mutate } = useChannelConnection({
+  const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
     integrationIdentifier: integrationIdentifier(),
     connectionIdentifier: connectionIdentifier(),
     subscriberId: props.subscriberId,
   });
 
   const [actionLoading, setActionLoading] = createSignal(false);
-
-  const connectionMode = () => props.connectionMode ?? 'subscriber';
-  const resolvedContext = () => props.context ?? novuAccessor().context;
   const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
 
   createEffect(() => {
@@ -71,6 +83,8 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   });
 
   const startPolling = () => {
+    const connId = connectionIdentifier();
+
     if (intervalIdRef.current !== null) {
       clearInterval(intervalIdRef.current);
       intervalIdRef.current = null;
@@ -81,7 +95,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
     intervalIdRef.current = setInterval(async () => {
       try {
         const response = await novuAccessor().channelConnections.get({
-          identifier: connectionIdentifier(),
+          identifier: connId,
         });
 
         if (response.data) {
@@ -92,7 +106,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
 
           setActionLoading(false);
           mutate(response.data);
-          props.onConnectSuccess?.(connectionIdentifier());
+          props.onConnectSuccess?.(connId);
 
           return;
         }
@@ -131,13 +145,14 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
       const resolvedSubscriberId =
         mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
 
-      const result = await connect({
+      const result = await generateConnectOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
         connectionIdentifier: connectionIdentifier(),
         subscriberId: resolvedSubscriberId,
         context: ctx,
         scope: props.scope,
         connectionMode: mode,
+        autoLinkUser: mode === 'subscriber' ? (props.autoLinkUser ?? true) : false,
       });
 
       if (result.error) {
@@ -150,6 +165,9 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
         startPolling();
+      } else {
+        setActionLoading(false);
+        props.onConnectError?.(new Error('OAuth URL was not returned. Please try again.'));
       }
     }
   };

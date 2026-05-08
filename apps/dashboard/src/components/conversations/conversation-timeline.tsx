@@ -7,9 +7,12 @@ import {
   RiRouteFill,
   RiShareForwardLine,
 } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ConversationActivityDto } from '@/api/conversations';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { useEnvironment } from '@/context/environment/hooks';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
@@ -18,7 +21,22 @@ type ConversationTimelineProps = {
   activities: ConversationActivityDto[];
   isLoading: boolean;
   totalCount: number;
+  conversationStatus?: string;
 };
+
+const ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
+
+function getActivityContent(activity: ConversationActivityDto): string {
+  if (activity.content.trim().length > 0) {
+    return activity.content;
+  }
+
+  if (activity.richContent?.attachments?.length) {
+    return ATTACHMENT_ONLY_PREVIEW;
+  }
+
+  return '';
+}
 
 function formatActivityTimestamp(dateStr: string | undefined): string {
   if (!dateStr?.trim()) {
@@ -135,7 +153,7 @@ function MessageContent({ content }: { content: string }) {
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={() => setExpanded(!expanded)}
-          className="text-text-soft flex shrink-0 items-center gap-0.5"
+          className="text-text-soft hover:text-text-sub flex shrink-0 cursor-pointer items-center gap-0.5 transition-colors"
         >
           <RiExpandUpDownLine className="size-3.5" />
           <span className="text-[10px] font-medium leading-[14px]">{expanded ? 'Collapse' : 'Show full message'}</span>
@@ -147,6 +165,7 @@ function MessageContent({ content }: { content: string }) {
 
 function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   const isAgent = activity.senderType === 'agent';
+  const content = getActivityContent(activity);
 
   return (
     <div className={cn('border-stroke-soft flex flex-col rounded-md border', isAgent ? 'bg-bg-weak' : 'bg-white')}>
@@ -155,7 +174,7 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
           <SenderHeader activity={activity} />
           <MessageTimestamp activity={activity} />
         </div>
-        {activity.content && <MessageContent content={activity.content} />}
+        {content && <MessageContent content={content} />}
       </div>
     </div>
   );
@@ -163,7 +182,17 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
 
 function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
   const isAgentAction = activity.senderType === 'agent' || activity.senderType === 'system';
-  const signalType = activity.signalData?.type;
+  const signalData = activity.signalData;
+  const signalType = signalData?.type;
+  const { currentEnvironment } = useEnvironment();
+
+  const transactionId =
+    signalType === 'trigger' && signalData?.type === 'trigger' ? signalData.payload?.transactionId : undefined;
+
+  const activityFeedLink =
+    transactionId && currentEnvironment?.slug
+      ? `${buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug })}?transactionId=${transactionId}`
+      : undefined;
 
   const icon =
     signalType === 'trigger' ? (
@@ -175,7 +204,16 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
   return (
     <div className="flex items-center gap-1 overflow-hidden py-0.5 pl-[11px]">
       {icon}
-      <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{activity.content}</span>
+      {activityFeedLink ? (
+        <Link
+          to={activityFeedLink}
+          className="text-text-sub text-label-xs min-w-0 truncate font-medium underline decoration-dashed underline-offset-[3px] decoration-[currentColor]/40 transition-colors hover:text-text-strong hover:decoration-[currentColor]/70"
+        >
+          {activity.content}
+        </Link>
+      ) : (
+        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{activity.content}</span>
+      )}
       <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">•</span>
       <span className="text-text-soft shrink-0 text-[10px] font-medium leading-[14px]">
         {formatActivityTimestamp(activity.createdAt)}
@@ -209,7 +247,12 @@ function ResolvedFooter({ totalCount }: { totalCount: number }) {
   );
 }
 
-export function ConversationTimeline({ activities, isLoading, totalCount }: ConversationTimelineProps) {
+export function ConversationTimeline({
+  activities,
+  isLoading,
+  totalCount,
+  conversationStatus,
+}: ConversationTimelineProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3 p-3">
@@ -236,7 +279,7 @@ export function ConversationTimeline({ activities, isLoading, totalCount }: Conv
     );
   }
 
-  const hasResolvedSignal = activities.some((a) => a.type === 'signal' && a.signalData?.type === 'resolve');
+  const isResolved = conversationStatus === 'resolved';
 
   return (
     <div className="flex flex-col gap-3 p-3">
@@ -255,7 +298,7 @@ export function ConversationTimeline({ activities, isLoading, totalCount }: Conv
           </Fragment>
         ))}
 
-        {hasResolvedSignal && (
+        {isResolved && (
           <>
             <TimelineDivider />
             <ResolvedFooter totalCount={totalCount} />

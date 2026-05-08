@@ -2,7 +2,7 @@ import { areTagsEqual, isSameFilter, Notification, NotificationFilter, NovuError
 import { useEffect, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
-import { useNovu } from './NovuProvider';
+import { useNovu, useRealtime } from './NovuProvider';
 
 type Count = {
   count: number;
@@ -28,10 +28,28 @@ type Count = {
  * const { counts } = useCounts({
  *   filters: [{ seen: true, read: false }]
  * });
+ *
+ * // Opt out of the built-in realtime count updates and drive them yourself
+ * const { counts, refetch } = useCounts({
+ *   filters: [{ read: false }],
+ *   realtime: false,
+ * });
  * ```
  */
 export type UseCountsProps = {
   filters: NotificationFilter[];
+  /**
+   * When `false`, disables the WebSocket subscriptions that auto-resync
+   * counts on `notifications.notification_received` and
+   * `notifications.unread_count_changed`. The filter-driven fetch and
+   * `refetch()` keep working. Use alongside
+   * `useNotifications({ realtime: false })` when you drive live updates
+   * yourself.
+   *
+   * When set, this prop takes precedence over the `realtime` config on
+   * `<NovuProvider />`. When omitted, the provider value (default `true`) is used.
+   */
+  realtime?: boolean;
   onSuccess?: (data: Count[]) => void;
   onError?: (error: NovuError) => void;
 };
@@ -45,8 +63,10 @@ export type UseCountsResult = {
 };
 
 export const useCounts = (props: UseCountsProps): UseCountsResult => {
-  const { filters, onSuccess, onError } = props;
+  const { filters, realtime: propsRealtime, onSuccess, onError } = props;
   const { notifications } = useNovu();
+  const providerRealtime = useRealtime();
+  const realtime = propsRealtime ?? providerRealtime;
   const filtersRef = useDataRef<NotificationFilter[]>(filters);
   const [error, setError] = useState<NovuError>();
   const [counts, setCounts] = useState<Count[]>();
@@ -110,6 +130,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
+    enabled: realtime,
     eventHandler: (data) => {
       sync(data.result);
     },
@@ -117,6 +138,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
+    enabled: realtime,
     eventHandler: () => {
       sync();
     },

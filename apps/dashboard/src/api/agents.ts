@@ -230,7 +230,8 @@ export function listAgentIntegrations(params: ListAgentIntegrationsParams): Prom
 }
 
 export type AddAgentIntegrationBody = {
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
+  providerId?: string;
 };
 
 type AgentIntegrationLinkEnvelope = { data: AgentIntegrationLink };
@@ -256,6 +257,33 @@ export function removeAgentIntegration(
   return del(`/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(agentIntegrationId)}`, {
     environment,
   });
+}
+
+export async function sendAgentTestEmail(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  targetAddress: string
+): Promise<{ success: boolean }> {
+  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/test-email`, {
+    environment,
+    body: { targetAddress },
+  });
+}
+
+type WelcomeMessageResponse = { sent: boolean; conversationId?: string };
+
+export async function sendAgentWelcomeMessage(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  conversationId?: string
+): Promise<WelcomeMessageResponse> {
+  const response = await post<{ data: WelcomeMessageResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/welcome-message`,
+    { environment, body: { integrationIdentifier, conversationId } }
+  );
+
+  return response.data;
 }
 
 export type AgentEmojiEntry = {

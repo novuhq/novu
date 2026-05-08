@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
-import type { TriggerRecipientsPayload } from '@novu/shared';
 import {
   ConversationActivityEntity,
   ConversationActivityRepository,
@@ -12,6 +11,29 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
 } from '@novu/dal';
+import type { TriggerRecipientsPayload } from '@novu/shared';
+
+export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
+
+export function getInboundActivityPreview(
+  content: string | undefined,
+  options: { richContent?: Record<string, unknown>; hasPlatformAttachments?: boolean } = {}
+): string {
+  const trimmed = content?.trim() ?? '';
+
+  if (trimmed.length > 0) {
+    return trimmed;
+  }
+
+  const attachments = options.richContent?.attachments;
+  const hasStoredAttachments = Array.isArray(attachments) && attachments.length > 0;
+
+  if (hasStoredAttachments || options.hasPlatformAttachments) {
+    return INBOUND_ATTACHMENT_ONLY_PREVIEW;
+  }
+
+  return trimmed;
+}
 
 export interface CreateOrGetConversationParams {
   environmentId: string;
@@ -36,6 +58,7 @@ export interface PersistInboundMessageParams {
   senderName?: string;
   content: string;
   richContent?: Record<string, unknown>;
+  hasPlatformAttachments?: boolean;
   platformMessageId?: string;
   environmentId: string;
   organizationId: string;
@@ -58,9 +81,14 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   richContent?: Record<string, unknown>;
 }
 
+export type MetadataOp =
+  | { action: 'set'; key: string; value: unknown }
+  | { action: 'delete'; key: string }
+  | { action: 'clear' };
+
 export interface UpdateMetadataParams extends ConversationActivityContext {
   currentMetadata: Record<string, unknown>;
-  signals: Array<{ key: string; value: unknown }>;
+  ops: MetadataOp[];
 }
 
 export interface ResolveConversationParams extends ConversationActivityContext {
@@ -79,7 +107,9 @@ export class AgentConversationService {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   getPrimaryChannel(conversation: ConversationEntity): ConversationChannel {
     const channel = conversation.channels?.[0];
@@ -92,7 +122,6 @@ export class AgentConversationService {
 
   async createOrGetConversation(params: CreateOrGetConversationParams): Promise<ConversationEntity> {
     const { environmentId, organizationId, platformThreadId } = params;
-
     const existing = await this.conversationRepository.findByPlatformThread(
       environmentId,
       organizationId,
@@ -179,6 +208,12 @@ export class AgentConversationService {
   }
 
   async persistInboundMessage(params: PersistInboundMessageParams): Promise<ConversationActivityEntity> {
+    const content = params.content ?? '';
+    const preview = getInboundActivityPreview(content, {
+      richContent: params.richContent,
+      hasPlatformAttachments: params.hasPlatformAttachments,
+    });
+
     const [activity] = await Promise.all([
       this.activityRepository.createUserActivity({
         identifier: `act_${shortId(12)}`,
@@ -189,7 +224,7 @@ export class AgentConversationService {
         senderType: params.senderType,
         senderId: params.senderId,
         senderName: params.senderName,
-        content: params.content,
+        content,
         richContent: params.richContent,
         platformMessageId: params.platformMessageId,
         environmentId: params.environmentId,
@@ -199,7 +234,7 @@ export class AgentConversationService {
         params.environmentId,
         params.organizationId,
         params.conversationId,
-        params.content
+        preview
       ),
     ]);
 
@@ -304,9 +339,24 @@ export class AgentConversationService {
   }
 
   async updateMetadata(params: UpdateMetadataParams): Promise<void> {
-    const merged: Record<string, unknown> = { ...(params.currentMetadata ?? {}) };
-    for (const signal of params.signals) {
-      merged[signal.key] = signal.value;
+    let merged: Record<string, unknown> = { ...(params.currentMetadata ?? {}) };
+    const descriptions: string[] = [];
+
+    for (const op of params.ops) {
+      switch (op.action) {
+        case 'set':
+          merged[op.key] = op.value;
+          descriptions.push(op.key);
+          break;
+        case 'delete':
+          delete merged[op.key];
+          descriptions.push(`-${op.key}`);
+          break;
+        case 'clear':
+          merged = {};
+          descriptions.push('(cleared)');
+          break;
+      }
     }
 
     const serialized = JSON.stringify(merged);
@@ -328,7 +378,7 @@ export class AgentConversationService {
         integrationId: params.channel._integrationId,
         platformThreadId: params.channel.platformThreadId,
         agentId: params.agentIdentifier,
-        content: `Metadata updated: ${params.signals.map((s) => s.key).join(', ')}`,
+        content: `Metadata updated: ${descriptions.join(', ')}`,
         signalData: { type: 'metadata', payload: merged },
         environmentId: params.environmentId,
         organizationId: params.organizationId,

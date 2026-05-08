@@ -2401,7 +2401,7 @@
                                 },
                                 {
                                     "key": "providerId",
-                                    "value": "braze",
+                                    "value": "novu-email-agent",
                                     "type": "enum"
                                 },
                                 {
@@ -2578,6 +2578,312 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Domains",
+            "item": [
+                {
+                    "name": "List domains for an environment",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains"
+                            ],
+                            "query": [
+                                {
+                                    "key": "after",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "7742.34",
+                                    "type": "number"
+                                },
+                                {
+                                    "key": "orderDirection",
+                                    "value": "ASC",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "includeCursor",
+                                    "value": false,
+                                    "type": "boolean"
+                                },
+                                {
+                                    "key": "name",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Returns a paginated list of inbound-email domains in the current environment. Supports cursor pagination and a name contains filter."
+                    }
+                },
+                {
+                    "name": "Create a domain",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains"
+                            ]
+                        },
+                        "description": "Registers a new inbound-email domain. The response includes the DNS records customers must add at their DNS provider before the domain can receive mail."
+                    }
+                },
+                {
+                    "name": "Retrieve a domain by name",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Returns the domain configuration and the DNS records that must be in place. This is a pure read; call `domains.verify` to refresh verification status from DNS."
+                    }
+                },
+                {
+                    "name": "Update a domain",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged."
+                    }
+                },
+                {
+                    "name": "Delete a domain",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Removes the domain and cascades the deletion to all of its routes. Inbound mail for that domain stops being processed immediately."
+                    }
+                },
+                {
+                    "name": "Diagnose inbound DNS for a domain",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}/diagnose",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain",
+                                "diagnose"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Runs live DNS checks (MX correctness, apex CNAME collision, NS delegation, and common DNS blocklists for the Novu mail host). Returns structured issues with plain-language fixes."
+                    }
+                },
+                {
+                    "name": "Verify a domain",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/domains/{domain}/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "domains",
+                                ":domain",
+                                "verify"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "domain",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Performs a live DNS lookup to refresh the MX record status of the domain and updates the verification status accordingly. Returns the latest domain configuration."
+                    }
+                }
+            ],
+            "description": "Used to manage your inbound email domains."
         },
         {
             "name": "Environment Variables",
@@ -3076,6 +3382,86 @@
                     }
                 },
                 {
+                    "name": "Generate OAuth URL for a workspace/tenant connection",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/integrations/channel-connections/oauth",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "integrations",
+                                "channel-connections",
+                                "oauth"
+                            ]
+                        },
+                        "description": "Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). \n    The generated URL expires after 5 minutes."
+                    }
+                },
+                {
+                    "name": "Generate OAuth URL to link a subscriber user identity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/integrations/channel-endpoints/oauth",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "integrations",
+                                "channel-endpoints",
+                                "oauth"
+                            ]
+                        },
+                        "description": "Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID). \n    The generated URL expires after 5 minutes."
+                    }
+                },
+                {
                     "name": "Generate chat OAuth URL",
                     "request": {
                         "method": "POST",
@@ -3112,7 +3498,7 @@
                                 "oauth"
                             ]
                         },
-                        "description": "Generate an OAuth URL for chat integrations like Slack and MS Teams. \n    This URL allows subscribers to authorize the integration, enabling the system to send messages \n    through their chat workspace. The generated URL expires after 5 minutes."
+                        "description": "**Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.\n    Generate an OAuth URL for chat integrations like Slack and MS Teams. \n    This URL allows subscribers to authorize the integration, enabling the system to send messages \n    through their chat workspace. The generated URL expires after 5 minutes."
                     }
                 }
             ],
@@ -3149,7 +3535,7 @@
                             "query": [
                                 {
                                     "key": "channel",
-                                    "value": "chat",
+                                    "value": "in_app",
                                     "type": "enum"
                                 },
                                 {
@@ -3258,7 +3644,7 @@
                             "query": [
                                 {
                                     "key": "channel",
-                                    "value": "sms",
+                                    "value": "chat",
                                     "type": "enum"
                                 }
                             ],

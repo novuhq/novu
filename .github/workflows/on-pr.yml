@@ -268,6 +268,109 @@ jobs:
       ee: true
     secrets: inherit
 
+  # Aggregator / "all-green" gate. This job depends on every other job in
+  # this workflow and reports a single success/failure status that can be
+  # used as the one required status check in branch protection (and for
+  # GitHub auto-merge). It must always run so that even when a dependency
+  # is skipped — e.g. dynamic jobs that have nothing to do because no
+  # affected projects were detected — the gate still produces a result.
+  #
+  # Skipped jobs are treated as success. Failure or cancellation of any
+  # required dependency will fail the gate.
+  #
+  # IMPORTANT: the `needs:` list below must contain every other job in this
+  # workflow. The first step in this job parses this very file and fails
+  # the run if the list ever drifts (a job is added/removed but `needs:`
+  # is not updated). That guard prevents the gate from going falsely green
+  # because of a forgotten dependency.
+  pr-checks-passed:
+    name: PR Checks Passed
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs:
+      - dependency-review
+      - find-flags
+      - get-affected
+      - test_unit_providers
+      - test_unit_packages
+      - test_unit_libs
+      - test_unit_services
+      - validate_openapi
+      - test_e2e_api
+    steps:
+      - name: Checkout workflow source
+        uses: actions/checkout@v5
+        with:
+          # We only need the workflow file itself to validate the needs list.
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/on-pr.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Validate aggregator `needs` list matches workflow jobs
+        # Uses `yq` and `jq`, both pre-installed on GitHub-hosted ubuntu
+        # runners — no `pip install` or other dependency setup, so the
+        # check runs in well under a second.
+        env:
+          WORKFLOW: .github/workflows/on-pr.yml
+          AGGREGATOR: pr-checks-passed
+        run: |
+          set -euo pipefail
+
+          workflow_json=$(yq -o=json '.' "$WORKFLOW")
+
+          if ! echo "$workflow_json" | jq -e --arg agg "$AGGREGATOR" '.jobs[$agg]' > /dev/null; then
+            echo "::error file=$WORKFLOW::aggregator job '$AGGREGATOR' not found in workflow"
+            exit 1
+          fi
+
+          diff_json=$(echo "$workflow_json" | jq --arg agg "$AGGREGATOR" '
+            .jobs as $jobs
+            | ($jobs[$agg].needs // []) as $declared
+            | ($jobs | keys | map(select(. != $agg))) as $expected
+            | {
+                missing: ($expected - $declared),
+                extra:   ($declared - $expected),
+                total:   ($expected | length)
+              }
+          ')
+
+          missing=$(echo "$diff_json" | jq -r '.missing | join(", ")')
+          extra=$(echo "$diff_json"   | jq -r '.extra   | join(", ")')
+          total=$(echo "$diff_json"   | jq -r '.total')
+
+          status=0
+          if [ -n "$missing" ]; then
+            echo "::error file=$WORKFLOW::$AGGREGATOR.needs is missing jobs that exist in the workflow: $missing. Add them so the gate can't go falsely green."
+            status=1
+          fi
+          if [ -n "$extra" ]; then
+            echo "::error file=$WORKFLOW::$AGGREGATOR.needs lists jobs that don't exist in the workflow: $extra. Remove them."
+            status=1
+          fi
+
+          if [ "$status" -eq 0 ]; then
+            echo "$AGGREGATOR.needs correctly covers all $total other jobs in the workflow."
+          fi
+          exit "$status"
+
+      - name: Verify required jobs succeeded or were skipped
+        env:
+          NEEDS_JSON: ${{ toJson(needs) }}
+        run: |
+          set -euo pipefail
+          echo "Aggregated job results:"
+          echo "$NEEDS_JSON" | jq -r 'to_entries[] | "  - \(.key): \(.value.result)"'
+
+          failed=$(echo "$NEEDS_JSON" | jq -r '[to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key] | join(", ")')
+
+          if [ -n "$failed" ]; then
+            echo "::error::The following required jobs failed or were cancelled: $failed"
+            exit 1
+          fi
+
+          echo "All required jobs passed (or were skipped because they were not affected)."
+
   #test_e2e_dashboard:
   #  name: E2E test Dashboard app
   #  needs: [get-affected]

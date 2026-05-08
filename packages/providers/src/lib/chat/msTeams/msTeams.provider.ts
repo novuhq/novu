@@ -184,7 +184,12 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     const errorMessage = data?.error?.message || data?.message || '';
 
     // Map Bot Framework errors to descriptive messages
-    if (errorCode === 'BotNotInConversationRoster' || errorMessage.includes('BotNotInConversationRoster')) {
+    if (
+      errorCode === 'BotNotInConversationRoster' ||
+      errorMessage.includes('BotNotInConversationRoster') ||
+      errorMessage.includes('Bot is not installed in user') ||
+      errorMessage.toLowerCase().includes('not installed')
+    ) {
       throw new Error('MSTEAMS_BOT_NOT_INSTALLED: Bot is not installed in this team/channel or for this user');
     }
 

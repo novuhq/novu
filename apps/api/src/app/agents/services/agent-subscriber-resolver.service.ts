@@ -17,7 +17,9 @@ export class AgentSubscriberResolver {
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async resolve(params: ResolveSubscriberParams): Promise<string | null> {
     const { environmentId, organizationId, platform, platformUserId, integrationIdentifier } = params;
@@ -41,9 +43,7 @@ export class AgentSubscriberResolver {
     });
 
     if (endpoint) {
-      this.logger.debug(
-        `Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`
-      );
+      this.logger.debug(`Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`);
 
       return endpoint.subscriberId;
     }

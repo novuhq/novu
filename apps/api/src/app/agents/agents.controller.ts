@@ -15,8 +15,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ProductFeature, RequirePermissions } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -40,6 +46,8 @@ import {
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
+import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
@@ -56,6 +64,10 @@ import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
+import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
+import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
+import { SendAgentWelcomeMessageCommand } from './usecases/send-agent-welcome-message/send-agent-welcome-message.command';
+import { SendAgentWelcomeMessage } from './usecases/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
@@ -79,7 +91,9 @@ export class AgentsController {
     private readonly listAgentIntegrationsUsecase: ListAgentIntegrations,
     private readonly updateAgentIntegrationUsecase: UpdateAgentIntegration,
     private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
-    private readonly listAgentEmojiUsecase: ListAgentEmoji
+    private readonly listAgentEmojiUsecase: ListAgentEmoji,
+    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
+    private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage
   ) {}
 
   @Get('/emoji')
@@ -163,6 +177,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
+        providerId: body.providerId,
       })
     );
   }
@@ -253,6 +268,61 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         agentIntegrationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/test-email')
+  @HttpCode(HttpStatus.OK)
+  @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
+  @ApiOperation({
+    summary: 'Send a test email to the agent inbound address',
+    description:
+      'Sends a test email to the configured inbound address using the agent outbound provider (or the Novu demo integration as fallback). Used to verify the inbound email pipeline.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentTestEmail(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: SendAgentTestEmailRequestDto
+  ): Promise<{ success: boolean }> {
+    return this.sendAgentTestEmailUsecase.execute(
+      SendAgentTestEmailCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        targetAddress: body.targetAddress,
+      })
+    );
+  }
+
+  @Post('/:identifier/welcome-message')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send onboarding welcome message',
+    description:
+      'Sends a proactive DM to the agent installer after Slack OAuth, or posts a bridge-connected ' +
+      'follow-up message into an existing conversation thread when conversationId is supplied.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentWelcomeMessage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: SendAgentWelcomeMessageRequestDto
+  ): Promise<{ sent: boolean; conversationId?: string }> {
+    return this.sendAgentWelcomeMessageUsecase.execute(
+      SendAgentWelcomeMessageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier: body.integrationIdentifier,
+        conversationId: body.conversationId,
       })
     );
   }

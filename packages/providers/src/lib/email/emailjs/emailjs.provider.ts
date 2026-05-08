@@ -8,7 +8,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-// @ts-ignore CJS importing an ESM module, this fails only during the CJS build
+// @ts-expect-error CJS importing an ESM module, this fails only during the CJS build
 import type { Message, MessageAttachment, SMTPClient } from 'emailjs';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { IEmailJsConfig } from './emailjs.config';
@@ -29,6 +29,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
     await this.ensureClientInitialized();
 
     const headers: Message['header'] = {
+      ...emailOptions.headers,
       from: emailOptions.from || this.config.from,
       to: emailOptions.to,
       subject: emailOptions.subject,

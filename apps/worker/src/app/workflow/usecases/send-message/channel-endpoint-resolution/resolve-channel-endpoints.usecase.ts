@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CachedResponse, decryptCredentials, InstrumentUsecase } from '@novu/application-generic';
+import { Injectable } from '@nestjs/common';
+import { decryptCredentials, InstrumentUsecase, MsTeamsTokenService } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -9,7 +9,6 @@ import {
 } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
-import axios from 'axios';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
 export type IntegrationEndpoints = {
@@ -41,12 +40,11 @@ export type IntegrationEndpoints = {
  */
 @Injectable()
 export class ResolveChannelEndpoints {
-  private readonly logger = new Logger(ResolveChannelEndpoints.name);
-
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly msTeamsTokenService: MsTeamsTokenService
   ) {}
 
   @InstrumentUsecase()
@@ -209,12 +207,13 @@ export class ResolveChannelEndpoints {
 
     const decryptedCredentials = decryptCredentials(integration.credentials);
     const { clientId, secretKey, tenantId } = decryptedCredentials;
+
     if (!clientId || !secretKey || !tenantId) {
       throw new Error(`Integration ${endpoint.integrationIdentifier} missing required MS Teams credentials`);
     }
 
     // Fetch Bot Framework token with caching
-    const token = await this.getMsTeamsBotToken(clientId, secretKey, tenantId);
+    const token = await this.msTeamsTokenService.getBotFrameworkToken(clientId, secretKey, tenantId);
 
     // For user DMs, include clientId (bot app ID) needed to create conversation
     if (endpoint.type === ENDPOINT_TYPES.MS_TEAMS_USER) {
@@ -241,50 +240,5 @@ export class ResolveChannelEndpoints {
     }
 
     return 'accessToken' in connection.auth ? connection.auth.accessToken : undefined;
-  }
-
-  /**
-   * Fetches Bot Framework token for MS Teams with caching
-   * Cache key: msteams:bot-token:{clientId}:{appTenantId}
-   * TTL: 55 minutes (1 hour token - 5 min safety buffer)
-   *
-   * Note: Returns empty string on failure to allow graceful degradation.
-   * Provider will fail with clear error message that bubbles to customer.
-   */
-  @CachedResponse<string>({
-    builder: (clientId: string, _secretKey: string, appTenantId: string) =>
-      `msteams:bot-token:${clientId}:${appTenantId}`,
-    options: {
-      ttl: 3300, // 55 minutes (3600 - 300 seconds)
-      skipSaveToCache: (token: string) => token === '', // Don't cache failures
-    },
-  })
-  private async getMsTeamsBotToken(clientId: string, secretKey: string, appTenantId: string): Promise<string> {
-    const tokenUrl = `https://login.microsoftonline.com/${appTenantId}/oauth2/v2.0/token`;
-    const body = new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: clientId,
-      client_secret: secretKey,
-      scope: 'https://api.botframework.com/.default',
-    });
-
-    try {
-      const response = await axios.post<{ access_token: string; expires_in: number }>(tokenUrl, body.toString(), {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      });
-
-      return response.data.access_token;
-    } catch (error) {
-      // Log error but return empty string to allow graceful degradation
-      // Provider will fail with proper error that reaches customer
-      const errorMessage =
-        axios.isAxiosError(error) && error.response
-          ? `Failed to fetch MS Teams bot token: ${error.response.status} - ${JSON.stringify(error.response.data)}`
-          : `Failed to fetch MS Teams bot token: ${error.message || error}`;
-
-      this.logger.error(errorMessage, error.stack);
-
-      return ''; // Empty token will cause provider to fail with clear error
-    }
   }
 }

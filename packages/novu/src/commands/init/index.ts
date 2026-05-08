@@ -50,12 +50,13 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   }
 
   if (!projectPath) {
+    const defaultName = program.agentIdentifier || 'my-novu-app';
     const res = await prompts({
       onState: onPromptState,
       type: 'text',
       name: 'path',
       message: 'What is your project named?',
-      initial: 'my-novu-app',
+      initial: defaultName,
       validate: (name: string) => {
         const validation = validateNpmName(path.basename(path.resolve(name)));
         if (validation.valid) {

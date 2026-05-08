@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, ProductUseCases } from '../../types';
+import { ApiServiceLevelEnum, IndustryEnum, ProductUseCases } from '../../types';
 
 export type BrandEnrichmentStatus = 'pending' | 'completed' | 'failed' | 'not_available';
 export type OnboardingWorkflowsStatus = 'pending' | 'generating' | 'completed' | 'failed' | 'skipped';
@@ -42,6 +42,7 @@ export interface IOrganizationEntity {
   targetLocales?: string[];
   domain?: string;
   productUseCases?: ProductUseCases;
+  industry?: IndustryEnum;
   language?: string[];
   removeNovuBranding?: boolean;
   /** External brand profile (industry, assets, copy) + enrichment pipeline status; used for AI onboarding, not in-app branding. */

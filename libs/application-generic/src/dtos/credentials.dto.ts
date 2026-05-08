@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ICredentials } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { TransformToBoolean } from '../decorators/to-boolean';
 
 export class CredentialsDto implements ICredentials {
@@ -251,4 +251,26 @@ export class CredentialsDto implements ICredentials {
   @IsOptional()
   @IsString()
   AppIOBaseUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  signingSecret?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  outboundIntegrationId?: string;
+
+  @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
+  @IsOptional()
+  useFromAddressOverride?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, v) => typeof v === 'string' && v.trim().length > 0)
+  @IsEmail()
+  fromAddressOverride?: string;
 }
