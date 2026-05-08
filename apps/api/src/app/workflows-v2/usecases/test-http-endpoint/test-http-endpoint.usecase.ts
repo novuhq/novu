@@ -29,6 +29,7 @@ const HTTP_CLIENT_ERROR_STATUS_MAP: Record<HttpClientErrorType, number> = {
   [HttpClientErrorType.CACHE_ERROR]: 502,
   [HttpClientErrorType.PARSE_ERROR]: 502,
   [HttpClientErrorType.HTTP_ERROR]: 500,
+  [HttpClientErrorType.SSRF_BLOCKED]: 400,
   [HttpClientErrorType.UNKNOWN]: 500,
 };
 

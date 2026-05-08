@@ -1,4 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import {
+  safeOutboundJsonRequest,
+  safeOutboundRequest,
+  type SafeOutboundRequestOptions,
+  type SafeOutboundResponse,
+} from '@novu/shared/utils/safe-outbound-http';
+import { SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import got, {
   CacheError,
   HTTPError,
@@ -94,6 +101,10 @@ export class HttpClientService {
     const httpsOptions = { rejectUnauthorized };
 
     try {
+      if (options.enforceSsrfProtection) {
+        return await this.requestSafe<T>({ url, method, headers, body, timeout, responseType, rejectUnauthorized });
+      }
+
       if (responseType === 'text') {
         return await this.requestText<T>({ url, method, headers, timeout, body, retryOptions, httpsOptions });
       }
@@ -102,6 +113,60 @@ export class HttpClientService {
     } catch (error) {
       throw this.normalizeError(error);
     }
+  }
+
+  private async requestSafe<T>(params: {
+    url: string;
+    method: Method;
+    headers: Record<string, string> | undefined;
+    body: unknown;
+    timeout: number;
+    responseType: 'json' | 'text';
+    rejectUnauthorized: boolean;
+  }): Promise<HttpResponse<T>> {
+    const safeOptions: SafeOutboundRequestOptions = {
+      url: params.url,
+      method: params.method as SafeOutboundRequestOptions['method'],
+      headers: params.headers,
+      timeoutMs: params.timeout,
+      rejectUnauthorized: params.rejectUnauthorized,
+    };
+
+    if (params.body !== undefined) {
+      safeOptions.body = params.body as SafeOutboundRequestOptions['body'];
+    }
+
+    let response: SafeOutboundResponse;
+    let parsedBody: unknown;
+
+    if (params.responseType === 'text') {
+      response = await safeOutboundRequest(safeOptions);
+      parsedBody = response.body.toString('utf8');
+    } else {
+      const jsonResponse = await safeOutboundJsonRequest<T>(safeOptions);
+      response = {
+        statusCode: jsonResponse.statusCode,
+        statusMessage: jsonResponse.statusMessage,
+        headers: jsonResponse.headers,
+        body: Buffer.alloc(0),
+      };
+      parsedBody = jsonResponse.body;
+    }
+
+    if (response.statusCode >= 400) {
+      throw new HttpClientError({
+        type: HttpClientErrorType.HTTP_ERROR,
+        message: `Response code ${response.statusCode} (${response.statusMessage || ''})`.trim(),
+        statusCode: response.statusCode,
+        responseBody: parsedBody,
+      });
+    }
+
+    return {
+      body: parsedBody as T,
+      statusCode: response.statusCode,
+      headers: normalizeHeaders(response.headers as Record<string, string | string[] | undefined>),
+    };
   }
 
   private async requestText<T>(params: GotRequestParams): Promise<HttpResponse<T>> {
@@ -163,6 +228,19 @@ export class HttpClientService {
   }
 
   private normalizeError(error: unknown): HttpClientError {
+    if (error instanceof HttpClientError) {
+      return error;
+    }
+
+    if (error instanceof SsrfBlockedError) {
+      return new HttpClientError({
+        type: HttpClientErrorType.SSRF_BLOCKED,
+        message: error.message,
+        networkCode: error.reason,
+        cause: error,
+      });
+    }
+
     if (!(error instanceof RequestError)) {
       return new HttpClientError({
         type: HttpClientErrorType.UNKNOWN,
