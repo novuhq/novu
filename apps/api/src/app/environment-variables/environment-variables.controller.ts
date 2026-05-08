@@ -150,6 +150,7 @@ export class EnvironmentVariablesController {
   @Post('/')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @HttpCode(HttpStatus.OK)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Create a variable',
