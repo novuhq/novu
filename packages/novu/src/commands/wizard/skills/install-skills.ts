@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const OFFICIAL_SKILLS_REPO = 'https://github.com/novuhq/skills.git';
-const DEFAULT_OFFICIAL_SKILLS_BRANCH = 'feat-inbox-framework-dashboard-workflows-best-practices';
+const DEFAULT_OFFICIAL_SKILLS_BRANCH = 'main';
 const OFFICIAL_SKILLS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const BUNDLED_GAP_FILLER_DIRS = ['env-setup'];
