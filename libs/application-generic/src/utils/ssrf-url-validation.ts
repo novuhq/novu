@@ -1,10 +1,19 @@
-// This module re-exports the SSRF primitives that live in @novu/shared so backend
-// callers have a single import path. The implementations are kept in
-// `@novu/shared` (so they can be reused by browser-safe and provider code).
+// IMPORTANT: this file is a hand-maintained mirror of two source modules:
+//   - packages/shared/src/utils/ssrf-url-validation.ts   (URL/IP policy primitives)
+//   - packages/shared/src/utils/safe-outbound-http.ts    (DNS-pinned request runner)
 //
-// libs/application-generic uses CommonJS module resolution which does not honor
-// `exports` subpaths, so we re-export via the package root and the runtime/dist
-// path here. Build-time the symbols are inlined from packages/shared.
+// Why duplicated rather than re-exported: libs/application-generic ships as
+// CommonJS and its tsconfig uses node10 module resolution, which does not honour
+// the `exports` subpath map that `packages/shared` uses to publish these
+// symbols. Until the lib moves to node16/nodenext resolution, we keep an
+// inlined copy so backend code has a single import path through
+// `@novu/application-generic`.
+//
+// Drift hazard: any change to the policy regexes, blocked hostname set,
+// SsrfBlockedError shape, redirect state machine, or DNS handling MUST land in
+// both files. A behavioural drift test in `packages/shared` exercises both
+// implementations against the same inputs to fail loudly if they ever
+// diverge — see `packages/shared/src/utils/safe-outbound-http-drift.spec.ts`.
 //
 // New code should prefer `safeOutboundRequest` / `safeOutboundJsonRequest`,
 // which enforce the policy at connect time and re-validate every redirect.

@@ -102,6 +102,17 @@ export class HttpClientService {
 
     try {
       if (options.enforceSsrfProtection) {
+        // The safe outbound pipeline does not run through `got`, so the `retry`
+        // / `onRetry` plumbing above is bypassed. Surface that explicitly so a
+        // caller does not silently lose retry semantics — the JSDoc on
+        // `enforceSsrfProtection` documents the same constraint.
+        if ((retriesLimit ?? 0) > 0 || onRetry) {
+          this.logger.warn(
+            { url, method },
+            'enforceSsrfProtection is enabled; retry / onRetry options are not honoured on the safe outbound path'
+          );
+        }
+
         return await this.requestSafe<T>({ url, method, headers, body, timeout, responseType, rejectUnauthorized });
       }
 

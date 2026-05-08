@@ -252,30 +252,38 @@ describe('safe-outbound-http', () => {
 
       vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
 
-      await safeOutboundRequest({
-        url: `${upstreamUrl}/start`,
-        method: 'POST',
-        headers: {
-          authorization: 'Bearer secret',
-          'novu-signature': 'v1,t=1,sig',
-          'x-novu-signature': 'v1,t=1,sig',
-          'x-trace-id': 'keep-me',
-        },
-        body: { sensitive: true },
-      });
+      try {
+        await safeOutboundRequest({
+          url: `${upstreamUrl}/start`,
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer secret',
+            'novu-signature': 'v1,t=1,sig',
+            'x-novu-signature': 'v1,t=1,sig',
+            'x-trace-id': 'keep-me',
+          },
+          body: { sensitive: true },
+        });
 
-      await new Promise<void>((resolve) => secondUpstream.close(() => resolve()));
+        expect(upstreamHits).toHaveLength(2);
+        const [initialHit, redirectHit] = upstreamHits as [
+          (typeof upstreamHits)[number],
+          (typeof upstreamHits)[number],
+        ];
 
-      expect(upstreamHits).toHaveLength(2);
-      const [initialHit, redirectHit] = upstreamHits as [(typeof upstreamHits)[number], (typeof upstreamHits)[number]];
+        expect(initialHit.headers.authorization).toBe('Bearer secret');
+        expect(initialHit.headers['novu-signature']).toBe('v1,t=1,sig');
 
-      expect(initialHit.headers.authorization).toBe('Bearer secret');
-      expect(initialHit.headers['novu-signature']).toBe('v1,t=1,sig');
-
-      expect(redirectHit.headers.authorization).toBeUndefined();
-      expect(redirectHit.headers['novu-signature']).toBeUndefined();
-      expect(redirectHit.headers['x-novu-signature']).toBeUndefined();
-      expect(redirectHit.headers['x-trace-id']).toBe('keep-me');
+        expect(redirectHit.headers.authorization).toBeUndefined();
+        expect(redirectHit.headers['novu-signature']).toBeUndefined();
+        expect(redirectHit.headers['x-novu-signature']).toBeUndefined();
+        expect(redirectHit.headers['x-trace-id']).toBe('keep-me');
+      } finally {
+        // Always release the secondary listener even if the request or any
+        // assertion above throws — otherwise the dangling socket can hang the
+        // entire vitest worker.
+        await new Promise<void>((resolve) => secondUpstream.close(() => resolve()));
+      }
     });
 
     it('refuses to follow redirects to non-http(s) schemes', async () => {
