@@ -186,15 +186,23 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
   });
 
   it('does not allow a subscriber-controlled bridgeUrl to drive an outbound bridge request', async () => {
+    const attackerHost = 'attacker.example.com';
     let bridgeRequestUrl: string | undefined;
     const originalFetch = global.fetch;
     // Wrap fetch so that any bridge request triggered by `bridgeUrl` would be
     // observable in this test. After the route fix, no fetch should ever land
     // on the attacker-controlled host.
     global.fetch = (async (input: any, init?: any) => {
-      const url = typeof input === 'string' ? input : input?.url;
-      if (typeof url === 'string' && url.includes('attacker.example.com')) {
-        bridgeRequestUrl = url;
+      const rawUrl = typeof input === 'string' ? input : input?.url;
+      if (typeof rawUrl === 'string') {
+        try {
+          const parsed = new URL(rawUrl);
+          if (parsed.hostname === attackerHost) {
+            bridgeRequestUrl = rawUrl;
+          }
+        } catch {
+          // ignore non-absolute URLs
+        }
       }
 
       return originalFetch(input as any, init);
@@ -205,7 +213,7 @@ describe('Keyless Inbox Events - /inbox/events (POST) #novu-v2', async () => {
         name: KEYLESS_WORKFLOW_IDENTIFIER,
         to: { subscriberId: session.subscriberId },
         payload: { foo: 'bar' },
-        bridgeUrl: 'https://attacker.example.com/bridge',
+        bridgeUrl: `https://${attackerHost}/bridge`,
       });
 
       expect(status).to.equal(201);
