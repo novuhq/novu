@@ -530,11 +530,12 @@ install_linux_base_deps () {
     installing_dependency "Linux base dependencies (curl, unzip, git…)"
 
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
-        linux_pkg_install curl unzip git ca-certificates gnupg lsb-release build-essential
+        linux_pkg_install curl unzip git ca-certificates gnupg lsb-release build-essential || { error_message "Linux base dependencies"; return 1; }
     elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
-        linux_pkg_install curl unzip git ca-certificates gnupg2 which
+        linux_pkg_install curl unzip git ca-certificates gnupg2 which || { error_message "Linux base dependencies"; return 1; }
     else
         echo "⚠️  Unknown distro - skipping base dependency installation."
+        return 0
     fi
 
     success_message "Linux base dependencies"
