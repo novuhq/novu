@@ -47,6 +47,7 @@ import {
   UpdateAgentRequestDto,
 } from './dtos';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
+import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
@@ -65,6 +66,8 @@ import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integrati
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
 import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
+import { SendAgentWelcomeMessageCommand } from './usecases/send-agent-welcome-message/send-agent-welcome-message.command';
+import { SendAgentWelcomeMessage } from './usecases/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
@@ -89,7 +92,8 @@ export class AgentsController {
     private readonly updateAgentIntegrationUsecase: UpdateAgentIntegration,
     private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
     private readonly listAgentEmojiUsecase: ListAgentEmoji,
-    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail
+    private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
+    private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage
   ) {}
 
   @Get('/emoji')
@@ -292,6 +296,33 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         targetAddress: body.targetAddress,
+      })
+    );
+  }
+
+  @Post('/:identifier/welcome-message')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send onboarding welcome message',
+    description:
+      'Sends a proactive DM to the agent installer after Slack OAuth, or posts a bridge-connected ' +
+      'follow-up message into an existing conversation thread when conversationId is supplied.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentWelcomeMessage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: SendAgentWelcomeMessageRequestDto
+  ): Promise<{ sent: boolean; conversationId?: string }> {
+    return this.sendAgentWelcomeMessageUsecase.execute(
+      SendAgentWelcomeMessageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier: body.integrationIdentifier,
+        conversationId: body.conversationId,
       })
     );
   }

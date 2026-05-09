@@ -1,21 +1,140 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { ConversationActivitySenderTypeEnum, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivitySenderTypeEnum,
+  ConversationParticipantTypeEnum,
+  EnvironmentRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
-import type { EmojiValue, Message, Thread } from 'chat';
+import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
-import { AgentConversationService } from './agent-conversation.service';
+import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
-const ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN = `*You're connected to Novu*
+const ONBOARDING_NO_BRIDGE_TEXT =
+  "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
 
-Your bot is linked successfully. Go back to the *Novu dashboard* to complete onboarding.`;
+function buildNoBridgeReply(dashboardUrl?: string): CardElement {
+  const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
+
+  if (dashboardUrl) {
+    children.push(
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [{ type: 'link-button', label: 'Continue setup', url: dashboardUrl, style: 'primary' }],
+      }
+    );
+  }
+
+  return { type: 'card', children };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
+  const raw = asRecord(message.raw);
+
+  return asRecord(raw?.event) ?? raw;
+}
+
+function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
+  const rawEvent = getMessageRawEvent(message);
+  const rawThreadTs = rawEvent?.thread_ts;
+  const threadRoot = typeof rawThreadTs === 'string' && rawThreadTs.length > 0 ? rawThreadTs : message.id;
+
+  if (platform !== AgentPlatformEnum.SLACK || !thread.isDM || !threadRoot || !thread.id.endsWith(':')) {
+    return thread.id;
+  }
+
+  return `${thread.id}${threadRoot}`;
+}
+
+function applyPlatformThreadIdToSerializedThread(serializedThread: Record<string, unknown>, platformThreadId: string) {
+  serializedThread.id = platformThreadId;
+
+  const currentMessage = asRecord(serializedThread.currentMessage ?? serializedThread.message);
+  if (!currentMessage) {
+    return;
+  }
+
+  currentMessage.threadId = platformThreadId;
+}
+
+function applyPlatformThreadIdToThread(thread: Thread, platformThreadId: string) {
+  // Chat SDK currently gives top-level Slack DMs an empty-root thread id (`slack:D...:`).
+  // Patch the in-memory handle before posting fallback replies so Slack receives a real thread root.
+  (thread as unknown as { id: string }).id = platformThreadId;
+}
+
+function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
+  const rawAttachments = richContent?.attachments;
+
+  if (!Array.isArray(rawAttachments)) {
+    return [];
+  }
+
+  return rawAttachments.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+
+    const attachment = item as Record<string, unknown>;
+    const storageKey = attachment.storageKey;
+
+    if (typeof storageKey !== 'string' || storageKey.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        type: typeof attachment.type === 'string' ? attachment.type : 'file',
+        name: typeof attachment.name === 'string' ? attachment.name : undefined,
+        mimeType: typeof attachment.mimeType === 'string' ? attachment.mimeType : undefined,
+        size: typeof attachment.size === 'number' ? attachment.size : undefined,
+        storageKey,
+        url: typeof attachment.url === 'string' ? attachment.url : undefined,
+      },
+    ];
+  });
+}
+
+function findSourceMessageStoredAttachments(
+  history: ConversationActivityEntity[],
+  messageIds: string[]
+): StoredAttachment[] | undefined {
+  const messageIdSet = new Set(messageIds);
+  const sourceActivity = history.find(
+    (activity) => activity.platformMessageId && messageIdSet.has(activity.platformMessageId)
+  );
+
+  if (!sourceActivity) {
+    return undefined;
+  }
+
+  const storedAttachments = mapStoredAttachmentsFromRichContent(sourceActivity.richContent);
+
+  if (!storedAttachments.length) {
+    return undefined;
+  }
+
+  return storedAttachments;
+}
 
 export interface InboundReactionEvent {
   emoji: EmojiValue;
@@ -34,8 +153,12 @@ export class AgentInboundHandler {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
-  ) {}
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly analyticsService: AnalyticsService,
+    private readonly attachmentStorage: AgentAttachmentStorage
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async handle(
     agentId: string,
@@ -62,6 +185,7 @@ export class AgentInboundHandler {
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
+    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
@@ -69,25 +193,39 @@ export class AgentInboundHandler {
       agentId,
       platform: config.platform,
       integrationId: config.integrationId,
-      platformThreadId: thread.id,
+      platformThreadId,
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: message.text,
+      firstMessageText: getInboundActivityPreview(message.text, {
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+      }),
     });
 
     const senderType = subscriberId
       ? ConversationActivitySenderTypeEnum.SUBSCRIBER
       : ConversationActivitySenderTypeEnum.PLATFORM_USER;
 
-    const richContent = message.attachments?.length
+    let storedAttachments: StoredAttachment[] | undefined;
+
+    if (message.attachments?.length) {
+      storedAttachments = await this.attachmentStorage.storeInbound(message.attachments, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        conversationId: String(conversation._id),
+        platformMessageId: message.id ?? `unknown-${Date.now()}`,
+        platform: config.platform,
+      });
+    }
+
+    const richContent = storedAttachments?.length
       ? {
-          attachments: message.attachments.map((a) => ({
-            type: a.type,
-            url: a.url,
-            name: a.name,
-            mimeType: a.mimeType,
-            size: a.size,
+          attachments: storedAttachments.map(({ type, name, mimeType, size, storageKey }) => ({
+            type,
+            name,
+            mimeType,
+            size,
+            storageKey,
           })),
         }
       : undefined;
@@ -99,12 +237,13 @@ export class AgentInboundHandler {
       conversationId: conversation._id,
       platform: config.platform,
       integrationId: config.integrationId,
-      platformThreadId: thread.id,
+      platformThreadId,
       senderType,
       senderId: participantId,
       senderName: message.author.fullName,
       content: message.text,
       richContent,
+      hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
@@ -124,7 +263,13 @@ export class AgentInboundHandler {
 
     if (isFirstMessage && message.id) {
       this.conversationService
-        .setFirstPlatformMessageId(config.environmentId, config.organizationId, conversation._id, thread.id, message.id)
+        .setFirstPlatformMessageId(
+          config.environmentId,
+          config.organizationId,
+          conversation._id,
+          platformThreadId,
+          message.id
+        )
         .catch((err) => {
           this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
         });
@@ -146,11 +291,12 @@ export class AgentInboundHandler {
     }
 
     const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
+    applyPlatformThreadIdToSerializedThread(serializedThread, platformThreadId);
     await this.conversationService.updateChannelThread(
       config.environmentId,
       config.organizationId,
       conversation._id,
-      thread.id,
+      platformThreadId,
       serializedThread
     );
 
@@ -170,21 +316,42 @@ export class AgentInboundHandler {
         history,
         message,
         platformContext: {
-          threadId: thread.id,
+          threadId: platformThreadId,
           channelId: thread.channelId,
           isDM: thread.isDM,
         },
+        storedAttachments: message.attachments?.length ? storedAttachments : undefined,
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
-        const sent = await thread.post(ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN);
+        applyPlatformThreadIdToThread(thread, platformThreadId);
+
+        let dashboardUrl: string | undefined;
+        const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+        if (dashboardBase) {
+          try {
+            const environment = await this.environmentRepository.findOne({ _id: config.environmentId });
+            if (environment?.identifier) {
+              dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${config.agentIdentifier}/overview`;
+            }
+          } catch (lookupErr) {
+            this.logger.warn(
+              lookupErr,
+              `[agent:${config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
+            );
+          }
+        }
+
+        const reply = buildNoBridgeReply(dashboardUrl);
+        const sent = await thread.post(reply);
         const channel = this.conversationService.getPrimaryChannel(conversation);
         await this.conversationService.persistAgentMessage({
           conversationId: conversation._id,
           channel,
           platformMessageId: (sent as { id?: string })?.id ?? '',
           agentIdentifier: config.agentIdentifier,
-          content: ONBOARDING_NO_BRIDGE_REPLY_MARKDOWN,
+          content: ONBOARDING_NO_BRIDGE_TEXT,
+          richContent: { card: reply },
           environmentId: config.environmentId,
           organizationId: config.organizationId,
         });
@@ -252,11 +419,27 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
-    const reaction: BridgeReaction = {
+    const sourceMessageIds = [event.messageId, event.message?.id].filter((id): id is string => Boolean(id));
+    let sourceMessageStoredAttachments = findSourceMessageStoredAttachments(history, sourceMessageIds);
+
+    if (!sourceMessageStoredAttachments && event.message?.attachments?.length) {
+      sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(event.message.attachments, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        conversationId: String(conversation._id),
+        platformMessageId: event.message.id ?? event.messageId ?? `unknown-${Date.now()}`,
+        platform: config.platform,
+      });
+    }
+
+    const reactionPayload: BridgeReaction = {
       emoji: event.emoji.name,
       added: event.added,
       messageId: event.messageId,
       sourceMessage: event.message,
+      sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
+        ? sourceMessageStoredAttachments
+        : undefined,
     };
 
     await this.bridgeExecutor.execute({
@@ -271,7 +454,7 @@ export class AgentInboundHandler {
         channelId: event.thread?.channelId ?? '',
         isDM: event.thread?.isDM ?? false,
       },
-      reaction,
+      reaction: reactionPayload,
     });
   }
 

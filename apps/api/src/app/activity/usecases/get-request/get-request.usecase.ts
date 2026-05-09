@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { QueryBuilder, RequestLog, RequestLogRepository, Trace, TraceLogRepository } from '@novu/application-generic';
+import { subDays } from 'date-fns';
 import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request.response.dto';
 import { mapTraceToResponseDto } from '../../shared/mappers';
 import { requestLogSelectColumns, traceSelectColumns } from '../../shared/select.const';
 import { GetRequestCommand } from './get-request.command';
+
+const TRACE_AFTER_BUFFER_DAYS = 1;
 
 @Injectable()
 export class GetRequest {
@@ -34,6 +37,14 @@ export class GetRequest {
     traceQueryBuilder.whereEquals('entity_id', command.requestId);
     traceQueryBuilder.whereEquals('entity_type', 'request');
     traceQueryBuilder.whereEquals('organization_id', command.organizationId);
+
+    // Traces for a request can never pre-date the request itself; bound the scan
+    // by the request's creation time (with a buffer for clock skew) so ClickHouse
+    // can prune partitions and skip granules on the `toDate(created_at)` sort key.
+    if (request.data.created_at) {
+      const requestCreatedAt = new Date(`${request.data.created_at} UTC`);
+      traceQueryBuilder.whereGreaterThanOrEqual('created_at', subDays(requestCreatedAt, TRACE_AFTER_BUFFER_DAYS));
+    }
 
     const traceResult = await this.traceLogRepository.find({
       where: traceQueryBuilder.build(),

@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
@@ -6,7 +6,13 @@ import {
   areNovuSmsCredentialsSet,
   encryptCredentials,
 } from '@novu/application-generic';
-import { DalException, IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
+import {
+  DalException,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationQuery,
+  IntegrationRepository,
+} from '@novu/dal';
 import {
   CHANNELS_WITH_PRIMARY,
   ChannelTypeEnum,
@@ -28,7 +34,8 @@ export class CreateIntegration {
   private checkIntegration: CheckIntegration;
   constructor(
     private integrationRepository: IntegrationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
@@ -116,6 +123,14 @@ export class CreateIntegration {
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
+    const environment = await this.environmentRepository.findByIdAndOrganization(
+      command.environmentId,
+      command.organizationId
+    );
+    if (!environment) {
+      throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
+    }
+
     await this.validate(command);
 
     this.analyticsService.track('Create Integration - [Integrations]', command.userId, {

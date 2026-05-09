@@ -39,15 +39,15 @@ if (!NOVU_SECRET_KEY) {
 }
 
 const echoBot = agent('novu-agent', {
-  onMessage: async (ctx) => {
+  onMessage: async ({ message, ctx }) => {
     console.log('\n─────────────────────────────────────────');
-    console.log(`[${ctx.event}] from ${ctx.subscriber?.firstName ?? 'unknown'} on ${ctx.platform}`);
-    console.log(`Message: ${ctx.message?.text ?? '(none)'}`);
+    console.log(`[onMessage] from ${ctx.subscriber?.firstName ?? 'unknown'} on ${ctx.platform}`);
+    console.log(`Message: ${message.text ?? '(none)'}`);
     console.log(`Conversation: ${ctx.conversation.identifier} (${ctx.conversation.status})`);
     console.log(`History: ${ctx.history.length} entries`);
     console.log('─────────────────────────────────────────');
 
-    const userText = ctx.message?.text ?? '';
+    const userText = message.text ?? '';
     const turnCount = (ctx.conversation.metadata?.turnCount as number) ?? 0;
 
     ctx.metadata.set('turnCount', turnCount + 1);
@@ -128,13 +128,10 @@ const echoBot = agent('novu-agent', {
     await ctx.reply(`Echo: ${userText}`);
   },
 
-  onAction: async (ctx) => {
+  onAction: async ({ actionId, value, ctx }) => {
     console.log('\n─────────────────────────────────────────');
-    console.log(`[${ctx.event}] action: ${ctx.action?.actionId} = ${ctx.action?.value ?? '(no value)'}`);
+    console.log(`[onAction] action: ${actionId} = ${value ?? '(no value)'}`);
     console.log('─────────────────────────────────────────');
-
-    const actionId = ctx.action?.actionId ?? 'unknown';
-    const value = ctx.action?.value;
 
     if (actionId === 'ack') {
       await ctx.reply(
@@ -162,7 +159,7 @@ const echoBot = agent('novu-agent', {
     }
   },
 
-  onResolve: async (ctx) => {
+  onResolve: async ({ ctx }) => {
     console.log(`\n[onResolve] Conversation ${ctx.conversation.identifier} closed.`);
     ctx.metadata.set('resolvedAt', new Date().toISOString());
   },

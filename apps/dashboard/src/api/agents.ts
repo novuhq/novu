@@ -270,6 +270,22 @@ export async function sendAgentTestEmail(
   });
 }
 
+type WelcomeMessageResponse = { sent: boolean; conversationId?: string };
+
+export async function sendAgentWelcomeMessage(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  conversationId?: string
+): Promise<WelcomeMessageResponse> {
+  const response = await post<{ data: WelcomeMessageResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/welcome-message`,
+    { environment, body: { integrationIdentifier, conversationId } }
+  );
+
+  return response.data;
+}
+
 export type AgentEmojiEntry = {
   name: string;
   unicode: string;

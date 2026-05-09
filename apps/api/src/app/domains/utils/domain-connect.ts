@@ -46,7 +46,7 @@ export function getDomainConnectConfig(): DomainConnectConfig {
   return {
     providerId: DOMAIN_CONNECT_PROVIDER_ID,
     serviceId: DOMAIN_CONNECT_SERVICE_ID,
-    privateKey: process.env.DOMAIN_CONNECT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    privateKey: normalizeDomainConnectPrivateKey(process.env.DOMAIN_CONNECT_PRIVATE_KEY),
     keyHost: DOMAIN_CONNECT_KEY_HOST,
     redirectBaseUrl: getDomainConnectRedirectBaseUrl(),
   };
@@ -214,6 +214,45 @@ function getRegistrableDomain(domainName: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function normalizeDomainConnectPrivateKey(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  let privateKey = value.trim();
+
+  if (
+    (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+    (privateKey.startsWith("'") && privateKey.endsWith("'"))
+  ) {
+    privateKey = privateKey.slice(1, -1);
+  }
+
+  privateKey = privateKey
+    .replace(/\\\\r\\\\n/g, '\n')
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+
+  const compactPemMatch = privateKey.match(/^(-----BEGIN [^-]+-----)([A-Za-z0-9+/=\s]+)(-----END [^-]+-----)$/);
+
+  if (compactPemMatch && !privateKey.includes('\n')) {
+    const [, header, body, footer] = compactPemMatch;
+    const wrappedBody = body
+      .replace(/\s+/g, '')
+      .match(/.{1,64}/g)
+      ?.join('\n');
+
+    if (wrappedBody) {
+      return `${header}\n${wrappedBody}\n${footer}\n`;
+    }
+  }
+
+  return privateKey;
 }
 
 function buildRedirectUri({

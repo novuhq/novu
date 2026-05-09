@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+/**
+ * Resolve cross-service URLs from `portless get <name>` and exec the wrapped
+ * command with them in the environment.
+ *
+ * Replaces hardcoded `https://*.novu.localhost` literals so worktree prefixes
+ * and non-default proxy ports flow through to the apps automatically.
+ *
+ * Usage: node scripts/with-portless-env.mjs <command> [args...]
+ */
+import { execFileSync, spawn } from 'node:child_process';
+
+const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu'];
+
+function getServiceUrl(name) {
+  try {
+    const out = execFileSync('pnpm', ['exec', 'portless', 'get', name], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return out.trim();
+  } catch (err) {
+    console.warn(`[with-portless-env] portless get ${name} failed: ${err.message}`);
+
+    return `https://${name}.localhost`;
+  }
+}
+
+const urls = Object.fromEntries(SERVICES.map((name) => [name, getServiceUrl(name)]));
+
+const apiUrl = urls['api.novu'];
+const dashboardUrl = urls['dashboard.novu'];
+const wsUrl = urls['ws.novu'];
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const dashboardOriginRegex = dashboardUrl.replace(
+  /^https?:\/\/(.+?)(:\d+)?$/,
+  (_match, host, port = '') => `https://(.*\\.)?${escapeRegExp(host)}${escapeRegExp(port)}`
+);
+
+const env = {
+  ...process.env,
+  API_ROOT_URL: apiUrl,
+  FRONT_BASE_URL: dashboardOriginRegex,
+  DASHBOARD_URL: dashboardUrl,
+  BETTER_AUTH_BASE_URL: `${apiUrl}/v1/better-auth`,
+  VITE_API_HOSTNAME: apiUrl,
+  VITE_WEBSOCKET_HOSTNAME: wsUrl,
+  VITE_DASHBOARD_URL: dashboardUrl,
+  VITE_BETTER_AUTH_BASE_URL: apiUrl,
+};
+
+const [, , command, ...args] = process.argv;
+
+if (!command) {
+  console.error('[with-portless-env] missing command to exec');
+  process.exit(1);
+}
+
+const child = spawn(command, args, { stdio: 'inherit', env, shell: false });
+
+child.on('exit', (code, signal) => {
+  if (signal) {
+    process.kill(process.pid, signal);
+
+    return;
+  }
+  process.exit(code ?? 0);
+});
+
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => child.kill(sig));
+}

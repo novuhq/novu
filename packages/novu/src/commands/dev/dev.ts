@@ -1,3 +1,4 @@
+import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import { NtfrTunnel } from '@novu/ntfr-client';
 import chalk from 'chalk';
 import open from 'open';
@@ -11,9 +12,31 @@ import { showWelcomeScreen } from '../shared';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
 
-process.on('SIGINT', () => {
-  process.exit();
-});
+let appProcess: ChildProcess | null = null;
+
+function killProcessTree(child: ChildProcess) {
+  if (!child.pid) return;
+
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: 'ignore' });
+    } else {
+      process.kill(-child.pid, 'SIGTERM');
+    }
+  } catch {
+    child.kill('SIGTERM');
+  }
+}
+
+function cleanup() {
+  if (appProcess && !appProcess.killed) {
+    killProcessTree(appProcess);
+  }
+  setTimeout(() => process.exit(), 200).unref();
+}
+
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 
 let tunnelClient: NtfrTunnel | null = null;
 
@@ -25,6 +48,10 @@ const { version } = packageJson;
 
 export async function devCommand(options: DevCommandOptions, anonymousId?: string) {
   await showWelcomeScreen();
+
+  if (options.run) {
+    appProcess = spawnAppServer(options.run);
+  }
 
   const parsedOptions = parseOptions(options);
   const NOVU_ENDPOINT_PATH = options.route;
@@ -157,7 +184,10 @@ function createWatchdogTick(getSocket: () => WatchdogSocket | undefined): () => 
 }
 
 function startTunnelWatchdog(): void {
-  setInterval(createWatchdogTick(() => tunnelClient?.socket), WATCHDOG_INTERVAL_MS);
+  setInterval(
+    createWatchdogTick(() => tunnelClient?.socket),
+    WATCHDOG_INTERVAL_MS
+  );
 }
 
 async function startTunnelProbe(tunnelOrigin: string, endpointRoute: string, localOrigin: string): Promise<void> {
@@ -174,7 +204,9 @@ async function startTunnelProbe(tunnelOrigin: string, endpointRoute: string, loc
       const tunnelHealthy = await tunnelHealthCheck(`${tunnelOrigin}${endpointRoute}`);
 
       if (!tunnelHealthy && tunnelClient?.socket) {
-        tunnelClient.socket.addEventListener('open', () => console.log(chalk.green('\n  ✓ Tunnel reconnected')), { once: true });
+        tunnelClient.socket.addEventListener('open', () => console.log(chalk.green('\n  ✓ Tunnel reconnected')), {
+          once: true,
+        });
         tunnelClient.socket.reconnect();
       }
     } catch {
@@ -240,6 +272,34 @@ async function connectToNewTunnel(originUrl: URL) {
   await connectToTunnel(parsedUrl, originUrl);
 
   return parsedUrl.origin;
+}
+
+function spawnAppServer(command: string): ChildProcess {
+  const isWindows = process.platform === 'win32';
+  const shell = isWindows ? 'cmd' : 'sh';
+  const shellFlag = isWindows ? '/c' : '-c';
+
+  const child = spawn(shell, [shellFlag, command], {
+    stdio: ['ignore', 'inherit', 'inherit'],
+    detached: !isWindows,
+  });
+
+  child.on('error', (err) => {
+    console.error(chalk.red(`\n  ✗ Failed to start app server: ${err.message}`));
+  });
+
+  child.on('exit', (code, signal) => {
+    if (signal === 'SIGINT' || signal === 'SIGTERM') {
+      process.exit(0);
+    }
+
+    console.error(chalk.red(`\n  ✗ App server exited with code ${code ?? 1}`));
+    process.exit(code ?? 1);
+  });
+
+  console.log(chalk.green(`  ▶ App server  → ${command}`));
+
+  return child;
 }
 
 interface DiscoverResponse {

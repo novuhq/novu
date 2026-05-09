@@ -19,6 +19,7 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
+  ApiBadRequestResponse,
   ApiCommonResponses,
   ApiConflictResponse,
   ApiNoContentResponse,
@@ -150,6 +151,7 @@ export class EnvironmentVariablesController {
   @Post('/')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @HttpCode(HttpStatus.OK)
   @ApiResponse(EnvironmentVariableResponseDto)
   @ApiOperation({
     summary: 'Create a variable',
@@ -158,6 +160,9 @@ export class EnvironmentVariablesController {
       'Secret variables are encrypted at rest and masked in API responses.',
   })
   @ApiConflictResponse({ description: 'An environment variable with the same key already exists.' })
+  @ApiBadRequestResponse({
+    description: 'A submitted value equals the public secret mask placeholder, which is reserved.',
+  })
   async createEnvironmentVariable(
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentVariableRequestDto
@@ -187,9 +192,14 @@ export class EnvironmentVariablesController {
   @ApiOperation({
     summary: 'Update a variable',
     description:
-      'Updates an existing environment variable. Providing values replaces all existing per-environment values.',
+      'Updates an existing environment variable. Providing `values` merges them into the existing per-environment values by `_environmentId`; envs not present in the request keep their stored value. ' +
+      'Submitting the masked secret placeholder (the value returned by read endpoints for secret variables) as a real value is rejected.',
   })
   @ApiNotFoundResponse({ description: 'Environment variable not found.' })
+  @ApiBadRequestResponse({
+    description:
+      'A submitted value equals the public secret mask placeholder, or no fields were provided to update.',
+  })
   async updateEnvironmentVariable(
     @UserSession() user: UserSessionData,
     @Param('variableKey') variableKey: string,

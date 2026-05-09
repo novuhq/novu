@@ -496,7 +496,7 @@ export const messagebirdConfig: IConfigCredential[] = [
 export const slackConfigLegacy: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
-    displayName: 'Application Id',
+    displayName: 'App ID',
     type: 'string',
     required: true,
   },
@@ -517,7 +517,7 @@ export const slackConfigLegacy: IConfigCredential[] = [
     displayName: 'Signing Secret',
     description: 'Slack app Signing Secret, used for verifying inbound webhook requests',
     type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.RedirectUrl,
@@ -537,7 +537,7 @@ export const slackConfigLegacy: IConfigCredential[] = [
 export const slackConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
-    displayName: 'Application Id',
+    displayName: 'App ID',
     type: 'string',
     required: true,
   },
@@ -558,7 +558,7 @@ export const slackConfig: IConfigCredential[] = [
     displayName: 'Signing Secret',
     description: 'Slack app Signing Secret, used for verifying inbound webhook requests',
     type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.RedirectUrl,

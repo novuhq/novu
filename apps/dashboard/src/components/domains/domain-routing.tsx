@@ -1,4 +1,4 @@
-import { DomainRouteTypeEnum } from '@novu/shared';
+import { DomainRouteTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Fragment, forwardRef, useEffect, useId, useImperativeHandle, useState } from 'react';
@@ -12,8 +12,8 @@ import {
   RiWebhookLine,
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { NovuApiError } from '@/api/api.client';
 import { listAgents } from '@/api/agents';
+import { NovuApiError } from '@/api/api.client';
 import type { DomainResponse, DomainRouteResponse, TestDomainRouteResponse } from '@/api/domains';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -46,6 +46,7 @@ import {
   useFetchDomainRoutes,
   useUpdateDomainRoute,
 } from '@/hooks/use-domain-routes';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTestDomainRoute } from '@/hooks/use-test-domain-route';
 import { parseDomainMetadataJson } from '@/utils/domain-metadata';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -106,6 +107,7 @@ type InlineRouteFormProps = {
   onCancel: () => void;
   isSaving: boolean;
   isAddressLocked?: boolean;
+  showWebhookDestination?: boolean;
 };
 
 function InlineRouteForm({
@@ -116,6 +118,7 @@ function InlineRouteForm({
   onCancel,
   isSaving,
   isAddressLocked = false,
+  showWebhookDestination = true,
 }: InlineRouteFormProps) {
   const [form, setForm] = useState<RouteFormState>(initialValues);
   const shouldReduceMotion = useReducedMotion();
@@ -170,7 +173,9 @@ function InlineRouteForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={DomainRouteTypeEnum.AGENT}>Agent</SelectItem>
-                <SelectItem value={DomainRouteTypeEnum.WEBHOOK}>Webhook</SelectItem>
+                {(showWebhookDestination || form.type === DomainRouteTypeEnum.WEBHOOK) && (
+                  <SelectItem value={DomainRouteTypeEnum.WEBHOOK}>Webhook</SelectItem>
+                )}
               </SelectContent>
             </Select>
 
@@ -422,9 +427,7 @@ function RouteTestDialog({ open, onOpenChange, domainName, route, mutation }: Ro
         </DialogHeader>
 
         <div className="text-foreground-600 space-y-3 text-xs">
-          <p className="font-code text-code-xs text-foreground-900">
-            {route ? `${route.address}@${domainName}` : ''}
-          </p>
+          <p className="font-code text-code-xs text-foreground-900">{route ? `${route.address}@${domainName}` : ''}</p>
 
           <div className="grid gap-2">
             <p className="text-foreground-500 text-2xs font-medium uppercase tracking-wide">From email</p>
@@ -590,6 +593,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   ref
 ) {
   const { currentEnvironment } = useEnvironment();
+  const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const { data: agents = [] } = useAgents();
   const [cursor, setCursor] = useState<{ after?: string; before?: string }>({});
   const { data: routesResponse, isLoading: areRoutesLoading } = useFetchDomainRoutes(domain.name, {
@@ -622,7 +626,12 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
   };
 
   const startAddingCatchAll = () => {
-    startAdding({ address: '*', agentId: '', type: DomainRouteTypeEnum.WEBHOOK, dataJson: '{}' });
+    startAdding({
+      address: '*',
+      agentId: '',
+      type: isWebhooksManagementEnabled ? DomainRouteTypeEnum.WEBHOOK : DomainRouteTypeEnum.AGENT,
+      dataJson: '{}',
+    });
   };
 
   const openAddRouteTypeDialog = () => {
@@ -751,6 +760,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                       dataJson: JSON.stringify(route.data ?? {}, null, 2),
                     }}
                     agentOptions={agentOptions}
+                    showWebhookDestination={isWebhooksManagementEnabled}
                     isAddressLocked
                     onSave={(values) => handleUpdate(route.address, values)}
                     onCancel={() => setEditingAddress(null)}
@@ -778,6 +788,7 @@ export const DomainRouting = forwardRef<DomainRoutingHandle, DomainRoutingProps>
                 domainName={domain.name}
                 initialValues={addInitialValues ?? DEFAULT_ROUTE_FORM}
                 agentOptions={agentOptions}
+                showWebhookDestination={isWebhooksManagementEnabled}
                 isAddressLocked={addInitialValues?.address === '*'}
                 onSave={handleCreate}
                 onCancel={cancelAdding}

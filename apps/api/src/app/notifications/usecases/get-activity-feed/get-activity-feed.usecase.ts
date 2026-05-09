@@ -23,10 +23,12 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsNumber,
 } from '@novu/shared';
+import { subDays } from 'date-fns';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
+const TRACE_AFTER_BUFFER_DAYS = 1;
 const traceFindColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
 type TraceFindResult = Pick<Trace, (typeof traceFindColumns)[number]>;
 
@@ -39,7 +41,9 @@ export class GetActivityFeed {
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     let subscriberIds: string[] | undefined;
@@ -281,11 +285,14 @@ export class GetActivityFeed {
         };
       });
 
-      this.logger.debug({
-        notificationCount: notifications.length,
-        jobCount: allJobIds.length,
-        executionDetailsCount: Array.from(executionDetailsByJobId.values()).flat().length,
-      }, 'Successfully enhanced notifications with ClickHouse execution details');
+      this.logger.debug(
+        {
+          notificationCount: notifications.length,
+          jobCount: allJobIds.length,
+          executionDetailsCount: Array.from(executionDetailsByJobId.values()).flat().length,
+        },
+        'Successfully enhanced notifications with ClickHouse execution details'
+      );
 
       return enhancedNotifications;
     } catch (error) {
@@ -329,12 +336,22 @@ export class GetActivityFeed {
       return new Map();
     }
 
-    const traceQuery = new QueryBuilder<Trace>({
+    // Only bound by `after`, not `before`: traces (e.g. message_seen, delivery callbacks)
+    // can arrive long after the workflow run was created, but never before it.
+    // Subtract a small buffer to absorb clock skew between the API and trace ingestion.
+    const traceQueryBuilder = new QueryBuilder<Trace>({
       environmentId: command.environmentId,
     })
       .whereIn('entity_id', entityIds)
       .whereEquals('entity_type', 'step_run')
-      .build();
+      .whereEquals('organization_id', command.organizationId);
+
+    if (command.after) {
+      const afterWithBuffer = subDays(new Date(command.after), TRACE_AFTER_BUFFER_DAYS);
+      traceQueryBuilder.whereGreaterThanOrEqual('created_at', afterWithBuffer);
+    }
+
+    const traceQuery = traceQueryBuilder.build();
 
     const traceResult = await this.traceLogRepository.find({
       where: traceQuery,

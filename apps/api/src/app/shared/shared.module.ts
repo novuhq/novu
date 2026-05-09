@@ -22,6 +22,7 @@ import {
   LoggerModule,
   QueuesModule,
   RequestLogRepository,
+  SafeOutboundHttpService,
   StepRunRepository,
   storageService,
   TraceLogRepository,
@@ -164,6 +165,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
 

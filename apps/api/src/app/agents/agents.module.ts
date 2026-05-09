@@ -11,6 +11,7 @@ import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentsController } from './agents.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
+import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
 import { AgentConfigResolver } from './services/agent-config-resolver.service';
 import { AgentConversationService } from './services/agent-conversation.service';
 import { AgentInboundHandler } from './services/agent-inbound-handler.service';
@@ -28,6 +29,7 @@ import { USE_CASES } from './usecases';
     ChannelEndpointRepository,
     ConversationRepository,
     ConversationActivityRepository,
+    AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
     AgentConversationService,

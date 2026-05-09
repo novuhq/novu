@@ -225,6 +225,64 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     expect(data._environmentId).to.equal(prodEnv?._id);
   });
 
+  it('should allow updating an integration that lives in a different environment of the same organization', async () => {
+    const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+    const otherEnvironmentIntegration = await integrationRepository.create({
+      name: 'OtherEnv',
+      identifier: 'other-env-update',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: prodEnv!._id,
+    });
+
+    const payload = {
+      name: 'Renamed cross env',
+      check: false,
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${otherEnvironmentIntegration._id}`).send(payload);
+
+    expect(data.name).to.equal('Renamed cross env');
+    expect(data._environmentId).to.equal(prodEnv!._id);
+  });
+
+  it('should not allow moving an integration into an environment owned by another organization', async () => {
+    const integrationOne = await integrationRepository.create({
+      name: 'TestCrossOrg',
+      identifier: 'identifier-cross-org',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const payload = {
+      _environmentId: otherSession.environment._id,
+      name: 'Hijacked',
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Environment with id ${otherSession.environment._id} not found`);
+
+    const untouched = await integrationRepository.findOne({
+      _id: integrationOne._id,
+      _environmentId: session.environment._id,
+    });
+    expect(untouched?._environmentId).to.equal(session.environment._id);
+    expect(untouched?.name).to.equal('TestCrossOrg');
+  });
+
   it('should update custom SMTP integration with TLS options successfully', async () => {
     const nodeMailerProviderPayload = {
       providerId: 'nodemailer',

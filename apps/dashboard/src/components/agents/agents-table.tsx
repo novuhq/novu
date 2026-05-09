@@ -156,7 +156,7 @@ function AgentsTableSkeletonRow() {
 export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProps }: AgentsTableProps) {
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const location = useLocation();
 
   return (
@@ -220,11 +220,16 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                 >
                   <span className="text-label-sm">{formatDateSimple(agent.updatedAt)}</span>
                 </AgentNavTableCell>
-                <TableCell className="p-3 text-right align-middle">
+                <AgentNavTableCell className="w-1 p-3 text-right align-middle">
                   {canWrite ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <CompactButton size="md" variant="ghost" icon={RiMore2Fill} className="z-10">
+                        <CompactButton
+                          variant="ghost"
+                          icon={RiMore2Fill}
+                          className="z-10 h-8 w-8 p-0"
+                          disabled={readOnly}
+                        >
                           <span className="sr-only">Open menu</span>
                         </CompactButton>
                       </DropdownMenuTrigger>
@@ -240,7 +245,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : null}
-                </TableCell>
+                </AgentNavTableCell>
               </TableRow>
             );
           })}

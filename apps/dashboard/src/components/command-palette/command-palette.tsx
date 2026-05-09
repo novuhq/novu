@@ -17,6 +17,7 @@ import {
   RiUserLine,
 } from 'react-icons/ri';
 import { useAiDrawer } from '@/components/ai-drawer';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -111,7 +112,7 @@ export function CommandPalette() {
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
-  const hasInkeep = !!import.meta.env.VITE_INKEEP_API_KEY;
+  const hasInkeep = IS_AI_FEATURES_ENABLED && !!import.meta.env.VITE_INKEEP_API_KEY;
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -160,7 +161,9 @@ export function CommandPalette() {
         <CommandMenu.Input
           value={search}
           onValueChange={setSearch}
-          placeholder="Type a command, search or ask Novu AI..."
+          placeholder={
+            IS_AI_FEATURES_ENABLED ? 'Type a command, search or ask Novu AI...' : 'Type a command or search...'
+          }
           autoFocus
           className="text-label-md text-text-sub placeholder:text-text-soft"
         />

@@ -131,6 +131,15 @@ export type ConversationActivityDto = {
   senderId: string;
   senderName?: string;
   platformMessageId?: string;
+  richContent?: {
+    attachments?: Array<{
+      type?: string;
+      name?: string;
+      mimeType?: string;
+      size?: number;
+      storageKey?: string;
+    }>;
+  };
   signalData?:
     | { type: 'metadata'; payload?: Record<string, unknown> }
     | { type: 'trigger'; payload?: { workflowId?: string; transactionId?: string; to?: unknown } }

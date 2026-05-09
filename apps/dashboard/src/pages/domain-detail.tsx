@@ -478,7 +478,7 @@ export function DomainDetailPage() {
                       disabled={!canWriteDomains || updateDomainMeta.isPending}
                       isPersisting={updateDomainMeta.isPending}
                       spellCheck={false}
-                      textareaClassName="font-code text-code-xs min-h-[120px] resize-y"
+                      textareaClassName="font-code text-code-xs min-h-[120px]"
                     />
                   )}
                 </DetailsSidebarCard>
