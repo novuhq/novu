@@ -225,6 +225,16 @@ export const SideNavigation = () => {
                           })
                         : undefined
                     }
+                    matchPaths={
+                      currentEnvironment?.slug
+                        ? [
+                            buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment.slug }),
+                            buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }),
+                            buildRoute(ROUTES.ACTIVITY_REQUESTS, { environmentSlug: currentEnvironment.slug }),
+                            buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug }),
+                          ]
+                        : undefined
+                    }
                   >
                     <RiBarChartBoxLine className="size-4" />
                     <span>Activity Feed</span>

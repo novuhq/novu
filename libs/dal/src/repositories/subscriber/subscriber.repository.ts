@@ -34,12 +34,16 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     organizationId: OrganizationId
   ): Promise<BulkCreateSubscriberEntity> {
     const bulkWriteOps = subscribers.map((subscriber) => {
-      const { subscriberId, ...rest } = subscriber;
+      const updatableFields = pickUpdatableSubscriberFields(subscriber);
 
       return {
         updateOne: {
-          filter: { subscriberId, _environmentId: environmentId, _organizationId: organizationId },
-          update: { $set: { ...rest, deleted: false } },
+          filter: {
+            subscriberId: subscriber.subscriberId,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+          },
+          update: { $set: { ...updatableFields, deleted: false } },
           upsert: true,
         },
       };
@@ -277,6 +281,29 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
 
 function mapToSubscriberObject(subscriberId: string) {
   return { subscriberId };
+}
+
+const UPDATABLE_SUBSCRIBER_FIELDS: readonly (keyof ISubscribersDefine)[] = [
+  'firstName',
+  'lastName',
+  'email',
+  'phone',
+  'avatar',
+  'locale',
+  'data',
+  'channels',
+  'timezone',
+];
+
+function pickUpdatableSubscriberFields(subscriber: ISubscribersDefine): Partial<ISubscribersDefine> {
+  const result: Partial<ISubscribersDefine> = {};
+  for (const field of UPDATABLE_SUBSCRIBER_FIELDS) {
+    if (field in subscriber) {
+      (result as Record<string, unknown>)[field] = subscriber[field];
+    }
+  }
+
+  return result;
 }
 
 function regExpEscape(literalString: string): string {

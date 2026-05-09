@@ -215,6 +215,32 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', (
     expect(second.priority).to.equal(1);
   });
 
+  it('should not allow deleting an integration belonging to another organization', async () => {
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const otherOrgIntegration = await integrationRepository.create({
+      name: 'OtherOrg',
+      identifier: 'other-org-delete',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: otherSession.organization._id,
+      _environmentId: otherSession.environment._id,
+    });
+
+    const { body } = await session.testAgent.delete(`/v1/integrations/${otherOrgIntegration._id}`).send();
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Entity with id ${otherOrgIntegration._id} not found`);
+
+    const stillExists = await integrationRepository.findOne({
+      _id: otherOrgIntegration._id,
+      _environmentId: otherSession.environment._id,
+    });
+    expect(stillExists?._id).to.equal(otherOrgIntegration._id);
+  });
+
   it('should remove a newly created integration', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
