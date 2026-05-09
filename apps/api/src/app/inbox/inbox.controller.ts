@@ -14,6 +14,7 @@ import {
   Req,
   UseGuards,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -32,7 +33,6 @@ import { GetChannelEndpointCommand } from '../channel-endpoints/usecases/get-cha
 import { GetChannelEndpoint } from '../channel-endpoints/usecases/get-channel-endpoint/get-channel-endpoint.usecase';
 import { ListChannelEndpointsCommand } from '../channel-endpoints/usecases/list-channel-endpoints/list-channel-endpoints.command';
 import { ListChannelEndpoints } from '../channel-endpoints/usecases/list-channel-endpoints/list-channel-endpoints.usecase';
-import { TriggerEventRequestDto } from '../events/dtos';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
 import { GenerateChatOAuthUrlResponseDto } from '../integrations/dtos/generate-chat-oauth-url-response.dto';
 import { GenerateConnectOauthUrlRequestDto } from '../integrations/dtos/generate-connect-oauth-url-request.dto';
@@ -65,6 +65,7 @@ import {
 import { InboxListChannelEndpointsResponseDto } from './dtos/inbox-channel-endpoint-response.dto';
 import { mapChannelConnectionToInboxDto, mapChannelEndpointToInboxDto } from './dtos/inbox-dto.mapper';
 import { InboxNotificationDto } from './dtos/inbox-notification.dto';
+import { InboxTriggerEventRequestDto } from './dtos/inbox-trigger-event-request.dto';
 import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
 import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
 import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
@@ -632,13 +633,21 @@ export class InboxController {
    * attempt to trigger a different workflow id, target another recipient, or
    * call from a non-keyless environment is rejected to prevent privilege
    * escalation. The actual validation lives in `TriggerKeylessEvent`.
+   *
+   * Uses `InboxTriggerEventRequestDto` (a minimal, inbox-only DTO) instead of
+   * the full `TriggerEventRequestDto` so subscriber-controlled fields such as
+   * `bridgeUrl`, `controls`, `overrides`, `actor`, `tenant`, `transactionId`
+   * and `context` cannot reach this route. The per-route `ValidationPipe` with
+   * `whitelist: true` actively strips any extra fields before the handler runs
+   * so a subscriber JWT can never drive signed outbound bridge requests.
    */
   @KeylessAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/events')
   async keylessEvents(
     @SubscriberSession() subscriberSession: SubscriberSession,
-    @Body() body: TriggerEventRequestDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
+    body: InboxTriggerEventRequestDto,
     @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto> {
     return this.triggerKeylessEventUsecase.execute(
