@@ -408,11 +408,19 @@ install_docker_linux () {
         sudo usermod -aG docker "$USER"
 
     elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
-        sudo yum install -y yum-utils 2>/dev/null || sudo dnf install -y yum-utils
-        sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo 2>/dev/null || \
-            sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-        sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || \
+        if command -v dnf &>/dev/null; then
+            sudo dnf install -y dnf-plugins-core
+            if [[ "$DISTRO_ID" == "fedora" ]]; then
+                sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+            else
+                sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            fi
             sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        else
+            sudo yum install -y yum-utils
+            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        fi
         sudo systemctl enable --now docker
         sudo usermod -aG docker "$USER"
     else
