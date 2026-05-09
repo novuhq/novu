@@ -741,6 +741,76 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     expect(workflows).to.deep.equal(dashboardWorkflow);
   });
 
+  describe('SSRF protection', () => {
+    // Locks in the SSRF guard — see Sync.assertSafeBridgeUrl. /bridge/sync is
+    // gated by BRIDGE_WRITE, but an authenticated operator must not be able to
+    // repoint the bridge at internal hosts (loopback name, cloud metadata) or
+    // sneak in non-http schemes / embedded credentials.
+    it('should reject bridgeUrl pointing at localhost', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://localhost:4000/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/bridgeUrl/i);
+    });
+
+    it('should reject bridgeUrl pointing at cloud metadata hostname', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://metadata.google.internal/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/bridgeUrl/i);
+    });
+
+    it('should reject bridgeUrl with embedded credentials', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://attacker:pass@example.com/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+    });
+
+    it('should reject bridgeUrl with non-http scheme', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'ftp://example.com/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+    });
+  });
+
+  describe('/bridge/validate (POST)', async () => {
+    it('should report isValid false for localhost bridge URL', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://localhost:4000/api/novu',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/localhost/i);
+    });
+
+    it('should report isValid false for cloud metadata hostname', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://metadata.google.internal/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/metadata\.google\.internal/i);
+    });
+
+    it('should reject non-http scheme at the DTO layer', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'ftp://example.com/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+    });
+  });
+
   it('should allow syncing a workflow with same ID if original was created externally', async () => {
     const workflowId = 'external-created-workflow';
 

@@ -1,6 +1,7 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
+  assertSafeOutboundUrl,
   BuildStepIssuesUsecase,
   CreateWorkflowCommandV0,
   CreateWorkflowV0,
@@ -9,6 +10,7 @@ import {
   JSONSchema,
   JSONSchemaDto,
   NotificationStep,
+  SsrfBlockedError,
   StepIssuesDto,
   UpdateWorkflowCommandV0,
   UpdateWorkflowV0,
@@ -54,6 +56,8 @@ export class Sync {
     private controlValuesRepository: ControlValuesRepository
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
+    this.assertSafeBridgeUrl(command.bridgeUrl);
+
     const environment = await this.findEnvironment(command);
     const discover = await this.executeDiscover(command);
     this.sendAnalytics(command, environment, discover);
@@ -63,6 +67,23 @@ export class Sync {
     await this.updateBridgeUrl(command);
 
     return persistedWorkflowsInBridge;
+  }
+
+  // The sync use-case persists `bridgeUrl` on the environment and immediately
+  // performs a discovery request against it. Without an SSRF guard, an
+  // authenticated BRIDGE_WRITE caller can repoint the bridge at internal hosts
+  // (loopback, RFC1918, link-local 169.254.169.254, cloud metadata) and have
+  // the API process leak the discovery response or the persisted URL to other
+  // tenants.
+  private assertSafeBridgeUrl(bridgeUrl: string): void {
+    try {
+      assertSafeOutboundUrl(bridgeUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new BadRequestException(`bridgeUrl: ${err.message}`);
+      }
+      throw err;
+    }
   }
 
   private sendAnalytics(command: SyncCommand, environment: EnvironmentEntity, discover: DiscoverOutput) {
