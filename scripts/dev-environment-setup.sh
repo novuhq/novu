@@ -535,7 +535,7 @@ install_linux_base_deps () {
         linux_pkg_install curl unzip git ca-certificates gnupg2 which || { error_message "Linux base dependencies"; return 1; }
     else
         echo "⚠️  Unknown distro - skipping base dependency installation."
-        return 0
+        return 1
     fi
 
     success_message "Linux base dependencies"
@@ -646,7 +646,7 @@ install_os_dependencies () {
 
     elif [[ "$OS_TYPE" == "Linux" ]]; then
         echo "Install 🐧 Linux dependencies (family: $DISTRO_FAMILY)"
-        install_linux_base_deps
+        install_linux_base_deps || exit 1
         install_git_linux
         install_novu_tools
 
