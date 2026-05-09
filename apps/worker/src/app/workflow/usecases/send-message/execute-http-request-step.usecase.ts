@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  assertSafeOutboundUrl,
   buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -13,9 +14,9 @@ import {
   InstrumentUsecase,
   PinoLogger,
   resolveHttpRequestBody,
+  SsrfBlockedError,
   shouldIncludeBody,
   toHeadersRecord,
-  validateUrlSsrf,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -146,9 +147,11 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       };
     }
 
-    const ssrfValidationError = await validateUrlSsrf(url);
+    try {
+      assertSafeOutboundUrl(url);
+    } catch (error) {
+      const errorMessage = error instanceof SsrfBlockedError ? error.message : String(error);
 
-    if (ssrfValidationError) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -157,7 +160,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ error: ssrfValidationError }),
+          raw: JSON.stringify({ error: errorMessage }),
         })
       );
 
@@ -196,6 +199,9 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     }
 
     const hasBody = shouldIncludeBody(bodyObject, method);
+    // HMAC is attached only after the URL has passed the synchronous SSRF
+    // check. The connect-time DNS guard and redirect re-validation happen
+    // inside HttpClientService when enforceSsrfProtection is enabled.
     const signatureHeaders = {
       'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
     };
@@ -210,6 +216,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         headers: mergedHeaders,
         timeout,
         responseType: 'text',
+        enforceSsrfProtection: true,
         ...(hasBody ? { body: bodyObject } : {}),
       });
 

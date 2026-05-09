@@ -1554,6 +1554,35 @@ describe('EmailOutputRendererUsecase', () => {
       expect(getLayoutUseCaseV0.execute.calledOnce).to.be.true;
       expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
     });
+
+    it('should interpolate environment variables inside the layout body', async () => {
+      const layoutWithEnvVar =
+        '<html><body><img src="{{env.CDN_BASE_URL}}/logo.png" /><div>{{content}}</div></body></html>';
+      controlValuesRepositoryMock.findOne.resolves({
+        controls: { email: { body: layoutWithEnvVar } },
+      } as any);
+
+      const renderCommand: EmailOutputRendererCommand = {
+        dbWorkflow: mockDbWorkflow,
+        controlValues: {
+          subject: 'Layout Env Var Test',
+          body: simpleBodyContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+          env: { CDN_BASE_URL: 'https://cdn.example.com', name: 'Production', type: 'prod' },
+        },
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('https://cdn.example.com/logo.png');
+      expect(result.body).to.not.include('{{env.CDN_BASE_URL}}');
+      expect(result.body).to.include('Step content John');
+    });
   });
 
   describe('Layout functionality', () => {

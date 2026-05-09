@@ -5,6 +5,10 @@ import {
   InboundDomainRouteDelivery,
   SendWebhookMessage,
 } from '@novu/application-generic';
+// The top-level @novu/application-generic re-exports helpers via Object.defineProperty
+// getters, which sinon cannot replace. Stub the underlying source module instead — the
+// re-export getter delegates to it so backend code picks up the stub.
+const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
 import {
   AgentIntegrationRepository,
   DomainRepository,
@@ -68,20 +72,27 @@ describe('Should handle the new arrived mail', () => {
   it('should send webhook request to the users webhook', async () => {
     const mail = getMailData();
 
-    const axiosPostStub = sandbox.stub(axios, 'post').resolves();
+    const safeRequestStub = sandbox.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: {},
+    } as any);
     sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
     compileTemplate.execute.resolves(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
 
     await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-    sinon.assert.calledOnce(axiosPostStub);
-    axiosPostStub.calledWith(sinon.match.array);
-    const { args } = axiosPostStub.getCall(0);
+    sinon.assert.calledOnce(safeRequestStub);
+    const callArgs = safeRequestStub.getCall(0).args[0] as {
+      url: string;
+      method: string;
+      body: IUserWebhookPayload;
+    };
 
-    const webhook: string = args[0];
-    const payload: IUserWebhookPayload = args[1];
-
-    expect(webhook).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+    expect(callArgs.url).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+    expect(callArgs.method).to.equal('POST');
+    const payload = callArgs.body;
     expect(payload.mail).to.be.ok;
     expect(payload.payload).to.ok;
     expect(payload.template).to.ok;

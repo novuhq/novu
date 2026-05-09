@@ -1,6 +1,6 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { IEnvironment } from '@novu/shared';
-import { useId } from 'react';
+import { IEnvironment, SECRET_MASK } from '@novu/shared';
+import { useId, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiInformationLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -26,27 +26,30 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 
 const VARIABLE_KEY_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
 
-const VariableSchema = z
-  .object({
-    key: z
-      .string()
-      .min(1, 'Variable key is required')
-      .regex(VARIABLE_KEY_REGEX, 'Must start with a letter and only contain letters, numbers, and underscores'),
-    environmentValues: z.record(z.string(), z.string()),
-  })
-  .superRefine((data, ctx) => {
-    for (const [envId, value] of Object.entries(data.environmentValues)) {
-      if (!value.trim()) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Value is required',
-          path: ['environmentValues', envId],
-        });
-      }
-    }
-  });
+const buildVariableSchema = (envIdsAllowedEmpty: Set<string>) =>
+  z
+    .object({
+      key: z
+        .string()
+        .min(1, 'Variable key is required')
+        .regex(VARIABLE_KEY_REGEX, 'Must start with a letter and only contain letters, numbers, and underscores'),
+      environmentValues: z.record(z.string(), z.string()),
+    })
+    .superRefine((data, ctx) => {
+      for (const [envId, value] of Object.entries(data.environmentValues)) {
+        if (envIdsAllowedEmpty.has(envId)) continue;
 
-type VariableFormValues = z.infer<typeof VariableSchema>;
+        if (!value.trim()) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Value is required',
+            path: ['environmentValues', envId],
+          });
+        }
+      }
+    });
+
+type VariableFormValues = z.infer<ReturnType<typeof buildVariableSchema>>;
 
 type UpsertVariableFormProps = {
   formId?: string;
@@ -68,14 +71,28 @@ export const UpsertVariableForm = ({
   const generatedFormId = useId();
   const formId = providedFormId ?? generatedFormId;
   const isEditing = !!variable;
+  const isSecret = !!variable?.isSecret;
+
+  // For secret variables we never receive the real value back from the API — only the
+  // public mask placeholder. Render those env inputs as empty (meaning "keep existing")
+  // so we don't echo the placeholder back to the API on save.
+  const envIdsWithExistingSecret = useMemo(() => {
+    if (!isEditing || !isSecret) return new Set<string>();
+
+    return new Set(variable.values.filter((v) => v.value === SECRET_MASK).map((v) => v._environmentId));
+  }, [isEditing, isSecret, variable]);
 
   const initialEnvironmentValues = Object.fromEntries(
     environments.map((env) => {
       const match = isEditing ? variable.values.find((v) => v._environmentId === env._id) : undefined;
+      const value = match?.value ?? '';
+      const isMasked = value === SECRET_MASK;
 
-      return [env._id, match?.value ?? ''];
+      return [env._id, isMasked ? '' : value];
     })
   );
+
+  const variableSchema = useMemo(() => buildVariableSchema(envIdsWithExistingSecret), [envIdsWithExistingSecret]);
 
   const { createEnvironmentVariable } = useCreateEnvironmentVariable({
     onSuccess: () => {
@@ -110,7 +127,7 @@ export const UpsertVariableForm = ({
       key: variable?.key ?? '',
       environmentValues: initialEnvironmentValues,
     },
-    resolver: standardSchemaResolver(VariableSchema),
+    resolver: standardSchemaResolver(variableSchema),
     shouldFocusError: false,
     mode: 'onSubmit',
     reValidateMode: 'onChange',
@@ -119,19 +136,26 @@ export const UpsertVariableForm = ({
   const onSubmit = async (data: VariableFormValues) => {
     onSubmitStart?.();
 
-    const values = Object.entries(data.environmentValues).map(([_environmentId, value]) => ({
-      _environmentId,
-      value,
-    }));
-
     try {
       if (isEditing) {
+        // For edits, only send envs the user actually filled in. Empty inputs for envs
+        // that already have a stored secret mean "keep existing". The backend merges
+        // values per `_environmentId` so unspecified envs are left untouched.
+        const values = Object.entries(data.environmentValues)
+          .filter(([, value]) => value !== '')
+          .map(([_environmentId, value]) => ({ _environmentId, value }));
+
         await updateEnvironmentVariable({
           variableKey: variable.key,
           key: data.key.trim(),
-          values,
+          ...(values.length > 0 ? { values } : {}),
         });
       } else {
+        const values = Object.entries(data.environmentValues).map(([_environmentId, value]) => ({
+          _environmentId,
+          value,
+        }));
+
         await createEnvironmentVariable({
           key: data.key.trim(),
           values,
@@ -187,29 +211,34 @@ export const UpsertVariableForm = ({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            {environments.map((env) => (
-              <FormField
-                key={env._id}
-                control={form.control}
-                name={`environmentValues.${env._id}`}
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex w-[175px] shrink-0 items-center gap-1.5">
-                        <EnvironmentBranchIcon environment={env} size="sm" />
-                        <span className="text-text-sub truncate text-xs font-medium">{env.name}</span>
+            {environments.map((env) => {
+              const hasExistingSecret = envIdsWithExistingSecret.has(env._id);
+              const placeholder = hasExistingSecret ? `${SECRET_MASK} (leave blank to keep)` : `${env.name} value`;
+
+              return (
+                <FormField
+                  key={env._id}
+                  control={form.control}
+                  name={`environmentValues.${env._id}`}
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex w-[175px] shrink-0 items-center gap-1.5">
+                          <EnvironmentBranchIcon environment={env} size="sm" />
+                          <span className="text-text-sub truncate text-xs font-medium">{env.name}</span>
+                        </div>
+                        <div className="flex flex-1 flex-col gap-1">
+                          <FormControl>
+                            <Input {...field} placeholder={placeholder} size="xs" hasError={!!fieldState.error} />
+                          </FormControl>
+                          {fieldState.error && <FormMessage />}
+                        </div>
                       </div>
-                      <div className="flex flex-1 flex-col gap-1">
-                        <FormControl>
-                          <Input {...field} placeholder={`${env.name} value`} size="xs" hasError={!!fieldState.error} />
-                        </FormControl>
-                        {fieldState.error && <FormMessage />}
-                      </div>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            ))}
+                    </FormItem>
+                  )}
+                />
+              );
+            })}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { validateUrlSsrf } from '@novu/application-generic';
+import { assertSafeOutboundUrl, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
 import { AgentRepository, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import type { AgentResponseDto } from '../../dtos';
@@ -29,10 +29,7 @@ export class UpdateAgent {
       throw new BadRequestException('At least one field must be provided.');
     }
 
-    const hasReadOnlyFields =
-      command.name !== undefined ||
-      command.description !== undefined ||
-      hasBehaviorFields;
+    const hasReadOnlyFields = command.name !== undefined || command.description !== undefined || hasBehaviorFields;
 
     if (hasReadOnlyFields) {
       await this.assertNotProduction(
@@ -146,9 +143,14 @@ export class UpdateAgent {
       return;
     }
 
-    const ssrfError = await validateUrlSsrf(url);
-    if (ssrfError) {
-      throw new BadRequestException(`${field}: ${ssrfError}`);
+    try {
+      const parsed = assertSafeOutboundUrl(url);
+      await resolvePublicAddresses(parsed.hostname);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new BadRequestException(`${field}: ${err.message}`);
+      }
+      throw err;
     }
   }
 }

@@ -47,6 +47,11 @@
       "require": "./dist/cjs/utils/ssrf-url-validation.js",
       "import": "./dist/esm/utils/ssrf-url-validation.js",
       "types": "./dist/esm/utils/ssrf-url-validation.d.ts"
+    },
+    "./utils/safe-outbound-http": {
+      "require": "./dist/cjs/utils/safe-outbound-http.js",
+      "import": "./dist/esm/utils/safe-outbound-http.js",
+      "types": "./dist/esm/utils/safe-outbound-http.d.ts"
     }
   },
   "dependencies": {
