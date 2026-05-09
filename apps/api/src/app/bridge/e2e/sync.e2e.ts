@@ -777,7 +777,9 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
         bridgeUrl: 'ftp://example.com/api/novu',
       });
 
-      expect(result.status).to.equal(400);
+      // CreateBridgeRequestDto's IsUrl validator rejects non-http schemes
+      // before the use-case runs, so the request fails at the DTO layer (422).
+      expect(result.status).to.equal(422);
     });
   });
 
@@ -807,7 +809,10 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
         bridgeUrl: 'ftp://example.com/api/novu',
       });
 
-      expect(result.status).to.equal(400);
+      // ValidateBridgeUrlRequestDto's IsUrl validator rejects non-http
+      // schemes before the controller runs, so the request fails at the DTO
+      // layer (422).
+      expect(result.status).to.equal(422);
     });
   });
 
