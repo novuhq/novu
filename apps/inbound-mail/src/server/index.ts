@@ -271,16 +271,27 @@ class Mailin extends events.EventEmitter {
                 return finalizedMessage;
               })
               .then(postQueue.bind(null, connection))
-              .then(unlinkFile.bind(null, connection))
-              .then(() => resolve())
-              .catch((error) => {
-                nr.noticeError(error);
-                logger.error(
-                  { err: error, context: LOG_CONTEXT, connectionId: connection.id },
-                  `${connection.id} Unable to finish processing message!!`
-                );
-                reject(error);
-              })
+              .then(
+                () => unlinkFile(connection).then(() => resolve()),
+                (processingError) => {
+                  nr.noticeError(processingError);
+                  logger.error(
+                    { err: processingError, context: LOG_CONTEXT, connectionId: connection.id },
+                    `${connection.id} Unable to finish processing message!!`
+                  );
+
+                  /*
+                   * Always clean up the temp raw email — even on the failure path.
+                   * SMTP returns 4xx so the sending MTA retries delivery, which
+                   * produces a fresh temp file. Retaining the failed file would
+                   * let an attacker amplify a queue/Redis outage into disk
+                   * exhaustion by repeatedly submitting messages while the
+                   * downstream queue is degraded. Unlink is best-effort so a
+                   * cleanup failure does not mask the original processing error.
+                   */
+                  return unlinkFile(connection).then(() => reject(processingError));
+                }
+              )
               .finally(() => {
                 if (transaction) {
                   transaction.end();
@@ -477,7 +488,7 @@ class Mailin extends events.EventEmitter {
         'inbound-mail/post-queue',
         true,
         () =>
-          new Promise((resolve) => {
+          new Promise<void>((resolve, reject) => {
             logger.debug(
               { context: LOG_CONTEXT, connectionId: connection.id },
               `${connection.id} finalized message is: ${finalizedMessage}`
@@ -517,25 +528,49 @@ class Mailin extends events.EventEmitter {
               // ignore — instrumentation must never break the pipeline
             }
 
-            inboundMailService.inboundParseQueueService.add({
-              name: finalizedMessage.messageId,
-              data: finalizedMessage,
-              groupId,
-            });
-
-            return resolve();
+            return inboundMailService.inboundParseQueueService
+              .add({
+                name: finalizedMessage.messageId,
+                data: finalizedMessage,
+                groupId,
+              })
+              .then(() => resolve())
+              .catch((error) => {
+                logger.error(
+                  { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+                  `${connection.id} Failed to add inbound mail to queue`
+                );
+                reject(error);
+              });
           })
       );
     }
-    function unlinkFile(connection) {
+    /*
+     * Best-effort cleanup of the raw email temp file. Used on both success and
+     * failure paths so a sustained queue outage cannot be amplified into a
+     * disk-exhaustion DoS via retained temp files (NV-7596). Swallows ENOENT
+     * (the file may never have been written, e.g. if `retrieveRawEmail`
+     * failed) and logs any other unlink error without rejecting — the caller
+     * may already be propagating an upstream processing error and we don't
+     * want a cleanup failure to mask it.
+     */
+    function unlinkFile(connection): Promise<void> {
       return nr.startSegment('inbound-mail/unlink-file', true, () =>
-        /* Don't forget to unlink the tmp file. */
         fs.promises
           .unlink(connection.mailPath)
           .then(() => {
             logger.info(
               { context: LOG_CONTEXT, connectionId: connection.id },
               `${connection.id} End processing message, deleted ${connection.mailPath}`
+            );
+          })
+          .catch((unlinkError: NodeJS.ErrnoException) => {
+            if (unlinkError?.code === 'ENOENT') {
+              return;
+            }
+            logger.warn(
+              { err: unlinkError, context: LOG_CONTEXT, connectionId: connection.id },
+              `${connection.id} Failed to clean up temp file ${connection.mailPath}`
             );
           })
       );
@@ -567,8 +602,29 @@ class Mailin extends events.EventEmitter {
         });
 
         stream.on('end', () => {
-          dataReady(connection);
-          onDataCallback();
+          dataReady(connection)
+            .then(() => onDataCallback())
+            .catch((error) => {
+              nr.noticeError(error);
+              logger.error(
+                { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+                `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
+              );
+
+              /*
+               * Signal a transient failure (4xx) to the sending MTA so it retries
+               * delivery instead of treating the message as accepted. Without
+               * this, a queue-insert failure after an unconditional onDataCallback()
+               * would silently drop the message — sender thinks 250 OK, we have
+               * nothing persisted.
+               */
+              const smtpError: Error & { responseCode?: number } =
+                error instanceof Error ? error : new Error(String(error));
+              if (typeof smtpError.responseCode !== 'number') {
+                smtpError.responseCode = 451;
+              }
+              onDataCallback(smtpError);
+            });
         });
 
         stream.on('close', () => {

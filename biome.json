@@ -39,6 +39,9 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "project": "recommended"
+    },
     "rules": {
       "recommended": true,
       "a11y": {
@@ -106,6 +109,9 @@
         "useIterableCallbackReturn": "warn",
         "noArrayIndexKey": "off",
         "noPrototypeBuiltins": "off"
+      },
+      "nursery": {
+        "noFloatingPromises": "warn"
       }
     }
   },
