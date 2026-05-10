@@ -4,6 +4,7 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
 import {
+  debugAccessToken,
   extractMetaError,
   type MetaErrorSummary,
   sendWhatsAppTemplate,
@@ -12,6 +13,8 @@ import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.c
 
 const TEMPLATE_NAME = 'hello_world';
 const TEMPLATE_LANGUAGE = 'en_US';
+
+const META_DEV_CONSOLE_URL_BASE = 'https://developers.facebook.com/apps';
 
 export type SendWhatsAppTestTemplateError = {
   code:
@@ -24,6 +27,12 @@ export type SendWhatsAppTestTemplateError = {
     | 'meta_rejected'
     | 'unknown';
   message: string;
+  /**
+   * Optional Meta dev-console URL the dashboard can render as a button to
+   * shortcut the user to the page where they can take corrective action
+   * (e.g. add a verified test recipient when the app is still in dev mode).
+   */
+  helpUrl?: string;
 };
 
 export interface SendWhatsAppTestTemplateResult {
@@ -103,7 +112,11 @@ export class SendWhatsAppTestTemplate {
 
     const error = extractMetaError(response.body);
     if (error || response.statusCode >= 400) {
-      const failure = this.classifyMetaError(error, response.statusCode);
+      const failure = this.classifyMetaError(error, response.statusCode, command.to);
+
+      if (failure.code === 'recipient_not_allowed') {
+        failure.helpUrl = await this.resolveDevConsoleUrl(accessToken);
+      }
 
       this.logger.warn(
         { integrationId: integration._id, statusCode: response.statusCode, metaError: error },
@@ -118,14 +131,36 @@ export class SendWhatsAppTestTemplate {
     return { success: true, messageId };
   }
 
-  private classifyMetaError(error: MetaErrorSummary | undefined, statusCode: number): SendWhatsAppTestTemplateError {
+  /**
+   * Best-effort lookup of the Meta App ID via `debug_token` so we can build a
+   * deep link straight to the WhatsApp dev console. Failures fall back to the
+   * generic apps list page rather than blocking the error response.
+   */
+  private async resolveDevConsoleUrl(accessToken: string): Promise<string> {
+    try {
+      const debug = await debugAccessToken(accessToken);
+      const appId = debug.body.data?.app_id;
+      if (appId) {
+        return `${META_DEV_CONSOLE_URL_BASE}/${encodeURIComponent(appId)}/whatsapp-business/wa-dev-console/`;
+      }
+    } catch (err) {
+      this.logger.warn({ err }, 'WhatsApp test template: failed to resolve app_id for help URL');
+    }
+
+    return `${META_DEV_CONSOLE_URL_BASE}/`;
+  }
+
+  private classifyMetaError(
+    error: MetaErrorSummary | undefined,
+    statusCode: number,
+    recipient: string
+  ): SendWhatsAppTestTemplateError {
     const message = error?.message ?? `Meta returned HTTP ${statusCode}`;
 
     if (error?.code === 131030 || error?.subcode === 2494051) {
       return {
         code: 'recipient_not_allowed',
-        message:
-          "Meta refused to deliver to this phone number — it's not in your test recipient list. Add it under WhatsApp > API Setup, then retry.",
+        message: `${recipient} isn't on your test recipient list. In Meta's WhatsApp dev console go to To → Manage phone number list, add the number, then enter the WhatsApp OTP Meta sends before retrying.`,
       };
     }
 

@@ -32,6 +32,12 @@ export class SendWhatsAppTestTemplateErrorDto {
 
   @ApiProperty({ type: String, description: 'Human-readable message safe to surface in the dashboard' })
   message: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Optional Meta dev-console URL the dashboard can render as a button to take corrective action',
+  })
+  helpUrl?: string;
 }
 
 export class SendWhatsAppTestTemplateResponseDto {

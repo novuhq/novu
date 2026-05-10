@@ -378,6 +378,7 @@ export type SendWhatsAppTestTemplateError = {
     | 'meta_rejected'
     | 'unknown';
   message: string;
+  helpUrl?: string;
 };
 
 export type SendWhatsAppTestTemplateResponse = {

@@ -58,7 +58,11 @@ type ConnectStatus =
   | { state: 'manual_fallback'; message: string }
   | { state: 'error'; message: string };
 
-type TestStatus = { state: 'idle' } | { state: 'sending' } | { state: 'sent' } | { state: 'error'; message: string };
+type TestStatus =
+  | { state: 'idle' }
+  | { state: 'sending' }
+  | { state: 'sent' }
+  | { state: 'error'; message: string; helpUrl?: string };
 
 function ConnectAndTestPanel({
   agent,
@@ -156,6 +160,7 @@ function ConnectAndTestPanel({
       setTestStatus({
         state: 'error',
         message: result.error?.message ?? "Meta didn't accept the test message.",
+        helpUrl: result.error?.helpUrl,
       });
     } catch (err) {
       setTestStatus({
@@ -249,7 +254,20 @@ function ConnectAndTestPanel({
             </p>
           ) : null}
           {testStatus.state === 'error' ? (
-            <p className="text-error-base text-label-xs leading-4">{testStatus.message}</p>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-error-base text-label-xs leading-4">{testStatus.message}</p>
+              {testStatus.helpUrl ? (
+                <a
+                  href={testStatus.helpUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-sub hover:text-text-strong text-label-xs inline-flex w-fit items-center gap-1 font-medium underline"
+                >
+                  Open WhatsApp dev console
+                  <RiArrowRightUpLine className="size-3" />
+                </a>
+              ) : null}
+            </div>
           ) : null}
         </div>
       ) : null}
