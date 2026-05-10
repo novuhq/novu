@@ -161,6 +161,7 @@ export enum SmsProviderIdEnum {
   IMedia = 'imedia',
   Sinch = 'sinch',
   ISendProSms = 'isendpro-sms',
+  Messente = 'messente',
 }
 
 export enum ChatProviderIdEnum {

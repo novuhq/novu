@@ -20,6 +20,7 @@ export * from './isendpro-sms/isendpro-sms.provider';
 export * from './kannel/kannel.provider';
 export * from './maqsam/maqsam.provider';
 export * from './messagebird/messagebird.provider';
+export * from './messente/messente.provider';
 export * from './mobishastra/mobishastra.provider';
 export * from './nexmo/nexmo.provider';
 export * from './plivo/plivo.provider';

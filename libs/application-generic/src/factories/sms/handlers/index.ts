@@ -20,6 +20,7 @@ export * from './isendpro-sms.handler';
 export * from './kannel.handler';
 export * from './maqsam.handler';
 export * from './messagebird.handler';
+export * from './messente.handler';
 export * from './mobishastra.handler';
 export * from './nexmo.handler';
 export * from './novu.handler';

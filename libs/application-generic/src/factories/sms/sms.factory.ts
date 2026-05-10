@@ -22,6 +22,7 @@ import {
   KannelSmsHandler,
   MaqsamHandler,
   MessageBirdHandler,
+  MessenteSmsHandler,
   MobishastraHandler,
   NexmoHandler,
   NovuSmsHandler,
@@ -81,6 +82,7 @@ export class SmsFactory implements ISmsFactory {
     new BulkSmsHandler(),
     new ISendProSmsHandler(),
     new CmTelecomHandler(),
+    new MessenteSmsHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {

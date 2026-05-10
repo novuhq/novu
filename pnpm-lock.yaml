@@ -3851,6 +3851,9 @@ importers:
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
+      messente_api:
+        specifier: ^2.5.0
+        version: 2.5.0
       nanoid:
         specifier: ^3.3.8
         version: 3.3.8
@@ -18585,6 +18588,10 @@ packages:
     resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
     engines: {node: '>=12.20.0'}
 
+  formidable@1.2.6:
+    resolution: {integrity: sha512-KcpbcpuLNOwrEjnbpMC0gS+X8ciDoZE1kkqzat4a8vrprf+s9pKNQ/QIwWfbfs4ltgmFl3MD177SNTkve3BwGQ==}
+    deprecated: 'Please upgrade to latest, formidable@v2 or formidable@v3! Check these notes: https://bit.ly/2ZEqIau'
+
   formidable@2.1.5:
     resolution: {integrity: sha512-Oz5Hwvwak/DCaXVVUtPn4oLMLLy1CdclLKO1LFgU7XzDpVMUU5UjlSLpGMocyQNNk8F6IJW9M/YdooSn2MRI+Q==}
 
@@ -21522,6 +21529,9 @@ packages:
   messagebird@4.0.1:
     resolution: {integrity: sha512-Abn0aoH1Dzsq5KMeI3LNanVETwu4+HvNXZrhWRGzRIJ9ea88sefsVfy98Qj4NDmxGuXLFmT8Lhgw1kStzu7F0g==}
     engines: {node: '>=10.0.0'}
+
+  messente_api@2.5.0:
+    resolution: {integrity: sha512-FeOALmF95wSrEDgFkUSni6hefvEibI/ttriUa0+XUuKLVXnNwUxpyUyW9aWKEmY6euYumll1qRi4cHFGEp69NA==}
 
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
@@ -25466,6 +25476,11 @@ packages:
   superagent@10.1.0:
     resolution: {integrity: sha512-JMmik7PbnXGlq7g528Gi6apHbVbTz2vrE3du6fuG4kIPSb2PnLoSOPvfjKn8aQYuJcBWAKW6ZG90qPPsE5jZxQ==}
     engines: {node: '>=14.18.0'}
+    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+
+  superagent@3.7.0:
+    resolution: {integrity: sha512-/8trxO6NbLx4YXb7IeeFTSmsQ35pQBiTBsLNvobZx7qBzBeHYvKCyIIhW2gNcWbLzYxPAjdgFbiepd8ypwC0Gw==}
+    engines: {node: '>= 4.0'}
     deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   superagent@8.1.2:
@@ -48159,6 +48174,8 @@ snapshots:
     dependencies:
       fetch-blob: 3.2.0
 
+  formidable@1.2.6: {}
+
   formidable@2.1.5:
     dependencies:
       '@paralleldrive/cuid2': 2.3.1
@@ -52276,6 +52293,12 @@ snapshots:
       jose: 4.15.5
       safe-buffer: 5.2.1
       scmp: 2.1.0
+
+  messente_api@2.5.0:
+    dependencies:
+      superagent: 3.7.0
+    transitivePeerDependencies:
+      - supports-color
 
   methods@1.1.2: {}
 
@@ -57059,6 +57082,21 @@ snapshots:
       methods: 1.1.2
       mime: 2.6.0
       qs: 6.15.0
+    transitivePeerDependencies:
+      - supports-color
+
+  superagent@3.7.0:
+    dependencies:
+      component-emitter: 1.3.1
+      cookiejar: 2.1.4
+      debug: 3.2.7(supports-color@5.5.0)
+      extend: 3.0.2
+      form-data: 2.5.5
+      formidable: 1.2.6
+      methods: 1.1.2
+      mime: 1.6.0
+      qs: 6.15.0
+      readable-stream: 2.3.8
     transitivePeerDependencies:
       - supports-color
 

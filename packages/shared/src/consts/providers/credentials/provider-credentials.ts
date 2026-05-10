@@ -1446,3 +1446,23 @@ export const cmTelecomConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
+export const messenteConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Messente API username',
+    links: [{ text: 'Check Messente documentation', url: 'https://dashboard.messente.com/api-settings' }],
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    description: 'Your Messente API password',
+    links: [{ text: 'Check Messente documentation', url: 'https://dashboard.messente.com/api-settings' }],
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
