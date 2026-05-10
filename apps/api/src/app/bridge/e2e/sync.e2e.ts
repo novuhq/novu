@@ -11,7 +11,7 @@ import { expect } from 'chai';
 import getPort from 'get-port';
 import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
-describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
+describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const workflowsRepository = new NotificationTemplateRepository();
@@ -781,9 +781,30 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
       // before the use-case runs, so the request fails at the DTO layer (422).
       expect(result.status).to.equal(422);
     });
+
+    // Locks in the connect-time DNS-pinned guard (enforceSsrfProtection:
+    // true). IP-literal private addresses pass the synchronous URL check but
+    // must be rejected before the TCP connect.
+    it('should reject bridgeUrl pointing at link-local cloud metadata IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://169.254.169.254/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/private or reserved IP/i);
+    });
+
+    it('should reject bridgeUrl pointing at RFC1918 private IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://10.0.0.1/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/private or reserved IP/i);
+    });
   });
 
-  describe('/bridge/validate (POST)', async () => {
+  describe('/bridge/validate (POST)', () => {
     it('should report isValid false for localhost bridge URL', async () => {
       const result = await session.testAgent.post(`/v1/bridge/validate`).send({
         bridgeUrl: 'http://localhost:4000/api/novu',
@@ -813,6 +834,26 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
       // schemes before the controller runs, so the request fails at the DTO
       // layer (422).
       expect(result.status).to.equal(422);
+    });
+
+    it('should report isValid false for link-local cloud metadata IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://169.254.169.254/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/private or reserved IP/i);
+    });
+
+    it('should report isValid false for RFC1918 private IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://10.0.0.1/api/novu',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/private or reserved IP/i);
     });
   });
 
