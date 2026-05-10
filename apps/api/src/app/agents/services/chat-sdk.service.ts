@@ -22,7 +22,7 @@ import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
-import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
+import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 function getErrorResponseBody(err: unknown): unknown {
@@ -155,8 +155,16 @@ export class ChatSdkService implements OnModuleDestroy {
     });
   }
 
-  async handleWebhook(agentId: string, integrationIdentifier: string, req: ExpressRequest, res: ExpressResponse) {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+  async handleWebhook(
+    agentId: string,
+    integrationIdentifier: string,
+    req: ExpressRequest,
+    res: ExpressResponse,
+    options: { source: AgentConfigResolveSource }
+  ) {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier, {
+      source: options.source,
+    });
     const { platform } = config;
     const instanceKey = `${agentId}:${integrationIdentifier}`;
 
