@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Update a variable
  *
  * @remarks
- * Updates an existing environment variable. Providing values replaces all existing per-environment values.
+ * Updates an existing environment variable. Providing `values` merges them into the existing per-environment values by `_environmentId`; envs not present in the request keep their stored value. Submitting the masked secret placeholder (the value returned by read endpoints for secret variables) as a real value is rejected.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
@@ -215,13 +215,11 @@ async function $do(
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
-    M.jsonErr(
-      [400, 401, 403, 405, 409, 413, 415],
-      errors.ErrorDto$inboundSchema,
-      { hdrs: true },
-    ),
+    M.jsonErr([401, 403, 405, 409, 413, 415], errors.ErrorDto$inboundSchema, {
+      hdrs: true,
+    }),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail([404, 429]),
+    M.fail([400, 404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),
