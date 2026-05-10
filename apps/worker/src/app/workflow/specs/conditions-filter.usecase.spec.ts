@@ -1,4 +1,8 @@
 import { CompileTemplate, ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
+// The top-level @novu/application-generic re-exports helpers via Object.defineProperty
+// getters, which sinon cannot replace. Stub the underlying source module instead — the
+// re-export getter delegates to it so backend code picks up the stub.
+const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import {
   BuilderGroupValues,
@@ -10,7 +14,6 @@ import {
   StepTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
-import axios from 'axios';
 import { expect } from 'chai';
 import { Duration, sub } from 'date-fns';
 import sinon from 'sinon';
@@ -556,11 +559,12 @@ describe('Message filter matcher', () => {
   });
 
   it('should handle webhook filter', async () => {
-    const gotGetStub = sinon.stub(axios, 'post').resolves(
-      Promise.resolve({
-        data: { varField: true },
-      })
-    );
+    const safeRequestStub = sinon.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: { varField: true },
+    } as any);
 
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
@@ -570,7 +574,7 @@ describe('Message filter matcher', () => {
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
-            webhookUrl: 'www.user.com/webhook',
+            webhookUrl: 'https://www.user.com/webhook',
           },
         ]),
         variables: { payload: {} },
@@ -579,15 +583,13 @@ describe('Message filter matcher', () => {
 
     expect(matchedMessage.passed).to.equal(true);
 
-    gotGetStub.restore();
+    safeRequestStub.restore();
   });
 
   it('should skip async filter if child under OR returned true', async () => {
-    const gotGetStub = sinon.stub(axios, 'post').resolves(
-      Promise.resolve({
-        body: '{"varField":true}',
-      })
-    );
+    const safeRequestStub = sinon
+      .stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest')
+      .resolves({ statusCode: 200, statusMessage: 'OK', headers: {}, body: { varField: true } } as any);
 
     let matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
@@ -603,14 +605,14 @@ describe('Message filter matcher', () => {
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
-            webhookUrl: 'www.user.com/webhook',
+            webhookUrl: 'https://www.user.com/webhook',
           },
         ]),
         variables: { payload: { payloadVarField: true } },
       })
     );
 
-    let requestsCount = gotGetStub.callCount;
+    let requestsCount = safeRequestStub.callCount;
 
     expect(requestsCount).to.equal(0);
     expect(matchedMessage.passed).to.equal(true);
@@ -625,7 +627,7 @@ describe('Message filter matcher', () => {
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
-            webhookUrl: 'www.user.com/webhook',
+            webhookUrl: 'https://www.user.com/webhook',
           },
           {
             operator: FieldOperatorEnum.EQUAL,
@@ -638,20 +640,18 @@ describe('Message filter matcher', () => {
       })
     );
 
-    requestsCount = gotGetStub.callCount;
+    requestsCount = safeRequestStub.callCount;
 
     expect(requestsCount).to.equal(0);
     expect(matchedMessage.passed).to.equal(true);
 
-    gotGetStub.restore();
+    safeRequestStub.restore();
   });
 
   it('should skip async filter if child under AND returned false', async () => {
-    const gotGetStub = sinon.stub(axios, 'post').resolves(
-      Promise.resolve({
-        body: '{"varField":true}',
-      })
-    );
+    const safeRequestStub = sinon
+      .stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest')
+      .resolves({ statusCode: 200, statusMessage: 'OK', headers: {}, body: { varField: true } } as any);
 
     let matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
@@ -667,14 +667,14 @@ describe('Message filter matcher', () => {
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
-            webhookUrl: 'www.user.com/webhook',
+            webhookUrl: 'https://www.user.com/webhook',
           },
         ]),
         variables: { payload: { payloadVarField: false } },
       })
     );
 
-    let requestsCount = gotGetStub.callCount;
+    let requestsCount = safeRequestStub.callCount;
 
     expect(requestsCount).to.equal(0);
     expect(matchedMessage.passed).to.equal(false);
@@ -689,7 +689,7 @@ describe('Message filter matcher', () => {
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
-            webhookUrl: 'www.user.com/webhook',
+            webhookUrl: 'https://www.user.com/webhook',
           },
           {
             operator: FieldOperatorEnum.EQUAL,
@@ -702,12 +702,12 @@ describe('Message filter matcher', () => {
       })
     );
 
-    requestsCount = gotGetStub.callCount;
+    requestsCount = safeRequestStub.callCount;
 
     expect(requestsCount).to.equal(0);
     expect(matchedMessage.passed).to.equal(false);
 
-    gotGetStub.restore();
+    safeRequestStub.restore();
   });
 
   describe('is online filters', () => {

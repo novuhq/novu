@@ -20,14 +20,18 @@ const linkVariants = cva(
 
 interface NavLinkProps {
   to?: string;
+  matchPaths?: string[];
   isExternal?: boolean;
   className?: string;
   children: React.ReactNode;
 }
 
-export function NavigationLink({ to, isExternal, className, children }: NavLinkProps) {
+export function NavigationLink({ to, matchPaths, isExternal, className, children }: NavLinkProps) {
   const { pathname } = useLocation();
-  const isSelected = pathname === to || (to && pathname.startsWith(to));
+  const isSelected =
+    pathname === to ||
+    (to && pathname.startsWith(to)) ||
+    matchPaths?.some((path) => pathname.startsWith(path));
   const variant = isSelected ? 'selected' : 'default';
   const classNames = cn(linkVariants({ variant, className }));
 

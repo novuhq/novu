@@ -205,6 +205,23 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(data.active).to.equal(false);
   });
 
+  it('should not allow creating an integration in an environment owned by another organization', async () => {
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      _environmentId: otherSession.environment._id,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Environment with id ${otherSession.environment._id} not found`);
+  });
+
   it('should create custom SMTP integration with TLS options successfully', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.CustomSMTP,

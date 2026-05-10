@@ -474,8 +474,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
    * Refer to https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
    */
   async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
+    const session = await this._model.db.startSession();
     try {
-      return await (await this._model.db.startSession()).withTransaction(fn);
+      return await session.withTransaction(fn);
     } catch (error) {
       // Check if the error is related to replica set requirement
       const errorMessage = error?.message?.toLowerCase() || '';
@@ -489,6 +490,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       }
 
       throw error;
+    } finally {
+      await session.endSession().catch(() => {});
     }
   }
 

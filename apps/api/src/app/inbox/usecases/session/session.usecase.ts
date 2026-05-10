@@ -41,11 +41,11 @@ import {
   ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
+  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
-  EnvironmentTypeEnum,
   PreferenceLevelEnum,
   PreferencesTypeEnum,
   ResourceOriginEnum,
@@ -66,7 +66,12 @@ import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
-import { AnalyticsEventsEnum } from '../../utils';
+import {
+  AnalyticsEventsEnum,
+  KEYLESS_ENVIRONMENT_PREFIX,
+  KEYLESS_SUBSCRIBER_ID,
+  KEYLESS_WORKFLOW_IDENTIFIER,
+} from '../../utils';
 import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
@@ -80,7 +85,7 @@ const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
 export class Session {
-  private readonly KEYLESS_ENVIRONMENT_PREFIX = 'pk_keyless_';
+  private readonly KEYLESS_ENVIRONMENT_PREFIX = KEYLESS_ENVIRONMENT_PREFIX;
 
   constructor(
     private environmentRepository: EnvironmentRepository,
@@ -356,7 +361,7 @@ export class Session {
 
   private buildPlatformSubscriber(requestData: SubscriberSessionRequestDto): SubscriberDto {
     if (!requestData.applicationIdentifier || this.isKeylessApplication(requestData.applicationIdentifier)) {
-      return { subscriberId: 'keyless-subscriber-id' };
+      return { subscriberId: KEYLESS_SUBSCRIBER_ID };
     }
 
     return this.extractSubscriberInfo(requestData);
@@ -726,7 +731,7 @@ export class Session {
       triggers: [
         {
           type: 'event',
-          identifier: 'hello-world',
+          identifier: KEYLESS_WORKFLOW_IDENTIFIER,
           variables: [
             { name: 'subject', type: 'string' },
             { name: 'body', type: 'string' },
