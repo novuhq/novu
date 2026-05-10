@@ -6,4 +6,5 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.AGENT_RUNTIME]: 'Agent Runtime',
 };

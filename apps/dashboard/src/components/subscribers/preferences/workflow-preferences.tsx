@@ -2,11 +2,12 @@ import { PatchPreferenceChannelsDto, SubscriberWorkflowPreferenceDto } from '@no
 import { ChannelTypeEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiContractUpDownLine, RiExpandUpDownLine, RiRobot2Line } from 'react-icons/ri';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/primitives/card';
 import { Step } from '@/components/primitives/step';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
+import { StepTypeEnum } from '@/utils/enums';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
@@ -92,9 +93,12 @@ function StepIcons({ steps }: { steps: ChannelTypeEnum[] }) {
   return (
     <div className="flex -space-x-2">
       {steps.map((type, index) => {
-        const Icon = STEP_TYPE_TO_ICON[type];
+        const stepType = type as unknown as StepTypeEnum;
+        const Icon = STEP_TYPE_TO_ICON[stepType] ?? RiRobot2Line;
+        const color = STEP_TYPE_TO_COLOR[stepType] ?? 'gray';
+
         return (
-          <Step key={index} variant={STEP_TYPE_TO_COLOR[type]} className="size-6">
+          <Step key={index} variant={color} className="size-6">
             <Icon />
           </Step>
         );

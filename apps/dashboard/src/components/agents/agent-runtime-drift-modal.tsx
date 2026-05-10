@@ -52,7 +52,7 @@ export function AgentRuntimeDriftModal({
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isBusy}>
+          <Button variant="secondary" mode="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isBusy}>
             Cancel
           </Button>
           <Button variant="secondary" size="sm" onClick={onUnlink} disabled={isBusy} isLoading={isUnlinking}>

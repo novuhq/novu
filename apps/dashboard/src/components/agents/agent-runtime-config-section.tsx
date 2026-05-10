@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { RiExternalLinkLine, RiRefreshLine, RiRobot2Line } from 'react-icons/ri';
-import { getAgentRuntimeConfig, getAgentRuntimeConfigQueryKey } from '@/api/agent-runtime';
+import { type AgentRuntimeConfig, getAgentRuntimeConfig, getAgentRuntimeConfigQueryKey } from '@/api/agent-runtime';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -100,15 +100,15 @@ export function AgentRuntimeConfigSection({ agent, onDrift, onUnauthorized }: Ag
     enabled: Boolean(currentEnvironment && agent.identifier && agent.runtime === 'managed'),
     retry: (failureCount, error) => agentRuntimeRetryDecision(failureCount, error),
     retryDelay: (failureCount, error) => agentRuntimeRetryDelay(failureCount, error),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
-  const config = configQuery.data;
+  const config: AgentRuntimeConfig | undefined = configQuery.data;
   const error = configQuery.error;
 
   // Trigger parent callbacks for specific error codes
   if (error) {
-    const code = (error as Record<string, unknown>)?.code;
+    const code = (error as unknown as Record<string, unknown>)?.code;
     if (code === 'AGENT_RUNTIME_DRIFT') onDrift?.();
     if (code === 'AGENT_RUNTIME_UNAUTHORIZED') onUnauthorized?.();
   }
@@ -162,7 +162,7 @@ export function AgentRuntimeConfigSection({ agent, onDrift, onUnauthorized }: Ag
                 config.tools.length > 0 ? (
                   <span className="flex flex-wrap gap-1">
                     {config.tools.map((t) => (
-                      <Badge key={t.externalId} color="feature" size="sm" variant="lighter">
+                      <Badge key={t.externalId} color="purple" size="sm" variant="lighter">
                         {t.name}
                       </Badge>
                     ))}

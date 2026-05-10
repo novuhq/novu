@@ -203,7 +203,13 @@ export function ManagedRuntimeSetupGuide({
       </div>
 
       <div className="flex items-center gap-2 pt-1">
-        <Button variant="ghost" size="sm" onClick={() => setStep('choose')} disabled={createManagedAgent.isPending}>
+        <Button
+          variant="secondary"
+          mode="ghost"
+          size="sm"
+          onClick={() => setStep('choose')}
+          disabled={createManagedAgent.isPending}
+        >
           Back
         </Button>
         <Button
