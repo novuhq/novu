@@ -75,7 +75,17 @@ export class Sync {
   // (loopback, RFC1918, link-local 169.254.169.254, cloud metadata) and have
   // the API process leak the discovery response or the persisted URL to other
   // tenants.
-  private assertSafeBridgeUrl(bridgeUrl: string): void {
+  //
+  // The synchronous `assertSafeOutboundUrl` check rejects the obvious vectors
+  // (non-http schemes, embedded credentials, blocked hostnames). The
+  // connect-time DNS-pinned guard against IP-literal private addresses is
+  // applied later via `enforceSsrfProtection: true` on the actual outbound
+  // request — see `executeDiscover`.
+  private assertSafeBridgeUrl(bridgeUrl: string | undefined): void {
+    if (!bridgeUrl) {
+      throw new BadRequestException('bridgeUrl is required');
+    }
+
     try {
       assertSafeOutboundUrl(bridgeUrl);
     } catch (err) {
@@ -108,6 +118,10 @@ export class Sync {
         action: GetActionEnum.DISCOVER,
         retriesLimit: 1,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
+        // User-supplied bridgeUrl: pin the connection to a validated public
+        // IP and re-validate on every redirect, so IP literals like
+        // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
+        enforceSsrfProtection: true,
       })) as DiscoverOutput;
     } catch (error) {
       if (error instanceof HttpException) {

@@ -240,6 +240,9 @@ export class BridgeController {
         GetBridgeStatusCommand.create({
           environmentId: user.environmentId,
           statelessBridgeUrl: body.bridgeUrl,
+          // User-supplied bridgeUrl: enforce DNS-pinned SSRF guard at connect
+          // time so IP-literal private addresses cannot reach internal hosts.
+          enforceSsrfProtection: true,
         })
       );
 
