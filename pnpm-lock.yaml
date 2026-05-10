@@ -3884,6 +3884,9 @@ importers:
       sms77-client:
         specifier: ^2.14.0
         version: 2.25.0(node-fetch@3.3.2)
+      sns-validator:
+        specifier: ^0.3.5
+        version: 0.3.5
       svix:
         specifier: ^1.29.0
         version: 1.64.1(encoding@0.1.13)
@@ -3909,6 +3912,9 @@ importers:
       '@types/nodemailer':
         specifier: ^8.0.0
         version: 8.0.0
+      '@types/sns-validator':
+        specifier: ^0.3.3
+        version: 0.3.3
       '@types/sparkpost':
         specifier: ^2.1.5
         version: 2.1.5
@@ -14462,6 +14468,9 @@ packages:
   '@types/smtp-server@3.5.7':
     resolution: {integrity: sha512-8HtcCeN1DCu3P3D4unfRlwRT2sM54PQSBnfwCf6HZl4CH234lTvTJxKXvZtcJajg8mCgiSLkJ6rratEhxgvhqQ==}
 
+  '@types/sns-validator@0.3.3':
+    resolution: {integrity: sha512-v/3bN5dak8aDXn7bgTGu+1oGc+PQCP0qnfzUM6gzo7FnxiW4wpppkaIptPhRhJaiDItbUDK+YA4yDQuVs5Cq1Q==}
+
   '@types/socket.io@3.0.2':
     resolution: {integrity: sha512-pu0sN9m5VjCxBZVK8hW37ZcMe8rjn4HHggBN5CbaRTvFwv5jOmuIRZEuddsBPa9Th0ts0SIo3Niukq+95cMBbQ==}
     deprecated: This is a stub types definition. socket.io provides its own type definitions, so you do not need this installed.
@@ -24962,6 +24971,9 @@ packages:
   snakecase-keys@8.0.1:
     resolution: {integrity: sha512-Sj51kE1zC7zh6TDlNNz0/Jn1n5HiHdoQErxO8jLtnyrkJW/M5PrI7x05uDgY3BO7OUQYKCvmeMurW6BPUdwEOw==}
     engines: {node: '>=18'}
+
+  sns-validator@0.3.5:
+    resolution: {integrity: sha512-lapYNmezLsltnt2fcQyhmYnC41mYZ7EjU7f2oR/hrhpbD/LemryclRpApwxO84gOyDIQ7MWe/h4HvkdunFzSKg==}
 
   socket.io-adapter@2.5.2:
     resolution: {integrity: sha512-87C3LO/NOMc+eMcpcxUBebGjkpMDkNBS9tf7KJqcDsmL936EChtVva71Dw2q4tQcuVC+hAUy4an2NO/sYXmwRA==}
@@ -43056,6 +43068,8 @@ snapshots:
       '@types/node': 22.15.13
       '@types/nodemailer': 8.0.0
 
+  '@types/sns-validator@0.3.3': {}
+
   '@types/socket.io@3.0.2':
     dependencies:
       socket.io: 4.8.3
@@ -56446,6 +56460,8 @@ snapshots:
       map-obj: 4.3.0
       snake-case: 3.0.4
       type-fest: 4.41.0
+
+  sns-validator@0.3.5: {}
 
   socket.io-adapter@2.5.2:
     dependencies:
