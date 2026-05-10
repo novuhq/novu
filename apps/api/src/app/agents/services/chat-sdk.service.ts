@@ -3,12 +3,13 @@ import * as http from 'node:http';
 import * as https from 'node:https';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
+  assertSafeOutboundUrl,
   CacheService,
   decryptCredentials,
   isPrivateIp,
   MailFactory,
   PinoLogger,
-  validateUrlSsrf,
+  SsrfBlockedError,
 } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
@@ -526,7 +527,16 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private async validateFileUrl(url: string): Promise<string | null> {
-    return validateUrlSsrf(url);
+    try {
+      assertSafeOutboundUrl(url);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        return err.message;
+      }
+      throw err;
+    }
+
+    return null;
   }
 
   private async requestPinnedFileUrl(url: string, file: FileRef, index: number): Promise<PinnedFileResponse> {

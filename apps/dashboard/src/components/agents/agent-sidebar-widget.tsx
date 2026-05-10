@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAlertFill } from 'react-icons/ri';
+import { RiAlertFill, RiInformationFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
@@ -20,6 +20,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -89,7 +90,18 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
       <div className="flex h-8 items-center justify-between gap-2 px-1.5">
         <span className="text-text-soft text-label-xs font-medium shrink-0 flex items-center gap-0.5">
           Bridge URL
-          {!displayUrl && <RiAlertFill className="size-3.5 text-orange-500" />}
+          {!displayUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help" tabIndex={0} aria-label="Bridge URL not configured">
+                  <RiAlertFill className="size-3.5 text-orange-500" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                Set the public URL of your deployed agent server so it can receive messages outside of local mode
+              </TooltipContent>
+            </Tooltip>
+          )}
         </span>
         <div className="relative flex h-8 min-w-0 flex-1 items-center justify-end">
           <AnimatePresence mode="wait">
@@ -156,7 +168,28 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
         </div>
       </div>
       {!readOnly && (
-        <DetailsSidebarRow label="Bridge">
+        <DetailsSidebarRow
+          label={
+            <>
+              Bridge
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="What is Bridge?"
+                    className="text-foreground-400 inline-flex cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <RiInformationFill className="size-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  The bridge connects Novu to your hosted agent handler. Switch to Local to route messages to a tunnel
+                  on your machine.
+                </TooltipContent>
+              </Tooltip>
+            </>
+          }
+        >
           <div className="flex items-center gap-1.5">
             <Badge variant="lighter" color={!agent.devBridgeActive ? 'green' : 'gray'} size="sm">
               DEVELOPMENT

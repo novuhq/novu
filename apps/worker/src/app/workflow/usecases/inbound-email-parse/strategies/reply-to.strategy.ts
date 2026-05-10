@@ -1,5 +1,12 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, createHash, normalizeOutboundHttpUrl, validateUrlSsrf } from '@novu/application-generic';
+import {
+  assertSafeOutboundUrl,
+  CompileTemplate,
+  createHash,
+  normalizeOutboundHttpUrl,
+  SsrfBlockedError,
+  safeOutboundJsonRequest,
+} from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
@@ -9,7 +16,6 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import axios from 'axios';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 
 const LOG_CONTEXT = 'ReplyToStrategy';
@@ -56,12 +62,18 @@ export class ReplyToStrategy {
       this.throwError('Reply callback URL blocked (SSRF): Invalid URL format.');
     }
 
-    const ssrfError = await validateUrlSsrf(requestUrl);
-
-    if (ssrfError) {
-      this.throwError(`Reply callback URL blocked (SSRF): ${ssrfError}`);
+    try {
+      assertSafeOutboundUrl(requestUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        this.throwError(`Reply callback URL blocked (SSRF): ${err.message}`);
+      }
+      throw err;
     }
 
+    // HMAC is built only after the URL passes the synchronous policy check.
+    // safeOutboundJsonRequest below performs the connect-time DNS guard and
+    // re-runs the policy on every redirect target.
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
@@ -73,7 +85,14 @@ export class ReplyToStrategy {
       mail: command,
     };
 
-    await axios.post(requestUrl, userPayload);
+    try {
+      await safeOutboundJsonRequest({ url: requestUrl, method: 'POST', body: userPayload });
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        this.throwError(`Reply callback URL blocked (SSRF): ${err.message}`);
+      }
+      throw err;
+    }
   }
 
   private splitTo(address: string) {

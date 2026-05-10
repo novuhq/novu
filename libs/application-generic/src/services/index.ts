@@ -34,6 +34,7 @@ export { MsTeamsTokenService } from './ms-teams-token.service';
 export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';
+export * from './safe-outbound-http';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
 export * from './socket-worker';

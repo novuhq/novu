@@ -409,6 +409,98 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(updatedTemplate.steps[0].replyCallback?.url).to.equal('acme-corp.com/webhook');
   });
 
+  it('should reject step _templateId that belongs to another workflow', async () => {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+
+    const workflowA = await notificationTemplateService.createTemplate({
+      steps: [{ type: StepTypeEnum.IN_APP, content: 'Workflow A step' }],
+    });
+    const workflowB = await notificationTemplateService.createTemplate({
+      steps: [{ type: StepTypeEnum.IN_APP, content: 'Workflow B step' }],
+    });
+
+    const foreignTemplateId = workflowB.steps[0]._templateId;
+
+    const update: IUpdateNotificationTemplateDto = {
+      steps: [
+        {
+          _templateId: foreignTemplateId,
+          template: {
+            type: StepTypeEnum.IN_APP,
+            content: 'Hijacked content from workflow A update',
+          },
+        } as INotificationTemplateStep,
+      ],
+    };
+
+    const { body } = await session.testAgent.put(`/v1/workflows/${workflowA._id}`).send(update);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.message).to.equal(`Template ${foreignTemplateId} does not belong to this workflow`);
+  });
+
+  it('should reject variant _templateId that belongs to another workflow', async () => {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+
+    const workflowA = await notificationTemplateService.createTemplate({
+      steps: [{ type: StepTypeEnum.IN_APP, content: 'Workflow A step' }],
+    });
+    const workflowB = await notificationTemplateService.createTemplate({
+      steps: [{ type: StepTypeEnum.IN_APP, content: 'Workflow B step' }],
+    });
+
+    const foreignTemplateId = workflowB.steps[0]._templateId;
+
+    const update: IUpdateNotificationTemplateDto = {
+      steps: [
+        {
+          _templateId: workflowA.steps[0]._templateId,
+          template: {
+            type: StepTypeEnum.IN_APP,
+            content: 'Workflow A step content',
+          },
+          variants: [
+            {
+              _templateId: foreignTemplateId,
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: FieldOperatorEnum.EQUAL,
+                    },
+                  ],
+                },
+              ],
+              template: {
+                type: StepTypeEnum.IN_APP,
+                content: 'Hijacked variant content',
+              },
+            },
+          ],
+        } as INotificationTemplateStep,
+      ],
+    };
+
+    const { body } = await session.testAgent.put(`/v1/workflows/${workflowA._id}`).send(update);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.message).to.equal(`Template ${foreignTemplateId} does not belong to this workflow`);
+  });
+
   it('should not able to update step with invalid action', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
