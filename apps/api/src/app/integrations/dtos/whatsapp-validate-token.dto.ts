@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
+import type { WhatsAppValidateTokenError } from '../usecases/whatsapp/whatsapp-validate-token.usecase';
+
 export class WhatsAppValidateTokenRequestDto {
   @ApiProperty({ type: String, description: 'WhatsApp Cloud API access token to validate against the Meta Graph API' })
   @IsString()
@@ -39,7 +41,7 @@ export class WhatsAppValidateTokenErrorDto {
       'unknown',
     ],
   })
-  code: string;
+  code: WhatsAppValidateTokenError['code'];
 
   @ApiProperty({ type: String, description: 'Human-readable error message safe to surface in the UI' })
   message: string;

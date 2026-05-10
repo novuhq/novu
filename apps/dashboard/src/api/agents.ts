@@ -342,7 +342,14 @@ export async function validateWhatsAppToken(
 }
 
 export type ConfigureWhatsAppWebhookFailure = {
-  code: 'missing_management_scope' | 'missing_credentials' | 'meta_rejected' | 'unknown';
+  code:
+    | 'missing_management_scope'
+    | 'missing_credentials'
+    | 'missing_verify_token'
+    | 'missing_app_secret'
+    | 'app_subscription_failed'
+    | 'meta_rejected'
+    | 'unknown';
   message: string;
 };
 

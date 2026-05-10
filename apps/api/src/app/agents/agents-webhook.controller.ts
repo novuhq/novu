@@ -67,7 +67,6 @@ export class AgentsWebhookController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    console.log('VERIFICATION!!!!!');
     return this.routeWebhook(agentId, integrationIdentifier, req, res);
   }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 
 import {
   debugAccessToken,
@@ -44,6 +44,7 @@ export class WhatsAppValidateToken {
     this.logger.setContext(this.constructor.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: WhatsAppValidateTokenCommand): Promise<WhatsAppValidateTokenResult> {
     const accessToken = command.accessToken.trim();
 
@@ -186,14 +187,20 @@ export class WhatsAppValidateToken {
       const isPermission = phoneError.code === 200 || phoneError.code === 10 || phoneError.code === 190;
       const isNotFound = phone.statusCode === 404 || phoneError.subcode === 33;
 
+      let code: WhatsAppValidateTokenError['code'] = 'unknown';
+      if (isPermission) {
+        code = 'phone_mismatch';
+      } else if (isNotFound) {
+        code = 'phone_not_found';
+      }
+
+      const message = isPermission
+        ? `This token can't read phone number "${phoneNumberId}". Make sure the Phone Number ID belongs to the same WhatsApp Business Account the token was generated for.`
+        : phoneError.message;
+
       return {
         details: {},
-        error: {
-          code: isPermission ? 'phone_mismatch' : isNotFound ? 'phone_not_found' : 'unknown',
-          message: isPermission
-            ? `This token can't read phone number "${phoneNumberId}". Make sure the Phone Number ID belongs to the same WhatsApp Business Account the token was generated for.`
-            : phoneError.message,
-        },
+        error: { code, message },
       };
     }
 
@@ -227,15 +234,19 @@ export class WhatsAppValidateToken {
       const isPermission = wabaError?.code === 200 || wabaError?.code === 10 || wabaError?.code === 190;
       const isNotFound = response.statusCode === 404 || wabaError?.subcode === 33;
 
+      const code: WhatsAppValidateTokenError['code'] = isPermission || isNotFound ? 'waba_not_accessible' : 'unknown';
+
+      let message: string;
+      if (isPermission) {
+        message = `This token can't access WhatsApp Business Account "${wabaId}". Double-check the WABA ID is the one shown on your API Setup page.`;
+      } else if (isNotFound) {
+        message = `Meta couldn't find a WhatsApp Business Account with id "${wabaId}". Double-check the value on the API Setup page.`;
+      } else {
+        message = wabaError?.message ?? `Meta returned HTTP ${response.statusCode}`;
+      }
+
       return {
-        error: {
-          code: isPermission || isNotFound ? 'waba_not_accessible' : 'unknown',
-          message: isPermission
-            ? `This token can't access WhatsApp Business Account "${wabaId}". Double-check the WABA ID is the one shown on your API Setup page.`
-            : isNotFound
-              ? `Meta couldn't find a WhatsApp Business Account with id "${wabaId}". Double-check the value on the API Setup page.`
-              : (wabaError?.message ?? `Meta returned HTTP ${response.statusCode}`),
-        },
+        error: { code, message },
       };
     }
 

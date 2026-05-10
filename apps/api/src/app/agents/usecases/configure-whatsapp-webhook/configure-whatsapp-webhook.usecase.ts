@@ -17,6 +17,7 @@ export type ConfigureWhatsAppWebhookFailure = {
   code:
     | 'missing_management_scope'
     | 'missing_credentials'
+    | 'missing_verify_token'
     | 'missing_app_secret'
     | 'app_subscription_failed'
     | 'meta_rejected'
@@ -38,6 +39,12 @@ function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): s
   // to the standard `API_ROOT_URL`. Meta refuses to register webhooks pointed
   // at `*.localhost`, so this override is the recommended dev workflow.
   const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+
+  if (!base) {
+    throw new Error(
+      `buildAgentWebhookUrl: neither AGENT_API_HOSTNAME nor API_ROOT_URL is configured (agentId="${agentId}", integrationIdentifier="${integrationIdentifier}")`
+    );
+  }
 
   return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
@@ -84,6 +91,26 @@ export class ConfigureWhatsAppWebhook {
       );
     }
 
+    // Authorization: ensure the integration is actually linked to this agent
+    // before exposing webhook configuration on it. Without this check an
+    // `AGENT_WRITE` caller could rebind webhooks for an unrelated WhatsApp
+    // integration in the same tenant.
+    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _agentId: agent._id,
+        _integrationId: integration._id,
+      },
+      ['_id']
+    );
+
+    if (!agentIntegrationLink) {
+      throw new NotFoundException(
+        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
+      );
+    }
+
     const callbackUrl = buildAgentWebhookUrl(agent._id, integration.identifier);
     const credentials = decryptCredentials(integration.credentials ?? {});
 
@@ -92,7 +119,7 @@ export class ConfigureWhatsAppWebhook {
     const wabaId = typeof credentials.businessAccountId === 'string' ? credentials.businessAccountId.trim() : '';
     const appSecret = typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
 
-    if (!accessToken || !wabaId || !verifyToken) {
+    if (!accessToken || !wabaId) {
       return {
         success: false,
         callbackUrl,
@@ -100,6 +127,28 @@ export class ConfigureWhatsAppWebhook {
         reason: {
           code: 'missing_credentials',
           message: 'Save the access token and WhatsApp Business Account ID in the credentials form before connecting.',
+        },
+      };
+    }
+
+    if (!verifyToken) {
+      // The verify token is auto-generated server-side in create/update
+      // integration use cases, so an empty value here indicates a stale
+      // record from before the migration or an internal misconfiguration —
+      // not something the user can fix on the credentials form.
+      this.logger.warn(
+        { agentId: agent._id, integrationId: integration._id },
+        'WhatsApp auto-configure: verify token missing on integration credentials'
+      );
+
+      return {
+        success: false,
+        callbackUrl,
+        fallbackToManual: true,
+        reason: {
+          code: 'missing_verify_token',
+          message:
+            "Novu couldn't find the auto-generated verify token for this integration. Re-save the credentials to regenerate it, then try again.",
         },
       };
     }

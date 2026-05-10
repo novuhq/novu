@@ -23,7 +23,7 @@ export type WhatsAppSetupGuideProps = {
   embedded?: boolean;
 };
 
-const PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/;
+const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
 function getApiBaseUrl(): string {
   return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
@@ -297,8 +297,8 @@ function ManualWebhookFallback({
         Callback URL and Verify Token below, click <strong className="text-text-sub">Verify and save</strong>, then
         scroll to <strong className="text-text-sub">Webhook fields</strong>, click{' '}
         <strong className="text-text-sub">Manage</strong> and toggle{' '}
-        <strong className="text-text-sub">Subscribe</strong> next to <strong className="text-text-sub">messages</strong>
-        .
+        <strong className="text-text-sub">Subscribe</strong> next to{' '}
+        <strong className="text-text-sub">messages</strong>.
       </p>
       <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
       <ReadOnlyValueRow label="Verify Token" value={verifyToken} />
@@ -310,7 +310,7 @@ function ManualWebhookFallback({
         className="w-fit gap-1.5"
         onClick={onMarkConnected}
       >
-        I configured it in Meta
+        Mark as configured
       </Button>
     </div>
   );

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
 import {
@@ -50,7 +50,9 @@ function normalizeRecipient(value: string): string {
 @Injectable()
 export class SendWhatsAppTestTemplate {
   constructor(
+    private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -58,6 +60,19 @@ export class SendWhatsAppTestTemplate {
 
   @InstrumentUsecase()
   async execute(command: SendWhatsAppTestTemplateCommand): Promise<SendWhatsAppTestTemplateResult> {
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: command.agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id', 'identifier']
+    );
+
+    if (!agent) {
+      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
+    }
+
     const integration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -71,6 +86,26 @@ export class SendWhatsAppTestTemplate {
     if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
       throw new NotFoundException(
         `Integration "${command.integrationIdentifier}" is not a WhatsApp Business integration.`
+      );
+    }
+
+    // Authorization: ensure the integration is actually linked to this agent
+    // before sending outbound messages through it. Without this check an
+    // `AGENT_WRITE` caller could trigger sends through unrelated WhatsApp
+    // integrations in the same tenant.
+    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _agentId: agent._id,
+        _integrationId: integration._id,
+      },
+      ['_id']
+    );
+
+    if (!agentIntegrationLink) {
+      throw new NotFoundException(
+        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
       );
     }
 
