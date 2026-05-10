@@ -26,6 +26,45 @@ export class MessageParser {
     const authorEmail = parseEmailAddress(raw.from);
     const authorName = extractDisplayName(raw.from);
     const text = raw.text || stripHtml(raw.html || '');
+    const mappedAuthor = {
+      userId: authorEmail,
+      userName: authorEmail,
+      fullName: authorName,
+      isBot: false,
+      isMe: authorEmail === fromAddress,
+    };
+    const mappedMetadata = {
+      dateSent: (() => {
+        const d = new Date(raw.createdAt);
+        return Number.isNaN(d.getTime()) ? new Date() : d;
+      })(),
+      edited: false,
+    };
+    const mappedAttachments = (raw.attachments || []).flatMap(
+      (a: {
+        filename: string;
+        contentType: string;
+        size?: number;
+        contentBase64?: string;
+        truncated?: boolean;
+        url?: string;
+      }) => {
+        if (a.truncated) {
+          return [];
+        }
+
+        return [
+          {
+            type: 'file' as const,
+            name: a.filename,
+            mimeType: a.contentType,
+            size: a.size,
+            ...(a.contentBase64 ? { data: Buffer.from(a.contentBase64, 'base64') } : {}),
+            ...(a.url ? { url: a.url } : {}),
+          },
+        ];
+      }
+    );
 
     return new this.MessageClass({
       id: raw.id,
@@ -33,23 +72,9 @@ export class MessageParser {
       text,
       formatted: this.parseMarkdownFn(text),
       raw,
-      author: {
-        userId: authorEmail,
-        userName: authorEmail,
-        fullName: authorName,
-        isBot: false,
-        isMe: authorEmail === fromAddress,
-      },
-      metadata: {
-        dateSent: (() => { const d = new Date(raw.createdAt); return Number.isNaN(d.getTime()) ? new Date() : d; })(),
-        edited: false,
-      },
-      attachments: (raw.attachments || []).map((a: { filename: string; contentType: string; url?: string }) => ({
-        type: 'file' as const,
-        name: a.filename,
-        mimeType: a.contentType,
-        url: a.url,
-      })),
+      author: mappedAuthor,
+      metadata: mappedMetadata,
+      attachments: mappedAttachments,
       isMention: true,
     });
   }
