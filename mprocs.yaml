@@ -1,0 +1,26 @@
+procs:
+  api:
+    shell: pnpm --filter @novu/api-service start:portless
+  dashboard:
+    shell: pnpm --filter @novu/dashboard start:portless
+  worker:
+    shell: pnpm --filter @novu/worker start
+    autostart: false
+
+  shared:
+    shell: pnpm --filter @novu/shared start
+  dal:
+    shell: pnpm --filter @novu/dal start
+  application-generic:
+    shell: pnpm --filter @novu/application-generic start
+
+  # Optional procs (press `s` in the mprocs sidebar to start)
+  providers:
+    shell: pnpm --filter @novu/providers start
+    autostart: false
+  js:
+    shell: pnpm --filter @novu/js build:watch
+    autostart: false
+  react:
+    shell: pnpm --filter @novu/react build:watch
+    autostart: false
