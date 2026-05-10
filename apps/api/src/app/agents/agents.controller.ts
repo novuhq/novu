@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -284,6 +284,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/auto-configure')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Auto-configure the WhatsApp webhook for an agent integration',
@@ -309,6 +310,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/test-template')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send a hello_world WhatsApp template from the agent integration',

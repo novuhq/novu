@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
 import {
@@ -54,7 +54,6 @@ export class ConfigureWhatsAppWebhook {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -313,13 +312,6 @@ export class ConfigureWhatsAppWebhook {
       };
     }
 
-    await this.markAgentIntegrationConnected({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      agentId: agent._id,
-      integrationId: integration._id,
-    });
-
     return { success: true, callbackUrl, wabaId };
   }
 
@@ -337,22 +329,5 @@ export class ConfigureWhatsAppWebhook {
       code: 'meta_rejected',
       message,
     };
-  }
-
-  private async markAgentIntegrationConnected(params: {
-    environmentId: string;
-    organizationId: string;
-    agentId: string;
-    integrationId: string;
-  }): Promise<void> {
-    await this.agentIntegrationRepository.updateOne(
-      {
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        _agentId: params.agentId,
-        _integrationId: params.integrationId,
-      },
-      { $set: { connectedAt: new Date() } }
-    );
   }
 }
