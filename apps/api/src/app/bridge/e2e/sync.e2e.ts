@@ -785,13 +785,17 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
     // Locks in the connect-time DNS-pinned guard (enforceSsrfProtection:
     // true). IP-literal private addresses pass the synchronous URL check but
     // must be rejected before the TCP connect.
+    // Connect-time block returns a stable client-safe message — the
+    // resolved IP must NOT leak to the response (it's logged server-side
+    // instead).
     it('should reject bridgeUrl pointing at link-local cloud metadata IP', async () => {
       const result = await session.testAgent.post(`/v1/bridge/sync`).send({
         bridgeUrl: 'http://169.254.169.254/computeMetadata/v1/',
       });
 
       expect(result.status).to.equal(400);
-      expect(JSON.stringify(result.body)).to.match(/private or reserved IP/i);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/169\.254\.169\.254/);
     });
 
     it('should reject bridgeUrl pointing at RFC1918 private IP', async () => {
@@ -800,7 +804,8 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
       });
 
       expect(result.status).to.equal(400);
-      expect(JSON.stringify(result.body)).to.match(/private or reserved IP/i);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/10\.0\.0\.1/);
     });
   });
 
@@ -836,6 +841,19 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
       expect(result.status).to.equal(422);
     });
 
+    it('should report isValid false for embedded credentials', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://attacker:pass@example.com/api/novu',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/credentials/i);
+    });
+
+    // Connect-time block returns a stable client-safe message — the
+    // resolved IP must NOT leak to the response (it's logged server-side
+    // instead).
     it('should report isValid false for link-local cloud metadata IP', async () => {
       const result = await session.testAgent.post(`/v1/bridge/validate`).send({
         bridgeUrl: 'http://169.254.169.254/computeMetadata/v1/',
@@ -843,7 +861,8 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
 
       expect(result.status).to.equal(201);
       expect(result.body.data.isValid).to.equal(false);
-      expect(result.body.data.error).to.match(/private or reserved IP/i);
+      expect(result.body.data.error).to.match(/blocked by the outbound SSRF policy/i);
+      expect(result.body.data.error).to.not.match(/169\.254\.169\.254/);
     });
 
     it('should report isValid false for RFC1918 private IP', async () => {
@@ -853,7 +872,8 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
 
       expect(result.status).to.equal(201);
       expect(result.body.data.isValid).to.equal(false);
-      expect(result.body.data.error).to.match(/private or reserved IP/i);
+      expect(result.body.data.error).to.match(/blocked by the outbound SSRF policy/i);
+      expect(result.body.data.error).to.not.match(/10\.0\.0\.1/);
     });
   });
 

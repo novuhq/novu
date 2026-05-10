@@ -347,13 +347,14 @@ export class ExecuteFrameworkRequest {
             break;
 
           case HttpClientErrorType.SSRF_BLOCKED:
-            // The safe outbound layer rejected the URL or its resolved
-            // address. Surface the underlying reason verbatim so the caller
-            // sees e.g. "Requests to private or reserved IP addresses are not
-            // allowed (resolved: 127.0.0.1)." instead of a generic message.
+            // Log the full reason (including resolved IPs / redirect targets)
+            // server-side. Return a stable, client-safe message so the
+            // endpoint can't be used as an authenticated network-recon probe
+            // — see CodeRabbit review on PR #11047.
+            this.logger.warn({ err: error }, `Blocked outbound bridge request to \`${url}\``);
             bridgeErrorData = {
               code: error.networkCode || 'SSRF_BLOCKED',
-              message: error.message,
+              message: 'The provided bridge URL is blocked by the outbound SSRF policy.',
               statusCode: HttpStatus.BAD_REQUEST,
             };
             break;
