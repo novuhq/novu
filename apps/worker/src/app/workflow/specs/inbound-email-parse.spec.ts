@@ -1,14 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  AttachmentRehydrator,
   CompileTemplate,
   HttpClientService,
   InboundDomainRouteDelivery,
   SendWebhookMessage,
 } from '@novu/application-generic';
+
 // The top-level @novu/application-generic re-exports helpers via Object.defineProperty
 // getters, which sinon cannot replace. Stub the underlying source module instead — the
 // re-export getter delegates to it so backend code picks up the stub.
 const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
+
 import {
   AgentIntegrationRepository,
   DomainRepository,
@@ -37,11 +40,15 @@ describe('Should handle the new arrived mail', () => {
   let compileTemplate: sinon.SinonStubbedInstance<CompileTemplate>;
 
   let sandbox;
+  let attachmentRehydrator: sinon.SinonStubbedInstance<AttachmentRehydrator>;
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
 
     compileTemplate = sandbox.createStubInstance(CompileTemplate);
+    attachmentRehydrator = sandbox.createStubInstance(AttachmentRehydrator);
+    // Default: return empty array (no attachments to rehydrate)
+    attachmentRehydrator.rehydrate.resolves([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -58,6 +65,7 @@ describe('Should handle the new arrived mail', () => {
         { provide: HttpClientService, useValue: sandbox.createStubInstance(HttpClientService) },
         { provide: IntegrationRepository, useValue: sandbox.createStubInstance(IntegrationRepository) },
         { provide: AgentIntegrationRepository, useValue: sandbox.createStubInstance(AgentIntegrationRepository) },
+        { provide: AttachmentRehydrator, useValue: attachmentRehydrator },
       ],
     }).compile();
 
@@ -101,6 +109,59 @@ describe('Should handle the new arrived mail', () => {
     expect(payload.hmac).to.ok;
     expect(payload.notification).to.ok;
     expect(payload.templateIdentifier).to.ok;
+  });
+
+  it('should include rehydrated attachments in the reply-to webhook payload', async () => {
+    const rehydratedAttachment = {
+      filename: 'test.pdf',
+      contentType: 'application/pdf',
+      size: 1024,
+      url: 'https://s3.example.com/inbound-mail/2024-01-01/msg-id/uuid-test.pdf?presigned=1',
+      storagePath: 'inbound-mail/2024-01-01/msg-id/uuid-test.pdf',
+      content: { type: 'Buffer' as const, data: [37, 80, 68, 70] },
+      contentBytes: 1024,
+    };
+    attachmentRehydrator.rehydrate.resolves([rehydratedAttachment]);
+
+    const mail = getMailData();
+    const safeRequestStub = sandbox.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: {},
+    } as any);
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    compileTemplate.execute.resolves(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+
+    // Inject a slim attachment into the command (as it would arrive from the queue)
+    const slimAttachment = {
+      filename: 'test.pdf',
+      contentType: 'application/pdf',
+      size: 1024,
+      url: 'https://s3.example.com/inbound-mail/2024-01-01/msg-id/uuid-test.pdf?presigned=1',
+      storagePath: 'inbound-mail/2024-01-01/msg-id/uuid-test.pdf',
+    };
+    (mail as any).attachments = [slimAttachment];
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.calledOnce(safeRequestStub);
+    const callArgs = safeRequestStub.getCall(0).args[0] as { body: IUserWebhookPayload };
+    const mailPayload = callArgs.body.mail;
+
+    // Rehydrator should have been called with the slim queue attachment
+    sinon.assert.calledOnceWithExactly(attachmentRehydrator.rehydrate, [slimAttachment]);
+
+    // Webhook should carry BOTH the new url/size AND the legacy content for backward compatibility
+    expect(mailPayload.attachments).to.have.length(1);
+    const att = mailPayload.attachments![0];
+    expect(att.url).to.equal(rehydratedAttachment.url);
+    expect(att.size).to.equal(1024);
+    expect(att.storagePath).to.equal(rehydratedAttachment.storagePath);
+    expect(att.content).to.deep.equal({ type: 'Buffer', data: [37, 80, 68, 70] });
+    expect(att.contentBytes).to.equal(1024);
+    // No raw Buffer-shaped content.data numeric arrays sitting directly in the queue fixture
+    expect((slimAttachment as any).content).to.be.undefined;
   });
 
   it('should not send webhook request with missing transactionId', async () => {

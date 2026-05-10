@@ -1,5 +1,19 @@
 import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 
+/**
+ * Slim attachment metadata stored in the BullMQ queue payload.
+ * The binary content is stored in S3; consumers access it via the presigned `url`.
+ */
+export interface IInboundParseAttachment {
+  filename: string;
+  contentType: string;
+  size: number;
+  /** Presigned GET URL valid for INBOUND_ATTACHMENT_URL_TTL_SECONDS (default 7 days). */
+  url: string;
+  /** Internal S3 key — used by the worker to rehydrate content for legacy webhooks. */
+  storagePath: string;
+}
+
 export interface IInboundParseDataDto {
   html: string;
   text: string;
@@ -17,7 +31,7 @@ export interface IInboundParseDataDto {
   spamScore: number;
   language: string;
   cc: any[];
-  attachments?: any[];
+  attachments?: IInboundParseAttachment[];
   connection: IConnection;
   envelopeFrom: IEnvelopeFrom;
   envelopeTo: IEnvelopeTo[];

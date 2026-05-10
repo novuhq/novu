@@ -14,6 +14,7 @@ import { SMTPServer } from 'smtp-server';
 import util from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
+import { uploadAttachmentsToS3 } from './attachment-uploader';
 import { InboundMailService } from './inbound-mail.service';
 import logger from './logger';
 
@@ -240,7 +241,7 @@ class Mailin extends events.EventEmitter {
 
                 return finalizeMessage.apply(this, args);
               })
-              .then((finalizedMessage) => {
+              .then(async (finalizedMessage) => {
                 try {
                   /*
                    * Only operational/aggregate metadata — no Message-ID (can echo
@@ -270,6 +271,33 @@ class Mailin extends events.EventEmitter {
 
                 return finalizedMessage;
               })
+              .then((finalizedMessage) =>
+                nr.startSegment('inbound-mail/upload-attachments', true, async () => {
+                  if (Array.isArray(finalizedMessage.attachments) && finalizedMessage.attachments.length > 0) {
+                    const { uploaded, failedCount } = await uploadAttachmentsToS3(
+                      finalizedMessage.messageId,
+                      finalizedMessage.attachments
+                    );
+
+                    finalizedMessage.attachments = uploaded;
+
+                    if (failedCount > 0) {
+                      try {
+                        nr.addCustomAttributes({ 'mail.attachmentUploadFailedCount': failedCount });
+                      } catch {
+                        // instrumentation must never break the pipeline
+                      }
+
+                      logger.warn(
+                        { context: LOG_CONTEXT, connectionId: connection.id, failedCount },
+                        `${connection.id} ${failedCount} attachment(s) failed to upload to S3 and were dropped`
+                      );
+                    }
+                  }
+
+                  return finalizedMessage;
+                })
+              )
               .then(postQueue.bind(null, connection))
               .then(
                 () => unlinkFile(connection).then(() => resolve()),

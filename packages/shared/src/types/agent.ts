@@ -1,6 +1,9 @@
 export interface NovuEmailAttachment {
   filename: string;
   contentType: string;
+  /** File size in bytes. */
+  size?: number;
+  /** Presigned GET URL to download the attachment. */
   url?: string;
 }
 

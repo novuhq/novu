@@ -5,10 +5,11 @@ import {
   IEnvelopeTo,
   IFrom,
   IHeaders,
+  IInboundParseAttachment,
   IInboundParseDataDto,
   ITo,
 } from '@novu/application-generic';
-import { IsDefined, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class InboundEmailParseCommand extends BaseCommand implements IInboundParseDataDto {
   @IsDefined()
@@ -69,9 +70,9 @@ export class InboundEmailParseCommand extends BaseCommand implements IInboundPar
   @IsDefined()
   cc: any[];
 
-  @IsDefined()
   @IsOptional()
-  attachments?: any[];
+  @ValidateNested({ each: true })
+  attachments?: IInboundParseAttachment[];
 
   @IsDefined()
   connection: IConnection;

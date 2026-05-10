@@ -1,23 +1,20 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-  AgentIntegrationRepository,
-  DomainEntity,
-  DomainRouteEntity,
-  IntegrationRepository,
-} from '@novu/dal';
+import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   EmailWebhookPayload,
+  InboundEmailAttachment,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { IFrom, IHeaders, ITo } from '../../dtos/inbound-parse-job.dto';
+import { IFrom, IHeaders, IInboundParseAttachment, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
-import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
+import { HttpClientService } from '../../services/http-client/http-client.service';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
-import { HttpClientService } from '../../services/http-client/http-client.service';
+import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
+import { AttachmentRehydrator } from './attachment-rehydrator';
 
 const LOG_CONTEXT = 'InboundDomainRouteDelivery';
 
@@ -33,7 +30,7 @@ export type InboundDomainRouteMailInput = {
   html: string;
   text: string;
   headers: IHeaders;
-  attachments?: unknown[];
+  attachments?: IInboundParseAttachment[];
   messageId: string;
   inReplyTo?: string;
   references?: string | string[];
@@ -58,7 +55,8 @@ export type DomainRouteWebhookPayload = {
     html: string;
     text: string;
     headers: InboundDomainRouteMailInput['headers'];
-    attachments?: InboundDomainRouteMailInput['attachments'];
+    /** Rehydrated attachments — include both new `url`/`size` and the deprecated legacy `content` field. */
+    attachments?: InboundEmailAttachment[];
     messageId: string;
     inReplyTo?: string;
     references?: string | string[];
@@ -73,13 +71,15 @@ export class InboundDomainRouteDelivery {
     private readonly sendWebhookMessage: SendWebhookMessage,
     private readonly httpClientService: HttpClientService,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly attachmentRehydrator: AttachmentRehydrator
   ) {}
 
   buildDomainRouteWebhookPayload(
     domain: RoutableDomain,
     route: DomainRouteEntity,
-    mail: InboundDomainRouteMailInput
+    mail: InboundDomainRouteMailInput,
+    rehydratedAttachments: InboundEmailAttachment[]
   ): DomainRouteWebhookPayload {
     return {
       domain: {
@@ -98,7 +98,7 @@ export class InboundDomainRouteDelivery {
         html: mail.html,
         text: mail.text,
         headers: mail.headers,
-        attachments: mail.attachments,
+        attachments: rehydratedAttachments,
         messageId: mail.messageId,
         inReplyTo: mail.inReplyTo,
         references: mail.references,
@@ -116,7 +116,13 @@ export class InboundDomainRouteDelivery {
     mail: InboundDomainRouteMailInput;
   }): Promise<{ latencyMs: number; skipped: boolean }> {
     const started = Date.now();
-    const payload = this.buildDomainRouteWebhookPayload(params.domain, params.route, params.mail);
+    const rehydratedAttachments = await this.attachmentRehydrator.rehydrate(params.mail.attachments);
+    const payload = this.buildDomainRouteWebhookPayload(
+      params.domain,
+      params.route,
+      params.mail,
+      rehydratedAttachments
+    );
     const result = await this.sendWebhookMessage.execute({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
@@ -201,15 +207,12 @@ export class InboundDomainRouteDelivery {
       subject: mail.subject,
       text: mail.text || undefined,
       html: mail.html || undefined,
-      attachments: mail.attachments?.map((a) => {
-        const att = a as { filename: string; contentType: string; url?: string };
-
-        return {
-          filename: att.filename,
-          contentType: att.contentType,
-          url: att.url,
-        };
-      }),
+      attachments: mail.attachments?.map((att) => ({
+        filename: att.filename,
+        contentType: att.contentType,
+        size: att.size,
+        url: att.url,
+      })),
       date: (() => {
         const d = new Date(mail.date as unknown as string);
 
