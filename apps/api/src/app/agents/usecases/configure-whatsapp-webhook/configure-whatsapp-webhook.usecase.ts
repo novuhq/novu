@@ -174,27 +174,6 @@ export class ConfigureWhatsAppWebhook {
       };
     }
 
-    // #region debug log
-    fetch('http://127.0.0.1:7559/ingest/6e460cd4-ed5e-45c8-9ece-eea74e549216', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '2e0533' },
-      body: JSON.stringify({
-        sessionId: '2e0533',
-        runId: 'post-fix-app-sub',
-        location: 'configure-whatsapp-webhook.usecase.ts:app-subscription',
-        message: 'POST /{app-id}/subscriptions result',
-        data: {
-          appId,
-          callbackUrl,
-          statusCode: appSubscription.statusCode,
-          success: appSubscription.body.success,
-          metaError: extractMetaError(appSubscription.body),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     const appSubError = extractMetaError(appSubscription.body);
     if (appSubError || appSubscription.statusCode >= 400) {
       this.logger.warn(
@@ -291,21 +270,6 @@ export class ConfigureWhatsAppWebhook {
       agentId: agent._id,
       integrationId: integration._id,
     });
-
-    // #region debug log
-    fetch('http://127.0.0.1:7559/ingest/6e460cd4-ed5e-45c8-9ece-eea74e549216', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '2e0533' },
-      body: JSON.stringify({
-        sessionId: '2e0533',
-        runId: 'post-fix',
-        location: 'configure-whatsapp-webhook.usecase.ts:meta-success',
-        message: 'Meta accepted subscribed_apps subscription',
-        data: { wabaId, statusCode: response.statusCode, success: response.body.success },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
 
     return { success: true, callbackUrl, wabaId };
   }
