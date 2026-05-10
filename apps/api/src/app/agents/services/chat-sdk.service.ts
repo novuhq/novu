@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
@@ -133,6 +134,8 @@ type PinnedFileResponse = {
 
 @Injectable()
 export class ChatSdkService implements OnModuleDestroy {
+  /** Dedupes ON_MESSAGE dispatch when the chat SDK fires both mention and subscribed handlers for one webhook. */
+  private readonly webhookMessageDedupStore = new AsyncLocalStorage<Set<string>>();
   private readonly instances: LRUCache<string, CachedChat>;
   private readonly pendingCreations = new Map<string, Promise<Chat>>();
 
@@ -167,8 +170,12 @@ export class ChatSdkService implements OnModuleDestroy {
     }
 
     const webRequest = toWebRequest(req);
-    const webResponse = await handler(webRequest);
-    await sendWebResponse(webResponse, res);
+
+    await this.webhookMessageDedupStore.run(new Set<string>(), async () => {
+      const webResponse = await handler(webRequest);
+
+      await sendWebResponse(webResponse, res);
+    });
   }
 
   async onModuleDestroy() {
@@ -1040,11 +1047,36 @@ export class ChatSdkService implements OnModuleDestroy {
     }
   }
 
+  private async dispatchWebhookInboundMessage(
+    agentId: string,
+    cached: CachedChat,
+    thread: Thread,
+    message: Message
+  ): Promise<void> {
+    const dedup = this.webhookMessageDedupStore.getStore();
+    const messageId = message.id;
+
+    if (!messageId) {
+      await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+
+      return;
+    }
+
+    const key = `${thread.id}:${messageId}`;
+
+    if (dedup?.has(key)) {
+      return;
+    }
+
+    dedup?.add(key);
+    await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+  }
+
   private registerEventHandlers(agentId: string, cached: CachedChat) {
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await this.dispatchWebhookInboundMessage(agentId, cached, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
       }
@@ -1052,7 +1084,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await this.dispatchWebhookInboundMessage(agentId, cached, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
       }
