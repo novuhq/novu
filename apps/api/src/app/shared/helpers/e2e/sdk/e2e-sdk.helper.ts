@@ -2,7 +2,7 @@ import { Novu } from '@novu/api';
 import { NovuCore } from '@novu/api/core';
 import { SDKOptions } from '@novu/api/lib/config';
 import { HTTPClient, HTTPClientOptions } from '@novu/api/lib/http';
-import { ErrorDto, SDKError, SDKValidationError, ValidationErrorDto } from '@novu/api/models/errors';
+import { ErrorDto, SDKValidationError, ValidationErrorDto } from '@novu/api/models/errors';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -55,78 +55,13 @@ function isSDKValidationError(error: unknown): error is SDKValidationError {
   );
 }
 
-/*
- * When a controller endpoint declares a 4XX response with `@ApiBadRequestResponse({ description })`
- * (or similar) without a schema, it overrides the typed ErrorDto schema from `@ApiCommonResponses()`
- * for that status code. The regenerated SDK then routes that status to `M.fail`, which throws a
- * generic `SDKError` rather than a typed `ErrorDto` — even though the response body is a perfectly
- * valid ErrorDto. Coerce those responses into an ErrorDto-shaped object so tests can keep
- * asserting on the structured error shape regardless of how the SDK gen classified the status code.
- */
-function coerceSdkErrorToErrorDto(error: unknown): ErrorDto | null {
-  if (!(error instanceof SDKError)) {
-    return null;
-  }
-
-  if (!error.contentType?.toLowerCase().includes('application/json')) {
-    return null;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(error.body);
-  } catch {
-    return null;
-  }
-
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    typeof (parsed as { statusCode?: unknown }).statusCode !== 'number' ||
-    typeof (parsed as { path?: unknown }).path !== 'string' ||
-    typeof (parsed as { timestamp?: unknown }).timestamp !== 'string'
-  ) {
-    return null;
-  }
-
-  const data = parsed as {
-    statusCode: number;
-    path: string;
-    timestamp: string;
-    message?: ErrorDto['message'];
-    ctx?: ErrorDto['ctx'];
-    errorId?: string;
-  };
-
-  const coerced = Object.assign(Object.create(Object.getPrototypeOf(error)) as ErrorDto, error, {
-    name: 'ErrorDto',
-    statusCode: data.statusCode,
-    timestamp: data.timestamp,
-    path: data.path,
-    message: typeof data.message === 'string' ? data.message : error.message,
-    ctx: data.ctx,
-    errorId: data.errorId,
-    data$: data,
-  });
-
-  return coerced;
-}
-
 export function handleSdkError(error: unknown): ErrorDto {
-  if (isErrorDto(error)) {
-    expect(error.name).to.equal('ErrorDto');
-
-    return error;
+  if (!isErrorDto(error)) {
+    throw new Error(`Provided error is not an ErrorDto error found:\n ${JSON.stringify(error, null, 2)}`);
   }
+  expect(error.name).to.equal('ErrorDto');
 
-  const coerced = coerceSdkErrorToErrorDto(error);
-  if (coerced) {
-    expect(coerced.name).to.equal('ErrorDto');
-
-    return coerced;
-  }
-
-  throw new Error(`Provided error is not an ErrorDto error found:\n ${JSON.stringify(error, null, 2)}`);
+  return error;
 }
 
 export function handleSdkZodFailure(error: unknown): SDKValidationError {
