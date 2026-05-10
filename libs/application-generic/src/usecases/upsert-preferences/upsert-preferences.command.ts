@@ -1,6 +1,7 @@
 import {
   ChannelPreference as ChannelPreferenceType,
   ChannelTypeEnum,
+  NotificationChannelTypeEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
   WorkflowPreference as WorkflowPreferenceType,
@@ -26,7 +27,9 @@ export class ChannelPreferencePartial implements Partial<ChannelPreferenceType> 
   readonly enabled?: boolean;
 }
 
-export class ChannelPreferencesPartial implements Partial<Record<ChannelTypeEnum, ChannelPreferencePartial>> {
+export class ChannelPreferencesPartial
+  implements Partial<Record<NotificationChannelTypeEnum, ChannelPreferencePartial>>
+{
   @IsOptional()
   @IsObject()
   @ValidateNested()
@@ -92,7 +95,7 @@ export class ChannelPreferenceRequired implements ChannelPreferenceType {
   readonly enabled: boolean;
 }
 
-export class ChannelPreferencesRequired implements Record<ChannelTypeEnum, ChannelPreferenceRequired> {
+export class ChannelPreferencesRequired implements Record<NotificationChannelTypeEnum, ChannelPreferenceRequired> {
   @IsObject()
   @ValidateNested()
   @Type(() => ChannelPreferenceRequired)

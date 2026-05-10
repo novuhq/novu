@@ -4,6 +4,7 @@ import {
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -11,6 +12,7 @@ import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentsController } from './agents.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
+import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
 import { AgentConfigResolver } from './services/agent-config-resolver.service';
 import { AgentConversationService } from './services/agent-conversation.service';
@@ -25,10 +27,12 @@ import { USE_CASES } from './usecases';
   controllers: [AgentsController, AgentsWebhookController],
   providers: [
     ...USE_CASES,
+    AgentRuntimeExceptionFilter,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     ConversationRepository,
     ConversationActivityRepository,
+    IntegrationRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,

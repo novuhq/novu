@@ -4,13 +4,16 @@ import { AgentRepository } from '@novu/dal';
 import { trackAgentCreated } from '../../agent-analytics';
 import type { AgentResponseDto } from '../../dtos';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
+import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
+import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';
 import { CreateAgentCommand } from './create-agent.command';
 
 @Injectable()
 export class CreateAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly provisionManagedAgentUsecase: ProvisionManagedAgent
   ) {}
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
@@ -38,6 +41,30 @@ export class CreateAgent {
       _organizationId: command.organizationId,
     });
 
+    if (command.runtime === 'managed' && command.managedRuntime) {
+      await this.provisionManagedAgentUsecase.execute(
+        Object.assign(new ProvisionManagedAgentCommand(), {
+          agentId: agent._id,
+          name: command.name,
+          providerId: command.managedRuntime.providerId,
+          integrationId: command.managedRuntime.integrationId,
+          model: command.managedRuntime.model,
+          systemPrompt: command.managedRuntime.systemPrompt,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+    }
+
+    const updatedAgent = await this.agentRepository.findOne(
+      {
+        _id: agent._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      '*'
+    );
+
     trackAgentCreated(this.analyticsService, {
       userId: command.userId,
       organizationId: command.organizationId,
@@ -48,6 +75,6 @@ export class CreateAgent {
       name: agent.name,
     });
 
-    return toAgentResponse(agent);
+    return toAgentResponse(updatedAgent ?? agent);
   }
 }

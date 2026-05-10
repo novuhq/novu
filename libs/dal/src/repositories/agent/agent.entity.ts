@@ -1,3 +1,4 @@
+import type { AgentRuntime, ManagedRuntimeConfigDto } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -5,6 +6,15 @@ import type { OrganizationId } from '../organization';
 export interface AgentBehavior {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
+}
+
+export interface ManagedRuntimeConfig {
+  /** The agent-runtime provider ID (e.g. 'anthropic') */
+  providerId: ManagedRuntimeConfigDto['providerId'];
+  /** Reference to the Integration that holds the encrypted API key */
+  _integrationId: string;
+  /** The agent entity ID returned by the provider at provisioning time */
+  externalAgentId: string;
 }
 
 export class AgentEntity {
@@ -25,6 +35,30 @@ export class AgentEntity {
   devBridgeUrl?: string;
 
   devBridgeActive?: boolean;
+
+  /**
+   * Whether this agent's brain is self-hosted (bridge) or managed by a provider.
+   * Absence of this field is treated as 'self-hosted' for backward compatibility.
+   */
+  runtime?: AgentRuntime;
+
+  /**
+   * Present only when runtime === 'managed'. Holds the stable provider identifiers
+   * (providerId, integration reference, external agent id). All live config
+   * (model, systemPrompt, MCP servers, tools) is fetched from the provider on demand.
+   */
+  managedRuntime?: ManagedRuntimeConfig;
+
+  /**
+   * Set when a managed agent is pending deletion.
+   * The agent is hidden from normal reads until the provider-side delete job completes.
+   */
+  deletedAt?: string;
+
+  /**
+   * True when the provider-side delete has been enqueued but not yet confirmed.
+   */
+  pendingExternalDelete?: boolean;
 
   _environmentId: EnvironmentId;
 

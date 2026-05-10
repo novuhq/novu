@@ -28,6 +28,23 @@ const agentSchema = new Schema<AgentDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    runtime: {
+      type: Schema.Types.String,
+      enum: ['self-hosted', 'managed'],
+    },
+    managedRuntime: {
+      providerId: Schema.Types.String,
+      _integrationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Integration',
+      },
+      externalAgentId: Schema.Types.String,
+    },
+    deletedAt: Schema.Types.String,
+    pendingExternalDelete: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

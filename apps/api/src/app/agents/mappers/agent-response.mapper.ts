@@ -13,6 +13,14 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     bridgeUrl: agent.bridgeUrl,
     devBridgeUrl: agent.devBridgeUrl,
     devBridgeActive: agent.devBridgeActive,
+    runtime: agent.runtime,
+    managedRuntime: agent.managedRuntime
+      ? {
+          providerId: agent.managedRuntime.providerId,
+          integrationId: agent.managedRuntime._integrationId,
+          externalAgentId: agent.managedRuntime.externalAgentId,
+        }
+      : undefined,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
     createdAt: agent.createdAt,

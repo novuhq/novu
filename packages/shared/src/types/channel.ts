@@ -4,6 +4,8 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  /** Used for agent-runtime integrations (e.g. Anthropic / Claude Platform). Not a message-delivery channel. */
+  AGENT_RUNTIME = 'agent_runtime',
 }
 
 export enum ActionTypeEnum {

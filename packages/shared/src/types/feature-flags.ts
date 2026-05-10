@@ -93,6 +93,8 @@ export enum FeatureFlagsKeysEnum {
   IS_ACTION_STEP_RESOLVER_ENABLED = 'IS_ACTION_STEP_RESOLVER_ENABLED',
   /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
+  /** Enable managed-runtime mode for Agents (e.g. Claude Platform). Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MANAGED_AGENT_RUNTIME_ENABLED` when self-hosted. */
+  IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
   /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
   IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */

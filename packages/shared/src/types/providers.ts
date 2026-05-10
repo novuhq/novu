@@ -1,3 +1,4 @@
+import { AgentRuntimeProviderIdEnum } from '../consts/providers/agent-runtime-providers';
 import { IConfigurations } from '../entities/integration/configuration.interface';
 
 export enum CredentialsKeyEnum {
@@ -161,7 +162,10 @@ export type ProvidersIdEnum =
   | SmsProviderIdEnum
   | PushProviderIdEnum
   | InAppProviderIdEnum
-  | ChatProviderIdEnum;
+  | ChatProviderIdEnum
+  | AgentRuntimeProviderIdEnum;
+
+export { AgentRuntimeProviderIdEnum };
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
@@ -169,4 +173,5 @@ export const ProvidersIdEnumConst = {
   PushProviderIdEnum,
   InAppProviderIdEnum,
   ChatProviderIdEnum,
+  AgentRuntimeProviderIdEnum,
 };
