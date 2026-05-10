@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
 import {
@@ -54,6 +54,7 @@ export class ConfigureWhatsAppWebhook {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
