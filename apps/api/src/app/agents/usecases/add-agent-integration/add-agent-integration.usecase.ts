@@ -17,7 +17,13 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, EmailProviderIdEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  EmailProviderIdEnum,
+  EnvironmentTypeEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+} from '@novu/shared';
 
 import { trackAgentIntegrationConnected } from '../../agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../dtos';

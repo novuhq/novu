@@ -3,6 +3,7 @@ import {
   CompileTemplate,
   HttpClientService,
   InboundDomainRouteDelivery,
+  PinoLogger,
   SendWebhookMessage,
 } from '@novu/application-generic';
 // The top-level @novu/application-generic re-exports helpers via Object.defineProperty
@@ -58,6 +59,7 @@ describe('Should handle the new arrived mail', () => {
         { provide: HttpClientService, useValue: sandbox.createStubInstance(HttpClientService) },
         { provide: IntegrationRepository, useValue: sandbox.createStubInstance(IntegrationRepository) },
         { provide: AgentIntegrationRepository, useValue: sandbox.createStubInstance(AgentIntegrationRepository) },
+        { provide: PinoLogger, useValue: sandbox.createStubInstance(PinoLogger) },
       ],
     }).compile();
 
