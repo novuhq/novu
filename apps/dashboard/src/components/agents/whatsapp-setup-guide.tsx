@@ -1,12 +1,16 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiArrowRightUpLine, RiKey2Line } from 'react-icons/ri';
+import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { API_HOSTNAME } from '@/config';
+import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
@@ -19,6 +23,8 @@ export type WhatsAppSetupGuideProps = {
   embedded?: boolean;
 };
 
+const PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/;
+
 function getApiBaseUrl(): string {
   return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
 }
@@ -27,20 +33,267 @@ function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): s
   return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
-function WebhookUrlSection({ webhookUrl }: { webhookUrl: string }) {
+function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex w-full max-w-[320px] flex-col gap-1.5">
-      <p className="text-text-sub text-label-xs font-medium leading-5">Webhook URL</p>
+      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
       <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
         <input
           type="text"
           readOnly
-          value={webhookUrl}
-          aria-label="Webhook URL"
+          value={value}
+          aria-label={label}
           className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
         />
-        <CopyButton valueToCopy={webhookUrl} size="xs" className="shrink-0 border-l border-stroke-soft" />
+        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
       </div>
+    </div>
+  );
+}
+
+type ConnectStatus =
+  | { state: 'idle' }
+  | { state: 'connecting' }
+  | { state: 'connected' }
+  | { state: 'manual_fallback'; message: string }
+  | { state: 'error'; message: string };
+
+type TestStatus = { state: 'idle' } | { state: 'sending' } | { state: 'sent' } | { state: 'error'; message: string };
+
+function ConnectAndTestPanel({
+  agent,
+  integrationIdentifier,
+  webhookUrl,
+  verifyToken,
+  isCredentialsSaved,
+  onConnected,
+}: {
+  agent: AgentResponse;
+  integrationIdentifier: string;
+  webhookUrl: string;
+  verifyToken: string;
+  isCredentialsSaved: boolean;
+  onConnected: () => void;
+}) {
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
+  const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
+  const [phone, setPhone] = useState('');
+
+  const { mutateAsync: configureWebhook } = useConfigureWhatsAppWebhook();
+  const { mutateAsync: sendTestTemplate } = useSendWhatsAppTestTemplate();
+
+  useEffect(() => {
+    if (!isCredentialsSaved) {
+      setConnectStatus({ state: 'idle' });
+      setTestStatus({ state: 'idle' });
+    }
+  }, [isCredentialsSaved]);
+
+  const handleConnect = useCallback(async () => {
+    setConnectStatus({ state: 'connecting' });
+
+    try {
+      const result = await configureWebhook({
+        agentIdentifier: agent.identifier,
+        integrationIdentifier,
+      });
+
+      if (result.success) {
+        setConnectStatus({ state: 'connected' });
+        onConnected();
+
+        return;
+      }
+
+      if (result.fallbackToManual) {
+        setConnectStatus({
+          state: 'manual_fallback',
+          message:
+            result.reason?.message ??
+            "We couldn't finish the setup automatically. Configure the webhook manually in Meta below.",
+        });
+
+        return;
+      }
+
+      setConnectStatus({
+        state: 'error',
+        message: result.reason?.message ?? "Meta didn't accept the webhook subscription.",
+      });
+    } catch (err) {
+      setConnectStatus({
+        state: 'error',
+        message: err instanceof Error ? err.message : 'Something went wrong contacting Meta.',
+      });
+    }
+  }, [agent.identifier, configureWebhook, integrationIdentifier, onConnected]);
+
+  const handleSendTest = useCallback(async () => {
+    if (!PHONE_PATTERN.test(phone.trim())) {
+      setTestStatus({
+        state: 'error',
+        message: 'Enter a phone number in international format, including the country code.',
+      });
+
+      return;
+    }
+
+    setTestStatus({ state: 'sending' });
+
+    try {
+      const result = await sendTestTemplate({
+        agentIdentifier: agent.identifier,
+        integrationIdentifier,
+        to: phone.trim(),
+      });
+
+      if (result.success) {
+        setTestStatus({ state: 'sent' });
+
+        return;
+      }
+
+      setTestStatus({
+        state: 'error',
+        message: result.error?.message ?? "Meta didn't accept the test message.",
+      });
+    } catch (err) {
+      setTestStatus({
+        state: 'error',
+        message: err instanceof Error ? err.message : 'Something went wrong sending the test message.',
+      });
+    }
+  }, [agent.identifier, integrationIdentifier, phone, sendTestTemplate]);
+
+  const isConnected = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
+  const showManualFallback = connectStatus.state === 'manual_fallback';
+
+  return (
+    <div className="flex w-full max-w-[400px] flex-col gap-3">
+      {!isConnected ? (
+        <Button
+          type="button"
+          variant="primary"
+          size="xs"
+          className="w-fit gap-1.5 px-2 py-1.5"
+          onClick={handleConnect}
+          disabled={!isCredentialsSaved || connectStatus.state === 'connecting'}
+          isLoading={connectStatus.state === 'connecting'}
+        >
+          {connectStatus.state === 'connecting' ? 'Connecting…' : 'Connect WhatsApp'}
+        </Button>
+      ) : (
+        <div className="text-success-base flex items-center gap-1.5">
+          <RiCheckLine className="size-4" />
+          <span className="text-label-xs font-medium">
+            {showManualFallback ? 'Webhook URL ready — finish in Meta' : 'Connected — Novu is listening for messages'}
+          </span>
+        </div>
+      )}
+
+      {connectStatus.state === 'error' ? (
+        <p className="text-error-base text-label-xs leading-4">{connectStatus.message}</p>
+      ) : null}
+
+      {showManualFallback ? (
+        <ManualWebhookFallback
+          message={connectStatus.message}
+          webhookUrl={webhookUrl}
+          verifyToken={verifyToken}
+          onMarkConnected={onConnected}
+        />
+      ) : null}
+
+      {connectStatus.state === 'connected' ? (
+        <div className="border-stroke-soft mt-2 flex w-full flex-col gap-2 rounded-md border p-3">
+          <p className="text-text-strong text-label-xs font-medium leading-4">Send yourself a test message</p>
+          <p className="text-text-soft text-label-xs leading-4">
+            We&rsquo;ll send the WhatsApp <span className="font-mono">hello_world</span> template from your business
+            number to confirm everything is wired up.
+          </p>
+          <div className="flex items-stretch gap-2">
+            <InputRoot size="xs" hasError={testStatus.state === 'error'} className="flex-1">
+              <InputWrapper>
+                <InputPure
+                  value={phone}
+                  onChange={(event) => {
+                    setPhone(event.target.value);
+                    if (testStatus.state === 'error') {
+                      setTestStatus({ state: 'idle' });
+                    }
+                  }}
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="+14155551234"
+                  autoComplete="tel"
+                  disabled={testStatus.state === 'sending'}
+                />
+              </InputWrapper>
+            </InputRoot>
+            <Button
+              type="button"
+              variant="secondary"
+              size="xs"
+              className="gap-1.5 px-2"
+              onClick={handleSendTest}
+              disabled={!phone || testStatus.state === 'sending'}
+              isLoading={testStatus.state === 'sending'}
+              leadingIcon={RiSendPlaneFill}
+            >
+              Send test
+            </Button>
+          </div>
+          {testStatus.state === 'sent' ? (
+            <p className="text-success-base text-label-xs leading-4">
+              Sent — check your WhatsApp inbox. Reply to that message to confirm inbound delivery.
+            </p>
+          ) : null}
+          {testStatus.state === 'error' ? (
+            <p className="text-error-base text-label-xs leading-4">{testStatus.message}</p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ManualWebhookFallback({
+  message,
+  webhookUrl,
+  verifyToken,
+  onMarkConnected,
+}: {
+  message: string;
+  webhookUrl: string;
+  verifyToken: string;
+  onMarkConnected: () => void;
+}) {
+  return (
+    <div className="border-warning-base/40 bg-warning-base/4 flex w-full flex-col gap-2 rounded-md border p-3">
+      <div className="text-warning-base flex items-center gap-1.5">
+        <RiErrorWarningLine className="size-4" />
+        <span className="text-label-xs font-medium">{message}</span>
+      </div>
+      <p className="text-text-soft text-label-xs leading-4">
+        In your Meta app go to <strong className="text-text-sub">WhatsApp &gt; Configuration</strong>, paste the
+        Callback URL and Verify Token below, click <strong className="text-text-sub">Verify and save</strong>, then
+        scroll to <strong className="text-text-sub">Webhook fields</strong>, click{' '}
+        <strong className="text-text-sub">Manage</strong> and toggle{' '}
+        <strong className="text-text-sub">Subscribe</strong> next to <strong className="text-text-sub">messages</strong>
+        .
+      </p>
+      <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
+      <ReadOnlyValueRow label="Verify Token" value={verifyToken} />
+      <Button
+        type="button"
+        variant="secondary"
+        mode="outline"
+        size="xs"
+        className="w-fit gap-1.5"
+        onClick={onMarkConnected}
+      >
+        I configured it in Meta
+      </Button>
     </div>
   );
 }
@@ -78,20 +331,21 @@ export function WhatsAppSetupGuide({
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
+  const verifyToken = (selectedIntegration?.credentials?.token as string | undefined) ?? '';
   const webhookUrl = buildAgentWebhookUrl(agent._id, selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
 
   const base = stepOffset;
 
   const firstIncompleteStep = useMemo(() => {
     if (isConnected) {
-      return base + 5;
+      return base + 3;
     }
 
     if (!isCredentialsSaved) {
-      return base;
+      return base + 1;
     }
 
-    return base + 3;
+    return base + 2;
   }, [base, isCredentialsSaved, isConnected]);
 
   const stepsColumn = (
@@ -137,18 +391,22 @@ export function WhatsAppSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
-        title="Get your API credentials"
+        title="Get your API credentials and save them in Novu"
         description={
           <span>
-            {'After creating the app you land on the Quickstart page. Go to '}
-            <strong className="text-text-sub">WhatsApp &gt; API Setup</strong>
-            {' and collect these four values:'}
+            {'In the left sidebar of your Meta app open '}
+            <strong className="text-text-sub">Use cases</strong>
+            {', click '}
+            <strong className="text-text-sub">Customize</strong>
+            {' on “Connect with customers through WhatsApp”, then pick '}
+            <strong className="text-text-sub">API Setup</strong>
+            {' from the inner menu. Collect:'}
           </span>
         }
         extraContent={
           <ol className="text-text-soft text-label-xs mt-1.5 list-inside list-decimal space-y-0.5 font-medium leading-4">
             <li>
-              <strong className="text-text-sub">Access Token</strong> — click &quot;Generate access token&quot; on the
+              <strong className="text-text-sub">Access Token</strong> — click &ldquo;Generate access token&rdquo; on the
               API Setup page
             </li>
             <li>
@@ -156,28 +414,24 @@ export function WhatsAppSetupGuide({
               API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">App Secret</strong> — found under App Settings &gt; Basic
+              <strong className="text-text-sub">WhatsApp Business Account ID</strong> — shown directly above the Phone
+              Number ID on the API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">Verify Token</strong> — choose any secret string (you will reuse it when
-              configuring the webhook)
+              <strong className="text-text-sub">App Secret</strong> — open{' '}
+              <strong className="text-text-sub">App settings &gt; Basic</strong> from the bottom of the left sidebar
+              (separate page from API Setup), then copy the value next to{' '}
+              <strong className="text-text-sub">App secret</strong>
             </li>
           </ol>
         }
-      />
-
-      <SetupStep
-        index={base + 2}
-        status={deriveStepStatus(base + 2, firstIncompleteStep)}
-        title="Save credentials in Novu"
-        description="Open the credentials form and enter the four values from the previous step."
         rightContent={
           <div className="flex flex-col gap-3">
             <SetupButton
               leadingIcon={<RiKey2Line className="size-3.5" />}
               onClick={() => setIsCredentialsSidebarOpen(true)}
             >
-              Configure credentials
+              {isCredentialsSaved ? 'Edit credentials' : 'Configure credentials'}
             </SetupButton>
             <a
               href="https://developers.facebook.com/apps/"
@@ -193,48 +447,43 @@ export function WhatsAppSetupGuide({
               <span className="text-text-sub text-label-xs font-medium">Meta Developer Portal</span>
               <RiArrowRightUpLine className="text-text-sub size-3" />
             </a>
+            {isCredentialsSaved ? (
+              <p className="text-text-soft text-label-xs leading-4">
+                Verify Token is auto-generated by Novu — no need to copy or paste it anywhere yourself.
+              </p>
+            ) : null}
           </div>
         }
       />
 
       <SetupStep
-        index={base + 3}
-        status={deriveStepStatus(base + 3, firstIncompleteStep)}
-        title="Configure the webhook"
+        index={base + 2}
+        status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        title="Connect & test"
         description={
-          <span>
-            {'In your Meta app, go to '}
-            <strong className="text-text-sub">WhatsApp &gt; Configuration</strong>
-            {'. Set the '}
-            <strong className="text-text-sub">Callback URL</strong>
-            {' to the webhook URL below, and enter the same '}
-            <strong className="text-text-sub">Verify Token</strong>
-            {' you chose earlier.'}
-          </span>
+          isCredentialsSaved
+            ? 'Click Connect WhatsApp — Novu will register the webhook with Meta and subscribe to inbound messages on your behalf.'
+            : 'Save your credentials above first. Then come back here to register the webhook with Meta in one click.'
         }
-        extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Don't forget:"
-            description="Click 'Subscribe' next to the 'messages' webhook field — without it your agent won't receive incoming messages."
+        rightContent={
+          <ConnectAndTestPanel
+            agent={agent}
+            integrationIdentifier={selectedIntegrationIdentifier}
+            webhookUrl={webhookUrl}
+            verifyToken={verifyToken}
+            isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
+            onConnected={handleConnected}
           />
         }
-        rightContent={<WebhookUrlSection webhookUrl={webhookUrl} />}
-      />
-
-      <SetupStep
-        index={base + 4}
-        status={deriveStepStatus(base + 4, firstIncompleteStep)}
-        title="Send a test message"
-        description="Open WhatsApp and send a message to your business phone number. If everything is configured correctly, your agent will respond."
         extraContent={
-          <InlineToast
-            className="mt-2 w-full"
-            variant="tip"
-            title="Before going live:"
-            description="The token from API Setup expires after 24 hours. For production, create a permanent System User Token in Meta Business Settings > System Users."
-          />
+          isConnected ? (
+            <InlineToast
+              className="mt-2 w-full"
+              variant="tip"
+              title="Heads up:"
+              description="The token from API Setup expires after 24 hours. For production, swap it for a permanent System User Token in Meta Business Settings > System Users."
+            />
+          ) : null
         }
       />
     </>
@@ -246,7 +495,7 @@ export function WhatsAppSetupGuide({
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
       connectedMessage="WhatsApp is connected — your agent is ready to receive messages."
-      listeningMessage="Waiting for a message on your business number to confirm the webhook is working…"
+      listeningMessage="Waiting for Meta to confirm the webhook subscription…"
     />
   );
 
