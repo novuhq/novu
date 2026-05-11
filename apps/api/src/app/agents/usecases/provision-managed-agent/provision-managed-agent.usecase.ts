@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   decryptCredentials,
   encryptCredentials,
@@ -125,7 +125,9 @@ export class ProvisionManagedAgent {
       const decryptedCredentials = decryptCredentials(integration.credentials);
 
       if (!decryptedCredentials.apiKey) {
-        throw new NotFoundException(`Integration "${command.integrationId}" has no API key configured.`);
+        throw new UnprocessableEntityException(
+          `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
+        );
       }
 
       resolvedIntegrationId = integration._id;
@@ -155,7 +157,13 @@ export class ProvisionManagedAgent {
         const resolvedMcpServers = command.mcpServers?.map((serverId) => {
           const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
 
-          return { name: catalogServer?.name ?? serverId, url: catalogServer?.url ?? '' };
+          if (!catalogServer) {
+            throw new BadRequestException(
+              `Unknown MCP server ID "${serverId}". Must be one of the supported catalog entries.`
+            );
+          }
+
+          return { name: catalogServer.name, url: catalogServer.url };
         });
 
         const response = await runtimeProvider.createAgent({

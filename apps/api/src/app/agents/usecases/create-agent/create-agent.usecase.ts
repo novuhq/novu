@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { AnalyticsService, shortId, slugifyOrRandom } from '@novu/application-generic';
 import { AgentRepository } from '@novu/dal';
 import { trackAgentCreated } from '../../agent-analytics';
@@ -40,7 +40,11 @@ export class CreateAgent {
       }
     }
 
-    const isManaged = command.runtime === 'managed' && command.managedRuntime;
+    if (command.runtime === 'managed' && !command.managedRuntime) {
+      throw new UnprocessableEntityException('managedRuntime is required when runtime is "managed".');
+    }
+
+    const isManaged = command.runtime === 'managed';
 
     const agent = isManaged
       ? await this.agentRepository.withTransaction(async (session) => {
@@ -85,6 +89,12 @@ export class CreateAgent {
               }),
               { session }
             );
+
+            if (isAdoptMode && !provisionResult.adoptedName) {
+              throw new Error(
+                `Provider returned no name for adopted agent "${command.managedRuntime?.externalAgentId}". Cannot resolve a unique identifier.`
+              );
+            }
 
             if (isAdoptMode && provisionResult.adoptedName) {
               // Resolve a unique identifier from the Claude agent name, following the

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
 import {
-  ChannelTypeEnum,
   EnvironmentSystemVariables,
   NotificationChannelTypeEnum,
   ResourceOriginEnum,

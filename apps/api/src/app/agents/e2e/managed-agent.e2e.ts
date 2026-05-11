@@ -1,3 +1,4 @@
+import * as AgentRuntimeFactoryModule from '@novu/application-generic';
 import {
   AgentRuntimeBadRequestError,
   AgentRuntimeNotFoundError,
@@ -5,7 +6,6 @@ import {
   AgentRuntimeUnauthorizedError,
   encryptCredentials,
 } from '@novu/application-generic';
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, ChannelTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';

@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
+import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
 import { UpdateAgentRuntimeConfigCommand } from './update-agent-runtime-config.command';
 
 @Injectable()
@@ -45,7 +46,14 @@ export class UpdateAgentRuntimeConfig {
     }
 
     const decryptedCredentials = decryptCredentials(integration.credentials);
-    const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey!);
+
+    if (!decryptedCredentials.apiKey) {
+      throw new UnprocessableEntityException(
+        `Integration for agent "${command.identifier}" has no API key configured. Please complete the integration setup.`
+      );
+    }
+
+    const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey);
 
     const updated = await runtimeProvider.updateConfig(externalAgentId, {
       model: command.model,
@@ -55,12 +63,25 @@ export class UpdateAgentRuntimeConfig {
       skills: command.skills,
     });
 
+    const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
+
+    const capabilities: AgentRuntimeCapabilitiesDto | undefined = providerEntry
+      ? {
+          mcpServers: providerEntry.capabilities.mcpServers,
+          tools: providerEntry.capabilities.tools,
+          model: providerEntry.capabilities.model,
+          systemPrompt: providerEntry.capabilities.systemPrompt,
+          skills: providerEntry.capabilities.skills,
+        }
+      : undefined;
+
     const result: AgentRuntimeConfigResponseDto = {
       model: updated.model,
       systemPrompt: updated.systemPrompt,
       mcpServers: updated.mcpServers,
       tools: updated.tools,
       ...(updated.skills !== undefined ? { skills: updated.skills } : {}),
+      ...(capabilities !== undefined ? { capabilities } : {}),
     };
 
     return result;
