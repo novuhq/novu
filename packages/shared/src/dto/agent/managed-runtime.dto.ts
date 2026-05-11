@@ -2,6 +2,16 @@ import { AgentRuntimeProviderIdEnum } from '../../consts/providers/agent-runtime
 
 export type AgentRuntime = 'self-hosted' | 'managed';
 
+/**
+ * Identifies which section of the Novu Dashboard was used to create the agent.
+ * - `'platform'` – created from the standard Platform section (default).
+ * - `'dispatch'` – created from the Dispatch feature (under development).
+ */
+export enum AgentCreationSourceEnum {
+  PLATFORM = 'platform',
+  DISPATCH = 'dispatch',
+}
+
 export type ManagedRuntimeConfigDto = {
   /** The agent-runtime provider (e.g. 'anthropic') */
   providerId: AgentRuntimeProviderIdEnum;

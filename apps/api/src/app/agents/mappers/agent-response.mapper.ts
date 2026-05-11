@@ -14,6 +14,7 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     devBridgeUrl: agent.devBridgeUrl,
     devBridgeActive: agent.devBridgeActive,
     runtime: agent.runtime,
+    creationSource: agent.creationSource,
     managedRuntime: agent.managedRuntime
       ? {
           providerId: agent.managedRuntime.providerId,

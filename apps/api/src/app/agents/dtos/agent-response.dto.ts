@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { AgentRuntime } from '@novu/shared';
+import { AgentCreationSourceEnum } from '@novu/shared';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
 import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
@@ -66,6 +67,12 @@ export class AgentResponseDto {
 
   @ApiProperty()
   updatedAt: string;
+
+  @ApiPropertyOptional({
+    enum: AgentCreationSourceEnum,
+    description: 'Which section of the Novu Dashboard was used to create this agent.',
+  })
+  creationSource?: AgentCreationSourceEnum;
 
   @ApiPropertyOptional({ type: [AgentIntegrationSummaryDto] })
   integrations?: AgentIntegrationSummaryDto[];
