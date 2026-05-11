@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -46,11 +46,18 @@ import {
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
+import {
+  SendWhatsAppTestTemplateRequestDto,
+  SendWhatsAppTestTemplateResponseDto,
+} from './dtos/send-whatsapp-test-template.dto';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
+import { ConfigureWhatsAppWebhookCommand } from './usecases/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
+import { ConfigureWhatsAppWebhook } from './usecases/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
 import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command';
@@ -68,6 +75,8 @@ import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send
 import { SendAgentTestEmail } from './usecases/send-agent-test-email/send-agent-test-email.usecase';
 import { SendAgentWelcomeMessageCommand } from './usecases/send-agent-welcome-message/send-agent-welcome-message.command';
 import { SendAgentWelcomeMessage } from './usecases/send-agent-welcome-message/send-agent-welcome-message.usecase';
+import { SendWhatsAppTestTemplateCommand } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.command';
+import { SendWhatsAppTestTemplate } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
@@ -93,7 +102,9 @@ export class AgentsController {
     private readonly removeAgentIntegrationUsecase: RemoveAgentIntegration,
     private readonly listAgentEmojiUsecase: ListAgentEmoji,
     private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
-    private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage
+    private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
+    private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
+    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate
   ) {}
 
   @Get('/emoji')
@@ -268,6 +279,60 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         agentIntegrationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/auto-configure')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Auto-configure the WhatsApp webhook for an agent integration',
+    description:
+      'Calls Meta to register Novu as the webhook callback for the connected WhatsApp Business Account, subscribing to message events with the auto-generated verify token. Falls back to manual configuration when the access token lacks the management scope.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  configureAgentWhatsAppWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string
+  ): Promise<ConfigureWhatsAppWebhookResponseDto> {
+    return this.configureWhatsAppWebhookUsecase.execute(
+      ConfigureWhatsAppWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/test-template')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send a hello_world WhatsApp template from the agent integration',
+    description:
+      'Sends the standard `hello_world` template via the configured WhatsApp Business phone number to a recipient supplied by the user, used at the end of the onboarding flow to verify outbound delivery without asking the user to send an inbound message themselves.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentWhatsAppTestTemplate(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: SendWhatsAppTestTemplateRequestDto
+  ): Promise<SendWhatsAppTestTemplateResponseDto> {
+    return this.sendWhatsAppTestTemplateUsecase.execute(
+      SendWhatsAppTestTemplateCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        to: body.to,
       })
     );
   }

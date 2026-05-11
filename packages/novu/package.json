@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.8.1-rc.7",
+  "version": "2.8.1-rc.8",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {

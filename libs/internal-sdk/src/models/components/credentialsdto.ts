@@ -59,6 +59,8 @@ export type CredentialsDto = {
   appIOBaseUrl?: string | undefined;
   signingSecret?: string | undefined;
   outboundIntegrationId?: string | undefined;
+  useFromAddressOverride?: boolean | undefined;
+  fromAddressOverride?: string | undefined;
 };
 
 /** @internal */
@@ -144,6 +146,8 @@ export const CredentialsDto$inboundSchema: z.ZodType<
   AppIOBaseUrl: z.string().optional(),
   signingSecret: z.string().optional(),
   outboundIntegrationId: z.string().optional(),
+  useFromAddressOverride: z.boolean().optional(),
+  fromAddressOverride: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     "AppIOBaseUrl": "appIOBaseUrl",
@@ -199,6 +203,8 @@ export type CredentialsDto$Outbound = {
   AppIOBaseUrl?: string | undefined;
   signingSecret?: string | undefined;
   outboundIntegrationId?: string | undefined;
+  useFromAddressOverride?: boolean | undefined;
+  fromAddressOverride?: string | undefined;
 };
 
 /** @internal */
@@ -255,6 +261,8 @@ export const CredentialsDto$outboundSchema: z.ZodType<
   appIOBaseUrl: z.string().optional(),
   signingSecret: z.string().optional(),
   outboundIntegrationId: z.string().optional(),
+  useFromAddressOverride: z.boolean().optional(),
+  fromAddressOverride: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     appIOBaseUrl: "AppIOBaseUrl",

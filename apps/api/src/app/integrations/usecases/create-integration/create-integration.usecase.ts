@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
@@ -6,7 +6,13 @@ import {
   areNovuSmsCredentialsSet,
   encryptCredentials,
 } from '@novu/application-generic';
-import { DalException, IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
+import {
+  DalException,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationQuery,
+  IntegrationRepository,
+} from '@novu/dal';
 import {
   CHANNELS_WITH_PRIMARY,
   ChannelTypeEnum,
@@ -20,6 +26,7 @@ import {
 import shortid from 'shortid';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { CreateIntegrationCommand } from './create-integration.command';
 
 @Injectable()
@@ -28,7 +35,8 @@ export class CreateIntegration {
   private checkIntegration: CheckIntegration;
   constructor(
     private integrationRepository: IntegrationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
@@ -116,6 +124,14 @@ export class CreateIntegration {
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
+    const environment = await this.environmentRepository.findByIdAndOrganization(
+      command.environmentId,
+      command.organizationId
+    );
+    if (!environment) {
+      throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
+    }
+
     await this.validate(command);
 
     this.analyticsService.track('Create Integration - [Integrations]', command.userId, {
@@ -143,6 +159,11 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name)}-${shortid.generate()}`;
 
+      const managedCredentials = ensureWhatsAppManagedCredentials({
+        providerId: command.providerId,
+        nextCredentials: command.credentials ?? {},
+      });
+
       const query: IntegrationQuery = {
         name,
         identifier,
@@ -150,7 +171,7 @@ export class CreateIntegration {
         _organizationId: command.organizationId,
         providerId: command.providerId,
         channel: command.channel,
-        credentials: encryptCredentials(command.credentials ?? {}),
+        credentials: encryptCredentials(managedCredentials),
         active: command.active,
         conditions: command.conditions,
         configurations: command.configurations,

@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, encryptCredentials, PinoLogger } from '@novu/application-generic';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { AnalyticsService, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class UpdateIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
+    private environmentRepository: EnvironmentRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -100,6 +102,16 @@ export class UpdateIntegration {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
 
+    if (command.environmentId && command.environmentId !== existingIntegration._environmentId) {
+      const targetEnvironment = await this.environmentRepository.findByIdAndOrganization(
+        command.environmentId,
+        command.organizationId
+      );
+      if (!targetEnvironment) {
+        throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
+      }
+    }
+
     const identifierHasChanged = command.identifier && command.identifier !== existingIntegration.identifier;
     if (identifierHasChanged) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
@@ -154,7 +166,15 @@ export class UpdateIntegration {
     }
 
     if (command.credentials) {
-      updatePayload.credentials = encryptCredentials(command.credentials);
+      const existingCredentials = existingIntegration.credentials
+        ? decryptCredentials(existingIntegration.credentials)
+        : undefined;
+      const managedCredentials = ensureWhatsAppManagedCredentials({
+        providerId: existingIntegration.providerId,
+        nextCredentials: command.credentials,
+        existingCredentials,
+      });
+      updatePayload.credentials = encryptCredentials(managedCredentials);
     }
 
     if (command.configurations) {
@@ -190,6 +210,7 @@ export class UpdateIntegration {
     await this.integrationRepository.update(
       {
         _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
         _environmentId: existingIntegration._environmentId,
       },
       {
@@ -201,13 +222,14 @@ export class UpdateIntegration {
       await this.integrationRepository.recalculatePriorityForAllActive({
         _id: existingIntegration._id,
         _organizationId: existingIntegration._organizationId,
-        _environmentId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._environmentId,
         channel: existingIntegration.channel,
       });
     }
 
     const updatedIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
+      _organizationId: existingIntegration._organizationId,
       _environmentId: environmentId,
     });
     if (!updatedIntegration) {

@@ -87,7 +87,15 @@
           "level": "error",
           "options": {
             "paths": {
-              "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'"
+              "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+              "@novu/shared/utils/ssrf-url-validation": {
+                "importNames": ["validateUrlSsrf"],
+                "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+              },
+              "@novu/application-generic": {
+                "importNames": ["validateUrlSsrf"],
+                "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/application-generic' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+              }
             }
           }
         }
@@ -211,8 +219,12 @@
                     "message": "Please use the PinoLogger from @novu/application-generic instead"
                   },
                   "@novu/application-generic": {
-                    "importNames": ["Logger"],
-                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                    "importNames": ["Logger", "validateUrlSsrf"],
+                    "message": "Logger: use PinoLogger from @novu/application-generic. validateUrlSsrf: use safeOutboundRequest / safeOutboundJsonRequest (or HttpClientService with enforceSsrfProtection: true) — see https://novu.atlassian.net/browse/NV-7560"
+                  },
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
                   },
                   "svix": {
                     "importNames": ["Svix"],
@@ -268,6 +280,10 @@
                   "svix": {
                     "importNames": ["Svix"],
                     "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
                   }
                 }
               }

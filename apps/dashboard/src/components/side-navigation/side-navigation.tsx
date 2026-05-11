@@ -142,7 +142,12 @@ export const LegacySideNavigation = () => {
                 }
               >
                 <RiRobot2Line className="size-4" />
-                <span>Agents</span>
+                <span>
+                  Agents{' '}
+                  <Badge variant="lighter" className="text-xs">
+                    BETA
+                  </Badge>
+                </span>
               </NavigationLink>
             </NavigationGroup>
 

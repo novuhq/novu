@@ -9,7 +9,6 @@ playground/
 
 # CI/CD, build infrastructure, and Docker configs
 .github/
-scripts/
 docker/
 
 # Inactive apps — no longer under active development

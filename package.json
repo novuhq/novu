@@ -15,7 +15,7 @@
     "build:ws": "nx build @novu/ws",
     "build": "nx run-many --target=build --all --exclude=nextjs,nestjs",
     "clean": "rimraf **/build **/dist **/node_modules",
-    "cache:clean": "pnpm nx reset && pnpm store prune",
+    "clean:cache": "pnpm nx reset && pnpm store prune",
     "commit": "cz",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "dev:portless": "mprocs",
@@ -121,7 +121,7 @@
     "ora": "~5.4.1",
     "pkg-pr-new": "^0.0.24",
     "pnpm": "10.33.0",
-    "portless": "^0.12.0",
+    "portless": "^0.13.0",
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
@@ -283,7 +283,11 @@
       "protobufjs@<7.5.5": "^7.5.5",
       "protobufjs@>=8.0.0 <8.0.1": "^8.0.1",
       "mongoose@>=8.0.0 <8.22.1": "^8.22.1",
-      "newrelic": "13.19.2"
+      "newrelic": "13.19.2",
+      "fast-uri@<3.1.2": "^3.1.2",
+      "@babel/plugin-transform-modules-systemjs@<7.29.4": "^7.29.4",
+      "uuid@>=11.0.0 <11.1.1": "^11.1.1",
+      "uuid@>=13.0.0 <13.0.1": "^13.0.1"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",

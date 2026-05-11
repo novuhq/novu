@@ -9,6 +9,7 @@ export enum HttpClientErrorType {
   HTTP_ERROR = 'HTTP_ERROR',
   NETWORK_ERROR = 'NETWORK_ERROR',
   CERTIFICATE_ERROR = 'CERTIFICATE_ERROR',
+  SSRF_BLOCKED = 'SSRF_BLOCKED',
   UNKNOWN = 'UNKNOWN',
 }
 
@@ -51,6 +52,23 @@ export interface HttpRequestOptions {
   };
   rejectUnauthorized?: boolean;
   onRetry?: (params: { attemptCount: number; statusCode?: number; errorCode?: string; delay: number }) => void;
+  /**
+   * When true, the request is routed through the SSRF-safe outbound HTTP
+   * pipeline instead of `got`. This:
+   *  - rejects URLs with embedded credentials, non-http/https schemes, and
+   *    blocked hostnames;
+   *  - resolves DNS per attempt, rejecting any private/reserved IP at
+   *    connect time;
+   *  - pins the TCP connection to a validated IP while preserving the
+   *    original Host/SNI;
+   *  - re-validates every redirect target through the same policy and
+   *    strips sensitive headers when crossing origins.
+   *
+   * Required for any request whose destination is user-controlled (webhooks,
+   * bridge URLs, reply callbacks). When this flag is on, the `retry` and
+   * `onRetry` options are not honoured.
+   */
+  enforceSsrfProtection?: boolean;
 }
 
 export interface HttpResponse<T = unknown> {

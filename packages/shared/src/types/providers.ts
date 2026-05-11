@@ -46,6 +46,7 @@ export enum CredentialsKeyEnum {
   externalLink = 'externalLink',
   channelId = 'channelId',
   phoneNumberIdentification = 'phoneNumberIdentification',
+  businessAccountId = 'businessAccountId',
   ApiVersion = 'apiVersion',
   AppSid = 'appSid',
   SenderId = 'senderId',

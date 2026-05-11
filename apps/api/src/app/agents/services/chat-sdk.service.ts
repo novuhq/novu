@@ -3,12 +3,13 @@ import * as http from 'node:http';
 import * as https from 'node:https';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
+  assertSafeOutboundUrl,
   CacheService,
   decryptCredentials,
   isPrivateIp,
   MailFactory,
   PinoLogger,
-  validateUrlSsrf,
+  SsrfBlockedError,
 } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
@@ -21,7 +22,7 @@ import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
-import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
+import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 function getErrorResponseBody(err: unknown): unknown {
@@ -154,8 +155,16 @@ export class ChatSdkService implements OnModuleDestroy {
     });
   }
 
-  async handleWebhook(agentId: string, integrationIdentifier: string, req: ExpressRequest, res: ExpressResponse) {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+  async handleWebhook(
+    agentId: string,
+    integrationIdentifier: string,
+    req: ExpressRequest,
+    res: ExpressResponse,
+    options: { source: AgentConfigResolveSource }
+  ) {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier, {
+      source: options.source,
+    });
     const { platform } = config;
     const instanceKey = `${agentId}:${integrationIdentifier}`;
 
@@ -167,6 +176,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const webRequest = toWebRequest(req);
     const webResponse = await handler(webRequest);
+
     await sendWebResponse(webResponse, res);
   }
 
@@ -526,7 +536,16 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private async validateFileUrl(url: string): Promise<string | null> {
-    return validateUrlSsrf(url);
+    try {
+      assertSafeOutboundUrl(url);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        return err.message;
+      }
+      throw err;
+    }
+
+    return null;
   }
 
   private async requestPinnedFileUrl(url: string, file: FileRef, index: number): Promise<PinnedFileResponse> {
@@ -1061,7 +1080,7 @@ export class ChatSdkService implements OnModuleDestroy {
           cached.config,
           event.thread as Thread,
           {
-            actionId: event.actionId,
+            id: event.actionId,
             value: event.value,
             sourceMessageId: event.messageId,
           },
