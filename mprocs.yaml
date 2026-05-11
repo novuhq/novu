@@ -24,3 +24,5 @@ procs:
   react:
     shell: pnpm --filter @novu/react build:watch
     autostart: false
+
+scrollback: 100000

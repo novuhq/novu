@@ -47,7 +47,7 @@ export class DiffEnvironmentUseCase {
         user: command.user,
       });
 
-      this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
+      this.logger.debug(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
       // Create workflow data container and pre-load workflow data for optimization
       const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.preferencesRepository);
@@ -59,7 +59,7 @@ export class DiffEnvironmentUseCase {
         _organizationId: command.user.organizationId,
       });
 
-      this.logger.info(`Pre-loading data for ${workflows.length} workflows before diff`);
+      this.logger.debug(`Pre-loading data for ${workflows.length} workflows before diff`);
       await workflowDataContainer.loadWorkflowsWithControlValues(
         workflows,
         sourceEnvironmentId,
@@ -113,7 +113,7 @@ export class DiffEnvironmentUseCase {
 
       const summary = this.calculateSummary(resources);
 
-      this.logger.info(
+      this.logger.debug(
         `Environment diff completed. Total entities: ${summary.totalEntities}, ` +
           `Total changes: ${summary.totalChanges}, Has changes: ${summary.hasChanges}`
       );

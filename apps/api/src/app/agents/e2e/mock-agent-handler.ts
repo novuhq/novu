@@ -39,7 +39,7 @@ if (!NOVU_SECRET_KEY) {
 }
 
 const echoBot = agent('novu-agent', {
-  onMessage: async ({ message, ctx }) => {
+  onMessage: async (message, ctx) => {
     console.log('\n─────────────────────────────────────────');
     console.log(`[onMessage] from ${ctx.subscriber?.firstName ?? 'unknown'} on ${ctx.platform}`);
     console.log(`Message: ${message.text ?? '(none)'}`);
@@ -128,12 +128,12 @@ const echoBot = agent('novu-agent', {
     await ctx.reply(`Echo: ${userText}`);
   },
 
-  onAction: async ({ actionId, value, ctx }) => {
+  onAction: async (action, ctx) => {
     console.log('\n─────────────────────────────────────────');
-    console.log(`[onAction] action: ${actionId} = ${value ?? '(no value)'}`);
+    console.log(`[onAction] action: ${action.id} = ${action.value ?? '(no value)'}`);
     console.log('─────────────────────────────────────────');
 
-    if (actionId === 'ack') {
+    if (action.id === 'ack') {
       await ctx.reply(
         Card({
           title: 'Incident Acknowledged',
@@ -145,21 +145,21 @@ const echoBot = agent('novu-agent', {
           ],
         })
       );
-    } else if (actionId === 'resolve') {
+    } else if (action.id === 'resolve') {
       ctx.resolve('Incident resolved via action');
       await ctx.reply(`Incident resolved by *${ctx.subscriber?.firstName ?? 'unknown'}*.`);
-    } else if (actionId === 'assign') {
-      await ctx.reply(`On-call assignment updated to *${value}*.`);
-    } else if (actionId === 'escalate') {
+    } else if (action.id === 'assign') {
+      await ctx.reply(`On-call assignment updated to *${action.value}*.`);
+    } else if (action.id === 'escalate') {
       await ctx.reply(
         `**Escalated** — paging the secondary on-call team.\n\n_Triggered by ${ctx.subscriber?.firstName ?? 'unknown'}_`
       );
     } else {
-      await ctx.reply(`Got action: *${actionId}*${value ? ` = ${value}` : ''}`);
+      await ctx.reply(`Got action: *${action.id}*${action.value ? ` = ${action.value}` : ''}`);
     }
   },
 
-  onResolve: async ({ ctx }) => {
+  onResolve: async (ctx) => {
     console.log(`\n[onResolve] Conversation ${ctx.conversation.identifier} closed.`);
     ctx.metadata.set('resolvedAt', new Date().toISOString());
   },
