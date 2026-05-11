@@ -141,8 +141,25 @@ export interface ReplyContent {
   files?: FileRef[];
 }
 
-/** Data carried by a button click or other interactive action. */
+/**
+ * Data carried by a button click or other interactive action.
+ * This is the handler-facing shape passed to `onAction(action, ctx)`.
+ */
 export interface AgentAction {
+  /** The `id` prop of the clicked `<Button>` or action element. */
+  id: string;
+  /** The `value` prop of the clicked element, if set. */
+  value?: string;
+  /** Platform-native message ID of the message containing the clicked button/action. */
+  sourceMessageId?: string;
+}
+
+/**
+ * Wire-level action payload as it arrives in the bridge request.
+ * Keeps the legacy `actionId` field name to preserve API contract compatibility.
+ * Handler authors should use `AgentAction` (with `.id`) instead.
+ */
+export interface AgentBridgeAction {
   /** The `id` prop of the clicked `<Button>` or action element. */
   actionId: string;
   /** The `value` prop of the clicked element, if set. */
@@ -323,7 +340,7 @@ export interface AgentHandlers {
    * Fires when the user clicks a `<Button>` or other interactive element.
    *
    * @param action - The interactive action that triggered this handler.
-   *   `action.actionId` is the `id` prop of the clicked element; `action.value` is its `value` prop.
+   *   `action.id` is the `id` prop of the clicked element; `action.value` is its `value` prop.
    * @param ctx - Conversation context (history, subscriber, metadata, reply/trigger methods).
    *
    * Return a string or card to reply, or return nothing to silently acknowledge the click.
@@ -357,7 +374,7 @@ export interface AgentBridgeRequest {
   replyUrl: string;
   conversationId: string;
   integrationIdentifier: string;
-  action: AgentAction | null;
+  action: AgentBridgeAction | null;
   message: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;

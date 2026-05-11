@@ -6,6 +6,7 @@ export type {
   AgentAction,
   AgentActionContext,
   AgentAttachment,
+  AgentBridgeAction,
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,

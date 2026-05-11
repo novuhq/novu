@@ -1032,7 +1032,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(capturedCtx).toBeDefined());
 
     expect(capturedCtx.event).toBe('onAction');
-    expect(capturedCtx.action).toEqual({ actionId: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' });
+    expect(capturedCtx.action).toEqual({ id: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' });
     expect(capturedCtx.message).toBeNull();
 
     const replyCall = fetchMock.mock.calls.find(
