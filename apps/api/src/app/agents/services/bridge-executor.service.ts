@@ -11,7 +11,7 @@ import {
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
-  AgentAction,
+  AgentBridgeAction,
   AgentBridgeRequest,
   AgentConversation,
   AgentHistoryEntry,
@@ -74,7 +74,7 @@ export interface BridgeExecutorParams {
   history: ConversationActivityEntity[];
   message: Message | null;
   platformContext: AgentPlatformContext;
-  action?: AgentAction;
+  action?: AgentBridgeAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
 }

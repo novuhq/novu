@@ -7,7 +7,7 @@ import {
   EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import type { AgentAction } from '@novu/framework';
+import type { AgentBridgeAction } from '@novu/framework';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
@@ -462,7 +462,7 @@ export class AgentInboundHandler {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    action: AgentAction,
+    action: AgentBridgeAction,
     userId: string
   ): Promise<void> {
     const subscriberId = await this.subscriberResolver
