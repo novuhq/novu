@@ -7,7 +7,22 @@ export interface NovuEmailAdapterConfig {
   senderName?: string;
   signingSecret: string;
   sendEmail: (params: SendEmailParams) => Promise<{ messageId?: string }>;
+  /**
+   * Resolves a URL for an interactive `<Button id="…">` rendered inside an outbound email.
+   * Called once per button before the email HTML is rendered. When omitted, action buttons
+   * fall back to the legacy `href="#"` (no-op) behavior — `<LinkButton url="…">` always uses
+   * its explicit URL and is never passed to this builder.
+   */
+  actionUrlBuilder?: ActionUrlBuilder;
 }
+
+export type ActionUrlBuilder = (params: {
+  threadId: string;
+  messageId: string;
+  actionId: string;
+  value?: string;
+  label?: string;
+}) => Promise<string>;
 
 export type EmailAlternative = IEmailAlternative;
 

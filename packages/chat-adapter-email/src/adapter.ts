@@ -147,7 +147,6 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuEmailRawMessage>> {
     const normalized = this.normalizeMessage(message);
     const decoded = this.threadResolver.decodeThreadId(threadId);
-    const rendered = await renderMessage(normalized);
 
     const agentAddress = await this.threadResolver.getAgentAddress(threadId);
     if (!agentAddress) {
@@ -156,7 +155,17 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const fromHeader = this.config.senderName ? `${this.config.senderName} <${agentAddress}>` : agentAddress;
 
+    // Mint the Message-ID before rendering so action-button URLs in the email body can sign
+    // a token bound to this specific email; the chat SDK's processAction lookup later in the
+    // click handler uses the same Message-ID to locate the originating thread/message.
     const messageId = generateMessageId(agentAddress);
+    const buildActionUrl = this.config.actionUrlBuilder;
+    const rendered = await renderMessage({
+      ...normalized,
+      ...(normalized.card && buildActionUrl
+        ? { actionContext: { threadId, messageId, buildActionUrl } }
+        : {}),
+    });
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
     const subject = storedSubject

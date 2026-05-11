@@ -23,6 +23,7 @@ import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
+import { AgentEmailActionClaims, AgentEmailActionTokenService } from './agent-email-action-token.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 function getErrorResponseBody(err: unknown): unknown {
@@ -62,6 +63,21 @@ function wrapMsgId(id: string): string {
   const trimmed = id.trim();
 
   return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
+}
+
+/**
+ * Extracts the recipient email address from an encoded email thread ID. The email adapter's
+ * ThreadResolver encodes thread IDs as `email:<encodedRecipient>:<rootMessageIdHash>`; we
+ * reverse that here so the token claims can carry the recipient as the `platformUserId` used
+ * for subscriber resolution on the click handler side.
+ */
+function extractRecipientFromThreadId(threadId: string): string {
+  const parts = threadId.split(':');
+  if (parts.length !== 3 || parts[0] !== 'email' || !parts[1]) {
+    throw new Error(`Cannot extract recipient from invalid email thread id: ${threadId}`);
+  }
+
+  return decodeURIComponent(parts[1]);
 }
 
 /**
@@ -141,7 +157,8 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly inboundHandler: AgentInboundHandler,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly actionTokenService: AgentEmailActionTokenService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -178,6 +195,50 @@ export class ChatSdkService implements OnModuleDestroy {
     const webResponse = await handler(webRequest);
 
     await sendWebResponse(webResponse, res);
+  }
+
+  /**
+   * Dispatches a verified email-button click into the chat SDK so it flows through the same
+   * `chat.onAction` → `AgentInboundHandler.handleAction` → bridge `onAction` path that
+   * inbound platforms (Slack/Teams) already use. Called from the public email-action endpoint
+   * after JWT verification and single-use replay protection.
+   */
+  async processEmailAction(claims: AgentEmailActionClaims): Promise<void> {
+    const { agentId, integrationIdentifier } = claims;
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (config.platform !== AgentPlatformEnum.EMAIL) {
+      throw new BadRequestException(
+        `Agent ${agentId} integration ${integrationIdentifier} is not configured for the email platform`
+      );
+    }
+
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const emailAdapter = chat.getAdapter(AgentPlatformEnum.EMAIL);
+    if (!emailAdapter) {
+      throw new BadRequestException(`Email adapter not available for agent ${agentId}`);
+    }
+
+    await chat.processAction(
+      {
+        adapter: emailAdapter,
+        actionId: claims.actionId,
+        value: claims.value,
+        messageId: claims.messageId,
+        threadId: claims.threadId,
+        user: {
+          userId: claims.userIdentifier,
+          userName: claims.userIdentifier,
+          fullName: claims.userIdentifier,
+          isBot: false,
+          isMe: false,
+        },
+        raw: {},
+      },
+      undefined
+    );
   }
 
   async onModuleDestroy() {
@@ -762,7 +823,7 @@ export class ChatSdkService implements OnModuleDestroy {
     config: ResolvedAgentConfig,
     adapterFingerprint: string
   ): Promise<Chat> {
-    const chat = await this.createChatInstance(instanceKey, platform, config);
+    const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
     await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
     this.registerEventHandlers(agentId, cached);
@@ -931,6 +992,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
   private async createChatInstance(
     instanceKey: string,
+    agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Chat> {
@@ -939,7 +1001,7 @@ export class ChatSdkService implements OnModuleDestroy {
       esmImport('@chat-adapter/state-ioredis'),
     ]);
 
-    const adapters = await this.buildAdapters(platform, config);
+    const adapters = await this.buildAdapters(agentId, platform, config);
     const client = this.cacheService.client;
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
@@ -967,6 +1029,7 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private async buildAdapters(
+    agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Record<string, unknown>> {
@@ -1041,6 +1104,24 @@ export class ChatSdkService implements OnModuleDestroy {
             senderName,
             signingSecret: credentials.secretKey,
             sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
+            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label }) => {
+              const userIdentifier = extractRecipientFromThreadId(threadId);
+              const { url } = await this.actionTokenService.signActionToken({
+                agentId,
+                agentIdentifier: config.agentIdentifier,
+                integrationIdentifier: config.integrationIdentifier,
+                environmentId: config.environmentId,
+                organizationId: config.organizationId,
+                threadId,
+                messageId,
+                actionId,
+                value,
+                label,
+                userIdentifier,
+              });
+
+              return url;
+            },
           }),
         };
       }
