@@ -130,10 +130,10 @@ const echoBot = agent('novu-agent', {
 
   onAction: async (action, ctx) => {
     console.log('\n─────────────────────────────────────────');
-    console.log(`[onAction] action: ${action.actionId} = ${action.value ?? '(no value)'}`);
+    console.log(`[onAction] action: ${action.id} = ${action.value ?? '(no value)'}`);
     console.log('─────────────────────────────────────────');
 
-    if (action.actionId === 'ack') {
+    if (action.id === 'ack') {
       await ctx.reply(
         Card({
           title: 'Incident Acknowledged',
@@ -145,17 +145,17 @@ const echoBot = agent('novu-agent', {
           ],
         })
       );
-    } else if (action.actionId === 'resolve') {
+    } else if (action.id === 'resolve') {
       ctx.resolve('Incident resolved via action');
       await ctx.reply(`Incident resolved by *${ctx.subscriber?.firstName ?? 'unknown'}*.`);
-    } else if (action.actionId === 'assign') {
+    } else if (action.id === 'assign') {
       await ctx.reply(`On-call assignment updated to *${action.value}*.`);
-    } else if (action.actionId === 'escalate') {
+    } else if (action.id === 'escalate') {
       await ctx.reply(
         `**Escalated** — paging the secondary on-call team.\n\n_Triggered by ${ctx.subscriber?.firstName ?? 'unknown'}_`
       );
     } else {
-      await ctx.reply(`Got action: *${action.actionId}*${action.value ? ` = ${action.value}` : ''}`);
+      await ctx.reply(`Got action: *${action.id}*${action.value ? ` = ${action.value}` : ''}`);
     }
   },
 

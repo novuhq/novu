@@ -49,7 +49,7 @@ export const supportAgent = agent('support-agent', {
 
   // Return a string or card to reply; return nothing to silently acknowledge the click
   onAction: async (action, ctx) => {
-    if (action.actionId.startsWith('topic-') && action.value) {
+    if (action.id.startsWith('topic-') && action.value) {
       ctx.metadata.set('topic', action.value);
 
       return `Topic set to **${action.value}**. Describe your issue and I'll help.`;
