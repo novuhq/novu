@@ -79,6 +79,12 @@ export type CreateManagedRuntimeBody = {
   integrationId: string;
   model?: string;
   systemPrompt?: string;
+  /** Tool `type` strings to enable on the new agent (e.g. 'web_search_20260209'). */
+  tools?: string[];
+  /** MCP server IDs to attach to the new agent. */
+  mcpServers?: string[];
+  /** Anthropic-managed or custom skills to attach to the new agent. Maximum 20. */
+  skills?: Array<{ type: 'anthropic' | 'custom'; skillId: string; version?: string | null }>;
 };
 
 export type CreateAgentBody = {

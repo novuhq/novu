@@ -3,6 +3,7 @@ import type {
   AgentRuntimeCapabilities,
   AgentRuntimeConfigDto,
   AgentRuntimeProviderIdEnum,
+  AgentSkillDto,
   AgentToolDto,
 } from '@novu/shared';
 
@@ -10,6 +11,12 @@ export type CreateAgentInput = {
   name: string;
   model?: string;
   systemPrompt?: string;
+  /** Builtin tool type strings, e.g. 'web_search', 'bash' */
+  tools?: string[];
+  /** MCP server catalog entries resolved to {name, url} pairs */
+  mcpServers?: Array<{ name: string; url: string }>;
+  /** Skills to attach to the agent at creation time. Maximum 20. */
+  skills?: AgentSkillDto[];
 };
 
 export type CreateAgentResult = {
@@ -21,6 +28,7 @@ export type UpdateAgentRuntimeConfigInput = {
   systemPrompt?: string;
   mcpServers?: AgentMcpServerDto[];
   tools?: AgentToolDto[];
+  skills?: AgentSkillDto[];
 };
 
 export interface IAgentRuntimeProvider {

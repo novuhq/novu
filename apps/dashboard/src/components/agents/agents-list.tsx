@@ -1,4 +1,4 @@
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { ChannelTypeEnum, DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -6,17 +6,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
-  type CreateAgentBody,
   createAgent,
   deleteAgent,
   getAgentsListQueryKey,
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { createIntegration } from '@/api/integrations';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
-import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
+import { CreateAgentDialog, type CreateAgentDialogSubmitBody } from '@/components/agents/create-agent-dialog';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { ListNoResults } from '@/components/list-no-results';
 import { Button } from '@/components/primitives/button';
@@ -88,8 +88,38 @@ export function AgentsList() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (body: CreateAgentBody) =>
-      createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
+    mutationFn: async (body: CreateAgentDialogSubmitBody) => {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      if (body.runtime === 'managed' && body.apiKey) {
+        const integrationResponse = await createIntegration(
+          {
+            providerId: 'anthropic',
+            channel: ChannelTypeEnum.AGENT_RUNTIME,
+            credentials: { apiKey: body.apiKey },
+            configurations: {},
+            name: 'Anthropic (managed agents)',
+            active: true,
+            _environmentId: environment._id,
+          },
+          environment
+        );
+
+        const { apiKey: _apiKey, externalAgentId: _extId, ...agentBody } = body;
+
+        return createAgent(environment, {
+          ...agentBody,
+          managedRuntime: {
+            ...agentBody.managedRuntime!,
+            integrationId: integrationResponse.data._id,
+          },
+        });
+      }
+
+      const { apiKey: _apiKey, externalAgentId: _extId, ...agentBody } = body;
+
+      return createAgent(environment, agentBody);
+    },
     onSuccess: async (createdAgent) => {
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
@@ -125,34 +155,7 @@ export function AgentsList() {
 
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const listKey = getAgentsListQueryKey(environment._id, {
-        after,
-        before,
-        limit,
-        identifier: debouncedSearch,
-      });
-
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
-
-      const refreshed = await queryClient.fetchQuery({
-        queryKey: listKey,
-        queryFn: () =>
-          listAgents({
-            environment,
-            limit,
-            after,
-            before,
-            orderBy: 'updatedAt',
-            orderDirection: DirectionEnum.DESC,
-            identifier: debouncedSearch || undefined,
-          }),
-      });
-
-      if (refreshed.data.length === 0 && refreshed.previous) {
-        setBefore(refreshed.previous);
-        setAfter(undefined);
-      }
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not delete agent.';
@@ -190,7 +193,7 @@ export function AgentsList() {
   }, []);
 
   const handleCreateSubmit = useCallback(
-    async (body: CreateAgentBody) => {
+    async (body: CreateAgentDialogSubmitBody) => {
       await createMutation.mutateAsync(body);
     },
     [createMutation]

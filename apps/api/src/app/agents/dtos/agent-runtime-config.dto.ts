@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class AgentMcpServerDto {
   @ApiProperty()
@@ -115,6 +115,21 @@ export class AgentRuntimeProviderResponseDto {
   capabilities: AgentRuntimeCapabilitiesDto;
 }
 
+export class AgentSkillInputDto {
+  @ApiProperty({ enum: ['anthropic', 'custom'] })
+  @IsIn(['anthropic', 'custom'])
+  type: 'anthropic' | 'custom';
+
+  @ApiProperty({ description: 'Skill identifier, e.g. "xlsx" or "skill_01XJ5..."' })
+  @IsString()
+  skillId: string;
+
+  @ApiPropertyOptional({ description: 'Version to pin. Omit for latest.' })
+  @IsOptional()
+  @IsString()
+  version?: string | null;
+}
+
 export class ManagedRuntimeDto {
   @ApiProperty({ enum: AgentRuntimeProviderIdEnum })
   @IsEnum(AgentRuntimeProviderIdEnum)
@@ -133,4 +148,23 @@ export class ManagedRuntimeDto {
   @IsOptional()
   @IsString()
   systemPrompt?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tools?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mcpServers?: string[];
+
+  @ApiPropertyOptional({ type: [AgentSkillInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AgentSkillInputDto)
+  skills?: AgentSkillInputDto[];
 }

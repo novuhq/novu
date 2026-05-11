@@ -1,7 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { CLAUDE_MCP_SERVERS } from '@novu/shared';
+import type { ClientSession } from 'mongoose';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
+
+export type ProvisionManagedAgentOptions = {
+  session: ClientSession | null;
+};
 
 @Injectable()
 export class ProvisionManagedAgent {
@@ -11,14 +17,20 @@ export class ProvisionManagedAgent {
     private readonly logger: PinoLogger
   ) {}
 
-  async execute(command: ProvisionManagedAgentCommand): Promise<{ externalAgentId: string }> {
+  async execute(
+    command: ProvisionManagedAgentCommand,
+    options: ProvisionManagedAgentOptions
+  ): Promise<{ externalAgentId: string }> {
+    const { session } = options;
+
     const integration = await this.integrationRepository.findOne(
       {
         _id: command.integrationId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'credentials', 'providerId']
+      ['_id', 'credentials', 'providerId'],
+      session ? { session } : {}
     );
 
     if (!integration) {
@@ -37,12 +49,22 @@ export class ProvisionManagedAgent {
     // Validate credentials before provisioning
     await runtimeProvider.validateCredentials(apiKey);
 
-    // Provision the agent on Claude Platform
-    const { externalAgentId } = await runtimeProvider.createAgent({
+    const resolvedMcpServers = command.mcpServers?.map((serverId) => {
+      const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
+
+      return { name: catalogServer?.name ?? serverId, url: catalogServer?.url ?? '' };
+    });
+
+    const response = await runtimeProvider.createAgent({
       name: command.name,
       model: command.model,
       systemPrompt: command.systemPrompt,
+      tools: command.tools,
+      mcpServers: resolvedMcpServers,
+      skills: command.skills,
     });
+
+    const { externalAgentId } = response;
 
     // Persist the managed runtime identifiers on the agent
     // If this update fails, roll back the Claude agent to avoid orphans
@@ -62,9 +84,11 @@ export class ProvisionManagedAgent {
               externalAgentId,
             },
           },
-        }
+        },
+        session ? { session } : {}
       );
     } catch (mongoError) {
+      this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
       // Best-effort rollback: attempt to delete the agent we just created
       try {
         await runtimeProvider.deleteAgent(externalAgentId);

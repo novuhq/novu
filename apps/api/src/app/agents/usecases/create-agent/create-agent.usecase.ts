@@ -32,29 +32,62 @@ export class CreateAgent {
       );
     }
 
-    const agent = await this.agentRepository.create({
-      name: command.name,
-      identifier: command.identifier,
-      description: command.description,
-      active: command.active ?? true,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
+    const isManaged = command.runtime === 'managed' && command.managedRuntime;
 
-    if (command.runtime === 'managed' && command.managedRuntime) {
-      await this.provisionManagedAgentUsecase.execute(
-        Object.assign(new ProvisionManagedAgentCommand(), {
-          agentId: agent._id,
-          name: command.name,
-          providerId: command.managedRuntime.providerId,
-          integrationId: command.managedRuntime.integrationId,
-          model: command.managedRuntime.model,
-          systemPrompt: command.managedRuntime.systemPrompt,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
+    const agent = isManaged
+      ? await this.agentRepository.withTransaction(async (session) => {
+          const created = await this.agentRepository.create(
+            {
+              name: command.name,
+              identifier: command.identifier,
+              description: command.description,
+              active: command.active ?? true,
+              _environmentId: command.environmentId,
+              _organizationId: command.organizationId,
+            },
+            { session }
+          );
+
+          try {
+            await this.provisionManagedAgentUsecase.execute(
+              Object.assign(new ProvisionManagedAgentCommand(), {
+                agentId: created._id,
+                name: command.name,
+                providerId: command.managedRuntime!.providerId,
+                integrationId: command.managedRuntime!.integrationId,
+                model: command.managedRuntime!.model,
+                systemPrompt: command.managedRuntime!.systemPrompt,
+                tools: command.managedRuntime!.tools,
+                mcpServers: command.managedRuntime!.mcpServers,
+                skills: command.managedRuntime!.skills,
+                environmentId: command.environmentId,
+                organizationId: command.organizationId,
+              }),
+              { session }
+            );
+          } catch (provisionError) {
+            // When running without a replica set (e.g. local dev), the transaction does not
+            // auto-abort on throw, so we delete the agent we just inserted as a compensating action.
+            if (!session) {
+              await this.agentRepository.delete({
+                _id: created._id,
+                _environmentId: command.environmentId,
+                _organizationId: command.organizationId,
+              });
+            }
+            throw provisionError;
+          }
+
+          return created;
         })
-      );
-    }
+      : await this.agentRepository.create({
+          name: command.name,
+          identifier: command.identifier,
+          description: command.description,
+          active: command.active ?? true,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        });
 
     const updatedAgent = await this.agentRepository.findOne(
       {

@@ -1,6 +1,11 @@
 import Anthropic, { APIConnectionError, APIConnectionTimeoutError, APIError } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentToolDto } from '@novu/shared';
-import { AGENT_RUNTIME_PROVIDERS, AgentRuntimeCapabilities, AgentRuntimeProviderIdEnum } from '@novu/shared';
+import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
+import {
+  AGENT_RUNTIME_PROVIDERS,
+  AgentRuntimeCapabilities,
+  AgentRuntimeProviderIdEnum,
+  CLAUDE_BUILTIN_TOOLS,
+} from '@novu/shared';
 import {
   AgentRuntimeBadRequestError,
   AgentRuntimeForbiddenError,
@@ -107,10 +112,16 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
     return this.withRetry(async () => {
       try {
+        const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
         const agent = await (client as any).beta.agents.create({
           name: input.name,
           model: input.model ?? DEFAULT_MODEL,
-          ...(input.systemPrompt ? { system_prompt: input.systemPrompt } : {}),
+          ...(input.systemPrompt ? { system: input.systemPrompt } : {}),
+          ...(input.mcpServers && input.mcpServers.length > 0
+            ? { mcp_servers: input.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url })) }
+            : {}),
+          ...(toolsPayload.length > 0 ? { tools: toolsPayload } : {}),
+          ...(input.skills && input.skills.length > 0 ? { skills: input.skills.map(toSkillParam) } : {}),
         });
 
         return { externalAgentId: agent.id as string };
@@ -125,7 +136,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
     await this.withRetry(async () => {
       try {
-        await (client as any).beta.agents.delete(externalAgentId);
+        await client.beta.agents.archive(externalAgentId);
       } catch (err) {
         this.normaliseError(err);
       }
@@ -137,17 +148,14 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
     return this.withRetry(async () => {
       try {
-        const [agent, mcpServersRaw, toolsRaw] = await Promise.all([
-          (client as any).beta.agents.retrieve(externalAgentId),
-          (client as any).beta.agents.mcpServers.list(externalAgentId).catch(() => ({ data: [] })),
-          (client as any).beta.agents.tools.list(externalAgentId).catch(() => ({ data: [] })),
-        ]);
+        const agent = await (client as any).beta.agents.retrieve(externalAgentId);
 
         return {
-          model: agent.model ?? DEFAULT_MODEL,
-          systemPrompt: agent.system_prompt ?? '',
-          mcpServers: ((mcpServersRaw as any).data ?? []).map(mapMcpServer),
-          tools: ((toolsRaw as any).data ?? []).map(mapTool),
+          model: agent.model?.id ?? agent.model ?? DEFAULT_MODEL,
+          systemPrompt: agent.system ?? '',
+          mcpServers: ((agent.mcp_servers as any[]) ?? []).map(mapMcpServer),
+          tools: ((agent.tools as any[]) ?? []).flatMap(mapToolset),
+          skills: ((agent.skills as any[]) ?? []).map(mapSkill),
         };
       } catch (err) {
         this.normaliseError(err);
@@ -163,19 +171,22 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         const updatePayload: Record<string, unknown> = {};
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
-        if (patch.systemPrompt !== undefined) updatePayload.system_prompt = patch.systemPrompt;
-
-        if (Object.keys(updatePayload).length > 0) {
-          await (client as any).beta.agents.update(externalAgentId, updatePayload);
-        }
-
+        if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
         if (patch.mcpServers !== undefined) {
-          await syncMcpServers(client, externalAgentId, patch.mcpServers);
+          updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
+        }
+        if (patch.tools !== undefined || patch.mcpServers !== undefined) {
+          const toolTypes = patch.tools?.map((t) => t.name);
+          const mcpServers = patch.mcpServers?.map((s) => ({ name: s.name, url: s.url }));
+          const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
+
+          if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
+        }
+        if (patch.skills !== undefined) {
+          updatePayload.skills = patch.skills.map(toSkillParam);
         }
 
-        if (patch.tools !== undefined) {
-          await syncTools(client, externalAgentId, patch.tools);
-        }
+        await (client as any).beta.agents.update(externalAgentId, updatePayload);
 
         return this.getConfig(externalAgentId);
       } catch (err) {
@@ -216,70 +227,86 @@ function isTransient(err: unknown): boolean {
   );
 }
 
+function mapSkill(raw: Record<string, unknown>): AgentSkillDto {
+  return {
+    type: raw.type as 'anthropic' | 'custom',
+    skillId: raw.skill_id as string,
+    version: (raw.version as string | null | undefined) ?? null,
+  };
+}
+
+function toSkillParam(skill: AgentSkillDto): Record<string, unknown> {
+  return {
+    type: skill.type,
+    skill_id: skill.skillId,
+    ...(skill.version != null ? { version: skill.version } : {}),
+  };
+}
+
 function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
   return {
-    externalId: raw.id as string,
+    externalId: (raw.name as string) ?? '',
     name: raw.name as string,
     url: raw.url as string,
-    authToken: raw.auth_token as string | undefined,
   };
 }
 
-function mapTool(raw: Record<string, unknown>): AgentToolDto {
-  return {
-    externalId: raw.id as string,
-    name: raw.name as string,
-    type: (raw.type === 'builtin' ? 'builtin' : 'custom') as 'builtin' | 'custom',
-    description: raw.description as string | undefined,
-  };
+/**
+ * The agent response `tools` array contains toolset objects, not plain tool entries.
+ * Flatten them into individual AgentToolDto entries for our internal representation.
+ */
+function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
+  if (raw.type === 'agent_toolset_20260401') {
+    return ((raw.configs as any[]) ?? [])
+      .filter((c) => c.enabled !== false)
+      .map((c) => ({
+        externalId: c.name as string,
+        name: c.name as string,
+        type: 'builtin' as const,
+      }));
+  }
+
+  if (raw.type === 'mcp_toolset') {
+    return [
+      {
+        externalId: raw.mcp_server_name as string,
+        name: raw.mcp_server_name as string,
+        type: 'custom' as const,
+      },
+    ];
+  }
+
+  return [];
 }
 
-async function syncMcpServers(client: Anthropic, agentId: string, desired: AgentMcpServerDto[]): Promise<void> {
-  const current: AgentMcpServerDto[] = (
-    await (client as any).beta.agents.mcpServers.list(agentId).catch(() => ({ data: [] }))
-  ).data.map(mapMcpServer);
+/**
+ * Build the Anthropic `tools` payload array from builtin tool type strings
+ * and optional MCP server entries.
+ *
+ * We always emit the full toolset with every known tool explicitly set to
+ * enabled or disabled. Sending only the enabled subset causes the Anthropic
+ * API to default all omitted tools to enabled, which means the agent ends up
+ * with every tool regardless of what the user selected.
+ */
+function buildToolsPayload(
+  toolTypes?: string[],
+  mcpServers?: Array<{ name: string; url: string }>
+): Record<string, unknown>[] {
+  const payload: Record<string, unknown>[] = [];
 
-  const currentIds = new Set(current.map((s) => s.externalId));
-  const desiredIds = new Set(desired.map((s) => s.externalId).filter(Boolean));
+  const enabledSet = new Set(toolTypes ?? []);
+  const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
 
-  for (const server of current) {
-    if (!desiredIds.has(server.externalId)) {
-      await (client as any).beta.agents.mcpServers.delete(agentId, server.externalId);
+  payload.push({
+    type: 'agent_toolset_20260401',
+    configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
+  });
+
+  if (mcpServers) {
+    for (const server of mcpServers) {
+      payload.push({ type: 'mcp_toolset', mcp_server_name: server.name });
     }
   }
 
-  for (const server of desired) {
-    if (!server.externalId || !currentIds.has(server.externalId)) {
-      await (client as any).beta.agents.mcpServers.create(agentId, {
-        name: server.name,
-        url: server.url,
-        ...(server.authToken ? { auth_token: server.authToken } : {}),
-      });
-    }
-  }
-}
-
-async function syncTools(client: Anthropic, agentId: string, desired: AgentToolDto[]): Promise<void> {
-  const current: AgentToolDto[] = (
-    await (client as any).beta.agents.tools.list(agentId).catch(() => ({ data: [] }))
-  ).data.map(mapTool);
-
-  const currentIds = new Set(current.map((t) => t.externalId));
-  const desiredIds = new Set(desired.map((t) => t.externalId).filter(Boolean));
-
-  for (const tool of current) {
-    if (!desiredIds.has(tool.externalId)) {
-      await (client as any).beta.agents.tools.delete(agentId, tool.externalId);
-    }
-  }
-
-  for (const tool of desired) {
-    if (!tool.externalId || !currentIds.has(tool.externalId)) {
-      await (client as any).beta.agents.tools.create(agentId, {
-        name: tool.name,
-        type: tool.type,
-        ...(tool.description ? { description: tool.description } : {}),
-      });
-    }
-  }
+  return payload;
 }

@@ -140,6 +140,7 @@ export class AgentsController {
     description: 'Creates an agent scoped to the current environment. The identifier must be unique per environment.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
   createAgent(@UserSession() user: UserSessionData, @Body() body: CreateAgentRequestDto): Promise<AgentResponseDto> {
     return this.createAgentUsecase.execute(
       CreateAgentCommand.create({
@@ -150,6 +151,8 @@ export class AgentsController {
         identifier: body.identifier,
         description: body.description,
         active: body.active,
+        runtime: body.runtime,
+        managedRuntime: body.managedRuntime,
       })
     );
   }
