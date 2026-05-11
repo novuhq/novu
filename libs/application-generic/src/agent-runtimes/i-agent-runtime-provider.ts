@@ -36,6 +36,19 @@ export type UpdateAgentRuntimeConfigInput = {
   skills?: AgentSkillDto[];
 };
 
+export type CreateEnvironmentInput = {
+  /** Human-readable name; must be unique within the provider workspace. */
+  name: string;
+};
+
+export type CreateEnvironmentResult = {
+  externalEnvironmentId: string;
+};
+
+export type GetEnvironmentResult = {
+  externalEnvironmentId: string;
+};
+
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
   readonly capabilities: AgentRuntimeCapabilities;
@@ -79,4 +92,23 @@ export interface IAgentRuntimeProvider {
    * Returns the full updated config.
    */
   updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
+
+  /**
+   * Create a new runtime environment on the provider side.
+   * Environments are container configurations (packages, networking) used when starting sessions.
+   * Returns the stable external environment ID we persist on Integration.credentials.
+   */
+  createEnvironment(input: CreateEnvironmentInput): Promise<CreateEnvironmentResult>;
+
+  /**
+   * Fetch basic info for an existing environment from the provider.
+   * Used to verify the environment still exists before starting a session.
+   */
+  getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult>;
+
+  /**
+   * Archive (soft-delete) the environment on the provider side.
+   * Best-effort — callers should still proceed with local cleanup on error.
+   */
+  archiveEnvironment(externalEnvironmentId: string): Promise<void>;
 }

@@ -22,9 +22,22 @@ export class ProvisionManagedAgentCommand {
   @IsNotEmpty()
   providerId: AgentRuntimeProviderIdEnum;
 
-  @IsNotEmpty()
+  /**
+   * ID of an existing Novu integration. Mutually exclusive with `apiKey`.
+   * Exactly one of `integrationId` or `apiKey` must be provided.
+   */
+  @IsOptional()
   @IsString()
-  integrationId: string;
+  integrationId?: string;
+
+  /**
+   * Raw provider API key. When provided, the usecase auto-creates an Integration
+   * and a Claude environment before provisioning the agent.
+   * Mutually exclusive with `integrationId`.
+   */
+  @IsOptional()
+  @IsString()
+  apiKey?: string;
 
   @IsOptional()
   @IsString()

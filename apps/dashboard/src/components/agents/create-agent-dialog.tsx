@@ -256,7 +256,6 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
         runtime: 'managed',
         managedRuntime: {
           providerId: 'anthropic',
-          integrationId: '',
           externalAgentId: externalAgentId.trim(),
         },
         apiKey: apiKey.trim(),
@@ -274,7 +273,6 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
         body.runtime = 'managed';
         body.managedRuntime = {
           providerId: 'anthropic',
-          integrationId: '',
           model: 'claude-opus-4-5',
           systemPrompt: trimmedInstructions || undefined,
           tools: selectedTools.length > 0 ? selectedTools : undefined,

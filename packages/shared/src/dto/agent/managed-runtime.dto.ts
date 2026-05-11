@@ -22,11 +22,16 @@ export type AgentSkillDto = {
 
 /**
  * Payload shape used when creating a new managed-runtime agent.
- * `tools`, `mcpServers`, and `skills` are optional initial selections applied at provisioning time.
+ * Exactly one of `integrationId` or `apiKey` must be provided.
+ * When `apiKey` is given, the API auto-creates an Integration and a Claude environment.
+ * When `integrationId` is given, the API reuses the existing Integration (and its environment).
  */
 export type CreateManagedRuntimeDto = {
   providerId: AgentRuntimeProviderIdEnum;
-  integrationId: string;
+  /** Use an existing Novu integration. Mutually exclusive with `apiKey`. */
+  integrationId?: string;
+  /** Raw provider API key. The API will create the Integration + Environment automatically. Mutually exclusive with `integrationId`. */
+  apiKey?: string;
   model?: string;
   systemPrompt?: string;
   /** Tool `type` strings to enable on the new agent (e.g. 'web_search'). */

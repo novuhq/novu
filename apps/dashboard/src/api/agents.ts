@@ -76,7 +76,16 @@ export type ListAgentsResponse = {
 
 export type CreateManagedRuntimeBody = {
   providerId: string;
-  integrationId: string;
+  /**
+   * Use an existing Novu integration. Mutually exclusive with `apiKey`.
+   * Exactly one of `integrationId` or `apiKey` must be provided.
+   */
+  integrationId?: string;
+  /**
+   * Raw provider API key. The API auto-creates an Integration + Claude environment.
+   * Mutually exclusive with `integrationId`.
+   */
+  apiKey?: string;
   /**
    * When set, Novu links to this existing provider agent instead of creating a new one.
    * The agent's name and Novu identifier are auto-generated from the provider.

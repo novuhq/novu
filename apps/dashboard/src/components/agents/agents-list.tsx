@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -12,7 +12,6 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { createIntegration } from '@/api/integrations';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
@@ -91,22 +90,11 @@ export function AgentsList() {
     mutationFn: async (body: CreateAgentDialogSubmitBody) => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
+      // The API handles Integration + Claude environment creation when apiKey is provided.
+      // No separate createIntegration call is needed.
+      const { apiKey: _apiKey, ...agentBody } = body;
+
       if (body.runtime === 'managed' && body.apiKey) {
-        const integrationResponse = await createIntegration(
-          {
-            providerId: 'anthropic',
-            channel: ChannelTypeEnum.AGENT_RUNTIME,
-            credentials: { apiKey: body.apiKey },
-            configurations: {},
-            name: 'Anthropic (managed agents)',
-            active: true,
-            _environmentId: environment._id,
-          },
-          environment
-        );
-
-        const { apiKey: _apiKey, ...agentBody } = body;
-
         const { managedRuntime } = agentBody;
 
         return createAgent(environment, {
@@ -114,12 +102,10 @@ export function AgentsList() {
           managedRuntime: {
             providerId: managedRuntime?.providerId ?? 'anthropic',
             ...managedRuntime,
-            integrationId: integrationResponse.data._id,
+            apiKey: body.apiKey,
           },
         });
       }
-
-      const { apiKey: _apiKey, ...agentBody } = body;
 
       return createAgent(environment, agentBody);
     },

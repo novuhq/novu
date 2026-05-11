@@ -49,6 +49,8 @@ async function setupManagedRuntimeContext(): Promise<ManagedAgentTestContext> {
   };
 }
 
+const FAKE_EXTERNAL_ENV_ID = 'env_01XJ5FakeEnvE2E';
+
 function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
   return {
     providerId: AgentRuntimeProviderIdEnum.Anthropic,
@@ -69,6 +71,9 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
       mcpServers: [],
       tools: [],
     }),
+    createEnvironment: sinon.stub().resolves({ externalEnvironmentId: FAKE_EXTERNAL_ENV_ID }),
+    getEnvironment: sinon.stub().resolves({ externalEnvironmentId: FAKE_EXTERNAL_ENV_ID }),
+    archiveEnvironment: sinon.stub().resolves(),
     ...overrides,
   };
 }
@@ -524,6 +529,134 @@ describe('Managed Agents API #novu-v2', () => {
       });
 
       expect(res.status).to.equal(422);
+    });
+  });
+
+  // ─── POST /v1/agents — apiKey flow (auto-create Integration + Environment) ──
+
+  describe('POST /v1/agents — apiKey auto-provisioning', () => {
+    function apiKeyBody(identifier: string, overrides: Record<string, unknown> = {}) {
+      return {
+        name: 'API Key Auto Agent',
+        identifier,
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+          apiKey: FAKE_API_KEY,
+        },
+        ...overrides,
+      };
+    }
+
+    it('should create an Integration and persist externalEnvironmentId when apiKey is provided', async () => {
+      const identifier = `e2e-apikey-${Date.now()}`;
+      createdIdentifiers.push(identifier);
+
+      const res = await ctx.session.testAgent.post('/v1/agents').send(apiKeyBody(identifier));
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data.runtime).to.equal('managed');
+      expect(res.body.data.managedRuntime).to.exist;
+      expect(res.body.data.managedRuntime.externalAgentId).to.equal(FAKE_EXTERNAL_AGENT_ID);
+
+      const integrationId = res.body.data.managedRuntime.integrationId;
+      expect(integrationId).to.be.a('string');
+
+      // Verify the integration was auto-created with the environment ID in credentials
+      const integration = await integrationRepository.findOne(
+        {
+          _id: integrationId,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
+        ['credentials']
+      );
+
+      expect(integration, 'auto-created integration should exist').to.exist;
+
+      // Verify createEnvironment was called on the provider
+      expect(mockProvider.createEnvironment.calledOnce, 'createEnvironment should be called').to.be.true;
+    });
+
+    it('should NOT call createEnvironment when an existing integrationId is provided', async () => {
+      const identifier = `e2e-existing-integ-${Date.now()}`;
+      createdIdentifiers.push(identifier);
+
+      await ctx.session.testAgent.post('/v1/agents').send({
+        name: 'Existing Integration Agent',
+        identifier,
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+          integrationId: ctx.integrationId,
+        },
+      });
+
+      expect(mockProvider.createEnvironment.called, 'createEnvironment should NOT be called').to.be.false;
+    });
+
+    it('should return 400 and roll back Integration + archive Environment when createAgent fails', async () => {
+      mockProvider.createAgent.rejects(
+        new AgentRuntimeBadRequestError('Invalid model', AgentRuntimeProviderIdEnum.Anthropic)
+      );
+
+      const identifier = `e2e-apikey-fail-${Date.now()}`;
+      const res = await ctx.session.testAgent.post('/v1/agents').send(apiKeyBody(identifier));
+
+      expect(res.status).to.equal(400);
+      expect(res.body.code).to.equal('AGENT_RUNTIME_BAD_REQUEST');
+
+      // archiveEnvironment should have been called as part of rollback
+      expect(mockProvider.archiveEnvironment.calledOnce, 'archiveEnvironment should be called on rollback').to.be.true;
+      expect(mockProvider.archiveEnvironment.getCall(0).args[0]).to.equal(FAKE_EXTERNAL_ENV_ID);
+
+      // No agent document should remain
+      const leftover = await agentRepository.findOne(
+        {
+          identifier,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
+        ['_id']
+      );
+
+      expect(leftover, 'agent document should have been rolled back').to.equal(null);
+    });
+
+    it('should return 422 when neither apiKey nor integrationId is provided', async () => {
+      const res = await ctx.session.testAgent.post('/v1/agents').send({
+        name: 'Missing Credentials Agent',
+        identifier: `e2e-no-creds-${Date.now()}`,
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+        },
+      });
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('should work with adopt flow using raw apiKey', async () => {
+      const res = await ctx.session.testAgent.post('/v1/agents').send({
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+          apiKey: FAKE_API_KEY,
+          externalAgentId: FAKE_ADOPT_AGENT_ID,
+        },
+      });
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data.name).to.equal(FAKE_ADOPT_AGENT_NAME);
+      expect(res.body.data.managedRuntime.externalAgentId).to.equal(FAKE_ADOPT_AGENT_ID);
+
+      // An integration should have been auto-created
+      expect(res.body.data.managedRuntime.integrationId).to.be.a('string');
+
+      // createEnvironment should have been called
+      expect(mockProvider.createEnvironment.calledOnce, 'createEnvironment should be called').to.be.true;
+
+      createdIdentifiers.push(res.body.data.identifier);
     });
   });
 });

@@ -44,7 +44,7 @@ export class CreateAgent {
 
     const agent = isManaged
       ? await this.agentRepository.withTransaction(async (session) => {
-          const managedRuntime = command.managedRuntime ?? { providerId: undefined as never, integrationId: '' };
+          const managedRuntime = command.managedRuntime ?? { providerId: undefined as never };
 
           // In adopt mode we don't know the name/identifier yet — use temporary placeholders.
           // They will be overwritten after the provider responds.
@@ -73,6 +73,7 @@ export class CreateAgent {
                 externalAgentId: managedRuntime.externalAgentId,
                 providerId: managedRuntime.providerId,
                 integrationId: managedRuntime.integrationId,
+                apiKey: managedRuntime.apiKey,
                 model: managedRuntime.model,
                 systemPrompt: managedRuntime.systemPrompt,
                 tools: managedRuntime.tools,

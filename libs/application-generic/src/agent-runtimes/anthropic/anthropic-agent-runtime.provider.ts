@@ -21,7 +21,10 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  CreateEnvironmentInput,
+  CreateEnvironmentResult,
   GetAgentResult,
+  GetEnvironmentResult,
   IAgentRuntimeProvider,
   UpdateAgentRuntimeConfigInput,
 } from '../i-agent-runtime-provider';
@@ -204,6 +207,52 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         await (client as any).beta.agents.update(externalAgentId, updatePayload);
 
         return this.getConfig(externalAgentId);
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async createEnvironment(input: CreateEnvironmentInput): Promise<CreateEnvironmentResult> {
+    const client = this.buildClient((this as any)._apiKey);
+
+    return this.withRetry(async () => {
+      try {
+        const env = await (client as any).beta.environments.create({
+          name: input.name,
+          config: {
+            type: 'cloud',
+            networking: { type: 'unrestricted' },
+          },
+        });
+
+        return { externalEnvironmentId: env.id as string };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
+    const client = this.buildClient((this as any)._apiKey);
+
+    return this.withRetry(async () => {
+      try {
+        const env = await (client as any).beta.environments.retrieve(externalEnvironmentId);
+
+        return { externalEnvironmentId: env.id as string };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async archiveEnvironment(externalEnvironmentId: string): Promise<void> {
+    const client = this.buildClient((this as any)._apiKey);
+
+    await this.withRetry(async () => {
+      try {
+        await (client as any).beta.environments.archive(externalEnvironmentId);
       } catch (err) {
         this.normaliseError(err);
       }
