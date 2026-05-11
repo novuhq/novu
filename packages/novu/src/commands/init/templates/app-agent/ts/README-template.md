@@ -48,13 +48,13 @@ Your agent handler receives a context object with:
 Replace the demo handler in `app/novu/agents/support-agent.tsx` with your LLM call:
 
 ```typescript
-onMessage: async (ctx) => {
+onMessage: async (message, ctx) => {
   const response = await openai.chat.completions.create({
     model: 'gpt-4',
     messages: [
       { role: 'system', content: 'You are a helpful support agent.' },
       ...ctx.history.map((h) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: ctx.message?.text ?? '' },
+      { role: 'user', content: message.text ?? '' },
     ],
   });
 
