@@ -1303,7 +1303,7 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
     description:
       'In your Meta app, open App settings > Basic from the bottom of the left sidebar — used to verify inbound webhook signatures',
     type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.Token,

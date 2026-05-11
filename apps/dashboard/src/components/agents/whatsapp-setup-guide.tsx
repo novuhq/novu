@@ -297,8 +297,8 @@ function ManualWebhookFallback({
         Callback URL and Verify Token below, click <strong className="text-text-sub">Verify and save</strong>, then
         scroll to <strong className="text-text-sub">Webhook fields</strong>, click{' '}
         <strong className="text-text-sub">Manage</strong> and toggle{' '}
-        <strong className="text-text-sub">Subscribe</strong> next to{' '}
-        <strong className="text-text-sub">messages</strong>.
+        <strong className="text-text-sub">Subscribe</strong> next to <strong className="text-text-sub">messages</strong>
+        .
       </p>
       <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
       <ReadOnlyValueRow label="Verify Token" value={verifyToken} />
@@ -418,7 +418,9 @@ export function WhatsAppSetupGuide({
             <strong className="text-text-sub">Customize</strong>
             {' on “Connect with customers through WhatsApp”, then pick '}
             <strong className="text-text-sub">API Setup</strong>
-            {' from the inner menu. Collect:'}
+            {
+              ' from the inner menu. CMD+A and CMD+C the whole page and paste it in the configure sidebar — we’ll auto-fill:'
+            }
           </span>
         }
         extraContent={
@@ -436,10 +438,9 @@ export function WhatsAppSetupGuide({
               Number ID on the API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">App Secret</strong> — open{' '}
-              <strong className="text-text-sub">App settings &gt; Basic</strong> from the bottom of the left sidebar
-              (separate page from API Setup), then copy the value next to{' '}
-              <strong className="text-text-sub">App secret</strong>
+              <strong className="text-text-sub">App Secret</strong> — lives on a different page; open{' '}
+              <strong className="text-text-sub">App settings &gt; Basic</strong> from the bottom of the left sidebar,
+              then copy the value next to <strong className="text-text-sub">App secret</strong> and paste it manually
             </li>
           </ol>
         }
