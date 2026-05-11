@@ -1,29 +1,15 @@
-import type { AgentRuntime, AgentRuntimeCapabilities, IEnvironment } from '@novu/shared';
+import type { AgentRuntime, IEnvironment } from '@novu/shared';
 import { get, patch } from '@/api/api.client';
 
 // ─── Query key helpers ───────────────────────────────────────────────────────
 
-const AGENT_RUNTIME_PROVIDERS_QUERY_KEY = 'fetchAgentRuntimeProviders' as const;
 const AGENT_RUNTIME_CONFIG_QUERY_KEY = 'fetchAgentRuntimeConfig' as const;
-
-export function getAgentRuntimeProvidersQueryKey() {
-  return [AGENT_RUNTIME_PROVIDERS_QUERY_KEY] as const;
-}
 
 export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
   return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-export type AgentRuntimeProviderResponse = {
-  providerId: string;
-  displayName: string;
-  docsUrl?: string;
-  statusUrl?: string;
-  comingSoon?: boolean;
-  capabilities: AgentRuntimeCapabilities;
-};
 
 export type AgentMcpServer = {
   externalId: string;
@@ -63,22 +49,6 @@ export type AgentRuntimeError = {
 };
 
 // ─── API functions ───────────────────────────────────────────────────────────
-
-/**
- * Fetches the static catalog of supported agent runtime providers.
- * Used to render capability-driven UI panels (MCP, tools, model, system prompt).
- */
-export async function getAgentRuntimeProviders(
-  environment: IEnvironment,
-  signal?: AbortSignal
-): Promise<AgentRuntimeProviderResponse[]> {
-  const response = await get<{ data: AgentRuntimeProviderResponse[] }>('/agents/runtime-providers', {
-    environment,
-    signal,
-  });
-
-  return response.data;
-}
 
 /**
  * Fetches live runtime configuration for a managed agent from the provider.

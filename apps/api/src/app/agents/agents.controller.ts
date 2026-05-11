@@ -18,7 +18,6 @@ import {
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
-  AGENT_RUNTIME_PROVIDERS,
   ApiRateLimitCategoryEnum,
   DirectionEnum,
   PermissionsEnum,
@@ -40,7 +39,6 @@ import {
   AgentIntegrationResponseDto,
   AgentResponseDto,
   AgentRuntimeConfigResponseDto,
-  AgentRuntimeProviderResponseDto,
   CreateAgentRequestDto,
   ListAgentIntegrationsQueryDto,
   ListAgentIntegrationsResponseDto,
@@ -118,19 +116,6 @@ export class AgentsController {
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgentEmoji(): Promise<AgentEmojiEntry[]> {
     return this.listAgentEmojiUsecase.execute();
-  }
-
-  @Get('/runtime-providers')
-  @ApiResponse(AgentRuntimeProviderResponseDto)
-  @ApiOperation({
-    summary: 'List agent runtime providers',
-    description:
-      'Returns the catalog of supported managed-runtime providers and their capabilities. ' +
-      'The dashboard uses this to show/hide configuration panels (MCP servers, tools, model, system prompt).',
-  })
-  @RequirePermissions(PermissionsEnum.AGENT_READ)
-  listAgentRuntimeProviders(): AgentRuntimeProviderResponseDto[] {
-    return AGENT_RUNTIME_PROVIDERS as AgentRuntimeProviderResponseDto[];
   }
 
   @Post('/')

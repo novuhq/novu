@@ -41,6 +41,21 @@ export class AgentToolDto {
   description?: string;
 }
 
+export class AgentSkillInputDto {
+  @ApiProperty({ enum: ['anthropic', 'custom'] })
+  @IsIn(['anthropic', 'custom'])
+  type: 'anthropic' | 'custom';
+
+  @ApiProperty({ description: 'Skill identifier, e.g. "xlsx" or "skill_01XJ5..."' })
+  @IsString()
+  skillId: string;
+
+  @ApiPropertyOptional({ description: 'Version to pin. Omit for latest.' })
+  @IsOptional()
+  @IsString()
+  version?: string | null;
+}
+
 export class AgentRuntimeConfigResponseDto {
   @ApiProperty()
   model: string;
@@ -89,55 +104,6 @@ export class PatchAgentRuntimeConfigRequestDto {
   @ValidateNested({ each: true })
   @Type(() => AgentSkillInputDto)
   skills?: AgentSkillInputDto[];
-}
-
-export class AgentRuntimeCapabilitiesDto {
-  @ApiProperty()
-  mcpServers: boolean;
-
-  @ApiProperty()
-  tools: boolean;
-
-  @ApiProperty()
-  model: boolean;
-
-  @ApiProperty()
-  systemPrompt: boolean;
-}
-
-export class AgentRuntimeProviderResponseDto {
-  @ApiProperty({ enum: AgentRuntimeProviderIdEnum })
-  providerId: string;
-
-  @ApiProperty()
-  displayName: string;
-
-  @ApiPropertyOptional()
-  docsUrl?: string;
-
-  @ApiPropertyOptional()
-  statusUrl?: string;
-
-  @ApiPropertyOptional()
-  comingSoon?: boolean;
-
-  @ApiProperty({ type: AgentRuntimeCapabilitiesDto })
-  capabilities: AgentRuntimeCapabilitiesDto;
-}
-
-export class AgentSkillInputDto {
-  @ApiProperty({ enum: ['anthropic', 'custom'] })
-  @IsIn(['anthropic', 'custom'])
-  type: 'anthropic' | 'custom';
-
-  @ApiProperty({ description: 'Skill identifier, e.g. "xlsx" or "skill_01XJ5..."' })
-  @IsString()
-  skillId: string;
-
-  @ApiPropertyOptional({ description: 'Version to pin. Omit for latest.' })
-  @IsOptional()
-  @IsString()
-  version?: string | null;
 }
 
 export class ManagedRuntimeDto {

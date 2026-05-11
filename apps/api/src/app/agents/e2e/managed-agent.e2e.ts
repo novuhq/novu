@@ -245,30 +245,6 @@ describe('Managed Agents API #novu-v2', () => {
     });
   });
 
-  // ─── GET /v1/agents/runtime-providers ───────────────────────────────────────
-
-  describe('GET /v1/agents/runtime-providers', () => {
-    it('should return the catalog of runtime providers with capabilities', async () => {
-      const res = await ctx.session.testAgent.get('/v1/agents/runtime-providers');
-
-      expect(res.status).to.equal(200);
-      expect(res.body.data).to.be.an('array').with.length.gte(1);
-
-      const anthropic = res.body.data.find(
-        (p: { providerId: string }) => p.providerId === AgentRuntimeProviderIdEnum.Anthropic
-      );
-
-      expect(anthropic, 'anthropic entry').to.exist;
-      expect(anthropic.displayName).to.equal('Claude (Anthropic)');
-      expect(anthropic.capabilities).to.deep.include({
-        mcpServers: true,
-        tools: true,
-        model: true,
-        systemPrompt: true,
-      });
-    });
-  });
-
   // ─── GET /v1/agents/:identifier/runtime/config ──────────────────────────────
 
   describe('GET /v1/agents/:identifier/runtime/config', () => {
