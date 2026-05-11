@@ -285,7 +285,9 @@
       "mongoose@>=8.0.0 <8.22.1": "^8.22.1",
       "newrelic": "13.19.2",
       "fast-uri@<3.1.2": "^3.1.2",
-      "@babel/plugin-transform-modules-systemjs@<7.29.4": "^7.29.4"
+      "@babel/plugin-transform-modules-systemjs@<7.29.4": "^7.29.4",
+      "uuid@>=11.0.0 <11.1.1": "^11.1.1",
+      "uuid@>=13.0.0 <13.0.1": "^13.0.1"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
