@@ -1,4 +1,4 @@
-import { Logger, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, HttpException, Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import {
   getSqsDefaultBatchSize,
@@ -23,6 +23,34 @@ import {
 } from '../sqs';
 
 const LOG_CONTEXT = 'WorkerService';
+
+/**
+ * 4xx HTTP statuses that should still be retried because the underlying
+ * condition is transient: request timeout and rate limiting.
+ */
+const TRANSIENT_4XX_STATUSES = new Set<number>([408, 429]);
+
+/**
+ * Decides whether a processor error represents a permanent client-side failure
+ * that cannot succeed on retry. Mirrors the BullMQ `removeOnFail: true` default
+ * for the workflow/subscriber-process/ws workers, which do not register their
+ * own `sqsFailedHandler`. Without this, SQS keeps redelivering 4xx failures
+ * (bad payload, missing subscriberId, etc.) every visibility timeout until the
+ * message hits `maxReceiveCount` and falls into the DLQ.
+ */
+export function isPermanentClientError(error: unknown): boolean {
+  if (error instanceof BadRequestException) {
+    return true;
+  }
+
+  if (error instanceof HttpException) {
+    const status = error.getStatus();
+
+    return status >= 400 && status < 500 && !TRANSIENT_4XX_STATUSES.has(status);
+  }
+
+  return false;
+}
 
 export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
@@ -186,6 +214,27 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
             );
             shouldRetry = true;
           }
+        } else if (isPermanentClientError(error)) {
+          /*
+           * Default behaviour for workers that have not registered a custom
+           * `sqsFailedHandler` (workflow, subscriber-process, ws). 4xx errors
+           * cannot succeed on retry, so ack the message to mirror BullMQ's
+           * `removeOnFail: true` semantics. Without this, SQS would keep
+           * redelivering the same bad payload every visibility timeout until
+           * the message is poison-pilled into the DLQ.
+           */
+          Logger.warn(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              jobId,
+              topic: this.topic,
+              attemptsMade: meta.receiveCount,
+            },
+            'SQS message has permanent client error, acking without retry',
+            LOG_CONTEXT
+          );
+
+          return;
         }
 
         if (shouldRetry) {
