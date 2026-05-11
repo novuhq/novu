@@ -1,4 +1,4 @@
-import { AgentRuntimeProviderIdEnum } from '../../consts/providers/agent-runtime-providers';
+import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 
 export type AgentRuntime = 'self-hosted' | 'managed';
 

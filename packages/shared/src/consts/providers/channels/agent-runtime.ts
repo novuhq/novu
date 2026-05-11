@@ -1,5 +1,4 @@
-import { ChannelTypeEnum } from '../../../types';
-import { AgentRuntimeProviderIdEnum } from '../agent-runtime-providers';
+import { AgentRuntimeProviderIdEnum, ChannelTypeEnum } from '../../../types';
 import { anthropicAgentConfig } from '../credentials';
 import type { IProviderConfig } from '../provider.interface';
 

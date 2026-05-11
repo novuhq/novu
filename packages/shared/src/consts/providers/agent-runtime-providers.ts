@@ -1,12 +1,11 @@
+import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from './claude-mcp-servers';
 import { CLAUDE_ANTHROPIC_SKILLS, type ClaudeAnthropicSkill } from './claude-skills';
 import { CLAUDE_BUILTIN_TOOLS, type ClaudeBuiltinTool } from './claude-tools';
 import { anthropicAgentConfig } from './credentials';
 import type { IConfigCredential, ILogoFileName } from './provider.interface';
 
-export enum AgentRuntimeProviderIdEnum {
-  Anthropic = 'anthropic',
-}
+export { AgentRuntimeProviderIdEnum };
 
 export type AgentRuntimeCapabilities = {
   /** Supports adding/removing MCP servers via the provider API */
