@@ -1,6 +1,8 @@
 import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from './claude-mcp-servers';
 import { CLAUDE_ANTHROPIC_SKILLS, type ClaudeAnthropicSkill } from './claude-skills';
 import { CLAUDE_BUILTIN_TOOLS, type ClaudeBuiltinTool } from './claude-tools';
+import { anthropicAgentConfig } from './credentials';
+import type { IConfigCredential, ILogoFileName } from './provider.interface';
 
 export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
@@ -26,7 +28,9 @@ export type AgentRuntimeProvider = {
   /** URL to the provider's operational status page */
   statusUrl?: string;
   comingSoon?: boolean;
+  logoFileName: ILogoFileName;
   capabilities: AgentRuntimeCapabilities;
+  credentials: IConfigCredential[];
   /** Static catalog of built-in tools the provider supports */
   availableTools?: ClaudeBuiltinTool[];
   /** Static catalog of remote MCP servers the provider supports */
@@ -41,6 +45,8 @@ export const AGENT_RUNTIME_PROVIDERS: AgentRuntimeProvider[] = [
     displayName: 'Claude (Anthropic)',
     docsUrl: 'https://docs.anthropic.com/en/docs/agents',
     statusUrl: 'https://status.anthropic.com',
+    logoFileName: { light: 'anthropic.svg', dark: 'anthropic.svg' },
+    credentials: anthropicAgentConfig,
     capabilities: {
       mcpServers: true,
       tools: true,

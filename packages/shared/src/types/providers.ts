@@ -55,6 +55,8 @@ export enum CredentialsKeyEnum {
   TenantId = 'tenantId',
   SigningSecret = 'signingSecret',
   OutboundIntegrationId = 'outboundIntegrationId',
+  /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. Auto-populated by the API — never entered by the user. */
+  ExternalEnvironmentId = 'externalEnvironmentId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

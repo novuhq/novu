@@ -577,6 +577,10 @@ describe('Managed Agents API #novu-v2', () => {
       );
 
       expect(integration, 'auto-created integration should exist').to.exist;
+      expect(
+        integration.credentials.externalEnvironmentId,
+        'externalEnvironmentId should be persisted on credentials'
+      ).to.equal(FAKE_EXTERNAL_ENV_ID);
 
       // Verify createEnvironment was called on the provider
       expect(mockProvider.createEnvironment.calledOnce, 'createEnvironment should be called').to.be.true;
