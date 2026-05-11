@@ -1,4 +1,4 @@
-import { BotMessageSquare, Box } from 'lucide-react';
+import { BotMessageSquare } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link } from 'react-router-dom';
 import { CustomerSupportButton } from '@/components/header-navigation/customer-support-button';
@@ -59,9 +59,7 @@ function AppRailLink({ item, to, isActive }: AppRailLinkProps) {
             {content}
           </Link>
         ) : (
-          <span role="img" aria-label={label} className="cursor-not-allowed opacity-50">
-            {content}
-          </span>
+          <span className="cursor-not-allowed opacity-50">{content}</span>
         )}
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={6}>

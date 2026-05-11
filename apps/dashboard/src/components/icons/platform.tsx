@@ -1,7 +1,11 @@
+import { useId } from 'react';
+
 export function PlatformIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
+  const id = useId();
+
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" {...props}>
-      <g clip-path="url(#a)">
+      <g clip-path={`url(#${id})`}>
         <path
           stroke="currentColor"
           strokeLinecap="round"
@@ -11,7 +15,7 @@ export function PlatformIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
         />
       </g>
       <defs>
-        <clipPath id="a">
+        <clipPath id={id}>
           <path fill="#fff" d="M0 0h20v20H0z" />
         </clipPath>
       </defs>
