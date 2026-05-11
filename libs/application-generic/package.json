@@ -53,7 +53,7 @@
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
     "@opentelemetry/api": "1.9.0",
-    "@opentelemetry/auto-instrumentations-node": "0.70.0",
+    "@opentelemetry/auto-instrumentations-node": "0.75.0",
     "@opentelemetry/context-async-hooks": "2.5.0",
     "@opentelemetry/core": "2.5.0",
     "@opentelemetry/exporter-logs-otlp-http": "0.211.0",
