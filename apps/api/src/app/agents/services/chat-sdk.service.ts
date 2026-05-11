@@ -1080,7 +1080,7 @@ export class ChatSdkService implements OnModuleDestroy {
           cached.config,
           event.thread as Thread,
           {
-            actionId: event.actionId,
+            id: event.actionId,
             value: event.value,
             sourceMessageId: event.messageId,
           },

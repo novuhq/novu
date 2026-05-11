@@ -11,7 +11,7 @@ import {
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
-  AgentBridgeAction,
+  AgentAction,
   AgentBridgeRequest,
   AgentConversation,
   AgentHistoryEntry,
@@ -74,7 +74,7 @@ export interface BridgeExecutorParams {
   history: ConversationActivityEntity[];
   message: Message | null;
   platformContext: AgentPlatformContext;
-  action?: AgentBridgeAction;
+  action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
 }
@@ -238,7 +238,7 @@ export class BridgeExecutorService {
     if (message?.id) {
       deliveryId = `${conversation._id}:${message.id}`;
     } else if (action) {
-      deliveryId = `${conversation._id}:${event}:${action.actionId}:${timestamp}`;
+      deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
       deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
     } else {

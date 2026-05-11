@@ -7,7 +7,7 @@ import {
   EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import type { AgentBridgeAction } from '@novu/framework';
+import type { AgentAction } from '@novu/framework';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
@@ -462,7 +462,7 @@ export class AgentInboundHandler {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    action: AgentBridgeAction,
+    action: AgentAction,
     userId: string
   ): Promise<void> {
     const subscriberId = await this.subscriberResolver
@@ -497,7 +497,7 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: userId,
-      firstMessageText: `[action:${action.actionId}]`,
+      firstMessageText: `[action:${action.id}]`,
     });
 
     const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
@@ -517,7 +517,7 @@ export class AgentInboundHandler {
       integrationIdentifier: config.integrationIdentifier,
       platform: config.platform,
       conversationId: conversation._id,
-      actionId: action.actionId,
+      actionId: action.id,
     });
 
     const [subscriber, history] = await Promise.all([
