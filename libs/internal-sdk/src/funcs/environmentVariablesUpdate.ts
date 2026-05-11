@@ -215,11 +215,13 @@ async function $do(
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
-    M.jsonErr([401, 403, 405, 409, 413, 415], errors.ErrorDto$inboundSchema, {
-      hdrs: true,
-    }),
+    M.jsonErr(
+      [400, 401, 403, 405, 409, 413, 415],
+      errors.ErrorDto$inboundSchema,
+      { hdrs: true },
+    ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail([400, 404, 429]),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),
