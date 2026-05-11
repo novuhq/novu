@@ -521,6 +521,7 @@ export class AgentsController {
         systemPrompt: body.systemPrompt,
         mcpServers: body.mcpServers,
         tools: body.tools,
+        skills: body.skills,
       })
     );
   }

@@ -40,11 +40,6 @@ const agentSchema = new Schema<AgentDBModel>(
       },
       externalAgentId: Schema.Types.String,
     },
-    deletedAt: Schema.Types.String,
-    pendingExternalDelete: {
-      type: Schema.Types.Boolean,
-      default: false,
-    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

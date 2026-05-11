@@ -49,17 +49,6 @@ export class AgentEntity {
    */
   managedRuntime?: ManagedRuntimeConfig;
 
-  /**
-   * Set when a managed agent is pending deletion.
-   * The agent is hidden from normal reads until the provider-side delete job completes.
-   */
-  deletedAt?: string;
-
-  /**
-   * True when the provider-side delete has been enqueued but not yet confirmed.
-   */
-  pendingExternalDelete?: boolean;
-
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

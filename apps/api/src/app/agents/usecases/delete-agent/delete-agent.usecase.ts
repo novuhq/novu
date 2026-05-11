@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 
 import { trackAgentDeleted } from '../../agent-analytics';
@@ -13,8 +13,7 @@ export class DeleteAgent {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly cleanupNovuEmail: CleanupNovuEmail,
-    private readonly analyticsService: AnalyticsService,
-    private readonly logger: PinoLogger
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: DeleteAgentCommand): Promise<void> {
@@ -31,53 +30,33 @@ export class DeleteAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    const isManagedAgent = agent.runtime === 'managed' && agent.managedRuntime;
     const shouldDeleteFromProvider = command.deleteFromProvider === true;
 
-    if (isManagedAgent && shouldDeleteFromProvider) {
-      // Soft-delete: mark as pending external deletion, then clean up provider-side async
-      await this.agentRepository.update(
+    if (agent.runtime === 'managed' && agent.managedRuntime && shouldDeleteFromProvider) {
+      await this.deleteFromProvider(agent.managedRuntime, command);
+    }
+
+    await this.agentRepository.withTransaction(async (session) => {
+      await this.cleanupNovuEmail.cleanupForAgent(agent._id, command.environmentId, command.organizationId, session);
+
+      await this.agentIntegrationRepository.delete(
+        {
+          _agentId: agent._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        { session }
+      );
+
+      await this.agentRepository.delete(
         {
           _id: agent._id,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
-        {
-          $set: {
-            deletedAt: new Date().toISOString(),
-            pendingExternalDelete: true,
-          },
-        }
+        { session }
       );
-
-      // Attempt provider-side delete; hard-delete locally on success
-      this.deleteExternalAgent(agent._id, agent.managedRuntime!, command).catch((err) => {
-        this.logger.error({ agentId: agent._id, err }, 'Background Claude agent deletion failed — will retry');
-      });
-    } else {
-      // Novu-only delete: remove the agent record and its links without touching the provider
-      await this.agentRepository.withTransaction(async (session) => {
-        await this.cleanupNovuEmail.cleanupForAgent(agent._id, command.environmentId, command.organizationId, session);
-
-        await this.agentIntegrationRepository.delete(
-          {
-            _agentId: agent._id,
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-          },
-          { session }
-        );
-
-        await this.agentRepository.delete(
-          {
-            _id: agent._id,
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-          },
-          { session }
-        );
-      });
-    }
+    });
 
     trackAgentDeleted(this.analyticsService, {
       userId: command.userId,
@@ -88,8 +67,7 @@ export class DeleteAgent {
     });
   }
 
-  private async deleteExternalAgent(
-    agentId: string,
+  private async deleteFromProvider(
     managedRuntime: { providerId: string; _integrationId: string; externalAgentId: string },
     command: DeleteAgentCommand
   ): Promise<void> {
@@ -102,33 +80,18 @@ export class DeleteAgent {
       ['credentials']
     );
 
-    if (integration) {
-      const decryptedCredentials = decryptCredentials(integration.credentials);
-      const runtimeProvider = getAgentRuntimeProvider(managedRuntime.providerId, decryptedCredentials.apiKey!);
-      await runtimeProvider.deleteAgent(managedRuntime.externalAgentId);
+    if (!integration) {
+      return;
     }
 
-    // Hard-delete agent and its integration links once the provider confirms
-    await this.agentRepository.withTransaction(async (session) => {
-      await this.cleanupNovuEmail.cleanupForAgent(agentId, command.environmentId, command.organizationId, session);
+    const decryptedCredentials = decryptCredentials(integration.credentials);
 
-      await this.agentIntegrationRepository.delete(
-        {
-          _agentId: agentId,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session }
-      );
+    if (!decryptedCredentials.apiKey) {
+      return;
+    }
 
-      await this.agentRepository.delete(
-        {
-          _id: agentId,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session }
-      );
-    });
+    const runtimeProvider = getAgentRuntimeProvider(managedRuntime.providerId, decryptedCredentials.apiKey);
+
+    await runtimeProvider.deleteAgent(managedRuntime.externalAgentId);
   }
 }

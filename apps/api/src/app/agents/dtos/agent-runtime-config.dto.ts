@@ -53,6 +53,9 @@ export class AgentRuntimeConfigResponseDto {
 
   @ApiProperty({ type: [AgentToolDto] })
   tools: AgentToolDto[];
+
+  @ApiProperty({ type: [AgentSkillInputDto] })
+  skills: AgentSkillInputDto[];
 }
 
 export class PatchAgentRuntimeConfigRequestDto {
@@ -79,6 +82,13 @@ export class PatchAgentRuntimeConfigRequestDto {
   @ValidateNested({ each: true })
   @Type(() => AgentToolDto)
   tools?: AgentToolDto[];
+
+  @ApiPropertyOptional({ type: [AgentSkillInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AgentSkillInputDto)
+  skills?: AgentSkillInputDto[];
 }
 
 export class AgentRuntimeCapabilitiesDto {

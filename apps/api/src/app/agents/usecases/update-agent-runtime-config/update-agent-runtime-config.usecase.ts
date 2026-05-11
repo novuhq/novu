@@ -52,6 +52,7 @@ export class UpdateAgentRuntimeConfig {
       systemPrompt: command.systemPrompt,
       mcpServers: command.mcpServers,
       tools: command.tools,
+      skills: command.skills,
     }) as Promise<AgentRuntimeConfigResponseDto>;
   }
 }
