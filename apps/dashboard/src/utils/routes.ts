@@ -84,6 +84,11 @@ export const ROUTES = {
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
   DISPATCH_HOME: '/env/:environmentSlug/dispatch',
   DISPATCH_AGENTS: '/env/:environmentSlug/dispatch/agents',
+  DISPATCH_AGENT_DETAILS: '/env/:environmentSlug/dispatch/agents/:agentIdentifier',
+  /** Must be registered before DISPATCH_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/dispatch/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  DISPATCH_AGENT_DETAILS_TAB: '/env/:environmentSlug/dispatch/agents/:agentIdentifier/:agentTab',
   DISPATCH_CONVERSATIONS: '/env/:environmentSlug/dispatch/conversations',
   DISPATCH_API_KEYS: '/env/:environmentSlug/dispatch/api-keys',
   DISPATCH_SETTINGS: '/env/:environmentSlug/dispatch/settings',

@@ -1,6 +1,7 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
+import { DispatchBreadcrumbProvider } from '@/components/dashboard-shell/dispatch-breadcrumb-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -21,5 +22,5 @@ export function DispatchProtectedRoute({ children }: DispatchProtectedRouteProps
     return <Navigate to={fallback} replace />;
   }
 
-  return <>{children}</>;
+  return <DispatchBreadcrumbProvider>{children}</DispatchBreadcrumbProvider>;
 }

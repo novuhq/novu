@@ -31,7 +31,6 @@ import {
   WorkflowsPage,
 } from '@/pages';
 import {
-  DispatchAgentsPage,
   DispatchApiKeysPage,
   DispatchConversationsPage,
   DispatchDashboardPage,
@@ -608,10 +607,34 @@ const router = createBrowserRouter([
                 ),
                 children: [
                   { index: true, element: <DispatchDashboardPage /> },
-                  { path: 'agents', element: <DispatchAgentsPage /> },
-                  { path: 'conversations', element: <DispatchConversationsPage /> },
-                  { path: 'api-keys', element: <DispatchApiKeysPage /> },
-                  { path: 'settings', element: <DispatchSettingsPage /> },
+                  { path: ROUTES.DISPATCH_AGENTS, element: <AgentsPage /> },
+                  {
+                    path: ROUTES.DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.DISPATCH_AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.DISPATCH_AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  { path: ROUTES.DISPATCH_CONVERSATIONS, element: <DispatchConversationsPage /> },
+                  { path: ROUTES.DISPATCH_API_KEYS, element: <DispatchApiKeysPage /> },
+                  { path: ROUTES.DISPATCH_SETTINGS, element: <DispatchSettingsPage /> },
                 ],
               },
 
