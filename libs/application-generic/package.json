@@ -57,7 +57,7 @@
     "@opentelemetry/context-async-hooks": "2.5.0",
     "@opentelemetry/core": "2.5.0",
     "@opentelemetry/exporter-logs-otlp-http": "0.211.0",
-    "@opentelemetry/exporter-prometheus": "0.211.0",
+    "@opentelemetry/exporter-prometheus": "0.217.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.211.0",
     "@opentelemetry/instrumentation": "0.211.0",
     "@opentelemetry/instrumentation-pino": "0.57.0",
