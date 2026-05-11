@@ -144,6 +144,17 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
       return;
     }
 
+    /*
+     * Precedence:
+     *   1. `getSqsDefaultConcurrency()` — `SQS_DEFAULT_CONCURRENCY` ENV. Global
+     *      ops lever to throttle every SQS consumer at runtime without a code
+     *      change (e.g. downstream incident, DynamoDB hot partition, etc.).
+     *   2. `options.concurrency` — per-worker value the worker declared (e.g.
+     *      WORKFLOW_WORKER_CONCURRENCY=200, WEB_SOCKET_WORKER_CONCURRENCY=400),
+     *      aligned with the BullMQ side via `getWorkerConcurrency`.
+     *   3. `SQS_DEFAULT_MAX_CONCURRENCY` — hardcoded final fallback when neither
+     *      a per-worker value nor the ENV is set.
+     */
     const sqsConcurrency = getSqsDefaultConcurrency() ?? options?.concurrency ?? SQS_DEFAULT_MAX_CONCURRENCY;
 
     const sqsConsumerOptions: ISqsConsumerOptions = {
