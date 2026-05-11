@@ -290,8 +290,6 @@ interface AgentContextBase {
 /** Context passed to the `onMessage` handler. */
 export interface AgentMessageContext extends AgentContextBase {
   readonly event: 'onMessage';
-  /** The incoming message that triggered this handler. */
-  readonly message: AgentMessage;
 }
 
 /** Context passed to the `onAction` handler. */

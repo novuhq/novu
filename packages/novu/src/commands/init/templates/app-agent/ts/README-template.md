@@ -29,11 +29,12 @@ app/
 
 ## Agent API
 
-Your agent handler receives a context object with:
+Your `onMessage` handler is called with `(message, ctx)`:
+
+- **`message`** — The inbound message (text, author, timestamp)
 
 | Method / Property | Description |
 |---|---|
-| `ctx.message` | The inbound message (text, author, timestamp) |
 | `ctx.conversation` | Current conversation state and metadata |
 | `ctx.history` | Recent conversation history |
 | `ctx.subscriber` | Resolved subscriber info |
@@ -54,7 +55,7 @@ onMessage: async (message, ctx) => {
     messages: [
       { role: 'system', content: 'You are a helpful support agent.' },
       ...ctx.history.map((h) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: message.text ?? '' },
+      { role: 'user', content: message.text },
     ],
   });
 
