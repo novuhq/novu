@@ -23,6 +23,11 @@ export type CreateAgentResult = {
   externalAgentId: string;
 };
 
+export type GetAgentResult = {
+  externalAgentId: string;
+  name: string;
+};
+
 export type UpdateAgentRuntimeConfigInput = {
   model?: string;
   systemPrompt?: string;
@@ -46,6 +51,15 @@ export interface IAgentRuntimeProvider {
    * Returns the stable external agent ID we persist on AgentEntity.managedRuntime.
    */
   createAgent(input: CreateAgentInput): Promise<CreateAgentResult>;
+
+  /**
+   * Fetch basic info (id + name) for an existing agent from the provider.
+   *
+   * Used in the "adopt existing agent" flow. A single call to this method is enough
+   * to both validate that the API key is authorised (401 if not) AND confirm the
+   * agent exists (404 if not), so there is no need to call validateCredentials() first.
+   */
+  getAgent(externalAgentId: string): Promise<GetAgentResult>;
 
   /**
    * Permanently delete the agent on the provider side.

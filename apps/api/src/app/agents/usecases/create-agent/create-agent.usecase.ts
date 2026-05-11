@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, shortId, slugifyOrRandom } from '@novu/application-generic';
 import { AgentRepository } from '@novu/dal';
 import { trackAgentCreated } from '../../agent-analytics';
 import type { AgentResponseDto } from '../../dtos';
@@ -7,6 +7,9 @@ import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
 import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';
 import { CreateAgentCommand } from './create-agent.command';
+
+/** Temporary placeholder used for the initial Mongo insert in adopt mode. */
+const ADOPT_PLACEHOLDER = '__adopt_pending__';
 
 @Injectable()
 export class CreateAgent {
@@ -17,29 +20,43 @@ export class CreateAgent {
   ) {}
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
-    const existing = await this.agentRepository.findOne(
-      {
-        identifier: command.identifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
+    const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
 
-    if (existing) {
-      throw new ConflictException(
-        `An agent with identifier "${command.identifier}" already exists in this environment.`
+    if (!isAdoptMode) {
+      // For non-adopt flows the identifier is required and must be unique
+      const existing = await this.agentRepository.findOne(
+        {
+          identifier: command.identifier,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_id']
       );
+
+      if (existing) {
+        throw new ConflictException(
+          `An agent with identifier "${command.identifier}" already exists in this environment.`
+        );
+      }
     }
 
     const isManaged = command.runtime === 'managed' && command.managedRuntime;
 
     const agent = isManaged
       ? await this.agentRepository.withTransaction(async (session) => {
+          const managedRuntime = command.managedRuntime ?? { providerId: undefined as never, integrationId: '' };
+
+          // In adopt mode we don't know the name/identifier yet — use temporary placeholders.
+          // They will be overwritten after the provider responds.
+          const tempName = isAdoptMode ? ADOPT_PLACEHOLDER : (command.name ?? ADOPT_PLACEHOLDER);
+          const tempIdentifier = isAdoptMode
+            ? `${ADOPT_PLACEHOLDER}-${shortId(6)}`
+            : (command.identifier ?? `${ADOPT_PLACEHOLDER}-${shortId(6)}`);
+
           const created = await this.agentRepository.create(
             {
-              name: command.name,
-              identifier: command.identifier,
+              name: tempName,
+              identifier: tempIdentifier,
               description: command.description,
               active: command.active ?? true,
               _environmentId: command.environmentId,
@@ -49,22 +66,49 @@ export class CreateAgent {
           );
 
           try {
-            await this.provisionManagedAgentUsecase.execute(
+            const provisionResult = await this.provisionManagedAgentUsecase.execute(
               Object.assign(new ProvisionManagedAgentCommand(), {
                 agentId: created._id,
                 name: command.name,
-                providerId: command.managedRuntime!.providerId,
-                integrationId: command.managedRuntime!.integrationId,
-                model: command.managedRuntime!.model,
-                systemPrompt: command.managedRuntime!.systemPrompt,
-                tools: command.managedRuntime!.tools,
-                mcpServers: command.managedRuntime!.mcpServers,
-                skills: command.managedRuntime!.skills,
+                externalAgentId: managedRuntime.externalAgentId,
+                providerId: managedRuntime.providerId,
+                integrationId: managedRuntime.integrationId,
+                model: managedRuntime.model,
+                systemPrompt: managedRuntime.systemPrompt,
+                tools: managedRuntime.tools,
+                mcpServers: managedRuntime.mcpServers,
+                skills: managedRuntime.skills,
                 environmentId: command.environmentId,
                 organizationId: command.organizationId,
               }),
               { session }
             );
+
+            if (isAdoptMode && provisionResult.adoptedName) {
+              // Resolve a unique identifier from the Claude agent name, following the
+              // same pattern used elsewhere in the platform: slugify + random short ID on collision.
+              const resolvedIdentifier = await this.resolveUniqueIdentifier(
+                provisionResult.adoptedName,
+                command.environmentId,
+                command.organizationId,
+                created._id
+              );
+
+              await this.agentRepository.update(
+                {
+                  _id: created._id,
+                  _environmentId: command.environmentId,
+                  _organizationId: command.organizationId,
+                },
+                {
+                  $set: {
+                    name: provisionResult.adoptedName,
+                    identifier: resolvedIdentifier,
+                  },
+                },
+                session ? { session } : {}
+              );
+            }
           } catch (provisionError) {
             // When running without a replica set (e.g. local dev), the transaction does not
             // auto-abort on throw, so we delete the agent we just inserted as a compensating action.
@@ -81,8 +125,8 @@ export class CreateAgent {
           return created;
         })
       : await this.agentRepository.create({
-          name: command.name,
-          identifier: command.identifier,
+          name: command.name ?? '',
+          identifier: command.identifier ?? '',
           description: command.description,
           active: command.active ?? true,
           _environmentId: command.environmentId,
@@ -103,11 +147,41 @@ export class CreateAgent {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       agentId: agent._id,
-      agentIdentifier: agent.identifier,
+      agentIdentifier: (updatedAgent ?? agent).identifier,
       active: agent.active ?? true,
-      name: agent.name,
+      name: (updatedAgent ?? agent).name,
     });
 
     return toAgentResponse(updatedAgent ?? agent);
+  }
+
+  /**
+   * Resolves a unique slug identifier from a name.
+   * Uses the platform-standard slugifyOrRandom pattern, then appends a short ID suffix
+   * on collision (same approach as workflow/layout identifier generation).
+   */
+  private async resolveUniqueIdentifier(
+    name: string,
+    environmentId: string,
+    organizationId: string,
+    excludeAgentId: string
+  ): Promise<string> {
+    const base = slugifyOrRandom(name);
+
+    const collision = await this.agentRepository.findOne(
+      {
+        identifier: base,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _id: { $ne: excludeAgentId },
+      },
+      ['_id']
+    );
+
+    if (!collision) {
+      return base;
+    }
+
+    return `${base}-${shortId(4)}`;
   }
 }

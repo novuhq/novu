@@ -139,6 +139,14 @@ export class ManagedRuntimeDto {
   @IsString()
   integrationId: string;
 
+  @ApiPropertyOptional({
+    description:
+      'ID of an existing agent on the provider platform. When set, Novu adopts the agent instead of creating a new one.',
+  })
+  @IsOptional()
+  @IsString()
+  externalAgentId?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

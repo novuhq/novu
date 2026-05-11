@@ -9,6 +9,12 @@ export type ProvisionManagedAgentOptions = {
   session: ClientSession | null;
 };
 
+export type ProvisionManagedAgentResult = {
+  externalAgentId: string;
+  /** The agent's name as returned by the provider. Present only in adoption mode. */
+  adoptedName?: string;
+};
+
 @Injectable()
 export class ProvisionManagedAgent {
   constructor(
@@ -20,7 +26,7 @@ export class ProvisionManagedAgent {
   async execute(
     command: ProvisionManagedAgentCommand,
     options: ProvisionManagedAgentOptions
-  ): Promise<{ externalAgentId: string }> {
+  ): Promise<ProvisionManagedAgentResult> {
     const { session } = options;
 
     const integration = await this.integrationRepository.findOne(
@@ -46,28 +52,44 @@ export class ProvisionManagedAgent {
 
     const runtimeProvider = getAgentRuntimeProvider(command.providerId, apiKey);
 
-    // Validate credentials before provisioning
-    await runtimeProvider.validateCredentials(apiKey);
+    let externalAgentId: string;
+    let adoptedName: string | undefined;
 
-    const resolvedMcpServers = command.mcpServers?.map((serverId) => {
-      const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
+    if (command.externalAgentId) {
+      // ── Adopt mode ──────────────────────────────────────────────────────────
+      // A single getAgent() call is sufficient to validate both that the API key
+      // is authorised (throws AgentRuntimeUnauthorizedError on 401) AND that the
+      // external agent exists (throws AgentRuntimeNotFoundError on 404). There is
+      // no need to call validateCredentials() separately.
+      const agentInfo = await runtimeProvider.getAgent(command.externalAgentId);
 
-      return { name: catalogServer?.name ?? serverId, url: catalogServer?.url ?? '' };
-    });
+      externalAgentId = agentInfo.externalAgentId;
+      adoptedName = agentInfo.name;
+    } else {
+      // ── Provision mode ───────────────────────────────────────────────────────
+      // Validate credentials before creating a new agent on the provider.
+      await runtimeProvider.validateCredentials(apiKey);
 
-    const response = await runtimeProvider.createAgent({
-      name: command.name,
-      model: command.model,
-      systemPrompt: command.systemPrompt,
-      tools: command.tools,
-      mcpServers: resolvedMcpServers,
-      skills: command.skills,
-    });
+      const resolvedMcpServers = command.mcpServers?.map((serverId) => {
+        const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
 
-    const { externalAgentId } = response;
+        return { name: catalogServer?.name ?? serverId, url: catalogServer?.url ?? '' };
+      });
 
-    // Persist the managed runtime identifiers on the agent
-    // If this update fails, roll back the Claude agent to avoid orphans
+      const response = await runtimeProvider.createAgent({
+        name: command.name ?? '',
+        model: command.model,
+        systemPrompt: command.systemPrompt,
+        tools: command.tools,
+        mcpServers: resolvedMcpServers,
+        skills: command.skills,
+      });
+
+      externalAgentId = response.externalAgentId;
+    }
+
+    // Persist the managed runtime identifiers on the agent.
+    // If this update fails and we just created a new provider agent, roll it back.
     try {
       await this.agentRepository.update(
         {
@@ -89,23 +111,27 @@ export class ProvisionManagedAgent {
       );
     } catch (mongoError) {
       this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
-      // Best-effort rollback: attempt to delete the agent we just created
-      try {
-        await runtimeProvider.deleteAgent(externalAgentId);
-      } catch (rollbackError) {
-        this.logger.error(
-          {
-            agentId: command.agentId,
-            externalAgentId,
-            providerId: command.providerId,
-            rollbackError,
-          },
-          'Failed to rollback Claude agent after Mongo write failure — manual cleanup required'
-        );
+
+      if (!command.externalAgentId) {
+        // Best-effort rollback: only delete if we created the agent (not adoption)
+        try {
+          await runtimeProvider.deleteAgent(externalAgentId);
+        } catch (rollbackError) {
+          this.logger.error(
+            {
+              agentId: command.agentId,
+              externalAgentId,
+              providerId: command.providerId,
+              rollbackError,
+            },
+            'Failed to rollback Claude agent after Mongo write failure — manual cleanup required'
+          );
+        }
       }
+
       throw mongoError;
     }
 
-    return { externalAgentId };
+    return { externalAgentId, adoptedName };
   }
 }

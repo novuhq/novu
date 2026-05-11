@@ -105,18 +105,21 @@ export function AgentsList() {
           environment
         );
 
-        const { apiKey: _apiKey, externalAgentId: _extId, ...agentBody } = body;
+        const { apiKey: _apiKey, ...agentBody } = body;
+
+        const { managedRuntime } = agentBody;
 
         return createAgent(environment, {
           ...agentBody,
           managedRuntime: {
-            ...agentBody.managedRuntime!,
+            providerId: managedRuntime?.providerId ?? 'anthropic',
+            ...managedRuntime,
             integrationId: integrationResponse.data._id,
           },
         });
       }
 
-      const { apiKey: _apiKey, externalAgentId: _extId, ...agentBody } = body;
+      const { apiKey: _apiKey, ...agentBody } = body;
 
       return createAgent(environment, agentBody);
     },

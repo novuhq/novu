@@ -14,6 +14,8 @@ import sinon from 'sinon';
 
 const FAKE_API_KEY = 'sk-fake-anthropic-key-for-e2e';
 const FAKE_EXTERNAL_AGENT_ID = 'ext-agent-e2e-123';
+const FAKE_ADOPT_AGENT_ID = 'agent_01XJ5AdoptE2E';
+const FAKE_ADOPT_AGENT_NAME = 'My Existing Claude Agent';
 
 const agentRepository = new AgentRepository();
 const integrationRepository = new IntegrationRepository();
@@ -54,6 +56,7 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
     validateCredentials: sinon.stub().resolves(),
     createAgent: sinon.stub().resolves({ externalAgentId: FAKE_EXTERNAL_AGENT_ID }),
     deleteAgent: sinon.stub().resolves(),
+    getAgent: sinon.stub().resolves({ externalAgentId: FAKE_ADOPT_AGENT_ID, name: FAKE_ADOPT_AGENT_NAME }),
     getConfig: sinon.stub().resolves({
       model: 'claude-3-5-sonnet-20241022',
       systemPrompt: '',
@@ -436,6 +439,91 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.retryAfterMs).to.equal(5000);
       expect(res.headers['retry-after']).to.exist;
       expect(Number(res.headers['retry-after'])).to.equal(5);
+    });
+  });
+
+  // ─── POST /v1/agents — adopt existing managed agent ─────────────────────────
+
+  describe('POST /v1/agents — adopt existing managed agent', () => {
+    function adoptBody(overrides: Record<string, unknown> = {}) {
+      return {
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+          integrationId: ctx.integrationId,
+          externalAgentId: FAKE_ADOPT_AGENT_ID,
+        },
+        ...overrides,
+      };
+    }
+
+    it('should adopt an existing Claude agent, auto-generating name and identifier from provider', async () => {
+      const res = await ctx.session.testAgent.post('/v1/agents').send(adoptBody());
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data.runtime).to.equal('managed');
+      expect(res.body.data.name).to.equal(FAKE_ADOPT_AGENT_NAME);
+      // Identifier should be a slugified version of the name
+      expect(res.body.data.identifier).to.be.a('string');
+      expect(res.body.data.identifier).to.match(/^my-existing-claude-agent/);
+      expect(res.body.data.managedRuntime.externalAgentId).to.equal(FAKE_ADOPT_AGENT_ID);
+      expect(res.body.data.managedRuntime.integrationId).to.equal(ctx.integrationId);
+
+      // Verify getAgent was called (not createAgent)
+      expect(mockProvider.getAgent.calledOnce, 'getAgent should be called').to.be.true;
+      expect(mockProvider.createAgent.called, 'createAgent should NOT be called').to.be.false;
+      expect(mockProvider.validateCredentials.called, 'validateCredentials should NOT be called').to.be.false;
+
+      createdIdentifiers.push(res.body.data.identifier);
+    });
+
+    it('should return 404 when the external agent ID does not exist on the provider', async () => {
+      mockProvider.getAgent.rejects(
+        new AgentRuntimeNotFoundError('Agent not found on provider', AgentRuntimeProviderIdEnum.Anthropic)
+      );
+
+      const res = await ctx.session.testAgent.post('/v1/agents').send(adoptBody());
+
+      // AgentRuntimeNotFoundError maps to 409 (AGENT_RUNTIME_DRIFT) in the exception filter
+      expect(res.status).to.equal(409);
+      expect(res.body.code).to.equal('AGENT_RUNTIME_DRIFT');
+    });
+
+    it('should return 401 when the API key is rejected during getAgent', async () => {
+      mockProvider.getAgent.rejects(
+        new AgentRuntimeUnauthorizedError('Invalid API key', AgentRuntimeProviderIdEnum.Anthropic)
+      );
+
+      const res = await ctx.session.testAgent.post('/v1/agents').send(adoptBody());
+
+      expect(res.status).to.equal(401);
+      expect(res.body.code).to.equal('AGENT_RUNTIME_UNAUTHORIZED');
+    });
+
+    it('should handle identifier collision by appending a short ID suffix', async () => {
+      // Pre-create an agent whose identifier would collide with the slugified adopt name
+      const collidingIdentifier = 'my-existing-claude-agent';
+      createdIdentifiers.push(collidingIdentifier);
+
+      await ctx.session.testAgent.post('/v1/agents').send({ name: 'Collision Seed', identifier: collidingIdentifier });
+
+      const res = await ctx.session.testAgent.post('/v1/agents').send(adoptBody());
+
+      expect(res.status).to.equal(201);
+      // Identifier should still start with the slug but have a suffix
+      expect(res.body.data.identifier).to.be.a('string');
+      expect(res.body.data.identifier).to.not.equal(collidingIdentifier);
+      expect(res.body.data.identifier).to.match(/^my-existing-claude-agent/);
+
+      createdIdentifiers.push(res.body.data.identifier);
+    });
+
+    it('should return 422 when managedRuntime is omitted even with an externalAgentId intent', async () => {
+      const res = await ctx.session.testAgent.post('/v1/agents').send({
+        runtime: 'managed',
+      });
+
+      expect(res.status).to.equal(422);
     });
   });
 });

@@ -83,6 +83,7 @@ type FormErrors = {
   name?: string;
   identifier?: string;
   apiKey?: string;
+  externalAgentId?: string;
 };
 
 function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
@@ -136,11 +137,11 @@ function RuntimeCard({ selected, onClick, disabled, icon, title, description }: 
   );
 }
 
-export type CreateAgentDialogSubmitBody = CreateAgentBody & {
+export type CreateAgentDialogSubmitBody = Omit<CreateAgentBody, 'name' | 'identifier'> & {
+  name?: string;
+  identifier?: string;
   /** Encrypted Anthropic API key; used by the caller to create an integration before creating the agent. */
   apiKey?: string;
-  /** External agent ID on the provider (for "setup from existing agent" flow). */
-  externalAgentId?: string;
 };
 
 type CreateAgentDialogProps = {
@@ -214,20 +215,28 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const trimmedName = name.trim();
-    const trimmedIdentifier = identifier.trim();
     const nextErrors: FormErrors = {};
+    const isExistingMode = runtime === 'claude' && mode === 'existing';
 
-    if (!trimmedName) nextErrors.name = 'Name is required.';
+    if (!isExistingMode) {
+      const trimmedName = name.trim();
+      const trimmedIdentifier = identifier.trim();
 
-    if (!trimmedIdentifier) {
-      nextErrors.identifier = 'Identifier is required.';
-    } else if (!SLUG_IDENTIFIER_REGEX.test(trimmedIdentifier)) {
-      nextErrors.identifier = slugIdentifierFormatMessage('identifier');
+      if (!trimmedName) nextErrors.name = 'Name is required.';
+
+      if (!trimmedIdentifier) {
+        nextErrors.identifier = 'Identifier is required.';
+      } else if (!SLUG_IDENTIFIER_REGEX.test(trimmedIdentifier)) {
+        nextErrors.identifier = slugIdentifierFormatMessage('identifier');
+      }
     }
 
-    if (runtime === 'claude' && mode === 'create' && !apiKey.trim()) {
+    if (runtime === 'claude' && !apiKey.trim()) {
       nextErrors.apiKey = 'Anthropic API key is required.';
+    }
+
+    if (isExistingMode && !externalAgentId.trim()) {
+      nextErrors.externalAgentId = 'Claude agent ID is required.';
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -238,33 +247,47 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
 
     setErrors({});
 
-    const body: CreateAgentDialogSubmitBody = {
-      name: trimmedName,
-      identifier: trimmedIdentifier,
-    };
-
     const trimmedInstructions = instructions.trim();
 
-    if (runtime === 'claude') {
-      body.runtime = 'managed';
-      body.managedRuntime = {
-        providerId: 'anthropic',
-        integrationId: '',
-        model: 'claude-opus-4-5',
-        systemPrompt: trimmedInstructions || undefined,
-        tools: selectedTools.length > 0 ? selectedTools : undefined,
-        mcpServers: selectedMcpServers.length > 0 ? selectedMcpServers : undefined,
-        skills:
-          selectedSkills.length > 0
-            ? selectedSkills.map((skillId) => ({ type: 'anthropic' as const, skillId }))
-            : undefined,
+    let body: CreateAgentDialogSubmitBody;
+
+    if (isExistingMode) {
+      body = {
+        runtime: 'managed',
+        managedRuntime: {
+          providerId: 'anthropic',
+          integrationId: '',
+          externalAgentId: externalAgentId.trim(),
+        },
+        apiKey: apiKey.trim(),
       };
-      body.apiKey = apiKey.trim();
-      if (mode === 'existing' && externalAgentId.trim()) {
-        body.externalAgentId = externalAgentId.trim();
+    } else {
+      const trimmedName = name.trim();
+      const trimmedIdentifier = identifier.trim();
+
+      body = {
+        name: trimmedName,
+        identifier: trimmedIdentifier,
+      };
+
+      if (runtime === 'claude') {
+        body.runtime = 'managed';
+        body.managedRuntime = {
+          providerId: 'anthropic',
+          integrationId: '',
+          model: 'claude-opus-4-5',
+          systemPrompt: trimmedInstructions || undefined,
+          tools: selectedTools.length > 0 ? selectedTools : undefined,
+          mcpServers: selectedMcpServers.length > 0 ? selectedMcpServers : undefined,
+          skills:
+            selectedSkills.length > 0
+              ? selectedSkills.map((skillId) => ({ type: 'anthropic' as const, skillId }))
+              : undefined,
+        };
+        body.apiKey = apiKey.trim();
+      } else if (trimmedInstructions) {
+        body.description = trimmedInstructions;
       }
-    } else if (trimmedInstructions) {
-      body.description = trimmedInstructions;
     }
 
     await onSubmit(body);
@@ -462,20 +485,38 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
                 </SegmentedControlList>
                 <TabsPrimitive.Content value="existing" className="mt-4 flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
-                    <label htmlFor={`${formId}-external-id`} className="text-text-sub text-label-xs font-medium">
-                      External agent ID
-                    </label>
+                    <div className="flex items-center gap-px">
+                      <label htmlFor={`${formId}-external-id`} className="text-text-sub text-label-xs font-medium">
+                        Claude agent ID
+                      </label>
+                      <span className="text-primary-base text-label-sm leading-5 tracking-tight" aria-hidden>
+                        *
+                      </span>
+                    </div>
                     <Input
                       id={`${formId}-external-id`}
                       size="2xs"
                       value={externalAgentId}
-                      onChange={(e) => setExternalAgentId(e.target.value)}
-                      placeholder="e.g. asst_abc123..."
+                      onChange={(e) => {
+                        setExternalAgentId(e.target.value);
+                        setErrors((prev) => ({ ...prev, externalAgentId: undefined }));
+                      }}
+                      placeholder="e.g. agent_01XJ5..."
                       className="font-mono"
+                      hasError={Boolean(errors.externalAgentId)}
+                      aria-invalid={errors.externalAgentId ? true : undefined}
+                      aria-describedby={errors.externalAgentId ? `${formId}-external-id-error` : undefined}
                     />
-                    <p className="text-text-soft text-paragraph-xs leading-4">
-                      Enter the ID of an existing agent on Claude Platform to link it to Novu.
-                    </p>
+                    {errors.externalAgentId ? (
+                      <p id={`${formId}-external-id-error`} className="text-error-base text-label-xs" role="alert">
+                        {errors.externalAgentId}
+                      </p>
+                    ) : (
+                      <p className="text-text-soft text-paragraph-xs leading-4">
+                        Find this in the Claude platform under your agent's settings. Novu will link to it and
+                        automatically use its name as the agent name.
+                      </p>
+                    )}
                   </div>
                 </TabsPrimitive.Content>
               </SegmentedControl>
@@ -688,100 +729,104 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
               </div>
             )}
 
-            {/* Name + Identifier side by side */}
-            <div className="flex gap-3">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <RequiredFieldLabel htmlFor={nameId}>Agent name</RequiredFieldLabel>
-                <Input
-                  id={nameId}
-                  size="2xs"
-                  value={name}
-                  onChange={(e) => {
-                    const nextName = e.target.value;
-                    setName(nextName);
-                    setErrors((prev) => ({ ...prev, name: undefined }));
-                    if (!isIdentifierTouched) {
-                      setIdentifier(slugify(nextName));
-                      setErrors((prev) => ({ ...prev, identifier: undefined }));
-                    }
-                  }}
-                  placeholder="e.g. Wine Sommelier Agent"
-                  hasError={Boolean(errors.name)}
-                  aria-invalid={errors.name ? true : undefined}
-                  aria-describedby={errors.name ? `${nameId}-error` : undefined}
-                />
-                {errors.name ? (
-                  <p id={`${nameId}-error`} className="text-error-base text-label-xs" role="alert">
-                    {errors.name}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex items-center gap-px">
-                  <RequiredFieldLabel htmlFor={identifierId}>Agent Identifier</RequiredFieldLabel>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
-                        <RiInformationFill className="size-3.5" aria-hidden />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Used in code and APIs. Must be unique. Letters, numbers, hyphens, underscores, and dots only.
-                    </TooltipContent>
-                  </Tooltip>
+            {/* Name + Identifier side by side — hidden when adopting an existing Claude agent */}
+            {!(isClaudeSelected && mode === 'existing') && (
+              <div className="flex gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <RequiredFieldLabel htmlFor={nameId}>Agent name</RequiredFieldLabel>
+                  <Input
+                    id={nameId}
+                    size="2xs"
+                    value={name}
+                    onChange={(e) => {
+                      const nextName = e.target.value;
+                      setName(nextName);
+                      setErrors((prev) => ({ ...prev, name: undefined }));
+                      if (!isIdentifierTouched) {
+                        setIdentifier(slugify(nextName));
+                        setErrors((prev) => ({ ...prev, identifier: undefined }));
+                      }
+                    }}
+                    placeholder="e.g. Wine Sommelier Agent"
+                    hasError={Boolean(errors.name)}
+                    aria-invalid={errors.name ? true : undefined}
+                    aria-describedby={errors.name ? `${nameId}-error` : undefined}
+                  />
+                  {errors.name ? (
+                    <p id={`${nameId}-error`} className="text-error-base text-label-xs" role="alert">
+                      {errors.name}
+                    </p>
+                  ) : null}
                 </div>
-                <Input
-                  id={identifierId}
-                  size="2xs"
-                  className="font-mono"
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setIsIdentifierTouched(true);
-                    setErrors((prev) => ({ ...prev, identifier: undefined }));
-                  }}
-                  placeholder="e.g. wine-sommelier-agent"
-                  hasError={Boolean(errors.identifier)}
-                  aria-invalid={errors.identifier ? true : undefined}
-                  aria-describedby={
-                    errors.identifier ? `${identifierId}-hint ${identifierId}-error` : `${identifierId}-hint`
-                  }
-                />
-                <Hint id={`${identifierId}-hint`} className="text-text-soft text-paragraph-xs leading-4">
-                  <HintIcon as={RiInformationFill} />
-                  Letters, numbers, hyphens, underscores, and dots only (no spaces).
-                </Hint>
-                {errors.identifier ? (
-                  <p id={`${identifierId}-error`} className="text-error-base text-label-xs" role="alert">
-                    {errors.identifier}
-                  </p>
-                ) : null}
-              </div>
-            </div>
 
-            {/* Instructions / Description textarea */}
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1">
-                <label htmlFor={instructionsId} className="text-text-strong text-label-xs font-medium">
-                  Instructions
-                </label>
-                {isClaudeSelected && (
-                  <span className="text-text-soft text-paragraph-xs">(Sent to Claude as the system prompt)</span>
-                )}
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex items-center gap-px">
+                    <RequiredFieldLabel htmlFor={identifierId}>Agent Identifier</RequiredFieldLabel>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
+                          <RiInformationFill className="size-3.5" aria-hidden />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Used in code and APIs. Must be unique. Letters, numbers, hyphens, underscores, and dots only.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Input
+                    id={identifierId}
+                    size="2xs"
+                    className="font-mono"
+                    value={identifier}
+                    onChange={(e) => {
+                      setIdentifier(e.target.value);
+                      setIsIdentifierTouched(true);
+                      setErrors((prev) => ({ ...prev, identifier: undefined }));
+                    }}
+                    placeholder="e.g. wine-sommelier-agent"
+                    hasError={Boolean(errors.identifier)}
+                    aria-invalid={errors.identifier ? true : undefined}
+                    aria-describedby={
+                      errors.identifier ? `${identifierId}-hint ${identifierId}-error` : `${identifierId}-hint`
+                    }
+                  />
+                  <Hint id={`${identifierId}-hint`} className="text-text-soft text-paragraph-xs leading-4">
+                    <HintIcon as={RiInformationFill} />
+                    Letters, numbers, hyphens, underscores, and dots only (no spaces).
+                  </Hint>
+                  {errors.identifier ? (
+                    <p id={`${identifierId}-error`} className="text-error-base text-label-xs" role="alert">
+                      {errors.identifier}
+                    </p>
+                  ) : null}
+                </div>
               </div>
-              <Textarea
-                id={instructionsId}
-                placeholder={
-                  isClaudeSelected
-                    ? 'You are a helpful assistant for the team. Always reply concisely\nand cite sources when you can...'
-                    : 'What does this agent do...'
-                }
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                className="min-h-24 resize-none text-sm"
-              />
-            </div>
+            )}
+
+            {/* Instructions / Description textarea — hidden when adopting an existing Claude agent */}
+            {!(isClaudeSelected && mode === 'existing') && (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1">
+                  <label htmlFor={instructionsId} className="text-text-strong text-label-xs font-medium">
+                    Instructions
+                  </label>
+                  {isClaudeSelected && (
+                    <span className="text-text-soft text-paragraph-xs">(Sent to Claude as the system prompt)</span>
+                  )}
+                </div>
+                <Textarea
+                  id={instructionsId}
+                  placeholder={
+                    isClaudeSelected
+                      ? 'You are a helpful assistant for the team. Always reply concisely\nand cite sources when you can...'
+                      : 'What does this agent do...'
+                  }
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  className="min-h-24 resize-none text-sm"
+                />
+              </div>
+            )}
           </div>
 
           {/* Footer */}

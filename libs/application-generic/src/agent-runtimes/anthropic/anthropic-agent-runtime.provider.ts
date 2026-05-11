@@ -21,6 +21,7 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  GetAgentResult,
   IAgentRuntimeProvider,
   UpdateAgentRuntimeConfigInput,
 } from '../i-agent-runtime-provider';
@@ -125,6 +126,20 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         });
 
         return { externalAgentId: agent.id as string };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async getAgent(externalAgentId: string): Promise<GetAgentResult> {
+    const client = this.buildClient((this as any)._apiKey);
+
+    return this.withRetry(async () => {
+      try {
+        const agent = await (client as any).beta.agents.retrieve(externalAgentId);
+
+        return { externalAgentId: agent.id as string, name: agent.name as string };
       } catch (err) {
         this.normaliseError(err);
       }

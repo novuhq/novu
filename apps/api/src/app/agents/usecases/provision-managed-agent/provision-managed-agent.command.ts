@@ -7,9 +7,17 @@ export class ProvisionManagedAgentCommand {
   @IsString()
   agentId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
+
+  /**
+   * When set, the usecase adopts this existing provider agent instead of creating a new one.
+   * The agent's name is fetched from the provider and written back to Mongo.
+   */
+  @IsOptional()
+  @IsString()
+  externalAgentId?: string;
 
   @IsNotEmpty()
   providerId: AgentRuntimeProviderIdEnum;

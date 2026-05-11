@@ -15,13 +15,15 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 import type { ManagedRuntimeDto } from '../../dtos/agent-runtime-config.dto';
 
 export class CreateAgentCommand extends EnvironmentWithUserCommand {
+  @ValidateIf((o) => !o.managedRuntime?.externalAgentId)
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name?: string;
 
+  @ValidateIf((o) => !o.managedRuntime?.externalAgentId)
   @IsString()
   @IsNotEmpty()
-  identifier: string;
+  identifier?: string;
 
   @IsString()
   @IsOptional()

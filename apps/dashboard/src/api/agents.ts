@@ -77,6 +77,11 @@ export type ListAgentsResponse = {
 export type CreateManagedRuntimeBody = {
   providerId: string;
   integrationId: string;
+  /**
+   * When set, Novu links to this existing provider agent instead of creating a new one.
+   * The agent's name and Novu identifier are auto-generated from the provider.
+   */
+  externalAgentId?: string;
   model?: string;
   systemPrompt?: string;
   /** Tool `type` strings to enable on the new agent (e.g. 'web_search_20260209'). */
@@ -88,8 +93,10 @@ export type CreateManagedRuntimeBody = {
 };
 
 export type CreateAgentBody = {
-  name: string;
-  identifier: string;
+  /** Required unless adopting an existing managed agent via managedRuntime.externalAgentId. */
+  name?: string;
+  /** Required unless adopting an existing managed agent via managedRuntime.externalAgentId. */
+  identifier?: string;
   description?: string;
   active?: boolean;
   runtime?: AgentRuntime;
