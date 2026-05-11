@@ -1015,7 +1015,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       handler: () => {
         const body = createMockBridgeRequest({
           event: 'onAction',
-          action: { actionId: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' },
+          action: { id: 'confirm', value: 'yes', sourceMessageId: 'msg-card-001' },
           message: null,
         });
         const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
@@ -1064,7 +1064,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       handler: () => {
         const body = createMockBridgeRequest({
           event: 'onAction',
-          action: { actionId: 'play', sourceMessageId: 'msg-ttt-board' },
+          action: { id: 'play', sourceMessageId: 'msg-ttt-board' },
           message: null,
         });
         const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
@@ -1137,7 +1137,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       handler: () => {
         const body = createMockBridgeRequest({
           event: 'onAction',
-          action: { actionId: 'btn-1' },
+          action: { id: 'btn-1' },
           message: null,
         });
         const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
@@ -1460,7 +1460,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
       agents: [testBot],
       client,
       handler: () => {
-        const body = createMockBridgeRequest({ event: 'onAction', action: { actionId: 'btn', value: '1' } });
+        const body = createMockBridgeRequest({ event: 'onAction', action: { id: 'btn', value: '1' } });
         const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onAction`);
 
         return {

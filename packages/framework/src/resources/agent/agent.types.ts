@@ -143,25 +143,13 @@ export interface ReplyContent {
 
 /**
  * Data carried by a button click or other interactive action.
- * This is the handler-facing shape passed to `onAction(action, ctx)`.
+ *
+ * Used both on the bridge wire (`AgentBridgeRequest.action`) and as the
+ * handler-facing argument passed to `onAction(action, ctx)`.
  */
 export interface AgentAction {
   /** The `id` prop of the clicked `<Button>` or action element. */
   id: string;
-  /** The `value` prop of the clicked element, if set. */
-  value?: string;
-  /** Platform-native message ID of the message containing the clicked button/action. */
-  sourceMessageId?: string;
-}
-
-/**
- * Wire-level action payload as it arrives in the bridge request.
- * Keeps the legacy `actionId` field name to preserve API contract compatibility.
- * Handler authors should use `AgentAction` (with `.id`) instead.
- */
-export interface AgentBridgeAction {
-  /** The `id` prop of the clicked `<Button>` or action element. */
-  actionId: string;
   /** The `value` prop of the clicked element, if set. */
   value?: string;
   /** Platform-native message ID of the message containing the clicked button/action. */
@@ -372,7 +360,7 @@ export interface AgentBridgeRequest {
   replyUrl: string;
   conversationId: string;
   integrationIdentifier: string;
-  action: AgentBridgeAction | null;
+  action: AgentAction | null;
   message: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;

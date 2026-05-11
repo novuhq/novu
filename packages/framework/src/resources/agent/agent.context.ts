@@ -278,9 +278,7 @@ export class AgentContextImpl {
 
   constructor(request: AgentBridgeRequest, secretKey: string) {
     this.event = request.event as AgentEventEnum;
-    this.action = request.action
-      ? { id: request.action.actionId, value: request.action.value, sourceMessageId: request.action.sourceMessageId }
-      : null;
+    this.action = request.action ?? null;
     this.message = request.message;
     this.reaction = request.reaction;
     this.conversation = request.conversation;
