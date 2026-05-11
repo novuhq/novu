@@ -407,3 +407,24 @@ export async function sendWhatsAppTestTemplate(
 
   return response.data;
 }
+
+export type ConfigureTelegramWebhookResult = {
+  webhookUrl: string;
+  configuredAt: string;
+  botUsername: string;
+};
+
+type ConfigureTelegramWebhookEnvelope = { data: ConfigureTelegramWebhookResult };
+
+export async function configureTelegramAgentWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationId: string
+): Promise<ConfigureTelegramWebhookResult> {
+  const response = await post<ConfigureTelegramWebhookEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    { environment }
+  );
+
+  return response.data;
+}

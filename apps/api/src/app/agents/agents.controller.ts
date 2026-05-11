@@ -77,6 +77,8 @@ import { SendAgentWelcomeMessageCommand } from './usecases/send-agent-welcome-me
 import { SendAgentWelcomeMessage } from './usecases/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendWhatsAppTestTemplateCommand } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.command';
 import { SendWhatsAppTestTemplate } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
+import { ConfigureTelegramAgentWebhookCommand } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
+import { ConfigureTelegramAgentWebhook } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
@@ -104,7 +106,8 @@ export class AgentsController {
     private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
-    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate
+    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook
   ) {}
 
   @Get('/emoji')
@@ -388,6 +391,34 @@ export class AgentsController {
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
         conversationId: body.conversationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/telegram/configure')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(Object, 200)
+  @ApiOperation({
+    summary: 'Configure Telegram bot webhook',
+    description:
+      'Registers the Novu agent webhook URL with Telegram for the specified integration, generates a cryptographic secret token for webhook verification, and persists it on the integration. Re-running rotates the secret.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, or agent-integration link was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  configureTelegramWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string
+  ): Promise<{ webhookUrl: string; configuredAt: string; botUsername: string }> {
+    return this.configureTelegramAgentWebhookUsecase.execute(
+      ConfigureTelegramAgentWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
       })
     );
   }

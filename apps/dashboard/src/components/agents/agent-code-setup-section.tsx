@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { BridgeUrlSetupStep } from './bridge-url-setup-step';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 
@@ -123,6 +124,8 @@ function getProviderSendTitle(providerId: string | undefined): string {
       return 'Send a message to the Slack App on Slack';
     case ChatProviderIdEnum.MsTeams:
       return 'Send a message to the bot on MS Teams';
+    case ChatProviderIdEnum.Telegram:
+      return 'Send a message to your Telegram bot';
     case ChatProviderIdEnum.WhatsAppBusiness:
       return 'Send a message on WhatsApp';
     case EmailProviderIdEnum.NovuAgent:
@@ -138,6 +141,8 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
       return `Open your Slack workspace and send a message to ${agentName}. Make sure to send in a channel or directly to the bot.`;
     case ChatProviderIdEnum.MsTeams:
       return `Open Microsoft Teams and send a message to ${agentName} in a channel or direct chat.`;
+    case ChatProviderIdEnum.Telegram:
+      return `Open Telegram and send a message to your bot to test the connection.`;
     case ChatProviderIdEnum.WhatsAppBusiness:
       return `Send a message to your WhatsApp number to test the connection.`;
     case EmailProviderIdEnum.NovuAgent:
@@ -147,7 +152,7 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
   }
 }
 
-export function CopySlackMessageButton({ agentName }: { agentName: string }) {
+function CopySlackMessageButton({ agentName }: { agentName: string }) {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -296,7 +301,13 @@ export function AgentCodeSetupSection({
 
   const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
-  const firstIncompleteStep = bridgeConnected ? stepOffset + 3 : stepOffset;
+  const hasBridgeUrl = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
+  const firstIncompleteStep = (() => {
+    if (bridgeConnected) return stepOffset + 4;
+    if (hasBridgeUrl) return stepOffset + 3;
+
+    return stepOffset;
+  })();
 
   return (
     <>
@@ -350,9 +361,11 @@ export function AgentCodeSetupSection({
         rightContent={<TerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
       />
 
+      <BridgeUrlSetupStep agent={agent} index={stepOffset + 2} firstIncompleteStep={firstIncompleteStep} />
+
       <SetupStep
-        index={stepOffset + 2}
-        status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
+        index={stepOffset + 3}
+        status={deriveStepStatus(stepOffset + 3, firstIncompleteStep)}
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
         rightContent={

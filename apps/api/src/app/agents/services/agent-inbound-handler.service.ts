@@ -39,6 +39,10 @@ function buildNoBridgeReply(dashboardUrl?: string): CardElement {
   return { type: 'card', children };
 }
 
+const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
+
+We were unable to reach the agent.`;
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {
     return undefined;
@@ -321,6 +325,20 @@ export class AgentInboundHandler {
           isDM: thread.isDM,
         },
         storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+        onBridgeFailure: async () => {
+          applyPlatformThreadIdToThread(thread, platformThreadId);
+          const sent = await thread.post(BRIDGE_OFFLINE_REPLY_MARKDOWN);
+          const channel = this.conversationService.getPrimaryChannel(conversation);
+          await this.conversationService.persistAgentMessage({
+            conversationId: conversation._id,
+            channel,
+            platformMessageId: (sent as { id?: string })?.id ?? '',
+            agentIdentifier: config.agentIdentifier,
+            content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+          });
+        },
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {

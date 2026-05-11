@@ -1,7 +1,7 @@
 import { providers as novuProviders } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState, useCallback } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
@@ -323,17 +323,24 @@ export function IntegrationCredentialsSidebar({
   onClose,
   onSaveSuccess,
   agentOnboarding,
+  submitLabel,
 }: {
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (meta?: { botUsername?: string }) => void;
   agentOnboarding?: boolean;
+  submitLabel?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
+  const botUsernameRef = useRef<string | undefined>(undefined);
+
+  const handleBotUsernameExtracted = useCallback((username: string) => {
+    botUsernameRef.current = username;
+  }, []);
 
   const integration = integrations?.find((i) => i._id === integrationId);
   const provider = novuProviders?.find((p) => p.id === integration?.providerId);
@@ -378,7 +385,7 @@ export function IntegrationCredentialsSidebar({
       });
 
       showSuccessToast('Integration updated successfully');
-      onSaveSuccess?.();
+      onSaveSuccess?.({ botUsername: botUsernameRef.current });
       onClose();
     } catch (error: unknown) {
       handleIntegrationError(error, 'update');
@@ -397,6 +404,7 @@ export function IntegrationCredentialsSidebar({
           mode="update"
           agentOnboarding={agentOnboarding}
           onFormStateChange={setFormState}
+          onBotUsernameExtracted={handleBotUsernameExtracted}
         />
       </div>
 
@@ -407,7 +415,7 @@ export function IntegrationCredentialsSidebar({
           isLoading={isUpdating}
           disabled={!formState.isValid}
         >
-          Save Changes
+          {submitLabel ?? 'Save Changes'}
         </Button>
       </div>
     </IntegrationSheet>

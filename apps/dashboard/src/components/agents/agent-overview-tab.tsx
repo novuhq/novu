@@ -3,6 +3,7 @@ import type { AgentResponse } from '@/api/agents';
 import { AgentConnectedOverview } from '@/components/agents/agent-connected-overview';
 import { AgentSetupGuide } from '@/components/agents/agent-setup-guide';
 import { AgentSidebarWidget } from '@/components/agents/agent-sidebar-widget';
+import { BridgeUrlFocusProvider } from '@/components/agents/bridge-url-focus-context';
 import { useEnvironment } from '@/context/environment/hooks';
 
 type AgentOverviewTabProps = {
@@ -22,9 +23,11 @@ export function AgentOverviewTab({ agent }: AgentOverviewTabProps) {
   const showConnectedOverview = readOnly || wasBridgeConnectedOnMount;
 
   return (
-    <div className="flex items-start gap-6 px-6 pt-4">
-      <AgentSidebarWidget agent={agent} />
-      {showConnectedOverview ? <AgentConnectedOverview agent={agent} /> : <AgentSetupGuide agent={agent} />}
-    </div>
+    <BridgeUrlFocusProvider>
+      <div className="flex items-start gap-6 px-6 pt-4">
+        <AgentSidebarWidget agent={agent} />
+        {showConnectedOverview ? <AgentConnectedOverview agent={agent} /> : <AgentSetupGuide agent={agent} />}
+      </div>
+    </BridgeUrlFocusProvider>
   );
 }

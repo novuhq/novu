@@ -23,6 +23,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
+import { TelegramCredentialsPaste } from './telegram-credentials-paste';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
@@ -50,6 +51,7 @@ type IntegrationConfigurationProps = {
   isReadOnly?: boolean;
   agentOnboarding?: boolean;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
+  onBotUsernameExtracted?: (username: string) => void;
 };
 
 function generateSlug(name: string): string {
@@ -71,6 +73,7 @@ export function IntegrationSettings({
   isReadOnly,
   agentOnboarding,
   onFormStateChange,
+  onBotUsernameExtracted,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -126,6 +129,7 @@ export function IntegrationSettings({
   const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
   const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
+  const isTelegramOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Telegram;
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,
@@ -268,11 +272,23 @@ export function IntegrationSettings({
                           <WhatsAppCredentialsValidator control={control} />
                         </>
                       )}
+                      {isTelegramOnboarding && (
+                        <TelegramCredentialsPaste
+                          control={control}
+                          setValue={setValue}
+                          isReadOnly={isReadOnly}
+                          onBotUsernameExtracted={onBotUsernameExtracted}
+                        />
+                      )}
                       <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
                         {providerCredentials.map((credential) => (
                           <CredentialSection
                             key={`${credential.key}-${integration?._id || 'no-id'}`}
-                            credential={credential}
+                            credential={
+                              isTelegramOnboarding && credential.key === CredentialsKeyEnum.ApiToken
+                                ? { ...credential, description: 'Auto-filled from the BotFather message above, or enter it manually.' }
+                                : credential
+                            }
                             control={control}
                             isReadOnly={isReadOnly}
                             integrationId={integration?._id}

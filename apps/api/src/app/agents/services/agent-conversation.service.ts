@@ -141,6 +141,14 @@ export class AgentConversationService {
         this.logger.debug(`Reopened resolved conversation ${existing._id} for thread ${platformThreadId}`);
       }
 
+      if (existing._agentId !== params.agentId) {
+        this.logger.warn(
+          `Conversation ${existing._id} has stale _agentId ${existing._agentId}, updating to ${params.agentId}`
+        );
+        await this.conversationRepository.updateAgentId(environmentId, organizationId, existing._id, params.agentId);
+        existing._agentId = params.agentId;
+      }
+
       await this.ensureParticipant(existing, params);
 
       return existing;
