@@ -41,9 +41,11 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
   readonly capabilities: AgentRuntimeCapabilities = AGENT_RUNTIME_PROVIDERS.find(
     (p) => p.providerId === PROVIDER_ID
-  )!.capabilities;
+  ).capabilities;
 
-  private buildClient(apiKey: string): Anthropic {
+  constructor(private readonly _apiKey: string) {}
+
+  private buildClient(apiKey: string = this._apiKey): Anthropic {
     return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
   }
 
@@ -112,7 +114,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async createAgent(input: CreateAgentInput): Promise<CreateAgentResult> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
@@ -136,7 +138,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async getAgent(externalAgentId: string): Promise<GetAgentResult> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
@@ -150,7 +152,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async deleteAgent(externalAgentId: string): Promise<void> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     await this.withRetry(async () => {
       try {
@@ -162,7 +164,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async getConfig(externalAgentId: string): Promise<AgentRuntimeConfigDto> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
@@ -182,7 +184,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
@@ -214,7 +216,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async createEnvironment(input: CreateEnvironmentInput): Promise<CreateEnvironmentResult> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
@@ -234,7 +236,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
@@ -248,7 +250,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   async archiveEnvironment(externalEnvironmentId: string): Promise<void> {
-    const client = this.buildClient((this as any)._apiKey);
+    const client = this.buildClient();
 
     await this.withRetry(async () => {
       try {
@@ -260,12 +262,8 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 }
 
-/** Factory function — callers inject the apiKey at call time via a closure. */
 export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimeProvider {
-  const provider = new AnthropicAgentRuntimeProvider();
-  (provider as any)._apiKey = apiKey;
-
-  return provider;
+  return new AnthropicAgentRuntimeProvider(apiKey);
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────

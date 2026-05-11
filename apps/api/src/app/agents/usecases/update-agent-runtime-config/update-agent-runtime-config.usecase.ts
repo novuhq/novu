@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import type { AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import { AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
 import { UpdateAgentRuntimeConfigCommand } from './update-agent-runtime-config.command';
 
 @Injectable()
@@ -47,12 +47,22 @@ export class UpdateAgentRuntimeConfig {
     const decryptedCredentials = decryptCredentials(integration.credentials);
     const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey!);
 
-    return runtimeProvider.updateConfig(externalAgentId, {
+    const updated = await runtimeProvider.updateConfig(externalAgentId, {
       model: command.model,
       systemPrompt: command.systemPrompt,
       mcpServers: command.mcpServers,
       tools: command.tools,
       skills: command.skills,
-    }) as Promise<AgentRuntimeConfigResponseDto>;
+    });
+
+    const result: AgentRuntimeConfigResponseDto = {
+      model: updated.model,
+      systemPrompt: updated.systemPrompt,
+      mcpServers: updated.mcpServers,
+      tools: updated.tools,
+      ...(updated.skills !== undefined ? { skills: updated.skills } : {}),
+    };
+
+    return result;
   }
 }

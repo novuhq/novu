@@ -25,11 +25,18 @@ export type AgentTool = {
   description?: string;
 };
 
+export type AgentSkill = {
+  type: 'anthropic' | 'custom';
+  skillId: string;
+  version?: string | null;
+};
+
 export type AgentRuntimeConfig = {
   model: string;
   systemPrompt: string;
   mcpServers: AgentMcpServer[];
   tools: AgentTool[];
+  skills?: AgentSkill[];
 };
 
 export type PatchAgentRuntimeConfigBody = {
@@ -37,6 +44,7 @@ export type PatchAgentRuntimeConfigBody = {
   systemPrompt?: string;
   mcpServers?: AgentMcpServer[];
   tools?: AgentTool[];
+  skills?: AgentSkill[];
 };
 
 export type AgentRuntimeError = {

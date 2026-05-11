@@ -29,6 +29,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
   ApiCommonResponses,
+  ApiConflictResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiResponse,
@@ -456,7 +457,7 @@ export class AgentsController {
   }
 
   @Get('/:identifier/runtime/config')
-  @ApiResponse(AgentRuntimeConfigResponseDto)
+  @ApiResponse(AgentRuntimeConfigResponseDto, 200)
   @ApiOperation({
     summary: 'Get agent runtime config',
     description:
@@ -464,6 +465,11 @@ export class AgentsController {
       '(model, system prompt, MCP servers, tools). Returns 422 for self-hosted agents.',
   })
   @ApiNotFoundResponse({ description: 'Agent or its runtime integration was not found.' })
+  @ApiConflictResponse({
+    description:
+      'AGENT_RUNTIME_DRIFT — the agent record exists in Novu but the provider reports it as deleted or unreachable. ' +
+      'Re-provision or delete the agent.',
+  })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   @UseFilters(AgentRuntimeExceptionFilter)
   getAgentRuntimeConfig(
@@ -481,15 +487,21 @@ export class AgentsController {
   }
 
   @Patch('/:identifier/runtime/config')
-  @ApiResponse(AgentRuntimeConfigResponseDto)
+  @ApiResponse(AgentRuntimeConfigResponseDto, 200)
   @ApiOperation({
     summary: 'Update agent runtime config',
     description:
       'Applies a partial update to the managed agent runtime config on the provider. ' +
-      'Accepts any combination of model, systemPrompt, mcpServers, and tools. ' +
-      'Server-side diffing issues the minimal set of provider API calls.',
+      'Accepts any combination of model, systemPrompt, mcpServers, tools, and skills. ' +
+      'Server-side diffing issues the minimal set of provider API calls. ' +
+      'An empty body is accepted and returns the current config unchanged.',
   })
   @ApiNotFoundResponse({ description: 'Agent or its runtime integration was not found.' })
+  @ApiConflictResponse({
+    description:
+      'AGENT_RUNTIME_DRIFT — the agent record exists in Novu but the provider reports it as deleted or unreachable. ' +
+      'Re-provision or delete the agent.',
+  })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
   updateAgentRuntimeConfig(

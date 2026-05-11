@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import type { AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
 import { GetAgentRuntimeConfigCommand } from './get-agent-runtime-config.command';
 
 @Injectable()
@@ -52,9 +52,25 @@ export class GetAgentRuntimeConfig {
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
 
-    return {
-      ...config,
-      ...(providerEntry ? { capabilities: providerEntry.capabilities } : {}),
-    } as AgentRuntimeConfigResponseDto;
+    const capabilities: AgentRuntimeCapabilitiesDto | undefined = providerEntry
+      ? {
+          mcpServers: providerEntry.capabilities.mcpServers,
+          tools: providerEntry.capabilities.tools,
+          model: providerEntry.capabilities.model,
+          systemPrompt: providerEntry.capabilities.systemPrompt,
+          skills: providerEntry.capabilities.skills,
+        }
+      : undefined;
+
+    const result: AgentRuntimeConfigResponseDto = {
+      model: config.model,
+      systemPrompt: config.systemPrompt,
+      mcpServers: config.mcpServers,
+      tools: config.tools,
+      ...(config.skills !== undefined ? { skills: config.skills } : {}),
+      ...(capabilities !== undefined ? { capabilities } : {}),
+    };
+
+    return result;
   }
 }

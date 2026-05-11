@@ -402,6 +402,34 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.status).to.equal(404);
     });
 
+    it('should forward skills to updateConfig', async () => {
+      const identifier = `e2e-patch-skills-${Date.now()}`;
+      createdIdentifiers.push(identifier);
+
+      await ctx.session.testAgent.post('/v1/agents').send(managedBody(identifier));
+
+      mockProvider.updateConfig.resolves({
+        model: 'claude-3-5-sonnet-20241022',
+        systemPrompt: '',
+        mcpServers: [],
+        tools: [],
+        skills: [{ type: 'anthropic', skillId: 'xlsx', version: null }],
+      });
+
+      const res = await ctx.session.testAgent
+        .patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`)
+        .send({
+          skills: [{ type: 'anthropic', skillId: 'xlsx' }],
+        });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.skills).to.be.an('array').with.length(1);
+      expect(res.body.data.skills[0].skillId).to.equal('xlsx');
+
+      const patchArg = mockProvider.updateConfig.getCall(0).args[1];
+      expect(patchArg.skills).to.deep.equal([{ type: 'anthropic', skillId: 'xlsx' }]);
+    });
+
     it('should return 429 with Retry-After header when provider is rate limited', async () => {
       const identifier = `e2e-patch-ratelimit-${Date.now()}`;
       createdIdentifiers.push(identifier);

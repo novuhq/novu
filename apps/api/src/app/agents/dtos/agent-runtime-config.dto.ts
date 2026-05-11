@@ -56,6 +56,23 @@ export class AgentSkillInputDto {
   version?: string | null;
 }
 
+export class AgentRuntimeCapabilitiesDto {
+  @ApiProperty()
+  mcpServers: boolean;
+
+  @ApiProperty()
+  tools: boolean;
+
+  @ApiProperty()
+  model: boolean;
+
+  @ApiProperty()
+  systemPrompt: boolean;
+
+  @ApiProperty()
+  skills: boolean;
+}
+
 export class AgentRuntimeConfigResponseDto {
   @ApiProperty()
   model: string;
@@ -69,8 +86,11 @@ export class AgentRuntimeConfigResponseDto {
   @ApiProperty({ type: [AgentToolDto] })
   tools: AgentToolDto[];
 
-  @ApiProperty({ type: [AgentSkillInputDto] })
-  skills: AgentSkillInputDto[];
+  @ApiPropertyOptional({ type: [AgentSkillInputDto] })
+  skills?: AgentSkillInputDto[];
+
+  @ApiPropertyOptional({ type: AgentRuntimeCapabilitiesDto })
+  capabilities?: AgentRuntimeCapabilitiesDto;
 }
 
 export class PatchAgentRuntimeConfigRequestDto {
