@@ -128,7 +128,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(({ classNa
 ));
 TableRow.displayName = 'TableRow';
 
-export const tableCellVariants = cva(`px-6 py-2 align-middle`);
+const tableCellVariants = cva(`px-6 py-2 align-middle`);
 
 const TableCell = React.forwardRef<HTMLTableCellElement, TableCellProps>(({ className, ...props }, ref) => (
   <td ref={ref} className={cn(tableCellVariants(), className)} {...props} />
