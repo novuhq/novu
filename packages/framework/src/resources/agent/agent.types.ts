@@ -141,10 +141,15 @@ export interface ReplyContent {
   files?: FileRef[];
 }
 
-/** Data carried by a button click or other interactive action. */
+/**
+ * Data carried by a button click or other interactive action.
+ *
+ * Used both on the bridge wire (`AgentBridgeRequest.action`) and as the
+ * handler-facing argument passed to `onAction(action, ctx)`.
+ */
 export interface AgentAction {
   /** The `id` prop of the clicked `<Button>` or action element. */
-  actionId: string;
+  id: string;
   /** The `value` prop of the clicked element, if set. */
   value?: string;
   /** Platform-native message ID of the message containing the clicked button/action. */
@@ -300,34 +305,41 @@ export type AgentContext = AgentMessageContext | AgentActionContext | AgentReact
 export interface AgentHandlers {
   /**
    * Fires on every text message the user sends.
-   * `payload.message` is the incoming message. `payload.ctx` provides conversation history,
-   * subscriber, metadata, and reply/trigger methods.
+   *
+   * @param message - The incoming message that triggered this handler.
+   * @param ctx - Conversation history, subscriber, metadata, and reply/trigger methods.
+   *
    * Return a string or JSX card to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (payload: { message: AgentMessage; ctx: AgentMessageContext }) => Awaitable<MessageContent | void>;
+  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
   /**
    * Fires when the user adds or removes an emoji reaction to a message.
-   * `reaction` carries the emoji and whether it was added or removed.
+   *
+   * @param reaction - The emoji reaction (carries the emoji and whether it was added or removed).
+   * @param ctx - Conversation context (history, subscriber, metadata, reply/trigger methods).
+   *
    * Return a string or card to post a reply, or return nothing to silently acknowledge.
    */
-  onReaction?: (payload: { reaction: AgentReaction; ctx: AgentReactionContext }) => Awaitable<MessageContent | void>;
+  onReaction?: (reaction: AgentReaction, ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
   /**
    * Fires when the user clicks a `<Button>` or other interactive element.
-   * `actionId` is the `id` prop of the clicked element; `value` is its `value` prop.
+   *
+   * @param action - The interactive action that triggered this handler.
+   *   `action.id` is the `id` prop of the clicked element; `action.value` is its `value` prop.
+   * @param ctx - Conversation context (history, subscriber, metadata, reply/trigger methods).
+   *
    * Return a string or card to reply, or return nothing to silently acknowledge the click.
    */
-  onAction?: (payload: {
-    actionId: string;
-    value?: string;
-    ctx: AgentActionContext;
-  }) => Awaitable<MessageContent | void>;
+  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
   /**
    * Fires after `ctx.resolve()` is called and the conversation is marked resolved.
    * Use for post-resolution side-effects (e.g. triggering a follow-up workflow).
-   * Access subscriber and conversation via `ctx.subscriber` and `ctx.conversation`.
+   *
+   * @param ctx - Conversation context. Access subscriber and conversation via
+   *   `ctx.subscriber` and `ctx.conversation`.
    */
-  onResolve?: (payload: { ctx: AgentResolveContext }) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
 }
 
 export interface Agent {

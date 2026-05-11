@@ -29,7 +29,7 @@ app/
 
 ## Agent API
 
-Your `onMessage` handler receives `{ message, ctx }`:
+Your `onMessage` handler is called with `(message, ctx)`:
 
 - **`message`** — The inbound message (text, author, timestamp)
 
@@ -49,7 +49,7 @@ Your `onMessage` handler receives `{ message, ctx }`:
 Replace the demo handler in `app/novu/agents/support-agent.tsx` with your LLM call:
 
 ```typescript
-onMessage: async ({ message, ctx }) => {
+onMessage: async (message, ctx) => {
   const response = await openai.chat.completions.create({
     model: 'gpt-4',
     messages: [
