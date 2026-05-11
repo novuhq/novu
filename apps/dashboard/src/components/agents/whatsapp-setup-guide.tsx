@@ -13,7 +13,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
-import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
+import { deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
 
 export type WhatsAppSetupGuideProps = {
   agent: AgentResponse;
@@ -346,7 +346,7 @@ export function WhatsAppSetupGuide({
   );
 
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
-  const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
+  const hasCredentials = hasWhatsAppUserCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
   const verifyToken = (selectedIntegration?.credentials?.token as string | undefined) ?? '';
