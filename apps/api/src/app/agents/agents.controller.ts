@@ -441,7 +441,10 @@ export class AgentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete agent',
-    description: 'Deletes an agent by identifier and removes all agent-integration links.',
+    description:
+      'Deletes an agent by identifier and removes all agent-integration links. ' +
+      'For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). ' +
+      'By default only the Novu record is deleted and the provider agent is left intact.',
   })
   @ApiNoContentResponse({
     description: 'The agent was deleted.',
@@ -450,13 +453,18 @@ export class AgentsController {
     description: 'The agent was not found.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  deleteAgent(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<void> {
+  deleteAgent(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Query('deleteFromProvider') deleteFromProvider?: string
+  ): Promise<void> {
     return this.deleteAgentUsecase.execute(
       DeleteAgentCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier,
+        deleteFromProvider: deleteFromProvider === 'true',
       })
     );
   }

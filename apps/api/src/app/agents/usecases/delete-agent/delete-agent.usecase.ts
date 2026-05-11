@@ -32,8 +32,9 @@ export class DeleteAgent {
     }
 
     const isManagedAgent = agent.runtime === 'managed' && agent.managedRuntime;
+    const shouldDeleteFromProvider = command.deleteFromProvider === true;
 
-    if (isManagedAgent) {
+    if (isManagedAgent && shouldDeleteFromProvider) {
       // Soft-delete: mark as pending external deletion, then clean up provider-side async
       await this.agentRepository.update(
         {
@@ -54,6 +55,7 @@ export class DeleteAgent {
         this.logger.error({ agentId: agent._id, err }, 'Background Claude agent deletion failed — will retry');
       });
     } else {
+      // Novu-only delete: remove the agent record and its links without touching the provider
       await this.agentRepository.withTransaction(async (session) => {
         await this.cleanupNovuEmail.cleanupForAgent(agent._id, command.environmentId, command.organizationId, session);
 
