@@ -82,6 +82,11 @@ export const ROUTES = {
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
+  DISPATCH_HOME: '/env/:environmentSlug/dispatch',
+  DISPATCH_AGENTS: '/env/:environmentSlug/dispatch/agents',
+  DISPATCH_CONVERSATIONS: '/env/:environmentSlug/dispatch/conversations',
+  DISPATCH_API_KEYS: '/env/:environmentSlug/dispatch/api-keys',
+  DISPATCH_SETTINGS: '/env/:environmentSlug/dispatch/settings',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
