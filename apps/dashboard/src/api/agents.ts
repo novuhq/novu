@@ -77,7 +77,7 @@ export type ListAgentsResponse = {
 export type CreateManagedRuntimeBody = {
   providerId: string;
   /**
-   * ID of an existing Novu integration (channel: AGENT_RUNTIME) that holds the provider
+   * ID of an existing Novu integration (kind: 'agent') that holds the provider
    * API key and provisioned environment. Create it first via POST /integrations.
    */
   integrationId: string;

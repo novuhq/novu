@@ -55,7 +55,6 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.ChatWebhook,
       ],
       [ChannelTypeEnum.IN_APP]: [],
-      [ChannelTypeEnum.AGENT_RUNTIME]: [],
     };
 
     return filtered.sort((a, b) => {

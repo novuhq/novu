@@ -133,7 +133,7 @@ export class ManagedRuntimeDto {
 
   @ApiProperty({
     description:
-      'ID of an existing Novu integration (channel: AGENT_RUNTIME) that holds the provider API key and ' +
+      'ID of an existing Novu integration (kind: "agent") that holds the provider API key and ' +
       'provisioned environment. Create the integration first via POST /integrations.',
   })
   @IsNotEmpty()

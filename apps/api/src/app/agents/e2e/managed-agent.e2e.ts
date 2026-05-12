@@ -8,7 +8,7 @@ import {
   encryptCredentials,
 } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, ChannelTypeEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -82,12 +82,12 @@ describe('Managed Agents API #novu-v2', () => {
     createdIntegrationIds.length = 0;
   });
 
-  // ─── Helper: create an AGENT_RUNTIME integration via POST /v1/integrations ───
+  // ─── Helper: create an agent-kind integration via POST /v1/integrations ───
 
   async function createAgentRuntimeIntegration(overrides: Record<string, unknown> = {}): Promise<string> {
     const res = await session.testAgent.post('/v1/integrations').send({
       providerId: AgentRuntimeProviderIdEnum.Anthropic,
-      channel: ChannelTypeEnum.AGENT_RUNTIME,
+      kind: IntegrationKindEnum.AGENT,
       credentials: { apiKey: FAKE_API_KEY },
       active: true,
       name: `anthropic-runtime-e2e-${Date.now()}`,
@@ -114,13 +114,13 @@ describe('Managed Agents API #novu-v2', () => {
     };
   }
 
-  // ─── POST /v1/integrations — AGENT_RUNTIME provisioning ──────────────────────
+  // ─── POST /v1/integrations — agent-kind provisioning ─────────────────────────
 
-  describe('POST /v1/integrations — AGENT_RUNTIME channel provisioning', () => {
+  describe('POST /v1/integrations — agent kind provisioning', () => {
     it('should create an integration and call provisionIntegration on the provider', async () => {
       const res = await session.testAgent.post('/v1/integrations').send({
         providerId: AgentRuntimeProviderIdEnum.Anthropic,
-        channel: ChannelTypeEnum.AGENT_RUNTIME,
+        kind: IntegrationKindEnum.AGENT,
         credentials: { apiKey: FAKE_API_KEY },
         active: true,
         name: `anthropic-provision-test-${Date.now()}`,
@@ -158,7 +158,7 @@ describe('Managed Agents API #novu-v2', () => {
 
       const res = await session.testAgent.post('/v1/integrations').send({
         providerId: AgentRuntimeProviderIdEnum.Anthropic,
-        channel: ChannelTypeEnum.AGENT_RUNTIME,
+        kind: IntegrationKindEnum.AGENT,
         credentials: { apiKey: FAKE_API_KEY },
         active: true,
         name: `anthropic-rollback-test-${Date.now()}`,
@@ -166,20 +166,20 @@ describe('Managed Agents API #novu-v2', () => {
 
       expect(res.status).to.be.oneOf([400, 422, 500, 503]);
 
-      // No leftover integration records for this environment
+      // No leftover agent-kind integration records for this environment
       const integrations = await integrationRepository.find({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
-        channel: ChannelTypeEnum.AGENT_RUNTIME,
+        kind: IntegrationKindEnum.AGENT,
       });
 
-      expect(integrations.length, 'no AGENT_RUNTIME integrations should remain after rollback').to.equal(0);
+      expect(integrations.length, 'no agent-kind integrations should remain after rollback').to.equal(0);
     });
 
-    it('should NOT call provisionIntegration for non-AGENT_RUNTIME channels', async () => {
+    it('should NOT call provisionIntegration for delivery-kind integrations', async () => {
       await session.testAgent.post('/v1/integrations').send({
         providerId: 'sendgrid',
-        channel: ChannelTypeEnum.EMAIL,
+        channel: 'email',
         credentials: { apiKey: FAKE_API_KEY },
         active: false,
         name: `email-non-agent-${Date.now()}`,

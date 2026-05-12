@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum, EnvironmentTypeEnum, IntegrationKindEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -107,7 +107,7 @@ export function AgentsList() {
         const integrationResponse = await createIntegration(
           {
             providerId,
-            channel: ChannelTypeEnum.AGENT_RUNTIME,
+            kind: IntegrationKindEnum.AGENT,
             credentials: { apiKey },
             configurations: {},
             name: `${providerId}-managed`,

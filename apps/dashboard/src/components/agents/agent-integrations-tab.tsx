@@ -48,7 +48,6 @@ const CONNECTED_PROVIDER_CHANNEL_LABEL: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.EMAIL]: 'Email',
   [ChannelTypeEnum.PUSH]: 'Push',
   [ChannelTypeEnum.SMS]: 'SMS',
-  [ChannelTypeEnum.AGENT_RUNTIME]: 'Agent Runtime',
 };
 
 type LastUpdatedParts = {

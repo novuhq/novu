@@ -67,8 +67,8 @@ export type ChannelPreference = {
   enabled: boolean;
 };
 
-/** Channels that carry end-user notifications and support subscriber preferences. Excludes non-delivery channels. */
-export type NotificationChannelTypeEnum = Exclude<ChannelTypeEnum, ChannelTypeEnum.AGENT_RUNTIME>;
+/** Channels that carry end-user notifications and support subscriber preferences. */
+export type NotificationChannelTypeEnum = ChannelTypeEnum;
 
 export type WorkflowPreferences = {
   /**

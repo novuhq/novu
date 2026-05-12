@@ -13,7 +13,6 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}`, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
-  [ChannelTypeEnum.AGENT_RUNTIME]: 'Agent Runtime',
 };
 
 type PreferencesItemProps = {

@@ -1,12 +1,6 @@
 import { DEFAULT_WORKFLOW_PREFERENCES } from '../consts';
 import { IPreferenceChannels } from '../entities/subscriber-preference';
-import {
-  ChannelTypeEnum,
-  NotificationChannelTypeEnum,
-  WorkflowPreference,
-  WorkflowPreferences,
-  WorkflowPreferencesPartial,
-} from '../types';
+import { ChannelTypeEnum, WorkflowPreference, WorkflowPreferences, WorkflowPreferencesPartial } from '../types';
 
 /**
  * Given any partial input of preferences, output a complete preferences object that:
@@ -36,11 +30,7 @@ export const buildWorkflowPreferences = (
     },
     channels: {
       ...defaultPreferences.channels,
-      ...(
-        Object.values(ChannelTypeEnum).filter(
-          (ch): ch is NotificationChannelTypeEnum => ch !== ChannelTypeEnum.AGENT_RUNTIME
-        ) as NotificationChannelTypeEnum[]
-      ).reduce(
+      ...Object.values(ChannelTypeEnum).reduce(
         (output, channel) => ({
           ...output,
           [channel]: {

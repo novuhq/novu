@@ -1,4 +1,4 @@
-import { AGENT_RUNTIME_PROVIDERS, ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { AGENT_RUNTIME_PROVIDERS, FeatureFlagsKeysEnum, IntegrationKindEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
@@ -59,7 +59,7 @@ export function ManagedRuntimeSetupGuide({
       const integrationResponse = await createIntegration(
         {
           providerId: 'anthropic',
-          channel: ChannelTypeEnum.AGENT_RUNTIME,
+          kind: IntegrationKindEnum.AGENT,
           credentials: { apiKey },
           configurations: {},
           name: 'Anthropic (managed agents)',

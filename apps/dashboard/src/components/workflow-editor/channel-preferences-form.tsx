@@ -48,7 +48,6 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
-  [ChannelTypeEnum.AGENT_RUNTIME]: 'Agent Runtime',
   all: 'All',
 };
 

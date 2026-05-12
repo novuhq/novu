@@ -18,6 +18,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
+    kind: {
+      type: Schema.Types.String,
+      enum: ['delivery', 'agent'],
+      default: 'delivery',
+    },
     credentials: {
       apiVersion: Schema.Types.String,
       apiKey: Schema.Types.String,

@@ -145,7 +145,7 @@ function RuntimeCard({ selected, onClick, disabled, icon, title, description }: 
 export type CreateAgentDialogSubmitBody = Omit<CreateAgentBody, 'name' | 'identifier' | 'managedRuntime'> & {
   name?: string;
   identifier?: string;
-  /** Raw Anthropic API key; used by the caller to create an AGENT_RUNTIME integration before calling POST /agents. */
+  /** Raw Anthropic API key; used by the caller to create an agent-kind integration before calling POST /agents. */
   apiKey?: string;
   managedRuntime?: Omit<import('@/api/agents').CreateManagedRuntimeBody, 'integrationId'> & {
     integrationId?: string;

@@ -33,7 +33,7 @@ export type AgentSkillDto = {
 /**
  * Payload shape used when creating a new managed-runtime agent.
  * The integration (holding the encrypted API key and provisioned provider environment)
- * must be created first via POST /integrations with channel AGENT_RUNTIME.
+ * must be created first via POST /integrations with kind 'agent'.
  */
 export type CreateManagedRuntimeDto = {
   providerId: AgentRuntimeProviderIdEnum;
