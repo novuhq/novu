@@ -24,7 +24,10 @@ import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
+import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
+import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
+import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
 type IntegrationFormData = {
   name: string;
@@ -122,11 +125,20 @@ export function IntegrationSettings({
   const isDemo = integration && isDemoIntegration(integration.providerId);
   const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
+  const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,
     isEnabled: isSlackOnboarding && !isReadOnly,
   });
+  const handleWhatsAppCredentialsPaste = useWhatsAppCredentialsPasteFallback({
+    control,
+    setValue,
+    isEnabled: isWhatsAppOnboarding && !isReadOnly,
+  });
+  const handleAgentOnboardingPaste = isWhatsAppOnboarding
+    ? handleWhatsAppCredentialsPaste
+    : handleSlackCredentialsPaste;
 
   const providerCredentials = useMemo(() => {
     let credentials = provider.credentials;
@@ -141,11 +153,13 @@ export function IntegrationSettings({
       }
     }
 
+    const visibleCredentials = credentials.filter((credential) => credential.hidden !== true);
+
     if (isAgentOnboarding) {
-      return credentials.filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl);
+      return visibleCredentials.filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl);
     }
 
-    return credentials;
+    return visibleCredentials;
   }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding]);
 
   return (
@@ -248,7 +262,13 @@ export function IntegrationSettings({
                       {isSlackOnboarding && (
                         <SlackCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
                       )}
-                      <div onPasteCapture={handleSlackCredentialsPaste} className="flex flex-col gap-2">
+                      {isWhatsAppOnboarding && (
+                        <>
+                          <WhatsAppCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
+                          <WhatsAppCredentialsValidator control={control} />
+                        </>
+                      )}
+                      <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
                         {providerCredentials.map((credential) => (
                           <CredentialSection
                             key={`${credential.key}-${integration?._id || 'no-id'}`}

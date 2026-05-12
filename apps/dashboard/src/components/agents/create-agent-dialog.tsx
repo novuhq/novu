@@ -1,6 +1,6 @@
 import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@novu/shared';
 import type { FormEvent, ReactNode } from 'react';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiExternalLinkLine, RiInformationFill } from 'react-icons/ri';
 import type { CreateAgentBody } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
@@ -9,8 +9,18 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Hint, HintIcon } from '@/components/primitives/hint';
 import { Input } from '@/components/primitives/input';
 import { Textarea } from '@/components/primitives/textarea';
+import { useAuth } from '@/context/auth/hooks';
 
 const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co';
+const DEFAULT_AGENT_NAME_PLACEHOLDER_ORG = 'Acme';
+
+function capitalizeOrgName(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 type CreateAgentDialogProps = {
   open: boolean;
@@ -40,6 +50,19 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
   const nameId = `${formId}-name`;
   const identifierId = `${formId}-identifier`;
   const descriptionId = `${formId}-description`;
+
+  const { currentOrganization } = useAuth();
+
+  const { namePlaceholder, identifierPlaceholder } = useMemo(() => {
+    const trimmedOrgName = currentOrganization?.name?.trim() ?? '';
+    const displayOrgName = trimmedOrgName ? capitalizeOrgName(trimmedOrgName) : DEFAULT_AGENT_NAME_PLACEHOLDER_ORG;
+    const slugOrgName = slugify(displayOrgName) || slugify(DEFAULT_AGENT_NAME_PLACEHOLDER_ORG);
+
+    return {
+      namePlaceholder: `e.g. ${displayOrgName} Copilot`,
+      identifierPlaceholder: `e.g. ${slugOrgName}-copilot`,
+    };
+  }, [currentOrganization?.name]);
 
   const [name, setName] = useState('');
   const [identifier, setIdentifier] = useState('');
@@ -156,7 +179,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
                       setErrors((prev) => ({ ...prev, identifier: undefined }));
                     }
                   }}
-                  placeholder="e.g. Wine Sommelier Agent"
+                  placeholder={namePlaceholder}
                   hasError={Boolean(errors.name)}
                   aria-invalid={errors.name ? true : undefined}
                   aria-describedby={errors.name ? `${nameId}-error` : undefined}
@@ -180,7 +203,7 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
                     setIsIdentifierTouched(true);
                     setErrors((prev) => ({ ...prev, identifier: undefined }));
                   }}
-                  placeholder="e.g. wine-sommelier-agent"
+                  placeholder={identifierPlaceholder}
                   hasError={Boolean(errors.identifier)}
                   aria-invalid={errors.identifier ? true : undefined}
                   aria-describedby={

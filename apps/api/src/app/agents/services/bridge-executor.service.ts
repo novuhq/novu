@@ -238,7 +238,7 @@ export class BridgeExecutorService {
     if (message?.id) {
       deliveryId = `${conversation._id}:${message.id}`;
     } else if (action) {
-      deliveryId = `${conversation._id}:${event}:${action.actionId}:${timestamp}`;
+      deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
       deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
     } else {

@@ -22,7 +22,8 @@ import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
-import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
+import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
+import { AgentEmailActionClaims, AgentEmailActionTokenService } from './agent-email-action-token.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 function getErrorResponseBody(err: unknown): unknown {
@@ -62,6 +63,40 @@ function wrapMsgId(id: string): string {
   const trimmed = id.trim();
 
   return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
+}
+
+/**
+ * Thrown by `ChatSdkService.processEmailAction` when a failure is provably pre-dispatch —
+ * i.e. token validation, agent-config lookup, or chat/adapter setup failed before the chat
+ * SDK had a chance to invoke the agent's `onAction` handler. Callers can safely retry these
+ * via single-use token release. Any other error (including raw exceptions out of
+ * `chat.processAction`) MUST be treated as potentially post-dispatch and not replayed.
+ */
+export class AgentActionPreDispatchError extends Error {
+  readonly preDispatch = true as const;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = 'AgentActionPreDispatchError';
+    if (cause !== undefined) {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
+/**
+ * Extracts the recipient email address from an encoded email thread ID. The email adapter's
+ * ThreadResolver encodes thread IDs as `email:<encodedRecipient>:<rootMessageIdHash>`; we
+ * reverse that here so the token claims can carry the recipient as the `platformUserId` used
+ * for subscriber resolution on the click handler side.
+ */
+function extractRecipientFromThreadId(threadId: string): string {
+  const parts = threadId.split(':');
+  if (parts.length !== 3 || parts[0] !== 'email' || !parts[1]) {
+    throw new Error(`Cannot extract recipient from invalid email thread id: ${threadId}`);
+  }
+
+  return decodeURIComponent(parts[1]);
 }
 
 /**
@@ -141,7 +176,8 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly inboundHandler: AgentInboundHandler,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly actionTokenService: AgentEmailActionTokenService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -155,8 +191,16 @@ export class ChatSdkService implements OnModuleDestroy {
     });
   }
 
-  async handleWebhook(agentId: string, integrationIdentifier: string, req: ExpressRequest, res: ExpressResponse) {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+  async handleWebhook(
+    agentId: string,
+    integrationIdentifier: string,
+    req: ExpressRequest,
+    res: ExpressResponse,
+    options: { source: AgentConfigResolveSource }
+  ) {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier, {
+      source: options.source,
+    });
     const { platform } = config;
     const instanceKey = `${agentId}:${integrationIdentifier}`;
 
@@ -168,7 +212,69 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const webRequest = toWebRequest(req);
     const webResponse = await handler(webRequest);
+
     await sendWebResponse(webResponse, res);
+  }
+
+  /**
+   * Dispatches a verified email-button click into the chat SDK so it flows through the same
+   * `chat.onAction` → `AgentInboundHandler.handleAction` → bridge `onAction` path that
+   * inbound platforms (Slack/Teams) already use. Called from the public email-action endpoint
+   * after token verification and single-use replay protection.
+   *
+   * The implementation is split into a *pre-dispatch* phase (config resolution, chat-instance
+   * lookup, adapter availability check) and a *dispatch* phase (`chat.processAction`). Errors
+   * raised by the pre-dispatch phase are wrapped in `AgentActionPreDispatchError` so the
+   * controller can safely release the single-use token and let the user retry. Errors raised
+   * by the dispatch phase propagate as-is — by then the chat SDK may have already invoked the
+   * agent's `onAction` handler with partial side effects, and re-releasing the token would
+   * permit a replay that duplicates non-idempotent downstream work.
+   */
+  async processEmailAction(claims: AgentEmailActionClaims): Promise<void> {
+    const { agentId, integrationIdentifier } = claims;
+
+    let chat: Chat;
+    let emailAdapter: ReturnType<Chat['getAdapter']>;
+    try {
+      const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+      if (config.platform !== AgentPlatformEnum.EMAIL) {
+        throw new BadRequestException(
+          `Agent ${agentId} integration ${integrationIdentifier} is not configured for the email platform`
+        );
+      }
+
+      const instanceKey = `${agentId}:${integrationIdentifier}`;
+      chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+      emailAdapter = chat.getAdapter(AgentPlatformEnum.EMAIL);
+      if (!emailAdapter) {
+        throw new BadRequestException(`Email adapter not available for agent ${agentId}`);
+      }
+    } catch (err) {
+      throw new AgentActionPreDispatchError('Failed to resolve agent context before dispatching email action', err);
+    }
+
+    // From here on, the chat SDK may have already invoked the user's `onAction` handler by
+    // the time an error is raised — do NOT retry these failures via token re-release.
+    await chat.processAction(
+      {
+        adapter: emailAdapter,
+        actionId: claims.actionId,
+        value: claims.value,
+        messageId: claims.messageId,
+        threadId: claims.threadId,
+        user: {
+          userId: claims.userIdentifier,
+          userName: claims.userIdentifier,
+          fullName: claims.userIdentifier,
+          isBot: false,
+          isMe: false,
+        },
+        raw: {},
+      },
+      undefined
+    );
   }
 
   async onModuleDestroy() {
@@ -753,7 +859,7 @@ export class ChatSdkService implements OnModuleDestroy {
     config: ResolvedAgentConfig,
     adapterFingerprint: string
   ): Promise<Chat> {
-    const chat = await this.createChatInstance(instanceKey, platform, config);
+    const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
     await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
     this.registerEventHandlers(agentId, cached);
@@ -922,6 +1028,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
   private async createChatInstance(
     instanceKey: string,
+    agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Chat> {
@@ -930,7 +1037,7 @@ export class ChatSdkService implements OnModuleDestroy {
       esmImport('@chat-adapter/state-ioredis'),
     ]);
 
-    const adapters = await this.buildAdapters(platform, config);
+    const adapters = await this.buildAdapters(agentId, platform, config);
     const client = this.cacheService.client;
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
@@ -958,6 +1065,7 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private async buildAdapters(
+    agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Record<string, unknown>> {
@@ -1032,6 +1140,26 @@ export class ChatSdkService implements OnModuleDestroy {
             senderName,
             signingSecret: credentials.secretKey,
             sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
+            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
+              const userIdentifier = extractRecipientFromThreadId(threadId);
+              const { url } = await this.actionTokenService.signActionToken({
+                agentId,
+                agentIdentifier: config.agentIdentifier,
+                agentName: config.agentName,
+                integrationIdentifier: config.integrationIdentifier,
+                environmentId: config.environmentId,
+                organizationId: config.organizationId,
+                threadId,
+                messageId,
+                actionId,
+                value,
+                label,
+                style,
+                userIdentifier,
+              });
+
+              return url;
+            },
           }),
         };
       }
@@ -1071,7 +1199,7 @@ export class ChatSdkService implements OnModuleDestroy {
           cached.config,
           event.thread as Thread,
           {
-            actionId: event.actionId,
+            id: event.actionId,
             value: event.value,
             sourceMessageId: event.messageId,
           },

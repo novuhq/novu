@@ -21,6 +21,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
+import type { AgentConfigResolveSource } from './services/agent-config-resolver.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
@@ -67,7 +68,7 @@ export class AgentsWebhookController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    return this.routeWebhook(agentId, integrationIdentifier, req, res);
+    return this.routeWebhook(agentId, integrationIdentifier, req, res, 'webhook_verification');
   }
 
   @Post('/:agentId/webhook/:integrationIdentifier')
@@ -78,12 +79,18 @@ export class AgentsWebhookController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    return this.routeWebhook(agentId, integrationIdentifier, req, res);
+    return this.routeWebhook(agentId, integrationIdentifier, req, res, 'webhook_message');
   }
 
-  private async routeWebhook(agentId: string, integrationIdentifier: string, req: Request, res: Response) {
+  private async routeWebhook(
+    agentId: string,
+    integrationIdentifier: string,
+    req: Request,
+    res: Response,
+    source: AgentConfigResolveSource
+  ) {
     try {
-      await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res);
+      await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res, { source });
     } catch (err) {
       if (err instanceof AgentInactiveException) {
         // Return 200 to avoid retries by the delivery provider

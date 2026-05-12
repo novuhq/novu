@@ -23,8 +23,9 @@ import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 type AgentSidebarWidgetProps = {
@@ -218,6 +219,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
   const canEditFields = canWrite && !readOnly;
+  const agentRoutes = useAgentRoutes();
 
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
@@ -309,7 +311,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
           onCtaClick={() => {
             if (!oppositeEnvironment?.slug) return;
             navigate(
-              buildRoute(ROUTES.AGENT_DETAILS, {
+              buildRoute(agentRoutes.details, {
                 environmentSlug: oppositeEnvironment.slug,
                 agentIdentifier: encodeURIComponent(agent.identifier),
               })

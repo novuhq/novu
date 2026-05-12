@@ -31,6 +31,7 @@ import { RemoveIntegration } from './remove-integration/remove-integration.useca
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
+import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -64,4 +65,5 @@ export const USE_CASES = [
   ChatOauthCallback,
   MsTeamsHealthCheck,
   SlackQuickSetup,
+  WhatsAppValidateToken,
 ];

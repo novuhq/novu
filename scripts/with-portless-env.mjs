@@ -12,13 +12,29 @@ import { execFileSync, spawn } from 'node:child_process';
 
 const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu'];
 
+function normalizeServiceUrl(rawUrl, name) {
+  // `portless get` may return the upstream HTTP URL (e.g. http://api.novu.localhost:1355).
+  // The browser-facing proxy is always HTTPS on the default port, so normalize to that
+  // form to avoid CORS preflight redirects from http://...:PORT -> https://...
+  try {
+    const parsed = new URL(rawUrl);
+    parsed.protocol = 'https:';
+    parsed.port = '';
+
+    return parsed.origin;
+  } catch {
+    return `https://${name}.localhost`;
+  }
+}
+
 function getServiceUrl(name) {
   try {
     const out = execFileSync('pnpm', ['exec', 'portless', 'get', name], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return out.trim();
+
+    return normalizeServiceUrl(out.trim(), name);
   } catch (err) {
     console.warn(`[with-portless-env] portless get ${name} failed: ${err.message}`);
 
@@ -36,10 +52,11 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-const dashboardOriginRegex = dashboardUrl.replace(
-  /^https?:\/\/(.+?)(:\d+)?$/,
-  (_match, host, port = '') => `https://(.*\\.)?${escapeRegExp(host)}${escapeRegExp(port)}`
-);
+const dashboardOriginRegex = dashboardUrl.replace(/^https?:\/\/(.+?)(:\d+)?$/, (_match, host, port = '') => {
+  const optionalPort = port ? `(?:${escapeRegExp(port)})?` : '';
+
+  return `https://(.*\\.)?${escapeRegExp(host)}${optionalPort}`;
+});
 
 const env = {
   ...process.env,

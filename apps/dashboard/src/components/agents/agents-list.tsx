@@ -25,9 +25,12 @@ import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
+import { APP_IDS } from '@/utils/apps';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
@@ -39,7 +42,10 @@ export function AgentsList() {
   const { currentEnvironment, readOnly } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
+  const agentRoutes = useAgentRoutes();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -95,13 +101,18 @@ export function AgentsList() {
       showSuccessToast('Agent created', 'Your agent is ready to use.');
       setCreateOpen(false);
 
-      track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
-        agentIdentifier: createdAgent.identifier,
-        active: createdAgent.active,
-      });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_CREATED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD,
+        {
+          agentIdentifier: createdAgent.identifier,
+          active: createdAgent.active,
+        }
+      );
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+      const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: environment.slug ?? '',
         agentIdentifier: encodeURIComponent(createdAgent.identifier),
         agentTab: AGENT_DETAILS_DEFAULT_TAB,
@@ -123,7 +134,12 @@ export function AgentsList() {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
-      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_DELETED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
+        { agentIdentifier: identifier }
+      );
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const listKey = getAgentsListQueryKey(environment._id, {

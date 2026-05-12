@@ -300,3 +300,110 @@ export async function listAgentEmoji(environment: IEnvironment, signal?: AbortSi
 
   return response.data;
 }
+
+export type WhatsAppValidateTokenError = {
+  code:
+    | 'invalid_token'
+    | 'expired_token'
+    | 'phone_not_found'
+    | 'phone_mismatch'
+    | 'waba_not_accessible'
+    | 'waba_phone_mismatch'
+    | 'missing_messaging_scope'
+    | 'unknown';
+  message: string;
+};
+
+export type WhatsAppValidateTokenResponse = {
+  valid: boolean;
+  hasManagementScope: boolean;
+  hasMessagingScope: boolean;
+  scopes: string[];
+  expiresAt?: number;
+  wabaId?: string;
+  phoneNumberId?: string;
+  displayPhoneNumber?: string;
+  verifiedName?: string;
+  error?: WhatsAppValidateTokenError;
+};
+
+export async function validateWhatsAppToken(
+  environment: IEnvironment,
+  body: { accessToken: string; phoneNumberIdentification?: string; businessAccountId?: string },
+  signal?: AbortSignal
+): Promise<WhatsAppValidateTokenResponse> {
+  const response = await post<{ data: WhatsAppValidateTokenResponse }>('/integrations/whatsapp/validate-token', {
+    environment,
+    body,
+    signal,
+  });
+
+  return response.data;
+}
+
+export type ConfigureWhatsAppWebhookFailure = {
+  code:
+    | 'missing_management_scope'
+    | 'missing_credentials'
+    | 'missing_verify_token'
+    | 'missing_app_secret'
+    | 'app_subscription_failed'
+    | 'meta_rejected'
+    | 'unknown';
+  message: string;
+};
+
+export type ConfigureWhatsAppWebhookResponse = {
+  success: boolean;
+  callbackUrl: string;
+  wabaId?: string;
+  fallbackToManual?: boolean;
+  reason?: ConfigureWhatsAppWebhookFailure;
+};
+
+export async function configureAgentWhatsAppWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string
+): Promise<ConfigureWhatsAppWebhookResponse> {
+  const response = await post<{ data: ConfigureWhatsAppWebhookResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/auto-configure`,
+    { environment }
+  );
+
+  return response.data;
+}
+
+export type SendWhatsAppTestTemplateError = {
+  code:
+    | 'missing_credentials'
+    | 'recipient_not_allowed'
+    | 'token_expired'
+    | 'template_unavailable'
+    | 'invalid_recipient'
+    | 'rate_limited'
+    | 'meta_rejected'
+    | 'unknown';
+  message: string;
+  helpUrl?: string;
+};
+
+export type SendWhatsAppTestTemplateResponse = {
+  success: boolean;
+  messageId?: string;
+  error?: SendWhatsAppTestTemplateError;
+};
+
+export async function sendWhatsAppTestTemplate(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  to: string
+): Promise<SendWhatsAppTestTemplateResponse> {
+  const response = await post<{ data: SendWhatsAppTestTemplateResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/test-template`,
+    { environment, body: { to } }
+  );
+
+  return response.data;
+}
