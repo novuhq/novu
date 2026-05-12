@@ -33,8 +33,24 @@ interface EmulatorInstance {
   close(): Promise<void>;
 }
 
+export interface RecordedSlackCall {
+  method: string;
+  options: Record<string, unknown>;
+}
+
 let emulator: EmulatorInstance | undefined;
 let webClientPatched = false;
+let recordedCalls: RecordedSlackCall[] = [];
+
+export function getRecordedCalls(method?: string): RecordedSlackCall[] {
+  if (!method) return [...recordedCalls];
+
+  return recordedCalls.filter((c) => c.method === method);
+}
+
+export function clearRecordedCalls(): void {
+  recordedCalls = [];
+}
 
 export async function startSlackEmulator(): Promise<EmulatorInstance> {
   if (emulator) return emulator;
@@ -124,8 +140,9 @@ function patchWebClient(): void {
       merged.slackApiUrl = apiUrl;
     }
 
+    type ConstructorTarget = new (...args: unknown[]) => unknown;
     const newTarget = new.target as unknown;
-    const target = newTarget ? (newTarget as Function) : (PatchedWebClient as unknown as Function);
+    const target = (newTarget ?? PatchedWebClient) as ConstructorTarget;
 
     return Reflect.construct(Original, [token, merged], target);
   }
@@ -164,6 +181,14 @@ function patchWebClient(): void {
           this.axios.defaults.baseURL = normalized;
         }
       }
+
+      // Record every Slack API call for assertions on the wire payload — the
+      // emulator only persists a subset of fields (e.g. `chat.postMessage`
+      // drops `blocks`), so test that need fidelity on what was sent must
+      // assert against what the production adapter handed off to the
+      // WebClient, not against what the emulator stored.
+      const [method, options] = args as [string, Record<string, unknown> | undefined];
+      recordedCalls.push({ method, options: { ...(options ?? {}) } });
 
       return origApiCall.apply(this, args);
     };
@@ -217,7 +242,11 @@ export async function getChannelHistory(channel: string, token = 'xoxb-test'): P
   return (await res.json()) as SlackHistoryResponse;
 }
 
-export async function getThreadReplies(channel: string, ts: string, token = 'xoxb-test'): Promise<SlackRepliesResponse> {
+export async function getThreadReplies(
+  channel: string,
+  ts: string,
+  token = 'xoxb-test'
+): Promise<SlackRepliesResponse> {
   const res = await postForm('conversations.replies', { channel, ts }, token);
 
   return (await res.json()) as SlackRepliesResponse;

@@ -23,6 +23,7 @@
  */
 
 import { AgentRepository, ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
+import { Actions, Button, Card, CardText } from '@novu/framework/express';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -34,14 +35,13 @@ import {
   conversationRepository,
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
-import {
-  BridgeExecutorStubHandle,
-  stubBridgeExecutorWithRealHttp,
-} from './helpers/bridge-executor-test-stub';
+import { BridgeExecutorStubHandle, stubBridgeExecutorWithRealHttp } from './helpers/bridge-executor-test-stub';
 import { BridgeServerHandle, startBridgeServer } from './helpers/bridge-server';
 import { buildSlackAppMention, signSlackRequest } from './helpers/providers/slack';
 import {
+  clearRecordedCalls,
   getChannelHistory,
+  getRecordedCalls,
   getThreadReplies,
   startSlackEmulator,
   stopSlackEmulator,
@@ -181,6 +181,8 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     bridgeStub = stubBridgeExecutorWithRealHttp(bridgeExecutor);
 
+    clearRecordedCalls();
+
     // Note: we deliberately do NOT call `resetEmulator()` between tests. The
     // emulator's seeded user/channel IDs are randomly generated per `seed()`
     // invocation, so resetting would invalidate the cached `channel`/`user`
@@ -240,7 +242,9 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     await Promise.race([
       bridgeStub.drain(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
+      ),
     ]);
 
     expect(bridgeStub.calls.length, 'bridge executor invoked').to.be.gte(1);
@@ -306,7 +310,9 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     await Promise.race([
       bridgeStub.drain(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
+      ),
     ]);
 
     const reply = await pollFor(async () => {
@@ -332,5 +338,219 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     if (replyInHistory) {
       expect(replyInHistory.thread_ts).to.equal(ts);
     }
+  });
+
+  it('serializes Card replies into Slack Block Kit with intact action_ids', async () => {
+    // Scenario B: Cards are framework-level objects that the slack adapter
+    // converts via cardToBlockKit. Drift here would silently produce broken
+    // interactivity payloads.
+    //
+    // emulate@0.5's `chat.postMessage` only persists `text` (not `blocks`),
+    // so we can't read blocks back from `conversations.history`. Instead, we
+    // record every WebClient call via the prototype patch and assert against
+    // the wire payload — which is exactly what gets sent to Slack in
+    // production.
+    onMessageHandler = async (_message, agentCtx) => {
+      await agentCtx.reply(
+        Card({
+          title: 'Confirm pickup',
+          children: [
+            CardText('Your order is ready.'),
+            Actions([
+              Button({ id: 'confirm', label: 'Confirm', style: 'primary' }),
+              Button({ id: 'cancel', label: 'Cancel', style: 'danger' }),
+            ]),
+          ],
+        })
+      );
+    };
+
+    const threadTs = `${Math.floor(Date.now() / 1000)}.000300`;
+    const body = JSON.stringify(
+      buildSlackAppMention({ userId: user.id, channel: channel.id, threadTs, text: '<@UBOT> card' })
+    );
+    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
+
+    await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
+    await Promise.race([
+      bridgeStub.drain(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
+      ),
+    ]);
+
+    // Wait until `chat.postMessage` lands on the wire — the bridge handler
+    // and the slack adapter's post are independently async after the bridge
+    // returns 200.
+    const postCall = await pollFor(async () => {
+      const calls = getRecordedCalls('chat.postMessage');
+      const match = calls.find((c) => c.options.thread_ts === threadTs);
+
+      return match ?? null;
+    }, SLACK_POLL_TIMEOUT_MS);
+
+    expect(postCall.options.channel, 'posted to inbound channel').to.equal(channel.id);
+
+    const blocks = postCall.options.blocks as Array<Record<string, unknown>> | undefined;
+    expect(blocks, 'card serialized to Block Kit blocks on the wire').to.be.an('array').that.is.not.empty;
+
+    const actionsBlock = blocks!.find((b) => b.type === 'actions');
+    expect(actionsBlock, 'card produces an actions block').to.exist;
+
+    const elements = (actionsBlock as { elements?: Array<Record<string, unknown>> }).elements ?? [];
+    expect(elements, 'actions block contains button elements').to.have.length.gte(2);
+
+    const actionIds = elements.map((e) => e.action_id as string);
+    expect(actionIds, 'button action_ids preserved through Card → Block Kit serialization').to.include.members([
+      'confirm',
+      'cancel',
+    ]);
+
+    const confirmButton = elements.find((e) => e.action_id === 'confirm');
+    expect(confirmButton).to.have.property('type', 'button');
+    expect(confirmButton).to.have.property('style', 'primary');
+
+    const cancelButton = elements.find((e) => e.action_id === 'cancel');
+    expect(cancelButton).to.have.property('style', 'danger');
+  });
+
+  it('emits reactions.add with the configured resolve emoji when ctx.resolve is called', async () => {
+    // Scenario C: enable the configured `reactionOnResolved` behavior and
+    // assert the Slack adapter actually emits a `reactions.add` for the
+    // first-message id we stored on the conversation. We can't read it back
+    // via `reactions.get` because the inbound user message lives only in our
+    // webhook payload (never `chat.postMessage`'d into the emulator), so
+    // reactions.add resolves to `message_not_found` server-side. The
+    // recorded WebClient call is the meaningful contract assertion: that's
+    // what the production adapter actually sends to Slack in real usage.
+    await agentRepository.update(
+      { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
+      { $set: { 'behavior.reactionOnResolved': 'white_check_mark' } }
+    );
+
+    onMessageHandler = async (_message, agentCtx) => {
+      await agentCtx.reply('working on it');
+      agentCtx.resolve('done');
+    };
+
+    // Use a single deterministic timestamp for both `event.ts` (which becomes
+    // the inbound message id stored as `firstPlatformMessageId`) and
+    // `thread_ts` so the test can assert the recorded `reactions.add` targets
+    // exactly that ts.
+    const ts = `${Math.floor(Date.now() / 1000)}.000400`;
+    const body = JSON.stringify(
+      buildSlackAppMention({
+        userId: user.id,
+        channel: channel.id,
+        threadTs: ts,
+        eventTs: ts,
+        text: '<@UBOT> resolve me',
+      })
+    );
+    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
+
+    await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
+    await Promise.race([
+      bridgeStub.drain(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
+      ),
+    ]);
+
+    const reactionCall = await pollFor(async () => {
+      const calls = getRecordedCalls('reactions.add');
+      const match = calls.find((c) => c.options.name === 'white_check_mark');
+
+      return match ?? null;
+    }, SLACK_POLL_TIMEOUT_MS);
+
+    expect(reactionCall.options.channel, 'reaction landed on inbound channel').to.equal(channel.id);
+    expect(reactionCall.options.timestamp, 'reaction targets the first inbound message').to.equal(ts);
+
+    // Conversation should be marked resolved in our DB.
+    const conversation = await conversationRepository.findByPlatformThread(
+      ctx.session.environment._id,
+      ctx.session.organization._id,
+      `slack:${channel.id}:${ts}`
+    );
+    expect(conversation, 'conversation persisted').to.exist;
+    // Resolved conversations move to status 'resolved' via resolveConversation.
+    expect(conversation!.status).to.equal('resolved');
+  });
+
+  it('edits a previously-posted message via the /reply edit path', async () => {
+    // Scenario D: the agent posts an initial reply, the test then issues a
+    // `/v1/agents/:id/reply` with `edit: { messageId, content }`. The slack
+    // adapter routes that to chat.update, mutating the message in the
+    // emulator. We assert the post-edit history reflects the new text.
+    onMessageHandler = async (_message, agentCtx) => {
+      await agentCtx.reply('initial');
+    };
+
+    const threadTs = `${Math.floor(Date.now() / 1000)}.000500`;
+    const body = JSON.stringify(
+      buildSlackAppMention({ userId: user.id, channel: channel.id, threadTs, text: '<@UBOT> edit me' })
+    );
+    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
+
+    await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
+    await Promise.race([
+      bridgeStub.drain(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
+      ),
+    ]);
+
+    const initialMessage = await pollFor(async () => {
+      const replies = await getThreadReplies(channel.id, threadTs);
+      if (!replies.ok || !replies.messages) return null;
+
+      return replies.messages.find((m) => m.text === 'initial') ?? null;
+    }, SLACK_POLL_TIMEOUT_MS);
+
+    const conversation = await conversationRepository.findByPlatformThread(
+      ctx.session.environment._id,
+      ctx.session.organization._id,
+      `slack:${channel.id}:${threadTs}`
+    );
+    expect(conversation, 'conversation exists').to.exist;
+
+    const editRes = await ctx.session.testAgent.post(`/v1/agents/${ctx.agentIdentifier}/reply`).send({
+      conversationId: conversation!._id,
+      integrationIdentifier: ctx.integrationIdentifier,
+      edit: {
+        messageId: initialMessage.ts,
+        content: { markdown: 'edited' },
+      },
+    });
+
+    expect(editRes.status, JSON.stringify(editRes.body)).to.equal(200);
+
+    await pollFor(async () => {
+      const replies = await getThreadReplies(channel.id, threadTs);
+      if (!replies.ok || !replies.messages) return null;
+
+      const updated = replies.messages.find((m) => m.ts === initialMessage.ts);
+
+      return updated && updated.text === 'edited' ? updated : null;
+    }, SLACK_POLL_TIMEOUT_MS);
   });
 });

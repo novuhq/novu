@@ -27,11 +27,7 @@ import {
 import type { AgentBridgeRequest } from '@novu/framework';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import sinon from 'sinon';
-import {
-  BridgeExecutorParams,
-  BridgeExecutorService,
-  NoBridgeUrlError,
-} from '../../services/bridge-executor.service';
+import { BridgeExecutorParams, BridgeExecutorService, NoBridgeUrlError } from '../../services/bridge-executor.service';
 
 interface BridgeExecutorInternals {
   resolveBridgeUrl: (
@@ -93,9 +89,11 @@ export function stubBridgeExecutorWithRealHttp(bridgeExecutor: BridgeExecutorSer
     })();
 
     inflight.add(work);
-    work.finally(() => inflight.delete(work)).catch(() => {
-      /* swallow — the actual error is observable via inflight rejections in drain() */
-    });
+    work
+      .finally(() => inflight.delete(work))
+      .catch(() => {
+        /* swallow — the actual error is observable via inflight rejections in drain() */
+      });
   });
 
   return {
