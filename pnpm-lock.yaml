@@ -51,7 +51,7 @@ overrides:
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   basic-ftp@<5.3.1: ^5.3.1
-  axios@>=1.0.0 <1.15.2: ^1.15.2
+  axios@>=1.0.0 <1.16.0: ^1.16.0
   seroval@<1.4.1: ^1.4.1
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
@@ -446,7 +446,7 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(ajv@8.18.0)
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       bcrypt:
         specifier: ^5.0.0
@@ -485,8 +485,8 @@ importers:
         specifier: ^1.1.9
         version: 1.1.9
       dotenv:
-        specifier: ^16.5.0
-        version: 16.5.0
+        specifier: ^16.6.1
+        version: 16.6.1
       entities:
         specifier: ^7.0.0
         version: 7.0.0
@@ -1157,8 +1157,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(encoding@0.1.13)
       dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
+        specifier: ^16.6.1
+        version: 16.6.1
       express:
         specifier: ^4.21.0
         version: 4.21.2
@@ -1365,7 +1365,7 @@ importers:
         specifier: ^7.40.0
         version: 7.120.3
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       class-transformer:
         specifier: 0.5.1
@@ -1540,7 +1540,7 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(ajv@8.18.0)
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       body-parser:
         specifier: ^2.2.1
@@ -1564,8 +1564,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1(date-fns@2.29.3)
       dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
+        specifier: ^16.6.1
+        version: 16.6.1
       envalid:
         specifier: ^8.1.1
         version: 8.1.1
@@ -1704,7 +1704,7 @@ importers:
         specifier: ^3.1037.0
         version: 3.1042.0
       '@godaddy/terminus':
-        specifier: ^4.3.1
+        specifier: ^4.12.1
         version: 4.12.1
       '@nestjs/common':
         specifier: 10.4.18
@@ -1776,8 +1776,8 @@ importers:
         specifier: 0.14.1
         version: 0.14.1
       dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
+        specifier: ^16.6.1
+        version: 16.6.1
       envalid:
         specifier: ^8.1.1
         version: 8.1.1
@@ -2545,7 +2545,7 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(ajv@8.18.0)
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       bullmq:
         specifier: ^3.10.2
@@ -2702,8 +2702,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
+        specifier: ^16.6.1
+        version: 16.6.1
       jest:
         specifier: ^27.1.0
         version: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
@@ -3188,7 +3188,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.6
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       bcrypt:
         specifier: ~5.0.0
@@ -3657,7 +3657,7 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       chalk:
         specifier: 4.1.2
@@ -3672,8 +3672,8 @@ importers:
         specifier: 7.0.5
         version: 7.0.5
       dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
+        specifier: ^16.6.1
+        version: 16.6.1
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
@@ -3820,7 +3820,7 @@ importers:
         specifier: ^0.7.9
         version: 0.7.9
       axios:
-        specifier: ^1.15.2
+        specifier: ^1.16.0
         version: 1.16.0
       braze-api:
         specifier: ^2.5.6
@@ -8275,7 +8275,7 @@ packages:
     resolution: {integrity: sha512-h6TCn3yJwD6OKqqqfmtRS5Zo4E46Ip2n+gK1sqwzNBC+qxQ9xpCu+ODVRFur6V3alHSCSBxb3nNtt73VEdluyA==}
     peerDependencies:
       '@nestjs/common': 10.4.18
-      axios: ^1.15.2
+      axios: ^1.16.0
       rxjs: ^6.0.0 || ^7.0.0
 
   '@nestjs/cli@10.4.5':
@@ -17773,6 +17773,10 @@ packages:
 
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
+    engines: {node: '>=12'}
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
   dotenv@17.2.4:
@@ -39845,7 +39849,7 @@ snapshots:
       '@babel/core': 7.28.0
       '@sentry/babel-plugin-component-annotate': 2.22.6
       '@sentry/cli': 2.38.0(encoding@0.1.13)
-      dotenv: 16.5.0
+      dotenv: 16.6.1
       find-up: 5.0.0
       glob: 9.3.5
       magic-string: 0.30.8
@@ -47051,7 +47055,7 @@ snapshots:
 
   dotenv-expand@11.0.6:
     dependencies:
-      dotenv: 16.5.0
+      dotenv: 16.6.1
 
   dotenv@10.0.0: {}
 
@@ -47060,6 +47064,8 @@ snapshots:
   dotenv@16.4.7: {}
 
   dotenv@16.5.0: {}
+
+  dotenv@16.6.1: {}
 
   dotenv@17.2.4: {}
 

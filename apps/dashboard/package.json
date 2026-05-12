@@ -179,7 +179,7 @@
     "@types/uuid": "^8.3.4",
     "@vitejs/plugin-react": "^4.7.0",
     "cross-fetch": "^4.0.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.21.0",
     "globals": "^15.9.0",
     "http-proxy-middleware": "^3.0.5",
