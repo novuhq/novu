@@ -24,3 +24,6 @@ pnpm-lock.yaml
 
 # Generator templates — not production code
 libs/automation/
+
+# Cursor have a tendency to remove the minReleaseAge when he faces it
+pnpm-workspace.yaml
