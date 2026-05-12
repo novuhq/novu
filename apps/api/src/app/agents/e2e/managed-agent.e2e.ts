@@ -1,4 +1,3 @@
-import * as AgentRuntimeFactoryModule from '@novu/application-generic';
 import {
   AgentRuntimeBadRequestError,
   AgentRuntimeNotFoundError,
@@ -6,6 +5,11 @@ import {
   AgentRuntimeUnauthorizedError,
   decryptCredentials,
 } from '@novu/application-generic';
+// Stub at the source factory module rather than the barrel: TypeScript's `__exportStar` helper
+// installs a non-configurable getter on the package barrel, which `sinon.stub` cannot replace.
+// The barrel getter reads the property from this source module on every access, so stubbing here
+// transparently propagates to both `create-integration.usecase.ts` and `provision-managed-agent.usecase.ts`.
+import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
