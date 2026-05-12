@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
@@ -165,7 +166,15 @@ export class UpdateIntegration {
     }
 
     if (command.credentials) {
-      updatePayload.credentials = encryptCredentials(command.credentials);
+      const existingCredentials = existingIntegration.credentials
+        ? decryptCredentials(existingIntegration.credentials)
+        : undefined;
+      const managedCredentials = ensureWhatsAppManagedCredentials({
+        providerId: existingIntegration.providerId,
+        nextCredentials: command.credentials,
+        existingCredentials,
+      });
+      updatePayload.credentials = encryptCredentials(managedCredentials);
     }
 
     if (command.configurations) {

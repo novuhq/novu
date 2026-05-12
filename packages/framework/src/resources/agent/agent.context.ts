@@ -20,6 +20,7 @@ import type {
   Signal,
   TriggerRecipientsPayload,
 } from './agent.types';
+import { AgentEventEnum } from './agent.types';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
@@ -247,7 +248,7 @@ class ReplyHandleImpl implements ReplyHandle {
 }
 
 export class AgentContextImpl {
-  readonly event: string;
+  readonly event: AgentEventEnum;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
   readonly reaction: AgentReaction | null;
@@ -276,7 +277,7 @@ export class AgentContextImpl {
   private readonly _poster: ReplyPoster;
 
   constructor(request: AgentBridgeRequest, secretKey: string) {
-    this.event = request.event;
+    this.event = request.event as AgentEventEnum;
     this.action = request.action ?? null;
     this.message = request.message;
     this.reaction = request.reaction;

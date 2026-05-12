@@ -323,41 +323,21 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
     switch (event) {
       case AgentEventEnum.ON_MESSAGE:
-        await replyIfPresent(
-          await registeredAgent.handlers.onMessage({
-            message: ctx.message!,
-            ctx: ctx as unknown as AgentMessageContext,
-          })
-        );
+        await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
         break;
       case AgentEventEnum.ON_ACTION:
         if (registeredAgent.handlers.onAction) {
-          await replyIfPresent(
-            await registeredAgent.handlers.onAction({
-              actionId: ctx.action!.actionId,
-              value: ctx.action!.value,
-              ctx: ctx as unknown as AgentActionContext,
-            })
-          );
+          await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
         }
         break;
       case AgentEventEnum.ON_REACTION:
         if (registeredAgent.handlers.onReaction) {
-          await replyIfPresent(
-            await registeredAgent.handlers.onReaction({
-              reaction: ctx.reaction!,
-              ctx: ctx as unknown as AgentReactionContext,
-            })
-          );
+          await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
         }
         break;
       case AgentEventEnum.ON_RESOLVE:
         if (registeredAgent.handlers.onResolve) {
-          await replyIfPresent(
-            await registeredAgent.handlers.onResolve({
-              ctx: ctx as unknown as AgentResolveContext,
-            })
-          );
+          await replyIfPresent(await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
         }
         break;
       default:

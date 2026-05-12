@@ -26,6 +26,7 @@ import {
 import shortid from 'shortid';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { CreateIntegrationCommand } from './create-integration.command';
 
 @Injectable()
@@ -158,6 +159,11 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name)}-${shortid.generate()}`;
 
+      const managedCredentials = ensureWhatsAppManagedCredentials({
+        providerId: command.providerId,
+        nextCredentials: command.credentials ?? {},
+      });
+
       const query: IntegrationQuery = {
         name,
         identifier,
@@ -165,7 +171,7 @@ export class CreateIntegration {
         _organizationId: command.organizationId,
         providerId: command.providerId,
         channel: command.channel,
-        credentials: encryptCredentials(command.credentials ?? {}),
+        credentials: encryptCredentials(managedCredentials),
         active: command.active,
         conditions: command.conditions,
         configurations: command.configurations,
