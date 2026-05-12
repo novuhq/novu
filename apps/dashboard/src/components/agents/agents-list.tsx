@@ -116,9 +116,7 @@ export function AgentsList() {
       return createAgent(environment, agentBody);
     },
     onSuccess: async (createdAgent) => {
-      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
-      setCreateOpen(false);
 
       track(
         isDispatchApp
@@ -138,6 +136,8 @@ export function AgentsList() {
       })}${location.search}`;
 
       navigate(agentDetailsPath);
+      queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      setCreateOpen(false);
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
