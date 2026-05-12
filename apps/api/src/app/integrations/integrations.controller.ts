@@ -155,6 +155,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -181,6 +182,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }

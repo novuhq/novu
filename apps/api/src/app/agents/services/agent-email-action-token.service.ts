@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
 const KEY_PREFIX = 'agent:email:action:';
+const MESSAGE_KEY_PREFIX = 'agent:email:action:msg:';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 3; // 3 days
 /** 256 bits of entropy. Encoded as base64url → 43 URL-safe characters. */
 const TOKEN_BYTES = 32;
@@ -152,6 +153,11 @@ export class AgentEmailActionTokenService {
    * Reads the claims **without** consuming the token. Used by the GET preview route so a
    * URL prefetcher (or repeated browser visit) doesn't burn the single-use reservation.
    *
+   * Returns `null` when the message's group flag has already been claimed by a sibling
+   * button in the same email — clicking Approve invalidates Deny, so the user landing on
+   * Deny's preview link should see the same "already submitted / expired" terminal page as
+   * if they reused a consumed link.
+   *
    * @throws AgentEmailActionCacheUnavailableError when Redis is unreachable — distinct from
    *   a `null` return (which means "expired or already used") so the controller can render
    *   a retryable error instead of silently dropping the click.
@@ -166,8 +172,17 @@ export class AgentEmailActionTokenService {
     if (!raw) return null;
 
     const entry = this.parseEntry(raw);
+    if (!entry) return null;
 
-    return entry ? { claims: entry.claims, expiresAt: entry.expiresAt, mintedAt: entry.mintedAt } : null;
+    let messageClaimed: string | null | undefined;
+    try {
+      messageClaimed = await this.cacheService.get(this.messageKey(entry.claims.messageId));
+    } catch (err) {
+      throw new AgentEmailActionCacheUnavailableError('peek', err);
+    }
+    if (messageClaimed) return null;
+
+    return { claims: entry.claims, expiresAt: entry.expiresAt, mintedAt: entry.mintedAt };
   }
 
   /**
@@ -175,6 +190,15 @@ export class AgentEmailActionTokenService {
    * caller wins per token; later callers see `null` and the controller renders the
    * "already submitted" page. If downstream dispatch fails transiently, call
    * `releaseActionToken` to put the entry back so the user can retry from the same link.
+   *
+   * After the per-token GETDEL succeeds, the *message-level* group flag is claimed via
+   * `SET NX` keyed on the email's Message-ID so that every sibling button rendered in the
+   * same email stops working too — i.e. clicking Approve invalidates Deny. If a concurrent
+   * sibling already won the race for the flag (extremely narrow window: both buttons
+   * clicked within the same Redis round-trip), the per-token entry stays deleted and we
+   * return `null` so the loser sees "already submitted". We intentionally do not restore
+   * the loser's entry, since the message is already in its terminal state and reviving one
+   * orphan would only enable a spurious second peek/consume on the loser's link.
    *
    * @throws AgentEmailActionCacheUnavailableError when Redis is unreachable — distinct from
    *   a `null` return so the controller can render a retryable error instead of silently
@@ -196,15 +220,35 @@ export class AgentEmailActionTokenService {
     if (!raw) return null;
 
     const entry = this.parseEntry(raw);
+    if (!entry) return null;
 
-    return entry ? { claims: entry.claims, expiresAt: entry.expiresAt, mintedAt: entry.mintedAt } : null;
+    const remaining = entry.expiresAt - Math.floor(Date.now() / 1000);
+    // The message-level flag mirrors the natural per-token TTL so it auto-expires alongside
+    // the siblings. Clamp to >=1s — Redis rejects zero/negative TTLs on SET EX.
+    const messageTtl = Math.max(1, remaining);
+    let claimed: 'OK' | null;
+    try {
+      claimed = await client.set(this.messageKey(entry.claims.messageId), '1', 'EX', messageTtl, 'NX');
+    } catch (err) {
+      throw new AgentEmailActionCacheUnavailableError('consume', err);
+    }
+
+    if (claimed !== 'OK') {
+      // A sibling beat us to the message-level claim. The per-token entry is already gone;
+      // the message is in its terminal "consumed" state. Surface as "already submitted".
+      return null;
+    }
+
+    return { claims: entry.claims, expiresAt: entry.expiresAt, mintedAt: entry.mintedAt };
   }
 
   /**
    * Re-stores a token previously taken by `consumeActionToken` so the user can retry after
    * a transient dispatch failure. The remaining TTL is re-computed against the original
    * `expiresAt` so a token can never outlive its natural expiry. No-op if the original
-   * expiry has already passed.
+   * expiry has already passed. Also clears the message-level consumed flag set by
+   * `consume`, so sibling buttons in the same email are usable again — symmetric with the
+   * consume path.
    */
   async releaseActionToken(token: string, consumed: ConsumedActionToken): Promise<void> {
     const remaining = consumed.expiresAt - Math.floor(Date.now() / 1000);
@@ -216,10 +260,15 @@ export class AgentEmailActionTokenService {
       mintedAt: consumed.mintedAt,
     };
     await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: remaining });
+    await this.cacheService.del(this.messageKey(consumed.claims.messageId));
   }
 
   private storageKey(token: string): string {
     return `${KEY_PREFIX}${token}`;
+  }
+
+  private messageKey(messageId: string): string {
+    return `${MESSAGE_KEY_PREFIX}${messageId}`;
   }
 
   private parseEntry(raw: string): StoredEntry | null {
